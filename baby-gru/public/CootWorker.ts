@@ -1,6 +1,7 @@
 import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
+import { gemmi } from "../src/types/gemmi";
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
@@ -160,15 +161,43 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
 
                 const instDataOrientation = inst_data.orientation
 
-                thisInstance_orientations.push(instDataOrientation[0][0])
-                thisInstance_orientations.push(instDataOrientation[0][1])
-                thisInstance_orientations.push(instDataOrientation[0][2])
-                thisInstance_orientations.push(instDataOrientation[0][3])
+                const vec1 = [instDataOrientation[0][0],instDataOrientation[0][1],instDataOrientation[0][2]]
+                const vec2 = [instDataOrientation[1][0],instDataOrientation[1][1],instDataOrientation[1][2]]
+                const vec3 = [instDataOrientation[2][0],instDataOrientation[2][1],instDataOrientation[2][2]]
+                const d1 = Math.sqrt(vec1[0]*vec1[0]+vec1[1]*vec1[1]+vec1[2]*vec1[2]);
+                const d2 = Math.sqrt(vec2[0]*vec2[0]+vec2[1]*vec2[1]+vec2[2]*vec2[2]);
+                const d3 = Math.sqrt(vec3[0]*vec3[0]+vec3[1]*vec3[1]+vec3[2]*vec3[2]);
+                const vec1Norm = [vec1[0]/d1,vec1[1]/d1,vec1[2]/d1]
+                const vec2Norm = [vec2[0]/d2,vec2[1]/d2,vec2[2]/d2]
+                const vec3Norm = [vec3[0]/d3,vec3[1]/d3,vec3[2]/d3]
 
-                thisInstance_orientations.push(instDataOrientation[1][0])
-                thisInstance_orientations.push(instDataOrientation[1][1])
-                thisInstance_orientations.push(instDataOrientation[1][2])
-                thisInstance_orientations.push(instDataOrientation[1][3])
+                const v3x = vec1Norm[1] * vec2Norm[2] - vec2Norm[1] * vec1Norm[2];
+                const v3y = vec1Norm[2] * vec2Norm[0] - vec2Norm[2] * vec1Norm[0];
+                const v3z = vec1Norm[0] * vec2Norm[1] - vec2Norm[0] * vec1Norm[1];
+                const vec3p = [v3x,v3y,v3z]
+                const dot33 = vec3p[0]*vec3Norm[0] + vec3p[1]*vec3Norm[1] + vec3p[2]*vec3Norm[2]
+
+                if(dot33>0.0){
+                    thisInstance_orientations.push(instDataOrientation[0][0])
+                    thisInstance_orientations.push(instDataOrientation[0][1])
+                    thisInstance_orientations.push(instDataOrientation[0][2])
+                    thisInstance_orientations.push(instDataOrientation[0][3])
+
+                    thisInstance_orientations.push(instDataOrientation[1][0])
+                    thisInstance_orientations.push(instDataOrientation[1][1])
+                    thisInstance_orientations.push(instDataOrientation[1][2])
+                    thisInstance_orientations.push(instDataOrientation[1][3])
+                } else {
+                    thisInstance_orientations.push(instDataOrientation[1][0])
+                    thisInstance_orientations.push(instDataOrientation[1][1])
+                    thisInstance_orientations.push(instDataOrientation[1][2])
+                    thisInstance_orientations.push(instDataOrientation[1][3])
+
+                    thisInstance_orientations.push(instDataOrientation[0][0])
+                    thisInstance_orientations.push(instDataOrientation[0][1])
+                    thisInstance_orientations.push(instDataOrientation[0][2])
+                    thisInstance_orientations.push(instDataOrientation[0][3])
+                }
 
                 thisInstance_orientations.push(instDataOrientation[2][0])
                 thisInstance_orientations.push(instDataOrientation[2][1])
@@ -463,9 +492,9 @@ const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radiu
     return fileContents.buffer
 }
 
-const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string) => {
+const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number) => {
     const fileName = `${guid()}.glb`
-    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, fileName)
+    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, ssUsageScheme, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
@@ -929,6 +958,13 @@ const replace_map_by_mtz_from_file = (imol: number, mtzData: ArrayBufferLike, se
     return result
 }
 
+const generate_assembly = (coordString: string, assemblyNumber: string, mol_name: string) => {
+    const gemmiStructure = cootModule.read_structure_from_string(coordString,mol_name)
+    const assembly = cootModule.copy_to_assembly_to_new_structure(gemmiStructure,assemblyNumber)
+    const assembly_cif_string = cootModule.get_mmcif_string_from_gemmi_struct(assembly)
+    return molecules_container["read_coords_string"](assembly_cif_string,mol_name)
+}
+
 const new_positions_for_residue_atoms = (molToUpDate: number, residues: libcootApi.AtomInfo[][]) => {
     let success = 0
     const movedResidueVector = new cootModule.Vectormoved_residue_t()
@@ -1057,6 +1093,47 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
+
+    const journalMapKeys = result.journal.keys();
+
+    const author_journal: libcootApi.AuthorJournal[] = []
+
+    for(let i=0;i<journalMapKeys.size();i++){
+         const key = journalMapKeys.get(i)
+         if(key){
+             const journalLines = result.journal.get(key)
+             const authorLines = result.author.get(key)
+             if(journalLines&&authorLines){
+                  const author: string[] = stringArrayToJSArray(authorLines)
+                  const journal: string[] = stringArrayToJSArray(journalLines)
+                  author_journal.push({author,journal,id:key})
+             }
+         }
+    }
+    journalMapKeys.delete()
+
+    return {
+        title: result.title,
+        compound: result.compound,
+        software: result.software,
+        author_journal
+    }
+}
+
+const cellInfoAsJSObject = (result: libcootApi.mapCell): libcootApi.mapCellJS => {
+
+        const cell: libcootApi.mapCellJS = {
+            a: result.a(),
+            b: result.b(),
+            c: result.c(),
+            alpha: result.alpha(),
+            beta: result.beta(),
+            gamma: result.gamma(),
+        }
+        return cell
+}
+
 const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerInfoJS => {
 
     const authorLines = result.author_lines
@@ -1070,9 +1147,8 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
 
     return {
         title: result.title,
-        author_lines,
+        author_journal: [{author:author_lines,journal:journal_lines,id:"primary"}],
         compound_lines,
-        journal_lines
     }
 }
 
@@ -1088,10 +1164,28 @@ const doCootCommand = (messageData: {
 
     const { returnType, command, commandArgs, messageId, myTimeStamp, message } = messageData
 
+
     try {
 
         let cootResult
         switch (command) {
+            case 'shim_set_colour_map_for_map_coloured_by_other_map':
+                const theVector = new cootModule.vector_pair_double_vector_double()
+                console.log(commandArgs)
+                commandArgs.forEach((cp) => {
+                    const thePair: libcootApi.DoublePairDoubleJS = {first:0,second:null}
+                    thePair.first = cp[0]
+                    thePair.second = new cootModule.VectorDouble()
+                    thePair.second.push_back(cp[1][0]/256)
+                    thePair.second.push_back(cp[1][1]/256)
+                    thePair.second.push_back(cp[1][2]/256)
+                    theVector.push_back(thePair)
+                })
+                cootResult = molecules_container.set_colour_map_for_map_coloured_by_other_map(theVector)
+                break
+            case 'shim_generate_assembly':
+                cootResult = generate_assembly(...commandArgs as [string, string, string])
+                break
             case 'shim_new_positions_for_residue_atoms':
                 cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
                 break
@@ -1120,7 +1214,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
                 break
             case 'shim_export_molecular_representation_as_gltf':
-                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string])
+                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string, number])
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
@@ -1128,15 +1222,34 @@ const doCootCommand = (messageData: {
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
+            case "is64bit":
+                cootResult = cootModule.is64bit()
+                break
+            case "get_coord_header_info":
+                cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
+                break
             default:
+                console.log("Calling",command)
                 cootResult = molecules_container[command](...commandArgs)
                 break
         }
 
         let returnResult;
         switch (returnType) {
+            case 'number':
+                returnResult = cootResult
+                break
+            case 'clipper_spacegroup':
+                returnResult = cootResult.symbol_hm().as_string()
+                break
+            case 'map_cell_info_t':
+                returnResult = cellInfoAsJSObject(cootResult)
+                break
             case 'header_info_t':
                 returnResult = headerInfoAsJSObject(cootResult)
+                break
+            case 'header_info_gemmi_t':
+                returnResult = headerInfoGemmiAsJSObject(cootResult)
                 break
             case 'texture_as_floats_t':
                 returnResult = textureAsFloatsToJSTextureAsFloats(cootResult)
@@ -1273,23 +1386,35 @@ const doCootCommand = (messageData: {
 }
 
 onmessage = function (e) {
+
     if (e.data.message === 'CootInitialize') {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        if (memory64) {
+        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
+        if (memory64&&!isChromeLinux) {
             try {
+                // @ts-ignore
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
                 scriptName = "moorhen64.js"
                 console.log("Successfully loaded 64-bit libcoot in worker thread")
-            } catch (e) {
+            } catch (e: any) {
+                if(e.name === 'NetworkError'){
+                   console.log('There was a NetworkError loading 64-bit WebAssembly module.')
+                   console.log('A retry *should* be attempted, errors below may not be real.');
+                }
                 console.error(e)
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
+                // @ts-ignore
+                importScripts('./moorhen.js')
+                mod = createCootModule
+                scriptName = "moorhen.js"
+                console.log("Successfully loaded 32-bit libcoot in worker thread")
             }
-        }
-        if (!memory64) {
+        } else {
+            // @ts-ignore
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"
@@ -1303,6 +1428,8 @@ onmessage = function (e) {
         })
             .then((returnedModule) => {
                 postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+
+                console.log("Loaded",scriptName,". Is 64-bit:",memory64)
 
                 cootModule = returnedModule;
 
@@ -1388,7 +1515,7 @@ onmessage = function (e) {
         })
 
     } else if (e.data.message === 'coot_command_list') {
-        const resultList = e.data.commandList.map(command => doCootCommand({ ...e.data, ...command }))
+        const resultList = e.data.commandList.map((command: any) => doCootCommand({ ...e.data, ...command }))
         postMessage({
             messageId: e.data.messageId, resultList
         })

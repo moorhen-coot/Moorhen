@@ -18,6 +18,8 @@ export const MoorhenMoveMoleculeHere = (props: {
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
 
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+
     const panelContent = <>
         <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
     </>
@@ -28,7 +30,7 @@ export const MoorhenMoveMoleculeHere = (props: {
         }
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
-            await selectedMolecule.moveMoleculeHere(...props.glRef.current.origin.map(coord => -coord) as [number, number, number])
+            await selectedMolecule.moveMoleculeHere(...originState.map(coord => -coord) as [number, number, number])
             dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
     }, [molecules])

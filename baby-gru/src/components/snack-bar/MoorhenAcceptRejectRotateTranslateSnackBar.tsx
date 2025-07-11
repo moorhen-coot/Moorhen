@@ -9,6 +9,7 @@ import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { SnackbarContent, useSnackbar } from "notistack"
+import { setActiveMolecule } from "../../store/glRefSlice"
 
 export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
     HTMLDivElement,
@@ -22,17 +23,18 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
 
     const dispatch = useDispatch()
 
+    const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
-    const [tips, setTips] = useState<null | JSX.Element>(null)
+    const [tips, setTips] = useState<null | React.JSX.Element>(null)
 
     const fragmentMoleculeRef = useRef<null | moorhen.Molecule>(null)
 
     const { closeSnackbar } = useSnackbar()
 
     const stopRotateTranslate = useCallback(async (acceptTransform: boolean = false) => {
-        props.glRef.current.setActiveMolecule(null)
+        dispatch(setActiveMolecule(null))
         await props.moleculeRef.current.unhideAll(!acceptTransform)
         if (acceptTransform) {
             const transformedAtoms = fragmentMoleculeRef.current.transformedCachedAtomsAsMovedAtoms()
@@ -60,7 +62,7 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
 
     useEffect(() => {
         const startRotateTranslate = async () => {
-            if (fragmentMoleculeRef.current || props.glRef.current.activeMolecule) {
+            if (fragmentMoleculeRef.current || activeMolecule) {
                 console.warn('There is already an active molecule... Doing nothing.')
                 return
             }
@@ -82,7 +84,7 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
                             return Promise.resolve()
                         }
                     }))
-                props.glRef.current.setActiveMolecule(newMolecule)
+                dispatch(setActiveMolecule(newMolecule))
                 fragmentMoleculeRef.current = newMolecule
             }, 1)
         }

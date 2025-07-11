@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { setRequestDrawScene, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
 
 export const MoorhenScenePresetMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -13,6 +14,9 @@ export const MoorhenScenePresetMenuItem = (props: {
 
     const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
+
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
@@ -23,20 +27,21 @@ export const MoorhenScenePresetMenuItem = (props: {
                 const fieldDepthFront: number = 8;
                 const fieldDepthBack: number = 21;
                 if (props.glRef !== null && typeof props.glRef !== 'function') { 
-                    props.glRef.current.set_fog_range(props.glRef.current.fogClipOffset - (props.glRef.current.zoom * fieldDepthFront), props.glRef.current.fogClipOffset + (props.glRef.current.zoom * fieldDepthBack))
-                    props.glRef.current.set_clip_range(0 - (props.glRef.current.zoom * fieldDepthFront), 0 + (props.glRef.current.zoom * fieldDepthBack))
-                    props.glRef.current.doDrawClickedAtomLines = false    
+                    dispatch(setFogStart(fogClipOffset - (zoom * fieldDepthFront)))
+                    dispatch(setFogEnd(fogClipOffset + (zoom * fieldDepthBack)))
+                    dispatch(setClipStart(zoom * fieldDepthFront))
+                    dispatch(setClipEnd(zoom * fieldDepthBack))
                 }
-                props.glRef.current.drawScene()
+                dispatch(setRequestDrawScene(true))
                 break
             
             case "figure-making":
                 dispatch( setResetClippingFogging(false) )
-                props.glRef.current.gl_clipPlane0[3] = 40 - props.glRef.current.fogClipOffset
-                props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + 40
-                props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - 2
-                props.glRef.current.gl_fog_end = 120 + props.glRef.current.fogClipOffset
-                props.glRef.current.drawScene()
+                dispatch(setClipStart(40))
+                dispatch(setClipEnd(40))
+                dispatch(setFogStart(fogClipOffset - 2))
+                dispatch(setFogEnd(fogClipOffset + 120))
+                dispatch(setRequestDrawScene(true))
                 break
             
             default:

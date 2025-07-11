@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
 
 export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
@@ -81,7 +82,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
         return badWaters
     }, [bFactorLim, sigmaLevel, minDist, maxDist])
     
-    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): React.JSX.Element[] => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return <Card key={`${index}/${selectedModel}/${water.model_number}/${water.chain_id}/${water.res_no}`} style={{marginTop: '0.5rem'}}>
@@ -131,38 +132,46 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const extraControls = <>
     <Row>
         <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="B-Factor"
-                defaultValue={60}
-                ref={bFactorLimRef}
-                onChange={(newVal: string) => {
-                    setBFactorLim(parseFloat(newVal))
+                labelPosition="top"
+                value={bFactorLim}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
+                    setBFactorLim(+newVal)
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Sigma"
-                defaultValue={0.8}
-                ref={sigmaLevelRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={sigmaLevel}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setSigmaLevel(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Min. dist."
-                defaultValue={2.3}
-                ref={minDistRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={minDist}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setMinDist(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()
                 }}/>
-            <MoorhenNumberForm
+            <MoorhenPreciseInput
                 label="Max. dist."
-                defaultValue={3.5}
-                ref={maxDistRef}
-                onChange={(newVal: string) => {
+                labelPosition="top"
+                value={maxDist}
+                decimalDigits={1}
+                type='numberForm'
+                setValue={(newVal: string) => {
                     setMaxDist(parseFloat(newVal))
                     isDirty.current = true
                     handleControlFormChange()
@@ -202,5 +211,6 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 getCards={getCards}
                 extraControlFormValue={triggerDataFetch}
                 extraControlForm={extraControls}
+                menuId='water-validation'
             />
 }

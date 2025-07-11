@@ -1,65 +1,86 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
+import { useState, useMemo, useEffect } from "react";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { UnfoldLessOutlined } from '@mui/icons-material';
-import { Button } from 'react-bootstrap';
+import { UnfoldLessOutlined } from "@mui/icons-material";
+import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
 
-export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {    
-    
-    const cardListRef = useRef([])
+export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
+    const [collapseAll, setCollapseAll] = useState<boolean>(false);
+    const [collapsedCards, setCollapsedCards] = useState<number[]>([]);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const maps = useSelector((state: moorhen.State) => state.maps);
 
-    const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
+    const handleCollapseAll = () => {
+        if (collapseAll) {
+            setCollapseAll(false);
+            setCollapsedCards([]);
+        } else {
+            setCollapseAll(true);
+            const allCards = maps.map((map) => map.molNo);
+            setCollapsedCards(allCards);
+        }
+    };
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const maps = useSelector((state: moorhen.State) => state.maps)
+    const handleCollapseToggle = (key) => {
+        if (collapsedCards.includes(key)) {
+            setCollapseAll(false);
+            setCollapsedCards(collapsedCards.filter((card) => card !== key));
+        } else {
+            if (collapsedCards.length === 1) {
+                setCollapseAll(true);
+            }
+            setCollapsedCards([...collapsedCards, key]);
+        }
+    };
 
-    useEffect(() => {
-        cardListRef.current = cardListRef.current.slice(0, maps.length);
-    }, [maps]); 
- 
-    const handleCollapseAll = useCallback(() => {
-        cardListRef.current.forEach(card => {
-            card.forceIsCollapsed(true)
-        })
-    }, [cardListRef.current, cardListRef])
+    const [modalWidth, setModalWidth] = useState<number>(512);
 
-    let displayData = maps.map((map, index) => {
-        return <MoorhenMapCard
-            ref={el => cardListRef.current[index] = el}
-            key={map.molNo}
-            map={map}
-            initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
-            initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
-            currentDropdownMolNo={currentDropdownMolNo}
-            setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-            {...props} />
-    })
-
-    displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
-
-    return <MoorhenDraggableModalBase
-                modalId={modalKeys.MAPS}
-                left={width - (convertRemToPx(55) + 100)}
-                top={height / 2}
-                minHeight={convertViewtoPx(10, height)}
-                minWidth={convertRemToPx(20)}
-                maxHeight={convertViewtoPx(90, height)}
-                maxWidth={convertRemToPx(55)}
-                headerTitle={'Maps'}
-                additionalHeaderButtons={[
-                    <Button variant="white" key='collapse-all-maps' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={handleCollapseAll}>
-                        <UnfoldLessOutlined/>
-                    </Button>
-                ]}
-                body={
-                    maps.length === 0 ? <span>No maps loaded</span> : displayData
-                }
-                footer={null}
+    const displayData = useMemo(() => {
+        return maps.map((map, index) => (
+            <MoorhenMapCard
+                key={map.molNo}
+                map={map}
+                initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
+                initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
+                isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
+                onCollapseToggle={(key) => handleCollapseToggle(key)}
+                modalWidth={modalWidth}
+                {...props}
             />
-}
+        ));
+    }, [modalWidth, collapsedCards, collapseAll, maps]);
 
+    const sortedDisplayData = useMemo(() => {
+        return [...displayData].sort((a, b) => (a.props.index > b.props.index ? 1 : b.props.index > a.props.index ? -1 : 0));
+    }, [maps, displayData, collapseAll, collapsedCards]);
+
+    return (
+        <MoorhenDraggableModalBase
+            modalId={modalKeys.MAPS}
+            left={width - convertRemToPx(55)}
+            top={height - convertViewtoPx(90, height)}
+            initialHeight={convertViewtoPx(50, height)}
+            initialWidth={convertRemToPx(32)}
+            minHeight={convertViewtoPx(10, height)}
+            minWidth={convertRemToPx(28)}
+            maxHeight={convertViewtoPx(90, height)}
+            maxWidth={convertRemToPx(55)}
+            onResize={(evt, ref, direction, delta, size) => {
+                setModalWidth(size.width);
+            }}
+            headerTitle={"Maps"}
+            additionalHeaderButtons={[
+                <Button variant="white" key="collapse-all-maps" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleCollapseAll}>
+                    <UnfoldLessOutlined />
+                </Button>,
+            ]}
+            body={maps.length === 0 ? <span>No maps loaded</span> : sortedDisplayData}
+            footer={null}
+        />
+    );
+};

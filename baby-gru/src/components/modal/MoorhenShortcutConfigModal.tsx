@@ -13,7 +13,7 @@ export const MoorhenShortcutConfigModal = (props: {
     const dispatch = useDispatch()
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const shortCuts = JSON.parse(_shortCuts as string)
-    const newShortCutModalRef = useRef<JSX.Element>();
+    const newShortCutModalRef = useRef<React.JSX.Element>(null);
     const [waitingNewShortCut, setWaitingNewShortCut] = useState<boolean | string>(false);
     const [stagedShortCuts, setStagedShortCuts] = useState(shortCuts);
     const [shortCutMessage, setShortCutMessage] = useState<string>("... Press something ...");

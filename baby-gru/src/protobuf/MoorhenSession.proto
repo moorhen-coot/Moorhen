@@ -5,6 +5,9 @@ message CootBondOptions {
   float smoothness = 1;
   float width = 2;
   float atomRadiusBondRatio = 3;
+  bool showAniso = 4;
+  bool showOrtep = 5;
+  bool showHs = 6;
 }
 
 message M2tParameters {
@@ -20,6 +23,8 @@ message M2tParameters {
   float surfaceStyleProbeRadius = 10;
   float ballsStyleRadiusMultiplier = 11;
   string nucleotideRibbonStyle = 12;
+  int32 dishStyleAngularSampling = 13;
+  int32 ssUsageScheme = 14;
 }
 
 message residueEnvironmentOptions {
@@ -79,6 +84,7 @@ message MoleculeSessionData {
   bool biomolOn = 11;
   float symmetryRadius = 12;
   residueEnvironmentOptions defaultResEnvOptions = 13;
+  string uniqueId = 14;
 }
 
 message MapDataSession {
@@ -160,4 +166,5 @@ message Session {
   repeated MapDataSession mapData = 4;
   ViewDataSession viewData = 5;
   int32 activeMapIndex = 6;
+  bool dataIsEmbedded = 7;
 }

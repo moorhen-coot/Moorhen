@@ -157,6 +157,18 @@ clearfftw() {
     rm -rf ${INSTALL_DIR}/lib/librfftw.a
 }
 
+clearfftw3() {
+    echo "Clear fftw3"
+    rm -rf ${BUILD_DIR}/fftw3_build
+    rm -rf ${INSTALL_DIR}/include/fftw3.f
+    rm -rf ${INSTALL_DIR}/include/fftw3.h
+    rm -rf ${INSTALL_DIR}/include/fftw3.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3l.f03
+    rm -rf ${INSTALL_DIR}/include/fftw3q.f03
+    rm -rf ${INSTALL_DIR}/lib/libfftw3.a
+    rm -rf ${INSTALL_DIR}/lib/libfftw3f.a
+}
+
 clearmmdb2() {
     echo "Clear mmdb2"
     rm -rf ${BUILD_DIR}/mmdb2_build
@@ -239,6 +251,7 @@ clearall() {
     cleareigen
     clearccp4
     clearfftw
+    clearfftw3
     clearmmdb2
     clearclipper
     clearprivateer
@@ -277,6 +290,8 @@ else
            eigen) cleareigen
                ;;
            libccp4) clearccp4
+               ;;
+           fftw3) clearfftw3
                ;;
            fftw) clearfftw
                ;;
@@ -344,6 +359,7 @@ BUILD_LIBEIGEN=false
 BUILD_MOORHEN=false
 BUILD_LIBCCP4=false
 BUILD_FFTW=false
+BUILD_FFTW3=false
 BUILD_MMDB2=false
 BUILD_CLIPPER=false
 BUILD_PRIVATEER=false
@@ -387,6 +403,12 @@ if test -d ${INSTALL_DIR}/include/rfftw; then
     true
 else
     BUILD_FFTW=true
+fi
+
+if test -r ${INSTALL_DIR}/include/fftw3.h; then
+    true
+else
+    BUILD_FFTW3=true
 fi
 
 if test -d ${INSTALL_DIR}/include/ccp4; then
@@ -510,6 +532,9 @@ for mod in $MODULES; do
        fftw) echo "Force build fftw"
        BUILD_FFTW=true
        ;;
+       fftw3) echo "Force build fftw3"
+       BUILD_FFTW3=true
+       ;;
        mmdb2) echo "Force build mmdb2"
        BUILD_MMDB2=true
        ;;
@@ -551,6 +576,7 @@ echo "BUILD_LIBSIGCPP  " $BUILD_LIBSIGCPP
 echo "BUILD_LIBEIGEN   " $BUILD_LIBEIGEN
 echo "BUILD_LIBCCP4    " $BUILD_LIBCCP4
 echo "BUILD_FFTW       " $BUILD_FFTW
+echo "BUILD_FFTW3      " $BUILD_FFTW3
 echo "BUILD_MMDB2      " $BUILD_MMDB2
 echo "BUILD_CLIPPER    " $BUILD_CLIPPER
 echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
@@ -615,7 +641,7 @@ if [ $BUILD_BOOST = true ]; then
     getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide"
+    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing boost, giving up."
 fi
@@ -623,10 +649,10 @@ fi
 #RDKit
 if [ $BUILD_RDKIT = true ]; then
     getrdkit
-    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
+    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-enum-constexpr-conversion -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
     # Manually copy coordgen and maeparser headers
@@ -769,6 +795,16 @@ if [ $BUILD_FFTW = true ]; then
     emmake make install || fail "Error installing fftw, giving up."
 fi
 
+#fftw3
+if [ $BUILD_FFTW3 = true ]; then
+    getfftw3
+    mkdir -p ${BUILD_DIR}/fftw3_build
+    cd ${BUILD_DIR}/fftw3_build
+    emconfigure ${MOORHEN_SOURCE_DIR}/checkout/fftw-$fftw3_release/configure --prefix=${INSTALL_DIR} --enable-float
+    emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
+    emmake make install || fail "Error installing fftw3, giving up."
+fi
+
 #mmdb2
 if [ $BUILD_MMDB2 = true ]; then
     getmmdb2
@@ -821,7 +857,7 @@ fi
 
 #Moorhen
 if [ $BUILD_MOORHEN = true ]; then
-    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
+    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     getglm
     getcoot
     getmonomers
@@ -832,6 +868,7 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
+    npm run transpile-graphql-codegen
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi

@@ -10,7 +10,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { useSnackbar } from "notistack";
 import { addMolecule } from "../../store/moleculesSlice";
 import { webGL } from "../../types/mgWebGL";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { Backdrop } from "@mui/material";
 import { Spinner, Stack } from "react-bootstrap";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
@@ -19,7 +19,7 @@ const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
 }) => {
@@ -27,6 +27,7 @@ const LhasaWrapper = (props: {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
 
@@ -81,7 +82,7 @@ const LhasaWrapper = (props: {
             const getMonomerResult = await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'get_monomer_and_position_at',
-                commandArgs: [ligandName, -999999, ...props.glRef.current.origin.map(coord => -coord)]
+                commandArgs: [ligandName, -999999, ...originState.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
     
             if (getMonomerResult.data.result.result === -1) {
@@ -123,7 +124,7 @@ const LhasaWrapper = (props: {
 }
 
 export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
-    const resizeNodeRef = useRef<HTMLDivElement>();
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)

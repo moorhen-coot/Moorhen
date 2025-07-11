@@ -28,7 +28,6 @@ var text_fragment_shader_source = `
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
-      if(vTexture.s>maxTextureS) discard;
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = clamp(fogFactor,0.0,1.0);
@@ -38,7 +37,7 @@ var text_fragment_shader_source = `
       //Fog
       vec4 theColor = vec4(0,0,0,0);
       gl_FragColor = mix(theColor, color, fogFactor );
-      
+
     }
 `;
 

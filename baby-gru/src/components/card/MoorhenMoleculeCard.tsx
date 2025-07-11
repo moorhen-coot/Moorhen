@@ -3,7 +3,7 @@ import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
-import { isDarkBackground } from '../../WebGLgComponents/mgWebGL';
+import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";
@@ -56,8 +56,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo))
     const drawInteractions = useSelector((state: moorhen.State) => state.molecules.generalRepresentations.some(item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === "environment" && !item.isCustom))
-    const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
-    const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
     const customRepresentationsString = useSelector((state: moorhen.State) => {
         return JSON.stringify(
             state.molecules.customRepresentations.filter(item => item.parentMolecule?.molNo === props.molecule.molNo).map(item => item.uniqueId)
@@ -109,7 +107,11 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
+    const [showAniso, setShowAniso] = useState<boolean>(props.molecule.defaultBondOptions.showAniso)
+    const [showOrtep, setShowOrtep] = useState<boolean>(props.molecule.defaultBondOptions.showOrtep)
+    const [showHs, setShowHs] = useState<boolean>(props.molecule.defaultBondOptions.showHs)
     const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
+    const [ssUsageScheme, setSsUsageScheme] = useState<number>(props.molecule.defaultM2tParams.ssUsageScheme)
     
     const [surfaceSigma, setSurfaceSigma] = useState<number>(4.4)
     const [surfaceLevel, setSurfaceLevel] = useState<number>(4.0)
@@ -143,7 +145,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
-        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness,
+        showAniso, setShowAniso, showOrtep, setShowOrtep, showHs, setShowHs,
     }
 
     const ribbonSettingsProps = {
@@ -152,7 +155,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         ribbonArrowWidth, setRibbonArrowWidth, ribbonDNARNAWidth, 
         setRibbonDNARNAWidth, ribbonAxialSampling, setRibbonAxialSampling,
         nucleotideRibbonStyle, setNucleotideRibbonStyle, dishStyleAngularSampling, 
-        setDishStyleAngularSampling
+        setDishStyleAngularSampling,
+        ssUsageScheme, setSsUsageScheme
     }
 
     const molSurfSettingsProps = {
@@ -216,7 +220,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     if (props.molecule.adaptativeBondsEnabled) {
                         await props.molecule.redrawAdaptativeBonds(cid)
                     }
-                    props.molecule.clearBuffersOfStyle('environment')
                     if (drawInteractions) {
                         await props.molecule.drawEnvironment(cid)
                     }
@@ -277,10 +280,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         }
 
     }, [backgroundColor, generalRepresentationString]);
-
-    useEffect(() => {
-        props.glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
-    }, [GLLabelsFontSize, GLLabelsFontFamily])
 
     useEffect(() => {
         const handleEnvSettingsChange = async () => {
@@ -365,6 +364,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             props.molecule.defaultM2tParams.cylindersStyleAngularSampling !== cylindersStyleAngularSampling
             || props.molecule.defaultM2tParams.cylindersStyleBallRadius !== cylindersStyleBallRadius
             || props.molecule.defaultM2tParams.cylindersStyleCylinderRadius !== cylindersStyleCylinderRadius
+            || props.molecule.defaultM2tParams.ssUsageScheme !== ssUsageScheme
         )
 
         if (needsRedraw) {
@@ -382,7 +382,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         }
-    }, [cylindersStyleAngularSampling, cylindersStyleBallRadius, cylindersStyleCylinderRadius]);
+    }, [cylindersStyleAngularSampling, cylindersStyleBallRadius, cylindersStyleCylinderRadius, dishStyleAngularSampling, ]);
 
     useEffect(() => {
         if ([ballsStyleRadiusMultiplier, surfaceStyleProbeRadius].some(item => item === null)) {
@@ -428,6 +428,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             || props.molecule.defaultM2tParams.ribbonStyleStrandWidth !== ribbonStrandWidth
             || props.molecule.defaultM2tParams.nucleotideRibbonStyle !== nucleotideRibbonStyle
             || props.molecule.defaultM2tParams.dishStyleAngularSampling !== dishStyleAngularSampling
+            || props.molecule.defaultM2tParams.ssUsageScheme !== ssUsageScheme
         )
 
         if (needsRedraw) {
@@ -440,7 +441,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 ribbonStyleHelixWidth: ribbonHelixWidth,
                 ribbonStyleStrandWidth: ribbonStrandWidth,
                 nucleotideRibbonStyle: nucleotideRibbonStyle,
-                dishStyleAngularSampling: dishStyleAngularSampling
+                dishStyleAngularSampling: dishStyleAngularSampling,
+                ssUsageScheme: ssUsageScheme
             }
         }
 
@@ -450,10 +452,10 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         }
-    }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, nucleotideRibbonStyle, dishStyleAngularSampling]);
+    }, [ribbonArrowWidth, ribbonAxialSampling, ribbonCoilThickness, ribbonDNARNAWidth, ribbonHelixWidth, ribbonStrandWidth, nucleotideRibbonStyle, dishStyleAngularSampling, ssUsageScheme]);
 
     useEffect(() => {
-        if ([bondSmoothness, bondWidth, atomRadiusBondRatio].some(item => item === null)) {
+        if ([bondSmoothness, bondWidth, atomRadiusBondRatio, showAniso, showOrtep, showHs].some(item => item === null)) {
             return
         }
 
@@ -463,12 +465,18 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             props.molecule.defaultBondOptions.width !== bondWidth
             || props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio
             || props.molecule.defaultBondOptions.smoothness !== bondSmoothness
+            || props.molecule.defaultBondOptions.showAniso !== showAniso
+            || props.molecule.defaultBondOptions.showOrtep !== showOrtep
+            || props.molecule.defaultBondOptions.showHs !== showHs
         )
 
         if (needsRedraw) {
             props.molecule.defaultBondOptions = {
                 width: bondWidth,
                 atomRadiusBondRatio: atomRadiusBondRatio,
+                showAniso: showAniso,
+                showOrtep: showOrtep,
+                showHs: showHs,
                 smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
             }
         }
@@ -480,7 +488,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             }
         } 
 
-    }, [bondSmoothness, bondWidth, atomRadiusBondRatio]);
+    }, [bondSmoothness, bondWidth, atomRadiusBondRatio,showAniso,showOrtep,showHs]);
 
     useEffect(() => {
         if (symmetryRadius === null) {
@@ -684,10 +692,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <MoorhenSequenceList
                                 setBusy={setBusyLoadingSequences}
                                 molecule={props.molecule}
-                                glRef={props.glRef}
                                 clickedResidue={clickedResidue}
                                 setClickedResidue={setClickedResidue}
-                                selectedResidues={selectedResidues}
                                 setSelectedResidues={setSelectedResidues}
                             />
                         </AccordionDetails>

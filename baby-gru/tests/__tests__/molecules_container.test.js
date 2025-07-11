@@ -46,6 +46,23 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables = []
     })
 
+    test('Test get_map_cell', () => {
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        expect(mapMolNo).toBe(0)
+        const cell = molecules_container.get_map_cell(mapMolNo)
+        expect(cell.a()).toBeCloseTo(54.71,2)
+        expect(cell.b()).toBeCloseTo(69.57,2)
+        expect(cell.c()).toBeCloseTo(77.04,2)
+        expect(cell.alpha()).toBeCloseTo(1.57,2)
+        expect(cell.beta()).toBeCloseTo(1.57,2)
+        expect(cell.gamma()).toBeCloseTo(1.57,2)
+        const sg = molecules_container.get_map_spacegroup(mapMolNo)
+        expect(sg.symbol_hm().as_string()).toBe("P 21 21 21")
+        molecules_container.associate_data_mtz_file_with_map(mapMolNo, "./5a3h_sigmaa.mtz", "FP", "SIGFP", "FREE")
+        const resol = molecules_container.get_map_data_resolution(mapMolNo)
+        expect(resol).toBeCloseTo(1.82,2)
+    })
+
     test('Test fill_rotamer_probability_tables', () => {
         molecules_container.fill_rotamer_probability_tables()
     })
@@ -147,26 +164,26 @@ describe('Testing molecules_container_js', () => {
     test("Test get_svg_for_residue_type", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
-        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
         expect(svg_1).toBe("No dictionary for LZA")
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', coordMolNo)
         expect(result_import_dict).toBe(1)
 
-        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
         expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
     test("Test get_svg_for_residue_type -- any molecule", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.mmcif')
 
-        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
         expect(svg_1).toBe("No dictionary for LZA")
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
         expect(result_import_dict).toBe(1)
 
-        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
         expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
@@ -1391,13 +1408,13 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         expect(
@@ -1413,7 +1430,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_1 = instanceMesh_1.geom
@@ -1451,7 +1468,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_2 = instanceMesh_2.geom
@@ -1483,7 +1500,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_1 = instanceMesh_1.geom
@@ -1521,7 +1538,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_2 = instanceMesh_2.geom
@@ -1552,7 +1569,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_1 = instanceMesh_1.geom
@@ -1590,7 +1607,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_2 = instanceMesh_2.geom
@@ -1621,7 +1638,7 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_1 = instanceMesh_1.geom
@@ -1659,7 +1676,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.set_user_defined_atom_colour_by_selection(coordMolNo, indexedResiduesVec, false)
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         const geom_2 = instanceMesh_2.geom
@@ -1690,13 +1707,13 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         expect(
@@ -1712,13 +1729,13 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/26-27')
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_for_selection_instanced(
-            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, '//A/10-20||//A/25-30', 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         expect(
@@ -1740,13 +1757,13 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         molecules_container.add_to_non_drawn_bonds(coordMolNo, '//A/12-15')
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         expect(
@@ -1854,7 +1871,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.add_colour_rule(coordMolNo, '//B', '#0000ff')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         let original_chains = []
@@ -1903,7 +1920,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.add_colour_rule(coordMolNo, '//X', '#0000ff')
 
         const instanceMesh_2 = molecules_container.get_bonds_mesh_instanced(
-            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, 1
+            coordMolNo, 'COLOUR-BY-CHAIN-AND-DICTIONARY', false, 0.1, 1, false, false, false, 1
         )
 
         expect(

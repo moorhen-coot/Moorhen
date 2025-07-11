@@ -1,9 +1,12 @@
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection } from './utils';
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { libcootApi } from '../types/libcoot';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
+import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { batch } from 'react-redux'
 
 /**
  * Represents a molecule representation
@@ -22,10 +25,10 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @example
  * import { MoorhenMolecule, MoorhenColourRule } from 'moorhen';
- * 
+ *
  * const example = async () => {
  *    const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
- * 
+ *
  *    const representation = new MoorhenMoleculeRepresentation(style, cid, commandCentre, glRef)
  *    representation.setParentMolecule(molecule)
  *    await representation.draw()
@@ -36,7 +39,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     uniqueId: string;
     style: moorhen.RepresentationStyles;
     cid: string;
-    buffers: moorhen.DisplayObject[];
+    buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>
     parentMolecule: moorhen.Molecule;
@@ -55,6 +58,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     useDefaultM2tParams: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: moorhen.m2tParameters;
+    nonCustomOpacity: number;
     residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
     ligandsCid: string;
     hoverColor: number[];
@@ -74,12 +78,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.isCustom = false
         this.useDefaultColourRules = true
         this.useDefaultBondOptions = true
+        this.nonCustomOpacity = 1.0
         this.useDefaultM2tParams = true
         this.useDefaultResidueEnvironmentOptions = true
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
-            atomRadiusBondRatio: 1
+            atomRadiusBondRatio: 1,
+            showAniso: false,
+            showOrtep: false,
+            showHs: true
         }
         this.m2tParams = {
             ribbonStyleCoilThickness: 0.3,
@@ -94,7 +102,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             surfaceStyleProbeRadius: 1.4,
             ballsStyleRadiusMultiplier: 1,
             nucleotideRibbonStyle: 'StickBases',
-            dishStyleAngularSampling: 32
+            dishStyleAngularSampling: 32,
+            ssUsageScheme: 2
         }
         this.residueEnvironmentOptions = {
             maxDist: 8,
@@ -123,6 +132,32 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     /**
+     * A method to set alpha for molecular representation in case of colour not picked with colour picker
+     */
+    setNonCustomOpacity(nonCustomOpacity: number) {
+        if(typeof(nonCustomOpacity)!=="number") return
+        this.nonCustomOpacity = nonCustomOpacity
+        if(this.buffers){
+            this.buffers.forEach((buffer) => {
+                if (nonCustomOpacity < 0.99) {
+                    buffer.transparent = true
+                } else {
+                    buffer.transparent = false
+                }
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx + 3] = nonCustomOpacity
+                    }
+                })
+                buffer.isDirty = true;
+                buffer.alphaChanged = true;
+            })
+            buildBuffers(this.buffers)
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true))
+    }
+
+    /**
      * A method to set bond style options for this molecule representation
      * @param {moorhen.cootBondOptions} bondOptions - The new bond options
      */
@@ -134,7 +169,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             this.useDefaultBondOptions = true
         }
     }
-    
+
     /**
      * A method to set res. env. options for this molecule representation
      * @param {moorhen.residueEnvironmentOptions} newOptions - The new res. env. options
@@ -192,7 +227,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @property {any[]} args - A list of arguments passed to libcoot API
      * @param {boolean} [isMultiColourRule=false] - Indicates whether this colour rule consists of multiple colours assigned to different residues
      * @param {boolean} [applyColourToNonCarbonAtoms=false] - Indicates if the colour rule will also be applied to non carbon atoms
-     * @property {string} [label=undefined] - Label displayed in the UI for this colour rule 
+     * @property {string} [label=undefined] - Label displayed in the UI for this colour rule
      */
     addColourRule(ruleType: string, cid: string, color: string, args: (string | number)[], isMultiColourRule: boolean = false, applyColourToNonCarbonAtoms: boolean = false, label?: string) {
         const newColourRule = new MoorhenColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms)
@@ -201,7 +236,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (label) {
             newColourRule.setLabel(label)
         }
-   
+
         this.useDefaultColourRules = false
         if (this.colourRules === null) {
             this.colourRules = [ newColourRule ]
@@ -262,18 +297,24 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {moorhen.DisplayObject[]} objects - The display objects for this representation
      */
     buildBuffers(objects: moorhen.DisplayObject[]) {
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = []
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = this.glRef.current.appendOtherData(object, true)
+                const a = appendOtherData(object, true)
+                newBuffers = [...newBuffers,...a]
+                buildBuffers(a)
                 if (this.buffers) {
                     this.buffers = this.buffers.concat(a)
                 } else {
                     this.buffers = a
                 }
             })
-            this.glRef.current.buildBuffers()
         }
-        this.glRef.current.drawScene()
+        this.buffers.forEach(buf => {
+            buf.multiViewGroup = this.parentMolecule.molNo
+        })
+        this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
     }
 
     /**
@@ -284,14 +325,18 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            buf.origin = selectionCentre
+        })
     }
 
     /**
-     * Redraw this molecule representation (tipically not the first time)
+     * Redraw this molecule representation (typically not the first time)
      */
     async redraw() {
         this.visible = true
@@ -299,37 +344,51 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.deleteBuffers()
         this.buildBuffers(objects)
+        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
-            let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
             this.setAtomBuffers(atomBuffers)
         }
+        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        this.buffers.forEach(buf => {
+            if (buf.hasOwnProperty("origin")) {
+                buf.origin = selectionCentre
+            }
+        })
     }
 
     /**
      * Delete the current representation buffers
      */
     deleteBuffers() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
+        const displayBuffers = this.parentMolecule.store.getState().glRef.displayBuffers
+        let newBuffers = displayBuffers
+        if(displayBuffers){
+            newBuffers = displayBuffers
+        }
         if (this.buffers?.length > 0) {
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
-                    buffer.clearBuffers()
-                    if (this.glRef.current.displayBuffers) {
-                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
-                    }
+                    newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer)
                 } else if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
                 }
             })
-            this.glRef.current.buildBuffers()
-            this.glRef.current.drawScene()
-            this.buffers = []   
+            this.buffers = []
         }
+        batch(() => {
+            this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers))
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers))
+        })
     }
 
     /**
-     * Make the representation visible 
+     * Make the representation visible
      */
     async show() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = []
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
@@ -337,37 +396,39 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     buffer.visible = true
                     if ("labels" in buffer) {
                         buffer.labels.forEach(label => {
-                            this.glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(label, buffer.uuid)
+                            newLabelBuffers.push({label:label,uuid:buffer.uuid})
                         })
-                        this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
                     }
                 })
-                this.glRef.current.drawScene()
             } else {
                 await this.draw()
             }
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers,...newLabelBuffers]))
     }
 
     /**
      * Make the representation not visible
      */
     hide() {
+        const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
+        let newLabelBuffers = labelBuffers
         try {
             this.visible = false
             this.buffers.forEach(buffer => {
-                 buffer.visible = false
-                 if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels, buffer.uuid)
+                 if (buffer.hasOwnProperty("visible")) {
+                     buffer.visible = false
                  }
-                 this.glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+                 if ("labels" in buffer) {
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid)
+                 }
             })
-            this.glRef.current.drawScene()
         } catch (err) {
             console.log(err)
         }
+        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]))
     }
 
     /**
@@ -432,7 +493,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 objects = await this.getCootContactDotsCidBuffers(_cid)
                 break
             case 'chemical_features':
-                objects = await this.getCootChemicalFeaturesCidBuffers(_cid)    
+                objects = await this.getCootChemicalFeaturesCidBuffers(_cid)
                 break
             case 'ligand_validation':
                 objects = await this.getLigandValidationBuffers(_cid)
@@ -473,7 +534,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             }
             resultBufferObjects.push(iObjects as libcootApi.InstancedMeshJS)
         }
-        
+
         return resultBufferObjects
     }
 
@@ -500,7 +561,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             console.warn('No selection string provided when drawing origin bonds')
             return []
         }
-        
+
         const maxDist = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.maxDist : this.residueEnvironmentOptions.maxDist
         let neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist)
         let focusCids = neighBoringResidues.join('||')
@@ -508,16 +569,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (!focusCids) {
             const isValid = await this.parentMolecule.isValidSelection(cid)
             if (isValid) {
-                console.warn(`Cannot find neighboring residues for ${cid}`)                
+                console.warn(`Cannot find neighboring residues for ${cid}`)
                 return []
-            } 
+            }
             const currentActiveAtom = await this.parentMolecule.getActiveAtom()
             neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(currentActiveAtom, maxDist)
             focusCids = neighBoringResidues.join('||')
             if (!focusCids) {
-                console.warn(`Cannot find neighboring residues for ${cid}`)                
+                console.warn(`Cannot find neighboring residues for ${cid}`)
                 return []
-            } 
+            }
             console.warn(`Cannot find neighboring residues for ${cid}, defaulting to active atom ${currentActiveAtom}`)
         }
 
@@ -532,7 +593,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
 
         const focusBufferObjects = await this.getBufferObjects(focusRepresentation, focusCids)
-        
+
         if (COOT_BOND_REPRESENTATIONS.includes(focusRepresentation) && drawMissingLoops) {
             await this.commandCentre.current.cootCommand({
                 command: "set_draw_missing_residue_loops",
@@ -567,7 +628,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 returnType: 'status',
                 commandArgs: [this.parentMolecule.molNo],
             }, false)
-    
+
             await Promise.all(this.parentMolecule.excludedSelections.map(i => {
                 this.commandCentre.current.cootCommand({
                     message: 'coot_command',
@@ -596,7 +657,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return objects
         } catch (err) {
             return console.log(err);
-        }    
+        }
     }
 
     /**
@@ -606,7 +667,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      */
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid)
-        
+
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
             command: "make_exportable_environment_bond_box",
@@ -617,7 +678,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const labelled = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.labelled : this.residueEnvironmentOptions.labelled
         const showContacts = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.showContacts : this.residueEnvironmentOptions.showContacts
         const showHBonds = this.useDefaultResidueEnvironmentOptions ? this.parentMolecule.defaultResidueEnvironmentOptions.showHBonds : this.residueEnvironmentOptions.showHBonds
-        
+
         const bumps = showContacts ? envDistances[0] : []
         const hbonds = showHBonds ? envDistances[1] : []
 
@@ -666,9 +727,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             const pair = [startAtomInfo, endAtomInfo]
             return pair
         })
-        
+
         let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
-        
+
         return originNeighboursBump.concat(originNeighboursHBond)
     }
 
@@ -762,7 +823,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      */
     async getNucleotideRepresentationBuffers(cidSelection: string): Promise<libcootApi.InstancedMeshJS[]> {
         const style = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.nucleotideRibbonStyle : this.m2tParams.nucleotideRibbonStyle
-        
+
         await Promise.all([
             this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -802,30 +863,41 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [
                     this.parentMolecule.molNo, 'cylindersStyleBallRadius', this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.cylindersStyleBallRadius : this.m2tParams.cylindersStyleBallRadius
                 ]
-            }, false)    
+            }, false)
         ])
-        
+
         return [result.data.result.result]
     }
 
     /**
-     * Get representation buffers for a M2T representation 
-     * @param style 
-     * @param cidSelection 
+     * Get representation buffers for a M2T representation
+     * @param style
+     * @param cidSelection
      */
     async getM2TRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
         const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection)
 
         await this.applyM2tParams()
 
+        let colorStyle : string = "colorRampChainsScheme"
+
+        if(this.colourRules.length>0&&this.colourRules[0].ruleType==="electrostatics")
+            colorStyle = "ByOwnPotential"
+
+        let ssUsageScheme
+        if (this.useDefaultM2tParams) {
+            ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme
+        } else {
+            ssUsageScheme = this.m2tParams.ssUsageScheme
+        }
+
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_molecular_representation_mesh",
             commandArgs: [
-                this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, 2
+                this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme
             ]
         }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
-        console.log(response)
 
         const ribbonBufferObjects = [response.data.result.result]
 
@@ -845,7 +917,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @param {string} name - The name of the representation style
      * @returns {any[]} An array of arguments passed to libcoot API
      */
-    getBondArgs(name: string): [string, boolean, number, number, number] {
+    getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, number] {
         let bondSettings: (string | boolean | number)[] = [
             name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
             this.parentMolecule.isDarkBackground
@@ -854,16 +926,18 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.width * 1.5 : this.parentMolecule.defaultBondOptions.width,
                 (name === 'ligands' || name === 'CAs') ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
+                this.parentMolecule.defaultBondOptions.showAniso, this.parentMolecule.defaultBondOptions.showOrtep, this.parentMolecule.defaultBondOptions.showHs,
                 this.parentMolecule.defaultBondOptions.smoothness
             )
         } else {
             bondSettings.push(
                 (name === 'ligands' || name === 'CAs') ? this.bondOptions.width * 1.5 : this.bondOptions.width,
                 (name === 'ligands' || name === 'CAs') ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
-                this.bondOptions.smoothness    
+                this.bondOptions.showAniso, this.bondOptions.showOrtep, this.bondOptions.showHs,
+                this.bondOptions.smoothness
             )
         }
-        return bondSettings as [string, boolean, number, number, number]
+        return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, number]
     }
 
     /**
@@ -915,7 +989,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices
                 displayObject.updateSymmetryAtoms()
             })
-            this.glRef.current.drawScene()
         }
     }
 
@@ -930,7 +1003,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (typeof selectionString !== 'string') {
             return
         }
-        
+
         let modifiedSelection: string
         if (isResidueRange) {
             modifiedSelection = selectionString
@@ -942,7 +1015,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
             }
         }
-        
+
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection)
         const atomColours = {}
         selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
@@ -1146,7 +1219,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_gaussian_surface",
             commandArgs: [
-                this.parentMolecule.molNo, 
+                this.parentMolecule.molNo,
                 this.parentMolecule.gaussianSurfaceSettings.sigma,
                 this.parentMolecule.gaussianSurfaceSettings.countourLevel,
                 this.parentMolecule.gaussianSurfaceSettings.boxRadius,
@@ -1218,7 +1291,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         unitCell.delete()
 
         let objects = [
-            gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false) 
+            gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false)
         ]
 
         return objects
@@ -1230,12 +1303,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     async applyColourRules() {
         if (!this.styleHasColourRules) {
             return
-        } 
+        }
 
         if (this.useDefaultColourRules) {
             this.colourRules = this.parentMolecule.defaultColourRules
         }
-        
+
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "delete_colour_rules",
@@ -1253,11 +1326,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     message: 'coot_command',
                     command: 'shim_set_bond_colours',
                     returnType: 'status',
-                    // FIXME: Here we just take applyColourToNonCarbonAtoms from the first colour rule but this needs 
+                    // FIXME: Here we just take applyColourToNonCarbonAtoms from the first colour rule but this needs
                     // to be done in a colour by colour basis.
                     commandArgs: [this.parentMolecule.molNo, colourObjectList, colourObjectList[0].applyColourToNonCarbonAtoms]
                 }, false)
-            } 
+            }
             if (!this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
                 for (let colourRuleIndex = 0; colourRuleIndex < this.colourRules.length; colourRuleIndex++) {
                     const colourRule = this.colourRules[colourRuleIndex]
@@ -1288,10 +1361,16 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             gltfData = result.data.result.result
         } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid)
+            let ssUsageScheme
+            if (this.useDefaultM2tParams) {
+                ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme
+            } else {
+                ssUsageScheme = this.m2tParams.ssUsageScheme
+            }
             const result = await this.commandCentre.current.cootCommand({
                 returnType: 'string',
                 command: 'shim_export_molecular_representation_as_gltf',
-                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle ],
+                commandArgs: [ this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme ],
             }, false) as moorhen.WorkerResponse<ArrayBuffer>
             gltfData = result.data.result.result
         } else {

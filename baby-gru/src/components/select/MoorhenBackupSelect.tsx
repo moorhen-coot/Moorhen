@@ -15,7 +15,7 @@ export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSe
 
     const { height, width, label } = { ...defaultProps, ...props }
     
-    const [backupOptions, setBackupOptions] = useState<null | JSX.Element[]>(null)
+    const [backupOptions, setBackupOptions] = useState<null | React.JSX.Element[]>(null)
 
     useEffect(() => {
         async function fetchKeys(): Promise<void> {

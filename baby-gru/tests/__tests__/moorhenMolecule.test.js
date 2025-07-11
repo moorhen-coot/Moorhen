@@ -286,6 +286,7 @@ describe("Testing MoorhenMolecule", () => {
             tempFactor: 9.109999656677246,
             serial: 213,
             name: 'CA',
+            occupancy: 1,
             has_altloc: false,
             alt_loc: '',
             mol_name: '1',
@@ -313,6 +314,7 @@ describe("Testing MoorhenMolecule", () => {
             tempFactor: 9.109999656677246,
             serial: 213,
             name: 'CA',
+            occupancy: 1,
             has_altloc: false,
             alt_loc: '',
             mol_name: '1',
@@ -356,6 +358,7 @@ describe("Testing MoorhenMolecule", () => {
                 tempFactor: 9.109999656677246,
                 serial: 213,
                 name: 'CA',
+                occupancy: 1,
                 has_altloc: false,
                 alt_loc: '',
                 mol_name: '1',
@@ -371,6 +374,7 @@ describe("Testing MoorhenMolecule", () => {
                 has_altloc: false,
                 mol_name: "1",
                 name: "CA",
+                occupancy: 1,
                 res_name: "PHE",
                 res_no: "61",
                 serial: 475,
@@ -681,7 +685,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_1,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
@@ -714,7 +718,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_3,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
@@ -781,7 +785,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_1.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
         const instancedMesh_2 = await commandCentre.current.cootCommand({
@@ -791,7 +795,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_1.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
@@ -814,7 +818,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_2.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 
@@ -832,7 +836,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_2.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, 1
+                false, 0.1, 1, false, false, false, 1
             ]
         })
 

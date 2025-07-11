@@ -4,7 +4,7 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
@@ -13,13 +13,13 @@ import { batch, useDispatch, useSelector } from 'react-redux';
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    store: ToolkitStore;
+    store: Store;
 }) => {
 
     const dispatch = useDispatch()

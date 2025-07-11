@@ -8,7 +8,6 @@ import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {        
-    const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -26,7 +25,6 @@ export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {
                 overflowX='auto'
                 headerTitle='Difference Map Peaks'
                 footer={null}
-                resizeNodeRef={resizeNodeRef}
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>

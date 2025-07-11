@@ -15,16 +15,16 @@ The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are d
 
 The following libraries/programs are compiled to Web Assembly:
 * libccp4 (8.0.0)
-* clipper (20240123)
+* clipper ('gemmi' branch)
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
-* gemmi 0.6.4
-* Coot 1.0
+* gemmi 0.7.0
+* Coot 1.1.15
 * fftw 2.1.5
 * gsl 2.7.1
-* Boost 1.84.0
+* Boost 1.86.0
 * glm 0.9.9.8
-* RDKit 2024_03_5
+* RDKit 2024\_09\_3
 * Freetype
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
@@ -57,7 +57,7 @@ Binaries are available on the releases page. Please read the instructions there 
 Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
 \
 \
-Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86_64 or aarch64). Tested on Ubuntu 22.04 x86_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
+Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86\_64 or aarch64). Tested on Ubuntu 22.04 x86\_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
 
 1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
@@ -65,7 +65,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 3.1.69, the 12th October 2024 release.)
+(Moorhen is known to build successfully with emscripten version 4.0.10, the 7th June 2025 release.)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
@@ -76,19 +76,14 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 
 4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
-<br/>After first checkout you should run the following script to build:  
+<br/>After first checkout you should run the following to build the 32-bit and 64-bit WebAssembly versions of Moorhen:  
 `./moorhen_build.sh`  
-This should build all dependencies and then `Moorhen`. 
-\
-\
-It is also possible to build a 64-bit version of Moorhen which (currently) can address up to 8GB memory:  
-`./moorhen_build.sh --64bit`  
-Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
-64-bit capability available as an option or in development versions.  
-See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)  
-Moorhen developers have seen success with Firefox Nightly on MacOS and Linux and Chrome Canary (with `chrome://flags/#enable-experimental-webassembly-features`) on MacOS.
+`./moorhen_build.sh  --64bit`  
+This should build all dependencies and then `Moorhen`.
 
-5. To run the Moorhen molecular graphics application:  
+**It is important to build both versions at the moment.**
+
+6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:5173/` .  
@@ -102,7 +97,7 @@ When you wish to update the application from this git repository and the `Coot` 
 4. `git pull`
 5. `cd ../..`
 6. `./moorhen_build.sh moorhen`
-7. `./moorhen_build.sh --64bit moorhen` if you want to (re-)build the 64-bit version.
+7. `./moorhen_build.sh --64bit moorhen`
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen application*

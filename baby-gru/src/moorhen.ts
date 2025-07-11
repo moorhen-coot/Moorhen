@@ -13,19 +13,35 @@ import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenPreferences } from "./utils/MoorhenPreferences";
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
-import { MoorhenSlider } from "./components/misc/MoorhenSlider";
+import { MoorhenSlider } from "./components/inputs/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
+
+import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
+import { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';
+import { MoorhenCarbohydrateValidation } from './components/validation-tools/MoorhenCarbohydrateValidation';
+import { MoorhenDifferenceMapPeaks } from './components/validation-tools/MoorhenDifferenceMapPeaks';
+import { MoorhenFillMissingAtoms } from './components/validation-tools/MoorhenFillMissingAtoms';
+import { MoorhenJsonValidation } from './components/validation-tools/MoorhenJsonValidation';
+import { MoorhenMMRRCCPlot } from './components/validation-tools/MoorhenMMRRCCPlot';
+import { MoorhenPepflipsDifferenceMap } from './components/validation-tools/MoorhenPepflipsDifferenceMap';
+import { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
+import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
+import { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
+import { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
+
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
+
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, setEdgeDetectNormalScale, resetSceneSettings,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setDrawScaleBar,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, 
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
-} from './store/sceneSettingsSlice';
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setDoAnaglyphStereo,
+    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView,
+    setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from './store/sceneSettingsSlice';
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
     setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
-    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates
+    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates, setUseGemmi, setShowHoverInfo
  } from './store/generalStatesSlice';
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from './store/hoveringStatesSlice';
@@ -46,6 +62,7 @@ import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwr
 import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
+
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
 import mouseSettingsReducer from './store/mouseSettings';
@@ -62,6 +79,10 @@ import sharedSessionReducer from './store/sharedSessionSlice';
 import refinementSettingsReducer from './store/refinementSettingsSlice';
 import lhasaReducer from './store/lhasaSlice';
 import sliceNDiceReducer from './store/sliceNDiceSlice';
+import overlaysReducer from './store/overlaysSlice';
+import glRefSliceReducer from './store/glRefSlice';
+import menusReducer from './store/menusSlice';
+import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -87,9 +108,15 @@ export {
     moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
     shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, generalStatesReducer, removeGeneralRepresentation,
     modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer, addGeneralRepresentation,
-    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, lhasaReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings,
+    sharedSessionReducer, refinementSettingsReducer, sliceNDiceReducer, overlaysReducer, lhasaReducer, resetSceneSettings,
+    resetBackupSettings, resetDefaultMouseSettings, menusReducer, 
     resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMoleculeMapUpdates,
     resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, setBFactorThreshold, 
     setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice, setMoleculeMinBfactor, 
-    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs
+    setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents, getMultiColourRuleArgs,
+    setUseGemmi, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView,
+    setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, glRefSliceReducer, atomInfoCardsReducer, setShowHoverInfo,
+    MoorhenRamachandran, MoorhenLigandValidation, MoorhenCarbohydrateValidation, MoorhenDifferenceMapPeaks,
+    MoorhenFillMissingAtoms, MoorhenJsonValidation, MoorhenMMRRCCPlot, MoorhenPepflipsDifferenceMap, MoorhenQScore,
+    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation
 };

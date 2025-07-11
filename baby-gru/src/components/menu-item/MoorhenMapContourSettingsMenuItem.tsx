@@ -5,7 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form, InputGroup } from "react-bootstrap";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
@@ -119,12 +119,11 @@ export const MapContourSettingsMenuItem = (props: {
             <MoorhenSlider
             minVal={0.1}
             maxVal={1.5}
-            logScale={true}
             sliderTitle="Map lines thickness"
-            initialValue={mapLineWidth}
             externalValue={mapLineWidth}
-            showMinMaxVal={false}
-            setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}/>
+            setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}
+            decimalPlaces={2}/>
+
         </Form.Group>
         <div style={{padding: '0.5rem'}}>
             <span>Map sampling rate</span>

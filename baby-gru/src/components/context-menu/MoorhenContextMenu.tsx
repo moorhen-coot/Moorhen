@@ -21,11 +21,16 @@ import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneBu
 import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
 import { moorhen } from "../../types/moorhen";
-import { JSX } from "react/jsx-runtime";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from "react-redux";
 
-const ContextMenu = styled.div`
+interface ContextMenuProps {
+  top: number;
+  left: number;
+  opacity: number;
+}
+
+const ContextMenu = styled.div<ContextMenuProps>`
   position: absolute;
   border-radius: 5px;
   box-sizing: border-box;
@@ -54,7 +59,7 @@ export const MoorhenContextMenu = (props: {
   const quickActionsFormGroupRef = useRef<HTMLInputElement>(null)
   
   const [showOverlay, setShowOverlay] = useState<boolean>(false)
-  const [overlayContents, setOverlayContents] = useState<null | JSX.Element>(null)
+  const [overlayContents, setOverlayContents] = useState<null | React.JSX.Element>(null)
   const [overrideMenuContents, setOverrideMenuContents] = useState<boolean>(false)
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')

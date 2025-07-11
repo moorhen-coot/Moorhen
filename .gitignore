@@ -77,7 +77,6 @@ coot/test-chem-feat.js
 coot/test-geometry.js
 coot/test-ligand.js
 coot/test-srs-standalone.js
-baby-gru/package-lock.json
 baby-gru/tsDist/
 baby-gru/tsDist/*
 baby-gru/out/Moorhen-darwin-x64/LICENSE
@@ -603,3 +602,4 @@ baby-gru/src/utils/__graphql__/*
 baby-gru/public/moorhen64*
 CCP4_WASM_BUILD_64/*
 install64/*
+.github/copilot-instructions.md

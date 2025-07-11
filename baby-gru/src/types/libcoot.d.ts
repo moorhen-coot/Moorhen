@@ -33,22 +33,45 @@ export namespace libcootApi {
         check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
+        has_hydrogen(model: gemmi.Model): number;
         gemmi_add_entity_types(gemmiStructure: gemmi.Structure, overWrite: boolean): void;
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_string(coordData: string) : gemmi.cifDocument;
+        is_small_structure(coordData: string): boolean;
+        copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
         cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
         get_pdb_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
+        get_mmcif_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
         validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument };
+    }
+    type headerInfoGemmi = {
+        title: string;
+        journal: emscriptem.map<emscriptem.vector<string>,string>;
+        author:  emscriptem.map<emscriptem.vector<string>,string>;
+        compound: string;
+        software: string;
+    }
+    type AuthorJournal = {
+        journal: string[];
+        author:  string[];
+        id:  string;
+    }
+    type headerInfoGemmiJS = {
+        title: string;
+        author_journal: AuthorJournal[];
+        compound: string;
+        software: string;
     }
     type headerInfo = {
         title: string;
@@ -58,9 +81,24 @@ export namespace libcootApi {
     }
     type headerInfoJS = {
         title: string;
-        journal_lines: string[];
-        author_lines: string[];
+        author_journal: AuthorJournal[];
         compound_lines: string[];
+    }
+    type mapCell = {
+        a: () => number;
+        b: () => number;
+        c: () => number;
+        alpha: () => number;
+        beta: () => number;
+        gamma: () => number;
+    }
+    type mapCellJS = {
+        a: number;
+        b: number;
+        c: number;
+        alpha: number;
+        beta: number;
+        gamma: number;
     }
     type SequenceResInfo = {
         resNum: number;
@@ -83,6 +121,7 @@ export namespace libcootApi {
         element: string;
         tempFactor: number;
         serial: number;
+        occupancy: number;
         name: string;
         has_altloc: boolean;
         alt_loc: string;
@@ -482,6 +521,9 @@ export namespace libcootApi {
     type CootModule = {
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
+        get_mmcif_string_from_gemmi_struct(arg0:gemmi.Structure): string;
+        read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
+        read_string(coordData: string) : gemmi.cifDocument;
         MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
 
         FS: {
@@ -491,6 +533,7 @@ export namespace libcootApi {
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
         testFloat32Array( arg0: any ): Float32Array;
+        copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         getPositionsFromSimpleMesh( arg0: any ): Float32Array;
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
@@ -511,6 +554,7 @@ export namespace libcootApi {
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
+        get_coord_header_info(docString: string, path: string): headerInfoGemmi;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
@@ -518,13 +562,22 @@ export namespace libcootApi {
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
         MapIntFloat4: { new(): emscriptem.map<[number, number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
+        vector_pair_double_vector_double: { new(): emscriptem.vector<{ first: double, second: emscriptem.vector<double> }>};
+        VectorDouble: { new(): emscriptem.vector<double>};
+        is64bit(): boolean;
+    }
+    interface DoublePairDoubleJS {
+      first: number;
+      second: any;
     }
     interface MoleculesContainerJS {
+        [key: string]: any;
         delete(): void;
+        set_colour_map_for_map_coloured_by_other_map(arg0: any): void;
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
-        export_molecular_representation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
+        export_molecular_representation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, useSecondaryStructureScheme: number, fileName: string): void;
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
         export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
         set_max_number_of_threads(arg0: number): void;
@@ -536,6 +589,7 @@ export namespace libcootApi {
         writePDBASCII(molNo: number, tempFilename: string): void;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
+        read_coords_string(pdb_string: string, molecule_name:string): PairType<number, string>;
         set_user_defined_atom_colour_by_selection(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>, nonCarbon: boolean): void;
         set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number, number], number>): void;
         read_ccp4_map(arg0: string, arg2: boolean): number;
@@ -548,5 +602,7 @@ export namespace libcootApi {
         read_pdb(tempFilename: string): number;
         set_show_timings: (arg0: boolean) => void;
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
+        get_map_spacegroup(arg0: number): string;
+        get_map_data_resolution(arg0: number): number;
     }       
 }

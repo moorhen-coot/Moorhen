@@ -2,15 +2,17 @@ import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
-import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
+import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
 import { convertViewtoPx, guid } from "../../utils/utils";
-import { Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { MoorhenCopyToClipBoard } from '../misc/MoorhenCopyToClipBoard';
 
 export const MoorhenLigandCard = (props: {
     ligand: moorhen.LigandInfo;
     molecule: moorhen.Molecule;
-    validationStyles?: moorhen.RepresentationStyles[]
+    validationStyles?: moorhen.RepresentationStyles[];
+    calculateQScore?: boolean;
 }) => {
 
     const validationLabels = {
@@ -24,16 +26,19 @@ export const MoorhenLigandCard = (props: {
 
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
     const [showInfoTable, setShowInfoTable] = useState<boolean>(false)
+    const [qScore, setQScore] = useState<number | null>(null)
+    const [flevAccordianExpanded, setFlevAccordianExpanded] = useState<boolean>(false);
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
 
     const defaultValidationStyles = [
         'contact_dots', 'chemical_features', 'ligand_environment', 'ligand_validation'
     ]
     
-    const { ligand, molecule, validationStyles } = { validationStyles: defaultValidationStyles,  ...props }
+    const { ligand, molecule, validationStyles, calculateQScore } = { validationStyles: defaultValidationStyles, calculateQScore: false,  ...props }
 
     useEffect(() => {
         const changedState = { ...showState }
@@ -44,6 +49,16 @@ export const MoorhenLigandCard = (props: {
                 molecule.hide(key, ligand.cid)
             })
         }
+    }, [])
+
+    useEffect(() => {
+        const getQScore = async () => {
+            if (activeMap && calculateQScore) {
+                const qScoreResponse = await molecule.calculateQscore(activeMap, ligand.cid)
+                setQScore(qScoreResponse?.[0]?.value)
+            }    
+        }
+        getQScore()
     }, [])
 
     const getToggleButton = (style: string, label: string) => {
@@ -72,6 +87,10 @@ export const MoorhenLigandCard = (props: {
                 <span style={{marginLeft: '0.5rem'}}>{label}</span>
         </ToggleButton>
     }
+
+    let flev_placeholder = true
+    if(ligand&&ligand.flev_svg)
+        flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model")
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return <Card key={guid()} style={{marginTop: '0.5rem'}}>
@@ -114,7 +133,16 @@ export const MoorhenLigandCard = (props: {
                                 </Table>
                             </TableContainer>
                             </Popover>}
-                            {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
+                            <Stack direction="vertical" gap={1}>
+                                {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
+                                {(calculateQScore && activeMap) ?
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                    {
+                                    qScore ? <span>Q-Score: {qScore.toFixed(2)}</span> : <LinearProgress variant="indeterminate" style={{ width: "50%" }}/>
+                                    }
+                                </div>
+                                : null}
+                            </Stack>
                     </Col>
                     <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                         <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
@@ -127,6 +155,21 @@ export const MoorhenLigandCard = (props: {
                             {validationStyles.map(style => {
                                 return getToggleButton(style, validationLabels[style])
                             })}
+                            {ligand.svg && <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
+                             onClick={() => {
+                             let link: any = document.getElementById('download_svg_link');
+                             if (!link) {
+                                 link = document.createElement('a');
+                                 link.id = 'download_svg_link';
+                                 document.body.appendChild(link);
+                             }
+                             const file = new Blob([ligand.svg], { type: 'image/svg+xml' });
+                             link.href = URL.createObjectURL(file);
+                             link.download = ligand.resName + ".svg";
+                             link.click()
+                             }}>
+                            <DownloadOutlined/>Download image (svg)
+                            </Button>}
                             {ligand.chem_comp_info?.length > 0 &&
                             <Button  variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}} onClick={() => setShowInfoTable((prev) => !prev)}>
                                 <HelpOutlined style={{marginRight: '0.5rem'}}/>
@@ -136,6 +179,55 @@ export const MoorhenLigandCard = (props: {
                         </Stack>
                     </Col>
                 </Row>
+            {ligand.smiles &&
+            <Row>
+            <Col>
+            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? 'white' : 'black' }}>{ligand.smiles}
+            &nbsp;&nbsp;
+            <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard"/>
+            </p>
+            </Col>
+            </Row>
+            }
+            {(ligand.smiles && ligand.flev_svg && (ligand.flev_svg.includes("<!-- Substitution Contour -->")||ligand.flev_svg.includes("<!-- Solvent Accessibilty of Atom -->")||ligand.flev_svg.includes("<!-- Exposure Circle -->")||ligand.flev_svg.includes("<!-- Residue Circle"))) &&
+            <Accordion onChange={() => setFlevAccordianExpanded((prev) => !prev)} expanded={flevAccordianExpanded} className="moorhen-accordion"  disableGutters={true} elevation={0}>
+                <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={<ExpandMoreOutlined/>} >
+                2D Environment View
+                </AccordionSummary>
+                <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
+                    <Card key={guid()} style={{marginTop: '0.5rem'}}>
+                        <Card.Body style={{padding:'0.5rem'}}>
+                            <Row style={{display:'flex', justifyContent:'between'}}>
+                                <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                                    {parse(ligand.flev_svg)}
+                                </Col>
+                                {!flev_placeholder &&
+                                <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                                    <Stack direction='vertical' gap={1} style={{display: 'flex', justifyContent: 'center'}}>
+                                        <Button variant="secondary" style={{marginRight:'0.5rem', display: 'flex', justifyContent: 'left'}}
+                                               onClick={() => {
+                                               let link: any = document.getElementById('download_flev_svg_link');
+                                               if (!link) {
+                                                   link = document.createElement('a');
+                                                   link.id = 'download_flev_svg_link';
+                                                   document.body.appendChild(link);
+                                               }
+                                               const file = new Blob([ligand.flev_svg], { type: 'image/svg+xml' });
+                                               link.href = URL.createObjectURL(file);
+                                               link.download = ligand.resName + "_flev.svg";
+                                               link.click()
+                                               }}>
+                                            <DownloadOutlined/>Download image (svg)
+                                        </Button>
+                                    </Stack>
+                                </Col>
+                                }
+                            </Row>
+                        </Card.Body>
+                    </Card>
+                </AccordionDetails>
+            </Accordion>
+            }
             </Card.Body>
         </Card>
 }

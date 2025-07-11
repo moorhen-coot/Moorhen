@@ -7,6 +7,8 @@ import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
+import { setOrigin, setZoom, setTexturedShapes } from "../../store/glRefSlice"
+import { appendOtherData } from '../../WebGLgComponents/buildBuffers'
 
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
@@ -33,6 +35,8 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
 
     const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+
+    const texturedShapes = useSelector((state: moorhen.State) => state.glRef.texturedShapes)
 
     useEffect(() => {
         const loadNFrames = async () => {
@@ -95,7 +99,8 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const showFrame = useCallback(async () => {
         let frameData: any
         if (frameDataRef.current) {
-            props.glRef.current.texturedShapes.pop()
+            const newShapes = texturedShapes.splice(0,texturedShapes.length-1)
+            dispatch(setTexturedShapes(newShapes))
         }
         if (framesRef.current[iFrameRef.current]) {
             frameData = framesRef.current[iFrameRef.current]
@@ -110,11 +115,11 @@ export const MoorhenTomogramSnackBar = forwardRef<
         }
         
         frameDataRef.current = frameData
-        const obj = props.glRef.current.appendOtherData(frameData, true)
+        const obj = appendOtherData(frameData, true)
         const shape = obj[0].texturedShapes
         
-        props.glRef.current.setOrigin(shape.getOrigin())
-        props.glRef.current.setZoom(300, true)
+        dispatch(setOrigin(shape.getOrigin()))
+        dispatch(setZoom(300))
     }, [props.mapMolNo])
 
     return <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>

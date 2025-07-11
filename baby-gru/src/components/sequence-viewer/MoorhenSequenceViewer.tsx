@@ -1,398 +1,521 @@
-import { useEffect, useRef, useState, useCallback } from "react"
-import ProtvistaManager from "protvista-manager";
-import ProtvistaSequence from "protvista-sequence";
-import ProtvistaNavigation from "protvista-navigation";
-import ProtvistaTrack from "protvista-track";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { clickedResidueType } from '../card/MoorhenMoleculeCard';
-import { useSelector, useDispatch } from 'react-redux';
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { cidToAtomInfo, cidToSpec } from "../../utils/utils";
+import { useRef, useMemo, useState, memo, useCallback } from "react";
+import { clickedResidueType } from "../card/MoorhenMoleculeCard";
+import Stack from "@mui/material/Stack";
+import "./MoorhenSequenceViewer.css";
+import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
+import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
+import { SequenceRow } from "./SequenceRow";
+import { useStateWithRef } from "../../hooks/useStateWithRef";
 
-!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
-!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
-!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
-!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
+export namespace MoorhenSeqViewTypes {
+    export type ResiduesSelection = {
+        molNo: number;
+        chain: string;
+        range: [number, number];
+    };
 
- const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
-    if (sequenceLength <= 40) {
-        return [rulerStart, sequenceLength + rulerStart]
+    export type Residue = {
+        resNum: number;
+        resCode: string;
+        resCID: string;
+        selected?: boolean;
+        colour?: string;
+    };
+
+    export type SeqElement = {
+        molName: string;
+        chain: string;
+        molNo: number;
+        hideResCode?: boolean;
+        displayName?: string;
+        residuesDisplayOffset?: number;
+        colour?: string;
+        missingAs?: string;
+        blockAlternateColour?: boolean;
+        residues: Residue[];
+    };
+}
+
+export function stringToSeqViewer(seqAsString: string, start?: number, name?: string, molName?: string, molNo?: number, chain?: string): MoorhenSeqViewTypes.SeqElement {
+    const sequence: MoorhenSeqViewTypes.SeqElement = {
+        molName: molName ? molName : "",
+        chain: chain ? chain : "",
+        molNo: molNo ? molNo : 0,
+        displayName: name ? name : "",
+        residues: []
+    };
+    let resNum = start?  start : 1;
+    for (const res of seqAsString) {
+        sequence.residues.push({
+            resNum: resNum++,
+            resCode: res,
+            resCID: '/' + sequence.molNo + '/' + sequence.chain + '/' + resNum 
+        });
     }
-    let middleIndex = Math.round((sequenceLength) / 2)
-    return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]        
+    return sequence;
 }
 
-const parseSequenceData = (sequence: moorhen.ResidueInfo[]): [number, number, string, number, number]=> {
-    let rulerStart = sequence[0].resNum
-    let finalSequence: string[] = Array(sequence[sequence.length-1].resNum).fill('-')
-    let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
-
-    sequence.forEach(residue => {
-        finalSequence[residue.resNum - 1] = residue.resCode
-    })
-
-    return [rulerStart, seqLenght, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLenght)]
-}
-
-type DisplaySettingsType = {
-    rulerStart: number;
-    start: number;
-    end: number;
-    seqLenght: number;
-    displaySequence: string;
+export function moorhenSequenceToSeqViewer(sequence: moorhen.Sequence, molName: string, molNo: number): MoorhenSeqViewTypes.SeqElement  {
+    if (sequence !== null && sequence.sequence.length > 0) {
+        return {
+            molName: molName,
+            chain: sequence.chain,
+            molNo: molNo,
+            residues: sequence.sequence.map(residue => ({
+                resNum: residue.resNum,
+                resCode: residue.resCode,
+                resCID: residue.cid
+            }))
+        };
+    }
+    return null;
 }
 
 type MoorhenSequenceViewerPropsType = {
-    key: string;
-    sequence: moorhen.Sequence;
-    molecule: moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>
-    clickedResidue: clickedResidueType;
-    setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
-    selectedResidues: [number, number];
-    setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
-    useMainStateResidueSelections?: boolean
-}
+    sequences: MoorhenSeqViewTypes.SeqElement | MoorhenSeqViewTypes.SeqElement[];
+    clickedResidue?: clickedResidueType;
+    onResidueClick?: ( modelIndex: number, molName: string, chain: string, seqNum: number ) => void;
+    selectedResidues?: MoorhenSeqViewTypes.ResiduesSelection;
+    onResiduesSelect?: (selection: MoorhenSeqViewTypes.ResiduesSelection ) => void;
+    useMainStateResidueSelections?: boolean;
+    onHoverResidue?: (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => void;
+    hoveredResidue?: {molNo: number, chain: string, resNum: number};
+    maxDisplayHeight?: number;
+    nameColumnWidth?: number;
+    columnWidth?: number;
+    selectIsActive?: boolean;
+    reOrder?: boolean;
+    fontSize?: number;
+};
 
-export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
-    const managerRef = useRef<any>(null);
-    const sequenceRef = useRef<any>(null);
-    const navigationRef = useRef<any>(null);
-    const selectedResiduesTrackRef = useRef<any>(null)
-    const shiftKey = useRef<boolean>(false);
-    
-    const [initialRulerStart, initialSeqLenght, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
-    
-    const [message, setMessage] = useState<string>("");
-    const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
-        rulerStart: initialRulerStart,
-        start: intialStart,
-        end: initialEnd,
-        seqLenght: initialSeqLenght,
-        displaySequence: initialDisplaySequence
-    });
-    
-    const dispatch = useDispatch()
-    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
-    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
+export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
+    const { 
+        nameColumnWidth = 2,
+        columnWidth = 1,
+        reOrder = true,   
+        fontSize = columnWidth
+        } = props;
+    const inputArray = Array.isArray(props.sequences) ? props.sequences : [props.sequences];
 
-    const hoveredResidueColor = '#FFEB3B66'
-    const transparentColor = '#FFEB3B00'
-
-    const {
-        molecule, sequence, clickedResidue,
-        setClickedResidue, selectedResidues, setSelectedResidues
-    } = props;
-
-    /**
-     * Clear highlighted residue range
-     */
-    const clearSelection = () => {
-        const dummyData = [
-            {
-                "accession": "backgroundLine",
-                "color": "red",
-                "shape": "line",
-                "start": "",
-                "end": ""
-            },
-            {
-                "accession": "Outliers",
-                "shape": "triangle",
-                "color": "red",
-                "locations": [{"fragments": []}]
-            }
-        ]
-
-        selectedResiduesTrackRef.current.data = dummyData
+    if (inputArray.length === 0) {
+        return <div>No sequences available</div>;
+    }
+    if (inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0)) {
+        return <div>Some sequences are empty or invalid</div>;       
     }
     
-    /**
-     * Sets a range of highlighted residues in the sequence viewer 
-     * @param {Number} start The first residues of the range
-     * @param {Number} end The last residue of the range
-    */
-    const setSelection = (start: number, end: number | null) => {
+    // Create a new array with updated residue numbers, preserving immutability and only modifying resNum
+    const applyOffset = (seqArray: MoorhenSeqViewTypes.SeqElement[]) =>
+        seqArray.map(seq => ({
+            ...seq,
+            residues: seq.residues.map(res => ({
+                ...res,
+                resNum: res.resNum + (seq.residuesDisplayOffset ?? 0),
+            })),
+        }));
 
-        let fragments = [{
-            "start": start,
-            "end": start
-        }]
+    const sequencesArray = useMemo(() => applyOffset(inputArray), [inputArray]);
 
-        if (end !== null) {
-            fragments.push({
-                "start": end,
-                "end": end
-            })
-        }
+    const seqLength = sequencesArray.length;
+    const [isScrolling, setIsScrolling, isScrollingRef] = useStateWithRef<boolean>(false);
+    const [displayHeight, setDisplayHeight] = useState<number>(props.maxDisplayHeight < seqLength ? props.maxDisplayHeight : seqLength);
+    const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHeight]);
+    const [mouseIsHovering, setMouseIsHovering, mouseIsHoveringRef] = useStateWithRef<boolean>(false);
+    const [internalSelectedResidues, setInternalSelectedResidues, internalSelectedResiduesRef] = useStateWithRef<MoorhenSeqViewTypes.ResiduesSelection>(props.selectedResidues ? props.selectedResidues : null)
+    const selectedResidues = props.selectedResidues === undefined ?  internalSelectedResidues : props.selectedResidues;
 
-        const selectedResiduesTrackData  = [
-            {
-                "accession": "backgroundLine",
-                "color": "red",
-                "shape": "line",
-                "start": start,
-                "end": end ? end : start
-            },
-            {
-                "accession": "Outliers",
-                "shape": "triangle",
-                "color": "red",
-                "locations": [{"fragments": fragments}]
-            }
-        ]
-      
-        selectedResiduesTrackRef.current.data = selectedResiduesTrackData
-    }
+    const [glideSelectStartRes, setGlideSelectStartRes, glideSelectStartResRef] = useStateWithRef<MoorhenSeqViewTypes.ResiduesSelection>(null)
+    const [isGliding, setIsGliding, isGlidingRef] = useStateWithRef<boolean>(false)
+    const clickTimer = useRef<NodeJS.Timeout | null>(null);
+    const [hoveredResidue, setHoveredResidue] = useState<{molName: string, chain: string, resNum: number, resCode: string}>(null);
 
-    /**
-     * Sets a highlighted residue in the sequence viewer 
-     */
-    const setHighlight = (resNum: string) => {
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
-    } 
-
-    /**
-     * Hook used to handle hovering events on the visualisation panel
-     */
-    useEffect(() => {
-        if (hoveredAtom===null || hoveredAtom.molecule === null || hoveredAtom.cid === null || sequenceRef.current === null) {
-            return
-        }
-
-        const [_, insCode, chainId, resInfo, atomName]   = hoveredAtom.cid.split('/')
-
-        if (chainId !== sequence.chain || !resInfo || hoveredAtom.molecule.molNo !== molecule.molNo) {
-            return
-        }
-        
-        const resNum = resInfo.split('(')[0]
-        
-        if (!resNum) {
-            return
-        }
-        
-        setMessage(hoveredAtom.cid)
-        setHighlight(resNum)
-
-    }, [hoveredAtom])
-
-    useEffect(() => {
-        if (!props.useMainStateResidueSelections) {
-            return
-        }
-
-        if (residueSelection.molecule && residueSelection.molecule.molNo !== props.molecule.molNo) {
-            clearSelection()
-            return
-        } else if (residueSelection.first) {
-            const startResSpec = cidToSpec(residueSelection.first)
-            if (startResSpec.chain_id !== props.sequence.chain) {
-                clearSelection()
-                return
-            }
-        }
-
-        if (residueSelection.molecule && residueSelection.cid) {
-            const startResSpec = cidToSpec(residueSelection.first)
-            const stopResSpec = cidToSpec(residueSelection.second)
-            const sortedResNums = [startResSpec.res_no, stopResSpec.res_no].sort(function(a, b){return a - b}) as [number, number]
-            setSelection(...sortedResNums)
-        } else if (residueSelection.molecule && residueSelection.first) {
-            const startResSpec = cidToSpec(residueSelection.first)
-            setSelection(startResSpec.res_no, null)
+    const handleResidueMouseDown = useCallback((evt) => {
+        const molNo = Number(evt.currentTarget.dataset.molno)
+        const chain = evt.currentTarget.dataset.chain
+        const resNum = Number(evt.currentTarget.dataset.resnum)
+        if (evt.shiftKey) {
+            return;
         } else {
-            clearSelection()
+            setGlideSelectStartRes({molNo: molNo, chain: chain, range: [resNum, null]})
+            clickTimer.current = setTimeout(() => {clearClickTimer()} , 300)
         }
-    }, [residueSelection])
-  
-    /**
-     * Callback to handle changes in the protvista component
-     */
-    const handleChange = useCallback((evt) => {
-        setTimeout(() => {
-            if (evt.detail.eventtype === "click") {
-                let residue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
-                if (!residue) {
-                    return
-                } else if (shiftKey.current && props.useMainStateResidueSelections) {
-                    let atomClicked: moorhen.AtomClickedEvent = new CustomEvent("atomClicked", {
-                        "detail": {
-                            atom: cidToAtomInfo(residue.cid),
-                            buffer: {id: props.molecule.representations[0]?.buffers[0]?.id},
-                            isResidueSelection: true
-                        }
-                    })
-                    document.dispatchEvent(atomClicked)   
-                } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                    setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
-                    setSelectedResidues(null)
-                } else if (evt.detail.highlight.includes(',')) {
-                    let residues;
-                    if (clickedResidue === null) {
-                        setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
-                        return
-                    } else if (selectedResidues === null || selectedResidues.length < 2){
-                        residues = [clickedResidue.seqNum, evt.detail.feature.start]
-                    } else {
-                        residues = [evt.detail.feature.start, ...selectedResidues]
-                    }
-                    setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
-                }
-            } else if (evt.detail.eventtype === "mouseover") {
-                if (evt.detail.feature !== null) {
-                    let hoveredResidue = sequence.sequence.find(residue => residue.resNum === evt.detail.feature.start)
-                    if (hoveredResidue) {
-                        let cid = hoveredResidue.cid
-                        dispatch( setHoveredAtom({ molecule: molecule, cid: cid }) )
-                    }
-                }
-            } else if (evt.detail.eventtype === "mouseout") {
-                setMessage("")
-            }   
-        }, 1)
-    }, [clickedResidue, sequence, selectedResidues, molecule, setSelectedResidues, setClickedResidue])
+    },[]);
 
+    const clearClickTimer = () => {
+        if (clickTimer.current) {
+            clearTimeout(clickTimer.current);
+            clickTimer.current = null;
+            setIsGliding(true);
+        }
+    }
 
-    /**
-     * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
-     * and mouse over. It will also disable mouse double click.
-     */
-    useEffect(()=> {
-        if (sequenceRef.current === null) {
+    const handleResidueMouseUp = useCallback((evt) => {
+        const molName = evt.currentTarget.dataset.molname
+        const molNo = Number(evt.currentTarget.dataset.molno)
+        const chain = evt.currentTarget.dataset.chain
+        const resNum = Number(evt.currentTarget.dataset.resnum)
+        if (evt.shiftKey) {
+            handleShiftSelect(molNo, chain, resNum);
+            return;
+        }        
+        if (clickTimer.current) {
+            clearClickTimer();
+            if (props.onResidueClick)   {
+                props.onResidueClick(0, molName, chain, resNum);
+            }
+        }
+        if (!isGlidingRef.current) {
+            handleResidueClick(molName, chain, resNum);
+        } else {
+            handleGlideSelect(molNo, chain, resNum);
+        }
+        setIsGliding(false);
+    },[])
+
+    const handleGlideSelect = (molNo, chain, resNum) => {
+        if ((molNo === glideSelectStartResRef.current.molNo) && (chain === glideSelectStartResRef.current.chain)) {
+            setInternalSelectedResidues({molNo: molNo, chain: chain, range: [glideSelectStartResRef.current.range[0], resNum]})
+            if (props.onResiduesSelect) {
+                props.onResiduesSelect({molNo: molNo, chain: chain, range: [glideSelectStartResRef.current.range[0], resNum]});
+            }
+        } else {
+            setGlideSelectStartRes(null)
+        }
+    }
+
+    const handleShiftSelect = (molNo, chain, resNum) => {
+        const curentSelection = internalSelectedResiduesRef.current
+
+        let newSelection: MoorhenSeqViewTypes.ResiduesSelection = curentSelection
+        ? { 
+            molNo: curentSelection.molNo, 
+            chain: curentSelection.chain, 
+            range: [...curentSelection.range] 
+            }
+        : null;
+
+        if (!curentSelection) {
+            newSelection = {
+                molNo: molNo,
+                chain: chain,
+                range: [resNum, resNum],
+            };
+        }
+        else if (curentSelection && ((molNo === curentSelection.molNo) && (chain === curentSelection.chain))) {
+            const orderedSelectionRange = curentSelection.range[0] < curentSelection.range[1] ? curentSelection.range : [curentSelection.range[1], curentSelection.range[0]];
+            if (resNum < orderedSelectionRange[0]) {
+                newSelection = {
+                    molNo: molNo,
+                    chain: chain,
+                    range: [resNum, orderedSelectionRange[1]],
+                };
+            } else if (resNum > orderedSelectionRange[1]) {
+                newSelection = {
+                    molNo: molNo,
+                    chain: chain,
+                    range: [orderedSelectionRange[0], resNum],
+                };
+            }
+        }
+
+        if (newSelection !== curentSelection) {
+            setInternalSelectedResidues(newSelection);
+            if (props.onResiduesSelect) {
+                props.onResiduesSelect(newSelection);
+            }
+        }
+    }
+
+    const handleResidueClick = (molName, chain, resNum) => {
+        setIsGliding(false)
+        if (props.onResidueClick)
+        props.onResidueClick(0, molName, chain, resNum );
+    };
+
+    /** this part is the scroll down functionallity */
+    const holdInterval = useRef<NodeJS.Timeout | null>(null);
+    const startScrollUp = (val) => {
+        if (holdInterval.current) return;
+        holdInterval.current = setInterval(() => {
+            scrollUp(val);
+        }, 50);
+    };
+
+    const scrollUp = (val) => {
+        if (sequencesSlice[0] === 0 && val < 0) {
+            return;
+        }
+        if (sequencesSlice[1] === sequencesArray.length && val > 0) {
             return;
         }
 
-        const disableDoubleClick = (evt: MouseEvent) => {
-            evt.preventDefault()
-            evt.stopPropagation()
-        }
+        setSequencesSlices((prev) => {
+            if (prev[0] === 0 && val < 0) return prev;
+            if (prev[1] === sequencesArray.length && val > 0) return prev;
+            return [prev[0] + val, prev[0] + val + displayHeight];
+        });
+    };
 
-        const handleClick = (evt: MouseEvent) => {
-            shiftKey.current = evt.shiftKey
+    const stopScroll = () => {
+        if (holdInterval.current) {
+            clearInterval(holdInterval.current);
+            holdInterval.current = null;
         }
-        
-        sequenceRef.current.addEventListener("click", handleClick)
-        sequenceRef.current.addEventListener("change", handleChange)
-        sequenceRef.current.addEventListener('dblclick', disableDoubleClick, true)
+    };
 
-        return () => {
-            if (sequenceRef && sequenceRef.current) {
-                sequenceRef.current.removeEventListener("click", handleClick)
-                sequenceRef.current.removeEventListener('change', handleChange);
-                sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
-            }
-        };
-        
-    }, [handleChange]);    
-    
-    /**
-     * Hook used when the component mounts to set the display start and end.
-     */
-    useEffect(()=> {       
-        sequenceRef.current._sequence = displaySettings.displaySequence
-        sequenceRef.current._displaystart = displaySettings.start
-        sequenceRef.current._displayend = displaySettings.end
-        sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
-        navigationRef.current._displaystart = displaySettings.start
-        navigationRef.current._displayend = displaySettings.end
-        selectedResiduesTrackRef.current._displaystart = displaySettings.start
-        selectedResiduesTrackRef.current._displayend = displaySettings.end
-        selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
-        
-    }, [])
-
-    /**
-     * Hook used to update the displayed sequence after adding/removing/mutating a residue in the sequence
-     */
-    useEffect(()=> {
-        if (props.molecule.molNo !== updateMolNo) {
-            return
+    const handleChangeDisplaySize = (val) => {
+        if ((val > 0) && (displayHeight < sequencesArray.length)) {
+            setDisplayHeight((prev) => Math.min(prev + 1, props.maxDisplayHeight));
+        } else if (val < 0 ) {
+            setDisplayHeight((prev) => Math.max(prev - 1, 1));
         }
+    };
 
-        const newSequence = props.molecule.sequences.find(sequence => sequence.name === props.sequence.name)?.sequence
-        if (!newSequence) {
-            return
-        }
-        
-        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(newSequence)
-        
-        if (newDisplaySequence !== displaySettings.displaySequence) {
-            sequenceRef.current.sequence = newDisplaySequence
-            navigationRef.current._rulerStart = newRulerStart
-            sequenceRef.current._createSequence()
-            setDisplaySettings({
-                rulerStart: newRulerStart,
-                start: newStart,
-                end: newEnd,
-                seqLenght: newSeqLenght,
-                displaySequence: newDisplaySequence     
+    useMemo(() => {
+        setSequencesSlices([sequencesSlice[0], sequencesSlice[0] + displayHeight]);
+    },[displayHeight])
+
+    const maxVal =
+        Math.max(
+            ...sequencesArray.map((seqObj) => {
+                const sequence = seqObj.residues;
+                return sequence[sequence.length - 1].resNum;
             })
-        } 
+        ) + 1;
 
-    }, [updateSwitch])
+    const minVal = Math.min(
+        ...sequencesArray.map((seqObj) => {
+            const sequence = seqObj.residues;
+            return sequence[0].resNum;
+        })
+    );
+
+    const sequencesToDisplay = useMemo(() => {
+        const sequenceElements: MoorhenSeqViewTypes.SeqElement[] = []
+        let orderedSequences: MoorhenSeqViewTypes.SeqElement[] = [];
+        const orderedSelectionRange = selectedResidues?.range[0] < selectedResidues?.range[1] ? selectedResidues?.range : [selectedResidues?.range[1], selectedResidues?.range[0]];
+        if (reOrder){
+            orderedSequences = sequencesArray.slice().sort((a, b) => {
+                const chainA = a.chain.toUpperCase();
+                const chainB = b.chain.toUpperCase();
+                if (chainA < chainB) return -1;
+                if (chainA > chainB) return 1;
+                return 0;
+            });
+        } else {
+            orderedSequences = sequencesArray;
+        }
+
+        orderedSequences.slice(sequencesSlice[0], sequencesSlice[1]).forEach((seqObj) => {
+            const sequence = seqObj.residues;
+            const molNo = seqObj.molNo;
+            const chain = seqObj.chain;
+            const lastResi = sequence[sequence.length - 1].resNum;
+            const firstResi = sequence[0].resNum;
+            const residues = [];
+            
+            for (let i = minVal; i < maxVal; i++) {
+                if (!sequence.some((residue) => residue.resNum === i)) {
+                    if (i < firstResi) {
+                        residues.push(null);                   
+                    } else if (i < lastResi) {
+                        if (seqObj.missingAs === 'none') {
+                            residues.push(null);
+                        } else {
+                        residues.push({
+                            resNum: i,
+                            resCode: seqObj.missingAs ? seqObj.missingAs : "-",
+                            resCID: "",
+                            selected: false,
+                            hovered: false,
+                        });}
+                    } else {
+                        residues.push(null);
+                    }
+                } else {
+                    const resi = sequence.find((residue) => residue.resNum === i);
+
+                    let selected = false;
+                    if (isGliding) {
+                        if (glideSelectStartRes && ((molNo === glideSelectStartRes.molNo) && (chain === glideSelectStartRes.chain))) {
+                            if (glideSelectStartRes.range[0] === resi.resNum) {
+                                selected = true;
+                            }}
+                    } else {
+
+                        if (selectedResidues && ((molNo === selectedResidues.molNo) && (chain === selectedResidues.chain))) {
+                            if (resi.resNum >= orderedSelectionRange[0] && resi.resNum <= orderedSelectionRange[1]) {
+                                selected = true;
+                        }
+                    }}
+
+                    residues.push({
+                        ...resi,
+                        selected: selected,                  
+                    });
+                }
+            }
+            sequenceElements.push({
+                ...seqObj,
+                residues: residues,
+            });
+        });
+        return sequenceElements;
+    }, [sequencesArray, minVal, maxVal, sequencesSlice, isGliding, glideSelectStartRes, props.selectedResidues, internalSelectedResidues]);
     
-    /**
-     * Hook used to clear the current selection if user selects residue from different chain
-     */
-    useEffect(() => {
-        if (props.useMainStateResidueSelections) {
-            return
-        } else if (clickedResidue && clickedResidue.chain !== sequence.chain) {
-            clearSelection()
-        } else if (clickedResidue && !selectedResidues) {
-            setSelection(clickedResidue.seqNum, null)
+    const tickMarks = useMemo(() => {
+        const ticks = [];
+        let startVal = minVal;
+        const mod = minVal % 5;
+        if (mod !== 1 && mod !== -4) {
+            const n = (6 - mod) % 5;
+            ticks.push(
+                <div
+                key = {'start tick'} 
+                className={`tick-mark`} style={{ maxWidth: columnWidth * n + "rem", minWidth: columnWidth * n + "rem" }}>
+                </div>
+            );
+            startVal += n;
         }
 
-    }, [clickedResidue]);
-
-    /**
-     * Hook used to set a range of highlighted residues
-     */
-    useEffect(()=> {
-        if (selectedResidues !== null  && clickedResidue.chain === sequence.chain) {
-          setSelection(...selectedResidues)
+        for (let i = startVal; i < maxVal; i = i + 5) {
+            const left = maxVal - i;
+            ticks.push(
+                <div 
+                key = {'tick ' + i}
+                className={`tick-mark`} style={left < 5 ? { maxWidth: left*columnWidth + "rem", minWidth: left*columnWidth + "rem" } : { maxWidth: columnWidth*5 + "rem", minWidth: columnWidth*5 + "rem" }}>
+                    {i}
+                </div>
+            );
         }
-    }, [selectedResidues]);
+        return ticks;
+    }, [maxVal, minVal, props.columnWidth]);
+
+
+
+    let hoveredRef: {molno: number, chain: string, resNum: number} | null = null;
+
+    const handleResidueMouseOver = useCallback((evt) => {
+        const resNum = Number(evt.currentTarget.dataset.resnum)
+        const chain = evt.currentTarget.dataset.chain
+        const molName = evt.currentTarget.dataset.molname
+        const resCode = evt.currentTarget.dataset.rescode
+            
+        if (props.onHoverResidue && mouseIsHoveringRef.current && !isScrollingRef.current) {
+            
+            const resCID = evt.currentTarget.dataset.rescid
+            props.onHoverResidue(molName, chain, resNum, resCode, resCID);
+        }
+        setHoveredResidue({
+            molName: molName,
+            chain: chain,
+            resCode: resCode,
+            resNum: resNum
+        });
+    }, []);
+
+
+    if (props.hoveredResidue && !mouseIsHovering) {
+        if (sequencesArray.some(seqObj => seqObj.molNo === props.hoveredResidue.molNo)) {
+            hoveredRef = {
+                molno: props.hoveredResidue.molNo,
+                chain: props.hoveredResidue.chain,
+                resNum: props.hoveredResidue.resNum
+            }
+        }
+    } else {
+            hoveredRef = null;
+    }
+
+    const listOfSeqs: React.JSX.Element[] = useMemo(() => {
+        return sequencesToDisplay?.map((seqObj, i) => {
+            const hoveredResidue = hoveredRef ? (seqObj.molNo === hoveredRef.molno && seqObj.chain === hoveredRef.chain ? hoveredRef.resNum : null) : null;
+            return (
+                <SequenceRow
+                    key={seqObj.molNo + seqObj.chain}
+                    sequence={seqObj}
+                    nameColumnWidth={nameColumnWidth}
+                    columnWidth={columnWidth}
+                    fontSize={fontSize}
+                    hoveredResidue={hoveredResidue}
+                    isGliding={isGlidingRef.current}
+                    handleResidueMouseOver={handleResidueMouseOver}
+                    handleResidueMouseDown={handleResidueMouseDown}
+                    handleResidueMouseUp={handleResidueMouseUp}
+                />
+            );
+        });
+    }, [sequencesToDisplay, props.hoveredResidue]);
 
     return (
-        <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
-            <span>{`${molecule.name}${message ? "" : "/" + sequence.chain}${message}`}</span>
-            <div style={{width: '100%'}}>
-                <protvista-manager ref={managerRef}>
-                    <protvista-navigation 
-                        ref={navigationRef}
-                        length={displaySettings.seqLenght}
-                        rulerStart={displaySettings.rulerStart}
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
-                        use-ctrl-to-zoom
-                        />
-                    <protvista-sequence
-                        ref={sequenceRef}
-                        sequence={displaySettings.displaySequence}
-                        length={displaySettings.seqLenght} 
-                        numberofticks="10"
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
-                        use-ctrl-to-zoom
-                        />
-                    <protvista-track 
-                        ref={selectedResiduesTrackRef}
-                        length={displaySettings.seqLenght} 
-                        displaystart={displaySettings.start}
-                        displayend={displaySettings.end}
-                        height='10'
-                        use-ctrl-to-zoom
-                        />
-                </protvista-manager>
-            </div>    
-        </div>
-    )   
-}
+        <>
+            <div
+                style={{
+                    padding: "0.5rem",
+                    border: "1px solid lightgrey",
+                    borderRadius: "4px",
+                    marginBottom: "0.5rem",
+                    height: 72 + displayHeight * 26 +  'px',
+                }}
+                /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
+                onMouseEnter={() => {setMouseIsHovering(true)}}
+                onMouseLeave={() => {setMouseIsHovering(false)}}
+            >
+                <div>
+                    {hoveredResidue && (
+                        <div className="hovered-residue-info">
+                            <div>Chain: {hoveredResidue.chain}   Res: {hoveredResidue.resNum} {hoveredResidue.resCode}</div>
+
+                        </div>
+                    )}
+                    <Stack
+                        direction="column"
+                        style={{
+                            zIndex: 4,
+                            position: "absolute",
+                            right: 3,
+                            top: 50,
+                        }}
+                    >
+                        {seqLength > displayHeight ? (
+                                <div onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} style={{cursor: 'pointer'}}>
+                                    <ExpandLessOutlined></ExpandLessOutlined>
+                                </div>
+                                ) : null}
+                        {seqLength > 1 ? (
+                            <>
+                                <div onClick={() => handleChangeDisplaySize(1)} >
+                                    <AddOutlined></AddOutlined>
+                                </div>
+                                <div onClick={() => handleChangeDisplaySize(-1)}>
+                                    <RemoveOutlined></RemoveOutlined>
+                                </div>
+                            </>
+                                ) : null}
+
+                        {seqLength > displayHeight ? (
+                                <div onMouseDown={() => startScrollUp(+1)} onMouseUp={stopScroll} style={{cursor: 'pointer'}}>
+                                    <ExpandMoreOutlined></ExpandMoreOutlined>
+                                </div>
+                                ) : null}
+                    </Stack>
+                </div>
+                <CustomHorizontalScrollbar 
+                style={{ height: "calc(100% - 1rem)", minHeight: "3rem", width: seqLength > displayHeight ? "calc(100% - 16px)" : "100%" }} 
+                onDraggingChange={setIsScrolling}>
+
+                    <div className="sticky-tick-marks">
+                        <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>
+                        {tickMarks}
+                    </div>
+                        {listOfSeqs}                        
+                </CustomHorizontalScrollbar>
+            </div>
+        </>
+    );
+});
+MoorhenSequenceViewer.displayName = "MoorhenSequenceViewer";
+
+
 

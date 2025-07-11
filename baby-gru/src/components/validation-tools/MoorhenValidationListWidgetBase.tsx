@@ -5,30 +5,37 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
+import { usePersistentState } from "../../store/menusSlice";
 
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
-    getCards: (arg0: number, arg1: number, arg2: any) => JSX.Element[];
-    extraControlForm?: JSX.Element;
+    getCards: (arg0: number, arg1: number, arg2: any) => React.JSX.Element[];
+    extraControlForm?: React.JSX.Element;
     extraControlFormValue?: any;
     enableMapSelect?: boolean;
+    menuId?: string;
 }) => {
 
     const defaultProps = { 
         filterMapFunction: (_maps: moorhen.Map) => true, extraControlForm: null, extraControlFormValue: null, enableMapSelect: true }
 
     const {
-        filterMapFunction, extraControlForm, extraControlFormValue, enableMapSelect
+        filterMapFunction, extraControlForm, extraControlFormValue, enableMapSelect, menuId = null
     } = { ...defaultProps, ...props }
 
-    const mapSelectRef = useRef<undefined | HTMLSelectElement>();
-    const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
+    const mapSelectRef = useRef<undefined | HTMLSelectElement>(null);
+    const moleculeSelectRef = useRef<undefined | HTMLSelectElement>(null);
 
-    const [selectedModel, setSelectedModel] = useState<null | number>(null)
-    const [selectedMap, setSelectedMap] = useState<null | number>(null)
+    const [selectedModel, setSelectedModel] = menuId
+        ? usePersistentState<null | number>(menuId, "selectedModel", null, true)
+        : useState<null | number>(null);
+    const [selectedMap, setSelectedMap] = menuId
+        ? usePersistentState<null | number>(menuId, "selectedMap", null, true)
+        : useState<null | number>(null);
+
     const [cardData, setCardData] = useState<any[]>([])
-    const [cardList, setCardList] = useState<JSX.Element[]>([])
+    const [cardList, setCardList] = useState<React.JSX.Element[]>([])
     const [busy, setBusy] = useState<boolean>(false)
 
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
@@ -104,11 +111,11 @@ export const MoorhenValidationListWidgetBase = (props: {
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
+                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} defaultValue={selectedModel}/>
                             </Col>
                             {enableMapSelect && 
                             <Col>
-                                <MoorhenMapSelect filterFunction={filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef}/>
+                                <MoorhenMapSelect filterFunction={filterMapFunction} width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} defaultValue={selectedMap}/>
                             </Col>
                             }
                             {extraControlForm}

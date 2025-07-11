@@ -12,7 +12,7 @@ const MoorhenPopoverOptions = (props: {
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     label: string;
     options: string[];
-    extraInput?: (arg0: React.MutableRefObject<any>) => JSX.Element;
+    extraInput?: (arg0: React.MutableRefObject<any>) => React.JSX.Element;
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
     doEdit: (arg0: moorhen.cootCommandKwargs) => void;
     getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.MutableRefObject<any>) => moorhen.cootCommandKwargs;
@@ -82,13 +82,13 @@ export const MoorhenContextButtonBase = (props: {
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
     glRef: React.RefObject<webGL.MGWebGL>;
     cootCommandInput?: moorhen.cootCommandKwargs;
-    setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
     onExit?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: any) => void;
     onCompleted?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => void;
-    icon: JSX.Element;
+    icon: React.JSX.Element;
     setToolTip: React.Dispatch<React.SetStateAction<string>>;
     toolTipLabel: string;
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -97,7 +97,7 @@ export const MoorhenContextButtonBase = (props: {
         options: string[];
         nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
         getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
-        extraInput?: (arg0: React.RefObject<any>) => JSX.Element;
+        extraInput?: (arg0: React.RefObject<any>) => React.JSX.Element;
         defaultValue?: string;
         setDefaultValue?: (arg0: string) => void;
     };

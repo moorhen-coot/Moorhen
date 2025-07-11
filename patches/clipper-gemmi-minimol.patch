@@ -1,0 +1,11 @@
+--- clipper/clipper/minimol/minimol_io_gemmi.cpp-orig	2025-02-17 09:48:27
++++ clipper/clipper/minimol/minimol_io_gemmi.cpp	2025-02-17 09:48:36
+@@ -222,7 +222,7 @@
+   int model_nth = 0;
+   if (model_num > 0) // just in case
+     model_nth = model_num - 1;
+-  gemmi::Model* p_mod = structure_.find_model(model_nth);
++  gemmi::Model* p_mod = structure_.find_model(model_num);
+   mol.set_property("StrucName", Property<String>(structure_.name));
+   gemmi::CRA cra;
+ 

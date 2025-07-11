@@ -11,13 +11,15 @@ import { batch } from "react-redux";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
-import { 
-    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoPerspectiveProjection, setDoSSAO, setDoShadow, 
-    setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias, 
-    setSsaoRadius, setUseOffScreenBuffers 
+import {
+    setBackgroundColor, setDepthBlurDepth, setDepthBlurRadius, setDoEdgeDetect, setDoPerspectiveProjection, setDoSSAO, setDoShadow,
+    setEdgeDetectDepthScale, setEdgeDetectDepthThreshold, setEdgeDetectNormalScale, setEdgeDetectNormalThreshold, setSsaoBias,
+    setSsaoRadius, setUseOffScreenBuffers
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
+import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
+     setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
 
 /**
  * Represents a time capsule with session backups
@@ -26,7 +28,7 @@ import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
  * @param {React.RefObject<moorhen.Map[]>} mapsRef - A react reference to the list of loaded maps
  * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
- * @param {ToolkitStore} store - The Redux store
+ * @param {Store} store - The Redux store
  * @property {string} version - Version number of the current time capsule
  * @property {boolean} busy - Indicates if time capsule is busy loading from local storage
  * @property {boolean} disableBackups - Disable time capsule
@@ -47,7 +49,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
-    store: ToolkitStore;
+    store: Store;
     onIsBusyChange: (arg0: boolean) => void;
     getBackupLabel: (key: moorhen.backupKey) => string;
     loadSessionData: (
@@ -55,10 +57,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromArrayBuffer: (
@@ -66,10 +68,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromProtoMessage: (
@@ -77,10 +79,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
     loadSessionFromJsonString: (
@@ -88,14 +90,14 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
+        glRef: React.RefObject<webGL.MGWebGL|null>,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ) => Promise<number>;
 
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: Store) {
         this.store = store
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
@@ -105,7 +107,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v21'
+        this.version = 'v23'
         this.disableBackups = false
         this.storageInstance = null
         this.onIsBusyChange = null
@@ -173,7 +175,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 promises.push(
                     map.fetchReflectionData().then(reflectionData => {
                         this.createBackup(key, reflectionData.data.result.mtzData)
-                    })    
+                    })
                 )
             }
             if (map.uniqueId && !currentMapData.includes(map.uniqueId)) {
@@ -185,7 +187,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 )
             }
         })
-        
+
         return Promise.all(promises)
     }
 
@@ -194,7 +196,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {boolean} [includeAdditionalMapData=true] - True if map data should be fetched and included in the resulting session
      * @returns {Promise<moorhen.backupSession>} A backup for the current session
      */
-    async fetchSession (includeAdditionalMapData: boolean = true): Promise<moorhen.backupSession> {
+    async fetchSession (includeAdditionalMapData: boolean = true, embedData: boolean = true ): Promise<moorhen.backupSession> {
         this.setBusy(true)
         const keyStrings = await this.storageInstance.keys()
         const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: moorhen.backupKey) => key.type === 'mtzData').map((key: moorhen.backupKey) => key.name)
@@ -205,7 +207,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             ...this.moleculesRef.current.map(molecule => {
                 return molecule.getAtoms()
                 .then(result => {return {data: {message: 'get_atoms', result: {result: result}}}})
-            }), 
+            }),
             ...this.mapsRef.current.map(map => {
                 if (!includeAdditionalMapData) {
                     return Promise.resolve('map_data')
@@ -221,7 +223,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 }
             }),
             ...this.mapsRef.current.map(map => {
-                if (!map.hasReflectionData || !includeAdditionalMapData) { 
+                if (!map.hasReflectionData || !includeAdditionalMapData) {
                     return Promise.resolve('reflection_data')
                 } else if (mtzFileNames.includes(map.associatedReflectionFileName)) {
                     return this.retrieveBackup(
@@ -245,11 +247,23 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             } else if (promise === 'map_data') {
                 mapDataPromises.push(null)
             } else if (typeof promise === "object" && promise.data.message === "get_mtz_data") {
-                reflectionDataPromises.push(promise.data.result.mtzData)
+                if(embedData){
+                    reflectionDataPromises.push(promise.data.result.mtzData)
+                } else {
+                    reflectionDataPromises.push(new TextEncoder().encode("NODATA"))
+                }
             } else if (typeof promise === "object" && promise.data.message === 'get_atoms') {
-                moleculeDataPromises.push(promise.data.result.result)
+                if(embedData){
+                    moleculeDataPromises.push(promise.data.result.result)
+                } else {
+                    moleculeDataPromises.push("NODATA")
+                }
             } else if (typeof promise === "object" && promise.data.message === 'get_map') {
-                mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
+                if(embedData){
+                    mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
+                } else {
+                    mapDataPromises.push(new TextEncoder().encode("NODATA"))
+                }
             } else {
                 console.log(`Unrecognised promise type when fetching session... ${promise}`)
             }
@@ -261,6 +275,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 molNo: molecule.molNo,
                 coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
+                uniqueId: molecule.uniqueId,
                 representations: molecule.representations.filter(item => item.visible).map(item => { return {
                     cid: item.cid,
                     style: item.style,
@@ -268,6 +283,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     colourRules: item.useDefaultColourRules ? null : item.colourRules.map(item => item.objectify()),
                     bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
                     m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
+                    nonCustomOpacity: item.nonCustomOpacity,
                     resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions
                 }}),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
@@ -306,39 +322,69 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         })
 
+        const lightPosition = this.store.getState().glRef.lightPosition
+        const ambient = this.store.getState().glRef.ambient
+        const specular = this.store.getState().glRef.specular
+        const diffuse = this.store.getState().glRef.diffuse
+        const specularPower = this.store.getState().glRef.specularPower
+        const zoom = this.store.getState().glRef.zoom
+        const quat = this.store.getState().glRef.quat
+        const fogClipOffset = this.store.getState().glRef.fogClipOffset
+        const fogStart = this.store.getState().glRef.fogStart
+        const fogEnd = this.store.getState().glRef.fogEnd
+        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
+        //Now we multiply by -1 at save and restore for compatibility with old status files.
+        const clipStart = this.store.getState().glRef.clipStart * -1
+        const clipEnd = this.store.getState().glRef.clipEnd
+
+        const doShadow = this.store.getState().sceneSettings.doShadow
+        const doSSAO = this.store.getState().sceneSettings.doSSAO
+        const depthBlurRadius = this.store.getState().sceneSettings.depthBlurRadius
+        const depthBlurDepth = this.store.getState().sceneSettings.depthBlurDepth
+        const ssaoRadius = this.store.getState().sceneSettings.ssaoRadius
+        const ssaoBias = this.store.getState().sceneSettings.ssaoBias
+        const useOffScreenBuffers = this.store.getState().sceneSettings.useOffScreenBuffers
+        const doEdgeDetect = this.store.getState().sceneSettings.doEdgeDetect
+        const depthScale = this.store.getState().sceneSettings.edgeDetectDepthScale
+        const depthThreshold = this.store.getState().sceneSettings.edgeDetectDepthThreshold
+        const normalScale = this.store.getState().sceneSettings.edgeDetectNormalScale
+        const normalThreshold = this.store.getState().sceneSettings.edgeDetectNormalThreshold
+        const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection
+        const backgroundColor = this.store.getState().sceneSettings.backgroundColor
+
         const viewData: moorhen.viewDataSession = {
-            origin: this.glRef.current.origin,
-            backgroundColor: this.glRef.current.background_colour,
-            ambientLight: Array.from(this.glRef.current.light_colours_ambient) as [number, number, number, number],
-            diffuseLight: Array.from(this.glRef.current.light_colours_diffuse) as [number, number, number, number],
-            lightPosition: Array.from(this.glRef.current.light_positions) as [number, number, number, number],
-            specularLight: Array.from(this.glRef.current.light_colours_specular) as [number, number, number, number],
-            specularPower: this.glRef.current.specularPower,
-            fogStart: this.glRef.current.gl_fog_start,
-            fogEnd: this.glRef.current.gl_fog_end,
-            zoom: this.glRef.current.zoom,
-            doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
-            clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
-            clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
-            quat4: Array.from(this.glRef.current.myQuat),
-            doPerspectiveProjection: this.glRef.current.doPerspectiveProjection,
+            origin: this.store.getState().glRef.origin,
+            backgroundColor: backgroundColor,
+            ambientLight: ambient,
+            diffuseLight: diffuse,
+            lightPosition: lightPosition,
+            specularLight: specular,
+            specularPower: specularPower,
+            fogStart: fogStart,
+            fogEnd: fogEnd,
+            zoom: zoom,
+            doDrawClickedAtomLines: false, // This is unused as far as I can tell
+            clipStart: clipStart,
+            clipEnd: clipEnd,
+            quat4: [quat[0], quat[1], quat[2], quat[3]],
+            doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {
-                enabled: this.glRef.current.doEdgeDetect,
-                depthScale: this.glRef.current.scaleDepth,
-                depthThreshold: this.glRef.current.depthThreshold,
-                normalScale: this.glRef.current.scaleNormal,
-                normalThreshold: this.glRef.current.normalThreshold
+                enabled: doEdgeDetect,
+                depthScale: depthScale,
+                depthThreshold: depthThreshold,
+                normalScale: normalScale,
+                normalThreshold: normalThreshold
             },
-            shadows: this.glRef.current.doShadow,
+            shadows: doShadow,
             ssao: {
-                enabled: this.glRef.current.doSSAO,
-                radius: this.glRef.current.ssaoRadius,
-                bias: this.glRef.current.ssaoBias
+                enabled: doSSAO,
+                radius: ssaoRadius,
+                bias: ssaoBias
             },
             blur: {
-                enabled: this.glRef.current.useOffScreenBuffers,
-                radius: this.glRef.current.blurSize,
-                depth: this.glRef.current.blurDepth
+                enabled: useOffScreenBuffers,
+                radius: depthBlurRadius,
+                depth: depthBlurDepth
             }
         }
 
@@ -348,7 +394,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             mapData: mapData,
             viewData: viewData,
             activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
-            version: this.version
+            version: this.version,
+            dataIsEmbedded: embedData
         }
 
         return session
@@ -364,20 +411,20 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
             this.setBusy(true)
             this.modificationCount = 0
-            
+
             await this.updateDataFiles()
             const session: moorhen.backupSession = await this.fetchSession(false)
             const sessionString: string = JSON.stringify(session)
-            
+
             const key: moorhen.backupKey = {
-                dateTime: `${Date.now()}`, 
-                type: 'automatic', 
+                dateTime: `${Date.now()}`,
+                type: 'automatic',
                 serNo: guid(),
                 molNames: this.moleculesRef.current.map(mol => mol.name),
                 mapNames: this.mapsRef.current.map(map => map.uniqueId),
                 mtzNames: this.mapsRef.current.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
             }
-            
+
             const keyString: string = JSON.stringify({
                 ...key,
                 label: MoorhenTimeCapsule.getBackupLabel(key)
@@ -422,7 +469,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * Create a session backup
      * @param {string} key - Backup key
      * @param {string} value - JSON structure with session data
-     * @returns {string} Backup key 
+     * @returns {string} Backup key
      */
     async createBackup(key: string, value: string): Promise<string> {
         if (!this.disableBackups) {
@@ -433,7 +480,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 return key
             } catch (err) {
                 console.log(err)
-            }   
+            }
         }
     }
 
@@ -459,7 +506,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             if (sortedKeys && sortedKeys.length > 0) {
                 const lastBackupKey = sortedKeys[sortedKeys.length - 1]
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey))
-                return backup    
+                return backup
             }
         } catch (err) {
             console.log(err)
@@ -468,7 +515,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
 
     /**
      * Remove a specific backup
-     * @param {string} key - Backup key 
+     * @param {string} key - Backup key
      */
     async removeBackup(key: string): Promise<void> {
         try {
@@ -514,7 +561,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         const moleculeNamesLabel: string = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
         return `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
     }
-    
+
     /**
      * A static function that can be used to load a session data object
      * @param {moorhen.backupSession} sessionData - An object containing session data
@@ -524,8 +571,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
+     * @param {Promise<string>} fetchExternalUrl - Function to fetch external file URL for non embedded data
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
     static async loadSessionData(
@@ -533,20 +581,23 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+        commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
-        dispatch: Dispatch<AnyAction>
+        store: Store,
+        dispatch: Dispatch<AnyAction>,
+        fetchExternalUrl?: (uniqueId: string) => Promise<string>
     ): Promise<number> {
 
         if (!sessionData) {
             return -1
         } else if (!Object.hasOwn(sessionData, 'version') || timeCapsuleRef.current.version !== sessionData.version) {
-            console.warn('Outdated session backup version, wont load...')
-            return -1
+            if((timeCapsuleRef.current.version==="v23"&&((sessionData.version!=="v22")&&(sessionData.version!=="v21")))||timeCapsuleRef.current.version!=="v23"){
+                console.warn('Outdated session backup version, wont load...')
+                return -1
+            }
         }
-        
+
         // Delete current scene
         molecules.forEach(molecule => {
             molecule.delete()
@@ -555,48 +606,77 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         maps.forEach(map => {
             map.delete()
         })
-        
+
         batch(() => {
             dispatch( emptyMolecules() )
-            dispatch( emptyMaps() )    
+            dispatch( emptyMaps() )
         })
 
         // Load molecules stored in session from coords string
-        const newMoleculePromises = sessionData.moleculeData?.map(storedMoleculeData => {
+        const newMoleculePromises = sessionData.moleculeData?.map( async (storedMoleculeData) => {
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
-            return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
-        }) || []
-        
-        // Load maps stored in session
-        const newMapPromises = sessionData.mapData?.map(storedMapData => {
-            const newMap = new MoorhenMap(commandCentre, glRef, store)
-            if (sessionData.includesAdditionalMapData) {
-                return newMap.loadToCootFromMapData(
-                    storedMapData.mapData, 
-                    storedMapData.name, 
-                    storedMapData.isDifference
-                    )
+            console.log(sessionData)
+            console.log(sessionData.dataIsEmbedded)
+            if(sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined){
+                return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
             } else {
-                newMap.uniqueId = storedMapData.uniqueId
-                return timeCapsuleRef.current.retrieveBackup(
-                    JSON.stringify({
-                        type: 'mapData',
-                        name: storedMapData.uniqueId
-                    })
-                    ).then(mapData => {
-                        return newMap.loadToCootFromMapData(
-                            mapData as Uint8Array, 
-                            storedMapData.name, 
-                            storedMapData.isDifference
-                            )
-                        })    
+                if (fetchExternalUrl) {
+                    newMolecule.uniqueId = storedMoleculeData.uniqueId
+                    const doppioUrl = await fetchExternalUrl(storedMoleculeData.uniqueId)
+                    return newMolecule.loadToCootFromURL(doppioUrl, storedMoleculeData.name)
+                }
+                console.warn('No function provided for fetchExternalUrl')
             }
         }) || []
-        
+
+        // Load maps stored in session
+        const newMapPromises = sessionData.mapData?.map(async (storedMapData) => {
+            const newMap = new MoorhenMap(commandCentre, glRef, store)
+            if (sessionData.includesAdditionalMapData) {
+                if (sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined) {
+                    return newMap.loadToCootFromMapData(
+                        storedMapData.mapData,
+                        storedMapData.name,
+                        storedMapData.isDifference
+                        )
+                    } else {
+                        if (fetchExternalUrl) {
+                            newMap.uniqueId = storedMapData.uniqueId
+                            const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId)
+                            return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference)
+                        }
+                        console.warn('No function provided for fetchExternalUrl');
+                    }
+            } else {
+                newMap.uniqueId = storedMapData.uniqueId
+
+                if (sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined) {
+                    return timeCapsuleRef.current.retrieveBackup(
+                        JSON.stringify({
+                            type: 'mapData',
+                            name: storedMapData.uniqueId
+                        })
+                        ).then(mapData => {
+                            return newMap.loadToCootFromMapData(
+                                mapData as ArrayBuffer | Uint8Array,
+                                storedMapData.name,
+                                storedMapData.isDifference
+                                )
+                            })
+                } else {
+                    if (fetchExternalUrl) {
+                        const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId)
+                        return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference)
+                    }
+                    console.warn('No function provided for fetchExternalUrl')
+                }
+            }
+        }) || []
+
         const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
-        const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
-        const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[] 
-        
+        const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[]
+        const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[]
+
         // Draw the molecules with the styles stored in session (needs to be done sequentially due to colour rules)
         for (let i = 0; i < newMolecules.length; i++) {
             const molecule = newMolecules[i]
@@ -629,7 +709,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                     if (item.isCustom) {
                         dispatch( addCustomRepresentation(representation) )
                     }
-                }    
+                }
             }
             if (storedMoleculeData.symmetryOn) {
                 molecule.setSymmetryRadius(storedMoleculeData.symmetryRadius)
@@ -638,14 +718,14 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 molecule.toggleBiomolecule()
             }
         }
-        
+
         // Associate maps to reflection data
         await Promise.all(
             newMaps.map((map, index) => {
                 const storedMapData = sessionData.mapData[index]
                 if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
                     return map.associateToReflectionData(
-                        storedMapData.selectedColumns, 
+                        storedMapData.selectedColumns,
                         storedMapData.reflectionData
                     )
                 } else if (storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
@@ -656,7 +736,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                         })
                         ).then(reflectionData => {
                             return map.associateToReflectionData(
-                                storedMapData.selectedColumns, 
+                                storedMapData.selectedColumns,
                                 reflectionData as ArrayBuffer
                             )
                         })
@@ -684,7 +764,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 dispatch( setContourLevel({molNo: map.molNo, contourLevel: storedMapData.contourLevel}) )
                 dispatch( setMapAlpha({molNo: map.molNo, alpha: storedMapData.rgba.a}) )
                 dispatch( setMapStyle({molNo: map.molNo, style: storedMapData.style}) )
-                dispatch( addMap(map) )                
+                dispatch( addMap(map) )
             })
         })
 
@@ -694,17 +774,20 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
 
         // Set camera details
-        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.viewData.ambientLight) as [number, number, number])
-        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.viewData.specularLight) as [number, number, number])
-        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.viewData.diffuseLight) as [number, number, number])
-        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.viewData.lightPosition) as [number, number, number])
-        glRef.current.setZoom(sessionData.viewData.zoom, false)
-        glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
-        glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
-        glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
-        glRef.current.setOrigin(sessionData.viewData.origin, false)
-        glRef.current.setQuat(sessionData.viewData.quat4)
-        glRef.current.specularPower = sessionData.viewData.specularPower
+        dispatch(setOrigin(sessionData.viewData.origin))
+        dispatch(setAmbient(sessionData.viewData.ambientLight))
+        dispatch(setSpecular(sessionData.viewData.specularLight))
+        dispatch(setDiffuse(sessionData.viewData.diffuseLight))
+        dispatch(setLightPosition(sessionData.viewData.lightPosition))
+        dispatch(setSpecularPower(sessionData.viewData.specularPower))
+        dispatch(setZoom(sessionData.viewData.zoom))
+        dispatch(setFogStart(sessionData.viewData.fogStart))
+        dispatch(setFogEnd(sessionData.viewData.fogEnd))
+        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
+        //Now we multiply by -1 at save and restore for compatibility with old status files.
+        dispatch(setClipStart(sessionData.viewData.clipStart*-1))
+        dispatch(setClipEnd(sessionData.viewData.clipEnd))
+        dispatch(setQuat(sessionData.viewData.quat4))
         batch(() => {
             dispatch(setBackgroundColor(sessionData.viewData.backgroundColor))
             dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale))
@@ -726,18 +809,18 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         // Set connected maps and molecules if any
         const connectedMoleculeIndex = sessionData.moleculeData?.findIndex(molecule => molecule.connectedToMaps?.length > 0)
         if (sessionData.mapData && sessionData.moleculeData && connectedMoleculeIndex !== -1) {
-            const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
+            const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]
             const molecule = newMolecules[connectedMoleculeIndex].molNo
             const [reflectionMap, twoFoFcMap, foFcMap] = oldConnectedMolecule.connectedToMaps.map(item => newMaps[sessionData.mapData.findIndex(map => map.molNo === item)].molNo)
             const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
             const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
-            
+
             await commandCentre.current.cootCommand({
                 command: 'connect_updating_maps',
                 commandArgs: connectMapsArgs,
                 returnType: 'status'
             }, false)
-                
+
             await commandCentre.current.cootCommand({
                 command: 'sfcalc_genmaps_using_bulk_solvent',
                 commandArgs: sFcalcArgs,
@@ -752,7 +835,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 dispatch( enableUpdatingMaps() )
             })
         }
-        
+
         return 0
     }
 
@@ -765,7 +848,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -777,13 +860,13 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
         timeCapsuleRef.current.setBusy(true)
         const bytes = new Uint8Array(sessionArrayBuffer)
-        const sessionMessage = moorhensession.Session.decode(bytes)
-        const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store,  dispatch) 
+        const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
+        const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, monomerLibraryPath, molecules, maps, commandCentre, timeCapsuleRef, glRef, store,  dispatch)
         timeCapsuleRef.current.setBusy(false)
         return status
     }
@@ -797,7 +880,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -809,7 +892,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
 
@@ -829,7 +912,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - React reference to the command centre
      * @param {React.RefObject<moorhen.TimeCapsule>} timeCapsuleRef - React reference to the time capsule
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
-     * @param {ToolkitStore} store - The Redux store
+     * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
@@ -841,7 +924,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
         glRef: React.RefObject<webGL.MGWebGL>,
-        store: ToolkitStore,
+        store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
 

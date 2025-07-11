@@ -51,7 +51,6 @@ ${coot_src}/src/testing.cc
 ${coot_src}/src/molecule-class-info-maps-2.cc
 ${coot_src}/src/coot-extended.cc
 ${coot_src}/src/molecule-class-info-residues.cc
-${coot_src}/src/flev.cc
 ${coot_src}/src/coot-embedded.cc
 ${coot_src}/src/lbg-interface.cc
 ${coot_src}/src/c-interface-ligands.cc
@@ -84,6 +83,8 @@ ${coot_src}/lidia-core/cod-atom-type-t.cc
 ${coot_src}/lidia-core/rdkit-interface.cc
 ${coot_src}/lidia-core/bond-table-record-t.cc
 ${coot_src}/utils/base64-encode-decode.cc
+${coot_src}/utils/static-logging.cc
+${coot_src}/utils/logging.cc
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
@@ -91,8 +92,9 @@ ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/diff-diff-map-peaks.cc
 ${coot_src}/coot-utils/gltf-export.cc
 ${coot_src}/coot-utils/texture-as-floats.cc
+${coot_src}/coot-utils/coot-align.cc
 ${coot_src}/src/coot-hydrogens.cc
-${coot_src}/src/cfc.cc
+${coot_src}/coot-utils/cfc.cc
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXBall.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXChargeTable.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXCircle.cpp
@@ -161,6 +163,7 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector2.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
+${coot_src}/MoleculesToTriangles/CXXClasses/tubes.cc
 ${coot_src}/api/molecules-container-maps.cc
 ${coot_src}/api/instancing.cc
 ${coot_src}/api/rigid-body-fit.cc
@@ -189,6 +192,8 @@ ${coot_src}/api/molecules-container-ligand-fitting.cc
 ${coot_src}/api/molecules-container.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/api/coot-molecule-change-chain-id.cc
+${coot_src}/api/ncs-ghosts.cc
+${coot_src}/api/ghost-molecule-display.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
@@ -197,6 +202,7 @@ ${coot_src}/analysis/mogul.cc
 ${coot_src}/analysis/b-factor-histogram.cc
 ${coot_src}/analysis/typed-distances.cc
 ${coot_src}/analysis/cablam.cc
+${coot_src}/analysis/chi-squared.cc
 ${coot_src}/density-contour/density-contour-triangles.cc
 ${coot_src}/density-contour/Vectors.cpp
 ${coot_src}/density-contour/CIsoSurface.cpp
@@ -262,10 +268,19 @@ ${coot_src}/high-res/high-res.cc
 ${coot_src}/protein_db/protein_db.cpp
 ${coot_src}/protein_db/protein_db_utils.cpp
 ${coot_src}/protein_db/rna_db.cpp
+${coot_src}/utils/split-indices.cc
 ${coot_src}/pli/flev-annotations.cc
+${coot_src}/pli/flev.cc
+${coot_src}/pli/flev-annotations.cc
+${coot_src}/pli/flev-attached-hydrogens.cc
+${coot_src}/pli/optimise-residue-circles.cc
+${coot_src}/pli/residue-circles.cc
+${coot_src}/pli/dots-representation-info.cc
+${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/protein-ligand-interactions.cc
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/pli/sdf-interface.cc
+${coot_src}/pli/specs.cc
 ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/coot-utils/merge-atom-selections.cc
 ${coot_src}/coot-utils/coot-least-squares.cc
@@ -432,7 +447,8 @@ ${coot_src}/src/coot-nomenclature.cc
 ${coot_src}/db-main/db-main.cc
 ${coot_src}/compat/getopt.cc
 ${coot_src}/compat/getopt1.cc
-${coot_src}/src/gl-matrix.cc
+${coot_src}/coot-utils/gl-matrix.cc
+${coot_src}/coot-utils/gl-matrix-eigensystem.cc
 glycoblocks.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
@@ -550,6 +566,7 @@ FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION
 
 add_executable(moorhen untar.c moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
+target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
@@ -580,6 +597,7 @@ target_link_libraries(moorhen
     slicendice_cpp
     fftw
     rfftw
+    fftw3f
     coot
     ${GSL_LIBRARIES}
     ${DEPS_LIBRARIES}

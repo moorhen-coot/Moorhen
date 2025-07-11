@@ -2,16 +2,21 @@ import { cidToSpec, getCentreAtom } from "./utils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
-import { getDeviceScale } from '../WebGLgComponents/mgWebGL';
+import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { Dispatch } from "react";
+import { Dispatch, createRef, useState } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
+import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { EnqueueSnackbar } from "notistack";
+import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
+import { setOrigin, setZoom, setQuat, setShortCutHelp,
+         setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
+import { EnqueueSnackbar, closeSnackbar } from "notistack";
+import store from '../store/MoorhenReduxStore'
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -42,6 +47,67 @@ export const moorhenKeyPress = (
         hoveredAtom, commandCentre, activeMap, glRef, molecules, 
         viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
+
+    const originState = store.getState().glRef.origin
+    const zoom = store.getState().glRef.zoom
+    const myQuat = store.getState().glRef.quat
+    const fogStart = store.getState().glRef.fogStart
+    const fogEnd = store.getState().glRef.fogEnd
+    const clipStart = store.getState().glRef.clipStart
+    const clipEnd = store.getState().glRef.clipEnd
+    const width = store.getState().sceneSettings.width
+    const height = store.getState().sceneSettings.height
+    const cursorPosition = store.getState().glRef.cursorPosition
+    const shortCutHelp = store.getState().glRef.shortCutHelp
+    const atomInfoIds = store.getState().atomInfoCards.atomInfoIds
+
+    const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
+        let x = cursorPosition[0];
+        let y = cursorPosition[1];
+        let invQuat = quat4.create();
+        quat4Inverse(myQuat, invQuat);
+        const theMatrix = quatToMat4(invQuat);
+        const ratio = width / height;
+        const minX = (-24. * ratio * zoom);
+        const maxX = (24. * ratio * zoom);
+        const minY = (-24. * zoom);
+        const maxY = (24. * zoom);
+        const fracX = 1.0 * x / width
+        const fracY = 1.0 * (y) / height
+        const theX = minX + fracX * (maxX - minX);
+        const theY = maxY - fracY * (maxY - minY);
+        let frontPos = vec3Create([theX, theY, -clipStart]); // Maybe should be -clipStart
+        let backPos = vec3Create([theX, theY, clipEnd]);
+        vec3.transformMat4(frontPos, frontPos, theMatrix);
+        vec3.transformMat4(backPos, backPos, theMatrix);
+        vec3.subtract(frontPos, frontPos, originState);
+        vec3.subtract(backPos, backPos, originState);
+        return [frontPos, backPos, x*getDeviceScale(), y*getDeviceScale()];
+    }
+
+    const doAtomInfo = async (): Promise<boolean> => {
+        if (hoveredAtom.molecule) {
+            let chosenAtom: moorhen.ResidueSpec
+            chosenAtom = cidToSpec(hoveredAtom.cid)
+            const fragmentCid = chosenAtom.cid
+            const chosenMolecule = hoveredAtom.molecule
+            for(let i_id=0;i_id<atomInfoIds.length;i_id++)
+                await closeSnackbar(atomInfoIds[i_id])
+            if(showShortcutToast) {
+                const newId = await enqueueSnackbar("atoms-info_"+chosenMolecule.molNo+"_"+fragmentCid, {
+                    variant: "atomInformation",
+                    monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
+                    commandCentre: commandCentre,
+                    cidRef: fragmentCid,
+                    glRef: glRef,
+                    moleculeRef: chosenMolecule,
+                    persist: true
+                })
+                collectedProps.dispatch(setAtomInfoIds([newId]))
+            }
+            return false
+        }
+    }
 
     const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
         let chosenMolecule: moorhen.Molecule
@@ -196,7 +262,7 @@ export const moorhenKeyPress = (
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
         showShortcutToast && enqueueSnackbar("Go to blob", { variant: "info"})
-        const frontAndBack: [number[], number[], number, number] = glRef.current.getFrontAndBackPos(event);
+        const frontAndBack: [number[], number[], number, number] = getFrontAndBackPos()
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
             front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
@@ -212,78 +278,71 @@ export const moorhenKeyPress = (
         .then(response => {
             let newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
-                glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
+                dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
             }
         })
     }
 
     else if (action === 'clear_labels') {
-        glRef.current.labelledAtoms = []
-        glRef.current.measuredAtoms = []
-        glRef.current.measurePointsArray = []
-        glRef.current.clearMeasureCylinderBuffers()
-        glRef.current.drawScene()
+        dispatch(triggerClearLabels(true))
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
         showShortcutToast && enqueueSnackbar("Clear labels", { variant: "info"})
     }
 
     else if (action === 'move_up') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (yshift[0] / 8. * zoom)
+        const y = originState[1] + (yshift[1] / 8. * zoom)
+        const z = originState[2] + (yshift[2] / 8. * zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_down') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom);
-        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom);
-        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom);
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (yshift[0] / 8. * zoom);
+        const y = originState[1] + (yshift[1] / 8. * zoom);
+        const z = originState[2] + (yshift[2] / 8. * zoom);
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_left') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (xshift[0] / 8. * zoom)
+        const y = originState[1] + (xshift[1] / 8. * zoom)
+        const z = originState[2] + (xshift[2] / 8. * zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'move_right') {
         const invQuat = quat4.create();
-        quat4Inverse(glRef.current.myQuat, invQuat);
+        quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
-        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
-        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
-        glRef.current.setOrigin([x, y, z], true, true)
+        const x = originState[0] + (xshift[0] / 8. * zoom)
+        const y = originState[1] + (xshift[1] / 8. * zoom)
+        const z = originState[2] + (xshift[2] / 8. * zoom)
+        dispatch(setOrigin([x, y, z]))
     }
 
     else if (action === 'restore_scene') {
-        glRef.current.myQuat = quat4.create()
-        quat4.set(glRef.current.myQuat, 0, 0, 0, -1)
-        glRef.current.setZoom(1.0)
-        glRef.current.labelledAtoms = []
-        glRef.current.measuredAtoms = []
-        glRef.current.measurePointsArray = []
-        glRef.current.clearMeasureCylinderBuffers()
-        glRef.current.drawScene()
+        const newQuat = quat4.create()
+        quat4.set(newQuat, 0, 0, 0, -1)
+        dispatch(setZoom(1.0))
+        dispatch(setQuat(newQuat))
+        dispatch(triggerClearLabels(true))
     }
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
@@ -302,8 +361,10 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'show_shortcuts') {
-        if (!glRef.current.showShortCutHelp) {
-            glRef.current.showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
+        let showShortCutHelp: string[] = [];
+
+        if(shortCutHelp.length===0){
+            showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
                 let modifiers = []
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
@@ -312,16 +373,15 @@ export const moorhenKeyPress = (
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
-            glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
-            glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
-            glRef.current.showShortCutHelp.push(`Double click go to blob`)
-            glRef.current.showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
-            glRef.current.drawScene()
+            showShortCutHelp.push(`<Shift><Alt> Translate View`)
+            showShortCutHelp.push(`<Shift> Rotate View`)
+            showShortCutHelp.push(`Double click go to blob`)
+            showShortCutHelp.push(`<Ctrl><Scroll> Change active map contour lvl.`)
         } else  {
-            glRef.current.showShortCutHelp = null
-            glRef.current.drawScene()
+            showShortCutHelp = []
         }
-        showShortcutToast && enqueueSnackbar(glRef.current.showShortCutHelp ? 'Show help' : 'Hide help', { variant: "info"})
+        dispatch(setShortCutHelp(showShortCutHelp))
+        showShortcutToast && enqueueSnackbar((showShortCutHelp.length>0) ? 'Show help' : 'Hide help', { variant: "info"})
         return false
     }
 
@@ -360,31 +420,30 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'decrease_front_clip') {
-        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
-        glRef.current.drawScene()
+        dispatch(setClipStart(clipStart-0.5))
         showShortcutToast && enqueueSnackbar("Front clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_front_clip') {
-        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
-        glRef.current.drawScene()
+        dispatch(setClipStart(clipStart+0.5))
         showShortcutToast && enqueueSnackbar("Front clip up", { variant: "info"})
         return false
     }
 
     else if (action === 'decrease_back_clip') {
-        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
-        glRef.current.drawScene()
+        dispatch(setClipEnd(clipEnd-0.5))
         showShortcutToast && enqueueSnackbar("Back clip down", { variant: "info"})
         return false
     }
 
     else if (action === 'increase_back_clip') {
-        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
-        glRef.current.drawScene()
+        dispatch(setClipEnd(clipEnd+0.5))
         showShortcutToast && enqueueSnackbar("Back clip up", { variant: "info"})
         return false
+    }
+    else if (action === 'show_atom_info') {
+        return doAtomInfo()
     }
 
     return true

@@ -7,6 +7,13 @@ import checker from 'vite-plugin-checker';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'modern',
+        }
+      }
+    },
     plugins: [
         react(),
         wasm(),

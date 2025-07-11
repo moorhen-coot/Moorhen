@@ -9,15 +9,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
 interface Props extends moorhen.CollectedProps {
-    resizeTrigger: boolean;
+    resizeTrigger?: boolean;
     resizeNodeRef?: React.RefObject<HTMLDivElement>;
+    size?: { width: number; height: number; };
 }
 
 export const MoorhenRamachandran = (props: Props) => {
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
-    const ramaPlotDivRef = useRef<HTMLDivElement>();
-    const moleculeSelectRef = useRef<HTMLSelectElement>();
-    const chainSelectRef = useRef<HTMLSelectElement>();
+    const ramaPlotDivRef = useRef<HTMLDivElement>(null);
+    const moleculeSelectRef = useRef<HTMLSelectElement>(null);
+    const chainSelectRef = useRef<HTMLSelectElement>(null);
     const reqRef = useRef<number>(null)
     const hitRef = useRef<number>(-1)
     const imageRefAll = useRef<null | HTMLImageElement>(null);
@@ -404,14 +405,14 @@ export const MoorhenRamachandran = (props: Props) => {
 
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef?.current.clientHeight) - convertRemToPx(7)
-            let plotWidth = (props.resizeNodeRef?.current.clientWidth) - convertRemToPx(3)
+            let plotHeigth = (props.size.height) - convertRemToPx(7)
+            let plotWidth = (props.size.width) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth)
             }
         }, 50);
 
-    }, [width, height, props.resizeTrigger])
+    }, [width, height, props.resizeTrigger, props.size])
 
     const fetchRamaData = useCallback( async () => {
         if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {

@@ -6,6 +6,7 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
+import store from '../store/MoorhenReduxStore'
 
 export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -13,13 +14,14 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 
 export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
+    const originState = store.getState().glRef.origin
     if (visibleMolecules.length === 0) {
         return [null, null]
     }
     const response = await commandCentre.current.cootCommand({
         returnType: "int_string_pair",
         command: "get_active_atom",
-        commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        commandArgs: [...originState.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
     }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
     const moleculeMolNo: number = response.data.result.result.first
     const residueCid: string = response.data.result.result.second
@@ -29,7 +31,7 @@ export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const formatLigandSVG = (svg: string): string => {
+export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
     
     const parser = new DOMParser()
     let theText = svg
@@ -86,7 +88,7 @@ export const formatLigandSVG = (svg: string): string => {
     let svgs = doc.getElementsByTagName("svg")
     const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
     for (let item of svgs) {
-        item.setAttribute("viewBox" , viewBoxStr)
+        if(edit_VB) item.setAttribute("viewBox" , viewBoxStr)
         item.setAttribute("width" , "100%")
         item.setAttribute("height" , "100%")
         theText = item.outerHTML
@@ -200,6 +202,10 @@ export function convertRemToPx(rem: number): number {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
+export function convertPxToRem(px: number): number {
+    return +(px / parseFloat(getComputedStyle(document.documentElement).fontSize)).toPrecision(2);
+}
+
 export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100)
 }
@@ -264,6 +270,11 @@ export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: str
     return structure
 }
 
+export const readGemmiCifDocument = (coordData: string): gemmi.cifDocument => {
+    const doc: gemmi.cifDocument = window.CCP4Module.read_string(coordData)
+    return doc
+}
+
 export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, number] => {
     const atomCount = atoms.length
     if (atomCount === 0) {
@@ -325,6 +336,7 @@ export const cidToAtomInfo = (cid: string): moorhen.AtomInfo => {
         element: null,
         tempFactor: null,
         serial: null,
+        occupancy: null,
         name: resSpec.atom_name,
         has_altloc: resSpec.alt_conf !== "",
         alt_loc: resSpec.alt_conf,
@@ -548,6 +560,14 @@ export const hexToHsl = (hex: string): [number, number, number] => {
     }
 
     return [h, s, l];
+}
+
+export const hexToRGB = (hex: string): [number, number, number] => {
+    const hexWithoutHash = hex.replace('#', '');
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    return [r, g, b];
 }
 
 export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
@@ -922,4 +942,53 @@ export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelec
     const newStruct = window.CCP4Module.remove_non_selected_atoms(gemmiStructure, selection)
     selection.delete()
     return newStruct
+}
+
+export const get_grid = (n,method="NEARSQUARE") => {
+    const f = Math.floor(Math.sqrt(n))
+    const c = Math.ceil(Math.sqrt(n))
+
+    if(method==="NEARSQUARE"){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let shapes = []
+
+    for(let i=1;i<=n;i++){
+        for(let j=1;j<=n;j++){
+            if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
+                if(i*j - n < n){
+                    let rem = i*j - n
+                    if(rem != i && rem != j){
+                        shapes.push([i,j,rem])
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    if(shapes.length===0){
+        if(f*c >= n)
+            return [f,c]
+        else
+            return [c,c]
+    }
+
+    let the_shape = shapes[0]
+    let minrem = n+1
+
+    shapes.forEach( (s) => {
+        if(s[2] < minrem){
+            the_shape = s
+            minrem = s[2]
+        } else if(s[2] == minrem && Math.abs(s[0]-s[1]) < Math.abs(the_shape[0]-the_shape[1])){
+            the_shape = s
+        }
+    })
+
+    return [the_shape[0],the_shape[1]]
 }

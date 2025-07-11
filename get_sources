@@ -19,6 +19,7 @@ getjsoncpp
 getigraph
 getslicendice
 getfftw
+getfftw3
 getgsl
 getcoot
 getglm

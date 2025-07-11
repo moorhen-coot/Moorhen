@@ -4,8 +4,8 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { MoorhenSlider } from "../misc/MoorhenSlider";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { IconButton } from "@mui/material";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
@@ -52,21 +52,6 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
         } 
     }
     
-    const increaseDistButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                    const newVal = maxDist + 0.25
-                                    setMaxDist(newVal)
-                                    maxDistSliderRef.current = newVal
-                                }}>
-                                    <AddCircleOutline/>
-                                </IconButton>
-    const decreaseDistButton =  <IconButton style={{padding: 0, color: isDark ? 'white' : 'grey'}} onClick={() => {
-                                    const newVal = maxDist - 0.25
-                                    setMaxDist(newVal)
-                                    maxDistSliderRef.current = newVal
-                                }}>
-                                    <RemoveCircleOutline/>
-                                </IconButton>
-
     const panelContent = <>
         <Form.Group className='moorhen-form-group' controlId="MoorhenSelfRestraintsMenuItem">
             <Form.Label>Selection</Form.Label>
@@ -92,17 +77,15 @@ export const MoorhenSelfRestraintsMenuItem = (props: {
             allowUseCurrentSelection={true}
             placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}/>}
         <MoorhenSlider
-            ref={maxDistSliderRef}
             sliderTitle="Max. dist."
-            decrementButton={decreaseDistButton}
-            incrementButton={increaseDistButton}
             minVal={4}
             maxVal={6}
             showMinMaxVal={false}
             logScale={false}
-            initialValue={maxDist}
             externalValue={maxDist}
-            setExternalValue={setMaxDist}/>
+            stepButtons={0.25}
+            decimalPlaces={2}
+            setExternalValue={(value) => setMaxDist(value)}/>
     </>
 
     const onCompleted = useCallback(async () => {

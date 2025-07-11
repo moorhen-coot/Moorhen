@@ -18,11 +18,11 @@ Chart.register(annotationPlugin);
 export const MoorhenMMRRCCPlot = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
-    const chartCardRef = useRef<HTMLDivElement>();
-    const chartBoxRef = useRef<HTMLDivElement>();
-    const containerRef = useRef<HTMLDivElement>();
-    const containerBodyRef = useRef<HTMLDivElement>();
-    const canvasRef = useRef<HTMLCanvasElement>();
+    const chartCardRef = useRef<HTMLDivElement>(null);
+    const chartBoxRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const containerBodyRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);

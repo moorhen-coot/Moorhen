@@ -4,7 +4,7 @@ import { IconButton } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack"
 import { useSelector } from "react-redux";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import { getCentreAtom } from "../../utils/utils";
 import { webGL } from "../../types/mgWebGL";

@@ -32,11 +32,11 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 
     static defaultPreferencesValues: moorhen.PreferencesValues = {
-        version: 'v40',
+        version: 'v41',
         reContourMapOnlyOnMouseUp: false,
         transparentModalsOnMouseOut: false,
         defaultBackgroundColor: [1, 1, 1, 1],
-        atomLabelDepthMode: true,
+        atomLabelDepthMode: false,
         enableTimeCapsule: true,
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
@@ -45,6 +45,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         drawScaleBar: false,
         drawAxes: false,
         drawFPS: false,
+        drawEnvBOcc: false, 
         drawMissingLoops: true,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
@@ -66,7 +67,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
         GLLabelsFontSize: 18,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
-        contourWheelSensitivityFactor: 0.05,
+        contourWheelSensitivityFactor: 1.0,
         mapLineWidth: 0.75,
         makeBackups: true,
         showShortcutToast: true,
@@ -81,6 +82,8 @@ export class MoorhenPreferences implements moorhen.Preferences {
         modificationCountBackupThreshold: 5,
         animateRefine: true,
         devMode: false,
+        useGemmi: false,
+        elementsIndicesRestrict: false,
         shortCuts: {
             "decrease_front_clip": {
                 modifiers: [],
@@ -290,6 +293,12 @@ export class MoorhenPreferences implements moorhen.Preferences {
                 modifiers: [],
                 keyPress: "[",
                 label: "Decrease map radius",
+                viewOnly: true
+            },
+            "show_atom_info": {
+                modifiers: [],
+                keyPress: "i",
+                label: "Show atom info",
                 viewOnly: true
             },
         }

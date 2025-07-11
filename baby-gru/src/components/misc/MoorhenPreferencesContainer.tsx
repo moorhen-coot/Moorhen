@@ -7,26 +7,32 @@ import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificatio
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { 
+import {
     setClipCap, setDefaultBackgroundColor, setDefaultBondSmoothness, setDepthBlurDepth, setDepthBlurRadius, setDoOutline,
     setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDrawAxes, setDrawCrosshairs, setUseOffScreenBuffers,
     setDrawFPS, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
-    setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale
+    setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale,
+    setDrawEnvBOcc
 } from "../../store/sceneSettingsSlice";
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinementSettingsSlice';
-import { setDevMode, setUserPreferencesMounted } from "../../store/generalStatesSlice";
+import { setDevMode, setUserPreferencesMounted, setUseGemmi } from "../../store/generalStatesSlice";
+import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen"
 
 export const MoorhenPreferencesContainer = (props: {
     onUserPreferencesChange?: (key: string, value: any) => void;
 }) => {
-    
+
     const localForageInstanceRef = useRef<null | moorhen.Preferences>(null)
     const dispatch = useDispatch()
 
     // Some important general app states
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
+
+    // Whether or not to restrict maximum element indices draw to 65535, or to use what driver thinks is best.
+    const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     // Map settings
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
@@ -143,6 +149,8 @@ export const MoorhenPreferencesContainer = (props: {
         47: { label: "edgeDetectDepthScale", value: edgeDetectDepthScale, valueSetter: setEdgeDetectDepthScale},
         48: { label: "edgeDetectNormalScale", value: edgeDetectNormalScale, valueSetter: setEdgeDetectNormalScale},
         49: { label: "reContourMapOnlyOnMouseUp", value: reContourMapOnlyOnMouseUp, valueSetter: setReContourMapOnlyOnMouseUp},
+        50: { label: "useGemmi", value: useGemmi, valueSetter: setUseGemmi},
+        51: { label: "elementsIndicesRestrict", value: elementsIndicesRestrict, valueSetter: setElementsIndicesRestrict},
     }
 
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
@@ -161,8 +169,8 @@ export const MoorhenPreferencesContainer = (props: {
     }
 
     /**
-     * Hook used after component mounts to retrieve user preferences from 
-     * local storage. If no previously stored data is found, default values 
+     * Hook used after component mounts to retrieve user preferences from
+     * local storage. If no previously stored data is found, default values
      * are used.
      */
     useEffect(() => {
@@ -178,16 +186,16 @@ export const MoorhenPreferencesContainer = (props: {
                     dispatch(setUserPreferencesMounted(true))
                     return
                 }
-                
+
                 const fetchPromises = Object.keys(preferencesMap).map(key => preferences.localStorageInstance.getItem(preferencesMap[key].label))
                 let responses = await Promise.all(fetchPromises)
-                               
+
                 if(!responses.every(item => item !== null) || responses.length < Object.keys(preferencesMap).length) {
                     restoreDefaults(preferences, defaultValues)
                 } else {
                     Object.keys(preferencesMap).forEach((key, index) => dispatch(
                         preferencesMap[key].valueSetter(responses[index]))
-                    ) 
+                    )
                 }
             } catch (err) {
                 console.log(err)
@@ -196,7 +204,7 @@ export const MoorhenPreferencesContainer = (props: {
                 dispatch(setUserPreferencesMounted(true))
             }
         }
-        
+
         fetchStoredContext();
 
     }, [])
@@ -206,7 +214,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (reContourMapOnlyOnMouseUp === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp)
         .then(_ => props.onUserPreferencesChange('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp));
     }, [reContourMapOnlyOnMouseUp]);
@@ -216,7 +224,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (transparentModalsOnMouseOut === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('transparentModalsOnMouseOut', transparentModalsOnMouseOut)
         .then(_ => props.onUserPreferencesChange('transparentModalsOnMouseOut', transparentModalsOnMouseOut));
     }, [transparentModalsOnMouseOut]);
@@ -227,7 +235,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (defaultMapSamplingRate === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSamplingRate', defaultMapSamplingRate)
         .then(_ => props.onUserPreferencesChange('defaultMapSamplingRate', defaultMapSamplingRate));
     }, [defaultMapSamplingRate]);
@@ -237,7 +245,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (shortcutOnHoveredAtom === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('shortcutOnHoveredAtom', shortcutOnHoveredAtom)
         .then(_ => props.onUserPreferencesChange('shortcutOnHoveredAtom', shortcutOnHoveredAtom));
     }, [shortcutOnHoveredAtom]);
@@ -247,47 +255,67 @@ export const MoorhenPreferencesContainer = (props: {
         if (devMode === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('devMode', devMode)
         .then(_ => props.onUserPreferencesChange('devMode', devMode));
     }, [devMode]);
-    
+
+    useMemo(() => {
+
+        if (useGemmi === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('useGemmi', useGemmi)
+        .then(_ => props.onUserPreferencesChange('useGemmi', useGemmi));
+    }, [useGemmi]);
+
+    useMemo(() => {
+
+        if (elementsIndicesRestrict === null) {
+            return
+        }
+
+        localForageInstanceRef.current?.localStorageInstance.setItem('elementsIndicesRestrict', elementsIndicesRestrict)
+        .then(_ => props.onUserPreferencesChange('elementsIndicesRestrict', elementsIndicesRestrict));
+    }, [elementsIndicesRestrict]);
+
     useMemo(() => {
 
         if (contourWheelSensitivityFactor === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('contourWheelSensitivityFactor', contourWheelSensitivityFactor)
         .then(_ => props.onUserPreferencesChange('contourWheelSensitivityFactor', contourWheelSensitivityFactor));
     }, [contourWheelSensitivityFactor]);
-    
+
     useMemo(() => {
 
         if (enableTimeCapsule === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('enableTimeCapsule', enableTimeCapsule)
         .then(_ => props.onUserPreferencesChange('enableTimeCapsule', enableTimeCapsule));
     }, [enableTimeCapsule]);
-    
+
     useMemo(() => {
 
         if (maxBackupCount === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('maxBackupCount', maxBackupCount)
         .then(_ => props.onUserPreferencesChange('maxBackupCount', maxBackupCount));
     }, [maxBackupCount]);
-    
+
     useMemo(() => {
 
         if (modificationCountBackupThreshold === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('modificationCountBackupThreshold', modificationCountBackupThreshold)
         .then(_ => props.onUserPreferencesChange('modificationCountBackupThreshold', modificationCountBackupThreshold));
     }, [modificationCountBackupThreshold]);
@@ -307,7 +335,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (resetClippingFogging === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('resetClippingFogging', resetClippingFogging)
         .then(_ => props.onUserPreferencesChange('resetClippingFogging', resetClippingFogging));
     }, [resetClippingFogging]);
@@ -317,7 +345,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (zoomWheelSensitivityFactor === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor)
         .then(_ => props.onUserPreferencesChange('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor));
     }, [zoomWheelSensitivityFactor]);
@@ -327,37 +355,37 @@ export const MoorhenPreferencesContainer = (props: {
         if (showShortcutToast === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('showShortcutToast', showShortcutToast)
         .then(_ => props.onUserPreferencesChange('showShortcutToast', showShortcutToast));
     }, [showShortcutToast]);
-    
+
     useMemo(() => {
 
         if (showScoresToast === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('showScoresToast', showScoresToast)
         .then(_ => props.onUserPreferencesChange('showScoresToast', showScoresToast));
     }, [showScoresToast]);
-    
+
     useMemo(() => {
 
         if (defaultUpdatingScores === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultUpdatingScores', defaultUpdatingScores)
         .then(_ => props.onUserPreferencesChange('defaultUpdatingScores', defaultUpdatingScores));
     }, [defaultUpdatingScores]);
-    
+
     useMemo(() => {
 
         if (defaultBondSmoothness === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultBondSmoothness', defaultBondSmoothness)
         .then(_ => props.onUserPreferencesChange('defaultBondSmoothness', defaultBondSmoothness));
     }, [defaultBondSmoothness]);
@@ -367,7 +395,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (defaultMapSurface === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSurface', defaultMapSurface)
         .then(_ => props.onUserPreferencesChange('defaultMapSurface', defaultMapSurface));
     }, [defaultMapSurface]);
@@ -377,7 +405,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (makeBackups === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('makeBackups', makeBackups)
         .then(_ => props.onUserPreferencesChange('makeBackups', makeBackups));
     }, [makeBackups]);
@@ -387,7 +415,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (enableRefineAfterMod === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('enableRefineAfterMod', enableRefineAfterMod)
         .then(_ => props.onUserPreferencesChange('enableRefineAfterMod', enableRefineAfterMod));
     }, [enableRefineAfterMod]);
@@ -397,7 +425,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (mapLineWidth === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('mapLineWidth', mapLineWidth)
         .then(_ => props.onUserPreferencesChange('mapLineWidth', mapLineWidth));
     }, [mapLineWidth]);
@@ -417,7 +445,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (drawScaleBar === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('drawScaleBar', drawScaleBar)
         .then(_ => props.onUserPreferencesChange('drawScaleBar', drawScaleBar));
     }, [drawScaleBar]);
@@ -427,7 +455,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (drawCrosshairs === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('drawCrosshairs', drawCrosshairs)
         .then(_ => props.onUserPreferencesChange('drawCrosshairs', drawCrosshairs));
     }, [drawCrosshairs]);
@@ -437,7 +465,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (drawFPS === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('drawFPS', drawFPS)
         .then(_ => props.onUserPreferencesChange('drawFPS', drawFPS));
     }, [drawFPS]);
@@ -447,7 +475,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (drawMissingLoops === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('drawMissingLoops', drawMissingLoops)
         .then(_ => props.onUserPreferencesChange('drawMissingLoops', drawMissingLoops));
     }, [drawMissingLoops]);
@@ -637,7 +665,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (mouseSensitivity === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('mouseSensitivity', mouseSensitivity)
         .then(_ => props.onUserPreferencesChange('mouseSensitivity', mouseSensitivity));
     }, [mouseSensitivity]);
@@ -647,27 +675,27 @@ export const MoorhenPreferencesContainer = (props: {
         if (atomLabelDepthMode === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('atomLabelDepthMode', atomLabelDepthMode)
         .then(_ => props.onUserPreferencesChange('atomLabelDepthMode', atomLabelDepthMode));
     }, [atomLabelDepthMode]);
- 
+
     useMemo(() => {
 
         if (defaultBackgroundColor === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultBackgroundColor', defaultBackgroundColor)
         .then(_ => props.onUserPreferencesChange('defaultBackgroundColor', defaultBackgroundColor));
     }, [defaultBackgroundColor]);
-    
+
     useMemo(() => {
 
         if (defaultExpandDisplayCards === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultExpandDisplayCards', defaultExpandDisplayCards)
         .then(_ => props.onUserPreferencesChange('defaultExpandDisplayCards', defaultExpandDisplayCards));
     }, [defaultExpandDisplayCards]);
@@ -677,7 +705,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (shortCuts === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('shortCuts', shortCuts)
         .then(_ => props.onUserPreferencesChange('shortCuts', shortCuts));
     }, [shortCuts]);
@@ -687,7 +715,7 @@ export const MoorhenPreferencesContainer = (props: {
         if (defaultMapLitLines === null) {
             return
         }
-       
+
         localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapLitLines', defaultMapLitLines)
         .then(_ => props.onUserPreferencesChange('defaultMapLitLines', defaultMapLitLines));
     }, [defaultMapLitLines]);

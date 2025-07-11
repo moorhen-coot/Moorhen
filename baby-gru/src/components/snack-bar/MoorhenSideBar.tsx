@@ -7,7 +7,7 @@ import { IconButton } from "@mui/material";
 import { CloseOutlined,  OpenInNewOutlined,  UnfoldLessOutlined, UnfoldMoreOutlined } from "@mui/icons-material";
 import { attachModalToSideBar, collapseSideBarModal, detachModalFromSideBar, expandSideBarModal, showModal } from "../../store/modalsSlice";
 
-export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: JSX.Element, id: string, title: string, modalId: string}>((props, ref) => {
+export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.Element, id: string, title: string, modalId: string}>((props, ref) => {
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const modalsAttachedToSideBar = useSelector((state: moorhen.State) => state.modals.modalsAttachedToSideBar)

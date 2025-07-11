@@ -24,7 +24,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     gemmi::SmallStructure small = gemmi::make_small_structure_from_block(block);
 
-    std::string resname = "UNK";
+    std::string resname = small.name;
 
     gemmi::Residue r;
     r.name = resname;
@@ -63,7 +63,7 @@ std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &sm
 
     gemmi::Structure st2;
 
-    gemmi::Model m("1");
+    gemmi::Model m(1);
     gemmi::Chain c("A");
 
     c.residues.push_back(r);

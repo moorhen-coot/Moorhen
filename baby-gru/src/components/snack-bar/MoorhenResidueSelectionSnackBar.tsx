@@ -9,17 +9,17 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { HexColorInput, HexColorPicker } from "react-colorful"
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm"
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: string}>((props, ref) => {
 
-    const notificationComponentRef = useRef()
-    const changeColourAnchorRef = useRef()
-    const cidAnchorRef = useRef()
-    const cidFormRef = useRef()
+    const notificationComponentRef = useRef(null)
+    const changeColourAnchorRef = useRef(null)
+    const cidAnchorRef = useRef(null)
+    const cidFormRef = useRef(null)
 
     const [cidFormValue, setCidFormValue] = useState<null | string>(null)
     const [showCidEditForm, setShowCidEditForm] = useState<boolean>(false)

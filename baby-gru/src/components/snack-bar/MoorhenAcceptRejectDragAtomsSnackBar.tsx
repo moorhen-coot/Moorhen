@@ -9,6 +9,7 @@ import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { setDraggableMolecule } from "../../store/glRefSlice";
 
 export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     HTMLDivElement, 
@@ -30,6 +31,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
     const dispatch = useDispatch()
 
@@ -38,7 +40,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     const finishDragging = async (acceptTransform: boolean) => {
         document.removeEventListener('atomDragged', atomDraggedCallback)
         document.removeEventListener('mouseup', mouseUpCallback)
-        props.glRef.current.setDraggableMolecule(null)
+        dispatch(setDraggableMolecule(null))
         if (busy.current) {
             setTimeout(() => finishDragging(acceptTransform), 100)
             return
@@ -143,7 +145,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
 
     useEffect(() => {
         const startDragging = async () => { 
-            if (moltenFragmentRef.current || props.glRef.current.draggableMolecule) {
+            if (moltenFragmentRef.current || draggableMolecule) {
                 console.warn('There is already a draggable molecule... Doing nothing.')
                 return
             }
@@ -157,7 +159,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
         
             /* Redraw with animation*/
             await moltenFragmentRef.current.animateRefine(10, 5, 10)
-            props.glRef.current.setDraggableMolecule(newMolecule)
+            dispatch(setDraggableMolecule(newMolecule))
         }
         
         startDragging()    

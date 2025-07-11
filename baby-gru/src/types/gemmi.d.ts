@@ -30,6 +30,7 @@ export namespace gemmi {
     }
     interface cifDocument extends emscriptem.instance<Fractional> {
         blocks: emscriptem.vector<cifBlock>;
+        as_string: () => string;
     }
     interface cifBlock extends emscriptem.instance<cifBlock> {
         name: string;
@@ -71,6 +72,7 @@ export namespace gemmi {
         element: emscriptem.instance<string>;
         pos: { x: number, y: number, z: number, delete: () => void };
         altloc: number;
+        occ: number;
         charge: number;
         b_iso: number;
         serial: number;
@@ -108,6 +110,7 @@ export namespace gemmi {
     }
     interface Mat33 extends emscriptem.instance<Mat33> {
         as_array: () => number[];
+        is_identity: () => boolean;
     }
     interface Vec3 extends emscriptem.instance<Vec3> {
         x: number;
@@ -128,6 +131,7 @@ export namespace gemmi {
     }
     interface Assembly extends emscriptem.instance<Assembly> {
         name: string;
+        oligomeric_details: string;
         generators: emscriptem.vector<Gen>;
     }
     interface Structure extends emscriptem.instance<Structure> {
@@ -136,5 +140,7 @@ export namespace gemmi {
         assemblies: emscriptem.vector<Assembly>;
         first_model: () => Model;
         remove_empty_chains: () => void;
+        get_info: (tag: string) => string;
+        as_string: () => string;
     }
 }

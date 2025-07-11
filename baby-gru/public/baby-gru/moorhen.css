@@ -6,7 +6,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-  
+/* font */
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
@@ -132,6 +132,11 @@ div.darkly text.end-label {fill:#FFF !important;}
   height: 100%;
 }
 
+.rama-plot-div {
+  display: flex !important;
+  justify-content: center !important;
+}
+
 .big-validation-tool-container-row {
   width: 100%;
   margin: 0 !important;
@@ -220,6 +225,11 @@ div.darkly text.end-label {fill:#FFF !important;}
   border-radius: 2rem;
   align-items: center;
   align-content: center;
+  justify-content: center;
+}
+
+.moorhen-notification-div span {
+  display: flex;
   justify-content: center;
 }
 

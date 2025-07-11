@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { RgbColorPicker } from "react-colorful";
-import { CirclePicker } from "react-color"
 import { convertRemToPx } from "../../utils/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setBackgroundColor } from "../../store/sceneSettingsSlice";
+import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { hexToRGB } from "../../utils/utils";
 
 export const MoorhenBackgroundColorMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -32,9 +33,10 @@ export const MoorhenBackgroundColorMenuItem = (props: {
         }    
     }, [innerBackgroundColor])
 
-    const handleCircleClick = (color: { rgb: { r: number; g: number; b: number; a: number; } }) => {
+    const handleCircleClick = (col: string) => {
         try {
-            setInnerBackgroundColor(color.rgb)
+            const color = hexToRGB(col)
+            setInnerBackgroundColor({r:color[0],g:color[1],b:color[2]})
         }
         catch (err) {
             console.log('err', err)
@@ -50,10 +52,11 @@ export const MoorhenBackgroundColorMenuItem = (props: {
         }
     }
 
+    const swatchCols = ["#000000","#5c5c5c","#8a8a8a","#cccccc","#ffffff"]
     const panelContent = <>
         <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
         <div style={{padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
-            <CirclePicker width={convertRemToPx(10)} onChange={handleCircleClick} color={innerBackgroundColor} circleSize={convertRemToPx(10)/9} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+            <MoorhenColorSwatch cols={swatchCols} size={20} columns={5} onClick={handleCircleClick}/>
         </div>
     </>
 

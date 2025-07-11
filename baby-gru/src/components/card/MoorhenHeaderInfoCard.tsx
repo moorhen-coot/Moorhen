@@ -1,5 +1,6 @@
 import { Backdrop, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
+import { libcootApi } from "../../types/libcoot";
 import { useSelector } from "react-redux";
 import { convertViewtoPx } from "../../utils/utils";
 import { useEffect, useState } from "react";
@@ -13,11 +14,10 @@ export const MoorhenHeaderInfoCard = (props: {
 }) => {
 
     const [title, setTitle] = useState<string | null>(null)
-    const [authorLines, setAuthorLines] = useState<string[]>([])
-    const [journalLines, setJournalLines] = useState<string[]>([])
     const [compoundLines, setCompoundLines] = useState<string[]>([])
+    const [authorJournal, setAuthorJournal] = useState<libcootApi.AuthorJournal[]>([])
     const [busy, setBusy] = useState<boolean>(true)
-    
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -26,8 +26,7 @@ export const MoorhenHeaderInfoCard = (props: {
         const fetchHeaderInfo = async () => {
             const headerInfo = await props.molecule.fetchHeaderInfo(true)
             setTitle(headerInfo.title)
-            setAuthorLines(headerInfo.author_lines)
-            setJournalLines(headerInfo.journal_lines)
+            setAuthorJournal(headerInfo.author_journal)
             setCompoundLines(headerInfo.compound_lines)
             setBusy(false)
         }
@@ -35,6 +34,39 @@ export const MoorhenHeaderInfoCard = (props: {
         fetchHeaderInfo()
     }, [])
 
+    const auth_journal_stanza = authorJournal.sort((r1, r2) => {if(r1.id==="primary"){return -1} else if(r2.id==="primary"){return 1} else if(r1.id<r2.id){return -1}else{return 1}}).map((item, idx) => {
+        const auth = item.author
+        const journ = item.journal
+
+        const journal_stanza_this = journ.map((item, idx) => {
+            if(item.startsWith("pdbx_database_id_DOI")&&(item.split(/(?<=^\S+)\s/)).length>1){
+                const doi = "https://doi.org/"+item.split(/(?<=^\S+)\s/)[1].trim()
+                return <p style={{margin: 0}} key={idx}><a href={doi} target="_blank" rel="noopener noreferrer">{item}</a></p>
+            } else if(item.startsWith("pdbx_database_id_PubMed")&&(item.split(/(?<=^\S+)\s/)).length>1){
+                const doi = "https://pubmed.ncbi.nlm.nih.gov/"+item.split(/(?<=^\S+)\s/)[1].trim()
+                return <p style={{margin: 0}} key={idx}><a href={doi} target="_blank" rel="noopener noreferrer">{item}</a></p>
+            } else {
+                return <p style={{margin: 0}} key={idx}>{item}</p>
+            }
+        })
+
+       let row_style={backgroundColor: 'rgba(233, 233, 233, 0.3)'}
+       if(idx%2==0)
+             row_style = {backgroundColor: 'white'}
+       return <TableRow key={idx} style={row_style} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+            <TableCell>
+            Journal
+            </TableCell>
+            <TableCell>
+            {auth.map((item, idx) => <span style={{margin: 0}} key={idx}>{item}</span>)}
+            <br/><br/>{journal_stanza_this}
+            </TableCell>
+        </TableRow>
+    })
+
+    let last_row_style={backgroundColor: 'rgba(233, 233, 233, 0.3)'}
+    if(authorJournal.length%2==0)
+        last_row_style = {backgroundColor: 'white'}
     return <Popover
             onClose={() => props.setShow(false)}
             open={props.show}
@@ -51,7 +83,7 @@ export const MoorhenHeaderInfoCard = (props: {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {title === null ? 
+                    {title === null ?
                      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
                         <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                         <span>Loading...</span>
@@ -62,15 +94,8 @@ export const MoorhenHeaderInfoCard = (props: {
                         <TableCell component="th" scope="row">Title</TableCell>
                         <TableCell component="th" scope="row">{title}</TableCell>
                     </TableRow>
-                    <TableRow style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell component="th" scope="row">Author</TableCell>
-                        <TableCell component="th" scope="row">{authorLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
-                    </TableRow>
-                    <TableRow style={{backgroundColor: 'rgba(233, 233, 233, 0.3)'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell component="th" scope="row">Journal</TableCell>
-                        <TableCell component="th" scope="row">{journalLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
-                    </TableRow>
-                    <TableRow style={{backgroundColor: 'white'}} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    {auth_journal_stanza}
+                    <TableRow style={last_row_style} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell component="th" scope="row">Compound</TableCell>
                         <TableCell component="th" scope="row">{compoundLines.map((item, idx) => <p style={{margin: 0}} key={idx}>{item}</p>)}</TableCell>
                     </TableRow>

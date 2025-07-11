@@ -4,16 +4,27 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenMap } from "./MoorhenMap";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { setOrigin, setZoom, setQuat, setRequestDrawScene, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setActiveMolecule, setDraggableMolecule, setDisplayBuffers} from "../store/glRefSlice"
+import { addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays} from "../store/overlaysSlice"
+import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBondSmoothness,
+    setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
+    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
+    setDepthBlurDepth, setDrawAxes, setEdgeDetectDepthScale,
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
+    setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewRows, setMultiViewColumns,
+    setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from "../store/sceneSettingsSlice"
+import {setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
+  setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings } from "../store/refinementSettingsSlice"
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
 }
 
 export class MoorhenScriptApi implements MoorhenScriptApiInterface {
@@ -22,9 +33,9 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: ToolkitStore;
+    store: Store;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
         this.molecules = molecules
         this.maps = maps
         this.store = store
@@ -119,7 +130,65 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
             clear_extra_restraints: this.doClearExtraRestraints,
             refine_residues_using_atom_cid: this.doRefineResiduesUsingAtomCid,
             set_refinement_geman_mcclure_alpha: this.setGemanMcclureAlpha,
-            redraw_molecules: this.redraw_molecules
+            redraw_molecules: this.redraw_molecules,
+            setOrigin: setOrigin,
+            setZoom: setZoom,
+            setQuat: setQuat,
+            setRequestDrawScene: setRequestDrawScene,
+            setLightPosition: setLightPosition,
+            setAmbient: setAmbient,
+            setSpecular: setSpecular,
+            setDiffuse: setDiffuse,
+            setSpecularPower: setSpecularPower,
+            setFogClipOffset: setFogClipOffset,
+            setFogStart: setFogStart,
+            setFogEnd: setFogEnd,
+            setClipStart: setClipStart,
+            setClipEnd: setClipEnd,
+            setActiveMolecule: setActiveMolecule,
+            setDraggableMolecule: setDraggableMolecule,
+            setDisplayBuffers: setDisplayBuffers,
+            addTextOverlay: addTextOverlay,
+            addSvgPathOverlay: addSvgPathOverlay,
+            addFracPathOverlay: addFracPathOverlay,
+            emptyOverlays: emptyOverlays,
+            setDrawCrosshairs: setDrawCrosshairs,
+            setDrawScaleBar: setDrawScaleBar,
+            setDrawMissingLoops: setDrawMissingLoops,
+            setDefaultBondSmoothness: setDefaultBondSmoothness,
+            setDoSSAO: setDoSSAO,
+            setSsaoRadius: setSsaoRadius,
+            setSsaoBias: setSsaoBias,
+            setResetClippingFogging: setResetClippingFogging,
+            setClipCap: setClipCap,
+            resetSceneSettings: resetSceneSettings,
+            setEdgeDetectNormalScale: setEdgeDetectNormalScale,
+            setDoShadow: setDoShadow,
+            setDoSpin: setDoSpin,
+            setDepthBlurRadius: setDepthBlurRadius,
+            setBackgroundColor: setBackgroundColor,
+            setDepthBlurDepth: setDepthBlurDepth,
+            setDrawAxes: setDrawAxes,
+            setEdgeDetectDepthScale: setEdgeDetectDepthScale,
+            setDoEdgeDetect: setDoEdgeDetect,
+            setEdgeDetectDepthThreshold: setEdgeDetectDepthThreshold,
+            setEdgeDetectNormalThreshold: setEdgeDetectNormalThreshold,
+            setDrawEnvBOcc: setDrawEnvBOcc,
+            setDoAnaglyphStereo: setDoAnaglyphStereo,
+            setDoCrossEyedStereo: setDoCrossEyedStereo,
+            setDoSideBySideStereo: setDoSideBySideStereo,
+            setDoThreeWayView: setDoThreeWayView,
+            setDoMultiView: setDoMultiView,
+            setMultiViewRows: setMultiViewRows,
+            setMultiViewColumns: setMultiViewColumns,
+            setSpecifyMultiViewRowsColumns: setSpecifyMultiViewRowsColumns,
+            setThreeWayViewOrder: setThreeWayViewOrder,
+            setAnimateRefine: setAnimateRefine,
+            setEnableRefineAfterMod: setEnableRefineAfterMod,
+            setUseRamaRefinementRestraints: setUseRamaRefinementRestraints,
+            setuseTorsionRefinementRestraints: setuseTorsionRefinementRestraints,
+            setRefinementSelection: setRefinementSelection,
+            resetRefinementSettings: resetRefinementSettings
         };
 
         (new Function("with(this) { " + src + "}")).call(env)

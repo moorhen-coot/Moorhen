@@ -34,8 +34,9 @@
       }
 
       const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+      const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
 
-      if (memory64) {
+      if (memory64&&!isChromeLinux) {
         loadScript('/moorhen64.js')
           .then(src => {
             console.log(src + ' loaded 64-bit successfully.')

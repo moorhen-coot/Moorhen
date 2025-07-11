@@ -10,12 +10,12 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -106,7 +106,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
 
     const fetchFilesFromPDBRedo = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value
-        const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
+        const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.cif`
         const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`
         if (pdbCode && fetchMapDataCheckRef.current?.checked) {
             Promise.all([

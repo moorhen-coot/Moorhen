@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Button } from "react-bootstrap";
 
 export const MoorhenBaseMenuItem = (props: {
-    popoverContent?: JSX.Element;
+    popoverContent?: React.JSX.Element;
     popoverPlacement?: 'left' | 'right';
     onCompleted?: () => void;
     onEntering?: () => void;

@@ -24,6 +24,11 @@
 #include <utility>
 #include <cctype>
 #include <gemmi/mmdb.hpp>
+#include <gemmi/mmcif.hpp>
+#include <gemmi/to_mmcif.hpp>
+#include <gemmi/to_cif.hpp>
+#include <gemmi/read_cif.hpp>
+
 
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
@@ -51,6 +56,7 @@
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
+#include "coot-utils/coot-align.hh"
 
 #include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -70,6 +76,60 @@ using namespace emscripten;
 extern "C" {
 void untar(FILE *a, const char *path);
 }
+
+bool is64bit(){
+#ifdef _MOORHEN_MEMORY64_
+     return true;
+#else
+     return false;
+#endif
+}
+
+namespace moorhen {
+    inline void ltrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }));
+    }
+    inline void rtrim_inplace(std::string &s, const char cht='\0') {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [cht](unsigned char ch) {
+            if(cht!='\0') {
+                return ch != cht;
+            } else {
+                return !std::isspace(ch);
+            }
+        }).base(), s.end());
+    }
+    inline std::string ltrim(const std::string &s, const char cht='\0'){
+        std::string s_copy = s;
+        ltrim_inplace(s_copy,cht);
+        return s_copy;
+    }
+    inline std::string rtrim(const std::string &s, const char cht='\0'){
+        std::string s_copy = s;
+        rtrim_inplace(s_copy,cht);
+        return s_copy;
+    }
+    static bool ends_with(std::string_view str, std::string_view suffix) {
+        return str.size() >= suffix.size() && str.compare(str.size()-suffix.size(), suffix.size(), suffix) == 0;
+    }
+
+    static bool starts_with(std::string_view str, std::string_view prefix) {
+        return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+    }
+}
+
+struct CoordinateHeaderInfo {
+    std::string title;
+    std::map<std::string,std::vector<std::string>> author;
+    std::map<std::string,std::vector<std::string>> journal;
+    std::string software;
+    std::string compound;
+};
 
 struct RamachandranInfo {
     std::string chainId;
@@ -101,6 +161,10 @@ std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
     }
     return shortTypes;
 
+}
+
+std::string clipperStringAsString(const clipper::String &s){
+    return static_cast<std::string>(s);
 }
 
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
@@ -135,6 +199,144 @@ std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int im
     delete [] resTable;
     return v;
 }
+
+CoordinateHeaderInfo get_coord_header_info(const std::string& docData, const std::string& path){
+
+    CoordinateHeaderInfo header_info;
+
+    char *c_data = (char *)docData.c_str();
+    const size_t size = docData.length();
+    auto c_path = path.c_str();
+
+    const auto st = gemmi::read_structure_from_char_array(c_data,size,path);
+
+    header_info.author["primary"] = st.meta.authors;
+    header_info.journal["primary"] = std::vector<std::string>();
+
+    std::vector<std::string> soft_strings;
+    for(const auto& soft : st.meta.software){
+        std::string soft_str = soft.name;
+        if((soft.version.length()>0)||(soft.date.length()>0)){
+            soft_str += " (";
+            if((soft.version.length()>0)){
+                soft_str += soft.version;
+            }
+            if((soft.version.length()>0)&&(soft.date.length()>0)){
+                soft_str += ", ";
+            }
+            if((soft.date.length()>0)){
+                soft_str += soft.date;
+            }
+            soft_str += ")";
+        }
+        soft_strings.push_back(soft_str);
+    }
+
+    if(soft_strings.size()>0){
+        header_info.software = std::accumulate(++soft_strings.begin(), soft_strings.end(), soft_strings[0],
+                     [](const std::string& a, const std::string& b){
+                           return a + ", " + b;
+                     });
+    }
+
+    auto have_compound_card = false;
+
+    for(const auto& rem : st.raw_remarks){
+        if (rem.rfind("REMARK 400", 0) == 0) {
+            const auto rem_copy = moorhen::rtrim(rem);
+            const auto len = std::string("REMARK 400").length();
+            if((!have_compound_card) && (rem_copy.length()==len)){
+                continue;
+            }
+            if(rem_copy==std::string("REMARK 400 COMPOUND")){
+                have_compound_card = true;
+                continue;
+            }
+            header_info.compound += moorhen::ltrim(rem_copy.substr(len))+"\n";
+        }
+    }
+
+    for(const auto& kv : st.info){
+        if(kv.first=="_struct.title"){
+            header_info.title = kv.second;
+            break;
+        }
+    }
+
+    if(moorhen::ends_with(path,"cif")){
+        auto doc = gemmi::cif::read_string(docData);
+        for (gemmi::cif::Block& block : doc.blocks){
+
+            if(block.find_loop_item("_citation_author.citation_id")){
+                header_info.author.clear();
+                auto& loop = block.find_loop_item("_citation_author.citation_id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation_author.")){
+                    if(row.size()==loop.tags.size()){
+                        auto id_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.citation_id");
+                        auto name_pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation_author.name");
+                        if(id_pos != loop.tags.end() && name_pos != loop.tags.end()){
+                            auto pos_index = std::distance(loop.tags.begin(), id_pos);
+                            //if(row[pos_index]=="primary"){
+                            if(header_info.author.count(row[pos_index])==0)
+                                header_info.author[row[pos_index]] = std::vector<std::string>();
+                            auto name_index = std::distance(loop.tags.begin(), name_pos);
+                            header_info.author[row[pos_index]].push_back(moorhen::rtrim(moorhen::ltrim(row[name_index],'\''),'\''));
+                            //}
+                        }
+                    }
+                }
+            }
+
+            if(block.find_loop_item("_citation.id")){
+                auto& loop = block.find_loop_item("_citation.id")->loop;
+                for(const auto& row : block.find_mmcif_category("_citation.")){
+                    if(row.size()==loop.tags.size()){
+                        auto pos = std::find(loop.tags.begin(), loop.tags.end(), "_citation.id");
+                        if(pos != loop.tags.end()){
+                            auto index = std::distance(loop.tags.begin(), pos);
+                            //if(row[index]=="primary"){
+                            if(header_info.journal.count(row[index])==0)
+                                header_info.journal[row[index]] = std::vector<std::string>();
+                            int ipos=0;
+                            for(const auto& s : row){
+                                if(s!="?"){
+                                    header_info.journal[row[index]].push_back(loop.tags[ipos].substr(std::string("_citation.").length())+":"+std::string((40-loop.tags[ipos].length()),' ')+moorhen::rtrim(moorhen::ltrim(s,'\''),'\''));
+                                }
+                                ipos++;
+                            }
+                            //}
+                        }
+                    }
+                }
+            } else {
+                header_info.journal["primary"] = std::vector<std::string>();
+                for(const auto& item : block.items){
+                    if (item.type == gemmi::cif::ItemType::Pair){
+                        if(moorhen::starts_with(item.pair[0],"_citation.")){
+                            if(item.pair[1]!="?"){
+                                header_info.journal["primary"].push_back(item.pair[0].substr(std::string("_citation.").length())+":"+std::string((40-item.pair[0].length()),' ')+moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\''));
+                            }
+                        }
+                    }
+                }
+            }
+            for(const auto& item : block.items){
+                if (item.type == gemmi::cif::ItemType::Pair){
+                    if(item.pair[0]=="_pdbx_entry_details.compound_details"){
+                        const auto trimmed = moorhen::rtrim(moorhen::ltrim(item.pair[1],'\''),'\'');
+                        if(trimmed != "?"){
+                            header_info.compound += trimmed;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return header_info;
+
+}
+
 
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
@@ -211,6 +413,16 @@ class molecules_container_js : public molecules_container_t {
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
         }
 
+        std::string molecule_to_mmCIF_string_with_gemmi(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            std::ostringstream os;
+            gemmi::cif::write_cif_to_stream(os, gemmi::make_mmcif_document(st));
+            os.flush();
+            std::string s = os.str();
+            return s;
+        }
+
         std::vector<std::pair<std::string,int>> slicendice_slice(int imol, int nclusters, const std::string &clustering_method, const std::string &pae_contents_string){
 
             std::vector<std::pair<std::string,int>> cid_label_pair;
@@ -237,7 +449,7 @@ class molecules_container_js : public molecules_container_t {
                                 at[1] = atom.pos.y;
                                 at[2] = atom.pos.z;
                                 std::stringstream cidbuffer;
-                                cidbuffer << "/" << model.name << "/" << chain.name << "/" << residue.seqid.num.value;
+                                cidbuffer << "/" << model.num << "/" << chain.name << "/" << residue.seqid.num.value;
                                 if(residue.seqid.icode!=' ')
                                     cidbuffer << "." << residue.seqid.icode;
                                 const std::string cid = cidbuffer.str();
@@ -484,7 +696,7 @@ class molecules_container_js : public molecules_container_t {
 
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
             coot::residue_spec_t resSpec(chainID,resNo,altLoc);
-            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec);
+            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec,3.5);
         }
 
         std::vector<std::pair<int, int>> get_consecutive_ranges(const std::vector<int> &numbers) {
@@ -641,6 +853,39 @@ class molecules_container_js : public molecules_container_t {
                 o.push_back(pp.second.z());
             }
             return o;
+        }
+
+        clipper::Spacegroup get_map_spacegroup(int imol){
+            clipper::Spacegroup sg;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                sg = xMap.spacegroup();
+            }
+            return sg;
+        }
+
+        double get_map_data_resolution(int imol){
+            /* This can only work if associate_data_mtz_file_with_map has be called. */
+            if(is_valid_map_molecule(imol)){
+                try {
+                    (*this)[imol].fill_fobs_sigfobs();
+                    auto fobs = (*this)[imol].get_original_fobs_sigfobs();
+                    auto reso = fobs->resolution();
+                    return reso.limit();
+                } catch(std::exception e){
+                    //Presumably we do not have original fobs.
+                }
+            }
+            return -1.0;
+        }
+
+        clipper::Cell get_map_cell(int imol){
+            clipper::Cell cell;
+            if(is_valid_map_molecule(imol)){
+                auto xMap = (*this)[imol].xmap;
+                cell = xMap.cell();
+            }
+            return cell;
         }
 };
 
@@ -1090,6 +1335,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     register_vector<TorsionEntry>("vector<TorsionEntry>");
+    register_vector<coot::residue_range_t>("vector_residue_range_t");
+    register_vector<coot::geometry_distortion_info_container_t>("vector_geometry_distortion_info_container_t");
 
     value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
@@ -1140,6 +1387,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    class_<clipper::Spgr_descr>("Spgr_descr")
+    .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
+    .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
+    .function("symbol_hm", &clipper::Spgr_descr::symbol_hm)
+    .function("symbol_xhm", &clipper::Spgr_descr::symbol_xhm)
+    .function("symbol_hm_ext", &clipper::Spgr_descr::symbol_hm_ext)
+    ;
+    class_<clipper::Spacegroup, base<clipper::Spgr_descr>>("Spacegroup")
+    ;
     class_<clipper::Cell_descr>("Cell_descr")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("a", &clipper::Cell_descr::a)
@@ -1172,6 +1428,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<clipper::String>("Clipper_String")
     .constructor()
     .constructor<const std::string>()
+    .function("as_string", &clipperStringAsString)
     ;
     class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
     .constructor()
@@ -1187,6 +1444,65 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("P_r1234",&coot::simple_rotamer::P_r1234)
     .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
     .function("get_chi",&coot::simple_rotamer::get_chi)
+    ;
+    class_<coot::geometry_distortion_info_container_t>("geometry_distortion_info_container_t")
+      .constructor()
+      .property("geometry_distortion",&coot::geometry_distortion_info_container_t::geometry_distortion)
+      .property("chain_id",&coot::geometry_distortion_info_container_t::chain_id)
+      .property("n_atoms",&coot::geometry_distortion_info_container_t::n_atoms)
+      .property("min_resno",&coot::geometry_distortion_info_container_t::min_resno)
+      .property("max_resno",&coot::geometry_distortion_info_container_t::max_resno)
+      .function("set_min_max",&coot::geometry_distortion_info_container_t::set_min_max)
+      .function("size",&coot::geometry_distortion_info_container_t::size)
+      .function("print",&coot::geometry_distortion_info_container_t::print)
+      .function("distortion",&coot::geometry_distortion_info_container_t::distortion)
+      .function("distortion_sum",&coot::geometry_distortion_info_container_t::distortion_sum)
+      .function("get_geometry_distortion_info",&coot::geometry_distortion_info_container_t::get_geometry_distortion_info)
+    ;
+    //FIXME - this ignores simple_restraint
+    class_<coot::geometry_distortion_info_t>("geometry_distortion_info_t")
+      .constructor()
+      .property("is_set",&coot::geometry_distortion_info_t::is_set)
+      .property("distortion_score",&coot::geometry_distortion_info_t::distortion_score)
+      .property("atom_indices",&coot::geometry_distortion_info_t::atom_indices)
+      .property("atom_specs",&coot::geometry_distortion_info_t::atom_specs)
+      .property("residue_spec",&coot::geometry_distortion_info_t::residue_spec)
+      .function("initialised_p",&coot::geometry_distortion_info_t::initialised_p)
+    ;
+    class_<coot::residue_range_t>("residue_range_t")
+      .constructor()
+      .constructor<const std::string&, int, int>()
+      .property("chain_id",&coot::residue_range_t::chain_id)
+      .property("res_no_start",&coot::residue_range_t::res_no_start)
+      .property("res_no_end",&coot::residue_range_t::res_no_end)
+    ;
+    class_<coot::mutate_insertion_range_info_t>("mutate_insertion_range_info_t")
+      .constructor<int, const std::vector<std::string>&>()
+      .property("start_resno",&coot::mutate_insertion_range_info_t::start_resno)
+      .property("types",&coot::mutate_insertion_range_info_t::types)
+      .function("end_resno",&coot::mutate_insertion_range_info_t::end_resno)
+    ;
+    class_<coot::chain_mutation_info_container_t>("chain_mutation_info_container_t")
+      .constructor()
+      .constructor<const std::string&>()
+      .property("chain_id",&coot::chain_mutation_info_container_t::chain_id)
+      .property("alignedS",&coot::chain_mutation_info_container_t::alignedS)
+      .property("alignedT",&coot::chain_mutation_info_container_t::alignedT)
+      .property("alignedS_label",&coot::chain_mutation_info_container_t::alignedS_label)
+      .property("alignedT_label",&coot::chain_mutation_info_container_t::alignedT_label)
+      .property("alignment_string",&coot::chain_mutation_info_container_t::alignment_string)
+      .property("alignment_score",&coot::chain_mutation_info_container_t::alignment_score)
+      .property("insertions",&coot::chain_mutation_info_container_t::insertions)
+      .property("single_insertions",&coot::chain_mutation_info_container_t::single_insertions)
+      .property("deletions",&coot::chain_mutation_info_container_t::deletions)
+      .property("mutations",&coot::chain_mutation_info_container_t::mutations)
+      .function("add_deletion",&coot::chain_mutation_info_container_t::add_deletion)
+      .function("add_mutation",&coot::chain_mutation_info_container_t::add_mutation)
+      .function("add_insertion",&coot::chain_mutation_info_container_t::add_insertion)
+      .function("rationalize_insertions",&coot::chain_mutation_info_container_t::rationalize_insertions)
+      .function("get_residue_type",&coot::chain_mutation_info_container_t::get_residue_type)
+      .function("print",&coot::chain_mutation_info_container_t::print)
+      .function("dissimilarity_score",&coot::chain_mutation_info_container_t::dissimilarity_score)
     ;
     value_object<merge_molecule_results_info_t>("merge_molecule_results_info_t")
     .field("chain_id", &merge_molecule_results_info_t::chain_id)
@@ -1353,6 +1669,23 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("set_colour_map_for_map_coloured_by_other_map",&molecules_container_t::set_colour_map_for_map_coloured_by_other_map)
+    .function("get_mutation_info",&molecules_container_t::get_mutation_info)
+    .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)
+    .function("get_validation_vs_dictionary_for_selection",&molecules_container_t::get_validation_vs_dictionary_for_selection)
+    .function("rotate_around_bond",&molecules_container_t::rotate_around_bond)
+    .function("read_extra_restraints",&molecules_container_t::read_extra_restraints)
+    .function("get_sum_density_for_atoms_in_residue",&molecules_container_t::get_sum_density_for_atoms_in_residue)
+    .function("get_residue_sidechain_average_position",&molecules_container_t::get_residue_sidechain_average_position)
+    .function("get_residue_CA_position",&molecules_container_t::get_residue_CA_position)
+    .function("get_residue_average_position",&molecules_container_t::get_residue_average_position)
+    .function("get_missing_residue_ranges",&molecules_container_t::get_missing_residue_ranges)
+    .function("get_ligand_distortion",&molecules_container_t::get_ligand_distortion)
+    .function("add_lsq_superpose_atom_match",&molecules_container_t::add_lsq_superpose_atom_match)
+    .function("split_residue_using_map",&molecules_container_t::split_residue_using_map)
+    .function("flood",&molecules_container_t::flood)
+    .function("copy_molecule",&molecules_container_t::copy_molecule)
+    .function("add_terminal_residue_directly",&molecules_container_t::add_terminal_residue_directly)
     .function("mmcif_tests", &molecules_container_t::mmcif_tests)
     .function("M2T_updateIntParameter", &molecules_container_t::M2T_updateIntParameter)
     .function("M2T_updateFloatParameter", &molecules_container_t::M2T_updateFloatParameter)
@@ -1410,6 +1743,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_max_number_of_threads", &molecules_container_t::set_max_number_of_threads)
     .function("set_map_is_contoured_with_thread_pool", &molecules_container_t::set_map_is_contoured_with_thread_pool)
     .function("is_EM_map",&molecules_container_t::is_EM_map)
+    .function("scale_map",&molecules_container_t::scale_map)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_mesh_for_ligand_validation_vs_dictionary",&molecules_container_t::get_mesh_for_ligand_validation_vs_dictionary)
     .function("molecule_to_mmCIF_string", &molecules_container_t::molecule_to_mmCIF_string)
@@ -1480,6 +1814,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fit_ligand",&molecules_container_t::fit_ligand)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
     .function("get_svg_for_residue_type",&molecules_container_t::get_svg_for_residue_type)
+    .function("get_svg_for_2d_ligand_environment_view",&molecules_container_t::get_svg_for_2d_ligand_environment_view)
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
@@ -1551,6 +1886,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
+    .function("export_chemical_features_as_gltf", &molecules_container_t::export_chemical_features_as_gltf)
     .function("export_molecular_representation_as_gltf", &molecules_container_t::export_molecular_representation_as_gltf)
     .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
     .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
@@ -1587,15 +1923,20 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_refinement_geman_mcclure_alpha",&molecules_container_t::set_refinement_geman_mcclure_alpha)
     .function("get_geman_mcclure_alpha",&molecules_container_t::get_geman_mcclure_alpha)
     .function("get_map_histogram",&molecules_container_t::get_map_histogram)
+    .function("get_map_vertices_histogram",&molecules_container_t::get_map_vertices_histogram)
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
     .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .function("get_rdkit_mol_pickle_base64", &molecules_container_t::get_rdkit_mol_pickle_base64)
     .function("get_q_score", &molecules_container_t::get_q_score)
+    .function("get_q_score_for_cid", &molecules_container_t::get_q_score_for_cid)
     .function("get_acedrg_atom_types_for_ligand", &molecules_container_t::get_acedrg_atom_types_for_ligand)
     .function("dictionary_atom_name_map", &molecules_container_t::dictionary_atom_name_map)
     .function("transform_map_using_lsq_matrix", &molecules_container_t::transform_map_using_lsq_matrix)
+    .function("get_SMILES_for_residue_type", &molecules_container_t::get_SMILES_for_residue_type)
+    .function("set_occupancy", &molecules_container_t::set_occupancy)
+    .function("read_small_molecule_cif", &molecules_container_t::read_small_molecule_cif)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
@@ -1603,6 +1944,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
+    .function("get_map_data_resolution",&molecules_container_js::get_map_data_resolution)
+    .function("get_map_cell",&molecules_container_js::get_map_cell)
+    .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
@@ -1622,6 +1966,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    .function("molecule_to_mmCIF_string_with_gemmi", &molecules_container_js::molecule_to_mmCIF_string_with_gemmi)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
@@ -1866,6 +2211,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
+    register_map<std::string,std::vector<std::string>>("MapStringVectorString");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
@@ -1920,6 +2266,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("rail_points_total",&molecules_container_t::r_factor_stats::rail_points_total)
         .field("rail_points_new",&molecules_container_t::r_factor_stats::rail_points_new)
     ;
+    value_object<std::pair<bool, float>>("pair_bool_float")
+        .field("first",&std::pair<bool, float>::first)
+        .field("second",&std::pair<bool, float>::second)
+    ;
+    value_object<std::pair<double, std::vector<double> > >("pair_double_vector_double")
+        .field("first",&std::pair<double, std::vector<double>>::first)
+        .field("second",&std::pair<double, std::vector<double>>::second)
+    ;
     value_object<std::pair<clipper::Coord_orth, float>>("pair_clipper_coord_orth_float")
         .field("first",&std::pair<clipper::Coord_orth, float>::first)
         .field("second",&std::pair<clipper::Coord_orth, float>::second)
@@ -1972,6 +2326,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<double,double>::first)
         .field("second",&std::pair<double,double>::second)
     ;
+    value_object<std::pair<int,double>>("int_double_pair")
+        .field("first",&std::pair<int,double>::first)
+        .field("second",&std::pair<int,double>::second)
+    ;
     value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
         .field("first",&std::pair<std::string, unsigned int>::first)
         .field("second",&std::pair<std::string, unsigned int>::second)
@@ -2013,6 +2371,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     register_vector<moorhen::helix_t>("vector_helix_t");
+    register_vector<std::pair<double, std::vector<double>>>("vector_pair_double_vector_double");
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)
@@ -2054,6 +2413,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("second",&std::pair<int,coot::instanced_mesh_t>::second)
     ;
 
+    value_object<CoordinateHeaderInfo>("CoordinateHeaderInfo")
+        .field("title",&CoordinateHeaderInfo::title)
+        .field("author",&CoordinateHeaderInfo::author)
+        .field("journal",&CoordinateHeaderInfo::journal)
+        .field("software",&CoordinateHeaderInfo::software)
+        .field("compound",&CoordinateHeaderInfo::compound)
+    ;
+
     value_array<glm::mat4>("array_mat4")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -2081,10 +2448,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     function("SmallMoleculeCifToMMCif",&SmallMoleculeCifToMMCif);
 
-    //For testing
-    //function("TakeColourMap",&TakeColourMap);
-    //function("TakeStringIntPairVector",&TakeStringIntPairVector);
     function("get_mtz_columns",&get_mtz_columns);
-
+    function("get_coord_header_info",&get_coord_header_info);
+    function("is64bit",&is64bit);
 
 }

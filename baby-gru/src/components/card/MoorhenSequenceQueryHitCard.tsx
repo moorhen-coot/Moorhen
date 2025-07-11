@@ -7,7 +7,7 @@ import { webGL } from "../../types/mgWebGL";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { Store } from "@reduxjs/toolkit";
 import { enqueueSnackbar } from "notistack";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
 
@@ -17,7 +17,7 @@ export const MoorhenQueryHitCard = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
-    store: ToolkitStore;
+    store: Store;
     selectedMolNo: number;
     selectedChain: string;
  }) => {

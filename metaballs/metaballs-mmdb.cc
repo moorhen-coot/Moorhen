@@ -30,7 +30,6 @@
 #include "Cartesian.h"
 #include <vector>
 #include <utility>
-#include <algorithm>
 #include <map>
 #include <math.h>
 #include <string>
@@ -172,7 +171,7 @@ std::map<std::string,float> multLookup = {
 {"AS", 1.85},
 {"AT", 1.80},
 {"AU", 1.66},
-{"B", 0.85},
+{"B", 1.9},
 {"BA", 2.53},
 {"BE", 1.12},
 {"BH", 2.0},//UNK
@@ -370,6 +369,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
         if(HetAtoms[i]->Het){
             std::string element = std::string(HetAtoms[i]->element);
             trim(element);
+            std::transform(element.begin(), element.end(), element.begin(), ::toupper);
             float atomMult = multLookup[element];
             if(strncmp(HetAtoms[i]->residue->name,"HOH",3)!=0){
                 //std::cout << element << " " << atomMult << std::endl;

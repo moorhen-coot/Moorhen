@@ -4,50 +4,73 @@
       "dictionaries": ["jsdoc", "closure"]
     },
     "source": {
-      "include": ["./src"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/)",
+      "include": ["./src/"],
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
-    "plugins": [
-        "node_modules/better-docs/typescript",
-        "node_modules/better-docs/component",
-        "node_modules/better-docs/category"
-    ],
+    "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
     "typescript": {
         "moduleRoot": "./src"
     },
     "templates": {
-      "search": true,
-      "default": {
-        "staticFiles": {
-          "include": [
-            "./docs.styles.css",
-            "./public/baby-gru/pixmaps/MoorhenLogo.png"
-          ]
-        }
-      },
-      "better-docs": {
-            "name": "Moorhen Developer Documentation",
-            "logo": "./MoorhenLogo.png",
-            "css": "docs.styles.css",
-            "navLinks": [
-              {
-                  "label": "Github",
-                  "href": "https://github.com/moorhen-coot/Moorhen"
-              },
-              {
-                  "label": "Moorhen Wiki",
-                  "href": "https://moorhen-coot.github.io/wiki/"
-              }
-            ]
-          }
+        "search": true,
+        "default": {
+            "staticFiles": {
+                "include": [
+                    "./docs.styles.css",
+                    "./public/baby-gru/pixmaps/MoorhenLogo.png"
+                ]
+            }
+        },
+        "cleverLinks": false,
+        "monospaceLinks": false
+    },
+    "babel": {
+        "extensions": ["tsx","ts"],
+        "ignore": ["**/*.(test|spec).ts"],
+        "babelrc": false,
+        "presets": [["@babel/preset-env", { "targets": { "node": true } }], "@babel/preset-typescript"],
+        "plugins": ["@babel/proposal-class-properties", "@babel/proposal-object-rest-spread"]
     },
     "opts": {
-        "template": "node_modules/better-docs",
-        "destination": "docs",
+        "encoding": "utf8",
+        "destination": "./docs/",
         "recurse": true,
         "verbose": true,
-        "readme": "../README.md"
+        "template": "node_modules/docdash"
     },
-    "sourceType": "module"
-  }
+    "docdash": {
+        "meta": {
+            "title": "Moorhen Developer Documentation",
+            "description": "Moorhen Developer Documentation",
+            "keyword": "Moorhen Developer Documentation"
+        },
+        "collapse":true,
+        "sectionOrder": [
+             "Classes",
+             "Modules",
+             "Global",
+             "Externals",
+             "Events",
+             "Namespaces",
+             "Mixins",
+             "Tutorials",
+             "Interfaces"
+        ],
+        "menu":{
+            "GitHub": {
+                "href":"https://github.com/moorhen-coot/Moorhen",
+                "target":"_blank",
+                "class":"menu-item",
+                "id":"repository"
+            },
+            "Moorhen Wiki": {
+                "href":"https://moorhen-coot.github.io/wiki/",
+                "target":"_blank",
+                "class":"menu-item",
+                "id":"repository"
+            }
+        },
+        "search": true
+    }
+}

@@ -20,7 +20,7 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
         return ligandInfo
     }
 
-    const getCards = (selectedModel: number, selectedMap: number, ligandInfo: moorhen.LigandInfo[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, ligandInfo: moorhen.LigandInfo[]): React.JSX.Element[] => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
 
         if (!selectedMolecule) {
@@ -28,7 +28,7 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
         }
 
         return ligandInfo.map((ligand, index) => {
-            return <MoorhenLigandCard key={`${ligand.cid}-${selectedModel}`} ligand={ligand} molecule={selectedMolecule}/>
+            return <MoorhenLigandCard key={`${ligand.cid}-${selectedModel}`} ligand={ligand} molecule={selectedMolecule} calculateQScore={true}/>
         })
     }
 
@@ -36,5 +36,6 @@ export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
                 enableMapSelect={false}
                 fetchData={fetchCardData}
                 getCards={getCards}
+                menuId="ligand-validation"
             />
 }

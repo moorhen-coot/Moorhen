@@ -5,7 +5,7 @@ import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { Backdrop } from "@mui/material";
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
 import { moorhen } from '../types/moorhen';
@@ -34,6 +34,10 @@ import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLev
 import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
 import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
 import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
+import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
+import { MoorhenDroppable } from './MoorhenDroppable';
+import { setRequestDrawScene } from "../store/glRefSlice"
+import {MoorhenMapsHeadManager} from './managers/MoorhenMapsHeadManager'
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -53,10 +57,17 @@ declare module "notistack" {
             glRef: React.RefObject<webGL.MGWebGL>;
             monomerLibraryPath: string;
         },
+        atomInformation: {
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
+            moleculeRef: moorhen.Molecule;
+            cidRef: string;
+            glRef: React.RefObject<webGL.MGWebGL>;
+            monomerLibraryPath: string;
+        },
         acceptRejectRotateTranslateAtoms: {
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string>;
-            glRef: React.RefObject<webGL.MGWebGL>;    
+            glRef: React.RefObject<webGL.MGWebGL>;
         };
         acceptRejectMatchingLigand: {
             refMolNo: number;
@@ -76,11 +87,11 @@ declare module "notistack" {
             onResume?: () => void;
             onProgress?: (progress: number) => void;
             disableTimeCapsule?: boolean
-            sleepTime?: number;    
+            sleepTime?: number;
         };
         updatingMaps: {
             glRef: React.RefObject<webGL.MGWebGL>;
-            commandCentre: React.RefObject<moorhen.CommandCentre>;    
+            commandCentre: React.RefObject<moorhen.CommandCentre>;
         };
         modelTrajectory: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -95,6 +106,7 @@ declare module "notistack" {
         };
         mapContourLevel: {
             mapMolNo: number;
+            mapPrecision: number
         };
         rotamerChange: {
             moleculeMolNo: number;
@@ -104,12 +116,12 @@ declare module "notistack" {
         }
         screenshot: {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-            glRef: React.RefObject<webGL.MGWebGL>;    
+            glRef: React.RefObject<webGL.MGWebGL>;
         };
         sideBar: {
-            children: JSX.Element;
+            children: React.JSX.Element;
             modalId: string;
-            title: string | JSX.Element;
+            title: string | React.JSX.Element;
         }
     }
 }
@@ -125,14 +137,14 @@ declare module "notistack" {
  * @property {string} [monomerLibraryPath='./monomers'] - A string with the path to the monomer library, relative to the root of the app
  * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
  * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
- * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
+ * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should be disabled
  * @property {string[]} [includeNavBarMenuNames] - An array of menu names to include in the Moorhen navbar. If empty array then all menus will be included. It can also be used to set their order.
  * @property {object[]} extraNavBarModals - A list with additional draggable modals with buttons rendered under the navigation menu
  * @property {object[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
- * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
- * @property {JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
- * @property {JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
- * @property {JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
+ * @property {React.JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
+ * @property {React.JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
+ * @property {React.JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
+ * @property {React.JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
  * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
  * @property {boolean} [allowScripting=true] - Indicates if the scrpting interface is enabled
  * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
@@ -141,27 +153,27 @@ declare module "notistack" {
  * import { MoorhenContainer } from "moorhen";
  *
  * const ExampleApp = () => {
- * 
+ *
  *  const doClick = (evt) => { console.log('Click!') }
- * 
+ *
  *  const exportMenuItem =  <MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
  *                              Example extra menu
  *                          </MenuItem>
- *  
+ *
  * const setDimensions = () => {
  *   return [window.innerWidth, window.innerHeight]
  * }
- *  
- * return <MoorhenReduxProvider> 
+ *
+ * return <MoorhenReduxProvider>
  *              <MoorhenContainer
  *                  allowScripting={false}
  *                  setMoorhenDimensions={setDimensions}
  *                  extraFileMenuItems={[exportMenuItem]}/>
  *          </MoorhenReduxProvider>
- * 
+ *
  */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
-    
+
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -170,7 +182,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
-    
+
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
@@ -189,6 +201,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
 
     const dispatch = useDispatch()
 
@@ -203,7 +216,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         refs[key] = props[key] ? props[key] : innerRefsMap[key]
     })
 
-    const { 
+    const {
         glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef, videoRecorderRef, lastHoveredAtomRef
     } = refs
 
@@ -228,24 +241,27 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowScripting: true,
         backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
         aceDRGInstance: null,
-        store: MoorhenReduxStore
+        store: MoorhenReduxStore,
+        allowAddNewFittedLigand: false,
+        allowMergeFittedLigand: true,
     }
 
     const {
-        disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
+        disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals,
         monomerLibraryPath, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions,
-        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store
+        onUserPreferencesChange, extraNavBarModals, includeNavBarMenuNames, store,
+        allowAddNewFittedLigand, allowMergeFittedLigand
     } = { ...defaultProps, ...props }
 
     const collectedProps: moorhen.CollectedProps = {
-        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+        glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance,
         urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
         videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, store,
-        includeNavBarMenuNames
+        includeNavBarMenuNames, allowAddNewFittedLigand, allowMergeFittedLigand
     }
-    
+
     useLayoutEffect(() => {
         let head = document.head
         let style: any = document.createElement("link")
@@ -260,7 +276,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         let [ newWidth, newHeight ]: [number, number] = [window.innerWidth, window.innerHeight]
         if (setMoorhenDimensions) {
             [ newWidth, newHeight ] = setMoorhenDimensions()
-        } 
+        }
         if (width !== newWidth) {
             dispatch(setWidth(newWidth))
         }
@@ -288,7 +304,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
         initTimeCapsule()
     }, [userPreferencesMounted])
-    
+
     useEffect(() => {
         const onCootInitialized = async () => {
             if (cootInitialized && userPreferencesMounted) {
@@ -309,7 +325,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 setBackgroundColor(defaultBackgroundColor)
             )
         }
-        
+
     }, [userPreferencesMounted])
 
     useLayoutEffect(() => {
@@ -321,7 +337,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         } else {
             style.href = `${urlPrefix}/flatly.css`
         }
-        
+
         style.rel = "stylesheet";
         style.async = true
         style.type = 'text/css'
@@ -334,9 +350,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         if (!userPreferencesMounted) {
             return
         }
-        
+
         const _isDark = isDarkBackground(...backgroundColor)
-        
+
         if (defaultBackgroundColor !== backgroundColor) {
             dispatch( setDefaultBackgroundColor(backgroundColor) )
         }
@@ -391,11 +407,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     dispatch( toggleCootCommandStart() )
                 }
             })
-            await commandCentre.current.init()    
+            await commandCentre.current.init()
         }
-        
+
         initCommandCentre()
-        
+
         return () => {
             commandCentre.current.close()
         }
@@ -454,8 +470,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [hoveredAtom])
 
     useEffect(() => {
-        glRef.current.resize(width, height)
-        glRef.current.drawScene()
+        dispatch(setRequestDrawScene(true))
     }, [width, height])
 
     useEffect(() => {
@@ -469,7 +484,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap])
 
-    return <SnackbarProvider 
+    return <SnackbarProvider
         hideIconVariant={false}
         autoHideDuration={4000}
         maxSnack={20}
@@ -490,7 +505,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             mapContourLevel: MoorhenMapContourLevelSnackBar,
             rotamerChange: MoorhenRotamerChangeSnackBar,
             screenshot: MoorhenScreenshotSnackBar,
-            sideBar: MoorhenSideBar
+            sideBar: MoorhenSideBar,
+            atomInformation: MoorhenAtomInfoSnackBar,
         }}
         preventDuplicate={true}>
     <div>
@@ -509,6 +525,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     <MoorhenUpdatingMapsManager commandCentre={commandCentre} glRef={glRef}/>
 
+    <MoorhenMapsHeadManager />
+
     {/**
     <MoorhenSharedSessionManager
         commandCentre={props.commandCentre}
@@ -521,6 +539,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     */}
 
     <Container fluid className={`baby-gru ${theme}`}>
+        <MoorhenDroppable
+                        glRef={glRef}
+                        monomerLibraryPath={monomerLibraryPath}
+                        timeCapsuleRef={timeCapsuleRef}
+                        commandCentre={commandCentre}
+                        store={store}
+        >
         <Row>
             <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
                 <div
@@ -529,7 +554,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         backgroundColor: `rgba(
                             ${255 * backgroundColor[0]},
                             ${255 * backgroundColor[1]},
-                            ${255 * backgroundColor[2]}, 
+                            ${255 * backgroundColor[2]},
                             ${backgroundColor[3]})`,
                         cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(height),
                     }}>
@@ -546,6 +571,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 </div>
             </Col>
         </Row>
+        </MoorhenDroppable>
     </Container>
     </SnackbarProvider>
 }

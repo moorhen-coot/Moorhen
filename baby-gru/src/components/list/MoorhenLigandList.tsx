@@ -31,15 +31,21 @@ export const MoorhenLigandList = (props: {
         let ligandList: moorhen.LigandInfo[] = []
 
         for (const ligand of props.molecule.ligands) {
-            const [svg, chemCompInfo] = await Promise.all([
+            const [svg, chemCompInfo,smilesInfo,flev_svg] = await Promise.all([
                 props.molecule.getLigandSVG(ligand.resName, true),
                 props.commandCentre.current.cootCommand({
                     returnType: "string_string_pair_vector",
                     command: 'get_gphl_chem_comp_info',
                     commandArgs: [ligand.resName, props.molecule.molNo],
-                }, false) as Promise<moorhen.WorkerResponse<{first: string; second: string}[]>>
+                }, false) as Promise<moorhen.WorkerResponse<{first: string; second: string}[]>>,
+                props.commandCentre.current.cootCommand({
+                    returnType: 'string',
+                    command: "get_SMILES_for_residue_type",
+                    commandArgs: [ligand.resName,props.molecule.molNo],
+                }, false) as Promise<moorhen.WorkerResponse<string>>,
+                props.molecule.getFLEVSVG(ligand.cid),
             ])
-            ligandList.push({ svg, chem_comp_info: chemCompInfo.data.result.result, ...ligand })
+            ligandList.push({ svg, smiles: smilesInfo.data.result.result, chem_comp_info: chemCompInfo.data.result.result, flev_svg, ...ligand })
         }
 
         setLigandList(ligandList)
