@@ -24,6 +24,7 @@ import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructu
 import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
 import { MoorhenQScoreModal } from '../modal/MoorhenQScoreModal';
 import { MoorhenColourMapByOtherMapModal } from '../modal/MoorhenColourMapByOtherMapModal';
+import { MoorhenVectorsModal } from '../modal/MoorhenVectorsModal';
 import { useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { modalKeys } from "../../utils/enums";
@@ -53,6 +54,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showQScoreModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.QSCORE))
     const showJsonValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.JSON_VALIDATION))
     const showColorMapByMapModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.COLOR_MAP_BY_MAP))
+    const showVectorsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.VECTORS))
 
     return <>
         <MoorhenModelsModal {...props}/>
@@ -152,6 +154,9 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         }
         {showColorMapByMapModal &&
             <MoorhenColourMapByOtherMapModal {...props} />
+        }
+        {showVectorsModal &&
+            <MoorhenVectorsModal {...props} />
         }
 
         {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

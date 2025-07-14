@@ -8,6 +8,8 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { useSnackbar } from "notistack";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
+import { showModal } from '../../store/modalsSlice';
+import { modalKeys } from '../../utils/enums';
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -87,6 +89,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     return <>
                     <MenuItem onClick={tomogramTest}>
                         Tomogram...
+                    </MenuItem>
+                    <MenuItem onClick={(evt) => { dispatch(showModal(modalKeys.VECTORS)); document.body.click() }}>
+                        Vectors
                     </MenuItem>
                     <hr></hr>
                     <InputGroup className='moorhen-input-group-check'>
