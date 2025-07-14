@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import * as styles from "./Inputs.module.css";
+import "./MoorhenPreciseInput.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -138,7 +138,10 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div className={`${styles.container} ${props.labelPosition === "top" ? styles.column : styles.row}`} data-theme={isDark ? "dark" : "light"}>
+        <div
+            className={`${"moorhen__input.container"} ${props.labelPosition === "top" ? "moorhen__input.column" : "moorhen__input.row"}`}
+            data-theme={isDark ? "dark" : "light"}
+        >
             {label ? <label htmlFor="input">{label}&nbsp;</label> : null}
             <input
                 ref={inputRef}
@@ -148,10 +151,10 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth }}
-                className={`${styles.input} 
-                ${type === "numberForm" ? styles.number : styles.compact} 
-                ${isValidInput ? styles.valid : styles.invalid} 
-                ${disabled ? styles.disabled : ""}`}
+                className={`${"moorhen__input.input"} 
+                ${type === "numberForm" ? "moorhen__input.number" : "moorhen__input.compact"} 
+                ${isValidInput ? "moorhen__input.valid" : "moorhen__input.invalid"} 
+                ${disabled ? "moorhen__input.disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}

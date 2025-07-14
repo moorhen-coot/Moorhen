@@ -6,7 +6,7 @@ import { AddCircleOutline, Cookie, RemoveCircleOutline } from "@mui/icons-materi
 import { IconButton } from "@mui/material";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
-import * as styles from "./Slider.module.css";
+import "./MoorhenSlider.css";
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
     externalValue: T; // value passed from parent
@@ -171,7 +171,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         const drawPreciseInput = () => {
             if (!isRange) {
                 return (
-                    <label className={styles.label} htmlFor="slider">
+                    <label className={"moorhen__slider label"} htmlFor="slider">
                         <MoorhenPreciseInput
                             allowNegativeValues={minVal < 0}
                             label={sliderTitle}
@@ -187,7 +187,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 );
             } else {
                 return (
-                    <div className={`${styles.container} ${styles.row}`}>
+                    <div className={`${"moorhen__slider container"} ${"moorhen__slider row"}`}>
                         <MoorhenPreciseInput
                             allowNegativeValues={minVal < 0}
                             value={props.externalValue[0]}
@@ -218,7 +218,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
         if (!usePreciseInput) {
             return (
-                <label className={styles.label} htmlFor="slider">
+                <label className={"moorhen__slider label"} htmlFor="slider">
                     {sliderTitle}:{" "}
                     {isRange
                         ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(decimalPlaces)}`
@@ -301,13 +301,15 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
     return (
         <>
-            <div className={styles.container}>
+            <div className={"moorhen__slider container"}>
                 {drawTitle()}
-                <div className={styles.leftPanel}>{drawSidePanels("L")}</div>
-                <div className={styles.sliderCont}>
+                <div className={"moorhen__slider leftPanel"}>{drawSidePanels("L")}</div>
+                <div className={"moorhen__slider sliderCont"}>
                     <input
                         type="range"
-                        className={`${styles.slider} ${isDisabled ? styles.disabled : ""} ${buttonIsDown ? styles.buttonIsDown : ""}`}
+                        className={`${"moorhen__slider slider"} ${isDisabled ? "moorhen__slider disabled" : ""} ${
+                            buttonIsDown ? "moorhen__slider buttonIsDown" : ""
+                        }`}
                         disabled={isDisabled}
                         value={Array.isArray(internalValue) ? internalValue[0] : internalValue}
                         onChange={(evt) => handleChange(Array.isArray(internalValue) ? ([+evt.target.value, internalValue[1]] as T) : (+evt.target.value as T))}
@@ -316,7 +318,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         step={precision}
                     />
                     {showMinMaxVal ? (
-                        <div className={styles.minMaxVal}>
+                        <div className={"moorhen__slider minMaxVal"}>
                             <span>{toFixedNoZero(minVal, decimalPlaces)}</span>
                             <span>{toFixedNoZero(maxVal, decimalPlaces)}</span>
                         </div>
@@ -324,7 +326,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         <></>
                     )}
                 </div>
-                <div className={styles.rightPanel}>{drawSidePanels("R")}</div>
+                <div className={"moorhen__slider rightPanel"}>{drawSidePanels("R")}</div>
             </div>
         </>
     );

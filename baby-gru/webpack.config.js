@@ -110,28 +110,12 @@ module.exports = (env, argv) => {
           type: 'asset/resource',
         },
         {
-          test: /\.module\.css$/,
-          use: [
-            'style-loader', 
-            {
-              loader: 'css-loader',
-              options: {
-                modules: {
-                  localIdentName: '[name]__[local]___[hash:base64:5]'
-                }
-              }
-            }
-          ],
-        },
-        {
           test: /\.css$/,
           sideEffects: true,
-          exclude: /\.module\.css$/,   
           use: [ MiniCssExtractPlugin.loader, 'css-loader'],
         },
         {
           test: /\.s[ac]ss$/,
-          exclude: /\.module\.s[ac]ss$/,
           use: [ "style-loader", "css-loader",
           {
               loader: "sass-loader",

@@ -1,35 +1,35 @@
 
 @import '../colors.css';
 
-.container {
+.moorhen__slider.container {
     display: grid;
     grid-template-columns: 24px auto 24px;
     grid-template-rows: 0.2fr 1fr;
     margin-bottom: 0.5rem;
 }
 
-.label {
+.moorhen__slider.label {
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
     align-self: center;
 }
 
-.leftPanel {
+.moorhen__slider.leftPanel {
     grid-column: 1;
     grid-row: 2;
     justify-self: center;
     align-self: top;
 }
 
-.rightPanel {
+.moorhen__slider.rightPanel {
     grid-column: 3;
     grid-row: 2;
     justify-self: center;
     align-self: top;
 }
 
-.sliderCont {
+.moorhen__slider.sliderCont {
     grid-column: 2;
     grid-row: 2;
     justify-self: center;
@@ -37,7 +37,7 @@
     width: 90%
 }
 
-.minMaxVal {
+.moorhen__slider.minMaxVal {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,16 +49,16 @@
 }
 
 :root {
-    --slider-thumb-size: 20px;
-    --slider-track-height: 8px;
+    --moorhen-slider-thumb-size: 20px;
+    --moorhen-slider-track-height: 8px;
 }
 
-.slider {
+.moorhen__slider.slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: var(--slider-track-height);
-    border-radius: var(--slider-track-height);  
+    height: var(--moorhen-slider-track-height);
+    border-radius: var(--moorhen-slider-track-height);
     background: #d3d3d3;
     outline: none;
     opacity: 0.7;
@@ -67,69 +67,69 @@
     cursor: pointer;  
 }
 
-.slider::-webkit-slider-thumb {
+.moorhen__slider.slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
-    border-radius: 50%; 
-    background: var(--moorhen-accent);
-    cursor: pointer;
-    border: 1px solid var(--moorhen-border);
-}
-
-.slider::-moz-range-thumb {
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
+    width: var(--moorhen-slider-thumb-size);
+    height: var(--moorhen-slider-thumb-size);
     border-radius: 50%;
     background: var(--moorhen-accent);
     cursor: pointer;
     border: 1px solid var(--moorhen-border);
 }
 
-.slider.disabled::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: var(--slider-thumb-size);
-    height:var(--slider-thumb-size);
-    border-radius: 50%; 
-    background: var(--moorhen-disabled);
-    cursor: default;
+.moorhen__slider.slider::-moz-range-thumb {
+    width: var(--moorhen-slider-thumb-size);
+    height: var(--moorhen-slider-thumb-size);
+    border-radius: 50%;
+    background: var(--moorhen-accent);
+    cursor: pointer;
+    border: 1px solid var(--moorhen-border);
 }
 
-.slider.disabled::-moz-range-thumb {
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
+.moorhen__slider.slider.disabled::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--moorhen-slider-thumb-size);
+    height: var(--moorhen-slider-thumb-size);
     border-radius: 50%;
     background: var(--moorhen-disabled);
     cursor: default;
 }
 
-.slider:hover {
+.moorhen__slider.slider.disabled::-moz-range-thumb {
+    width: var(--moorhen-slider-thumb-size);
+    height: var(--moorhen-slider-thumb-size);
+    border-radius: 50%;
+    background: var(--moorhen-disabled);
+    cursor: default;
+}
+
+.moorhen__slider.slider:hover {
     opacity: 1;
     border-color: var(--moorhen-focus);
     outline: 0;
     box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
 
-.slider.buttonIsDown {
+.moorhen__slider.slider.buttonIsDown {
     opacity: 1;
     border-color: var(--moorhen-focus);
     outline: 0;
     box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
 
-.slider:hover.disabled {
+.moorhen__slider.slider:hover.disabled {
     opacity: 0.7;
     border-color: var(--moorhen-disabled);
     box-shadow: none;
     cursor: default;
 }
 
-.row {
+.moorhen__slider.row {
     flex-direction: row;
 }
 
-.column {
+.moorhen__slider.column {
     flex-direction: column;
 }

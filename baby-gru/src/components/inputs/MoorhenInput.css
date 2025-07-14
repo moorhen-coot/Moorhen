@@ -1,6 +1,6 @@
 @import '../colors.css';
 /* General styles for the inputs */
-.input {
+.moorhen__input {
     display: block;
     width: 100%;
     padding: 0.5rem 0.75rem;
@@ -16,7 +16,7 @@
     box-sizing: border-box;
 }
 
-.input:focus {
+.moorhen__input:focus {
     color: var(--moorhen-input-color);
     background-color: var(--moorhen-input-background);
     border-color: var(--moorhen-focus);
@@ -24,7 +24,7 @@
     box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
 
-.invalid {
+.moorhen__input.invalid {
     border-color: var(--moorhen-error) !important;
     border-top: 1px solid var(--moorhen-error) !important;
     border-left: 1px solid var(--moorhen-error)!important;
@@ -32,51 +32,14 @@
     box-shadow: 2px 2px 4px 1px var(--moorhen-error-shadow) !important;
 }
 
-.disabled {
+.moorhen__input.disabled {
     color: var(--moorhen-disabled);
 }
 
-.precise {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;  
-    margin-top: 0.25rem;
-    box-sizing: border-box;
-    width: 100%; 
-    border: 1px solid var(--moorhen-border); 
-}
-
-.number{
-    height: 2.5rem;
-    margin: 0.5rem 1rem;
-}
-
-.compact{
-    height: 2rem;
-    border-top: none;
-    border-left: none;
-    border-bottom: 1px solid var(--moorhen-border); 
-}
-
-.compact:focus {
-    box-shadow: 2px 2px 4px 1px var(--moorhen-focus-shadow);
-}
-
-.number:focus {
-    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
-}
-.valid {
-    border-color: var(--moorhen-border);
-}
-
-.container {
-    display: flex;
-    align-items: center;
-}
-
-.row {
+.moorhen__input.row {
     flex-direction: row;
 }
 
-.column {
+.moorhen__input.column {
     flex-direction: column;
 }
