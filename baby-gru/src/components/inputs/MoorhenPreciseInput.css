@@ -31,8 +31,3 @@
 .moorhen__input.valid {
     border-color: var(--moorhen-border);
 }
-
-.moorhen__input.container {
-    display: flex;
-    align-items: center;
-}

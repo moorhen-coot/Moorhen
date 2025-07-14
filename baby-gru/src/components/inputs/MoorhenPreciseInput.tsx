@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenPreciseInput.css";
+import "../MoorhenStack.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -138,11 +139,12 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div
-            className={`${"moorhen__input.container"} ${props.labelPosition === "top" ? "moorhen__input.column" : "moorhen__input.row"}`}
-            data-theme={isDark ? "dark" : "light"}
-        >
-            {label ? <label htmlFor="input">{label}&nbsp;</label> : null}
+        <div className={`${props.labelPosition === "top" ? "moorhen__stack__column" : "moorhen__stack__row"}`} data-theme={isDark ? "dark" : "light"}>
+            {label ? (
+                <label className="moorhen__input__label" htmlFor="input">
+                    {label}&nbsp;
+                </label>
+            ) : null}
             <input
                 ref={inputRef}
                 id="input"
@@ -151,10 +153,10 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 disabled={disabled}
                 value={internalValue}
                 style={{ width: inputWidth }}
-                className={`${"moorhen__input.input"} 
-                ${type === "numberForm" ? "moorhen__input.number" : "moorhen__input.compact"} 
-                ${isValidInput ? "moorhen__input.valid" : "moorhen__input.invalid"} 
-                ${disabled ? "moorhen__input.disabled" : ""}`}
+                className={`${"moorhen__input precise"} 
+                ${type === "numberForm" ? "moorhen__input number" : "moorhen__input compact"} 
+                ${isValidInput ? "moorhen__input valid" : "moorhen__input invalid"} 
+                ${disabled ? "moorhen__input disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}
