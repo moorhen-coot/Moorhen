@@ -103,7 +103,13 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <FormSelect ref={vectorSelectRef} size="sm" onChange={handleVectorChange}>
                                 <option value="new">New vector</option>
                                 {vectorsList.length>0 && vectorsList.map((vec,i) => {
-                                    return <option key={i} value={vec.uniqueId}>{vec.uniqueId}</option>
+                                    if(vec.coordsMode==="points") {
+                                        return <option key={i} value={vec.uniqueId}>{vec.xFrom.toFixed(2)+" "+vec.yFrom.toFixed(2)+" "+vec.zFrom.toFixed(2)+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
+                                    } else if(vec.coordsMode==="atoms") {
+                                        return <option key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.cidTo}</option>
+                                    } else  {
+                                        return <option key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
+                                    }
                                 })
                                 }
                                 </FormSelect>
