@@ -23,14 +23,14 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         const mapItem = state.maps.find((item) => item.molNo === props.map.molNo);
         return mapItem?.isOriginLocked || false;
     });
-    
+
     const handleOriginLockClick = () => {
         const currentStatus = props.map.isOriginLocked;
         props.map.toggleOriginLock(!currentStatus);
         //setIsOriginLocked(!currentStatus);
-        props.map.drawMapContour(); 
+        props.map.drawMapContour();
     };
-    
+
     const maxRadius = useMemo(() => {
         if (props.map.isEM) {
             if (props.map.headerInfo === null) {
@@ -50,26 +50,24 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
 
     const opacitySlider = (
         <MoorhenSlider
-        minVal={0.01}
-        maxVal={1.0}
-        logScale={false}
-        sliderTitle="Opacity"
-        isDisabled={!props.mapIsVisible}
-        usePreciseInput={true}
-        showMinMaxVal={false}
-        externalValue={
-            props.mapStyle === "solid" ? surfaceAlpha : 
-            props.mapStyle === "lines" ? meshAlpha :
-            litAlpha
-        }
-        setExternalValue={
-            props.mapStyle === "solid" ? (value) => setSurfaceAlpha(value) :
-            props.mapStyle === "lines" ? (value) => setMeshAlpha(value) :
-            (value) => setLitAlpha(value)
-        }               
-        decimalPlaces={2}
-    />
-    )
+            minVal={0.01}
+            maxVal={1.0}
+            logScale={false}
+            sliderTitle="Opacity"
+            isDisabled={!props.mapIsVisible}
+            usePreciseInput={true}
+            showMinMaxVal={false}
+            externalValue={props.mapStyle === "solid" ? surfaceAlpha : props.mapStyle === "lines" ? meshAlpha : litAlpha}
+            setExternalValue={
+                props.mapStyle === "solid"
+                    ? (value) => setSurfaceAlpha(value)
+                    : props.mapStyle === "lines"
+                    ? (value) => setMeshAlpha(value)
+                    : (value) => setLitAlpha(value)
+            }
+            decimalPlaces={2}
+        />
+    );
     useEffect(() => {
         let newValue: number;
         if (props.mapStyle === "lines") {
@@ -79,11 +77,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         } else if (props.mapStyle === "lit-lines") {
             newValue = litAlpha;
         }
-        dispatch(setMapAlpha({molNo: props.map.molNo, alpha:newValue}));
-    }
-    , [meshAlpha, surfaceAlpha, litAlpha, props.mapStyle]);
-
-
+        dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newValue }));
+    }, [meshAlpha, surfaceAlpha, litAlpha, props.mapStyle]);
 
     return (
         <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
@@ -106,7 +101,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                 style={{
                     paddingTop: "0.4rem",
                     padding: "0.2rem",
-                    backgroundColor: isDark ? "#ced5d6" : "white",
+                    backgroundColor: isDark ? "#696969ff" : "white",
                 }}
             >
                 <Stack direction="vertical" gap={1}>
@@ -217,7 +212,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 usePreciseInput={true}
                                 piWidth={"3rem"}
                             />
-                        {opacitySlider}
+                            {opacitySlider}
                         </Stack>
                     </Stack>
                 </Stack>
