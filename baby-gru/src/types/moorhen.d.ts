@@ -1187,6 +1187,9 @@ export namespace moorhen {
         atomInfoCards: {
             atomInfoIds: any[]
         }
+        vectors: {
+            vectorsList: MoorhenVector[]
+        }
     }
 
     type actionButtonSettings = {
@@ -1196,6 +1199,28 @@ export namespace moorhen {
         rotateTranslate: 'ATOM' | 'RESIDUE' | 'CHAIN' | 'MOLECULE';
         drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
         rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
+    }
+
+    type VectorsCoordMode = 'atoms'|'points'|'atompoint';
+    type VectorsLabelMode = 'none'|'start'|'end'|'middle';
+    type VectorsDrawMode = 'cylinder'|'dashedcylinder';
+    type VectorsArrowMode = 'none'|'start'|'end'|'both';
+    interface MoorhenVector  {
+        coordsMode: VectorsCoordMode;
+        labelMode: VectorsLabelMode;
+        drawMode: VectorsDrawMode;
+        arrowMode: VectorsArrowMode;
+        xFrom: number;
+        yFrom: number;
+        zFrom: number;
+        xTo: number;
+        yTo: number;
+        zTo: number;
+        cidFrom: string;
+        cidTo: string;
+        molNoFrom: number;
+        molNoTo: number;
+        uniqueId: string;
     }
 
 }

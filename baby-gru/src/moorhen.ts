@@ -63,6 +63,7 @@ import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwr
 import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
+import { addVector, removeVector, emptyVectors } from './store/vectorsSlice';
 
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
@@ -85,6 +86,7 @@ import glRefSliceReducer from './store/glRefSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
+import vectorsReducer from './store/vectorsSlice';
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
@@ -119,5 +121,6 @@ export {
     setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, glRefSliceReducer, atomInfoCardsReducer, setShowHoverInfo,
     MoorhenRamachandran, MoorhenLigandValidation, MoorhenCarbohydrateValidation, MoorhenDifferenceMapPeaks,
     MoorhenFillMissingAtoms, MoorhenJsonValidation, MoorhenMMRRCCPlot, MoorhenPepflipsDifferenceMap, MoorhenQScore,
-    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation, autoOpenFiles
+    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation, autoOpenFiles, addVector, removeVector, emptyVectors,
+    vectorsReducer
 };
