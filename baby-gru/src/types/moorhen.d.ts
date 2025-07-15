@@ -1208,6 +1208,7 @@ export namespace moorhen {
     interface MoorhenVector  {
         coordsMode: VectorsCoordMode;
         labelMode: VectorsLabelMode;
+        labelText: string;
         drawMode: VectorsDrawMode;
         arrowMode: VectorsArrowMode;
         xFrom: number;

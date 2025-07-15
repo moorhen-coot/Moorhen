@@ -9,6 +9,37 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { FormControlLabel, FormControl, RadioGroup, Radio, Slider, TextField, Menu, MenuItem, Accordion, AccordionSummary, AccordionDetails, Popover, StyledEngineProvider, IconButton, Tabs, Tab, Tooltip } from '@mui/material';
 import {v4 as uuidv4} from 'uuid';
 import { addVector, removeVector } from "../../store/vectorsSlice"
+import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
+
+const MoorhenDeleteVectorMenuItem = (props: {
+    item: moorhen.Map | moorhen.Molecule;
+    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+
+    const dispatch = useDispatch()
+
+    const panelContent = <>
+        <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="MoorhenGetDeleteMenuItem" className="mb-3">
+            <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
+        </Form.Group>
+    </>
+
+    const onCompleted = useCallback(() => {
+    }, [vectorsList])
+
+    return <MoorhenBaseMenuItem
+        textClassName="text-danger"
+        buttonVariant="danger"
+        buttonText="Delete"
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Delete vector"}
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
 
 export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
 
@@ -27,25 +58,19 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const vectorSelectRef = useRef<null | HTMLSelectElement>(null)
-    const moleculeFromSelectRef = useRef<null | HTMLSelectElement>(null)
-    const moleculeToSelectRef = useRef<null | HTMLSelectElement>(null)
     const coordsModeRef = useRef<null | HTMLSelectElement>(null)
     const drawModeRef = useRef<null | HTMLSelectElement>(null)
     const arrowModeRef = useRef<null | HTMLSelectElement>(null)
     const labelModeRef = useRef<null | HTMLSelectElement>(null)
+    const labelTextRef = useRef<null | HTMLInputElement>(null)
     const cidFromRef = useRef<null | HTMLInputElement>(null)
     const cidToRef = useRef<null | HTMLInputElement>(null)
-    const xFromRef = useRef<null | HTMLInputElement>(null)
-    const yFromRef = useRef<null | HTMLInputElement>(null)
-    const zFromRef = useRef<null | HTMLInputElement>(null)
-    const xToRef = useRef<null | HTMLInputElement>(null)
-    const yToRef = useRef<null | HTMLInputElement>(null)
-    const zToRef = useRef<null | HTMLInputElement>(null)
 
     const newVector = () => {
         const aVector: moorhen.MoorhenVector = {
             coordsMode: "atoms",
             labelMode: "none",
+            labelText: "",
             drawMode: "cylinder",
             arrowMode: "none",
             xFrom: 0.0,
@@ -71,8 +96,6 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         }
         dispatch(addVector(theVector))
     }
-
-    const defaultValue = "atoms"
 
     const handleVectorChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if(vectorSelectRef !== null && typeof vectorSelectRef !== 'function') {
@@ -115,11 +138,14 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 </FormSelect>
                             </Form.Group>
                         </>
-    const footer = <Button onClick={handleApply}>Apply</Button>
+
+    const footer = <>{vectorSelectRef.current.value!=="new" && <Button className='m-2' variant="danger" onClick={handleApply}>Delete</Button>}
+                    <Button className='m-2' onClick={handleApply}>Apply</Button></>
 
     const updateVector = ({
         coordsMode=undefined,
         labelMode=undefined,
+        labelText=undefined,
         drawMode=undefined,
         arrowMode=undefined,
         xFrom=undefined,
@@ -137,6 +163,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         const newVector: moorhen.MoorhenVector = {
             coordsMode: (coordsMode !== undefined) ? coordsMode : theVector.coordsMode,
             labelMode: (labelMode !== undefined) ? labelMode : theVector.labelMode,
+            labelText: (labelText !== undefined) ? labelText : theVector.labelText,
             drawMode: (drawMode !== undefined) ? drawMode : theVector.drawMode,
             arrowMode: (arrowMode !== undefined) ? arrowMode : theVector.arrowMode,
             xFrom: (xFrom !== undefined) ? xFrom : theVector.xFrom,
@@ -165,7 +192,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             {headerContent}
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                             <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Between</Form.Label>
-                                <FormSelect size="sm" ref={coordsModeRef} defaultValue={defaultValue} onChange={(evt) => {
+                                <FormSelect size="sm" ref={coordsModeRef} defaultValue="atoms" onChange={(evt) => {
                                     if (coordsModeRef !== null && typeof coordsModeRef !== 'function') {
                                         coordsModeRef.current.value = evt.target.value
                                         updateVector({coordsMode:evt.target.value as moorhen.VectorsCoordMode})
@@ -179,10 +206,10 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             { (theVector.coordsMode === "atoms" || theVector.coordsMode === "atompoint") &&
                             <>
                             <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>From atom</div>
-                            <MoorhenMoleculeSelect ref={moleculeFromSelectRef} molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, false)} />
+                            <MoorhenMoleculeSelect molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, false)} />
                             <Form.Group className='moorhen-form-group' controlId="cidFrom">
                                 <Form.Label>selection</Form.Label>
-                                <Form.Control ref={cidFromRef} type="text" value={theVector.cidFrom} onChange={(evt) => { 
+                                <Form.Control ref={cidFromRef} type="text" value={theVector.cidFrom} onChange={(evt) => {
                                     updateVector({cidFrom:evt.target.value})
                             }} />
                             </Form.Group>
@@ -191,7 +218,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             { theVector.coordsMode === "atoms" &&
                             <>
                             <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>To atom</div>
-                            <MoorhenMoleculeSelect ref={moleculeToSelectRef} molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, true)} />
+                            <MoorhenMoleculeSelect molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, true)} />
                             <Form.Group className='moorhen-form-group' controlId="cidTo">
                                 <Form.Label>selection</Form.Label>
                                 <Form.Control ref={cidToRef} type="text" value={theVector.cidTo} onChange={(evt) => {
@@ -205,7 +232,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>From point</div>
                             <Row>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>x:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.xFrom} ref={xFromRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.xFrom} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({xFrom:Number(evt.target.value)})
@@ -213,7 +240,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>y:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.yFrom} ref={yFromRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.yFrom} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({yFrom:Number(evt.target.value)})
@@ -221,7 +248,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>z:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.zFrom} ref={zFromRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.zFrom} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({zFrom:Number(evt.target.value)})
@@ -236,7 +263,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>To point</div>
                             <Row>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>x:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.xTo} ref={xToRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.xTo} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({xTo:Number(evt.target.value)})
@@ -244,7 +271,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>y:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.yTo} ref={yToRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.yTo} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({yTo:Number(evt.target.value)})
@@ -252,7 +279,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>z:</div></Col>
-                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.zTo} ref={zToRef} type="number" onChange={(evt) => {
+                                <Col xs={2} sm md lg={3}><Form.Control value={theVector.zTo} type="number" onChange={(evt) => {
                                     try {
                                         const dum = Number(evt.target.value)
                                         updateVector({zTo:Number(evt.target.value)})
@@ -264,7 +291,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             }
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                             <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Draw mode</Form.Label>
-                                <FormSelect size="sm" ref={drawModeRef} defaultValue={defaultValue} onChange={(evt) => {
+                                <FormSelect size="sm" ref={drawModeRef} defaultValue="cylinder" onChange={(evt) => {
                                     if (drawModeRef !== null && typeof drawModeRef !== 'function') {
                                         drawModeRef.current.value = evt.target.value
                                         updateVector({drawMode:evt.target.value as moorhen.VectorsDrawMode})
@@ -276,7 +303,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             </Form.Group>
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                             <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Arrow mode</Form.Label>
-                                <FormSelect size="sm" ref={arrowModeRef} defaultValue={defaultValue} onChange={(evt) => {
+                                <FormSelect size="sm" ref={arrowModeRef} defaultValue="none" onChange={(evt) => {
                                     if (arrowModeRef !== null && typeof arrowModeRef !== 'function') {
                                         arrowModeRef.current.value = evt.target.value
                                         updateVector({arrowMode:evt.target.value as moorhen.VectorsArrowMode})
@@ -290,7 +317,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             </Form.Group>
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                             <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Label mode</Form.Label>
-                                <FormSelect size="sm" ref={labelModeRef} defaultValue={defaultValue} onChange={(evt) => {
+                                <FormSelect size="sm" ref={labelModeRef} defaultValue="none" onChange={(evt) => {
                                     if (labelModeRef !== null && typeof labelModeRef !== 'function') {
                                         labelModeRef.current.value = evt.target.value
                                         updateVector({labelMode:evt.target.value as moorhen.VectorsLabelMode})
@@ -302,6 +329,12 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <option value="middle">Middle</option>
                                 </FormSelect>
                             </Form.Group>
+                            {theVector.labelMode !== "none" && <Form.Group  style={{display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem'}} className='moorhen-form-group' controlId="cidTo">
+                                <Form.Label>Label text</Form.Label>
+                                <Form.Control ref={labelTextRef} type="text" value={theVector.labelText} onChange={(evt) => {
+                                    updateVector({labelText:evt.target.value})
+                                }} />
+                            </Form.Group>}
                         </>
 
     return <MoorhenDraggableModalBase
