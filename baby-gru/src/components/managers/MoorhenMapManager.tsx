@@ -7,6 +7,7 @@ import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
 import { setMapRadius, setContourLevel } from "../../moorhen";
 import { showMap } from "../../moorhen";
+import { debounce } from "@mui/material";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
@@ -42,7 +43,9 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const _postDraw = (startTime: number) => {
         const now = Date.now();
         isWorkingRef.current = false;
-        console.debug(`Map manager draw time for map ${map.molNo}:`, now - startTime);
+        const timing = now - startTime;
+        //console.debug(`Map manager draw time for map ${map.molNo}:`, timing);
+        debounceTime.current = timing;
     };
 
     const _drawMap = async (now: number) => {
@@ -62,7 +65,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
 
         const now = Date.now();
-        if (now - lastTime.current < debounceTime.current || isWorkingRef.current) {
+        if (now - lastTime.current < debounceTime.current * 0.9) {
             if (lastDrawTimeout.current) {
                 clearTimeout(lastDrawTimeout.current);
             }
