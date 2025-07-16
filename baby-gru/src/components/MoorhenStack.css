@@ -1,0 +1,12 @@
+.moorhen__stack, .moorhen__stack__row, .moorhen__stack__column {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.moorhen__stack__row {
+    flex-direction: row;
+}
+.moorhen__stack__column {
+    flex-direction: column;
+}

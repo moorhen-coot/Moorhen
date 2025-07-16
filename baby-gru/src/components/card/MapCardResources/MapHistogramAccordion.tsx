@@ -211,7 +211,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
             <AccordionDetails
                 style={{
                     padding: "0.2rem",
-                    backgroundColor: isDark ? "#ced5d6" : "white",
+                    backgroundColor: isDark ? "#b4b4b4ff" : "white",
                 }}
             >
                 <Stack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
