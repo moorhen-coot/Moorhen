@@ -1,8 +1,8 @@
-import { useRef, useState} from "react";
+import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
+import { moorhen } from "../../../types/moorhen";
 import "./MoorhenPreciseInput.css";
-import "../MoorhenStack.css";
+import "../../MoorhenStack.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -59,18 +59,18 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const { allowNegativeValues = true, decimalDigits = 2, label = "", disabled = false, width, waitReturn = false, minMax = null, type = "standard" } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
-    const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits))
-    const isValidRef = useRef<boolean>(true)
+    const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits));
+    const isValidRef = useRef<boolean>(true);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    let displayValue: string = "" 
+    let displayValue: string = "";
     if (!isUserInteracting) {
-        displayValue  = props.value.toFixed(decimalDigits) 
+        displayValue = props.value.toFixed(decimalDigits);
     } else {
-        displayValue = internalValue
+        displayValue = internalValue;
     }
 
-    const checkIsValidInput = (input: string) => {       
+    const checkIsValidInput = (input: string) => {
         if (input === "") {
             return false;
         }
@@ -89,16 +89,16 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         return true;
     };
 
-    isValidRef.current = checkIsValidInput(displayValue)
+    isValidRef.current = checkIsValidInput(displayValue);
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        setIsUserInteracting(true); 
-        setInternalValue(evt.target.value)  
+        setIsUserInteracting(true);
+        setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
-    }
+    };
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === "Enter") {
@@ -113,7 +113,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const handleBlur = () => {
         setIsUserInteracting(false);
     };
-
 
     const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";

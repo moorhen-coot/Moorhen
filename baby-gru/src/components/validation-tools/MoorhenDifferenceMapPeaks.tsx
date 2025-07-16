@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Col, Form } from "react-bootstrap";
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from "chart.js";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";

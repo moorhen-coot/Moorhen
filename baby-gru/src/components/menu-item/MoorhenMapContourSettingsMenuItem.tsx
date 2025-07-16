@@ -5,7 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form, InputGroup } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {

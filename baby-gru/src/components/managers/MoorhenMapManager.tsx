@@ -7,7 +7,6 @@ import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
 import { setMapRadius, setContourLevel } from "../../moorhen";
 import { showMap } from "../../moorhen";
-import { debounce } from "@mui/material";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();

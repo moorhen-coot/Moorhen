@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Col, Row, Form, Card, Button } from "react-bootstrap";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
