@@ -2,7 +2,7 @@ import { useMemo, useState, useRef} from "react";
 import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { AddCircleOutline, Cookie, RemoveCircleOutline } from "@mui/icons-material";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
@@ -142,10 +142,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         props.setExternalValue?.(internalValueRef.current as T);
         }
 
-    const displayValue  = (logScale? log10ofT(props.externalValue) : props.externalValue) 
+    //const displayValue  = (logScale? log10ofT(props.externalValue) : props.externalValue) 
 
     const handleChange = (newValue: T) => {
-        setExternalValue(logScale ? pow10ofT(newValue) : newValue); // external value is changed by logscale
+        props.setExternalValue(logScale ? pow10ofT(newValue) : newValue); // external value is changed by logscale
     };
 
     const drawTitle = () => {
@@ -157,7 +157,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                             allowNegativeValues={minVal < 0}
                             label={sliderTitle}
                             value={props.externalValue as number}
-                            setValue={(newVal) => setExternalValue(+newVal as T)}
+                            setValue={(newVal) => props.setExternalValue(+newVal as T)}
                             waitReturn={piWaitReturn}
                             decimalDigits={decimalPlaces}
                             width={piWidth ? piWidth : 2.5 + 0.6 * decimalPlaces + "rem"}
@@ -168,11 +168,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 );
             } else {
                 return (
-                    <Stack
-                    direction="row"
-                    spacing={1}
-                    justifyContent="space-between"
-
+                    <div 
                 >
                     <MoorhenPreciseInput
                         allowNegativeValues={minVal < 0}
@@ -195,7 +191,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         disabled={isDisabled}
                         minMax={piMinMax}
                     />
-                    </Stack>
+                    </div>
                 );
             }
         };
@@ -204,7 +200,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
         if (!usePreciseInput) {
             return (
-                <label className={"moorhen__slider label"} htmlFor="slider">
+                <label className={"moorhen__slider__label"} htmlFor="slider">
                     {sliderTitle}:{" "}
                     {isRange
                         ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(decimalPlaces)}`
@@ -288,10 +284,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
     return (
         <>
-            <div className={"moorhen__slider container"}>
+            <div className={"moorhen__slider__container"}>
                 {drawTitle()}
-                <div className={"moorhen__slider leftPanel"}>{drawSidePanels("L")}</div>
-                <div className={"moorhen__slider sliderCont"}>
+                <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
+                <div className={"moorhen__slider__sliderCont"}>
                     <input
                         type="range"
                         className={`${"moorhen__slider slider"} ${isDisabled ? "moorhen__slider disabled" : ""} ${

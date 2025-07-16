@@ -126,7 +126,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 </label>
             ) : null}
             <input
-                ref={inputRef}
                 id="input"
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
