@@ -33,31 +33,33 @@ type MoorhenColourPickerType = MoorhenColourPickerSingle | MoorhenColourPickerDu
  * MoorhenColourPicker component props
  *
  * @typedef {object} MoorhenColourPickerBase
- * @prop {[number, number, number]} colour
- *   The primary RGB color value as an array of three numbers.
- * @prop {(colour: [number, number, number]) => void} setColour
- *   Callback to update the primary color.
+ * @prop {number[]} colour
+ *   The primary RGB color value as an array of three numbers [number, number, number].
+ * @prop {function} setColour
+ *   Callback to update the primary color. (colour: [number, number, number]) => void.
  * @prop {string} [label]
  *   Optional label for the primary color picker.
  * @prop {string} [position="top"]
  *   Popover position ("top" or "bottom").
- * @prop {() => void} [onClose]
- *   Callback fired when the color picker popover closes.
- * @prop {() => void} [onOpen]
- *   Callback fired when the color picker popover opens.
+ * @prop {function} [onClose]
+ *   Callback fired when the color picker popover closes. () => void.
+ * @prop {function} [onOpen]
+ *   Callback fired when the color picker popover opens.() => void.
  * @prop {string} [tooltip]
  *   Tooltip text for the color swatch.
  *
  * @typedef {object} MoorhenColourPickerDual
  *   Extends MoorhenColourPickerBase for a dual color picker.
- * @prop {[number, number, number]} colour2
- *   The secondary RGB color value.
- * @prop {(colour: [number, number, number]) => void} setColour2
- *   Callback to update the secondary color.
+ * @prop {number[]} colour2
+ *   The secondary RGB color value [number, number, number].
+ * @prop {function} setColour2
+ *   Callback to update the secondary color. (colour: [number, number, number]) => void.
  * @prop {string} [label2]
  *   Optional label for the secondary color picker.
  *
  * @typedef {MoorhenColourPickerSingle | MoorhenColourPickerDual} MoorhenColourPickerType
+ *
+ * @function
  */
 
 export default function MoorhenColourPicker(props:MoorhenColourPickerType) {

@@ -5,7 +5,7 @@
     },
     "source": {
       "include": ["./src/"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types)",
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
@@ -56,6 +56,21 @@
              "Mixins",
              "Tutorials",
              "Interfaces"
-        ]
+        ],
+        "menu":{
+            "GitHub": {
+                "href":"https://github.com/moorhen-coot/Moorhen",
+                "target":"_blank",
+                "class":"menu-item",
+                "id":"repository"
+            },
+            "Moorhen Wiki": {
+                "href":"https://moorhen-coot.github.io/wiki/",
+                "target":"_blank",
+                "class":"menu-item",
+                "id":"repository"
+            }
+        },
+        "search": true
     }
 }

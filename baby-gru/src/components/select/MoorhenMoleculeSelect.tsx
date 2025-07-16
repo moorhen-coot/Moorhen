@@ -38,7 +38,8 @@ type MoorhenMoleculeSelectPropsType = {
  * }
  * 
  * return (
- *  <MoorhenMoleculeSelect ref={moleculeSelectRef} width='100%' label='Select a molecule' onChange={handleModelChange} />
+ *  <MoorhenMoleculeSelect ref={moleculeSelectRef} width='100%'
+     label='Select a molecule' onChange={handleModelChange} />
  * )
  */
 export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMoleculeSelectPropsType>((props, selectRef) => {

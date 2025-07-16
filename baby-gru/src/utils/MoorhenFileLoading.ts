@@ -1,8 +1,12 @@
 import { moorhen } from '../types/moorhen';
 import { readTextFile, readDataFile } from "./utils"
 import { MoorhenMolecule } from "./MoorhenMolecule"
+import { setValidationJson } from "../store/jsonValidation"
+import { MoorhenMap } from "./MoorhenMap"
 import { useSnackbar } from "notistack"
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../store/moleculesSlice"
+import { addMapList } from "../store/mapsSlice"
+import { setActiveMap } from "../store/generalStatesSlice"
 import { webGL } from "../types/mgWebGL"
 import { Store } from "redux"
 import { moorhensession } from "../protobuf/MoorhenSession";
@@ -15,6 +19,8 @@ import {
     setHomologsSortReversed, setAFDisplaySettings, setHomologsDisplaySettings
 } from "../store/mrParseSlice"
 import Fasta from "biojs-io-fasta"
+import { showModal } from "../store/modalsSlice";
+import { modalKeys } from "../utils/enums";
 
 interface MrParsePDBModelJson  {
     chain_id : string;
@@ -325,4 +331,69 @@ export const loadMrParseUrl = async (urlBase, commandCentre, glRef, store, monom
 
     dispatch(setMrParseModels(newMolecules))
 
+}
+
+export const autoOpenFiles = async (files: File[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch) => {
+    const molecules = store.getState().molecules.moleculeList
+    const maps = store.getState().maps
+
+    let isMrParse = false
+    for(const file of files) {
+       if(file.name.endsWith("input.fasta")){
+           isMrParse = true
+           break
+       }
+    }
+    if(isMrParse){
+        console.log("I think this is an MrParse directory....")
+        dispatch(showModal(modalKeys.MRPARSE))
+        loadMrParseFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch)
+        return
+    }
+    const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    let newMolecules: moorhen.Molecule[]
+    newMolecules = await Promise.all(loadPromises)
+
+    if(newMolecules.length>0){
+        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
+            //enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+            newMolecules = newMolecules.filter(molecule =>molecule.molNo !== -1)
+        }
+        await drawModels(newMolecules)
+        dispatch(addMoleculeList(newMolecules))
+        newMolecules.at(-1).centreOn('/*/*/*/*', true)
+    }
+    for(const file of files) {
+        if(file.name.endsWith(".mtz")){
+            const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, glRef, store)
+            if (newMaps.length === 0) {
+                //enqueueSnackbar('Error reading mtz file', { variant: "warning" })
+            } else {
+                dispatch( addMapList(newMaps) )
+                dispatch( setActiveMap(newMaps[0]) )
+            }
+        }
+    }
+    for(const file of files) {
+        if(file.name.endsWith(".pb")){
+            try {
+                 await handleSessionUpload(file, commandCentre, glRef, store, monomerLibraryPath, molecules, maps, timeCapsuleRef,dispatch)
+            } catch(e) {
+                //enqueueSnackbar("Error loading the session", { variant: "warning" })
+            }
+            break //We only load the first session.
+        }
+    }
+    for(const file of files) {
+        if(file.name.endsWith(".json")){
+            try {
+                const fileContents = await readTextFile(file) as string
+                const json = JSON.parse(fileContents)
+                dispatch(setValidationJson(json))
+                dispatch(showModal(modalKeys.JSON_VALIDATION))
+            } catch(e) {
+                //enqueueSnackbar("Error loading json validation", { variant: "warning" })
+            }
+        }
+    }
 }

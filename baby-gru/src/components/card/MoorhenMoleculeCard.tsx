@@ -609,118 +609,203 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleShowInfo }
 
-    return <><Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
-        <Card.Header ref={cardHeaderDivRef} style={{ padding: '0.1rem' }}>
-            <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: isDark ? 'white' : 'black'}}>
-                    {getNameLabel(props.molecule)}
-                </Col>
-                <Col style={{ display: 'flex', justifyContent: 'right' }}>
-                    <MoorhenMoleculeCardButtonBar
-                        molecule={props.molecule}
-                        glRef={props.glRef}
-                        sideBarWidth={props.sideBarWidth}
-                        isCollapsed={isCollapsed}
-                        setIsCollapsed={setIsCollapsed}
-                        clickedResidue={clickedResidue}
-                        selectedResidues={selectedResidues}
-                        currentDropdownMolNo={props.currentDropdownMolNo}
-                        setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
-                        {...handleProps}
-                    />
-                </Col>
-            </Stack>
-        </Card.Header>
-        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem', justifyContent:'center' }}>
-            <Stack gap={2} direction='vertical'>
-                <Row style={{display: 'flex'}}>
-                    <Col style={{ display: 'flex' }}>
-                        <div ref={addColourRulesAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
-                            <FormGroup style={{ margin: "0px", padding: "0px", display: 'flex', justifyContent: 'center'}} row>
-                                {allRepresentations.map(key => 
-                                    <RepresentationCheckbox
-                                        key={key}
-                                        style={key}
-                                        glRef={props.glRef}
-                                        molecule={props.molecule}
-                                        isVisible={isVisible}
-                                />)}
-                            </FormGroup>
-                            <hr style={{ margin: '0.5rem' }}></hr>
-                            {props.molecule.representations.some(representation => representation.isCustom) ?
-                                <FormGroup style={{ margin: "0px", padding: "0px" }} row>
-                                    {customRepresentationList.filter(representation => representation !== undefined).map(representation => {
-                                        return <CustomRepresentationChip
-                                                    key={representation.uniqueId}
-                                                    urlPrefix={props.urlPrefix}
-                                                    glRef={props.glRef}
-                                                    addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
-                                                    molecule={props.molecule}
-                                                    representation={representation}/>
-                                    })}
-                                </FormGroup>
-                            :
-                                <span>No custom representations</span>
-                            }
-                            { busyDrawingCustomRepresentation && <LinearProgress style={{ margin: '0.5rem' }}/> }
-                        </div>
-                    </Col>
-                    <Col md='auto' style={{paddingLeft: 0, justifyContent: 'center', display: 'flex'}} >
-                        <Stack gap={1} direction='vertical'>
-                        <Button style={{height: '100%'}} variant='light' onClick={() => setShowColourRulesModal((prev) => { return !prev })}>
-                            <FormatColorFillOutlined/>
-                        </Button>
-                        <Button style={{height: '100%'}} variant='light' onClick={() => setShowCreateRepresentationSettingsModal((prev) => { return !prev })}>
-                            <TuneOutlined/>
-                        </Button>
-                        <Button style={{ height: '100%' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
-                            <AddOutlined/>
-                        </Button>
-                        </Stack>
-                    </Col>
-                    <MoorhenHeaderInfoCard anchorEl={cardHeaderDivRef} molecule={props.molecule} show={showHeaderInfo} setShow={setShowHeaderInfo}/>
-                    <MoorhenMoleculeRepresentationSettingsCard residueEnvironmentSettingsProps={residueEnvironmentSettingsProps} cylinderSettingsProps={cylinderSettingsProps} molSurfSettingsProps={molSurfSettingsProps} ribbonSettingsProps={ribbonSettingsProps} symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
-                    <MoorhenModifyColourRulesCard anchorEl={addColourRulesAnchorDivRef} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal}/>
-                    <MoorhenAddCustomRepresentationCard setBusy={setBusyDrawingCustomRepresentation} glRef={props.glRef} urlPrefix={props.urlPrefix} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
-                </Row>
-            <div>
-                <Accordion className="moorhen-accordion"  disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
-                        <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingSequences ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
-                            Sequences
-                        </AccordionSummary>
-                        <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                            <MoorhenSequenceList
-                                setBusy={setBusyLoadingSequences}
+    return (
+        <>
+            <Card ref={cardRef} className="px-0" style={{ marginBottom: "0.5rem", padding: "0" }} key={props.molecule.molNo}>
+                <Card.Header ref={cardHeaderDivRef} style={{ padding: "0.1rem" }}>
+                    <Stack gap={2} direction="horizontal">
+                        <Col className="align-items-center" style={{ display: "flex", justifyContent: "left", color: isDark ? "white" : "black" }}>
+                            {getNameLabel(props.molecule)}
+                        </Col>
+                        <Col style={{ display: "flex", justifyContent: "right" }}>
+                            <MoorhenMoleculeCardButtonBar
                                 molecule={props.molecule}
+                                glRef={props.glRef}
+                                sideBarWidth={props.sideBarWidth}
+                                isCollapsed={isCollapsed}
+                                setIsCollapsed={setIsCollapsed}
                                 clickedResidue={clickedResidue}
-                                setClickedResidue={setClickedResidue}
-                                setSelectedResidues={setSelectedResidues}
+                                selectedResidues={selectedResidues}
+                                currentDropdownMolNo={props.currentDropdownMolNo}
+                                setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
+                                {...handleProps}
                             />
-                        </AccordionDetails>
-                </Accordion>
-                <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
-                    <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingLigands ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
-                        Ligands
-                    </AccordionSummary>
-                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                        <MoorhenLigandList setBusy={setBusyLoadingLigands} commandCentre={props.commandCentre} molecule={props.molecule} height={convertViewtoPx(40, height)}/>
-                    </AccordionDetails>
-                </Accordion>
-                {props.molecule.hasGlycans && 
-                <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
-                    <AccordionSummary style={{backgroundColor: isDark ? '#adb5bd' : '#ecf0f1'}} expandIcon={busyLoadingCarbohydrates ? <Spinner animation='border'/> : <ExpandMoreOutlined />} >
-                        Carbohydrates
-                    </AccordionSummary>
-                    <AccordionDetails style={{padding: '0.2rem', backgroundColor: isDark ? '#ced5d6' : 'white'}}>
-                        <MoorhenCarbohydrateList setBusy={setBusyLoadingCarbohydrates} molecule={props.molecule} height={convertViewtoPx(40, height)}/>
-                    </AccordionDetails>
-                </Accordion>            
-                }
-            </div>
-            </Stack>
-        </Card.Body>
-    </Card >
-    </>
+                        </Col>
+                    </Stack>
+                </Card.Header>
+                <Card.Body style={{ display: isCollapsed ? "none" : "", padding: "0.25rem", justifyContent: "center" }}>
+                    <Stack gap={2} direction="vertical">
+                        <Row style={{ display: "flex" }}>
+                            <Col style={{ display: "flex" }}>
+                                <div
+                                    ref={addColourRulesAnchorDivRef}
+                                    style={{
+                                        margin: "1px",
+                                        paddingTop: "0.25rem",
+                                        paddingBottom: "0.25rem",
+                                        border: "1px solid",
+                                        borderRadius: "0.33rem",
+                                        borderColor: "#CCC",
+                                    }}
+                                >
+                                    <FormGroup style={{ margin: "0px", padding: "0px", display: "flex", justifyContent: "center" }} row>
+                                        {allRepresentations.map((key) => (
+                                            <RepresentationCheckbox key={key} style={key} glRef={props.glRef} molecule={props.molecule} isVisible={isVisible} />
+                                        ))}
+                                    </FormGroup>
+                                    <hr style={{ margin: "0.5rem" }}></hr>
+                                    {props.molecule.representations.some((representation) => representation.isCustom) ? (
+                                        <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                                            {customRepresentationList
+                                                .filter((representation) => representation !== undefined)
+                                                .map((representation) => {
+                                                    return (
+                                                        <CustomRepresentationChip
+                                                            key={representation.uniqueId}
+                                                            urlPrefix={props.urlPrefix}
+                                                            glRef={props.glRef}
+                                                            addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
+                                                            molecule={props.molecule}
+                                                            representation={representation}
+                                                        />
+                                                    );
+                                                })}
+                                        </FormGroup>
+                                    ) : (
+                                        <span>No custom representations</span>
+                                    )}
+                                    {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
+                                </div>
+                            </Col>
+                            <Col md="auto" style={{ paddingLeft: 0, justifyContent: "center", display: "flex" }}>
+                                <Stack gap={1} direction="vertical">
+                                    <Button
+                                        style={{ height: "100%" }}
+                                        variant="light"
+                                        onClick={() =>
+                                            setShowColourRulesModal((prev) => {
+                                                return !prev;
+                                            })
+                                        }
+                                    >
+                                        <FormatColorFillOutlined />
+                                    </Button>
+                                    <Button
+                                        style={{ height: "100%" }}
+                                        variant="light"
+                                        onClick={() =>
+                                            setShowCreateRepresentationSettingsModal((prev) => {
+                                                return !prev;
+                                            })
+                                        }
+                                    >
+                                        <TuneOutlined />
+                                    </Button>
+                                    <Button
+                                        style={{ height: "100%" }}
+                                        variant="light"
+                                        onClick={() =>
+                                            setShowCreateCustomRepresentation((prev) => {
+                                                return !prev;
+                                            })
+                                        }
+                                    >
+                                        <AddOutlined />
+                                    </Button>
+                                </Stack>
+                            </Col>
+                            <MoorhenHeaderInfoCard anchorEl={cardHeaderDivRef} molecule={props.molecule} show={showHeaderInfo} setShow={setShowHeaderInfo} />
+                            <MoorhenMoleculeRepresentationSettingsCard
+                                residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
+                                cylinderSettingsProps={cylinderSettingsProps}
+                                molSurfSettingsProps={molSurfSettingsProps}
+                                ribbonSettingsProps={ribbonSettingsProps}
+                                symmetrySettingsProps={symmetrySettingsProps}
+                                gaussianSettingsProps={gaussianSettingsProps}
+                                bondSettingsProps={bondSettingsProps}
+                                glRef={props.glRef}
+                                urlPrefix={props.urlPrefix}
+                                molecule={props.molecule}
+                                anchorEl={addColourRulesAnchorDivRef}
+                                show={showCreateRepresentationSettingsModal}
+                                setShow={setShowCreateRepresentationSettingsModal}
+                            />
+                            <MoorhenModifyColourRulesCard
+                                anchorEl={addColourRulesAnchorDivRef}
+                                urlPrefix={props.urlPrefix}
+                                glRef={props.glRef}
+                                commandCentre={props.commandCentre}
+                                molecule={props.molecule}
+                                showColourRulesToast={showColourRulesModal}
+                                setShowColourRulesToast={setShowColourRulesModal}
+                            />
+                            <MoorhenAddCustomRepresentationCard
+                                setBusy={setBusyDrawingCustomRepresentation}
+                                glRef={props.glRef}
+                                urlPrefix={props.urlPrefix}
+                                molecule={props.molecule}
+                                anchorEl={addColourRulesAnchorDivRef}
+                                show={showCreateCustomRepresentation}
+                                setShow={setShowCreateCustomRepresentation}
+                            />
+                        </Row>
+                        <div>
+                            <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                                <AccordionSummary
+                                    style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}
+                                    expandIcon={busyLoadingSequences ? <Spinner animation="border" /> : <ExpandMoreOutlined />}
+                                >
+                                    Sequences
+                                </AccordionSummary>
+                                <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#696969" : "white" }}>
+                                    <MoorhenSequenceList
+                                        setBusy={setBusyLoadingSequences}
+                                        molecule={props.molecule}
+                                        clickedResidue={clickedResidue}
+                                        setClickedResidue={setClickedResidue}
+                                        setSelectedResidues={setSelectedResidues}
+                                    />
+                                </AccordionDetails>
+                            </Accordion>
+                            <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                                <AccordionSummary
+                                    style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}
+                                    expandIcon={busyLoadingLigands ? <Spinner animation="border" /> : <ExpandMoreOutlined />}
+                                >
+                                    Ligands
+                                </AccordionSummary>
+                                <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#696969" : "white" }}>
+                                    <MoorhenLigandList
+                                        setBusy={setBusyLoadingLigands}
+                                        commandCentre={props.commandCentre}
+                                        molecule={props.molecule}
+                                        height={convertViewtoPx(40, height)}
+                                    />
+                                </AccordionDetails>
+                            </Accordion>
+                            {props.molecule.hasGlycans && (
+                                <Accordion className="moorhen-accordion" disableGutters={true} elevation={0} TransitionProps={{ unmountOnExit: true }}>
+                                    <AccordionSummary
+                                        style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}
+                                        expandIcon={busyLoadingCarbohydrates ? <Spinner animation="border" /> : <ExpandMoreOutlined />}
+                                    >
+                                        Carbohydrates
+                                    </AccordionSummary>
+                                    <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#696969" : "white" }}>
+                                        <MoorhenCarbohydrateList
+                                            setBusy={setBusyLoadingCarbohydrates}
+                                            molecule={props.molecule}
+                                            height={convertViewtoPx(40, height)}
+                                        />
+                                    </AccordionDetails>
+                                </Accordion>
+                            )}
+                        </div>
+                    </Stack>
+                </Card.Body>
+            </Card>
+        </>
+    );
 })
 MoorhenMoleculeCard.displayName = "MoorhenMoleculeCard"
 

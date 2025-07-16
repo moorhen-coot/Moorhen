@@ -33,3 +33,6 @@ yarn-error.log*
 baby-gru/public/baby-gru/CootWorker.js
 /src/WebGL
 /monomers
+
+# Ignore PWA related files
+/dev-dist

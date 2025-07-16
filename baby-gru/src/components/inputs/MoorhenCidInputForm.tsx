@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import "./inputs.css";
+import "./MoorhenInput.css";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -48,28 +48,26 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
         }
     }
 
-    return  <>
-    <div style={{ width: width, margin: margin, height: height }}>
-        {label && <label style={{ display: 'block', marginBottom: '0.25rem' }}>{label}</label>}
-        <input 
-            type="text" 
-            className={`moorhen-input ${invalidCid ? 'invalid' : ''}`}
-            placeholder={placeholder} 
-            defaultValue={defaultValue}
-            onChange={handleChange} 
-            ref={cidFormRef}
-        />
-    </div>
-    {allowUseCurrentSelection && showResidueSelection && 
-        <div style={{ width: width, margin: margin, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input 
-                type="checkbox" 
-                id="useCurrentSelection"
-                onChange={handleFillCurrentSelection}
-            />
-            <label htmlFor="useCurrentSelection">Use current selection?</label>
-        </div>
-    }
-</>
+    return (
+        <>
+            <div style={{ width: width, margin: margin, height: height }}>
+                {label && <label style={{ display: "block", marginBottom: "0.25rem" }}>{label}</label>}
+                <input
+                    type="text"
+                    className={`${"moorhen__input"} ${invalidCid ? "moorhen__input.invalid" : ""}`}
+                    placeholder={placeholder}
+                    defaultValue={defaultValue}
+                    onChange={handleChange}
+                    ref={cidFormRef}
+                />
+            </div>
+            {allowUseCurrentSelection && showResidueSelection && (
+                <div style={{ width: width, margin: margin, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <input type="checkbox" id="useCurrentSelection" onChange={handleFillCurrentSelection} />
+                    <label htmlFor="useCurrentSelection">Use current selection?</label>
+                </div>
+            )}
+        </>
+    );
 })
 

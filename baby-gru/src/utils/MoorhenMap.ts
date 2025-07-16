@@ -37,7 +37,9 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * const map = new MoorhenMap(commandCentre, glRef);
  *
  * // Load file from a URL
- * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true }
+ * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP",
+                            FreeR: "FREE", isDifference: false, useWeight: false,
+                            calcStructFact: true }
  * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  *
  * // Draw map and set view on map centre
@@ -795,17 +797,9 @@ export class MoorhenMap implements moorhen.Map {
 
         this.displayObjects['Coot'].forEach(buffer => {
             if (mapAlpha < 0.99) {
-                buffer.customColour = null;
                 buffer.transparent = true
-                buffer.triangleColours.forEach(colbuffer => {
-                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                        colbuffer[idx] = mapColour.r
-                        colbuffer[idx + 1] = mapColour.g
-                        colbuffer[idx + 2] = mapColour.b
-                    }
-                })
-                buffer.isDirty = true;
                 buffer.alphaChanged = true;
+                buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,mapAlpha])
             } else {
                 buffer.setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                 buffer.transparent = false

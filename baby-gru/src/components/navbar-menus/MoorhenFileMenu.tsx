@@ -21,6 +21,7 @@ import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
+import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -168,6 +169,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         doDownload([sessionBytes], 'moorhen_session.pb')
     }
 
+    const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files: File[] = []
+        for(let ifile=0;ifile<e.target.files.length;ifile++){
+            files.push(e.target.files[ifile])
+        }
+        autoOpenFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, props.timeCapsuleRef, dispatch)
+    }
+
     const createBackup = async () => {
         await props.timeCapsuleRef.current.updateDataFiles()
         const session = await props.timeCapsuleRef.current.fetchSession(false)
@@ -273,6 +282,13 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MenuItem id='load-mrbump-menu-item' onClick={handleLoadMrBump}>
                     MrBump results...
                     </MenuItem>
+                    }
+
+                    {(devMode && false) &&
+                    <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
+                        <Form.Label>Auto load</Form.Label>
+                    <Form.Control type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { autoLoadHandler(e) }}/>
+                    </Form.Group>
                     }
 
                     {(!props.disableFileUploads && devMode) &&

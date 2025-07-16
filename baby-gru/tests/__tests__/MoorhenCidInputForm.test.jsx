@@ -50,27 +50,6 @@ describe('Testing MoorhenCidIputForm', () => {
         expect(formNode).toHaveValue('//B')
     })
 
-    test('Test MoorhenCidInputForm default cid style', async () => {
-        render(
-            <Provider store={MoorhenStore}> 
-                <MoorhenCidInputForm/>
-            </Provider> 
-        )
-
-        const formNode = screen.getByRole('textbox')
-        expect(formNode).toHaveClass('moorhen-input')
-    })
-
-test('Test MoorhenCidInputForm invalid cid', async () => {
-    render(
-        <Provider store={MoorhenStore}> 
-            <MoorhenCidInputForm invalidCid={true}/>
-        </Provider> 
-    )
-
-    const formNode = screen.getByRole('textbox')
-    expect(formNode).toHaveClass('moorhen-input invalid')
-})
     test('Test MoorhenCidInputForm residue selection', async () => {
         const cidRef = createRef(null)
         

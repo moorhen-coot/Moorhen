@@ -72,21 +72,25 @@ type MoorhenDraggableModalBaseProps = {
  *
  * const example = () => {
  *   return <MoorhenDraggableModalBase
- *                modalId="example-modal-id"
- *                headerTitle="Create covalent link"
- *                additionalChildren={
- *                    <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
- *                        <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
- *                            <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
- *                            <span>Click on an atom...</span>
- *                            <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
- *                        </Stack>
- *                    </Backdrop>
+ *             modalId="example-modal-id"
+ *             headerTitle="Create covalent link"
+ *             additionalChildren={
+ *                <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                            open={awaitAtomClick !== -1}>
+ *                    <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
+ *                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+ *                           <span>Click on an atom...</span>
+ *                           <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
+ *                    </Stack>
+ *                </Backdrop>
  *                }
  *                body={
- *                    <Stack direction='horizontal' gap={2} style={{display: 'flex', justifyContent: 'space-between'}}>
- *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
- *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                    <Stack direction='horizontal' gap={2}
+                             style={{display: 'flex', justifyContent: 'space-between'}}>
+ *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick}
+                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick}
+                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
  *                    </Stack>
  *                }
  *                footer={
@@ -96,11 +100,12 @@ type MoorhenDraggableModalBaseProps = {
  *                    </div>
  *                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
  *                        <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
- *                        <Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel</Button>
+ *                        <Button variant='danger' onClick={handleCancel}
+                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
  *                    </div>
  *                    </div>
  *                }
- *            />
+ *          />
  * }
  *
  */
