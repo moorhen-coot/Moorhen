@@ -63,6 +63,12 @@ import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwr
 import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
 import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
 import { resetSharedSession } from './store/sharedSessionSlice';
+import { setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
+    setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
+    setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
+    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
+    setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict } from './store/glRefSlice';
 
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
@@ -119,5 +125,11 @@ export {
     setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, glRefSliceReducer, atomInfoCardsReducer, setShowHoverInfo,
     MoorhenRamachandran, MoorhenLigandValidation, MoorhenCarbohydrateValidation, MoorhenDifferenceMapPeaks,
     MoorhenFillMissingAtoms, MoorhenJsonValidation, MoorhenMMRRCCPlot, MoorhenPepflipsDifferenceMap, MoorhenQScore,
-    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation, autoOpenFiles
+    MoorhenUnmodelledBlobs, MoorhenValidation, MoorhenWaterValidation, autoOpenFiles,
+    setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
+    setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
+    setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
+    setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
+    setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict
 };
