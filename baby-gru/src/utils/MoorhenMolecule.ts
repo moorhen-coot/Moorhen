@@ -45,9 +45,10 @@ import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRef
  * const example = async () => {
  *    // Create a new molecule
  *    const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
+ *    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
  *
  *    // Set some defaults
- *    molecule.setBackgroundColour(glRef.current.background_colour)
+ *    molecule.setBackgroundColour(backgroundColor)
  *
  *    // Load file from a URL
  *    await molecule.loadToCootFromURL('/uri/to/file.pdb', 'mol-1');
