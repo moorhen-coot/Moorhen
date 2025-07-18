@@ -7,11 +7,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-import { get } from "http";
+import "./MoorhenDraggableModalBase.css";
+import resizableIcon from "../icons/resizable.svg";
+import { storeKeyNameFromField } from "@apollo/client/utilities";
+import { MoorhenStore } from "../../moorhen";
 
 type MoorhenDraggableModalBaseProps = {
-    headerTitle: string |React.JSX.Element;
-    body:React.JSX.Element |React.JSX.Element[];
+    headerTitle: string | React.JSX.Element;
+    body: React.JSX.Element | React.JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
@@ -23,9 +26,9 @@ type MoorhenDraggableModalBaseProps = {
     minHeight?: number;
     top?: number;
     left?: number;
-    additionalHeaderButtons?:React.JSX.Element[];
-    footer?:React.JSX.Element;
-    additionalChildren?:React.JSX.Element;
+    additionalHeaderButtons?: React.JSX.Element[];
+    footer?: React.JSX.Element;
+    additionalChildren?: React.JSX.Element;
     overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     handleClassName?: string;
@@ -50,8 +53,8 @@ type MoorhenDraggableModalBaseProps = {
 
 /**
  * The base component used to create draggable modals.
- * It autoscale to the content if initialWidth and initialHeight are not provided. 
- * This scaling need to draw the content first off screen, so of the content is not ready yet, the modal will not be displayed or might be slow to display. 
+ * It autoscale to the content if initialWidth and initialHeight are not provided.
+ * This scaling need to draw the content first off screen, so of the content is not ready yet, the modal will not be displayed or might be slow to display.
  * In that case provide initialWidth and initialHeight.
  * @property {string} headerTitle - The title displayed on the modal header
  * @property {boolean} show - Indicates if the modal is to be displayed
@@ -76,7 +79,7 @@ type MoorhenDraggableModalBaseProps = {
  *             headerTitle="Create covalent link"
  *             additionalChildren={
  *                <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-                            open={awaitAtomClick !== -1}>
+ *                            open={awaitAtomClick !== -1}>
  *                    <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
  *                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
  *                           <span>Click on an atom...</span>
@@ -86,11 +89,11 @@ type MoorhenDraggableModalBaseProps = {
  *                }
  *                body={
  *                    <Stack direction='horizontal' gap={2}
-                             style={{display: 'flex', justifyContent: 'space-between'}}>
+ *                             style={{display: 'flex', justifyContent: 'space-between'}}>
  *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick}
-                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
  *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick}
-                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
  *                    </Stack>
  *                }
  *                footer={
@@ -101,7 +104,7 @@ type MoorhenDraggableModalBaseProps = {
  *                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
  *                        <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
  *                        <Button variant='danger' onClick={handleCancel}
-                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
+ *                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
  *                    </div>
  *                    </div>
  *                }
@@ -129,6 +132,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         minWidth = 100,
         enforceMaxBodyDimensions = true,
     } = { ...props };
+
+    const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);
@@ -275,7 +280,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     };
 
     if (!measured) {
-        return ( // Render a hidden div to measure the body size
+        return (
+            // Render a hidden div to measure the body size
             <div
                 ref={bodyRef}
                 style={{
@@ -354,18 +360,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             }}
                             handle={
                                 enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
-                                    <span className="react-resizable-handle react-resizable-handle-se">
-                                        <SquareFootOutlined
-                                            style={{
-                                                position: "absolute",
-                                                right: 0,
-                                                bottom: 0,
-                                                cursor: "se-resize",
-                                                transform: "rotate(270deg)",
-                                            }}
-                                        />
-                                    </span>
-                                ) : undefined
+                                    //<div className="react-resizable-handle react-resizable-handle-se">
+                                    <img
+                                        src={`${urlPrefix}/pixmaps/moorhen-icons/resizable.svg`}
+                                        draggable="false"
+                                        alt="resize"
+                                        className="moorhen__modal__base__icon"
+                                    />
+                                ) : //</div>
+                                undefined
                             }
                         >
                             <div

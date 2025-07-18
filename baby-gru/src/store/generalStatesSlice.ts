@@ -11,6 +11,7 @@ const initialState = {
   theme: 'flatly',
   viewOnly: false,
   showHoverInfo: true,
+  urlPrefix: '',
   residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
   showResidueSelection: false,
   defaultExpandDisplayCards: null,
@@ -112,6 +113,9 @@ export const generalStatesSlice = createSlice({
     setTransparentModalsOnMouseOut: (state, action: {payload: boolean, type: string}) => {
       return {...state, transparentModalsOnMouseOut: action.payload}
     },
+    setUrlPrefix: (state, action: {payload: string, type: string}) => {
+      return {...state, urlPrefix: action.payload}
+    }
 }})
 
 export const {
@@ -122,7 +126,7 @@ export const {
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
   resetGeneralStates, setIsShowingTomograms, setDefaultExpandDisplayCards,
-  setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo
+  setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo, setUrlPrefix
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

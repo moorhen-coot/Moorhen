@@ -1,0 +1,9 @@
+.moorhen__modal__base__icon {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    cursor: se-resize;
+    width: 20px; 
+    height: 20px;
+    filter: invert(1) brightness(0.3);
+}

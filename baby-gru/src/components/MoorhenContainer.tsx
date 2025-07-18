@@ -13,31 +13,31 @@ import { webGL } from '../types/mgWebGL';
 import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
-import { setCootInitialized, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
-import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
-import { setRefinementSelection } from '../store/refinementSettingsSlice';
-import { MoorhenSnackBarManager } from '../components/snack-bar/MoorhenSnackBarManager';
-import MoorhenReduxStore from '../store/MoorhenReduxStore';
-import { SnackbarProvider } from 'notistack';
-import { MoorhenGoToResidueSnackbar } from './snack-bar/MoorhenGoToResidueSnackbar';
-import { MoorhenRecordingSnackBar } from './snack-bar/MoorhenRecordingSnackBar'
-import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelectionSnackBar';
-import { MoorhenAcceptRejectDragAtomsSnackBar } from './snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
-import { MoorhenAcceptRejectRotateTranslateSnackBar } from './snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
-import { MoorhenAcceptRejectMatchingLigandSnackBar } from './snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
-import { MoorhenLongJobSnackBar } from './snack-bar/MoorhenLongJobSnackBar';
-import { MoorhenResidueStepsSnackBar } from './snack-bar/MoorhenResidueStepsSnackBar';
-import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from './snack-bar/MoorhenUpdatingMapsSnackBar';
-import { MoorhenModelTrajectorySnackBar } from './snack-bar/MoorhenModelTrajectorySnackBar';
-import { MoorhenTomogramSnackBar } from './snack-bar/MoorhenTomogramSnackBar';
-import { MoorhenMapContourLevelSnackBar } from './snack-bar/MoorhenMapContourLevelSnackBar';
-import { MoorhenRotamerChangeSnackBar } from './snack-bar/MoorhenRotamerChangeSnackbar';
-import { MoorhenScreenshotSnackBar } from './snack-bar/MoorhenScreenshotSnackBar';
-import { MoorhenSideBar } from './snack-bar/MoorhenSideBar';
-import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
-import { MoorhenDroppable } from './MoorhenDroppable';
-import { setRequestDrawScene } from "../store/glRefSlice"
-import {MoorhenMapsHeadManager} from './managers/MoorhenMapsHeadManager'
+import { setCootInitialized, setTheme, setUrlPrefix, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
+import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
+import { setRefinementSelection } from "../store/refinementSettingsSlice";
+import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
+import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { SnackbarProvider } from "notistack";
+import { MoorhenGoToResidueSnackbar } from "./snack-bar/MoorhenGoToResidueSnackbar";
+import { MoorhenRecordingSnackBar } from "./snack-bar/MoorhenRecordingSnackBar";
+import { MoorhenResidueSelectionSnackBar } from "./snack-bar/MoorhenResidueSelectionSnackBar";
+import { MoorhenAcceptRejectDragAtomsSnackBar } from "./snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
+import { MoorhenAcceptRejectRotateTranslateSnackBar } from "./snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar";
+import { MoorhenAcceptRejectMatchingLigandSnackBar } from "./snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
+import { MoorhenLongJobSnackBar } from "./snack-bar/MoorhenLongJobSnackBar";
+import { MoorhenResidueStepsSnackBar } from "./snack-bar/MoorhenResidueStepsSnackBar";
+import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "./snack-bar/MoorhenUpdatingMapsSnackBar";
+import { MoorhenModelTrajectorySnackBar } from "./snack-bar/MoorhenModelTrajectorySnackBar";
+import { MoorhenTomogramSnackBar } from "./snack-bar/MoorhenTomogramSnackBar";
+import { MoorhenMapContourLevelSnackBar } from "./snack-bar/MoorhenMapContourLevelSnackBar";
+import { MoorhenRotamerChangeSnackBar } from "./snack-bar/MoorhenRotamerChangeSnackbar";
+import { MoorhenScreenshotSnackBar } from "./snack-bar/MoorhenScreenshotSnackBar";
+import { MoorhenSideBar } from "./snack-bar/MoorhenSideBar";
+import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar";
+import { MoorhenDroppable } from "./MoorhenDroppable";
+import { setRequestDrawScene } from "../store/glRefSlice";
+import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -297,7 +297,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowMergeFittedLigand,
     };
 
-
     useLayoutEffect(() => {
         let head = document.head;
         let style: any = document.createElement("link");
@@ -531,6 +530,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             }
         }
     }, [activeMap]);
+
+    useLayoutEffect(() => {
+        dispatch(setUrlPrefix(urlPrefix));
+    }, [urlPrefix]);
 
     return (
         <SnackbarProvider

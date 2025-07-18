@@ -6,6 +6,7 @@ import { AddCircleOutline, Cookie, RemoveCircleOutline } from "@mui/icons-materi
 import { IconButton } from "@mui/material";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
+import { MoorhenIcon } from "../icons/MoorhenIcon";
 import "./MoorhenSlider.css";
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
@@ -272,15 +273,18 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         };
 
         return (
-            <IconButton
-                sx={{ padding: 0, color: isDark ? "white" : "black" }}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                disabled={isDisabled}
-            >
-                {factor > 0 ? <AddCircleOutline /> : <RemoveCircleOutline />}
-            </IconButton>
+            <>
+                <IconButton
+                    sx={{ padding: 0, color: isDark ? "white" : "black" }}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    disabled={isDisabled}
+                >
+                    {factor > 0 ? <AddCircleOutline /> : <RemoveCircleOutline />}
+                </IconButton>
+                <MoorhenIcon name={factor > 0 ? "plus" : "minus"} alt={factor > 0 ? "Increase" : "Decrease"} size={"small"} />
+            </>
         );
     };
 

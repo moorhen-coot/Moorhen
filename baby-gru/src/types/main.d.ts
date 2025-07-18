@@ -522,6 +522,9 @@ declare module 'moorhen' {
     function setDefaultExpandDisplayCards(arg0: boolean): any;
     module.exports = setDefaultExpandDisplayCards;
 
+    function setUrlPrefix(arg0: string): any;
+    module.exports = setUrlPrefix;
+
     function setTransparentModalsOnMouseOut(arg0: boolean): any;
     module.exports = setTransparentModalsOnMouseOut;
 

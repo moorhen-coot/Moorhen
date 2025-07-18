@@ -1,0 +1,18 @@
+.moorhen__icon__small {
+    width: 22px; 
+    height: 22px;
+}
+
+.moorhen__icon__medium {
+    width: 32px; 
+    height: 32px;
+}
+
+.moorhen__icon__large {
+    width: 64px; 
+    height: 64px;
+}
+
+.moorhen__icon__color {
+    filter: invert(1) brightness(0.2);
+}
