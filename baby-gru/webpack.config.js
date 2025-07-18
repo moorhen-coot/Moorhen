@@ -26,8 +26,8 @@ module.exports = (env, argv) => {
         process: {env: {}}
       }), 
       new MiniCssExtractPlugin({
-        filename: 'moorhen.css',
-        chunkFilename: '[id].css',
+        filename: 'public/baby-gru/moorhen.css',
+        chunkFilename: 'public/baby-gru/[id].css',
         ignoreOrder: false,
       }),
       new TerserPlugin({
