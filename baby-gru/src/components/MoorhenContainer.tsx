@@ -297,14 +297,21 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowMergeFittedLigand,
     };
 
+
     useLayoutEffect(() => {
         let head = document.head;
         let style: any = document.createElement("link");
-        style.href = `./moorhen.css`;
+        style.href = `${urlPrefix}/moorhen.css`;
         style.rel = "stylesheet";
         style.async = true;
         style.type = "text/css";
         head.appendChild(style);
+
+        return () => {
+            if (head.contains(style)) {
+                head.removeChild(style);
+            }
+        };
     }, []);
 
     const setWindowDimensions = useCallback(() => {

@@ -315,12 +315,12 @@ img.moorhen-context-button__icon {
 }
 
 .moorhen-navbar-menu-item {
-  margin-bottom: 0.5rem;
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
-  justify-content: left;
-  display: flex;
-  border-radius: 2rem;
+  margin-bottom: 0.5rem !important;
+  margin-right: 0.5rem !important;
+  margin-left: 0.5rem !important;
+  justify-content: left !important;
+  display: flex !important;
+  border-radius: 2rem !important;
   box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
 }
 
