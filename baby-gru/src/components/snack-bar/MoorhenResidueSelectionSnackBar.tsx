@@ -229,7 +229,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
     }, [residueSelection])
 
     const handleColourChange = useCallback(async () => {
-        let newColourRules: moorhen.ColourRule[] = []
+        const newColourRules: moorhen.ColourRule[] = []
 
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
             residueSelection.cid.forEach(cid => {

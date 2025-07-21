@@ -14,7 +14,7 @@ import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenPreferences } from "./utils/MoorhenPreferences";
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
-import { MoorhenSlider } from "./components/inputs/MoorhenSlider";
+import { MoorhenSlider } from "./components/inputs";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
 import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
 import { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';

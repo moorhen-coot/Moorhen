@@ -81,7 +81,7 @@ export const MoorhenValidationListWidgetBase = (props: {
         if (selectedModel === null || (enableMapSelect && selectedMap === null)) {
             setCardData(null)
         } else {
-            let newData = await props.fetchData(selectedModel, selectedMap)
+            const newData = await props.fetchData(selectedModel, selectedMap)
             setCardData(newData)
         }
         setBusy(false)      

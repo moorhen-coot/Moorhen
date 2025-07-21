@@ -192,14 +192,14 @@ export namespace libcootApi {
         atom_id_2: string;
         atom_type_1: string;
         atom_type_2: string;
-        bond_length: Number;
+        bond_length: number;
     }
     interface AcedrgTypesForBondJS {
         atom_id_1: string;
         atom_id_2: string;
         atom_type_1: string;
         atom_type_2: string;
-        bond_length: Number;
+        bond_length: number;
     }
     interface MoorhenHBond extends emscriptem.instance<MoorhenHBond> {
         hb_hydrogen: HBondAtom;

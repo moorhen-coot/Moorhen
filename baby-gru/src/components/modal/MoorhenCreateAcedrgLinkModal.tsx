@@ -76,7 +76,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         const blocks = doc.blocks
         const blocksSize = blocks.size()
         
-        let bonds: {
+        const bonds: {
             atom_id_1: string;
             atom_id_2: string;
             bond_type: string;

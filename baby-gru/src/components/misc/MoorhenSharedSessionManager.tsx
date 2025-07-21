@@ -96,7 +96,7 @@ export const MoorhenSharedSessionManager = (props: {
                 const mapMolNos = Array.from(moorhenFleetManagerRef.current.maps.keys())
                 const sortedMolNos = [...moleculeMolNos.map(item => parseInt(item)), ...mapMolNos.map(item => parseInt(item))].sort((a, b) => a - b)
                 // TODO: Before this loop we need a function to increase the imol to the desired current value...
-                for (let molNo of sortedMolNos) {
+                for (const molNo of sortedMolNos) {
                     if (moleculeMolNos.includes(molNo.toString())) {
                         const molecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibrary)
                         const moleculeData = moorhenFleetManagerRef.current.molecules.get(molNo.toString())

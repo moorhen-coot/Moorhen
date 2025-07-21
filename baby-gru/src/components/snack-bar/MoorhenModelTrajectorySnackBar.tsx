@@ -45,14 +45,14 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
         
-        let frames: moorhen.DisplayObject[][] = []
+        const frames: moorhen.DisplayObject[][] = []
         const multiModelMolecules = await molecule.splitMultiModels(false)
 
         const nSteps = multiModelMolecules.length
         const stepPercent = nSteps / 50
         const singleStepPercent = 1 / stepPercent
 
-        for (let iMolecule of multiModelMolecules) {
+        for (const iMolecule of multiModelMolecules) {
             iMolecule.setAtomsDirty(true)
             await iMolecule.updateAtoms()
             representation.setParentMolecule(iMolecule)

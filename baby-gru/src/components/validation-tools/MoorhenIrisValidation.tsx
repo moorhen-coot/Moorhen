@@ -124,8 +124,8 @@ export const MoorhenIrisValidation = (props: {
    
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
-            let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
+            const plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
+            const plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setPlotDimensions(plotWidth) : setPlotDimensions(plotHeigth)
             }

@@ -64,7 +64,7 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
         const nSteps = props.residueList.length
         const stepPercent = nSteps / 100
         const singleStepPercent = 1 / stepPercent
-        for (let residue of props.residueList) {
+        for (const residue of props.residueList) {
             setBuffer((prev) => prev + singleStepPercent)
             if (isClosedRef.current) {
                     await exit()

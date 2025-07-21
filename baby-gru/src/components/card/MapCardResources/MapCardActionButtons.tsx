@@ -53,7 +53,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     const dispatch = useDispatch();
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
     const handleDownload = async () => {
-        let response = await props.map.getMap();
+        const response = await props.map.getMap();
         doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
     };
 
@@ -135,8 +135,8 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
 
     const maximumAllowedWidth = props.maxWidth;
     let currentlyUsedWidth = 0;
-    let expandedButtons:React.JSX.Element[] = [];
-    let compressedButtons:React.JSX.Element[] = [];
+    const expandedButtons:React.JSX.Element[] = [];
+    const compressedButtons:React.JSX.Element[] = [];
 
     Object.keys(actionButtons).forEach((key) => {
         if ("menuItem" in actionButtons[key]) {

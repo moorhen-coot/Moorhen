@@ -7,7 +7,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 
 export const MoorhenMinimizeEnergyMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

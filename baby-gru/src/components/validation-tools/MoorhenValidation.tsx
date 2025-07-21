@@ -74,9 +74,9 @@ export const MoorhenValidation = (props: Props) => {
     }
 
     const getSequenceData = (selectedMolNo: number, selectedChain: string) => {
-        let selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         if (selectedMolecule) {
-            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
+            const sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
             if (sequenceData) {
                 return sequenceData.sequence
             }
@@ -92,7 +92,7 @@ export const MoorhenValidation = (props: Props) => {
             {command: "peptide_omega_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel], needsMapData: false, displayName:'Pept. Omega'},
         ]    
         
-        let currentlyAvailable = []
+        const currentlyAvailable = []
         allMetrics.forEach(metric => {
             if ((metric.needsMapData && selectedMap === null) || selectedModel === null || selectedChain === null) {
                 return
@@ -107,16 +107,16 @@ export const MoorhenValidation = (props: Props) => {
         if (selectedModel === null || selectedChain === null) {
             return null
         }
-        let availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
+        const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
 
-        let promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
+        const promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
         availableMetrics.forEach(metric => {
             const inputData = { message:'coot_command', ...metric }
             promises.push(props.commandCentre.current.cootCommand(inputData, false))
         })
-        let responses = await Promise.all(promises) 
+        const responses = await Promise.all(promises) 
         
-        let newPlotData: libcootApi.ValidationInformationJS[][] = []
+        const newPlotData: libcootApi.ValidationInformationJS[][] = []
         responses.forEach(response => {
             newPlotData.push(response.data.result.result)
         })
@@ -171,12 +171,12 @@ export const MoorhenValidation = (props: Props) => {
             return "UNK"
         }
 
-        let sequenceData =  getSequenceData(selectedModel, selectedChain)
+        const sequenceData =  getSequenceData(selectedModel, selectedChain)
         if (!sequenceData) {
             return
         }
 
-        let labels = []
+        const labels = []
         sequenceData.forEach((residue, index) => {
             if (index % 10 !== 0) {
                 labels.push(residue.resCode)
@@ -192,7 +192,7 @@ export const MoorhenValidation = (props: Props) => {
         const containerBody = document.getElementById(`${props.chartId}-container-body`)
         containerBody.style.width = (labels.length*barWidth)+ "px";
         
-        let scales = {
+        const scales = {
             x: {
                 stacked: true,
                 beginAtZero: true,
@@ -212,18 +212,18 @@ export const MoorhenValidation = (props: Props) => {
             }
         }
 
-        let datasets = []
-        let availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
+        const datasets = []
+        const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
         for(let methodIndex=0; methodIndex < plotData.length; methodIndex++){
             if (!plotData[methodIndex]) {
                 continue
             }
-            let metricScale = metricInfoScaling[availableMetrics[methodIndex].command]
-            let palette = colourPalettes[availableMetrics[methodIndex].command]
+            const metricScale = metricInfoScaling[availableMetrics[methodIndex].command]
+            const palette = colourPalettes[availableMetrics[methodIndex].command]
             datasets.push({
                 label: availableMetrics[methodIndex].displayName,
                 data: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
+                    const residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
                     if (residue) {
                         return metricScale(residue.value)
                     } else {
@@ -231,9 +231,9 @@ export const MoorhenValidation = (props: Props) => {
                     }
                 }),
                 backgroundColor: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
+                    const residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
                     if (residue) {
-                        let gFrac = 1.0 - metricScale(residue.value)
+                        const gFrac = 1.0 - metricScale(residue.value)
                         return palette(gFrac)
                     } else {
                         return null

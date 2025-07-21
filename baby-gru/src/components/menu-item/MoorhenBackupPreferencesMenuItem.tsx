@@ -1,5 +1,5 @@
 import { Form } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";

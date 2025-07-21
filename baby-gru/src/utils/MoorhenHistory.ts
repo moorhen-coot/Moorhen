@@ -16,7 +16,7 @@ const formatCommandString = (command: string) => {
         }
         return ''
     })
-    let formattedString = formattedWords.join(' ');
+    const formattedString = formattedWords.join(' ');
     return formattedString
 }
 

@@ -21,7 +21,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
 
-        let options = {
+        const options = {
           videoBitsPerSecond: 25000000000 // 2.5Mbps
         }
 
@@ -66,7 +66,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
     }
 
     downloadVideo = async (blob: Blob) => {
-        let url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         let link: any = document.getElementById('download_video_link');
         if (!link) {
             link = document.createElement('a');

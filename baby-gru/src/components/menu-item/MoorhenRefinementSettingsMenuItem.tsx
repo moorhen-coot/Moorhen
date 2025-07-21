@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { MoorhenSlider } from "../inputs/MoorhenSlider"
+import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { moorhen } from "../../types/moorhen"

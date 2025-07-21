@@ -21,7 +21,7 @@ export const MoorhenBackupsMenuItem = (props: {
         if (backupSelectRef.current.value) {
             try {
                 const key = backupSelectRef.current.value
-                let backupData = await props.timeCapsuleRef.current.retrieveBackup(key) as string
+                const backupData = await props.timeCapsuleRef.current.retrieveBackup(key) as string
                 props.commandCentre.current.history.reset()
                 props.loadSession(backupData)
             } catch (err) {

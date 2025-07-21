@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { 

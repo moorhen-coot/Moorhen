@@ -264,7 +264,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
         const $this = this
-        let reflectionData = await readDataFile(source)
+        const reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
         await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
         if (selectedColumns.calcStructFact) {
@@ -564,11 +564,11 @@ export class MoorhenMap implements moorhen.Map {
                     let i = 0;
                     object.idx_tri.forEach((idxss: number[][]) => {
                         let j = 0;
-                        let pos_idx = [];
-                        let neg_idx = [];
+                        const pos_idx = [];
+                        const neg_idx = [];
                         idxss.forEach((idxs: number[]) => {
-                            let this_pos_idx = [];
-                            let this_neg_idx = [];
+                            const this_pos_idx = [];
+                            const this_neg_idx = [];
                             for (let idx = 0; idx < idxs.length; idx++) {
                                 const col = object.col_tri[i][j][idxs[idx]*4]
                                 if (col < 0.5) {
@@ -614,8 +614,8 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End loop",tl-t1)
                 }
                 if (this.isDifference) {
-                    let a = appendOtherData(object_positive, true);
-                    let b = appendOtherData(object_negative, true);
+                    const a = appendOtherData(object_positive, true);
+                    const b = appendOtherData(object_negative, true);
                     if(mapAlpha<0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
@@ -646,7 +646,7 @@ export class MoorhenMap implements moorhen.Map {
                         buildBuffers(this.displayObjects["Coot"])
                         newBuffers = [...newBuffers,...this.displayObjects["Coot"]]
                     } else {
-                       let a = appendOtherData(object, true);
+                       const a = appendOtherData(object, true);
                        if(mapAlpha>0.98){
                            a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
@@ -661,7 +661,7 @@ export class MoorhenMap implements moorhen.Map {
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                 } else {
                     //console.log("MOORHEN MAP do what keepCootColours wants")
-                    let a = appendOtherData(object, true);
+                    const a = appendOtherData(object, true);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     buildBuffers(a)
                     newBuffers = [...newBuffers,...a]
@@ -1075,7 +1075,7 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     async getVerticesHistogram(map2:number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
-        let posX:Number, posY:number, posZ : number
+        let posX:number, posY:number, posZ : number
         if (this.isOriginLocked)    {
             posX = Math.abs(this.mapCentre[0])
             posY = Math.abs(this.mapCentre[1])

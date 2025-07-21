@@ -62,7 +62,7 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
         const handleClick = async () => {
             if (historyEntry.associatedBackupKey) {
                 props.commandCentre.current.history.setSkipTracking(true)
-                let backup = await props.timeCapsuleRef.current.retrieveBackup(historyEntry.associatedBackupKey) as string
+                const backup = await props.timeCapsuleRef.current.retrieveBackup(historyEntry.associatedBackupKey) as string
                 await loadSession(backup)
                 props.commandCentre.current.history.setSkipTracking(false)
                 props.commandCentre.current.history.setCurrentHead(historyEntry.uniqueId)

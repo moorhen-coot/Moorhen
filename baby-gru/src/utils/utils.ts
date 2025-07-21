@@ -35,14 +35,14 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
     
     const parser = new DOMParser()
     let theText = svg
-    let doc = parser.parseFromString(theText, "image/svg+xml")
+    const doc = parser.parseFromString(theText, "image/svg+xml")
     let xmin = 999
     let ymin = 999
     let xmax = -999
     let ymax = -999
     
-    let lines = doc.getElementsByTagName("line")
-    for (let l of lines) {
+    const lines = doc.getElementsByTagName("line")
+    for (const l of lines) {
         const x1 = parseFloat(l.getAttribute("x1"))
         const y1 = parseFloat(l.getAttribute("y1"))
         const x2 = parseFloat(l.getAttribute("x2"))
@@ -57,8 +57,8 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
         if(y2<ymin) ymin = y2
     }
     
-    let texts = doc.getElementsByTagName("text");
-    for (let t of texts) {
+    const texts = doc.getElementsByTagName("text");
+    for (const t of texts) {
         const x = parseFloat(t.getAttribute("x"))
         const y = parseFloat(t.getAttribute("y"))
         if(x>xmax) xmax = x
@@ -67,8 +67,8 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
         if(y<ymin) ymin = y
     }
     
-    let polygons = doc.getElementsByTagName("polygon");
-    for (let poly of polygons) {
+    const polygons = doc.getElementsByTagName("polygon");
+    for (const poly of polygons) {
         const points = poly.getAttribute("points").trim().split(" ")
         for (const point of points) {
             const xy = point.split(",")
@@ -85,9 +85,9 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
     ymin -= 20
     xmax += 30
     ymax -= ymin - 10
-    let svgs = doc.getElementsByTagName("svg")
+    const svgs = doc.getElementsByTagName("svg")
     const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
-    for (let item of svgs) {
+    for (const item of svgs) {
         if(edit_VB) item.setAttribute("viewBox" , viewBoxStr)
         item.setAttribute("width" , "100%")
         item.setAttribute("height" , "100%")
@@ -174,8 +174,8 @@ export const getRandomMoleculeColour = (min: number = 127, max: number = 160) =>
 
 export function guid(): string {
     let d = Date.now();
-    let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        let r = (d + Math.random() * 16) % 16 | 0;
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (d + Math.random() * 16) % 16 | 0;
         d = Math.floor(d / 16);
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
@@ -376,7 +376,7 @@ export const getResidueInfo = (molecules: moorhen.Molecule[], selectedMolNo: num
 }
 
 export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
-    let modifiers = []
+    const modifiers = []
     if (shortCut.modifiers.includes('shiftKey')) modifiers.push("Shift")
     if (shortCut.modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
     if (shortCut.modifiers.includes('metaKey')) modifiers.push("<Meta>")
@@ -458,7 +458,7 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): st
 }
 
 const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
-    let result: string[]  = []
+    const result: string[]  = []
     ncsRelatedChains.forEach(chains => {
         const randColour = getRandomMoleculeColour()
         chains.forEach(chain => {
@@ -469,8 +469,8 @@ const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
 }
 
 const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.ResidueSpecJS[]): string => {
-    let result: string[] = []
-    let chainSS2Info: { [chainId: string]: { [ss2: number]: number[] } } = {}
+    const result: string[] = []
+    const chainSS2Info: { [chainId: string]: { [ss2: number]: number[] } } = {}
 
     const alphaHelix = '#d13d62'
     const betaStrand = '#4b57bd'
@@ -484,8 +484,8 @@ const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.Res
         chainSS2Info[residue.chainId][ss2Type].push(residue.resNum)
     })
     
-    for (let chainId in chainSS2Info) {
-        for (let ss2Info in chainSS2Info[chainId]) {
+    for (const chainId in chainSS2Info) {
+        for (const ss2Info in chainSS2Info[chainId]) {
             if (chainSS2Info[chainId][ss2Info].length > 0) {
                 const residueRanges = findConsecutiveRanges(chainSS2Info[chainId][ss2Info])
                 residueRanges.forEach(residueRange => {
@@ -583,9 +583,9 @@ export const createLocalStorageInstance = (name: string, empty: boolean = false)
 }
 
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
-    let thisPos = []
-    let thisNorm = []
-    let thisIdxs = []
+    const thisPos = []
+    const thisNorm = []
+    const thisIdxs = []
 
     let ipos = 0
     let maxIdx = 0
@@ -645,38 +645,38 @@ export const gemmiAtomPairsToCylindersInfo = (
     dashed: boolean = true
 ) => {
 
-    let atomPairs = atoms;
+    const atomPairs = atoms;
 
-    let totIdxs = []
-    let totPos = []
-    let totNorm = []
-    let totInstance_sizes = []
-    let totInstance_colours = []
-    let totInstance_origins = []
-    let totInstance_orientations = []
-    let totInstanceUseColours = []
-    let totInstancePrimTypes = []
+    const totIdxs = []
+    const totPos = []
+    const totNorm = []
+    const totInstance_sizes = []
+    const totInstance_colours = []
+    const totInstance_origins = []
+    const totInstance_orientations = []
+    const totInstanceUseColours = []
+    const totInstancePrimTypes = []
 
     const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(dashed ? 15 : 1, 16);
 
-    let thisInstance_sizes = []
-    let thisInstance_colours = []
-    let thisInstance_origins = []
-    let thisInstance_orientations = []
+    const thisInstance_sizes = []
+    const thisInstance_colours = []
+    const thisInstance_origins = []
+    const thisInstance_orientations = []
 
-    let totTextPrimTypes = []
-    let totTextIdxs = []
-    let totTextPrimPos = []
-    let totTextPrimNorm = []
-    let totTextPrimCol = []
-    let totTextLabels = []
+    const totTextPrimTypes = []
+    const totTextIdxs = []
+    const totTextPrimPos = []
+    const totTextPrimNorm = []
+    const totTextPrimCol = []
+    const totTextLabels = []
 
 
     for (let iat = 0; iat < atomPairs.length; iat++) {
         const at0 = atomPairs[iat][0];
         const at1 = atomPairs[iat][1];
-        let ab = vec3.create()
-        let midpoint = vec3.create()
+        const ab = vec3.create()
+        const midpoint = vec3.create()
 
         vec3.set(ab, at0.x - at1.x, at0.y - at1.y, at0.z - at1.z)
         vec3.set(midpoint, 0.5 * (at0.x + at1.x), 0.5 * (at0.y + at1.y), 0.5 * (at0.z + at1.z))
@@ -695,10 +695,10 @@ export const gemmiAtomPairsToCylindersInfo = (
         }
         thisInstance_origins.push(at0.x, at0.y, at0.z)
         thisInstance_sizes.push(...[size, size, l])
-        let v = vec3.create()
-        let au = vec3.create()
-        let a = vec3.create()
-        let b = vec3.create()
+        const v = vec3.create()
+        const au = vec3.create()
+        const a = vec3.create()
+        const b = vec3.create()
         const aup = [
             at0.x - at1.x,
             at0.y - at1.y,
@@ -718,19 +718,19 @@ export const gemmiAtomPairsToCylindersInfo = (
             ])
         } else {
             const s = vec3.length(v)
-            let k = mat3.create()
+            const k = mat3.create()
             k.set([
                 0.0, -v[2], v[1],
                 v[2], 0.0, -v[0],
                 -v[1], v[0], 0.0,
             ])
-            let kk = mat3.create()
+            const kk = mat3.create()
             mat3.multiply(kk, k, k)
-            let sk = mat3.create()
+            const sk = mat3.create()
             mat3.multiplyScalar(sk, k, 1.0)
-            let omckk = mat3.create()
+            const omckk = mat3.create()
             mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c))
-            let r = mat3.create()
+            const r = mat3.create()
             r.set([
                 1.0, 0.0, 0.0,
                 0.0, 1.0, 0.0,
@@ -789,14 +789,14 @@ export const gemmiAtomPairsToCylindersInfo = (
 
 export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: number, primType: string, colourScheme: { [x: string]: any[]; }) => {
 
-    let sphere_sizes = [];
-    let sphere_col_tri = [];
-    let sphere_vert_tri = [];
-    let sphere_idx_tri = [];
-    let sphere_atoms = [];
+    const sphere_sizes = [];
+    const sphere_col_tri = [];
+    const sphere_vert_tri = [];
+    const sphere_idx_tri = [];
+    const sphere_atoms = [];
 
-    let totInstanceUseColours = []
-    let totInstance_orientations = []
+    const totInstanceUseColours = []
+    const totInstance_orientations = []
 
     for (let iat = 0; iat < atoms.length; iat++) {
         sphere_idx_tri.push(iat);
@@ -955,13 +955,13 @@ export const get_grid = (n,method="NEARSQUARE") => {
             return [c,c]
     }
 
-    let shapes = []
+    const shapes = []
 
     for(let i=1;i<=n;i++){
         for(let j=1;j<=n;j++){
             if(i*j >= n && i*j <= c*c && Math.abs(i-j)<=f){
                 if(i*j - n < n){
-                    let rem = i*j - n
+                    const rem = i*j - n
                     if(rem != i && rem != j){
                         shapes.push([i,j,rem])
                         break

@@ -272,14 +272,14 @@ export class MoorhenFleetManager {
         this.hoveredAtoms.delete(this.clientId)
         this.locks.delete(this.clientId)
         this.doc.destroy()
-        for (let clientId in this.hoverRepresentations) {
+        for (const clientId in this.hoverRepresentations) {
             this.hoverRepresentations[clientId]?.deleteBuffers()
         }
         this.setIsConnected(false)
     }
 
     getClientList() {
-        let result = []
+        const result = []
         this.connectedClients.forEach((clientData, clientId) => {
             if (clientId !== this.clientId) {
                 result.push(clientData)

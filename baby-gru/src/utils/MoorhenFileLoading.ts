@@ -79,7 +79,7 @@ const readCoordsString = async (fileString: string, fileName: string, commandCen
 }
 
 export const drawModels = async (newMolecules: moorhen.Molecule[]) => {
-    let drawPromises: Promise<void>[] = []
+    const drawPromises: Promise<void>[] = []
     if (newMolecules.length === 0) {
         return
     }
@@ -257,7 +257,7 @@ export const loadMrParseFiles = async (files: File[], commandCentre, glRef, stor
 
     const json_contents = await loadMrParseJson(files)
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch)
-    let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files, modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files, modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
 
     await drawModels(newMolecules)
     dispatch(addMoleculeList(newMolecules))
@@ -323,7 +323,7 @@ export const loadMrParseUrl = async (urlBase, commandCentre, glRef, store, monom
 
     const json_contents = await loadMrParseJsonUrl(urlBase)
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch)
-    let newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
 
     await drawModels(newMolecules)
     dispatch(addMoleculeList(newMolecules))

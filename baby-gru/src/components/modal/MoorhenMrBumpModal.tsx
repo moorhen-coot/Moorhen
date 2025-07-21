@@ -51,7 +51,7 @@ function rgb2hsv(r, g, b) {
     if (arguments.length === 1) {
         g = r.g, b = r.b, r = r.r;
     }
-    var max = Math.max(r, g, b), min = Math.min(r, g, b),
+    let max = Math.max(r, g, b), min = Math.min(r, g, b),
         d = max - min,
         h,
         s = (max === 0 ? 0 : d / max),
@@ -73,7 +73,7 @@ function rgb2hsv(r, g, b) {
 
 
 function hsv2rgb(h, s, v) {
-    var r, g, b, i, f, p, q, t;
+    let r, g, b, i, f, p, q, t;
     if (arguments.length === 1) {
         s = h.s, v = h.v, h = h.h;
     }
@@ -247,7 +247,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
 
         let alignText: string = ""
         let phmmerText: string = ""
-        let models_json: MrBUMPModelJson[] = []
+        const models_json: MrBUMPModelJson[] = []
 
         for (const file of files) {
             if(file.name==="models.json"&&file.webkitRelativePath.includes("logs/models.json")){
@@ -313,8 +313,8 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             }
         }
 
-        let drawPromises: Promise<void>[] = []
-        let molecules: moorhen.Molecule[] = []
+        const drawPromises: Promise<void>[] = []
+        const molecules: moorhen.Molecule[] = []
 
         for (const newMolecule of newMolecules) {
             molecules.push(newMolecule.molecule)

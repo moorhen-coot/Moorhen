@@ -28,7 +28,7 @@ export const MoorhenLigandList = (props: {
             return
         }
 
-        let ligandList: moorhen.LigandInfo[] = []
+        const ligandList: moorhen.LigandInfo[] = []
 
         for (const ligand of props.molecule.ligands) {
             const [svg, chemCompInfo,smilesInfo,flev_svg] = await Promise.all([

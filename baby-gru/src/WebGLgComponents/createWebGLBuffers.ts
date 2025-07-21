@@ -7,7 +7,7 @@ const createInstanceOriginsBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer());
     theBuffer.triangleInstanceOriginBuffer[theBuffer.triangleInstanceOriginBuffer.length - 1].numItems = 0;
     theBuffer.triangleInstanceOrigins.push([]);
-    for (var j = 0; j < tri.length; j++) {
+    for (let j = 0; j < tri.length; j++) {
         theBuffer.triangleInstanceOrigins[theBuffer.triangleInstanceOrigins.length - 1].push(parseFloat(tri[j]));
         theBuffer.triangleInstanceOriginBuffer[theBuffer.triangleInstanceOriginBuffer.length - 1].numItems++;
     }
@@ -18,7 +18,7 @@ const createInstanceOrientationsBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceOrientationBuffer.push(gl.createBuffer());
     theBuffer.triangleInstanceOrientationBuffer[theBuffer.triangleInstanceOrientationBuffer.length - 1].numItems = 0;
     theBuffer.triangleInstanceOrientations.push([]);
-    for (var j = 0; j < tri.length; j++) {
+    for (let j = 0; j < tri.length; j++) {
         theBuffer.triangleInstanceOrientations[theBuffer.triangleInstanceOrientations.length - 1].push(parseFloat(tri[j]));
         theBuffer.triangleInstanceOrientationBuffer[theBuffer.triangleInstanceOrientationBuffer.length - 1].numItems++;
     }
@@ -29,7 +29,7 @@ const createInstanceSizesBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceSizeBuffer.push(gl.createBuffer());
     theBuffer.triangleInstanceSizeBuffer[theBuffer.triangleInstanceSizeBuffer.length - 1].numItems = 0;
     theBuffer.triangleInstanceSizes.push([]);
-    for (var j = 0; j < tri.length; j++) {
+    for (let j = 0; j < tri.length; j++) {
         theBuffer.triangleInstanceSizes[theBuffer.triangleInstanceSizes.length - 1].push(parseFloat(tri[j]));
         theBuffer.triangleInstanceSizeBuffer[theBuffer.triangleInstanceSizeBuffer.length - 1].numItems++;
     }
@@ -40,7 +40,7 @@ const createVertexBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleVertexPositionBuffer.push(gl.createBuffer());
     theBuffer.triangleVertexPositionBuffer[theBuffer.triangleVertexPositionBuffer.length - 1].numItems = 0;
     theBuffer.triangleVertices.push([]);
-    for (var j = 0; j < tri.length; j++) {
+    for (let j = 0; j < tri.length; j++) {
         theBuffer.triangleVertices[theBuffer.triangleVertices.length - 1].push(parseFloat(tri[j]));
         theBuffer.triangleVertexPositionBuffer[theBuffer.triangleVertexPositionBuffer.length - 1].numItems++;
     }
@@ -56,7 +56,7 @@ const createNormalBuffer = (norm,theBuffer,gl) => {
     theBuffer.triangleNormals.push([]);
     theBuffer.triangleVertexNormalBuffer.push(gl.createBuffer());
     theBuffer.triangleVertexNormalBuffer[theBuffer.triangleVertexNormalBuffer.length - 1].numItems = 0;
-    for (var j = 0; j < norm.length; j++) {
+    for (let j = 0; j < norm.length; j++) {
         theBuffer.triangleNormals[theBuffer.triangleNormals.length - 1].push(parseFloat(norm[j]));
         theBuffer.triangleVertexNormalBuffer[theBuffer.triangleVertexNormalBuffer.length - 1].numItems++;
     }
@@ -71,7 +71,7 @@ const createColourBuffer = (colour,theBuffer,gl) => {
         //console.log("This is transparent");
         theBuffer.transparent = true;
     }
-    for (var j = 0; j < colour.length; j++) {
+    for (let j = 0; j < colour.length; j++) {
         theBuffer.triangleColours[theBuffer.triangleColours.length - 1].push(parseFloat(colour[j]));
         theBuffer.triangleColourBuffer[theBuffer.triangleColourBuffer.length - 1].numItems++;
     }
@@ -90,7 +90,7 @@ const createIndexBuffer = (idx,theBuffer,gl) => {
     theBuffer.triangleVertexIndexBuffer.push(gl.createBuffer());
     theBuffer.triangleVertexIndexBuffer[theBuffer.triangleVertexIndexBuffer.length - 1].numItems = 0;
     theBuffer.triangleIndexs.push([]);
-    for (var j = 0; j < idx.length; j++) {
+    for (let j = 0; j < idx.length; j++) {
         theBuffer.triangleIndexs[theBuffer.triangleIndexs.length - 1].push(parseFloat(idx[j]));
         theBuffer.triangleVertexIndexBuffer[theBuffer.triangleVertexIndexBuffer.length - 1].numItems++;
     }
@@ -98,7 +98,7 @@ const createIndexBuffer = (idx,theBuffer,gl) => {
 
 const createSizeBuffer = (idx,theBuffer) => {
     theBuffer.primitiveSizes.push([]);
-    for (var j = 0; j < idx.length; j++) {
+    for (let j = 0; j < idx.length; j++) {
         theBuffer.primitiveSizes[theBuffer.primitiveSizes.length - 1].push(parseFloat(idx[j]));
     }
 }
@@ -111,7 +111,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_origins) {
         const rssentries = jsondata.instance_origins[idat];
         if(rssentries){
-            let instance_origins = rssentries;
+            const instance_origins = rssentries;
             for (let i = 0; i < instance_origins.length; i++) {
                 createInstanceOriginsBuffer(instance_origins[i],theBuffer,gl);
             }
@@ -121,7 +121,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_sizes) {
         const rssentries = jsondata.instance_sizes[idat];
         if(rssentries){
-            let instance_sizes = rssentries;
+            const instance_sizes = rssentries;
             for (let i = 0; i < instance_sizes.length; i++) {
                 createInstanceSizesBuffer(instance_sizes[i],theBuffer,gl);
             }
@@ -131,7 +131,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_orientations) {
         const rssentries = jsondata.instance_orientations[idat];
         if(rssentries){
-            let instance_orientations = rssentries;
+            const instance_orientations = rssentries;
             for (let i = 0; i < instance_orientations.length; i++) {
                 createInstanceOrientationsBuffer(instance_orientations[i],theBuffer,gl);
             }
@@ -140,7 +140,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
 
     if (jsondata.additional_norm_tri) {
         const rssentries = jsondata.additional_norm_tri[idat];
-        let add_norms = rssentries;
+        const add_norms = rssentries;
         for (let i = 0; i < add_norms.length; i++) {
             createRealNormalBuffer(add_norms[i],theBuffer,gl); //This is dummy data. It will be blatted.
         }
@@ -157,10 +157,10 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
 
     if (jsondata.idx_tri) {
         const rssentries = jsondata.idx_tri[idat];
-        var idxs = rssentries;
+        const idxs = rssentries;
 
         for (let i = 0; i < idxs.length; i++) {
-            for (var j = 0; j < idxs[i].length; j++) {
+            for (let j = 0; j < idxs[i].length; j++) {
             }
             createIndexBuffer(idxs[i],theBuffer,gl);
         }
@@ -278,7 +278,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
 
     if (jsondata.col_tri) {
         const rssentries = jsondata.col_tri[idat];
-        let colours = rssentries;
+        const colours = rssentries;
 
         for (let i = 0; i < colours.length; i++) {
             createColourBuffer(colours[i],theBuffer,gl);
@@ -332,7 +332,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_origins) {
         const rssentries = jsondata.instance_origins[idat];
         if(rssentries){
-            let instance_origins = rssentries;
+            const instance_origins = rssentries;
             for (let i = 0; i < instance_origins.length; i++) {
                 createInstanceOriginsBuffer(instance_origins[i],theBuffer,gl);
             }
@@ -342,7 +342,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_sizes) {
         const rssentries = jsondata.instance_sizes[idat];
         if(rssentries){
-            let instance_sizes = rssentries;
+            const instance_sizes = rssentries;
             for (let i = 0; i < instance_sizes.length; i++) {
                 createInstanceSizesBuffer(instance_sizes[i],theBuffer,gl);
             }
@@ -352,7 +352,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if (jsondata.instance_orientations) {
         const rssentries = jsondata.instance_orientations[idat];
         if(rssentries){
-            let instance_orientations = rssentries;
+            const instance_orientations = rssentries;
             for (let i = 0; i < instance_orientations.length; i++) {
                 createInstanceOrientationsBuffer(instance_orientations[i],theBuffer,gl);
             }
@@ -361,7 +361,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
 
     if (jsondata.additional_norm_tri) {
         const rssentries = jsondata.additional_norm_tri[idat];
-        let add_norms = rssentries;
+        const add_norms = rssentries;
         for (let i = 0; i < add_norms.length; i++) {
             createRealNormalBuffer(add_norms[i],theBuffer,gl); //This is dummy data. It will be blatted.
         }

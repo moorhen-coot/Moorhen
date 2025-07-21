@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
+import { moorhen } from "../../../types/moorhen";
 import "./MoorhenPreciseInput.css";
-import "../MoorhenStack.css";
+import "../../MoorhenStack.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null | undefined;
@@ -58,38 +58,16 @@ type MoorhenPreciseInputPropsType = {
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const { allowNegativeValues = true, decimalDigits = 2, label = "", disabled = false, width, waitReturn = false, minMax = null, type = "standard" } = props;
 
-    const [isValidInput, setIsValidInput] = useState<boolean>(true);
-    const [internalValue, setInternalValue] = useState<string>("");
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
+    const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits));
+    const isValidRef = useRef<boolean>(true);
 
-    useEffect(() => {
-        if (!isUserInteracting) {
-            if (props.value === undefined || props.value === null) {
-                setInternalValue("");
-                setIsValidInput(false);
-            } else {
-                setInternalValue(Number(props.value).toFixed(decimalDigits));
-                setIsValidInput(true);
-            }
-        }
-    }, [props.value, isUserInteracting]);
-
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (type !== "number") {
-            return;
-        }
-        function handleClickOutside(event: MouseEvent) {
-            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-                setIsUserInteracting(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+    let displayValue: string = "";
+    if (!isUserInteracting) {
+        displayValue = props.value.toFixed(decimalDigits);
+    } else {
+        displayValue = internalValue;
+    }
 
     const checkIsValidInput = (input: string) => {
         if (input === "") {
@@ -110,11 +88,12 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         return true;
     };
 
+    isValidRef.current = checkIsValidInput(displayValue);
+
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
-        setIsValidInput(_isValid);
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
@@ -123,7 +102,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
-            if (isValidInput) {
+            if (checkIsValidInput(internalValue)) {
                 props.setValue?.(internalValue);
             }
             setIsUserInteracting(false);
@@ -145,16 +124,15 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 </label>
             ) : null}
             <input
-                ref={inputRef}
                 id="input"
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
-                value={internalValue}
+                value={displayValue}
                 style={{ width: inputWidth }}
                 className={`${"moorhen__input precise"} 
                 ${type === "numberForm" ? "moorhen__input number" : "moorhen__input compact"} 
-                ${isValidInput ? "moorhen__input valid" : "moorhen__input invalid"} 
+                ${isValidRef.current ? "moorhen__input valid" : "moorhen__input invalid"} 
                 ${disabled ? "moorhen__input disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}

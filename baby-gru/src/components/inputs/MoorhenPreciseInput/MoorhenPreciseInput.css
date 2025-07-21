@@ -1,4 +1,4 @@
-@import './MoorhenInput.css';
+@import '../MoorhenInput.css';
 
 .moorhen__input.precise {
     padding-left: 0.5rem;

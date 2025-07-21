@@ -1,7 +1,7 @@
-import { useState, useEffect,} from "react";
+import { useState, useEffect, memo } from "react";
 import { Popover } from "@mui/material";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { hexToRGB, rgbToHex } from "../../utils/utils";
+import { hexToRGB, rgbToHex } from "../../../utils/utils";
 import { Stack } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -62,19 +62,9 @@ type MoorhenColourPickerType = MoorhenColourPickerSingle | MoorhenColourPickerDu
  * @function
  */
 
-export default function MoorhenColourPicker(props:MoorhenColourPickerType) {
-    const { colour, 
-        setColour,
-        label = null,
-        colour2 = null,
-        setColour2 = null,
-        label2 = null,
-        position = "top",
-        onClose,
-        onOpen
-    } = props;
+export const MoorhenColourPicker = memo((props: MoorhenColourPickerType) => {
+    const { colour, setColour, label = null, colour2 = null, setColour2 = null, label2 = null, position = "top", onClose, onOpen } = props;
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
-    //const colourSwatchRef = useRef<HTMLDivElement | null>(null);
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
@@ -85,7 +75,6 @@ export default function MoorhenColourPicker(props:MoorhenColourPickerType) {
             onOpen();
         }
     }, [showColourPicker, onClose, onOpen]);
-
 
     return (
         <>
@@ -112,7 +101,7 @@ export default function MoorhenColourPicker(props:MoorhenColourPickerType) {
                         backgroundColor: colour2 ? "white" : `rgb(${colour[0]}, ${colour[1]}, ${colour[2]})`,
                         backgroundImage: colour2
                             ? `linear-gradient(135deg, rgb(${colour[0]}, ${colour[1]}, ${colour[2]}) 49%, white 49%, white 51%, rgb(${colour2[0]}, ${colour2[1]}, ${colour2[2]}) 51%)`
-                            : "none"
+                            : "none",
                     }}
                 />
             </Tooltip>
@@ -141,10 +130,7 @@ export default function MoorhenColourPicker(props:MoorhenColourPickerType) {
                         .map(({ c, set, label }, i) => (
                             <Stack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
                                 {label ? <span>{label}</span> : null}
-                                <RgbColorPicker
-                                    color={{ r: c[0], g: c[1], b: c[2] }}
-                                    onChange={({ r, g, b }) => set([r, g, b])}
-                                />
+                                <RgbColorPicker color={{ r: c[0], g: c[1], b: c[2] }} onChange={({ r, g, b }) => set([r, g, b])} />
                                 <div
                                     style={{
                                         width: "100%",
@@ -168,5 +154,7 @@ export default function MoorhenColourPicker(props:MoorhenColourPickerType) {
                 </Stack>
             </Popover>
         </>
-            );
-}
+    );
+});
+
+MoorhenColourPicker.displayName = "MoorhenColourPicker";

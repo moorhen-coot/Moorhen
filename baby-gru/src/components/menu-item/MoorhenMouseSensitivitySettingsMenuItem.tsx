@@ -1,5 +1,5 @@
 import { Form } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { useDispatch, useSelector } from "react-redux";

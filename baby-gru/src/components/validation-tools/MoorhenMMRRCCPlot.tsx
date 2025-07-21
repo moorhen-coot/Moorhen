@@ -42,9 +42,9 @@ export const MoorhenMMRRCCPlot = (props: {
     const dispatch = useDispatch()
 
     const getSequenceData = () => {
-        let selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
+            const sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
             if (sequenceData) {
                 return sequenceData.sequence
             }    
@@ -109,7 +109,7 @@ export const MoorhenMMRRCCPlot = (props: {
     }
 
     const fetchData = async () => {
-        let response = await props.commandCentre.current.cootCommand({
+        const response = await props.commandCentre.current.cootCommand({
             message: 'coot_command', 
             command: 'mmrrcc', 
             returnType: 'mmrrcc_stats', 
@@ -155,12 +155,12 @@ export const MoorhenMMRRCCPlot = (props: {
             return;
         }
 
-        let sequenceData =  getSequenceData()
+        const sequenceData =  getSequenceData()
         if (!sequenceData) {
             return
         }
         
-        let labels: ([string, number] | string)[] = []
+        const labels: ([string, number] | string)[] = []
         sequenceData.forEach((residue, index) => {
             if (index % 10 !== 0) {
                 labels.push(residue.resCode)
@@ -176,9 +176,9 @@ export const MoorhenMMRRCCPlot = (props: {
         const containerBody = document.getElementById('mmrrcc-container-body')
         containerBody.style.width = (labels.length*barWidth)+ "px";
         const canvas = document.getElementById("mmrrcc-chart-canvas") as HTMLCanvasElement
-        let ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d")
 
-        let scales = {
+        const scales = {
             x: {
                 stacked: true,
                 beginAtZero: true,
@@ -213,7 +213,7 @@ export const MoorhenMMRRCCPlot = (props: {
             }
         }
 
-        let datasets: {label: string; data: (number | null)[], clip: (number | false), fill: boolean, borderColor: string, tension: number}[] = []
+        const datasets: {label: string; data: (number | null)[], clip: (number | false), fill: boolean, borderColor: string, tension: number}[] = []
         
         for(const metric of Object.keys(plotData)){
             if (!plotData[metric]) {
@@ -223,7 +223,7 @@ export const MoorhenMMRRCCPlot = (props: {
             datasets.push({
                 label: metric,
                 data: sequenceData.map(currentResidue => {
-                    let residue = plotData[metric].find(res => parseInt(res.resNum) === currentResidue.resNum)
+                    const residue = plotData[metric].find(res => parseInt(res.resNum) === currentResidue.resNum)
                     if (residue) {
                         return residue.correlation
                     } else {

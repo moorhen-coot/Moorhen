@@ -105,7 +105,7 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
                     <Row style={{display: 'flex'}}>
                     <Col className="col-4" style={{overflowY: 'scroll', height: convertViewtoPx(65, height)}}>
                     {shortCuts && Object.keys(shortCuts).map(key => {
-                            let modifiers = []
+                            const modifiers = []
                             if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("Shift")
                             if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("Ctrl")
                             if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("Meta")

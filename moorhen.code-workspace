@@ -1,0 +1,28 @@
+{
+  "folders": [
+    {
+      "name": "Moorhen Root",
+      "path": "."
+    },
+    {
+      "name": "Baby-gru",
+      "path": "./baby-gru"
+    }
+  ],
+  "settings": {
+    "eslint.workingDirectories": ["baby-gru"],
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}

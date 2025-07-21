@@ -214,7 +214,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         videoRecorderRef: innerVideoRecorderRef,
     };
 
-    let refs = {} as moorhen.ContainerRefs;
+    const refs = {} as moorhen.ContainerRefs;
     Object.keys(innerRefsMap).forEach((key) => {
         refs[key] = props[key] ? props[key] : innerRefsMap[key];
     });
@@ -298,20 +298,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     };
 
     useLayoutEffect(() => {
-        let head = document.head;
-        let style: any = document.createElement("link");
-        style.href = `${urlPrefix}/moorhen.css`;
-        style.rel = "stylesheet";
-        style.async = true;
-        style.type = "text/css";
-        head.appendChild(style);
-
-        return () => {
-            if (head.contains(style)) {
-                head.removeChild(style);
-            }
-        };
-    }, []);
+        const head = document.head
+        const style: any = document.createElement("link")
+        style.href = `${urlPrefix}/moorhen.css`
+        style.rel = "stylesheet"
+        style.async = true
+        style.type = 'text/css'
+        head.appendChild(style)
+    }, [])
 
     const setWindowDimensions = useCallback(() => {
         let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
@@ -369,8 +363,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     }, [userPreferencesMounted]);
 
     useLayoutEffect(() => {
-        let head = document.head;
-        let style: any = document.createElement("link");
+        const head = document.head;
+        const style: any = document.createElement("link");
 
         if (isDark) {
             style.href = `${urlPrefix}/darkly.css`;

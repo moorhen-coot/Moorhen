@@ -7,7 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { MoorhenSlider } from "../inputs";
 import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Store } from "@reduxjs/toolkit";
