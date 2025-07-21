@@ -1,5 +1,10 @@
 import React, { useMemo, useCallback } from "react";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer, MoorhenSeqViewTypes } from "../sequence-viewer/MoorhenSequenceViewer";
+import {
+    MoorhenSequenceViewer,
+    moorhenSequenceToSeqViewer,
+    MoorhenSequenceViewerSequence,
+    MoorhenSequenceViewerResiduesSelection,
+} from "../sequence-viewer";
 import { cidToSpec, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch} from "react-redux";
@@ -31,34 +36,38 @@ export const MoorhenSequenceList = (props: {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
 
     const sequenceSelection = useMemo(() => {
-        const selection:MoorhenSeqViewTypes.ResiduesSelection | null = residueSelection.molecule ? {
-            molNo: residueSelection.molecule.molNo,
-            chain: residueSelection.first.split('/')[2], 
-            range: [
-                parseInt(residueSelection.first.split('/')[3]),
-                residueSelection.second ? parseInt(residueSelection.second.split('/')[3]) : parseInt(residueSelection.first.split('/')[3])
-            ]
-        } : null;
+        const selection: MoorhenSequenceViewerResiduesSelection | null = residueSelection.molecule
+            ? {
+                  molNo: residueSelection.molecule.molNo,
+                  chain: residueSelection.first.split("/")[2],
+                  range: [
+                      parseInt(residueSelection.first.split("/")[3]),
+                      residueSelection.second
+                          ? parseInt(residueSelection.second.split("/")[3])
+                          : parseInt(residueSelection.first.split("/")[3]),
+                  ],
+              }
+            : null;
         return selection;
     }, [residueSelection]);
 
-    const sequenceList = useMemo<MoorhenSeqViewTypes.SeqElement[]>(() => {    
-        const newSequenceList = props.molecule.sequences.map(
-            sequence => {            
-                if (!sequenceIsValid(sequence.sequence)) {
-                    return null
-                }
-                const newSeq = moorhenSequenceToSeqViewer(sequence, props.molecule.name, props.molecule.molNo)
-                newSeq.residues = newSeq.residues.map(res => ({
-                    ...res,
-                    colour: null
-                }))
-                const seqColour = props.molecule.representations[0].colourRules.find(rule => rule.cid === '//' + newSeq.chain)?.color
-                newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null
-                return newSeq
+    const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
+        const newSequenceList = props.molecule.sequences.map((sequence) => {
+            if (!sequenceIsValid(sequence.sequence)) {
+                return null;
             }
-        )
-        return newSequenceList
+            const newSeq = moorhenSequenceToSeqViewer(sequence, props.molecule.name, props.molecule.molNo);
+            newSeq.residues = newSeq.residues.map((res) => ({
+                ...res,
+                colour: null,
+            }));
+            const seqColour = props.molecule.representations[0].colourRules.find(
+                (rule) => rule.cid === "//" + newSeq.chain
+            )?.color;
+            newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null;
+            return newSeq;
+        });
+        return newSequenceList;
     }, [props.molecule.sequences]);
 
 
@@ -72,17 +81,17 @@ export const MoorhenSequenceList = (props: {
     );
 
     const handleResiduesSelection = useCallback(
-        (selection: MoorhenSeqViewTypes.ResiduesSelection) => {
+        (selection: MoorhenSequenceViewerResiduesSelection) => {
             if (selection.molNo !== props.molecule.molNo) return;
             const first = Math.min(selection.range[0], selection.range[1]);
             const second = Math.max(selection.range[0], selection.range[1]);
             const newSelection: moorhen.ResidueSelection = {
                 molecule: props.molecule,
-                first: '/1/' + selection.chain + '/' + first + '/CA',
-                second: '/1/' + selection.chain + '/' + second + '/CA',
-                cid: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+                first: "/1/" + selection.chain + "/" + first + "/CA",
+                second: "/1/" + selection.chain + "/" + second + "/CA",
+                cid: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
                 isMultiCid: false,
-                label: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+                label: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
             };
             dispatch(setResidueSelection(newSelection));
             props.molecule.drawResidueSelection(newSelection.cid as string);

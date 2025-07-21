@@ -10,7 +10,7 @@ import { webGL } from "../../types/mgWebGL";
 import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 
 type colourRuleChange = {

@@ -1,4 +1,4 @@
-import { MoorhenIcon } from "./MoorhenIcon";
+import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import "./moorhen-button.css";
 
 type MoorhenButtonPropsType = {

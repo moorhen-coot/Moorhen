@@ -2,7 +2,7 @@ import { useState, useRef, memo } from "react";
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { representationLabelMapping } from "../../utils/enums";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/";
 import { moorhen } from "../../types/moorhen";
 import { Popover } from "@mui/material";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";

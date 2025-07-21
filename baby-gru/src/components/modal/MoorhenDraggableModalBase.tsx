@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useRef, useState, useLayoutEffect, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
+import { AddOutlined, CloseOutlined, RemoveOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
 import "./MoorhenDraggableModalBase.css";
-import resizableIcon from "../icons/resizable.svg";
-import { storeKeyNameFromField } from "@apollo/client/utilities";
 import { MoorhenStore } from "../../moorhen";
 
 type MoorhenDraggableModalBaseProps = {
@@ -118,7 +116,16 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         handleClassName = "handle",
         additionalHeaderButtons = null,
         additionalChildren = null,
-        enableResize = { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        enableResize = {
+            top: false,
+            right: true,
+            bottom: true,
+            left: false,
+            topRight: false,
+            bottomRight: true,
+            bottomLeft: true,
+            topLeft: false,
+        },
         top = 500,
         left = 500,
         overflowY = "auto",
@@ -159,7 +166,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         } else if (measured) {
             return {
                 width: bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth,
-                height: bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight,
+                height:
+                    bodySize.height > minHeight
+                        ? bodySize.height < maxHeight
+                            ? bodySize.height
+                            : maxHeight
+                        : minHeight,
             };
         } else {
             return {
@@ -174,7 +186,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut);
+    const transparentModalsOnMouseOut = useSelector(
+        (state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut
+    );
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);
     const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId));
 

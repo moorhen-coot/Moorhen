@@ -6,7 +6,7 @@
     --moorhen-focus: #86b7fe;
     --moorhen-background: #fff;
     --moorhen-middle: #d3d3d3;
-    --moorhen-border: #ced4da;  
+    --moorhen-border: #898f96;  
     --moorhen-input-background: rgba(219, 219, 219, 0.075);
     --moorhen-error: #dc3545;
     --moorhen-disabled:  #6c757d;
@@ -24,8 +24,8 @@
     /* Moorhen specific colors for dark theme */
     --moorhen-primary: #f8f9fa;
     --moorhen-background: #2c2e30;
-    --moorhen-border: #495057;
-    --moorhen-focus: #0d6efd;
+    --moorhen-background-secondary: #606060;
+    --moorhen-border: #c6cfd8;
     --moorhen-input-background: rgba(255, 255, 255, 0.1);
     --moorhen-error: #dc3545;
     --moorhen-disabled: #6c757d;

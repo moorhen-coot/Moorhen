@@ -1,9 +1,6 @@
 import { useRef } from "react";
-import { useSelector } from "react-redux";
-import { moorhen } from "../../../types/moorhen";
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
 import { clampValue } from "../../misc/helpers";
+import { MoorhenButton } from "../";
 
 type PlusMinusButtonProps = {
     step: number;
@@ -17,14 +14,17 @@ type PlusMinusButtonProps = {
 };
 
 export function PlusMinusButton(props: PlusMinusButtonProps) {
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const { step, minVal, maxVal, isDisabled, logScale = false } = props;
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const currentValueRef = useRef<number>(props.externalValue);
     currentValueRef.current = logScale ? Math.log10(props.externalValue) : props.externalValue;
 
     const buttonEffect = () => {
-        const newValue = clampValue(logScale ? Math.pow(10, currentValueRef.current + step) : currentValueRef.current + step, minVal, maxVal);
+        const newValue = clampValue(
+            logScale ? Math.pow(10, currentValueRef.current + step) : currentValueRef.current + step,
+            minVal,
+            maxVal
+        );
         currentValueRef.current = newValue;
         props.setExternalValue(newValue);
     };
@@ -47,14 +47,14 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
     };
 
     return (
-        <IconButton
-            sx={{ padding: 0, color: isDark ? "white" : "black" }}
+        <MoorhenButton
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            icon={step > 0 ? "plus" : "minus"}
+            type="icon-only"
+            size="small"
             disabled={isDisabled}
-        >
-            {step > 0 ? <AddCircleOutline /> : <RemoveCircleOutline />}
-        </IconButton>
+        />
     );
 }
