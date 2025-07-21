@@ -16,12 +16,10 @@ export const MapOriginListener = (props: { drawMap(): void }) => {
 };
 
 export const MapOriginListenerMouseUp = (props: { drawMap(): void }) => {
-    useEffect(() => {
-        const handleMouseUp = (event: MouseEvent) => {
-            props.drawMap();
-        };
-        useDocumentEventListener("mouseup", handleMouseUp, { capture: true });
-    }, []);
 
+    const handleMouseUp = (event: MouseEvent) => {
+        props.drawMap();
+    };
+    useDocumentEventListener("mouseup", handleMouseUp, { capture: true });
     return null;
 };

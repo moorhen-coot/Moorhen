@@ -179,15 +179,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                 <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
                             </ToggleButton>
                             <Stack direction="vertical" style={{ justifyContent: "center" }}>
-                                <Stack
-                                    direction="horizontal"
-                                    gap={4}
-                                    style={{
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        width: "100%",
-                                    }}
-                                >
+                                <div className="moorhen__stack__row">
                                     <MoorhenPreciseInput
                                         value={mapContourLevel}
                                         setValue={(newVal) => {
@@ -199,7 +191,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                         disabled={!mapIsVisible}
                                         waitReturn={true}
                                     />
-                                    ;
+                                    &nbsp;
                                     {props.map.mapRmsd && (
                                         <MoorhenPreciseInput
                                             allowNegativeValues={true}
@@ -213,7 +205,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                             waitReturn={true}
                                         />
                                     )}
-                                </Stack>
+                                </div>
                                 <MoorhenSlider
                                     minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
                                     maxVal={props.map.levelRange[1]}

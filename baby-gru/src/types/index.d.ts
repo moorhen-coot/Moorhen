@@ -3,13 +3,8 @@ import { libcootApi } from "./libcoot";
 export {};
 
 declare global {
+    declare module "*.module.css";
     namespace JSX {
-        interface IntrinsicElements {
-          "nightingale-manager": NightingaleManager;
-          "nightingale-sequence": NightingaleSequence;
-          "nightingale-navigation": NightingaleNavigation;
-          "nightingale-track": NightingaleTrack;
-        }
     }    
     interface Window {
         CCP4Module: libcootApi.CCP4ModuleType;

@@ -1,6 +1,6 @@
 {
   "name": "moorhen",
-  "version": "0.22.0-beta.6",
+  "version": "0.22.0-beta.9",
   "private": false,
   "main": "moorhen.js",
   "types": "./types/main.d.ts",
@@ -29,7 +29,7 @@
     "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak '/export {}/d' public/CootWorker.js && rm public/CootWorker.js.bak",
     "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/CootWorker.js && sed -i.bak '/importScripts.*;/d' public/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/CootWorker.js && rm public/CootWorker.js.bak",
     "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
-    "start": "vite",
+    "start": "vite --config vite.config.mts",
     "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
     "build": "vite build",
     "build-pwa": "npm run prebuild && vite build --config vite.pwa.config.mts",

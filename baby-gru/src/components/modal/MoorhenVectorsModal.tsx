@@ -89,18 +89,26 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
     }
 
     const [theVector, setVector] = useState<moorhen.MoorhenVector>(newVector())
+    const [selectedOption, setSelectedOption] = useState<string>("new")
+
+    const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
+        dispatch(removeVector(theVector))
+        setSelectedOption("new")
+    }
 
     const handleApply = (evt: React.MouseEvent<HTMLElement> ) => {
         if(vectorSelectRef.current.value!=="new"){
             dispatch(removeVector(theVector))
         }
         dispatch(addVector(theVector))
+        setSelectedOption(theVector.uniqueId)
     }
 
     const handleVectorChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if(vectorSelectRef !== null && typeof vectorSelectRef !== 'function') {
             vectorSelectRef.current.value = evt.target.value
             if(vectorSelectRef.current.value==="new"){
+                setSelectedOption("new")
                 updateVector(newVector())
                 if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "cylinder"
                 if(arrowModeRef !== null && typeof arrowModeRef !== 'function') arrowModeRef.current.value = "none"
@@ -110,6 +118,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                 try {
                     const existingVector = vectorsList.find((element) => element.uniqueId===evt.target.value)
                     updateVector(existingVector)
+                    setSelectedOption(existingVector.uniqueId)
                     if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = existingVector.drawMode
                     if(arrowModeRef !== null && typeof arrowModeRef !== 'function') arrowModeRef.current.value =  existingVector.arrowMode
                     if(labelModeRef !== null && typeof labelModeRef !== 'function') labelModeRef.current.value =  existingVector.labelMode
@@ -124,14 +133,14 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             <div style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Select vector:</div>
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                                 <FormSelect ref={vectorSelectRef} size="sm" onChange={handleVectorChange}>
-                                <option value="new">New vector</option>
+                                <option selected={selectedOption==="new"} value="new">New vector</option>
                                 {vectorsList.length>0 && vectorsList.map((vec,i) => {
                                     if(vec.coordsMode==="points") {
-                                        return <option key={i} value={vec.uniqueId}>{vec.xFrom.toFixed(2)+" "+vec.yFrom.toFixed(2)+" "+vec.zFrom.toFixed(2)+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.xFrom.toFixed(2)+" "+vec.yFrom.toFixed(2)+" "+vec.zFrom.toFixed(2)+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
                                     } else if(vec.coordsMode==="atoms") {
-                                        return <option key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.cidTo}</option>
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.cidTo}</option>
                                     } else  {
-                                        return <option key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.cidFrom+" <--> "+vec.xTo.toFixed(2)+" "+vec.yTo.toFixed(2)+" "+vec.zTo.toFixed(2)}</option>
                                     }
                                 })
                                 }
@@ -139,7 +148,9 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             </Form.Group>
                         </>
 
-    const footer = <>{vectorSelectRef.current.value!=="new" && <Button className='m-2' variant="danger" onClick={handleApply}>Delete</Button>}
+    const footer = <>{vectorSelectRef.current && selectedOption!=="new" && 
+                    <Button className='m-2' variant="danger" onClick={handleDelete}>Delete</Button>
+                    }
                     <Button className='m-2' onClick={handleApply}>Apply</Button></>
 
     const updateVector = ({
