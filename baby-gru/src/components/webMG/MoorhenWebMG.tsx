@@ -1,5 +1,6 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
+import { buildBuffers, appendOtherData,linesToThickLines } from '../../WebGLgComponents/buildBuffers'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
@@ -10,8 +11,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers } from "../../store/glRefSlice"
 import * as quat4 from 'gl-matrix/quat';
+import { gemmiAtomPairsToCylindersInfo } from '../../utils/utils'
+import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -127,6 +130,58 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [drawQuat,setDrawQuat] = useState<quat4>([0, 0, 0, -1])
 
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
+
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
+    const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+
+            let oldBuffers = displayBuffers
+            vectorBuffers.forEach((buffer) => {
+                buffer.clearBuffers()
+                oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            })
+
+            const atomColours = {}
+            const colour = [1.0,0.0,0.0,1.0]
+            const atomPairs = []
+            vectorsList.forEach(vec => {
+                if(vec.coordsMode==="points"){
+                    const firstAtomInfo = {
+                        pos: [vec.xFrom, vec.yFrom, vec.zFrom],
+                        x: vec.xFrom,
+                        y: vec.yFrom,
+                        z: vec.zFrom,
+                    }
+                    const secondAtomInfo = {
+                        pos: [vec.xTo, vec.yTo, vec.zTo],
+                        x: vec.xTo,
+                        y: vec.yTo,
+                        z: vec.zTo,
+                    }
+                    const pair = [firstAtomInfo, secondAtomInfo]
+                    atomPairs.push(pair)
+                }
+            })
+            atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+            const objects = [
+                gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
+            ]
+            console.log(objects)
+
+            let newBuffers = []
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = appendOtherData(object, true);
+                newBuffers = [...newBuffers,...a]
+                buildBuffers(a)
+            })
+            setVectorBuffers(newBuffers)
+            console.log(newBuffers)
+            dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
+        }
+    }, [vectorsList])
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
