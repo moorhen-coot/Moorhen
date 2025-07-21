@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { MoorhenPreciseInput } from "./MoorhenPreciseInput";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { AddCircleOutline, Cookie, RemoveCircleOutline } from "@mui/icons-material";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import { clampValue } from "../misc/helpers";
 import { toFixedNoZero } from "../misc/helpers";
-import { MoorhenIcon } from "../icons/MoorhenIcon";
+import { MoorhenButton } from "../icons/MoorhenButton";
 import "./MoorhenSlider.css";
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
@@ -136,7 +136,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         }
     };
 
-    const [internalValue, setInternalValue] = useState<T>(logScale ? log10ofT(props.externalValue) : props.externalValue); // internal value
+    const [internalValue, setInternalValue] = useState<T>(
+        logScale ? log10ofT(props.externalValue) : props.externalValue
+    ); // internal value
     const [externalValue, setExternalValue] = useState<T>(props.externalValue);
     const isRange = Array.isArray(props.externalValue);
 
@@ -222,7 +224,9 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 <label className={"moorhen__slider label"} htmlFor="slider">
                     {sliderTitle}:{" "}
                     {isRange
-                        ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(decimalPlaces)}`
+                        ? `${props.externalValue[0].toFixed(decimalPlaces)} - ${props.externalValue[1].toFixed(
+                              decimalPlaces
+                          )}`
                         : typeof props.externalValue === "number"
                         ? props.externalValue.toFixed(decimalPlaces)
                         : ""}
@@ -242,12 +246,30 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
 
             if (Array.isArray(linearValue)) {
                 if (idx === 0) {
-                    return [clampValue(logScale ? Math.pow(10, linearValue[0] + factor) : linearValue[0] + factor, minVal, maxVal), currentValue[1]] as T;
+                    return [
+                        clampValue(
+                            logScale ? Math.pow(10, linearValue[0] + factor) : linearValue[0] + factor,
+                            minVal,
+                            maxVal
+                        ),
+                        currentValue[1],
+                    ] as T;
                 } else {
-                    return [currentValue[0], clampValue(logScale ? Math.pow(10, linearValue[1] + factor) : linearValue[1] + factor, minVal, maxVal)] as T;
+                    return [
+                        currentValue[0],
+                        clampValue(
+                            logScale ? Math.pow(10, linearValue[1] + factor) : linearValue[1] + factor,
+                            minVal,
+                            maxVal
+                        ),
+                    ] as T;
                 }
             } else if (typeof linearValue === "number") {
-                return clampValue(logScale ? Math.pow(10, linearValue + factor) : linearValue + factor, minVal, maxVal) as T;
+                return clampValue(
+                    logScale ? Math.pow(10, linearValue + factor) : linearValue + factor,
+                    minVal,
+                    maxVal
+                ) as T;
             }
         };
 
@@ -273,18 +295,15 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         };
 
         return (
-            <>
-                <IconButton
-                    sx={{ padding: 0, color: isDark ? "white" : "black" }}
-                    onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    disabled={isDisabled}
-                >
-                    {factor > 0 ? <AddCircleOutline /> : <RemoveCircleOutline />}
-                </IconButton>
-                <MoorhenIcon name={factor > 0 ? "plus" : "minus"} alt={factor > 0 ? "Increase" : "Decrease"} size={"small"} />
-            </>
+            <MoorhenButton
+                icon={factor > 0 ? "plus" : "minus"}
+                type="icon-only"
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                disabled={isDisabled}
+                size="small"
+            />
         );
     };
 
@@ -316,7 +335,13 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         }`}
                         disabled={isDisabled}
                         value={Array.isArray(internalValue) ? internalValue[0] : internalValue}
-                        onChange={(evt) => handleChange(Array.isArray(internalValue) ? ([+evt.target.value, internalValue[1]] as T) : (+evt.target.value as T))}
+                        onChange={(evt) =>
+                            handleChange(
+                                Array.isArray(internalValue)
+                                    ? ([+evt.target.value, internalValue[1]] as T)
+                                    : (+evt.target.value as T)
+                            )
+                        }
                         min={logScale ? Math.log10(minVal) : minVal}
                         max={logScale ? Math.log10(maxVal) : maxVal}
                         step={precision}

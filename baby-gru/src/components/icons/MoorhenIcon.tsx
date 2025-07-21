@@ -1,15 +1,18 @@
 import { MoorhenStore } from "../../moorhen";
 import "./moorhen-icons.css";
 
-export const MoorhenIcon = (props: { name: string; alt: string; size: "small" | "medium" | "large" }) => {
+type MoorhenIconPropsType = {
+    name: string;
+    alt?: string;
+    size: "small" | "medium" | "large";
+    isActive?: boolean; // Optional prop to indicate if the icon is active
+    className?: string; // Optional className for additional styling
+};
+export const MoorhenIcon = ({ name, alt, size, isActive = null, className = "" }: MoorhenIconPropsType) => {
     const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
-    console.log(`MoorhenIcon: ${urlPrefix}/pixmaps/moorhen_icons/${props.name}.svg`);
-    return (
-        <img
-            src={`${urlPrefix}/pixmaps/moorhen_icons/${props.name}.svg`}
-            alt={props.alt}
-            className={`moorhen__icon__${props.size} moorhen__icon__color`}
-            draggable={false}
-        />
-    );
+    const file = `${urlPrefix}/pixmaps/moorhen_icons/${name}.svg`;
+    const internalClassName = className
+        ? className
+        : `moorhen__icon__${size} ${isActive ? "moorhen__icon__active" : "moorhen__icon__inactive"}`;
+    return <img className={internalClassName} draggable="false" aria-label={alt ? alt : name} src={`${file}`} />;
 };

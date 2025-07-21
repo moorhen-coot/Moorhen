@@ -374,8 +374,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
         if (isDark) {
             style.href = `${urlPrefix}/darkly.css`;
+            document.body.setAttribute("data-theme", "dark");
         } else {
             style.href = `${urlPrefix}/flatly.css`;
+            document.body.setAttribute("data-theme", "light");
         }
 
         style.rel = "stylesheet";

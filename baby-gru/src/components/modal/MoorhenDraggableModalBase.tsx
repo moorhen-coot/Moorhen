@@ -313,7 +313,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                     onClick={() => dispatch(focusOnModal(modalIdRef.current))}
                     className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
                     ref={draggableNodeRef}
-                    style={{ display: show ? "block" : "none", position: "absolute", opacity: opacity, zIndex: currentZIndex }}
+                    style={{
+                        display: show ? "block" : "none",
+                        position: "absolute",
+                        opacity: opacity,
+                        zIndex: currentZIndex,
+                    }}
                     onMouseOver={() => setOpacity(1.0)}
                     onMouseOut={() => {
                         if (transparentModalsOnMouseOut) setOpacity(0.5);
@@ -321,22 +326,42 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 >
                     <Card.Header
                         className={handleClassName}
-                        style={{ minWidth: minWidth, justifyContent: "space-between", display: "flex", cursor: "move", alignItems: "center" }}
+                        style={{
+                            minWidth: minWidth,
+                            justifyContent: "space-between",
+                            display: "flex",
+                            cursor: "move",
+                            alignItems: "center",
+                        }}
                     >
                         {props.headerTitle}
                         <Stack gap={2} direction="horizontal">
                             {collapse ? null : additionalHeaderButtons?.map((button) => button)}
-                            <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={() => setCollapse(!collapse)}>
+                            <Button
+                                variant="white"
+                                style={{ margin: "0.1rem", padding: "0.1rem" }}
+                                onClick={() => setCollapse(!collapse)}
+                            >
                                 {collapse ? <AddOutlined /> : <RemoveOutlined />}
                             </Button>
                             {showCloseButton && (
-                                <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleClose}>
+                                <Button
+                                    variant="white"
+                                    style={{ margin: "0.1rem", padding: "0.1rem" }}
+                                    onClick={handleClose}
+                                >
                                     <CloseOutlined />
                                 </Button>
                             )}
                         </Stack>
                     </Card.Header>
-                    <Card.Body style={{ display: collapse ? "none" : "flex", justifyContent: "center", flexDirection: "column" }}>
+                    <Card.Body
+                        style={{
+                            display: collapse ? "none" : "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                        }}
+                    >
                         <ResizableBox
                             width={resizableSize.width}
                             height={resizableSize.height}
@@ -346,29 +371,37 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             ref={props.resizeNodeRef ? props.resizeNodeRef : null}
                             resizeHandles={["se"]}
                             onResizeStop={(e, data) => {
-                                handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                    width: data.size.width,
-                                    height: data.size.height,
-                                });
+                                handleResizeStop(
+                                    e as unknown as MouseEvent | TouchEvent,
+                                    data.handle as any,
+                                    data.node as HTMLDivElement,
+                                    {
+                                        width: data.size.width,
+                                        height: data.size.height,
+                                    }
+                                );
                             }}
                             onResizeStart={(e) => handleStart()}
                             onResize={(e, data) => {
-                                handleResize(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                    width: data.size.width,
-                                    height: data.size.height,
-                                });
+                                handleResize(
+                                    e as unknown as MouseEvent | TouchEvent,
+                                    data.handle as any,
+                                    data.node as HTMLDivElement,
+                                    {
+                                        width: data.size.width,
+                                        height: data.size.height,
+                                    }
+                                );
                             }}
                             handle={
                                 enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
-                                    //<div className="react-resizable-handle react-resizable-handle-se">
                                     <img
-                                        src={`${urlPrefix}/pixmaps/moorhen-icons/resizable.svg`}
+                                        src={`${urlPrefix}/pixmaps/moorhen_icons/resizable.svg`}
                                         draggable="false"
                                         alt="resize"
                                         className="moorhen__modal__base__icon"
                                     />
-                                ) : //</div>
-                                undefined
+                                ) : undefined
                             }
                         >
                             <div
@@ -383,7 +416,13 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                                 }}
                             >
                                 {enforceMaxBodyDimensions ? (
-                                    <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
+                                    <div
+                                        style={
+                                            enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}
+                                        }
+                                    >
+                                        {props.body}
+                                    </div>
                                 ) : (
                                     props.body
                                 )}
@@ -391,7 +430,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         </ResizableBox>
                     </Card.Body>
                     {props.footer && (
-                        <Card.Footer style={{ display: collapse ? "none" : "flex", alignItems: "center", justifyContent: "right" }}>{props.footer}</Card.Footer>
+                        <Card.Footer
+                            style={{
+                                display: collapse ? "none" : "flex",
+                                alignItems: "center",
+                                justifyContent: "right",
+                            }}
+                        >
+                            {props.footer}
+                        </Card.Footer>
                     )}
                     {additionalChildren}
                 </Card>
