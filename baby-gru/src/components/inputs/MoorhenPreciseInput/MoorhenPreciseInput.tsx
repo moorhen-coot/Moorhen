@@ -61,7 +61,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits));
     const isValidRef = useRef<boolean>(true);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     let displayValue: string = "";
     if (!isUserInteracting) {
@@ -118,7 +117,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div className={`${props.labelPosition === "top" ? "moorhen__stack__column" : "moorhen__stack__row"}`} data-theme={isDark ? "dark" : "light"}>
+        <div className={`${props.labelPosition === "top" ? "moorhen__stack__column" : "moorhen__stack__row"}`}>
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;

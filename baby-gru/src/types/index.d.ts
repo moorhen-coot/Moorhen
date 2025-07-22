@@ -10,5 +10,9 @@ declare global {
         CCP4Module: libcootApi.CCP4ModuleType;
         cootModule: libcootApi.CCP4ModuleType;
     }
+    declare module "*.svg" {
+    const content: string;
+    export default content;
+}
 }
 

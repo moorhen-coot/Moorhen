@@ -1,17 +1,17 @@
-import { get } from "http";
-import { useCallback, useEffect, useRef, useState, useLayoutEffect, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
+import { AddOutlined, CloseOutlined, RemoveOutlined } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
 import { moorhen } from "../../types/moorhen";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
+import { MoorhenStore } from "../../moorhen";
 
 type MoorhenDraggableModalBaseProps = {
-    headerTitle: string |React.JSX.Element;
-    body:React.JSX.Element |React.JSX.Element[];
+    headerTitle: string | React.JSX.Element;
+    body: React.JSX.Element | React.JSX.Element[];
     modalId: string;
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
@@ -23,9 +23,9 @@ type MoorhenDraggableModalBaseProps = {
     minHeight?: number;
     top?: number;
     left?: number;
-    additionalHeaderButtons?:React.JSX.Element[];
-    footer?:React.JSX.Element;
-    additionalChildren?:React.JSX.Element;
+    additionalHeaderButtons?: React.JSX.Element[];
+    footer?: React.JSX.Element;
+    additionalChildren?: React.JSX.Element;
     overflowY?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     overflowX?: "visible" | "hidden" | "clip" | "scroll" | "auto";
     handleClassName?: string;
@@ -50,8 +50,8 @@ type MoorhenDraggableModalBaseProps = {
 
 /**
  * The base component used to create draggable modals.
- * It autoscale to the content if initialWidth and initialHeight are not provided. 
- * This scaling need to draw the content first off screen, so of the content is not ready yet, the modal will not be displayed or might be slow to display. 
+ * It autoscale to the content if initialWidth and initialHeight are not provided.
+ * This scaling need to draw the content first off screen, so of the content is not ready yet, the modal will not be displayed or might be slow to display.
  * In that case provide initialWidth and initialHeight.
  * @property {string} headerTitle - The title displayed on the modal header
  * @property {boolean} show - Indicates if the modal is to be displayed
@@ -76,7 +76,7 @@ type MoorhenDraggableModalBaseProps = {
  *             headerTitle="Create covalent link"
  *             additionalChildren={
  *                <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-                            open={awaitAtomClick !== -1}>
+ *                            open={awaitAtomClick !== -1}>
  *                    <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
  *                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
  *                           <span>Click on an atom...</span>
@@ -86,11 +86,11 @@ type MoorhenDraggableModalBaseProps = {
  *                }
  *                body={
  *                    <Stack direction='horizontal' gap={2}
-                             style={{display: 'flex', justifyContent: 'space-between'}}>
+ *                             style={{display: 'flex', justifyContent: 'space-between'}}>
  *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick}
-                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
  *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick}
-                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
  *                    </Stack>
  *                }
  *                footer={
@@ -101,7 +101,7 @@ type MoorhenDraggableModalBaseProps = {
  *                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
  *                        <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
  *                        <Button variant='danger' onClick={handleCancel}
-                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
+ *                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
  *                    </div>
  *                    </div>
  *                }
@@ -115,7 +115,16 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         handleClassName = "handle",
         additionalHeaderButtons = null,
         additionalChildren = null,
-        enableResize = { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        enableResize = {
+            top: false,
+            right: true,
+            bottom: true,
+            left: false,
+            topRight: false,
+            bottomRight: true,
+            bottomLeft: true,
+            topLeft: false,
+        },
         top = 500,
         left = 500,
         overflowY = "auto",
@@ -129,6 +138,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         minWidth = 100,
         enforceMaxBodyDimensions = true,
     } = { ...props };
+
+    const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);
@@ -154,7 +165,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         } else if (measured) {
             return {
                 width: bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth,
-                height: bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight,
+                height:
+                    bodySize.height > minHeight
+                        ? bodySize.height < maxHeight
+                            ? bodySize.height
+                            : maxHeight
+                        : minHeight,
             };
         } else {
             return {
@@ -169,7 +185,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut);
+    const transparentModalsOnMouseOut = useSelector(
+        (state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut
+    );
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);
     const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId));
 
@@ -275,7 +293,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     };
 
     if (!measured) {
-        return ( // Render a hidden div to measure the body size
+        return (
+            // Render a hidden div to measure the body size
             <div
                 ref={bodyRef}
                 style={{
@@ -307,7 +326,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                     onClick={() => dispatch(focusOnModal(modalIdRef.current))}
                     className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
                     ref={draggableNodeRef}
-                    style={{ display: show ? "block" : "none", position: "absolute", opacity: opacity, zIndex: currentZIndex }}
+                    style={{
+                        display: show ? "block" : "none",
+                        position: "absolute",
+                        opacity: opacity,
+                        zIndex: currentZIndex,
+                    }}
                     onMouseOver={() => setOpacity(1.0)}
                     onMouseOut={() => {
                         if (transparentModalsOnMouseOut) setOpacity(0.5);
@@ -315,22 +339,42 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 >
                     <Card.Header
                         className={handleClassName}
-                        style={{ minWidth: minWidth, justifyContent: "space-between", display: "flex", cursor: "move", alignItems: "center" }}
+                        style={{
+                            minWidth: minWidth,
+                            justifyContent: "space-between",
+                            display: "flex",
+                            cursor: "move",
+                            alignItems: "center",
+                        }}
                     >
                         {props.headerTitle}
                         <Stack gap={2} direction="horizontal">
                             {collapse ? null : additionalHeaderButtons?.map((button) => button)}
-                            <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={() => setCollapse(!collapse)}>
+                            <Button
+                                variant="white"
+                                style={{ margin: "0.1rem", padding: "0.1rem" }}
+                                onClick={() => setCollapse(!collapse)}
+                            >
                                 {collapse ? <AddOutlined /> : <RemoveOutlined />}
                             </Button>
                             {showCloseButton && (
-                                <Button variant="white" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleClose}>
+                                <Button
+                                    variant="white"
+                                    style={{ margin: "0.1rem", padding: "0.1rem" }}
+                                    onClick={handleClose}
+                                >
                                     <CloseOutlined />
                                 </Button>
                             )}
                         </Stack>
                     </Card.Header>
-                    <Card.Body style={{ display: collapse ? "none" : "flex", justifyContent: "center", flexDirection: "column" }}>
+                    <Card.Body
+                        style={{
+                            display: collapse ? "none" : "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                        }}
+                    >
                         <ResizableBox
                             width={resizableSize.width}
                             height={resizableSize.height}
@@ -340,31 +384,36 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             ref={props.resizeNodeRef ? props.resizeNodeRef : null}
                             resizeHandles={["se"]}
                             onResizeStop={(e, data) => {
-                                handleResizeStop(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                    width: data.size.width,
-                                    height: data.size.height,
-                                });
+                                handleResizeStop(
+                                    e as unknown as MouseEvent | TouchEvent,
+                                    data.handle as any,
+                                    data.node as HTMLDivElement,
+                                    {
+                                        width: data.size.width,
+                                        height: data.size.height,
+                                    }
+                                );
                             }}
                             onResizeStart={(e) => handleStart()}
                             onResize={(e, data) => {
-                                handleResize(e as unknown as MouseEvent | TouchEvent, data.handle as any, data.node as HTMLDivElement, {
-                                    width: data.size.width,
-                                    height: data.size.height,
-                                });
+                                handleResize(
+                                    e as unknown as MouseEvent | TouchEvent,
+                                    data.handle as any,
+                                    data.node as HTMLDivElement,
+                                    {
+                                        width: data.size.width,
+                                        height: data.size.height,
+                                    }
+                                );
                             }}
                             handle={
                                 enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
-                                    <span className="react-resizable-handle react-resizable-handle-se">
-                                        <SquareFootOutlined
-                                            style={{
-                                                position: "absolute",
-                                                right: 0,
-                                                bottom: 0,
-                                                cursor: "se-resize",
-                                                transform: "rotate(270deg)",
-                                            }}
-                                        />
-                                    </span>
+                                    <img
+                                        src={`${urlPrefix}/pixmaps/moorhen_icons/resizable.svg`}
+                                        draggable="false"
+                                        alt="resize"
+                                        className="moorhen__modal__base__icon"
+                                    />
                                 ) : undefined
                             }
                         >
@@ -380,7 +429,13 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                                 }}
                             >
                                 {enforceMaxBodyDimensions ? (
-                                    <div style={enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}}>{props.body}</div>
+                                    <div
+                                        style={
+                                            enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}
+                                        }
+                                    >
+                                        {props.body}
+                                    </div>
                                 ) : (
                                     props.body
                                 )}
@@ -388,7 +443,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         </ResizableBox>
                     </Card.Body>
                     {props.footer && (
-                        <Card.Footer style={{ display: collapse ? "none" : "flex", alignItems: "center", justifyContent: "right" }}>{props.footer}</Card.Footer>
+                        <Card.Footer
+                            style={{
+                                display: collapse ? "none" : "flex",
+                                alignItems: "center",
+                                justifyContent: "right",
+                            }}
+                        >
+                            {props.footer}
+                        </Card.Footer>
                     )}
                     {additionalChildren}
                 </Card>

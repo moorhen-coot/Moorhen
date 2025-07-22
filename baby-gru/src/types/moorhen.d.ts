@@ -823,6 +823,7 @@ export namespace moorhen {
         setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
+        setUrlPrefix: React.Dispatch<React.SetStateAction<string>>;
         setEnableRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
         setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;

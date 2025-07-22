@@ -75,6 +75,7 @@ export default [
     languageOptions: {
       globals: {
         React: "readonly", // Make React available globally for TypeScript files too
+        NodeJS: "readonly", // Node.js globals for TypeScript
       },
       parser: tsparser,
       parserOptions: {
@@ -104,6 +105,7 @@ export default [
     languageOptions: {
       globals: {
         React: "readonly", // Make React available globally for JSX
+        NodeJS: "readonly", // Node.js globals for TypeScript
       },
       parserOptions: {
         ecmaFeatures: {
@@ -146,7 +148,7 @@ export default [
       // React Performance rules
       "react-perf/jsx-no-new-object-as-prop": "warn",
       "react-perf/jsx-no-new-array-as-prop": "warn",
-      "react-perf/jsx-no-new-function-as-prop": "warn",
+      //"react-perf/jsx-no-new-function-as-prop": "warn", // Uncomment if you want to enforce this rule, but flag things that should be sorted by the compiler
       "react-perf/jsx-no-jsx-as-prop": "warn",
     },
     settings: {

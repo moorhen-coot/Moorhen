@@ -40,56 +40,55 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
 }
 
 /**
- * MoorhenSlider component props
+ * MoorhenSlider component - A customizable slider control with support for logarithmic scaling,
+ * precise input, and increment/decrement buttons.
  *
- * @template T - The value type, either number or [number, number] for range sliders.
- *
- * @prop {T} externalValue
- *   The current value of the slider, controlled by the parent. Can be a single number or a tuple for range sliders.
+ * @prop {number} externalValue
+ *   The current value of the slider, controlled by the parent component.
  *
  * @prop {function} setExternalValue
- *   Callback to update the value in the parent component. Receives the new value as argument. Returns void.
+ *   Callback function to update the value in the parent component. Receives the new value as argument.
  *
  * @prop {boolean} [logScale=false]
- *   If true, the slider operates on a logarithmic scale.
+ *   If true, the slider operates on a logarithmic scale internally while displaying linear values.
  *
  * @prop {number} [minVal=0]
- *   The minimum value of the slider.
+ *   The minimum value of the slider range.
  *
  * @prop {number} [maxVal=100]
- *   The maximum value of the slider.
+ *   The maximum value of the slider range.
  *
  * @prop {string} [sliderTitle=""]
- *   The label/title displayed for the slider.
+ *   The label/title displayed above the slider. If empty, no title is shown.
  *
  * @prop {number} [decimalPlaces=0]
- *   Number of decimal places to display for the value.
+ *   Number of decimal places to display for the value and use for precision.
  *
  * @prop {boolean} [showMinMaxVal=true]
- *   Whether to display the min and max values below the slider.
+ *   Whether to display the min and max values below the slider track.
  *
  * @prop {boolean} [showButtons=true]
- *   Whether to show increment/decrement buttons next to the slider.
+ *   Whether to show increment/decrement buttons on the left and right sides of the slider.
  *
  * @prop {number} [stepButtons]
- *   If the slider is linear :The step size for the increment/decrement buttons.
- *   If the slider is logarithmic, this is the number of steps between min and max.
- *   If not provided, a default is calculated. so that the slider is divided into 100 steps.
+ *   Step size for the increment/decrement buttons. If not provided, defaults to 1/100th of the range.
+ *   For logarithmic sliders, this represents the step in log space.
  *
  * @prop {boolean} [isDisabled=false]
- *   If true, disables the slider and its controls.
+ *   If true, disables the slider and all its interactive controls.
  *
  * @prop {boolean} [usePreciseInput=false]
- *   If true, shows a precise numeric input instead of the value as text.
+ *   If true, replaces the value display with an editable precise numeric input field.
  *
  * @prop {string | number} [piWidth]
- *   Width of the precise input field (if enabled).
+ *   Width of the precise input field (when usePreciseInput is true). 
+ *   If not provided, width is calculated based on decimal places.
  *
  * @prop {boolean} [piWaitReturn=false]
- *   If true, only updates value on pressing Enter in precise input.
+ *   If true, the precise input only updates the value when Enter is pressed.
  *
- * @prop {number[]} [piMinMax]
- *   Min and max values [number,number] for the precise input field. Defaults to [minVal, maxVal].
+ * @prop {[number, number]} [piMinMax]
+ *   Min and max value constraints for the precise input field. Defaults to [minVal, maxVal].
  */
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
@@ -127,7 +126,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 }
             }
         },
-        [props.stepButtons]
+        [props.stepButtons, logScale, maxVal, minVal, precision]
     );
 
     const displayValue = logScale ? log10ofT(props.externalValue) : props.externalValue;
@@ -141,6 +140,10 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         handleChange(newSliderValue);
     };
 
+    const handleSetValue = (newVal: string) => {
+        props.setExternalValue(+newVal);
+    };
+
     const drawTitle = () => {
         const drawPreciseInput = () => {
             return (
@@ -149,7 +152,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
                         value={props.externalValue as number}
-                        setValue={(newVal) => props.setExternalValue(+newVal)}
+                        setValue={handleSetValue}
                         waitReturn={piWaitReturn}
                         decimalDigits={decimalPlaces}
                         width={piWidth ? piWidth : 2.5 + 0.6 * decimalPlaces + "rem"}

@@ -5,6 +5,78 @@ declare module 'moorhen' {
     let MoorhenStore: any;
     module.exports = MoorhenStore
 
+    let setOrigin: any
+    module.exports = setOrigin
+
+    let setRequestDrawScene: any
+    module.exports = setRequestDrawScene
+
+    let setIsWebGL2: any
+    module.exports = setIsWebGL2
+
+    let setActiveMolecule: any
+    module.exports = setActiveMolecule
+
+    let setLightPosition: any
+    module.exports = setLightPosition
+
+    let setAmbient: any
+    module.exports = setAmbient
+
+    let setSpecular: any
+    module.exports = setSpecular
+
+    let setDiffuse: any
+    module.exports = setDiffuse
+
+    let setSpecularPower: any
+    module.exports = setSpecularPower
+
+    let setZoom: any
+    module.exports = setZoom
+
+    let setQuat: any
+    module.exports = setQuat
+
+    let setFogClipOffset: any
+    module.exports = setFogClipOffset
+
+    let setFogStart: any
+    module.exports = setFogStart
+
+    let setFogEnd: any
+    module.exports = setFogEnd
+
+    let setClipStart: any
+    module.exports = setClipStart
+
+    let setClipEnd: any
+    module.exports = setClipEnd
+
+    let setShortCutHelp: any
+    module.exports = setShortCutHelp
+
+    let triggerRedrawEnv: any
+    module.exports = triggerRedrawEnv
+
+    let triggerClearLabels: any
+    module.exports = triggerClearLabels
+
+    let setDisplayBuffers: any
+    module.exports = setDisplayBuffers
+
+    let setHoverSize: any
+    module.exports = setHoverSize
+
+    let setLabelBuffers: any
+    module.exports = setLabelBuffers
+
+    let setTexturedShapes: any
+    module.exports = setTexturedShapes
+
+    let setElementsIndicesRestrict: any
+    module.exports = setElementsIndicesRestrict
+
     let moleculesReducer: any;
     module.exports = moleculesReducer
 
@@ -449,6 +521,9 @@ declare module 'moorhen' {
 
     function setDefaultExpandDisplayCards(arg0: boolean): any;
     module.exports = setDefaultExpandDisplayCards;
+
+    function setUrlPrefix(arg0: string): any;
+    module.exports = setUrlPrefix;
 
     function setTransparentModalsOnMouseOut(arg0: boolean): any;
     module.exports = setTransparentModalsOnMouseOut;

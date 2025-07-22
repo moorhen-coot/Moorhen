@@ -9,7 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
 

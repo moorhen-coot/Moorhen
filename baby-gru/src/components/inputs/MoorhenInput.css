@@ -1,4 +1,4 @@
-@import '../colors.css';
+@import '../../colors.css';
 /* General styles for the inputs */
 .moorhen__input {
     display: block;

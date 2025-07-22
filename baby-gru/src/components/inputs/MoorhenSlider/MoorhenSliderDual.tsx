@@ -1,4 +1,4 @@
-/***
+/*
  * this component have been abandoned for way to high complexity and little use.
  * kept for reference, replace by MoorhenSlider and MoorhenRangeSlider
  **
@@ -95,7 +95,7 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
  *
  * @prop {number[]} [piMinMax]
  *   Min and max values [number,number] for the precise input field. Defaults to [minVal, maxVal].
- */
+ *
 
 export const MoorhenSlider = <T extends number | [number, number]>(props: MoorhenSliderProps<T>) => {
     const {
@@ -292,3 +292,4 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         </>
     );
 };
+*/

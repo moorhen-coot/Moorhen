@@ -1,0 +1,31 @@
+@import '../../colors.css';
+.moorhen__icon__small {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+    width: 22px; 
+    height: 22px;
+}
+
+.moorhen__icon__medium {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+    width: 32px; 
+    height: 32px;
+}
+
+.moorhen__icon__large {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+    width: 64px; 
+    height: 64px;
+}
+
+.moorhen__icon__active {
+    cursor: pointer;
+}
+
+.moorhen__icon__inactive {
+    filter: invert(1) brightness(0.5);
+}
+
+.moorhen__icon__active:hover { 
+    filter: invert(1) brightness(var(--moorhen-icon-brightness)) drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+    transition: filter 0.15s ease-in;
+}

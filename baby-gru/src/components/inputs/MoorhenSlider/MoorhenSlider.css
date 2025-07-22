@@ -1,5 +1,5 @@
 
-@import '../../colors.css';
+@import '../../../colors.css';
 
 .moorhen__slider__container {
     display: grid;
@@ -59,7 +59,7 @@
     width: 100%;
     height: var(--moorhen-slider-track-height);
     border-radius: var(--moorhen-slider-track-height);
-    background: #d3d3d3;
+    background: var(--moorhen-middle);
     outline: none;
     opacity: 0.7;
     -webkit-transition: 0.5s;
