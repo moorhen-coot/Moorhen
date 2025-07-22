@@ -1,11 +1,11 @@
 import React, { useRef, useState } from "react"
 import { Form, FormSelect, Stack } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { useSelector } from "react-redux";
-import { useSnackbar } from "notistack";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAssociateReflectionsToMap = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

@@ -1,14 +1,14 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useDispatch, useSelector } from 'react-redux';
+import { useCallback } from 'react';
+import { useSnackbar } from 'notistack';
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
-import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
-import { useCallback } from 'react';
 import { cidToSpec, sleep } from '../../utils/utils';
 import { hideModal } from '../../store/modalsSlice';
-import { useSnackbar } from 'notistack';
 import { modalKeys } from '../../utils/enums';
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 
 export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {

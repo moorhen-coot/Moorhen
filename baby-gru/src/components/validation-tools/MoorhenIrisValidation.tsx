@@ -1,11 +1,11 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap'
-import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { convertRemToPx } from '../../utils/MoorhenUtils'
 import { useDispatch, useSelector } from "react-redux"
 import { Iris, IrisData, IrisAesthetics, IrisProps } from "iris-validation"
-import { moorhen } from "../../types/moorhen"
 import iris_module from "iris-validation-backend"
+import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
+import { convertRemToPx } from '../../utils/MoorhenUtils'
+import { moorhen } from "../../types/moorhen"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { gemmi } from "../../types/gemmi";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"

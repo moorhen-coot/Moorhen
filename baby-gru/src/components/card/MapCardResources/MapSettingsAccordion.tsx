@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { Stack } from "react-bootstrap";
+import { Stack , ToggleButton, Form } from "react-bootstrap";
 import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
-import { ToggleButton, Form } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenSlider } from "../../inputs";
 import { moorhen } from "../../../types/moorhen";
 import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
-import { useDispatch, useSelector } from "react-redux";
 
 interface MoorhenMapCardSettings {
     map: moorhen.Map;

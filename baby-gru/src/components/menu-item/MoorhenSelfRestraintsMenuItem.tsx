@@ -1,16 +1,16 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { IconButton } from "@mui/material";
+import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs";
-import { IconButton } from "@mui/material";
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addGeneralRepresentation } from "../../moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenSelfRestraintsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

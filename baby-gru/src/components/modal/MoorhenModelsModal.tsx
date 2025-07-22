@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
 import { Button } from "react-bootstrap";
 import { UnfoldLessOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
+import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
     const cardListRef = useRef([])

@@ -1,26 +1,26 @@
-import { moorhen } from '../types/moorhen';
-import { readTextFile, readDataFile } from "./utils"
-import { MoorhenMolecule } from "./MoorhenMolecule"
-import { setValidationJson } from "../store/jsonValidation"
-import { MoorhenMap } from "./MoorhenMap"
 import { useSnackbar } from "notistack"
+import { Store } from "redux"
+import { AnyAction, Dispatch } from "@reduxjs/toolkit";
+import { useSelector, useDispatch } from "react-redux"
+import Fasta from "biojs-io-fasta"
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../store/moleculesSlice"
 import { addMapList } from "../store/mapsSlice"
 import { setActiveMap } from "../store/generalStatesSlice"
 import { webGL } from "../types/mgWebGL"
-import { Store } from "redux"
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule"
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
-import { useSelector, useDispatch } from "react-redux"
 import {
     setMrParseModels, setTargetSequence, setAfJson, setEsmJson,
     setHomologsJson, setAfSortField, setHomologsSortField, setAfSortReversed,
     setHomologsSortReversed, setAFDisplaySettings, setHomologsDisplaySettings
 } from "../store/mrParseSlice"
-import Fasta from "biojs-io-fasta"
+import { setValidationJson } from "../store/jsonValidation"
+import { moorhen } from '../types/moorhen';
 import { showModal } from "../store/modalsSlice";
 import { modalKeys } from "../utils/enums";
+import { MoorhenMap } from "./MoorhenMap"
+import { MoorhenMolecule } from "./MoorhenMolecule"
+import { readTextFile, readDataFile } from "./utils"
 
 interface MrParsePDBModelJson  {
     chain_id : string;

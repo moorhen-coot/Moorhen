@@ -1,11 +1,6 @@
 import { useRef,useEffect,useState } from "react";
 import { Form, FormSelect, Row, Col, InputGroup, Tab, Tabs } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
-import { get_grid } from '../../utils/utils';
-import { moorhen } from "../../types/moorhen";
-import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder } from "../../store/sceneSettingsSlice"
-
 import {
   DndContext,
   closestCenter,
@@ -22,6 +17,10 @@ import {
   rectSwappingStrategy,
 } from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
+import { get_grid } from '../../utils/utils';
+import { moorhen } from "../../types/moorhen";
+import { setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder } from "../../store/sceneSettingsSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 function SortableItem(props) {
   const {

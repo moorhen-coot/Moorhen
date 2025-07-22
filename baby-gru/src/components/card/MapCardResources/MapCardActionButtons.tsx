@@ -1,13 +1,5 @@
-import { doDownload } from "../../../utils/utils";
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
-import { addMap } from "../../../store/mapsSlice";
-import { MoorhenRenameDisplayObjectMenuItem } from "../../menu-item/MoorhenRenameDisplayObjectMenuItem";
-import { MoorhenDeleteDisplayObjectMenuItem } from "../../menu-item/MoorhenDeleteDisplayObjectMenuItem";
-import { MoorhenSetMapWeight } from "../../menu-item/MoorhenSetMapWeight";
-import { MoorhenScaleMap } from "../../menu-item/MoorhenScaleMap";
-import { MoorhenMapInfoCard } from "../../card/MoorhenMapInfoCard";
 import { MenuItem } from "@mui/material";
 import { Button, DropdownButton } from "react-bootstrap";
 import {
@@ -20,9 +12,17 @@ import {
     FileCopyOutlined,
     FilterTiltShiftOutlined,
 } from "@mui/icons-material";
+import Tooltip from "@mui/material/Tooltip";
+import { doDownload } from "../../../utils/utils";
+import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
+import { addMap } from "../../../store/mapsSlice";
+import { MoorhenRenameDisplayObjectMenuItem } from "../../menu-item/MoorhenRenameDisplayObjectMenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem } from "../../menu-item/MoorhenDeleteDisplayObjectMenuItem";
+import { MoorhenSetMapWeight } from "../../menu-item/MoorhenSetMapWeight";
+import { MoorhenScaleMap } from "../../menu-item/MoorhenScaleMap";
+import { MoorhenMapInfoCard } from "../../card/MoorhenMapInfoCard";
 import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
-import Tooltip from "@mui/material/Tooltip";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface ActionButtonPropsType {

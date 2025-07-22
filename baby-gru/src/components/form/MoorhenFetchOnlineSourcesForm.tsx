@@ -1,17 +1,17 @@
 import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
+import { useState, useRef } from "react";
+import { useSelector, useDispatch, batch } from 'react-redux';
+import { Store } from "@reduxjs/toolkit";
+import { useSnackbar } from "notistack";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { useState, useRef } from "react";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { Store } from "@reduxjs/toolkit";
-import { useSnackbar } from "notistack";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;

@@ -1,6 +1,6 @@
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { version } from '../../version'
 import { CSSProperties } from "react";
+import { version } from '../../version'
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 

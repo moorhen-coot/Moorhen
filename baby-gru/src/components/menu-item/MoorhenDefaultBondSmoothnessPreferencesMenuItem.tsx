@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setDefaultBondSmoothness } from "../../store/sceneSettingsSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 

@@ -1,6 +1,9 @@
 import { Form } from "react-bootstrap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { useState, useCallback } from "react";
+import { MenuItem } from "@mui/material";
+import { useSelector, useDispatch } from 'react-redux';
+import { useSnackbar } from "notistack";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm"
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
@@ -10,18 +13,15 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
-import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from 'react-redux';
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
-import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 

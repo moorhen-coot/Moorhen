@@ -1,12 +1,12 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { webGL } from "../../types/mgWebGL";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { SnackbarContent, useSnackbar } from "notistack";
-import { sleep } from "../../utils/utils";
 import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
+import { sleep } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { hideMolecule, showMolecule } from '../../store/moleculesSlice';

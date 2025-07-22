@@ -1,12 +1,8 @@
+import { Store } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
-import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoorhenMap } from "./MoorhenMap";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
-import { Store } from "@reduxjs/toolkit";
-import { MoorhenColourRule } from "./MoorhenColourRule";
-import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { setOrigin, setZoom, setQuat, setRequestDrawScene, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setActiveMolecule, setDraggableMolecule, setDisplayBuffers} from "../store/glRefSlice"
 import { addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays} from "../store/overlaysSlice"
 import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBondSmoothness,
@@ -18,6 +14,10 @@ import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBond
     setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from "../store/sceneSettingsSlice"
 import {setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
   setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings } from "../store/refinementSettingsSlice"
+import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { MoorhenColourRule } from "./MoorhenColourRule";
+import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenMolecule } from "./MoorhenMolecule";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];

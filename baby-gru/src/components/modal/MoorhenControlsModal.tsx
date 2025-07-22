@@ -1,12 +1,12 @@
 import { Card, Col, Row } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { convertViewtoPx } from "../../utils/utils";
 import parse from 'html-react-parser'
-import { modalKeys } from "../../utils/enums";
 import { Autocomplete, createFilterOptions, MenuItem, TextField } from "@mui/material";
+import { convertViewtoPx } from "../../utils/utils";
+import { modalKeys } from "../../utils/enums";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const shortCutMouseActions = {
     open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],

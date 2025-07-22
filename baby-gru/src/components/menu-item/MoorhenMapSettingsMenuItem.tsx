@@ -1,9 +1,9 @@
 import { Form } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useDispatch } from "react-redux";
 import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch } from "react-redux";
 import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenMapSettingsMenuItem = (props: {
     map: moorhen.Map;

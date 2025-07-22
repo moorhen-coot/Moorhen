@@ -1,10 +1,10 @@
 import { useCallback, useRef } from "react";
 import { Form, Button } from "react-bootstrap";
+import { useSelector } from 'react-redux';
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector } from 'react-redux';
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

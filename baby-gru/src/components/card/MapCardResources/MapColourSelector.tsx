@@ -1,6 +1,6 @@
-import { moorhen } from "../../../types/moorhen";
 import { useMemo } from "react";
 import { useDispatch, useSelector} from "react-redux";
+import { moorhen } from "../../../types/moorhen";
 import {
     setMapColours,
     setNegativeMapColours,

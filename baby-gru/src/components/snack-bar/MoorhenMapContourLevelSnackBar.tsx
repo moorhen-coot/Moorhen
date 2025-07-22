@@ -1,8 +1,7 @@
-import { SnackbarContent } from "notistack";
+import { SnackbarContent , useSnackbar } from "notistack";
 import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { useSnackbar } from "notistack";
 
 export const MoorhenMapContourLevelSnackBar = forwardRef<
     HTMLDivElement,

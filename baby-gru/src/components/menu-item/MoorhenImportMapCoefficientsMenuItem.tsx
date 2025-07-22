@@ -1,15 +1,15 @@
 import { Dispatch, RefObject, SetStateAction, useCallback, useRef, useState } from "react"
-import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { MoorhenMap } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL"
 import { batch, useDispatch, useSelector } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice"
-import { addMap } from "../../store/mapsSlice"
 import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL"
+import { setActiveMap } from "../../store/generalStatesSlice"
+import { addMap } from "../../store/mapsSlice"
+import { MoorhenMap } from "../../utils/MoorhenMap"
+import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;

@@ -1,13 +1,9 @@
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { guid } from "./utils";
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
-import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoorhenMap } from "./MoorhenMap";
-import { MoorhenColourRule } from "./MoorhenColourRule";
+import { AnyAction, Dispatch , Store } from "@reduxjs/toolkit";
+import { batch } from "react-redux";
 import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
-import { batch } from "react-redux";
+import { webGL } from "../types/mgWebGL";
+import { moorhen } from "../types/moorhen";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours } from "../store/mapContourSettingsSlice";
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../store/moleculeMapUpdateSlice";
@@ -17,9 +13,12 @@ import {
     setSsaoRadius, setUseOffScreenBuffers
 } from "../store/sceneSettingsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
-import { Store } from "@reduxjs/toolkit";
 import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
      setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
+import { MoorhenColourRule } from "./MoorhenColourRule";
+import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenMolecule } from "./MoorhenMolecule";
+import { guid } from "./utils";
 
 /**
  * Represents a time capsule with session backups

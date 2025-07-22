@@ -1,7 +1,7 @@
 import { guid } from '../utils/utils';
+import store from '../store/MoorhenReduxStore'
 import { DisplayBuffer } from './displayBuffer'
 import { getEncodedData } from './encodedData'
-import store from '../store/MoorhenReduxStore'
 
 const createInstanceOriginsBuffer = (tri,theBuffer,gl) => {
     theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer());

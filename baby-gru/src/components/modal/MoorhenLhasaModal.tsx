@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { useSnackbar } from "notistack";
+import { Store } from "@reduxjs/toolkit";
+import { Backdrop } from "@mui/material";
+import { Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 import { modalKeys } from "../../utils/enums";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { useSnackbar } from "notistack";
 import { addMolecule } from "../../store/moleculesSlice";
 import { webGL } from "../../types/mgWebGL";
-import { Store } from "@reduxjs/toolkit";
-import { Backdrop } from "@mui/material";
-import { Spinner, Stack } from "react-bootstrap";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const LhasaWrapper = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

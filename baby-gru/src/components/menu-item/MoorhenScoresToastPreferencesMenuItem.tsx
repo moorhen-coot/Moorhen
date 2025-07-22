@@ -1,9 +1,9 @@
 import { Form, InputGroup } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
+import { useCallback } from "react";
 import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { useCallback } from "react";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenScoresToastPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button, Form } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
 import { TextField } from "@mui/material";
 import { useSelector } from 'react-redux';
+import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenSetMapWeight = (props: {
     map: moorhen.Map;

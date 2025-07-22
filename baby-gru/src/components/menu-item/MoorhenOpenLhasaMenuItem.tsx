@@ -1,14 +1,14 @@
 import { useCallback, useRef, useState } from "react"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { useDispatch, useSelector } from "react-redux"
+import { Button, FormControl, FormGroup, FormLabel, FormSelect } from "react-bootstrap"
+import { useSnackbar } from "notistack"
+import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { modalKeys } from "../../utils/enums"
 import { showModal } from "../../store/modalsSlice"
-import { Button, FormControl, FormGroup, FormLabel, FormSelect } from "react-bootstrap"
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice"
-import { useSnackbar } from "notistack"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenOpenLhasaMenuItem = (props) => {
 

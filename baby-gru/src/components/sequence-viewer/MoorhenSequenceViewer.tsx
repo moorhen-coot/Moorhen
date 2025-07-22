@@ -1,12 +1,12 @@
-import { moorhen } from "../../types/moorhen";
 import { useRef, useMemo, useState, memo, useCallback } from "react";
-import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import Stack from "@mui/material/Stack";
+import { moorhen } from "../../types/moorhen";
+import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import "./MoorhenSequenceViewer.css";
+import { useStateWithRef } from "../../hooks/useStateWithRef";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
 import { SequenceRow } from "./SequenceRow";
-import { useStateWithRef } from "../../hooks/useStateWithRef";
 
 export namespace MoorhenSeqViewTypes {
     export type ResiduesSelection = {

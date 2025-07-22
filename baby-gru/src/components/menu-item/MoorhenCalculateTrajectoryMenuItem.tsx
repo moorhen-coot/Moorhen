@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Form, FormSelect } from "react-bootstrap";
-import { representationLabelMapping } from "../../utils/enums";
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
+import { representationLabelMapping } from "../../utils/enums";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 

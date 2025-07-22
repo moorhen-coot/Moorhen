@@ -1,18 +1,18 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Button, Card, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
-import { convertViewtoPx } from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { DeleteOutlined, WarningAmberOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
+import { convertViewtoPx } from '../../utils/utils';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { addMolecule } from "../../moorhen";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
-import { DeleteOutlined, WarningAmberOutlined } from "@mui/icons-material";
 import { hideModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const lsqkbResidueRangesReducer = (oldList: moorhen.lskqbResidueRangeMatch[], change: {action: string; item?: moorhen.lskqbResidueRangeMatch}) => {
     let newState: moorhen.lskqbResidueRangeMatch[]

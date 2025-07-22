@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 
 export const MapAlphaListener = (props: { map: moorhen.Map }) => {
     const mapAlpha = useSelector((state: moorhen.State) => state.mapContourSettings.mapAlpha.find((item) => item.molNo === props.map.molNo));

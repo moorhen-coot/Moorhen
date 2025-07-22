@@ -1,6 +1,6 @@
 import { use, useEffect } from "react";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 import { useDocumentEventListener } from "../../hooks/useDocumentEventListener";
 
 export const MapOriginListener = (props: { drawMap(): void }) => {

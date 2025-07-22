@@ -1,11 +1,11 @@
 import { useRef, useCallback } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAddSimpleMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>

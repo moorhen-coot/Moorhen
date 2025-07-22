@@ -1,13 +1,13 @@
 import { useCallback, useRef } from "react"
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation'
+import { useSelector, useDispatch } from 'react-redux';
 import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
 import { residueCodesOneToThree } from '../../utils/enums'
-import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
-import annotationPlugin from 'chartjs-plugin-annotation'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from 'react-redux';
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

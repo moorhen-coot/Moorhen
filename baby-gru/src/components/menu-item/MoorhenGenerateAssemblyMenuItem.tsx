@@ -2,8 +2,8 @@ import { useCallback,useRef, useState } from "react"
 import { useDispatch } from "react-redux"
 import { Button, Form, FormSelect } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenGenerateAssemblyMenuItem = (props: {
     item: moorhen.Molecule;

@@ -1,9 +1,9 @@
 import { ClickAwayListener, FormGroup, IconButton } from "@mui/material"
 import { useCallback, useEffect, useRef } from "react"
 import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
+import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 

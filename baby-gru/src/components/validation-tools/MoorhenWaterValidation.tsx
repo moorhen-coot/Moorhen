@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button, Stack, InputGroup } from 'react-bootstrap';
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
+import { useDispatch, useSelector } from "react-redux";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 
 export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 

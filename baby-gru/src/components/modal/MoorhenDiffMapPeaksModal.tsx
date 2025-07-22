@@ -1,11 +1,11 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Row } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifferenceMapPeaks"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
-import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {        
       

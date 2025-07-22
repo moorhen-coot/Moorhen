@@ -1,8 +1,8 @@
 import { useRef } from "react";
 import { useSelector } from "react-redux";
-import { moorhen } from "../../../types/moorhen";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
+import { moorhen } from "../../../types/moorhen";
 import { clampValue } from "../../misc/helpers";
 
 type PlusMinusButtonProps = {

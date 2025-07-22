@@ -1,22 +1,22 @@
-import { cidToSpec, getCentreAtom } from "./utils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
+import { Dispatch, createRef, useState } from "react";
+import { AnyAction } from "@reduxjs/toolkit";
+import { useSelector } from 'react-redux';
+import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { Dispatch, createRef, useState } from "react";
-import { AnyAction } from "@reduxjs/toolkit";
-import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,
          setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
-import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
+import { cidToSpec, getCentreAtom } from "./utils"
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)

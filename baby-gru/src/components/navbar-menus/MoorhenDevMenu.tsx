@@ -1,13 +1,13 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from "react-redux";
-import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 

@@ -1,14 +1,14 @@
 import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import { hexToRgb } from '@mui/material';
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
-import { WebsocketProvider } from 'y-websocket'
-import { railSpecies } from './enums';
-import { guid } from './utils';
-import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
-import { hexToRgb } from '@mui/material';
 import { setIsInSharedSession } from '../store/sharedSessionSlice';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { setOrigin, setZoom, setQuat } from "../store/glRefSlice";
+import { railSpecies } from './enums';
+import { guid } from './utils';
+import { MoorhenMoleculeRepresentation } from './MoorhenMoleculeRepresentation';
 
 export class MoorhenFleetManager {
     

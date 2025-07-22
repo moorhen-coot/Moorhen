@@ -1,9 +1,9 @@
 import { SnackbarContent, useSnackbar } from "notistack"
 import { forwardRef, useCallback, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { moorhen } from "../../types/moorhen"
 import { IconButton, Tooltip } from "@mui/material"
 import { CameraAlt, CloseOutlined, Photo, PhotoOutlined } from "@mui/icons-material"
+import { moorhen } from "../../types/moorhen"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 

@@ -1,10 +1,10 @@
 import { useCallback, useRef } from "react";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, batch, useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { useSnackbar } from "notistack";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)

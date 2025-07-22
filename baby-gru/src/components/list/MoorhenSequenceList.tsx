@@ -1,11 +1,11 @@
 import React, { useMemo, useCallback } from "react";
+import { useSelector, useDispatch} from "react-redux";
+import { useSnackbar } from "notistack";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer, MoorhenSeqViewTypes } from "../sequence-viewer/MoorhenSequenceViewer";
 import { cidToSpec, sequenceIsValid } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch} from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setResidueSelection } from "../../store/generalStatesSlice";
-import { useSnackbar } from "notistack";
 
 export const MoorhenSequenceList = (props: { 
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;

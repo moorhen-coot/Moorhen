@@ -1,11 +1,11 @@
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { webGL } from "../../types/mgWebGL";
 import { ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { webGL } from "../../types/mgWebGL";
 import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { setRequestDrawScene, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenScenePresetMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;

@@ -1,10 +1,10 @@
 import { memo, useState } from "react";
 import { Form, Button } from "react-bootstrap";
-import { usePersistentState } from "../../../store/menusSlice";
 import Stack from "@mui/material/Stack";
-import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenColourPicker } from "../";
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
+import { usePersistentState } from "../../../store/menusSlice";
+import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenColourPicker } from "..";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {

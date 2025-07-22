@@ -3,8 +3,8 @@ import { IconButton } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack";
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 
 
 export const MoorhenRecordingSnackBar = forwardRef<HTMLDivElement, {videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>, id: string}>((props, ref) => {

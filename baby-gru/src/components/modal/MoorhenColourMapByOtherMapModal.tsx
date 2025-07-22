@@ -1,18 +1,18 @@
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Button } from "react-bootstrap";
+import { Stack } from "@mui/material";
+import { Chart, registerables } from "chart.js";
 import { usePersistent, usePersistentState, dispatchPersistentStates } from "../../store/menusSlice";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { Button } from "react-bootstrap";
-import { Stack } from "@mui/material";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { MoorhenGradientPicker } from "../inputs";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { Chart, registerables } from "chart.js";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 Chart.register(...registerables);
 

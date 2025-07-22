@@ -1,12 +1,12 @@
 import { Fragment, forwardRef, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { Chart, registerables } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation'
+import { useSelector } from "react-redux";
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import annotationPlugin from 'chartjs-plugin-annotation'
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
 import { convertViewtoPx } from "../../utils/utils";
 import { usePersistentState } from "../../store/menusSlice";
 

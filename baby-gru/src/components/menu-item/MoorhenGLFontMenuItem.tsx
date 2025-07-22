@@ -1,10 +1,10 @@
 import { Form } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useSelector, useDispatch } from "react-redux"
+import { useEffect } from "react"
 import { moorhen } from "../../types/moorhen"
 import { addAvailableFontList, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice"
-import { useEffect } from "react"
 import { allFontsSet } from '../../utils/enums';
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenGLFontMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 

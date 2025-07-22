@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState, useReducer, memo} from "react";
 import { Button, Stack, Form, FormSelect } from "react-bootstrap";
 import { HexColorInput, HexAlphaColorPicker } from "react-colorful";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
+import { Popover } from "@mui/material";
+import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { Popover } from "@mui/material";
-import { useSelector } from "react-redux";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard"
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";

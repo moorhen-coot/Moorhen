@@ -1,18 +1,18 @@
 import { IconButton, Popover, Tooltip } from "@mui/material"
-import { cidToSpec } from "../../utils/utils"
 import { AdsClickOutlined, AllOutOutlined, CloseOutlined, CopyAllOutlined, CrisisAlertOutlined, DeleteOutlined, EditOutlined, FormatColorFillOutlined, Rotate90DegreesCw, SwapVertOutlined, SwipeRightAlt } from "@mui/icons-material"
 import { batch, useDispatch, useSelector } from "react-redux"
-import { moorhen } from "../../types/moorhen"
 import { Button, Stack } from "react-bootstrap"
-import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
+import { HexColorInput, HexColorPicker } from "react-colorful"
+import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
+import { cidToSpec } from "../../utils/utils"
+import { moorhen } from "../../types/moorhen"
+import { clearResidueSelection, setIsDraggingAtoms, setIsRotatingAtoms, setResidueSelection, setShowResidueSelection } from '../../store/generalStatesSlice';
 import { addMolecule, removeMolecule } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
-import { HexColorInput, HexColorPicker } from "react-colorful"
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
-import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack"
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: string}>((props, ref) => {
 

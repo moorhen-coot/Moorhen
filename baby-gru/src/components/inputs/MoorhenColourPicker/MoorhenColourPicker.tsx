@@ -1,9 +1,8 @@
 import { useState, useEffect, memo } from "react";
-import { Popover } from "@mui/material";
+import { Popover , Stack } from "@mui/material";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { hexToRGB, rgbToHex } from "../../../utils/utils";
-import { Stack } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
+import { hexToRGB, rgbToHex } from "../../../utils/utils";
 
 type MoorhenColourPickerBase = {
     colour: [number, number, number];

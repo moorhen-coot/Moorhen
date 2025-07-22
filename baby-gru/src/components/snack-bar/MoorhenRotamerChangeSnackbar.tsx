@@ -1,17 +1,16 @@
-import { SnackbarContent } from "notistack";
+import { SnackbarContent , useSnackbar } from "notistack";
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
 import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setIsChangingRotamers } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
-import { useSnackbar } from "notistack";
 
 export const MoorhenRotamerChangeSnackBar =  forwardRef<
     HTMLDivElement,

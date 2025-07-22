@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "react"
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { Form } from "react-bootstrap";
 import { useSelector } from 'react-redux';
+import { moorhen } from "../../types/moorhen";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRigidBodyFitButton = (props: moorhen.ContextButtonProps) => {
     const [randomJiggleMode, setRandomJiggleMode] = useState<boolean>(false)

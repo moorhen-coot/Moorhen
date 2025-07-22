@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
+import { useCallback, useRef } from "react"
+import { ChartEvent, ChartType, TooltipItem } from "chart.js"
 import { moorhen } from "../../types/moorhen"
 import { getResidueInfo } from "../../utils/utils"
-import { useCallback, useRef } from "react"
 import { libcootApi } from "../../types/libcoot"
-import { ChartEvent, ChartType, TooltipItem } from "chart.js"
 import { setHoveredAtom } from "../../moorhen"
 import { residueCodesOneToThree } from "../../utils/enums"
+import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 
 export const MoorhenQScore = (props: moorhen.CollectedProps) => {
 

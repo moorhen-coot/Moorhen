@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
+import { useSelector } from "react-redux";
 import { getTooltipShortcutLabel } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useSelector } from "react-redux";
 
 export const MoorhenAddTerminalResidueButton = (props: moorhen.ContextButtonProps) => {
 

@@ -1,9 +1,12 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, List, Tooltip } from '@mui/material';
-import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
-import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { Popover, Overlay } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
+import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenAddAltConfButton } from "./MoorhenAddAltConfButton"
 import { MoorhenAddTerminalResidueButton } from "./MoorhenAddTerminalResidueButton"
 import { MoorhenAutofitRotamerButton } from "./MoorhenAutofitRotamerButton"
@@ -20,9 +23,6 @@ import { MoorhenRotamerChangeButton } from "./MoorhenRotamerChangeButton";
 import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneButton";
 import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { useSelector } from "react-redux";
 
 interface ContextMenuProps {
   top: number;

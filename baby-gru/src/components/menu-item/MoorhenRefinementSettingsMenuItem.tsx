@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react"
+import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
+import { useDispatch, useSelector } from "react-redux"
+import { InfoOutlined } from "@mui/icons-material"
+import { moorhen } from "../../types/moorhen"
+import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
 import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
-import { moorhen } from "../../types/moorhen"
-import { useDispatch, useSelector } from "react-redux"
-import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
-import { InfoOutlined } from "@mui/icons-material"
 
 export const MoorhenRefinementSettingsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

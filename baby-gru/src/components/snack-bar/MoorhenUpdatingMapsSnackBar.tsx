@@ -1,8 +1,8 @@
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { SnackbarContent, useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { SnackbarContent, useSnackbar } from "notistack";
 import { disableUpdatingMaps, setCurrentScores } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenUpdatingMapsManager = (props: {

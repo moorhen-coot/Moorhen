@@ -1,6 +1,7 @@
 
 import React, { memo } from 'react';
 import { MoorhenSeqViewTypes } from './MoorhenSequenceViewer';
+
 const defaultColour = 'rgb(198, 205, 238)';
 
 export const SequenceRow = memo((props: { 

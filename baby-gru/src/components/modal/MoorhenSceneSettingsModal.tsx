@@ -1,30 +1,29 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider } from "../inputs";
-import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
-import { 
-    setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
-    setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
-    setEdgeDetectDepthScale, setEdgeDetectNormalScale, setDoShadow
-} from "../../store/sceneSettingsSlice";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { Tooltip } from "@mui/material";
 import Brightness1Icon from '@mui/icons-material/Brightness1';
 import IconButton from '@mui/material/IconButton';
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
+import { 
+    setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
+    setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
+    setEdgeDetectDepthScale, setEdgeDetectNormalScale, setDoShadow
+} from "../../store/sceneSettingsSlice";
+import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
+import { MoorhenSlider } from "../inputs";
+import { convertRemToPx, convertViewtoPx, rgbToHex , hexToRGB } from "../../utils/utils";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
-import { hexToRGB } from "../../utils/utils";
 import { hideModal } from "../../store/modalsSlice";
 import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower,
          setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const EdgeDetectPanel = (props: {}) => {
 

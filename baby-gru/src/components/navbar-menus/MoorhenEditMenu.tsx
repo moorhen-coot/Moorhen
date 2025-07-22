@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
 import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem"
 import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem"
@@ -11,12 +12,11 @@ import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdM
 import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem"
 import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
 import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     

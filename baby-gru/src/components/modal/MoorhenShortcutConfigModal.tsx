@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen"
 import { useSelector, useDispatch } from "react-redux";
+import { moorhen } from "../../types/moorhen"
 import { setShortCuts } from "../../store/shortCutsSlice";
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 

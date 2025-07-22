@@ -1,10 +1,10 @@
 import { useCallback, useRef } from "react"
+import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenMoveMoleculeHere = (props: {
     popoverPlacement?: 'left' | 'right'

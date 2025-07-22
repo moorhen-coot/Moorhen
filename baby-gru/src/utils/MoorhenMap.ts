@@ -1,13 +1,13 @@
-import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
+import pako from "pako"
+import { Store } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
-import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
-import { Store } from "@reduxjs/toolkit";
-import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { setOrigin, setRequestDrawScene, setDisplayBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13

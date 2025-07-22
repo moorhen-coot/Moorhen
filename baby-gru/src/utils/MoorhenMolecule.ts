@@ -1,26 +1,26 @@
 import 'pako';
-import {
-    guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms,
-    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel,
-    readGemmiCifDocument
- } from './utils'
-import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
-import { MoorhenColourRule } from "./MoorhenColourRule"
-import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
-import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
-import { hideMolecule } from '../store/moleculesSlice';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as mat4 from 'gl-matrix/mat4';
 import * as quat4 from 'gl-matrix/quat';
+import { Store } from "@reduxjs/toolkit";
+import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
+import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
+import { hideMolecule } from '../store/moleculesSlice';
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
-import { Store } from "@reduxjs/toolkit";
 import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRefSlice"
+import { MoorhenColourRule } from "./MoorhenColourRule"
+import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
+import {
+    guid, readTextFile, readGemmiStructure, centreOnGemmiAtoms,
+    getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel,
+    readGemmiCifDocument
+ } from './utils'
 
 /**
  * Represents a molecule

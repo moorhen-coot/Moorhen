@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { MoorhenMapCard } from "../card/MoorhenMapCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
 import { UnfoldLessOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import { MoorhenMapCard } from "../card/MoorhenMapCard";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
     const [collapseAll, setCollapseAll] = useState<boolean>(false);

@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { MoorhenAboutMenuItem } from "../menu-item/MoorhenAboutMenuItem";
-import { MoorhenReferencesMenuItem } from "../menu-item/MoorhenReferencesMenuItem";
-import { MoorhenContactMenuItem } from "../menu-item/MoorhenContactMenuItem";
 import { MenuItem } from "@mui/material";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { useDispatch, useSelector } from "react-redux";
+import { MoorhenContactMenuItem } from "../menu-item/MoorhenContactMenuItem";
+import { MoorhenReferencesMenuItem } from "../menu-item/MoorhenReferencesMenuItem";
+import { MoorhenAboutMenuItem } from "../menu-item/MoorhenAboutMenuItem";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 

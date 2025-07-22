@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { Button, Form, FormSelect } from "react-bootstrap"
+import { Slider } from "@mui/material"
 import { moorhen } from "../../types/moorhen"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm"
-import { Button, Form, FormSelect } from "react-bootstrap"
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect"
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
-import { Slider } from "@mui/material"
 import { triggerRedrawEnv } from "../../store/glRefSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenMultiplyBfactorMenuItem = (props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)

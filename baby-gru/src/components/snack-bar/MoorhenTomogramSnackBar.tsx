@@ -1,11 +1,11 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
 import { SnackbarContent, useSnackbar } from "notistack";
 import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
 import { setOrigin, setZoom, setTexturedShapes } from "../../store/glRefSlice"
 import { appendOtherData } from '../../WebGLgComponents/buildBuffers'

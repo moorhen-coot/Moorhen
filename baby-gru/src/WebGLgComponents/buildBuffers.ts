@@ -1,11 +1,11 @@
 import * as vec3 from 'gl-matrix/vec3';
+import store from '../store/MoorhenReduxStore'
+import { guid } from '../utils/utils';
+import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
-import store from '../store/MoorhenReduxStore'
 import { TexturedShape } from './texturedShape'
-import { guid } from '../utils/utils';
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 
 export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
 

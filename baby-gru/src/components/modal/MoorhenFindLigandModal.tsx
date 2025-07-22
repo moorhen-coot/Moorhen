@@ -1,18 +1,18 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Col, Form, Row, Spinner, Stack } from "react-bootstrap";
-import { convertViewtoPx } from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
+import { Backdrop, IconButton, Tooltip } from "@mui/material";
+import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
+import { convertViewtoPx } from '../../utils/utils';
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
-import { Backdrop, IconButton, Tooltip } from "@mui/material";
-import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { hideModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { addMolecule } from "../../store/moleculesSlice";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const LigandHitCard = (props: {
     selectedMolNo: number;

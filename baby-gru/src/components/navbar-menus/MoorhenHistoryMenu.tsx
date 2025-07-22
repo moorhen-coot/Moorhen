@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
-import { moorhen } from "../../types/moorhen";
 import { SaveOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
+import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 

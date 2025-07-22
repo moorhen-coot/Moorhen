@@ -1,16 +1,15 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen"
 import { useRef, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
-import { modalKeys } from "../../utils/enums"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
-import { addMoleculeList } from "../../store/moleculesSlice"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
+import { moorhen } from "../../types/moorhen"
+import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils'
+import { modalKeys } from "../../utils/enums"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { addMoleculeList } from "../../store/moleculesSlice"
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const mrbump_json_keys = ['modelName', 'rank', 'tarStart', 'tarEnd',
     'tarGroupStart', 'tarGroupEnd',

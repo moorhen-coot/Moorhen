@@ -1,12 +1,12 @@
 import { useCallback, useRef } from "react";
 import { Form, Row } from "react-bootstrap";
+import { Store } from "@reduxjs/toolkit";
+import { useSelector } from "react-redux";
 import { readTextFile } from "../../utils/utils";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { Store } from "@reduxjs/toolkit";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
-import { useSelector } from "react-redux";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

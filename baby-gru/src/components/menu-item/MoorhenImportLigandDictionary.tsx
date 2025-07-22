@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { FormSelect, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { FormSelect, OverlayTrigger, Tooltip , Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap";
 import { TextField } from "@mui/material"
-import { readTextFile } from "../../utils/utils"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
-import { addMolecule } from "../../store/moleculesSlice"
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { Store } from "@reduxjs/toolkit";
 import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
+import { libcootApi } from "../../types/libcoot"
+import { addMolecule } from "../../store/moleculesSlice"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { readTextFile } from "../../utils/utils"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 const MoorhenImportLigandDictionary = (props: {
     id: string;

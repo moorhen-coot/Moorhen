@@ -1,11 +1,11 @@
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
 import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import { CenterFocusStrongOutlined, HelpOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, DownloadOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import parse from 'html-react-parser'
-import { convertViewtoPx, guid } from "../../utils/utils";
 import { Accordion, AccordionDetails, AccordionSummary, LinearProgress, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { convertViewtoPx, guid } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenCopyToClipBoard } from '../misc/MoorhenCopyToClipBoard';
 
 export const MoorhenLigandCard = (props: {

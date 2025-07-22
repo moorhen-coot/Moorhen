@@ -1,15 +1,15 @@
 import { useState } from "react";
+import { MenuItem } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
 import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem";
 import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from "../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem";
 import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuItem"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { convertViewtoPx } from "../../utils/utils";
-import { MenuItem } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenMapToolsMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const dispatch = useDispatch()

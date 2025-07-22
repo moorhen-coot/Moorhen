@@ -1,29 +1,25 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, createRef, useCallback, useMemo } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table } from "react-bootstrap"
-import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
+import { Accordion, AccordionDetails, AccordionSummary , Slider,Typography } from '@mui/material';
 import { useSelector, useDispatch } from "react-redux"
-import { modalKeys } from "../../utils/enums"
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { readTextFile } from "../../utils/utils"
 import { useSnackbar } from "notistack"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
-import { Slider,Typography } from '@mui/material'
+import Fasta from "biojs-io-fasta"
+import { setsEqual } from "chart.js/dist/helpers/helpers.core";
+import { moorhen } from "../../types/moorhen"
+import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils'
+import { modalKeys } from "../../utils/enums"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { hideMolecule, showMolecule, removeMolecule, addMoleculeList } from "../../store/moleculesSlice"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import Fasta from "biojs-io-fasta"
-
 import {
     setMrParseModels, setTargetSequence, setAfJson, setEsmJson,
     setHomologsJson, setAfSortField, setHomologsSortField, setAfSortReversed,
     setHomologsSortReversed, setAFDisplaySettings, setHomologsDisplaySettings
  } from "../../store/mrParseSlice"
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading"
-
 import { MoorhenSequenceViewer, stringToSeqViewer, MoorhenSeqViewTypes, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
-import { setsEqual } from "chart.js/dist/helpers/helpers.core";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 interface MrParsePDBModelJson  {
     chain_id : string;

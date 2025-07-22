@@ -1,5 +1,16 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Spinner, Form, Overlay, Popover, Stack } from 'react-bootstrap';
+import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
+import {
+    CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
+    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined,
+    SettingsSuggestOutlined, CloseOutlined, HistoryOutlined, ConstructionOutlined,
+ } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { convertRemToPx, convertViewtoPx } from '../../utils/utils';
+import { moorhen } from '../../types/moorhen';
+import { showModal } from '../../store/modalsSlice';
+import { modalKeys } from '../../utils/enums';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { MoorhenHelpMenu } from './MoorhenHelpMenu';
@@ -11,17 +22,6 @@ import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenMapToolsMenu } from './MoorhenMapToolsMenu';
 import { MoorhenValidationMenu } from './MoorhenValidationMenu'
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
-import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
-import { convertRemToPx, convertViewtoPx } from '../../utils/utils';
-import {
-    CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
-    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined,
-    SettingsSuggestOutlined, CloseOutlined, HistoryOutlined, ConstructionOutlined,
- } from '@mui/icons-material';
-import { moorhen } from '../../types/moorhen';
-import { useDispatch, useSelector } from 'react-redux';
-import { showModal } from '../../store/modalsSlice';
-import { modalKeys } from '../../utils/enums';
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;

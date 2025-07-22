@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { Row, Button, Card, Col, OverlayTrigger, Tooltip, Form, FormSelect } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined, GrainOutlined } from '@mui/icons-material';
 import { HexAlphaColorPicker, HexColorInput, RgbColorPicker } from "react-colorful";
-import { rgbToHex } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
 import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
+import { rgbToHex } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 const ColourSwatch = (props: {

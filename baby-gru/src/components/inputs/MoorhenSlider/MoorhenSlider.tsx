@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
-import { PlusMinusButton } from "./PlusMinusButton";
 import { toFixedNoZero } from "../../misc/helpers";
+import { PlusMinusButton } from "./PlusMinusButton";
 import "./MoorhenSlider.css";
 
 type MoorhenSliderProps = {

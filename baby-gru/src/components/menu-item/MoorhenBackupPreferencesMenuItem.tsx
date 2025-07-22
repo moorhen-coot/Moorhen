@@ -1,9 +1,9 @@
 import { Form } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
+import { MoorhenSlider } from "../inputs";
 import { moorhen } from "../../types/moorhen";
 import { setEnableTimeCapsule, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenBackupPreferencesMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

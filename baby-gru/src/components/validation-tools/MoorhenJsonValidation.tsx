@@ -1,24 +1,22 @@
 import { useEffect, useCallback, useState, useRef } from "react"
 import { Table, Container } from 'react-bootstrap';
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
-import { libcootApi } from "../../types/libcoot";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { cidToSpec, sleep } from '../../utils/utils';
-import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
-import { modalKeys } from "../../utils/enums";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { Icon, Button, IconButton } from "@mui/material";
-import { Accordion, AccordionDetails, AccordionSummary, Typography, Collapse, Box, Grid, Checkbox, FormGroup, FormControlLabel} from '@mui/material';
+import { Icon, Button, IconButton , Accordion, AccordionDetails, AccordionSummary, Typography, Collapse, Box, Grid, Checkbox, FormGroup, FormControlLabel} from "@mui/material";
 import { ExpandMoreOutlined, CenterFocusWeakOutlined } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { ThemeProvider } from '@mui/material/styles';
-import { rgbToHsv,hsvToRgb } from '../../utils/utils';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
+import { cidToSpec, sleep , rgbToHsv,hsvToRgb } from '../../utils/utils';
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../types/moorhen";
+import { libcootApi } from "../../types/libcoot";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 
 export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
 

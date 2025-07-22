@@ -1,14 +1,14 @@
 import { SnackbarContent, useSnackbar } from "notistack";
 import { forwardRef, useCallback, useEffect, useRef } from "react";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
-import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
+import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setDraggableMolecule } from "../../store/glRefSlice";
 
 export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<

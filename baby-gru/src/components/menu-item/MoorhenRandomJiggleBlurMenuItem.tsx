@@ -1,13 +1,13 @@
 import { useCallback, useRef, useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { useDispatch, useSelector } from "react-redux";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

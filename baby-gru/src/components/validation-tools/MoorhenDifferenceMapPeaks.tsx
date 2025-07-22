@@ -1,15 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 import { Col, Form } from "react-bootstrap";
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from "chart.js";
-import { MoorhenSlider } from "../inputs";
 import annotationPlugin from "chartjs-plugin-annotation";
+import { useSelector , useDispatch } from "react-redux";
+import { MoorhenSlider } from "../inputs";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
-import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
-import { useSelector } from "react-redux";
-import { useDispatch } from 'react-redux';
 import { setOrigin } from "../../store/glRefSlice"
+import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

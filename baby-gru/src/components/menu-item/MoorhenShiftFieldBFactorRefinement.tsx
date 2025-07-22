@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from "react-redux"
+import { useRef } from "react"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { useRef } from "react"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenShiftFieldBFactorRefinement = (props) => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)

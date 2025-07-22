@@ -1,9 +1,9 @@
 import { useRef } from 'react';
-import { MoorhenContainer } from "./MoorhenContainer";
+import { Provider } from 'react-redux';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { Provider } from 'react-redux';
 import store from '../store/MoorhenReduxStore';
+import { MoorhenContainer } from "./MoorhenContainer";
 
 export const MoorhenApp = (props) => {
     const glRef = useRef<null | webGL.MGWebGL>(null)

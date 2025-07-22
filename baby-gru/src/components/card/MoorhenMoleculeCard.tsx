@@ -1,26 +1,25 @@
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
-import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress , Chip, FormGroup } from '@mui/material';
+import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, EditOutlined, ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';
+import { useSelector, useDispatch } from 'react-redux';
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
 import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";
-import { Chip, FormGroup } from "@mui/material";
-import { getNameLabel } from "./cardUtils"
-import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, EditOutlined, ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';
-import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
-import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
-import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
-import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { addGeneralRepresentation, addMolecule, removeCustomRepresentation, removeGeneralRepresentation, showMolecule } from '../../store/moleculesSlice';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
-import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
+import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
+import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
+import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
+import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
+import { getNameLabel } from "./cardUtils"
 
 const allRepresentations: moorhen.RepresentationStyles[] = ['CBs', 'adaptativeBonds', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks', 'restraints',  'environment' ]
 

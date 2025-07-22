@@ -1,6 +1,6 @@
+import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useSnackbar } from "notistack";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) => {
     

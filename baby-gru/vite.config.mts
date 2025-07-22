@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
@@ -14,7 +14,11 @@ export default defineConfig({
       }
     },
     plugins: [
-        react(),
+        react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
         wasm(),
         topLevelAwait(),
         crossOriginIsolation(),

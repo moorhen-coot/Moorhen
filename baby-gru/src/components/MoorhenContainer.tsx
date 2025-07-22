@@ -1,24 +1,24 @@
 import { useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { Container, Col, Row, Spinner } from 'react-bootstrap';
-import { MoorhenWebMG } from './webMG/MoorhenWebMG';
+import { Backdrop } from "@mui/material";
+import { useSelector, useDispatch } from 'react-redux';
+import { SnackbarProvider } from 'notistack';
 import { createLocalStorageInstance, parseAtomInfoLabel } from '../utils/utils';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { Backdrop } from "@mui/material";
 import { isDarkBackground } from '../WebGLgComponents/webGLUtils'
-import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
-import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
-import { useSelector, useDispatch } from 'react-redux';
 import { setDefaultBackgroundColor, setBackgroundColor, setHeight, setIsDark, setWidth } from '../store/sceneSettingsSlice';
+import { MoorhenWebMG } from './webMG/MoorhenWebMG';
+import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
+import { MoorhenModalsContainer } from './misc/MoorhenModalsContainer';
+import { MoorhenPreferencesContainer } from './misc/MoorhenPreferencesContainer';
 import { setCootInitialized, setTheme, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../store/hoveringStatesSlice';
 import { setRefinementSelection } from '../store/refinementSettingsSlice';
 import { MoorhenSnackBarManager } from '../components/snack-bar/MoorhenSnackBarManager';
 import MoorhenReduxStore from '../store/MoorhenReduxStore';
-import { SnackbarProvider } from 'notistack';
 import { MoorhenGoToResidueSnackbar } from './snack-bar/MoorhenGoToResidueSnackbar';
 import { MoorhenRecordingSnackBar } from './snack-bar/MoorhenRecordingSnackBar'
 import { MoorhenResidueSelectionSnackBar } from './snack-bar/MoorhenResidueSelectionSnackBar';

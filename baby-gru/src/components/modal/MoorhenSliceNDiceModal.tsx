@@ -1,13 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen"
-import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
+import { moorhen } from "../../types/moorhen"
+import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
-import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 import { hideModal } from "../../store/modalsSlice"
 import { modalKeys } from "../../utils/enums"
@@ -15,6 +14,7 @@ import {
     setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor,
     setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
  } from "../../store/sliceNDiceSlice"
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {

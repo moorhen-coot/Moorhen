@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
+import { useSelector, useDispatch } from 'react-redux';
 import { getTooltipShortcutLabel } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { libcootApi } from "../../types/libcoot";
-import { useSelector, useDispatch } from 'react-redux';
 import { removeMolecule } from "../../store/moleculesSlice";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenDeleteButton = (props: moorhen.ContextButtonProps) => {
     const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")

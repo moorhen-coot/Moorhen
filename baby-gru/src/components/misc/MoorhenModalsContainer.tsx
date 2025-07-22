@@ -1,3 +1,4 @@
+import { useSelector } from 'react-redux';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
@@ -24,7 +25,6 @@ import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructu
 import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
 import { MoorhenQScoreModal } from '../modal/MoorhenQScoreModal';
 import { MoorhenColourMapByOtherMapModal } from '../modal/MoorhenColourMapByOtherMapModal';
-import { useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { modalKeys } from "../../utils/enums";
 

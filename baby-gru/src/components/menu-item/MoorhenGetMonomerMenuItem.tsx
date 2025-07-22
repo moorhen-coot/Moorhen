@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useSelector, useDispatch } from 'react-redux';
+import { Store } from "@reduxjs/toolkit";
+import { useSnackbar } from "notistack";
+import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
+import parse from 'html-react-parser';
+import { InfoOutlined } from "@mui/icons-material";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
-import { Store } from "@reduxjs/toolkit";
-import { useSnackbar } from "notistack";
-import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import { libcootApi } from "../../types/libcoot";
-import parse from 'html-react-parser';
-import { InfoOutlined } from "@mui/icons-material";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;

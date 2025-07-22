@@ -1,13 +1,13 @@
 import { useCallback, useRef, useState } from "react"
 import { Button } from "react-bootstrap"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useSelector, useDispatch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule } from "../../store/moleculesSlice";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

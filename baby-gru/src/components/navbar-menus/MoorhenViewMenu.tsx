@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { useSelector, useDispatch } from "react-redux";
+import { MenuItem } from "@mui/material";
 import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from "react-redux";
 import { convertViewtoPx } from "../../utils/utils";
-import { MenuItem } from "@mui/material";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenOtherSceneSettings } from "../menu-item/MoorhenOtherSceneSettings";
 import { MoorhenLayoutSettings } from "../menu-item/MoorhenLayoutSettings";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)

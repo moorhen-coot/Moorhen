@@ -1,23 +1,22 @@
 import { useState, useRef, memo } from "react";
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
-import { getMultiColourRuleArgs } from "../../utils/utils";
-import { representationLabelMapping } from "../../utils/enums";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
-import { moorhen } from "../../types/moorhen";
 import { Popover } from "@mui/material";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
-import { webGL } from "../../types/mgWebGL";
 import { GrainOutlined } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
+import { getMultiColourRuleArgs } from "../../utils/utils";
+import { representationLabelMapping , COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer/MoorhenSequenceViewer";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { addCustomRepresentation } from "../../store/moleculesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { NcsColourSwatch } from "./MoorhenColourRuleCard";
 import { MoorhenSlider } from "../inputs";
+import { NcsColourSwatch } from "./MoorhenColourRuleCard";
 import { BondSettingsPanel, MolSurfSettingsPanel, ResidueEnvironmentSettingsPanel, RibbonSettingsPanel } from "./MoorhenMoleculeRepresentationSettingsCard";
-import { useSnackbar } from "notistack";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums";
 
 const customRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres", "MetaBalls", "residue_environment"];
 

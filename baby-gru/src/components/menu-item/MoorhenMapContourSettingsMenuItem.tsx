@@ -1,12 +1,11 @@
 import { Slider } from "@mui/material";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useEffect, useState } from "react";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form, InputGroup } from "react-bootstrap";
+import { moorhen } from "../../types/moorhen";
+import { setDefaultMapSamplingRate, setMapLineWidth , setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 import { MoorhenSlider } from "../inputs";
-import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []

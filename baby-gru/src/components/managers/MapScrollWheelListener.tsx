@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
 import { useFastContourMode } from "../../hooks/useFastContourMode";
 import { useDocumentEventListener } from "../../hooks/useDocumentEventListener";
 

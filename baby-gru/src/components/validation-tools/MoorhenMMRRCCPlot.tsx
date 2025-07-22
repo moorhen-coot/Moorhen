@@ -2,12 +2,12 @@ import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form, Button } from 'react-bootstrap'
 import { Chart, TooltipItem, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
+import { useDispatch, useSelector } from "react-redux"
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
 import { residueCodesOneToThree } from "../../utils/enums"
-import { useDispatch, useSelector } from "react-redux"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { moorhen } from "../../types/moorhen"
 import { libcootApi } from "../../types/libcoot"

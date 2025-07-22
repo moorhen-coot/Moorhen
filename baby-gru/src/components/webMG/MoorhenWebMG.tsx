@@ -1,17 +1,17 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
-import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
-import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { useDispatch, useSelector } from 'react-redux';
+import { useSnackbar } from 'notistack';
+import * as quat4 from 'gl-matrix/quat';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
-import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
-import * as quat4 from 'gl-matrix/quat';
+import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
+import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;

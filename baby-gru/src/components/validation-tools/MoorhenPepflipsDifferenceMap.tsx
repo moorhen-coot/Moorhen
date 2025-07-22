@@ -1,16 +1,16 @@
 import { useCallback, useState } from "react";
 import { Col, Row, Form, Card, Button } from "react-bootstrap";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useDispatch, useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
 import { MoorhenSlider } from "../inputs";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { cidToSpec, sleep } from "../../utils/utils";
 import { hideModal } from "../../store/modalsSlice";
-import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { usePersistentState } from "../../store/menusSlice";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     const modalId = modalKeys.PEPTIDE_FLIPS;

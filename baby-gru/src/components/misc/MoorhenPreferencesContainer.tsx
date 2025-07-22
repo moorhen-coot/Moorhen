@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux"
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
-import { useSelector, useDispatch } from "react-redux"
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
@@ -14,9 +14,8 @@ import {
     setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale,
     setDrawEnvBOcc
 } from "../../store/sceneSettingsSlice";
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut , setDevMode, setUserPreferencesMounted, setUseGemmi } from "../../store/generalStatesSlice";
 import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinementSettingsSlice';
-import { setDevMode, setUserPreferencesMounted, setUseGemmi } from "../../store/generalStatesSlice";
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen"
 

@@ -1,9 +1,9 @@
 import { Form } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { useDispatch, useSelector } from "react-redux";
+import { MoorhenSlider } from "../inputs";
+import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenMouseSensitivitySettingsMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity);

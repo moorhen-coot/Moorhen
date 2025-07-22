@@ -1,11 +1,11 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Row } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenWaterValidation } from "../validation-tools/MoorhenWaterValidation"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
-import { useSelector } from "react-redux";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenWaterValidationModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);

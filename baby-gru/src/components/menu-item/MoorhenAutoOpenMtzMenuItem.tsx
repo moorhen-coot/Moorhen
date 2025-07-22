@@ -1,16 +1,16 @@
 import { useCallback, useRef } from "react"
 import { Form, Row } from "react-bootstrap"
+import { useDispatch } from 'react-redux';
+import { Store } from "@reduxjs/toolkit";
+import { useSnackbar } from "notistack"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL"
 import { libcootApi } from "../../types/libcoot"
-import { useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap, addMapList } from "../../store/mapsSlice"
-import { Store } from "@reduxjs/toolkit";
-import { useSnackbar } from "notistack"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     store: Store;

@@ -1,12 +1,12 @@
-import { moorhen } from "../../types/moorhen";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector } from 'react-redux';
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { Button, Form } from "react-bootstrap";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { useSnackbar } from "notistack";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenChangeChainIdMenuItem = (props) => {
 

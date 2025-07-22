@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import * as quat4 from 'gl-matrix/quat';
+import * as vec3 from 'gl-matrix/vec3';
 import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
 import store from '../../store/MoorhenReduxStore'
-import { useDispatch, useSelector } from 'react-redux'
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
-import * as quat4 from 'gl-matrix/quat';
-import * as vec3 from 'gl-matrix/vec3';
 
 
 interface ImageFrac2D {

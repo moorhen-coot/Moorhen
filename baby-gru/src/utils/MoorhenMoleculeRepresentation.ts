@@ -1,12 +1,12 @@
+import { batch } from 'react-redux'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { libcootApi } from '../types/libcoot';
-import { MoorhenColourRule } from './MoorhenColourRule';
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
 import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
-import { batch } from 'react-redux'
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
+import { MoorhenColourRule } from './MoorhenColourRule';
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
 
 /**
  * Represents a molecule representation

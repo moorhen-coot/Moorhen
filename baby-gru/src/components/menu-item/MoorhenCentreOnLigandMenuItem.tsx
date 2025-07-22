@@ -1,10 +1,10 @@
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 
     glRef: React.RefObject<webGL.MGWebGL>;

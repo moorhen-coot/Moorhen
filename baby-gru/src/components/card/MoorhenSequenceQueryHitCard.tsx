@@ -1,14 +1,14 @@
 import { useCallback, useMemo } from "react";
-import { getMultiColourRuleArgs } from '../../utils/utils';
 import { Card, Row, Col, Button } from "react-bootstrap";
+import { useSelector, useDispatch } from 'react-redux';
+import { Store } from "@reduxjs/toolkit";
+import { enqueueSnackbar } from "notistack";
+import { getMultiColourRuleArgs } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { Store } from "@reduxjs/toolkit";
-import { enqueueSnackbar } from "notistack";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
 
 export const MoorhenQueryHitCard = (props: { 

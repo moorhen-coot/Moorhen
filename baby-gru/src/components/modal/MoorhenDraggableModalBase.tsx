@@ -1,13 +1,13 @@
+import { get } from "http";
 import { useCallback, useEffect, useRef, useState, useLayoutEffect, useMemo } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { AddOutlined, CloseOutlined, RemoveOutlined, SquareFootOutlined } from "@mui/icons-material";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { ResizableBox } from "react-resizable";
+import { moorhen } from "../../types/moorhen";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-import { get } from "http";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string |React.JSX.Element;

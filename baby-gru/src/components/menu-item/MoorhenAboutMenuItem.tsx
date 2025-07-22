@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { version } from '../../version'
 import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>, commandCentre:React.RefObject<moorhen.CommandCentre> }) => {
 

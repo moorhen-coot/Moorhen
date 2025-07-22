@@ -1,11 +1,11 @@
 import { useCallback, useRef } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenStepRefinementMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;

@@ -1,10 +1,10 @@
 import { useRef } from "react";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, batch } from 'react-redux';
+import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
-import { useSnackbar } from "notistack";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonProps) => {
 
