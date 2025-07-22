@@ -582,6 +582,42 @@ export const createLocalStorageInstance = (name: string, empty: boolean = false)
     return instance
 }
 
+export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
+
+    let thisPos = []
+    let thisNorm = []
+    let thisIdxs = []
+
+    let maxIdx = 0
+
+    for (let j = 0; j < 360; j += 360 / cylinder_accu) {
+        const theta1 = j * Math.PI / 180.0;
+        const theta2 = (j + 360 / cylinder_accu) * Math.PI / 180.0;
+            const x1 = Math.sin(theta1);
+            const y1 = Math.cos(theta1);
+            const x2 = Math.sin(theta2);
+            const y2 = Math.cos(theta2);
+            thisNorm.push(...[x1, y1, 0.0])
+            thisNorm.push(...[x1, y1, 0.0])
+            thisNorm.push(...[x2, y2, 0.0])
+            thisPos.push(...[x1, y1, 0.0])
+            thisPos.push(...[0, 0, 1.0])
+            thisPos.push(...[x2, y2, 0.0])
+            thisIdxs.push(...[0 + maxIdx, 1 + maxIdx, 2 + maxIdx])
+            maxIdx += 3
+            thisPos.push(...[x1, y1, 0.0])
+            thisPos.push(...[x2, y2, 0.0])
+            thisPos.push(...[0.0, 0.0, 0.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisIdxs.push(...[0 + maxIdx, 2 + maxIdx, 1 + maxIdx])
+            maxIdx += 3
+    }
+
+    return [thisPos, thisNorm, thisIdxs]
+}
+
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = []
     let thisNorm = []
@@ -642,7 +678,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     labelled: boolean = false,
     minDist: number = 1.9,
     maxDist: number = 4.0,
-    dashed: boolean = true
+    dashed: boolean = true,
+    style: "cylinder"|"cone" = "cylinder",
 ) => {
 
     let atomPairs = atoms;
@@ -657,7 +694,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
 
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(dashed ? 15 : 1, 16);
+    const [thisPos, thisNorm, thisIdxs] = style == "cylinder" ? getDashedCylinder(dashed ? 15 : 1, 16) : getCone(16);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []

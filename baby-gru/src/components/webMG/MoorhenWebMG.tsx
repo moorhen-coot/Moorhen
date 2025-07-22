@@ -146,30 +146,103 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
             const atomColours = {}
             const colour = [1.0,0.0,0.0,1.0]
-            const atomPairs = []
+            const dashPairs = []
+            const solidPairs = []
+            const arrowHeadPairs = []
             vectorsList.forEach(vec => {
                 if(vec.coordsMode==="points"){
+                    let xFrom = vec.xFrom
+                    let yFrom = vec.yFrom
+                    let zFrom = vec.zFrom
+                    let xTo = vec.xTo
+                    let yTo = vec.yTo
+                    let zTo = vec.zTo
+                    if(vec.arrowMode==="end"||vec.arrowMode==="both"){
+                        xTo = xFrom + 0.8 * (vec.xTo - vec.xFrom)
+                        yTo = yFrom + 0.8 * (vec.yTo - vec.yFrom)
+                        zTo = zFrom + 0.8 * (vec.zTo - vec.zFrom)
+                    }
+                    if(vec.arrowMode==="start"||vec.arrowMode==="both"){
+                        xFrom = xFrom + 0.2 * (vec.xTo - vec.xFrom)
+                        yFrom = yFrom + 0.2 * (vec.yTo - vec.yFrom)
+                        zFrom = zFrom + 0.2 * (vec.zTo - vec.zFrom)
+                    }
                     const firstAtomInfo = {
-                        pos: [vec.xFrom, vec.yFrom, vec.zFrom],
-                        x: vec.xFrom,
-                        y: vec.yFrom,
-                        z: vec.zFrom,
+                        pos: [xFrom, yFrom, zFrom],
+                        x: xFrom,
+                        y: yFrom,
+                        z: zFrom,
                     }
                     const secondAtomInfo = {
-                        pos: [vec.xTo, vec.yTo, vec.zTo],
-                        x: vec.xTo,
-                        y: vec.yTo,
-                        z: vec.zTo,
+                        pos: [xTo, yTo, zTo],
+                        x: xTo,
+                        y: yTo,
+                        z: zTo,
                     }
                     const pair = [firstAtomInfo, secondAtomInfo]
-                    atomPairs.push(pair)
+                    if(vec.drawMode==="dashedcylinder"){
+                        dashPairs.push(pair)
+                    } else {
+                        solidPairs.push(pair)
+                    }
+                    if(vec.arrowMode==="end"||vec.arrowMode==="both"){
+                        const xFrom = vec.xFrom + 0.8 * (vec.xTo - vec.xFrom)
+                        const yFrom = vec.yFrom + 0.8 * (vec.yTo - vec.yFrom)
+                        const zFrom = vec.zFrom + 0.8 * (vec.zTo - vec.zFrom)
+                        const xTo = vec.xTo
+                        const yTo = vec.yTo
+                        const zTo = vec.zTo
+                        const firstAtomInfo = {
+                            pos: [xFrom, yFrom, zFrom],
+                            x: xFrom,
+                            y: yFrom,
+                            z: zFrom,
+                        }
+                        const secondAtomInfo = {
+                            pos: [xTo, yTo, zTo],
+                            x: xTo,
+                            y: yTo,
+                            z: zTo,
+                        }
+                        const pair = [firstAtomInfo, secondAtomInfo]
+                        arrowHeadPairs.push(pair)
+                    }
+                    if(vec.arrowMode==="start"||vec.arrowMode==="both"){
+                        const xTo = vec.xFrom
+                        const yTo = vec.yFrom
+                        const zTo = vec.zFrom
+                        const xFrom = vec.xFrom + 0.2 * (vec.xTo - vec.xFrom)
+                        const yFrom = vec.yFrom + 0.2 * (vec.yTo - vec.yFrom)
+                        const zFrom = vec.zFrom + 0.2 * (vec.zTo - vec.zFrom)
+                        const firstAtomInfo = {
+                            pos: [xFrom, yFrom, zFrom],
+                            x: xFrom,
+                            y: yFrom,
+                            z: zFrom,
+                        }
+                        const secondAtomInfo = {
+                            pos: [xTo, yTo, zTo],
+                            x: xTo,
+                            y: yTo,
+                            z: zTo,
+                        }
+                        const pair = [firstAtomInfo, secondAtomInfo]
+                        arrowHeadPairs.push(pair)
+                    }
                 }
             })
-            atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+            dashPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+            solidPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+            arrowHeadPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
             const objects = [
-                gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
+                gemmiAtomPairsToCylindersInfo(dashPairs, 0.07, atomColours, false, 0.01, 1000.)
             ]
-            console.log(objects)
+            objects.push(...[
+                gemmiAtomPairsToCylindersInfo(solidPairs, 0.07, atomColours, false, 0.01, 1000., false)
+            ])
+            objects.push(...[
+                gemmiAtomPairsToCylindersInfo(arrowHeadPairs, 0.15, atomColours, false, 0.01, 1000., false, "cone")
+            ])
 
             let newBuffers = []
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
@@ -178,7 +251,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 buildBuffers(a)
             })
             setVectorBuffers(newBuffers)
-            console.log(newBuffers)
             dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
         }
     }, [vectorsList])
