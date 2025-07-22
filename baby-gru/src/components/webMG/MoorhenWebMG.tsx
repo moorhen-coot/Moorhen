@@ -707,3 +707,4 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             </>
 });
 
+MoorhenWebMG.displayName = "MoorhenWebMG";

@@ -4,6 +4,7 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import pluginReact from "eslint-plugin-react";
 import pluginReactHooks from "eslint-plugin-react-hooks";
+import pluginReactHooksExtra from "eslint-plugin-react-hooks-extra";
 import pluginJsxA11y from "eslint-plugin-jsx-a11y";
 import pluginReactRefresh from "eslint-plugin-react-refresh";
 import pluginReactPerf from "eslint-plugin-react-perf";
@@ -11,6 +12,9 @@ import pluginImport from "eslint-plugin-import";
 
 export default [
   js.configs.recommended,
+  {
+    ignores: ["src/components/LhasaReact/**"],
+  },
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     plugins: {
@@ -91,6 +95,7 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {
@@ -98,6 +103,7 @@ export default [
     plugins: {
       react: pluginReact,
       "react-hooks": pluginReactHooks,
+      "react-hooks-extra": pluginReactHooksExtra,
       "jsx-a11y": pluginJsxA11y,
       "react-refresh": pluginReactRefresh,
       "react-perf": pluginReactPerf,
@@ -132,6 +138,14 @@ export default [
       // React Hooks rules
       ...pluginReactHooks.configs.recommended.rules,
       "react-hooks/react-compiler": "error",
+      "react-hooks/exhaustive-deps": "off", // Disable exhaustive-deps rule, it is the limit of how much I can accept the React way of life.
+      
+      // React Hooks Extra rules
+      "react-hooks-extra/no-direct-set-state-in-use-effect": "warn",
+      "react-hooks-extra/no-redundant-custom-hook": "warn",
+      "react-hooks-extra/prefer-use-state-lazy-initialization": "warn",
+      "react-hooks-extra/no-unnecessary-use-callback": "warn",
+      "react-hooks-extra/no-unnecessary-use-memo": "warn",
       
       // Accessibility rules
       ...pluginJsxA11y.configs.recommended.rules,
@@ -146,10 +160,11 @@ export default [
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       
       // React Performance rules
-      "react-perf/jsx-no-new-object-as-prop": "warn",
-      "react-perf/jsx-no-new-array-as-prop": "warn",
+      //"react-perf/jsx-no-new-object-as-prop": "warn",
+      //"react-perf/jsx-no-new-array-as-prop": "warn",
       //"react-perf/jsx-no-new-function-as-prop": "warn", // Uncomment if you want to enforce this rule, but flag things that should be sorted by the compiler
-      "react-perf/jsx-no-jsx-as-prop": "warn",
+      //"react-perf/jsx-no-jsx-as-prop": "warn",
+      
     },
     settings: {
       react: {

@@ -1188,6 +1188,13 @@ export namespace moorhen {
         atomInfoCards: {
             atomInfoIds: any[]
         }
+        coreRefs: {
+            commandCentre: React.RefObject<CommandCentre>;
+            timeCapsule: React.RefObject<TimeCapsule>;
+        }
+        userInterface: {
+            busy: boolean;
+        }
     }
 
     type actionButtonSettings = {

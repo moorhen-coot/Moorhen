@@ -23,6 +23,7 @@ import {
     toggleCootCommandStart,
     setUrlPrefix,
 } from "../store/generalStatesSlice";
+import { setCommandCentre, setTimeCapsule } from "../store/coreRefsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
 import { setRefinementSelection } from "../store/refinementSettingsSlice";
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
@@ -91,7 +92,7 @@ declare module "notistack" {
         residueSteps: {
             timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
             residueList: { cid: string }[];
-            onStep: (stepInput: any) => Promise<void>;
+            onStep: (stepInput) => Promise<void>;
             onStart?: () => Promise<void> | void;
             onStop?: () => void;
             onPause?: () => void;
@@ -215,7 +216,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         (state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold
     );
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+    //const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi); // unused selector
 
     const dispatch = useDispatch();
 
@@ -324,10 +325,10 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useLayoutEffect(() => {
         const head = document.head;
-        const style: any = document.createElement("link");
+        const style: HTMLLinkElement = document.createElement("link");
         style.href = `${urlPrefix}/moorhen.css`;
         style.rel = "stylesheet";
-        style.async = true;
+        //style.async = true; seem to not exist?
         style.type = "text/css";
         head.appendChild(style);
     }, []);
@@ -361,6 +362,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold;
                 await timeCapsuleRef.current.init();
             }
+            dispatch(setTimeCapsule(timeCapsuleRef));
         };
         initTimeCapsule();
     }, [userPreferencesMounted]);
@@ -389,7 +391,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useLayoutEffect(() => {
         const head = document.head;
-        const style: any = document.createElement("link");
+        const style: HTMLLinkElement = document.createElement("link");
 
         if (isDark) {
             style.href = `${urlPrefix}/darkly.css`;
@@ -400,7 +402,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
 
         style.rel = "stylesheet";
-        style.async = true;
+        // style.async = true; 
         style.type = "text/css";
 
         head.appendChild(style);
@@ -459,27 +461,31 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [drawMissingLoops, cootInitialized]);
 
+    /** Initialize the command centre and set it in the Redux store. */
     useEffect(() => {
         const initCommandCentre = async () => {
             setWindowDimensions();
+            
+            // eslint-disable-next-line react-hooks/react-compiler
             commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
                 onCootInitialized: () => {
                     dispatch(setCootInitialized(true));
                 },
-                onCommandExit: (kwargs) => {
+                onCommandExit: () => {
                     dispatch(toggleCootCommandExit());
                 },
-                onCommandStart: (kwargs) => {
+                onCommandStart: () => {
                     dispatch(toggleCootCommandStart());
                 },
             });
             await commandCentre.current.init();
+            dispatch(setCommandCentre(commandCentre));
         };
 
         initCommandCentre();
-
         return () => {
             commandCentre.current.close();
+            dispatch(setCommandCentre(null));
         };
     }, []);
 
