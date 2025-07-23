@@ -1,7 +1,6 @@
 import { useCallback, useRef } from "react"
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -9,8 +8,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAddWatersMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -19,6 +16,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
 
     const panelContent = <>
         <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />
@@ -34,7 +32,7 @@ export const MoorhenAddWatersMenuItem = (props: {
         const moleculeMolNo = parseInt(moleculeSelectRef.current.value)
         const mapMolNo = parseInt(mapSelectRef.current.value)
         
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.current.cootCommand({
             command: 'add_waters',
             commandArgs: [moleculeMolNo, mapMolNo],
             returnType: "status",
@@ -47,7 +45,7 @@ export const MoorhenAddWatersMenuItem = (props: {
         
         dispatch( triggerUpdate(moleculeMolNo) )
 
-    }, [molecules, maps, props.glRef, props.commandCentre])
+    }, [molecules, maps, commandCentre])
 
     return <MoorhenBaseMenuItem
         id='add-waters-menu-item'

@@ -3,12 +3,10 @@ import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from 'react-redux';
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAddSimpleMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
@@ -38,7 +36,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
             await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value)
             dispatch( triggerUpdate(selectedMolecule.molNo) )
         }
-    }, [props.glRef, molecules])
+    }, [molecules])
 
     return <MoorhenBaseMenuItem
         id='add-simple-menu-item'

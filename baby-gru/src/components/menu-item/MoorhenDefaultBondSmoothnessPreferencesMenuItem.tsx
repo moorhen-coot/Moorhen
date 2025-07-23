@@ -6,7 +6,6 @@ import { setDefaultBondSmoothness } from "../../store/sceneSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
 }) => {
     
@@ -36,7 +35,6 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props: {
         popoverPlacement={props.popoverPlacement ?? "right"}
         popoverContent={panelContent}
         menuItemText={"Default smoothness of molecule bonds..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
     />
 }

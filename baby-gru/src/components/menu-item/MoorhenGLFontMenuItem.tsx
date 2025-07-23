@@ -6,9 +6,7 @@ import { addAvailableFontList, setGLLabelsFontFamily, setGLLabelsFontSize } from
 import { allFontsSet } from '../../utils/enums';
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenGLFontMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
-}) => {
+export const MoorhenGLFontMenuItem = () => {
 
     const dispatch = useDispatch()
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
@@ -54,6 +52,5 @@ export const MoorhenGLFontMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Fonts..."
         onCompleted={() => { }}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

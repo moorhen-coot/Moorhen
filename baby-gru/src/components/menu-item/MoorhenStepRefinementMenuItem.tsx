@@ -4,19 +4,15 @@ import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenStepRefinementMenuItem = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
 }) => {
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
+    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -40,7 +36,7 @@ export const MoorhenStepRefinementMenuItem = (props: {
             enqueueSnackbar("stepped-refine", {
                 variant: "residueSteps",
                 persist: true,
-                timeCapsuleRef: props.timeCapsuleRef,
+                timeCapsuleRef: timeCapsuleRef,
                 residueList: residueList,
                 onStep: handleStepRefine,
                 onStart: async () => {

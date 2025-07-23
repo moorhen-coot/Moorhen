@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import parse from 'html-react-parser';
@@ -9,7 +8,6 @@ import { InfoOutlined } from "@mui/icons-material";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
@@ -53,13 +51,11 @@ const CompoundAutoCompleteOption = (props: {
 }
 
 export const MoorhenGetMonomerMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    monomerLibraryPath: string;
-    store: Store;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
+    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
@@ -105,7 +101,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif")
             if (response.ok) {
                 const fileContents = await response.text()
-                const table = await props.commandCentre.current.cootCommand({
+                const table = await commandCentre.current.cootCommand({
                     command: 'parse_mon_lib_list_cif',
                     commandArgs: [fileContents],
                     returnType: 'status'
@@ -120,7 +116,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     }
 
     const getMonomerFromLibcootAPI = useCallback((tlc: string, fromMolNo: number) => {
-        return props.commandCentre.current.cootCommand({
+        return commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'get_monomer_and_position_at',
             commandArgs: [tlc, fromMolNo,
@@ -130,7 +126,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     }, [])
 
     const createNewLigandMolecule = useCallback(async (tlc: string, molNo: number, ligandDict?: string) => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule()
         newMolecule.molNo = molNo
         newMolecule.name = tlc
         newMolecule.setBackgroundColour(backgroundColor)
@@ -142,14 +138,14 @@ export const MoorhenGetMonomerMenuItem = (props: {
         await newMolecule.fetchIfDirtyAndDraw('CBs')
         dispatch(addMolecule(newMolecule))
         return newMolecule
-    }, [defaultBondSmoothness, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
+    }, [defaultBondSmoothness])
 
     const addLigand = useCallback(async (tlc: string, ligandDict: string, fromMolNo: number) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === fromMolNo)
         if (selectedMolecule) {
             await selectedMolecule.addDict(ligandDict)
         } else {
-            await props.commandCentre.current.cootCommand({
+            await commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'read_dictionary_string',
                 commandArgs: [ligandDict, -999999],
@@ -163,9 +159,9 @@ export const MoorhenGetMonomerMenuItem = (props: {
         } else {
             enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: "warning" })
         }
-    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, props.commandCentre])
+    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, commandCentre])
 
-    const fetchLigandDictFromUrl = useCallback(async (url: string) => {
+    const fetchLigandDictFromUrl = async (url: string) => {
         const response = await fetch(url)
         if (!response.ok) {
             console.log(`Cannot fetch data from ${url}`)
@@ -173,7 +169,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             const fileContent = await response.text()
             return fileContent
         }
-    }, [])
+    }
 
     const fetchLigandDict = useCallback(async (source: string, tlc: string, fromMolNo: number = -999999) => {
         let url: string
@@ -185,7 +181,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
                 url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`
                 break
             case "local-monomer-library":
-                url = `${props.monomerLibraryPath}/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`
+                url = `${monomerLibraryPath}/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`
                 break
             default:
                 console.warn(`Unrecognised ligand source ${source}`)
@@ -197,7 +193,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
         } else {
             console.warn("No ligand dictionary, doing nothing...")
         }
-    }, [fetchLigandDictFromUrl, addLigand, props.monomerLibraryPath])
+    }, [fetchLigandDictFromUrl, addLigand, monomerLibraryPath])
 
     const defaultGetMonomer = useCallback(async () => {
         const fromMolNo = parseInt(moleculeSelectRef.current.value)
@@ -217,7 +213,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
         let result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
 
         if (result.data.result.result === -1) {
-            const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+            const newMolecule = new MoorhenMolecule()
             await newMolecule.loadMissingMonomer(newTlc, fromMolNo)
             result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
         }
@@ -229,7 +225,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: 'warning' })
             console.log('Error getting monomer. Missing dictionary?')
         }
-    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
+    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules])
 
     const onCompleted = useCallback(async () => {
         if (sourceSelectRef.current.value === "libcoot-api") {
@@ -258,7 +254,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
                 overlay={
                     <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{zIndex: 99999}}>
                         <em>
-                            By default, "Get monomer" will search in each of the following sources until a match is found
+                            By default, &quot;Get monomer&quot; will search in each of the following sources until a match is found
                             for your monomer. You can instead override this behaviour by selecting a specific source for your monomer.
                         </em>
                     </Tooltip>
@@ -361,7 +357,6 @@ export const MoorhenGetMonomerMenuItem = (props: {
         menuItemText="Get monomer..."
         onCompleted={() => {}}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
         popoverPlacement={props.popoverPlacement ?? "right"}
     />
 }

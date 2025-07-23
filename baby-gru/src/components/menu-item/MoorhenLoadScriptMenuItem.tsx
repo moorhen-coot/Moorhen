@@ -1,24 +1,14 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 import { Form, Row } from "react-bootstrap";
-import { Store } from "@reduxjs/toolkit";
-import { useSelector } from "react-redux";
 import { readTextFile } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-     glRef: React.RefObject<webGL.MGWebGL>;
-     store: Store;
-     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
-    
-    const filesRef = useRef<null | HTMLInputElement>(null)
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const maps = useSelector((state: moorhen.State) => state.maps)
+    const filesRef = useRef<null | HTMLInputElement>(null)
 
     const panelContent = <Row>
         <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadScript" className="mb-3">
@@ -27,18 +17,18 @@ export const MoorhenLoadScriptMenuItem = (props: {
         </Form.Group>
     </Row>
 
-    const onCompleted = useCallback(async () => {
+    const onCompleted =async () => {
         for (const file of filesRef.current.files) {
             const code = await readTextFile(file) as string
             try {
-                const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.store, molecules, maps)
+                const scriptApi = new MoorhenScriptApi()
                 scriptApi.exe(code)
             }
             catch (err) {
                 console.error(err)
             }    
         }
-    }, [molecules, maps])
+    }
 
     return <MoorhenBaseMenuItem
         key='execute-script-menu-item'

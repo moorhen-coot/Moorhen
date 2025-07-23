@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCentreOnLigandMenuItem } from "../menu-item/MoorhenCentreOnLigandMenuItem"
@@ -11,26 +10,24 @@ import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenLigandMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+
+export const MoorhenLigandMenu = (props: {
+    dropdownId: string;
+    disableFileUploads?: boolean;
+}) => {
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
     const dispatch = useDispatch()
-
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-    
-    const menuItemProps = { setPopoverIsShown, ...props }
-
+ 
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
-            <MoorhenGetMonomerMenuItem {...menuItemProps} />
-            {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem {...menuItemProps} />}
-            <MoorhenSMILESToLigandMenuItem {...menuItemProps} />
-            <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
-            <MoorhenMinimizeEnergyMenuItem {...menuItemProps} />
-            <MoorhenMatchLigandsMenuItem {...menuItemProps} />
-            <MoorhenOpenLhasaMenuItem {...menuItemProps}/>
+            <MoorhenGetMonomerMenuItem  />
+            {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem  />}
+            <MoorhenSMILESToLigandMenuItem  />
+            <MoorhenCentreOnLigandMenuItem  />
+            <MoorhenMinimizeEnergyMenuItem  />
+            <MoorhenMatchLigandsMenuItem  />
+            <MoorhenOpenLhasaMenuItem />
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.FIT_LIGAND))
                 document.body.click()

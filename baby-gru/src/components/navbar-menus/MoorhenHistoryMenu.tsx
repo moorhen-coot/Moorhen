@@ -7,9 +7,8 @@ import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
 
     const [historyHead, setHistoryHead] = useState(0)
 
@@ -22,17 +21,19 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
 
     const { enqueueSnackbar } = useSnackbar()
 
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule)
+    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary)
+
     const loadSession = useCallback(async (sessionData: string) => {
         try {
             const status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                 sessionData as string,
-                props.monomerLibraryPath,
-                molecules, 
+                monomerLibraryPath,
+                molecules,
                 maps,
-                props.commandCentre,
-                props.timeCapsuleRef,
-                props.glRef,
-                props.store,
+                commandCentre,
+                timeCapsuleRef,
                 dispatch
             )
             if (status === -1) {
@@ -55,17 +56,17 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
             })
         }
 
-        if(historyEntry.uniqueId === props.commandCentre.current.history.headId && historyHead !== index) {
+        if(historyEntry.uniqueId === commandCentre.current.history.headId && historyHead !== index) {
             setHistoryHead(index)
         }
 
         const handleClick = async () => {
             if (historyEntry.associatedBackupKey) {
-                props.commandCentre.current.history.setSkipTracking(true)
-                const backup = await props.timeCapsuleRef.current.retrieveBackup(historyEntry.associatedBackupKey) as string
+                commandCentre.current.history.setSkipTracking(true)
+                const backup = await timeCapsuleRef.current.retrieveBackup(historyEntry.associatedBackupKey) as string
                 await loadSession(backup)
-                props.commandCentre.current.history.setSkipTracking(false)
-                props.commandCentre.current.history.setCurrentHead(historyEntry.uniqueId)
+                commandCentre.current.history.setSkipTracking(false)
+                commandCentre.current.history.setCurrentHead(historyEntry.uniqueId)
             }
         }
 
@@ -88,14 +89,14 @@ export const MoorhenHistoryMenu = (props: MoorhenNavBarExtendedControlsInterface
                 </StepLabel>
             </StepButton>
         </Step>
-    }, [props.commandCentre, historyHead, molecules, props.timeCapsuleRef, loadSession])
+    }, [commandCentre, historyHead, molecules, timeCapsuleRef, loadSession])
 
     return <div style={{maxHeight: convertViewtoPx(65, height), maxWidth: '20rem', overflowY: 'auto', overflowX: 'hidden'}}>
-        {props.commandCentre.current.history.entries.length === 0 ? 
+        {commandCentre.current.history.entries.length === 0 ? 
         <span>No command history</span>
         :
         <Stepper nonLinear activeStep={historyHead} orientation="vertical">
-            { props.commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
+            { commandCentre.current.history.entries.map((entry, index) => getHistoryStep(entry, index)) }
         </Stepper>
         }
     </div>

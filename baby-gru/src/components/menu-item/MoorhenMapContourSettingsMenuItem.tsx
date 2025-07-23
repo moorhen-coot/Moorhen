@@ -25,9 +25,7 @@ const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = fa
 const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100]
 
 export const MapContourSettingsMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -37,8 +35,9 @@ export const MapContourSettingsMenuItem = (props: {
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
 
-    const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
+    const [mapSampling, setMapSampling] = useState<number>(() => convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
     const dispatch = useDispatch()
 
@@ -47,7 +46,7 @@ export const MapContourSettingsMenuItem = (props: {
             const newSamplingRate = convertPercentageToSamplingRate(mapSampling)
 
             if (newSamplingRate !== defaultMapSamplingRate) {
-                await props.commandCentre.current.cootCommand({
+                await commandCentre.current.cootCommand({
                     command: 'set_map_sampling_rate',
                     commandArgs: [newSamplingRate],
                     returnType: 'status'
@@ -61,7 +60,7 @@ export const MapContourSettingsMenuItem = (props: {
                     await Promise.all(
                         maps.filter(map => !map.isEM && map.hasReflectionData).map(async(map: moorhen.Map) => {
                             const reflectionData = await map.fetchReflectionData()
-                            await props.commandCentre.current.cootCommand({
+                            await commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: 'shim_replace_map_by_mtz_from_file',
                                 commandArgs: [map.molNo, reflectionData.data.result.mtzData, map.selectedColumns]
@@ -150,7 +149,6 @@ export const MapContourSettingsMenuItem = (props: {
         popoverContent={panelContent}
         showOkButton={false}
         menuItemText={"Map contour settings..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />
 }

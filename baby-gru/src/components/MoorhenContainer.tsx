@@ -54,37 +54,28 @@ import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
 
 declare module "notistack" {
     interface VariantOverrides {
-        goToResidue: {
-            glRef: React.RefObject<webGL.MGWebGL>;
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
-        };
+        goToResidue;
         screenRecorder: {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
         };
         residueSelection: true;
         acceptRejectDraggingAtoms: {
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string[]>;
-            monomerLibraryPath: string;
         };
         atomInformation: {
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: moorhen.Molecule;
             cidRef: string;
-            monomerLibraryPath: string;
         };
         acceptRejectRotateTranslateAtoms: {
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string>;
-            glRef: React.RefObject<webGL.MGWebGL>;
         };
         acceptRejectMatchingLigand: {
             refMolNo: number;
             movingMolNo: number;
             refLigandCid: string;
             movingLigandCid: string;
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
         };
         longJobNotification: true;
         residueSteps: {
@@ -99,16 +90,12 @@ declare module "notistack" {
             disableTimeCapsule?: boolean;
             sleepTime?: number;
         };
-        updatingMaps: {
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
-        };
+        updatingMaps;
         modelTrajectory: {
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeMolNo: number;
             representationStyle: string;
         };
         tomogram: {
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
             mapMolNo: number;
         };
         mapContourLevel: {
@@ -118,7 +105,6 @@ declare module "notistack" {
         rotamerChange: {
             moleculeMolNo: number;
             chosenAtom: moorhen.ResidueSpec;
-            commandCentre: React.RefObject<moorhen.CommandCentre>;
         };
         screenshot: {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;

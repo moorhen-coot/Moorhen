@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { FormSelect, OverlayTrigger, Tooltip , Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap";
 import { TextField } from "@mui/material"
 import { useSelector, useDispatch } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
 import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
@@ -20,16 +18,11 @@ const MoorhenImportLigandDictionary = (props: {
     menuItemText: string;
     createInstance: boolean;
     setCreateInstance: React.Dispatch<React.SetStateAction<boolean>>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    monomerLibraryPath: string;
-    store: Store;
     panelContent: React.JSX.Element;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
     addToMolecule: string;
     setAddToMolecule: React.Dispatch<React.SetStateAction<string>>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     tlcValueRef: React.RefObject<string>;
     createRef: React.MutableRefObject<boolean>;
     moleculeSelectRef: React.RefObject<HTMLSelectElement>;
@@ -41,12 +34,13 @@ const MoorhenImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
-        addToMoleculeValueRef, setPopoverIsShown, glRef, commandCentre, menuItemText,
-        monomerLibraryPath, id, store
+        addToMoleculeValueRef, menuItemText,
+        id
     } = props
 
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
@@ -89,7 +83,7 @@ const MoorhenImportLigandDictionary = (props: {
                     ...originState.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number>
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
+                newMolecule = new MoorhenMolecule()
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
@@ -116,20 +110,19 @@ const MoorhenImportLigandDictionary = (props: {
         }
 
         [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)))
-        setPopoverIsShown(false)
 
-    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef])
+    }, [moleculeSelectValueRef, createRef, molecules, commandCentre, tlcValueRef,  backgroundColor, defaultBondSmoothness, addToMoleculeValueRef])
 
     const popoverContent = <>
             {panelContent}
             <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" onChange={(evt) => {
+                // eslint-disable-next-line react-hooks/react-compiler
                 moleculeSelectValueRef.current = evt.target.value
         }}/>
             <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
                 <Form.Label>Create instance on read</Form.Label>
                 <InputGroup>
                     <SplitButton title={createInstance ? "Yes" : "No"} id="segmented-button-dropdown-1">
-                        {/* @ts-ignore */}
                         <Dropdown.Item key="Yes" href="#" onClick={() => {
                             createRef.current = true
                             setCreateInstance(true)
@@ -166,19 +159,13 @@ const MoorhenImportLigandDictionary = (props: {
         popoverContent={popoverContent}
         menuItemText={menuItemText}
         onCompleted={onCompleted}
-        setPopoverIsShown={setPopoverIsShown}
     />
 
 }
 
-export const MoorhenSMILESToLigandMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    monomerLibraryPath: string;
-    store: Store;
-}) => {
+export const MoorhenSMILESToLigandMenuItem = () => {
 
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
     const [smile, setSmile] = useState<string>('')
     const [tlc, setTlc] = useState<string>('')
     const [createInstance, setCreateInstance] = useState<boolean>(true)
@@ -201,7 +188,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     const collectedProps = {
         smile, setSmile, tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
         setAddToMolecule, smileRef, tlcValueRef, createRef, moleculeSelectRef, addToRef,
-        addToMoleculeValueRef, moleculeSelectValueRef, ...props
+        addToMoleculeValueRef, moleculeSelectValueRef,
     }
 
     const smilesToPDB = async (): Promise<string> => {
@@ -242,7 +229,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
             return
         }
 
-        const response = await props.commandCentre.current.cootCommand({
+        const response = await commandCentre.current.cootCommand({
             command: 'smiles_to_pdb',
             commandArgs: [smilesText, tlcValueRef.current, n_conformer, n_iteration],
             returnType: 'str_str_pair'
@@ -330,13 +317,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     return <MoorhenImportLigandDictionary id='smiles-to-ligand-menu-item' menuItemText="From SMILES..." panelContent={panelContent} fetchLigandDict={smilesToPDB} {...collectedProps} />
 }
 
-export const MoorhenImportDictionaryMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    monomerLibraryPath: string;
-    store: Store;
- }) => {
+export const MoorhenImportDictionaryMenuItem = () => {
 
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([])
     const filesRef = useRef<null | HTMLInputElement>(null)
@@ -359,7 +340,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     const collectedProps = {
         tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,
-        addToMoleculeValueRef, moleculeSelectValueRef, ...props
+        addToMoleculeValueRef, moleculeSelectValueRef
     }
 
     const parseCifDict = async (file: File) => {

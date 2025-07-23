@@ -5,9 +5,7 @@ import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from 
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenScoresToastPreferencesMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const MoorhenScoresToastPreferencesMenuItem = () => {
 
     const dispatch = useDispatch()
     const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast)
@@ -56,7 +54,6 @@ export const MoorhenScoresToastPreferencesMenuItem = (props: {
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText={"Options for scores when updating maps..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
 

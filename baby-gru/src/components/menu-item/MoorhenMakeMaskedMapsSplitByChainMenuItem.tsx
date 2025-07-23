@@ -1,22 +1,15 @@
 import { useRef } from "react";
 import { batch, useDispatch, useSelector } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
-}) => {
+export const MoorhenMakeMaskedMapsSplitByChainMenuItem = () => {
 
     const moleculeSelectRef = useRef<HTMLSelectElement>(null)
     const mapSelectRef = useRef<HTMLSelectElement>(null)
@@ -24,6 +17,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -46,7 +40,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
             return
         }
 
-        const result = await props.commandCentre.current.cootCommand({
+        const result = await commandCentre.current.cootCommand({
             returnType: 'int_array',
             command: 'make_masked_maps_split_by_chain',
             commandArgs: [moleculeNo, mapNo]
@@ -55,7 +49,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         if (result.data.result.result.length > 0) {
             await Promise.all(
                 result.data.result.result.map(async (iNewMap, listIndex) =>{
-                    const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
+                    const newMap = new MoorhenMap()
                     newMap.molNo = iNewMap
                     newMap.name = `Chain ${listIndex} of ${selectedMap.name}`
                     newMap.isDifference = selectedMap.isDifference
@@ -82,7 +76,6 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Split map by chain..."
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 

@@ -13,10 +13,8 @@ import { setDraggableMolecule } from "../../store/glRefSlice";
 export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     HTMLDivElement, 
     {
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
         moleculeRef: React.RefObject<moorhen.Molecule>;
         cidRef: React.RefObject<string[]>;
-        monomerLibraryPath: string;
         id: string;
     }
 >((props, ref) => {
@@ -26,6 +24,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     const draggingDirty = useRef<boolean>(false)
     const refinementDirty = useRef<boolean>(false)
     const autoClearRestraintsRef = useRef<boolean>(true)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
     
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -81,7 +80,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
                 return
             }
             const chosenAtom = cidToSpec(atomCid)
-            const result = await props.commandCentre.current.cootCommand({
+            const result = await commandCentre.current.cootCommand({
                 returnType: 'instanced_mesh',
                 command: 'add_target_position_restraint_and_refine',
                 commandArgs: [moltenFragmentRef.current.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, movedAtoms[0][0].x, movedAtoms[0][0].y, movedAtoms[0][0].z, 10],
@@ -97,7 +96,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
             busy.current = true
             refinementDirty.current = false
             if (autoClearRestraintsRef.current) {
-                await props.commandCentre.current.cootCommand({
+                await commandCentre.current.cootCommand({
                     returnType: 'status',
                     command: 'clear_target_position_restraints',
                     commandArgs: [moltenFragmentRef.current.molNo]
@@ -115,7 +114,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     const clearRestraints = async () => {
         busy.current = true
         refinementDirty.current = false
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'clear_target_position_restraints',
             commandArgs: [moltenFragmentRef.current.molNo]
@@ -148,7 +147,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
                 return
             }
             // This is only necessary in development because React.StrictMode mounts components twice
-            // @ts-ignore
+            // @ts-ignore-expect-error 
             moltenFragmentRef.current = 1
     
             /* Copy the component to move into a new molecule */

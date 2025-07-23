@@ -18,6 +18,7 @@ import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { MoorhenStore } from "../moorhen";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -31,16 +32,15 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
 
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
-    glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     store: Store;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
-        this.molecules = molecules
-        this.maps = maps
-        this.store = store
-        this.glRef = glRef
-        this.commandCentre = commandCentre
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre> = null, store:Store = null, molecules: moorhen.Molecule[] = null, maps: moorhen.Map[] = null) {
+        this.store = store ? store : MoorhenStore;
+        this.commandCentre = commandCentre? commandCentre : MoorhenStore.getState().coreRefs.commandCentre;
+        this.molecules = molecules ? molecules : MoorhenStore.getState().molecules.moleculeList;
+        this.maps = maps ? maps : MoorhenStore.getState().maps;
     }
 
     doRigidBodyFit = async (molNo: number, cidsString: string, mapNo: number) => {

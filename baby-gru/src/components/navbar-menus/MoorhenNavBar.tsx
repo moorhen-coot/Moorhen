@@ -22,22 +22,18 @@ import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenFileMenu } from "./MoorhenFileMenu";
-// import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
-// import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
-// import { MoorhenViewMenu } from "./MoorhenViewMenu";
-// import { MoorhenLigandMenu } from "./MoorhenLigandMenu";
-// import { MoorhenHistoryMenu } from "./MoorhenHistoryMenu";
-// import { MoorhenEditMenu } from "./MoorhenEditMenu";
-// import { MoorhenDevMenu } from "./MoorhenDevMenu";
-// import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
-// import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
-// import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
+import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
+import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
+import { MoorhenViewMenu } from "./MoorhenViewMenu";
+import { MoorhenLigandMenu } from "./MoorhenLigandMenu";
+import { MoorhenHistoryMenu } from "./MoorhenHistoryMenu";
+import { MoorhenEditMenu } from "./MoorhenEditMenu";
+import { MoorhenDevMenu } from "./MoorhenDevMenu";
+import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
+import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
+import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
 import { MoorhenStore } from "../../moorhen";
 
-export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
-    dropdownId: string;
-    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
 interface MoorhenNavBarProps {
     extraNavBarMenus?: moorhen.ContainerOptionalProps["extraNavBarMenus"];
@@ -101,8 +97,6 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
             };
         }
     }, [timeCapsuleRef]);
-
-    const collectedProps = { setBusy, ...props };
 
     const navBarMenus = {
         File: { icon: <DescriptionOutlined />, name: "File", ref: fileSpeedDialActionRef },
@@ -309,37 +303,37 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                                 {navBarActiveMenu === "File" && (
                                     <MoorhenFileMenu dropdownId="File" videoRecorderRef={videoRecorderRef} />
                                 )}
-                                {/*
+                        
                                 {navBarActiveMenu === "Edit" && (
-                                    <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
+                                    <MoorhenEditMenu dropdownId="Edit" />
                                 )}
                                 {navBarActiveMenu === "Calculate" && (
-                                    <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} />
+                                    <MoorhenCalculateMenu dropdownId="Calculate" />
                                 )}
                                 {navBarActiveMenu === "Ligand" && (
-                                    <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
+                                    <MoorhenLigandMenu dropdownId="Ligand"/>
                                 )}
                                 {navBarActiveMenu === "Validation" && (
-                                    <MoorhenValidationMenu dropdownId="Validation" {...collectedProps} />
+                                    <MoorhenValidationMenu dropdownId="Validation" />
                                 )}
                                 {navBarActiveMenu === "View" && (
-                                    <MoorhenViewMenu dropdownId="View" {...collectedProps} />
+                                    <MoorhenViewMenu dropdownId="View" />
                                 )}
                                 {navBarActiveMenu === "Preferences" && (
-                                    <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                                    <MoorhenPreferencesMenu dropdownId="Preferences"  />
                                 )}
                                 {navBarActiveMenu === "History" && (
-                                    <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
+                                    <MoorhenHistoryMenu dropdownId="History"  />
                                 )}
                                 {navBarActiveMenu === "Map Tools" && (
-                                    <MoorhenMapToolsMenu dropdownId="Map Tools" {...collectedProps} />
+                                    <MoorhenMapToolsMenu dropdownId="Map Tools"  />
                                 )}
                                 {navBarActiveMenu === "Help" && (
-                                    <MoorhenHelpMenu dropdownId="Help" {...collectedProps} />
+                                    <MoorhenHelpMenu dropdownId="Help"  />
                                 )}
-                                {navBarActiveMenu === "Dev" && <MoorhenDevMenu dropdownId="Dev" {...collectedProps} />}
+                                {navBarActiveMenu === "Dev" && <MoorhenDevMenu dropdownId="Dev"  />}
                                 {props.extraNavBarMenus &&
-                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement} */}
+                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement}
                             </Popover.Body>
                         </Popover>
                     </Overlay>

@@ -1,15 +1,10 @@
-import { ChevronRightOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useSelector } from 'react-redux';
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenCentreOnLigandMenuItem = (props: { 
-    glRef: React.RefObject<webGL.MGWebGL>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
- }) => {
+export const MoorhenCentreOnLigandMenuItem = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -50,7 +45,6 @@ export const MoorhenCentreOnLigandMenuItem = (props: {
                 <span>No ligands...</span>
             }
             menuItemText="Centre on ligand..."
-            setPopoverIsShown={props.setPopoverIsShown}
             showOkButton={false}
         />
 }

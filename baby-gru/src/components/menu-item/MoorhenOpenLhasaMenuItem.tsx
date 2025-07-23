@@ -10,9 +10,11 @@ import { showModal } from "../../store/modalsSlice"
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenOpenLhasaMenuItem = (props) => {
+export const MoorhenOpenLhasaMenuItem = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary)
 
     const [selectedCoordMolNo, setSelectedCoordMolNo] = useState<number>(molecules[0]?.molNo ?? null)
     const [onStartLigandSource, setOnStartLigandSource] = useState<string>('none')
@@ -35,7 +37,7 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
     }, [])
 
     const fetchAndAddRdkitPickle = useCallback(async (resName: string, molNo: number, cid: string = null) => {
-        const result = await props.commandCentre.current.cootCommand({
+        const result = await commandCentre.current.cootCommand({
             returnType: 'string',
             command: "get_rdkit_mol_pickle_base64",
             commandArgs: [ resName, molNo ]
@@ -51,7 +53,7 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
         } else {
             enqueueSnackbar("Error getting monomer. Missing dictionary?", {variant: "warning"})
         }
-    }, [props.commandCentre])
+    }, [commandCentre])
 
     const onCompleted = useCallback(async () => {
         try {
@@ -77,7 +79,7 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
                         url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${tlcRef.current.value.toLowerCase()[0]}/${tlcRef.current.value.toUpperCase()}.cif`
                         break
                     case "local-monomer-library":
-                        url = `${props.monomerLibraryPath}/${tlcRef.current.value.toLowerCase()[0]}/${tlcRef.current.value.toUpperCase()}.cif`
+                        url = `${monomerLibraryPath}/${tlcRef.current.value.toLowerCase()[0]}/${tlcRef.current.value.toUpperCase()}.cif`
                         break
                     default:
                         console.warn(`Unrecognised ligand source ${loadLigandSelectRef.current.value}`)
@@ -87,7 +89,7 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
                     const response = await fetch(url)
                     if (response.ok) {
                         const ligandDict = await response.text()
-                        await props.commandCentre.current.cootCommand({
+                        await commandCentre.current.cootCommand({
                             returnType: "status",
                             command: 'read_dictionary_string',
                             commandArgs: [ligandDict, -999999],
@@ -140,6 +142,5 @@ export const MoorhenOpenLhasaMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Open ligand builder..."
         onCompleted={() => {}}
-        showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}/>
+        showOkButton={false}/>
 }

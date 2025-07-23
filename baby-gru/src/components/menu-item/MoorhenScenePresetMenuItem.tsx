@@ -1,17 +1,12 @@
 import { ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { webGL } from "../../types/mgWebGL";
 import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { setRequestDrawScene, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../../store/glRefSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenScenePresetMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-
+export const MoorhenScenePresetMenuItem = () => {
     const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
@@ -20,18 +15,18 @@ export const MoorhenScenePresetMenuItem = (props: {
     const [presetValue, setPresetValue] = useState<string | null>(null)
 
     useEffect(() => {
+        const fieldDepthFront: number = 8;
+        const fieldDepthBack: number = 21;
         switch(presetValue) {
             
             case "model-building":
                 dispatch( setResetClippingFogging(true) )
-                const fieldDepthFront: number = 8;
-                const fieldDepthBack: number = 21;
-                if (props.glRef !== null && typeof props.glRef !== 'function') { 
+
                     dispatch(setFogStart(fogClipOffset - (zoom * fieldDepthFront)))
                     dispatch(setFogEnd(fogClipOffset + (zoom * fieldDepthBack)))
                     dispatch(setClipStart(zoom * fieldDepthFront))
                     dispatch(setClipEnd(zoom * fieldDepthBack))
-                }
+
                 dispatch(setRequestDrawScene(true))
                 break
             
@@ -87,6 +82,5 @@ export const MoorhenScenePresetMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Activate scene preset..."
         onCompleted={() => { }}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

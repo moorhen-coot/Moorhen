@@ -31,7 +31,7 @@ export const MoorhenScriptModal = (props: {
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.store, molecules, maps)
+            const scriptApi = new MoorhenScriptApi()
             scriptApi.exe(code)
         }
         catch (err) {

@@ -4,9 +4,9 @@ import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenValidationMenu = ( props:{dropdownId:string}) => {
+
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     
     const dispatch = useDispatch()

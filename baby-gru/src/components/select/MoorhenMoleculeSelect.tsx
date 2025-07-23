@@ -87,3 +87,5 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
         </FormSelect>
     </Form.Group>
 })
+
+MoorhenMoleculeSelect.displayName = "MoorhenMoleculeSelect"

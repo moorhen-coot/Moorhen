@@ -10,7 +10,6 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenCreateSelectionMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

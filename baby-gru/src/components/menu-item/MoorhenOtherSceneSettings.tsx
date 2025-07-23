@@ -5,7 +5,7 @@ import { setDoPerspectiveProjection, setDoSpin, setDrawAxes, setDrawCrosshairs, 
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const MoorhenOtherSceneSettings = () => {
 
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering)
     const drawScaleBar = useSelector((state: moorhen.State) => state.sceneSettings.drawScaleBar)
@@ -96,7 +96,6 @@ export const MoorhenOtherSceneSettings = (props: { setPopoverIsShown: React.Disp
         menuItemText="Other settings..."
         onCompleted={() => {}}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 
 }

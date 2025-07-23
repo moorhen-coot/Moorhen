@@ -4,7 +4,6 @@ import { SnackbarContent, useSnackbar } from "notistack";
 import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined, KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from "@mui/icons-material";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
 import { setOrigin, setZoom, setTexturedShapes } from "../../store/glRefSlice"
@@ -13,7 +12,6 @@ import { appendOtherData } from '../../WebGLgComponents/buildBuffers'
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
     {
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
         mapMolNo: number
     }
 >((props, ref) => {
@@ -26,6 +24,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const frameDataRef = useRef(null)
     const framesRef = useRef([])
     const iFrameRef = useRef<number>(0)
+    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
 
     const [progressBufferedFrames, setProgressBufferedFrames] = useState<{value: number; label: string}[]>([])
     const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(false)
@@ -33,7 +32,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const [progress, setProgress] = useState<number>(0)
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
 
-    const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+    const { enqueueSnackbar, } = useSnackbar()
 
     const texturedShapes = useSelector((state: moorhen.State) => state.glRef.texturedShapes)
 
@@ -42,7 +41,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
             dispatch(setIsShowingTomograms(true))
             setBusyComputingFrames(true)
 
-            const nFrames = await props.commandCentre.current.cootCommand({
+            const nFrames = await commandCentre.current.cootCommand({
                 returnType: "number",
                 command: 'get_number_of_map_sections',
                 commandArgs: [props.mapMolNo, 2],
@@ -65,7 +64,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
             const singleStepPercent = 1 / stepPercent
             for (let i = 0; i < nFrames.data.result.result; i++) {
                 if (!framesRef.current[i]) {
-                    const frame = await props.commandCentre.current.cootCommand({
+                    const frame = await commandCentre.current.cootCommand({
                         returnType: "texture_as_floats_t",
                         command: "get_map_section_texture",
                         commandArgs: [props.mapMolNo, i, 2, bottomValue, topValue],
@@ -104,7 +103,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
         if (framesRef.current[iFrameRef.current]) {
             frameData = framesRef.current[iFrameRef.current]
         } else {
-            const frame = await props.commandCentre.current.cootCommand({
+            const frame = await commandCentre.current.cootCommand({
                 returnType: "texture_as_floats_t",
                 command: "get_map_section_texture",
                 commandArgs: [props.mapMolNo, iFrameRef.current, 0],

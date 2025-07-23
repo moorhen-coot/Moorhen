@@ -9,10 +9,7 @@ import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenMinimizeEnergyMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenMinimizeEnergyMenuItem = () => {
  
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -53,7 +50,6 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
             return
         }
 
-        const quiet = true
         const molNo = parseInt(moleculeSelectRef.current.value)
         const selectedMolecule = molecules.find(molecule => molecule.molNo === molNo)
 
@@ -110,10 +106,10 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
                 <option value={'cid'} key={'cid'}>By atom selection</option>
             </FormSelect>
         </Form.Group>
-        <MoorhenMoleculeSelect {...props} molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
-        {selectionType === 'cid' && <MoorhenCidInputForm {...props} width='20rem' margin='0.5rem' ref={cidInputRef} allowUseCurrentSelection={true}/>}
-        {selectionType === 'chain' && <MoorhenChainSelect {...props} molecules={molecules} selectedCoordMolNo={selectedMolNo} ref={chainSelectRef} />}
-        {selectionType === 'ligand' && <MoorhenLigandSelect {...props} molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
+        <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
+        {selectionType === 'cid' && <MoorhenCidInputForm  width='20rem' margin='0.5rem' ref={cidInputRef} allowUseCurrentSelection={true}/>}
+        {selectionType === 'chain' && <MoorhenChainSelect  molecules={molecules} selectedCoordMolNo={selectedMolNo} ref={chainSelectRef} />}
+        {selectionType === 'ligand' && <MoorhenLigandSelect  molecules={molecules} selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)} ref={ligandSelectRef} />}
         <InputGroup className='moorhen-input-group-check' style={{ width: '20rem' }}>
             <Form.Check 
                 ref={useRamaRestraintsCheckRef}
@@ -177,7 +173,6 @@ export const MoorhenMinimizeEnergyMenuItem = (props: {
 return <MoorhenBaseMenuItem
             popoverContent={panelContent}
             menuItemText={"Minimize energy..."}
-            setPopoverIsShown={props.setPopoverIsShown}
             onCompleted={() => {}}
             showOkButton={false}
         />

@@ -18,9 +18,8 @@ import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shor
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenPreferencesMenu = (props:{dropdownId: string}) => {
 
     const dispatch = useDispatch()
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
@@ -35,15 +34,14 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
-     const [showModal, setShowModal] = useState<boolean | null>(null);
-     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule)
+    const [showModal, setShowModal] = useState<boolean | null>(null);
 
     useEffect(() => {
-        if (props.timeCapsuleRef.current) {
-            props.timeCapsuleRef.current.disableBackups = !enableTimeCapsule
-            props.timeCapsuleRef.current.maxBackupCount = maxBackupCount
-            props.timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
+        if (timeCapsuleRef.current) {
+            timeCapsuleRef.current.disableBackups = !enableTimeCapsule
+            timeCapsuleRef.current.maxBackupCount = maxBackupCount
+            timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
         }
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
@@ -108,32 +106,23 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     </InputGroup>
                     <hr></hr>
                     <MoorhenMouseSensitivitySettingsMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
                     />
                     <MoorhenBackupPreferencesMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
                     />
                     <MoorhenScoresToastPreferencesMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
                     />
                     <MoorhenDefaultBondSmoothnessPreferencesMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
                     />
                     <MoorhenViewLayoutPreferencesMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
-                        urlPrefix={props.urlPrefix}
                     />
                     <MapContourSettingsMenuItem
-                        commandCentre={props.commandCentre}
-                        setPopoverIsShown={setPopoverIsShown}
                     />
-                    <MoorhenRefinementSettingsMenuItem commandCentre={props.commandCentre} setPopoverIsShown={setPopoverIsShown}/>
+                    <MoorhenRefinementSettingsMenuItem />
                     <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal}/>
                     <MoorhenGLFontMenuItem
-                        setPopoverIsShown={setPopoverIsShown}
                     />
             </div>
 }

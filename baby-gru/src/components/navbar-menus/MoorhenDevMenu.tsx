@@ -7,11 +7,10 @@ import { moorhen } from "../../types/moorhen";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+export const MoorhenDevMenu = (props: {dropdownId: string}) => {
+
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false)
 
     const customCid = useRef<string>('')
@@ -19,19 +18,15 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const dispatch = useDispatch()
 
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
-
-    const menuItemProps = {setPopoverIsShown, customCid, ...props}
-
     const { enqueueSnackbar } = useSnackbar()
 
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
 
+    const urlPrefix = useSelector((state: moorhen.State) => state.coreRefs.paths.urlPrefix)
+
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
-
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
     const exampleCallBack = (ctx,backgroundColor,cbWidth,cbHeight,scale) => {
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
@@ -48,8 +43,8 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         dispatch(emptyOverlays())
         setOverlaysOn(evt.target.checked)
         if(evt.target.checked){
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
+            dispatch(addImageOverlay({src:`${urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
+            dispatch(addImageOverlay({src:`${urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
             dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red"}))
             dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48}))
             dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue"}))
@@ -77,8 +72,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         enqueueSnackbar("tomogram", {
             variant: "tomogram",
             persist: true,
-            commandCentre: props.commandCentre,
-            glRef: props.glRef,
             mapMolNo: 0,
             anchorOrigin: { vertical: "bottom", horizontal: "center" }
         })

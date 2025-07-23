@@ -4,22 +4,20 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
+import { MoorhenStore } from "../../moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
+    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
     const dispatch = useDispatch()
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -124,7 +122,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
             dispatch( clearResidueSelection() )
         }
         
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.current.cootCommand({
             command: "fit_to_map_by_random_jiggle_with_blur_using_cid",
             returnType: 'status',
             commandArgs: [
@@ -140,7 +138,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw()
 
-    }, [props.commandCentre])
+    }, [commandCentre])
 
     return <MoorhenBaseMenuItem
         id='jiggle-fit-blur-menu-item'

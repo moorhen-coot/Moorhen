@@ -11,9 +11,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    monomerLibraryPath: string;
 }) => {
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)

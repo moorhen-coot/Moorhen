@@ -5,9 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { setEnableTimeCapsule, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenBackupPreferencesMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const MoorhenBackupPreferencesMenuItem = () => {
 
     const dispatch = useDispatch()
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
@@ -39,7 +37,6 @@ export const MoorhenBackupPreferencesMenuItem = (props: {
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText={"Automatic backup settings..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
 }

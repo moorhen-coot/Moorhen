@@ -8,17 +8,11 @@ import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenHelpMenu = (props: {dropdownId: string}) => {
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-
-    const dispatch = useDispatch()
-
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-    
-    const menuItemProps = {setPopoverIsShown, ...props}
+    const dispatch = useDispatch() 
     
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
         <MenuItem onClick={() => window.open('https://moorhen-coot.github.io/wiki/')}>Go to Moorhen wiki...</MenuItem>
@@ -26,8 +20,8 @@ export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             dispatch(showModal(modalKeys.SHOW_CONTROLS))
             document.body.click()
         }}>Show controls...</MenuItem>
-        <MoorhenContactMenuItem {...menuItemProps} />
-        <MoorhenAboutMenuItem {...menuItemProps} />
-        <MoorhenReferencesMenuItem {...menuItemProps} />
+        <MoorhenContactMenuItem/>
+        <MoorhenAboutMenuItem  />
+        <MoorhenReferencesMenuItem />
     </div>
 }
