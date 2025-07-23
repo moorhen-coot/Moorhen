@@ -1222,7 +1222,6 @@ export namespace moorhen {
         molNoFrom: number;
         molNoTo: number;
         uniqueId: string;
-        labelText: string;
     }
 
 }
