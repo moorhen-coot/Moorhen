@@ -93,6 +93,8 @@ import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 import vectorsReducer from './store/vectorsSlice';
+import jsonValidationReducer from './store/jsonValidation'
+import mrParseSliceReducer from './store/mrParseSlice'
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
@@ -133,6 +135,6 @@ export {
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
-    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict,
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer,
     addVector, removeVector, emptyVectors, vectorsReducer
 };
