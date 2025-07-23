@@ -22,7 +22,7 @@ import overlaysSliceReducer from './overlaysSlice'
 import menusReducer from './menusSlice'
 import atomInfoCardsReducer from './atomInfoCardsSlice'
 import coreRefsSliceReducer from './coreRefsSlice'
-import userInterfaceSliceReducer from './userInterface'
+import userInterfaceSliceReducer from './userInterfaceSlice'
 
 export default configureStore({
     reducer: {
