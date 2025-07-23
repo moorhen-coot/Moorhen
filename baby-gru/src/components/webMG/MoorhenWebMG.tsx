@@ -172,16 +172,19 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     xToOrig = vec.xTo
                     yToOrig = vec.yTo
                     zToOrig = vec.zTo
-                } else if(vec.coordsMode==="atoms"){
-                    if(vec.molNoFrom!==undefined&&vec.molNoTo!==undefined&&vec.cidFrom.length>0&&vec.cidTo.length>0){
+                }
+                if(vec.coordsMode==="atompoint"||vec.coordsMode==="atoms"){
+                    if(vec.coordsMode==="atompoint"){
+                        xToOrig = vec.xTo
+                        yToOrig = vec.yTo
+                        zToOrig = vec.zTo
+                    }
+                    if(vec.molNoFrom!==undefined&&vec.cidFrom.length>0){
                         const fromMol = molecules.find(mol => mol.molNo === vec.molNoFrom)
-                        const toMol = molecules.find(mol => mol.molNo === vec.molNoTo)
-                        if(fromMol&&toMol){
+                        if(fromMol){
                             const fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
-                            const toAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidTo, "" )
                             const nFromAtoms = fromAtoms.size()
-                            const nToAtoms = toAtoms.size()
-                            if(nFromAtoms>0&&nToAtoms>0){
+                            if(nFromAtoms>0){
                                 let totXFrom = 0
                                 let totYFrom = 0
                                 let totZFrom = 0
@@ -194,6 +197,21 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                                 totXFrom /= nFromAtoms
                                 totYFrom /= nFromAtoms
                                 totZFrom /= nFromAtoms
+                                xFromOrig = totXFrom
+                                yFromOrig = totYFrom
+                                zFromOrig = totZFrom
+                            }
+                            fromAtoms.delete()
+                        }
+                    }
+                }
+                if(vec.coordsMode==="atoms"){
+                    if(vec.molNoTo!==undefined&&vec.cidTo.length>0){
+                        const toMol = molecules.find(mol => mol.molNo === vec.molNoTo)
+                        if(toMol){
+                            const toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
+                            const nToAtoms = toAtoms.size()
+                            if(nToAtoms>0){
                                 let totXTo = 0
                                 let totYTo = 0
                                 let totZTo = 0
@@ -206,14 +224,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                                 totXTo /= nToAtoms
                                 totYTo /= nToAtoms
                                 totZTo /= nToAtoms
-                                xFromOrig = totXFrom
-                                yFromOrig = totYFrom
-                                zFromOrig = totZFrom
                                 xToOrig = totXTo
                                 yToOrig = totYTo
                                 zToOrig = totZTo
                             }
-                            fromAtoms.delete()
                             toAtoms.delete()
                         }
                     }
@@ -340,7 +354,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') { 
+        if (glRef !== null && typeof glRef !== 'function') {
             dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
             dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
             dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
