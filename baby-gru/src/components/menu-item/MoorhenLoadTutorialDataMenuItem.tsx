@@ -50,11 +50,11 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             return
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
-        const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
+        const newMap = new MoorhenMap(props.commandCentre);
+        const newDiffMap = new MoorhenMap(props.commandCentre);
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
         await newMolecule.centreOn('/*/*/*/*', true)

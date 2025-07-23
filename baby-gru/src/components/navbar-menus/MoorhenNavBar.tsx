@@ -22,17 +22,17 @@ import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenFileMenu } from "./MoorhenFileMenu";
-import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
-import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
-import { MoorhenViewMenu } from "./MoorhenViewMenu";
-import { MoorhenLigandMenu } from "./MoorhenLigandMenu";
-import { MoorhenHistoryMenu } from "./MoorhenHistoryMenu";
-import { MoorhenEditMenu } from "./MoorhenEditMenu";
-import { MoorhenDevMenu } from "./MoorhenDevMenu";
-import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
-import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
-import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
-import { MoorhenReduxStore } from "../../moorhen";
+// import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
+// import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
+// import { MoorhenViewMenu } from "./MoorhenViewMenu";
+// import { MoorhenLigandMenu } from "./MoorhenLigandMenu";
+// import { MoorhenHistoryMenu } from "./MoorhenHistoryMenu";
+// import { MoorhenEditMenu } from "./MoorhenEditMenu";
+// import { MoorhenDevMenu } from "./MoorhenDevMenu";
+// import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
+// import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
+// import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
+ import { MoorhenStore } from "../../moorhen";
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
@@ -76,13 +76,13 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
-    const urlPrefix = MoorhenReduxStore.getState().generalStates.urlPrefix;
+    const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
 
     const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
     const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
 
     useEffect(() => {
-        if (commandCentre.current) {
+        if (commandCentre && commandCentre.current) {
             // eslint-disable-next-line react-hooks/react-compiler
             commandCentre.current.onActiveMessagesChanged = (newActiveMessages) =>
                 setBusy(newActiveMessages.length !== 0);
@@ -90,7 +90,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     }, [cootInitialized]);
 
     useEffect(() => {
-        if (timeCapsuleRef.current) {
+        if (timeCapsuleRef && timeCapsuleRef.current) {
             timeCapsuleRef.current.onIsBusyChange = (newValue: boolean) => {
                 if (newValue) {
                     setTimeCapsuleBusy(true);
@@ -99,7 +99,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                 }
             };
         }
-    }, [timeCapsuleRef.current]);
+    }, [timeCapsuleRef]);
 
     const collectedProps = { setBusy, ...props };
 
@@ -165,6 +165,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
         navBarMenuNames = props.includeNavBarMenuNames;
     }
 
+    let selectedExtraNavBarModal: moorhen.ContainerOptionalProps["extraNavBarModals"][number] | undefined;
     useEffect(() => {
         switch (navBarActiveMenu) {
             case "-1":
@@ -178,9 +179,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                 setNavBarActiveMenu("-1");
                 break;
             default:
-                const selectedExtraNavBarModal = props.extraNavBarModals.find(
-                    (modal) => modal.name === navBarActiveMenu
-                );
+                selectedExtraNavBarModal = props.extraNavBarModals.find((modal) => modal.name === navBarActiveMenu);
                 if (selectedExtraNavBarModal) {
                     selectedExtraNavBarModal.setShow(true);
                     setNavBarActiveMenu("-1");
@@ -306,9 +305,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                     >
                         <Popover className="moorhen-nav-popover" style={{ maxWidth: convertViewtoPx(35, width) }}>
                             <Popover.Body>
-                                {navBarActiveMenu === "File" && (
-                                    <MoorhenFileMenu dropdownId="File" {...collectedProps} />
-                                )}
+                                {navBarActiveMenu === "File" && <MoorhenFileMenu dropdownId="File" />}
                                 {/*
                                 {navBarActiveMenu === "Edit" && (
                                     <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />

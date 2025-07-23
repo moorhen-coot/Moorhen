@@ -59,7 +59,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
                 Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
                 FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
             }
-            const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
+            const newMap = new MoorhenMap(props.commandCentre);
             try {
                 await newMap.loadToCootFromMtzFile(file, selectedColumns)
                 if (newMap.molNo === -1) {

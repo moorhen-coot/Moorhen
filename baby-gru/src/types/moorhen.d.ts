@@ -694,8 +694,6 @@ export namespace moorhen {
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
-            store: Store,
             dispatch: Dispatch<AnyAction>,
             fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
@@ -706,8 +704,6 @@ export namespace moorhen {
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
-            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         static loadSessionFromProtoMessage(
@@ -717,8 +713,6 @@ export namespace moorhen {
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
-            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         static loadSessionFromJsonString(
@@ -728,8 +722,6 @@ export namespace moorhen {
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
-            store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         store: Store;
@@ -1189,6 +1181,10 @@ export namespace moorhen {
             atomInfoIds: any[]
         }
         coreRefs: {
+            paths: {
+                monomerLibrary: string;
+                moorhenIcons: string;
+            };
             commandCentre: React.RefObject<CommandCentre>;
             timeCapsule: React.RefObject<TimeCapsule>;
         }

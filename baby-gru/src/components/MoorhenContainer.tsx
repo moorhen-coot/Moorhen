@@ -356,13 +356,14 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         const initTimeCapsule = async () => {
             if (userPreferencesMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, store);
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef);
                 timeCapsuleRef.current.storageInstance = backupStorageInstance;
                 timeCapsuleRef.current.maxBackupCount = maxBackupCount;
                 timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold;
                 await timeCapsuleRef.current.init();
+                dispatch(setTimeCapsule(timeCapsuleRef));
             }
-            dispatch(setTimeCapsule(timeCapsuleRef));
+            
         };
         initTimeCapsule();
     }, [userPreferencesMounted]);

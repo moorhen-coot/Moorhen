@@ -26,7 +26,7 @@ export const moleculesSlice = createSlice({
       }
       return state
     },
-    emptyMolecules: (state) => {
+    emptyMolecules: () => {
       return initialState
     },
     addMoleculeList: (state, action: {payload: moorhen.Molecule[], type: string}) => {

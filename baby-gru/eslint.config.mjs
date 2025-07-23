@@ -96,6 +96,7 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     },
   },
   {
@@ -164,7 +165,12 @@ export default [
       //"react-perf/jsx-no-new-array-as-prop": "warn",
       //"react-perf/jsx-no-new-function-as-prop": "warn", // Uncomment if you want to enforce this rule, but flag things that should be sorted by the compiler
       //"react-perf/jsx-no-jsx-as-prop": "warn",
-      
+
+      // TypeScript specific rules
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/ban-ts-comment": "warn"
+
     },
     settings: {
       react: {

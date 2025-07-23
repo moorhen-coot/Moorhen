@@ -83,15 +83,14 @@ export class MoorhenMap implements moorhen.Map {
     defaultNegativeMapColour: {r: number, g: number, b: number};
     autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store) => Promise<moorhen.Map[]>;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null> = null, reduxStore: Store = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
         this.headerInfo = null
+        this.store = reduxStore
         this.isEM = false
         this.molNo = null
-        this.commandCentre = commandCentre
-        this.glRef = glRef
-        this.store = store
+        this.commandCentre = commandCentre? commandCentre : this.store.getState().coreRefs.commandCentre;
         this.levelRange = null
         this.webMGContour = false
         this.showOnLoad = true
@@ -263,14 +262,14 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
     loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        const $this = this
+        //const $this = this likely not needed here
         const reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
-        await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
+        await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
         if (selectedColumns.calcStructFact) {
-            await $this.associateToReflectionData(selectedColumns, asUIntArray)
+            await this.associateToReflectionData(selectedColumns, asUIntArray)
         }
-        return $this
+        return this
     }
 
     /**
@@ -364,7 +363,7 @@ export class MoorhenMap implements moorhen.Map {
      * @param {Store} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
-    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store): Promise<moorhen.Map[]> {
+    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper()
         await mtzWrapper.loadHeaderFromFile(source)
 
@@ -396,7 +395,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const newMaps = await Promise.all(
             response.data.result.result.filter(item => item.idx !== -1).map(async (autoReadInfo, index) => {
-                const newMap = new MoorhenMap(commandCentre, glRef, store)
+                const newMap = new MoorhenMap(commandCentre)
                 newMap.molNo = autoReadInfo.idx
                 newMap.name = `${source.name.replace('mtz', '')}-map-${index}`
                 newMap.isDifference = isDiffMapResponses[index].data.result.result
@@ -906,7 +905,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
-        const newMap = new MoorhenMap(this.commandCentre, this.glRef, this.store)
+        const newMap = new MoorhenMap(this.commandCentre)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
         const { mapRadius, contourLevel } = this.getMapContourParams()
         newMap.suggestedContourLevel = contourLevel

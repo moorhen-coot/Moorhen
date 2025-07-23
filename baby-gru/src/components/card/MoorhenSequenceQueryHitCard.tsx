@@ -55,7 +55,7 @@ export const MoorhenQueryHitCard = (props: {
     }, [data, idx])
 
     const fetchMoleculeFromURL = useCallback(async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {

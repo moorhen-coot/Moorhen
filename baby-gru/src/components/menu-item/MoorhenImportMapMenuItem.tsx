@@ -34,7 +34,7 @@ export const MoorhenImportMapMenuItem = (props: {
             const newMaps = [];
             try {
                 for (const file of files) {
-                    const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store);
+                    const newMap = new MoorhenMap(props.commandCentre);
                     try {
                         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked);
                     } catch (err) {

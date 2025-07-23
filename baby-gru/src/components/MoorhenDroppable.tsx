@@ -38,7 +38,16 @@ export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
 
     const {getRootProps} = useDropzone({
         onDrop: async files => {
-            autoOpenFiles(files, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath, backgroundColor, defaultBondSmoothness, props.timeCapsuleRef, dispatch)
+            autoOpenFiles(
+                files,
+                props.commandCentre,
+                props.store,
+                props.monomerLibraryPath,
+                backgroundColor,
+                defaultBondSmoothness,
+                props.timeCapsuleRef,
+                dispatch
+            );
         }
     });
 

@@ -70,8 +70,8 @@ interface MrParseAFModelJson  {
     total_frac_scat_known : null|number;
 }
 
-const readCoordsString = async (fileString: string, fileName: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<moorhen.Molecule> => {
-    const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
+const readCoordsString = async (fileString: string, fileName: string, commandCentre: React.RefObject<moorhen.CommandCentre> = null, monomerLibraryPath: string = null, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<moorhen.Molecule> => {
+    const newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath)
     newMolecule.setBackgroundColour(backgroundColor)
     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
     await newMolecule.loadToCootFromString(fileString, fileName)
@@ -91,19 +91,19 @@ export const drawModels = async (newMolecules: moorhen.Molecule[]) => {
 
 }
 
-export  const loadCoordFiles = async(files: File[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<Promise<moorhen.Molecule>[]> => {
+export  const loadCoordFiles = async(files: File[], commandCentre: React.RefObject<moorhen.CommandCentre>, monomerLibraryPath: string, backgroundColor: [number,number,number,number], defaultBondSmoothness: number|null): Promise<Promise<moorhen.Molecule>[]> => {
     const loadPromises: Promise<moorhen.Molecule>[] = []
     for(const file of files) {
         if(file.name.endsWith(".pdb")||file.name.endsWith(".ent")||file.name.endsWith(".cif")||file.name.endsWith(".mmcif")){
             const contents = await readTextFile(file) as string
-            loadPromises.push(readCoordsString(contents,file.name, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
+            loadPromises.push(readCoordsString(contents,file.name, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
         }
     }
     return loadPromises
 
 }
 
-const loadSession = async (session: string | object, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
+const loadSession = async (session: string | object, commandCentre: React.RefObject<moorhen.CommandCentre>, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
     commandCentre.current.history.reset()
     let status = -1
     if (typeof session === 'string') {
@@ -114,8 +114,6 @@ const loadSession = async (session: string | object, commandCentre: React.RefObj
             maps,
             commandCentre,
             timeCapsuleRef,
-            glRef,
-            store,
             dispatch
         )
     } else {
@@ -126,8 +124,6 @@ const loadSession = async (session: string | object, commandCentre: React.RefObj
             maps,
             commandCentre,
             timeCapsuleRef,
-            glRef,
-            store,
             dispatch
         )
     }
@@ -136,11 +132,11 @@ const loadSession = async (session: string | object, commandCentre: React.RefObj
     }
 }
 
-export const handleSessionUpload = async (file: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
+export const handleSessionUpload = async (file: File, commandCentre: React.RefObject<moorhen.CommandCentre>, monomerLibraryPath: string, molecules: moorhen.Molecule[], maps: moorhen.Map[], timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch: Dispatch<AnyAction>) => {
         const arrayBuffer = await readDataFile(file)
         const bytes = new Uint8Array(arrayBuffer)
         const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
-        await loadSession(sessionMessage, commandCentre, glRef, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch)
+        await loadSession(sessionMessage, commandCentre, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch)
 }
 
 
@@ -226,7 +222,7 @@ const loadMrParseJson = async (files: File[]) => {
     return {fastaContents,afModelContents,esmModelContents,homologsContents}
 }
 
-const loadCoordinateFilesFromFileList = async (files: File[], modelFiles: string[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
+const loadCoordinateFilesFromFileList = async (files: File[], modelFiles: string[], commandCentre,  monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
 
     let newMolecules: moorhen.Molecule[] = []
 
@@ -235,7 +231,7 @@ const loadCoordinateFilesFromFileList = async (files: File[], modelFiles: string
         for (const modelFile of modelFiles) {
             if(file.webkitRelativePath.includes(modelFile)||(file.webkitRelativePath.length===0&&modelFile.includes(file.name))){
                 const contents = await readTextFile(file) as string
-                loadPromises.push(readCoordsString(contents, file.name, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
+                loadPromises.push(readCoordsString(contents, file.name, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
             }
         }
     }
@@ -253,11 +249,11 @@ const loadCoordinateFilesFromFileList = async (files: File[], modelFiles: string
 
 }
 
-export const loadMrParseFiles = async (files: File[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
+export const loadMrParseFiles = async (files: File[], commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
 
     const json_contents = await loadMrParseJson(files)
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch)
-    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files, modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(files, modelFiles, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
 
     await drawModels(newMolecules)
     dispatch(addMoleculeList(newMolecules))
@@ -294,7 +290,7 @@ const loadMrParseJsonUrl = async (urlBase) => {
     return {fastaContents,afModelContents,esmModelContents,homologsContents}
 }
 
-const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
+const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[], commandCentre,  monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
 
     let newMolecules: moorhen.Molecule[]
 
@@ -303,7 +299,7 @@ const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[], com
         const response = await fetch(url+"/"+modelFile)
         if(response.ok) {
             const contents = await response.text();
-            loadPromises.push(readCoordsString(contents,modelFile.split('/').reverse()[0], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
+            loadPromises.push(readCoordsString(contents,modelFile.split('/').reverse()[0], commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness))
         }
     }
 
@@ -319,11 +315,11 @@ const loadCoordinateFilesFromURL = async (url: string, modelFiles: string[], com
 
 }
 
-export const loadMrParseUrl = async (urlBase, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
+export const loadMrParseUrl = async (urlBase, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch) => {
 
     const json_contents = await loadMrParseJsonUrl(urlBase)
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch)
-    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(urlBase,modelFiles, commandCentre,  monomerLibraryPath, backgroundColor, defaultBondSmoothness)
 
     await drawModels(newMolecules)
     dispatch(addMoleculeList(newMolecules))
@@ -333,7 +329,7 @@ export const loadMrParseUrl = async (urlBase, commandCentre, glRef, store, monom
 
 }
 
-export const autoOpenFiles = async (files: File[], commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch) => {
+export const autoOpenFiles = async (files: File[], commandCentre, store : Store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, dispatch) => {
     const molecules = store.getState().molecules.moleculeList
     const maps = store.getState().maps
 
@@ -347,10 +343,10 @@ export const autoOpenFiles = async (files: File[], commandCentre, glRef, store, 
     if(isMrParse){
         console.log("I think this is an MrParse directory....")
         dispatch(showModal(modalKeys.MRPARSE))
-        loadMrParseFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch)
+        loadMrParseFiles(files, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch)
         return
     }
-    const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+    const loadPromises: Promise<moorhen.Molecule>[] = await loadCoordFiles(files, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
     let newMolecules: moorhen.Molecule[]
     newMolecules = await Promise.all(loadPromises)
 
@@ -365,7 +361,7 @@ export const autoOpenFiles = async (files: File[], commandCentre, glRef, store, 
     }
     for(const file of files) {
         if(file.name.endsWith(".mtz")){
-            const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, glRef, store)
+            const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre)
             if (newMaps.length === 0) {
                 //enqueueSnackbar('Error reading mtz file', { variant: "warning" })
             } else {
@@ -377,7 +373,7 @@ export const autoOpenFiles = async (files: File[], commandCentre, glRef, store, 
     for(const file of files) {
         if(file.name.endsWith(".pb")){
             try {
-                 await handleSessionUpload(file, commandCentre, glRef, store, monomerLibraryPath, molecules, maps, timeCapsuleRef,dispatch)
+                 await handleSessionUpload(file, commandCentre, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch)
             } catch(e) {
                 //enqueueSnackbar("Error loading the session", { variant: "warning" })
             }

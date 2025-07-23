@@ -88,7 +88,7 @@ const LhasaWrapper = (props: {
             if (getMonomerResult.data.result.result === -1) {
                 enqueueSnackbar("Unable to get monomer...", {variant: "error"})
             } else if (getMonomerResult.data.result.status === "Completed") {
-                const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+                const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
                 newMolecule.molNo = getMonomerResult.data.result.result
                 newMolecule.name = ligandName
                 newMolecule.setBackgroundColour(backgroundColor)

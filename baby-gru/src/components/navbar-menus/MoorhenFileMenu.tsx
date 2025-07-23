@@ -21,17 +21,18 @@ import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
-
+import { MoorhenReduxStore } from "../../moorhen";
 
 interface MoorhenFileMenuProps {
     dropdownId: string;
-    monomerLibraryPath: string;
 }
 
 export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const dispatch = useDispatch();
 
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
+    const disableFileUploads = false; /*** This is temporary add a store value to control this ***/
+
+    const [, setPopoverIsShown] = useState<boolean>(false);
 
     const maps = useSelector((state: moorhen.State) => state.maps);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -45,9 +46,10 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
     const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
     const timeCapsule = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
+    const paths = useSelector((state: moorhen.State) => state.coreRefs.paths);
 
     const menuItemProps = { setPopoverIsShown, ...props };
-    const mrBumpenuItemProps = { setPopoverIsShown, ...props };
+    //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
     const loadPdbFiles = async (files: FileList) => {
         const readPromises: Promise<moorhen.Molecule>[] = [];
@@ -75,7 +77,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(commandCentre, paths.monomerLibrary);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -133,25 +135,22 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             if (typeof session === "string") {
                 status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
-                    props.monomerLibraryPath,
+                    paths.monomerLibrary,
                     molecules,
                     maps,
                     commandCentre,
                     timeCapsule,
-                    glRef,
-                    store,
+
                     dispatch
                 );
             } else {
                 status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
-                    props.monomerLibraryPath,
+                    paths.monomerLibrary,
                     molecules,
                     maps,
-                    props.commandCentre,
-                    props.timeCapsuleRef,
-                    props.glRef,
-                    store,
+                    commandCentre,
+                    timeCapsule,
                     dispatch
                 );
             }
@@ -165,7 +164,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const getSession = async () => {
-        const sessionData = await props.timeCapsuleRef.current.fetchSession(true);
+        const sessionData = await timeCapsule.current.fetchSession(true);
         //console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData);
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
@@ -173,6 +172,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const store = MoorhenReduxStore;
         const files: File[] = [];
         for (let ifile = 0; ifile < e.target.files.length; ifile++) {
             files.push(e.target.files[ifile]);
@@ -180,19 +180,18 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         autoOpenFiles(
             files,
             commandCentre,
-            glRef,
             store,
-            monomerLibraryPath,
+            paths.monomerLibrary,
             backgroundColor,
             defaultBondSmoothness,
-            props.timeCapsuleRef,
+            timeCapsule,
             dispatch
         );
     };
 
     const createBackup = async () => {
-        await props.timeCapsuleRef.current.updateDataFiles();
-        const session = await props.timeCapsuleRef.current.fetchSession(false);
+        await timeCapsule.current.updateDataFiles();
+        const session = await timeCapsule.current.fetchSession(false);
         const sessionString = JSON.stringify(session);
         const key: moorhen.backupKey = {
             dateTime: `${Date.now()}`,
@@ -208,9 +207,10 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             ...key,
             label: MoorhenTimeCapsule.getBackupLabel(key),
         });
-        return props.timeCapsuleRef.current.createBackup(keyString, sessionString);
+        return timeCapsule.current.createBackup(keyString, sessionString);
     };
 
+    /*
     const handleRecording = useCallback(() => {
         if (!props.videoRecorderRef.current) {
             console.warn("Attempted to record screen before webGL is initated...");
@@ -228,11 +228,11 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             });
         }
     }, [props.videoRecorderRef]);
-
+    */
     return (
         <>
             <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
-                {!props.disableFileUploads && (
+                {!disableFileUploads && (
                     <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control
@@ -246,15 +246,9 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     </Form.Group>
                 )}
 
-                <MoorhenFetchOnlineSourcesForm
-                    commandCentre={commandCentre}
-                    glRef={glRef}
-                    setBusy={setBusy}
-                    monomerLibraryPath={monomerLibraryPath}
-                    store={store}
-                />
+                <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} />
 
-                {!props.disableFileUploads && (
+                {!disableFileUploads && (
                     <Form.Group className="moorhen-form-group" controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
                         <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload} />
@@ -273,7 +267,8 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     Query online services with a sequence...
                 </MenuItem>
 
-                {!props.disableFileUploads && (
+                {/*
+                {!disableFileUploads && (
                     <>
                         <MoorhenAssociateReflectionsToMap {...menuItemProps} />
                         <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
@@ -348,7 +343,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
                 <hr></hr>
 
-                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
+                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />*/}
             </div>
         </>
     );

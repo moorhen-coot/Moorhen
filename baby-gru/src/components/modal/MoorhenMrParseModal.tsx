@@ -312,12 +312,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     };
 
     const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(
-            props.commandCentre,
-            props.glRef,
-            props.store,
-            props.monomerLibraryPath
-        );
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromString(fileString, fileName);
@@ -325,12 +320,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(
-            props.commandCentre,
-            props.glRef,
-            props.store,
-            props.monomerLibraryPath
-        );
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -717,8 +707,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         loadMrParseUrl(
             urlBase,
             props.commandCentre,
-            props.glRef,
-            props.store,
             props.monomerLibraryPath,
             backgroundColor,
             defaultBondSmoothness,
@@ -756,8 +744,6 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                             loadMrParseFiles(
                                 Array.from(e.target.files),
                                 props.commandCentre,
-                                props.glRef,
-                                props.store,
                                 props.monomerLibraryPath,
                                 backgroundColor,
                                 defaultBondSmoothness,
