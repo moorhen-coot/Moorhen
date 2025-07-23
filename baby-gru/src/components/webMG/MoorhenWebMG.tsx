@@ -16,6 +16,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { gemmiAtomPairsToCylindersInfo } from '../../utils/utils'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { guid } from '../../utils/utils';
+import { gemmi } from "../../types/gemmi"
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -158,13 +159,72 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const arrowHeadPairs = []
             const newLabelBuffers = []
             vectorsList.forEach(vec => {
+                let xFromOrig;
+                let yFromOrig;
+                let zFromOrig;
+                let xToOrig;
+                let yToOrig;
+                let zToOrig;
                 if(vec.coordsMode==="points"){
-                    let xFrom = vec.xFrom
-                    let yFrom = vec.yFrom
-                    let zFrom = vec.zFrom
-                    let xTo = vec.xTo
-                    let yTo = vec.yTo
-                    let zTo = vec.zTo
+                    xFromOrig = vec.xFrom
+                    yFromOrig = vec.yFrom
+                    zFromOrig = vec.zFrom
+                    xToOrig = vec.xTo
+                    yToOrig = vec.yTo
+                    zToOrig = vec.zTo
+                } else if(vec.coordsMode==="atoms"){
+                    if(vec.molNoFrom!==undefined&&vec.molNoTo!==undefined&&vec.cidFrom.length>0&&vec.cidTo.length>0){
+                        const fromMol = molecules.find(mol => mol.molNo === vec.molNoFrom)
+                        const toMol = molecules.find(mol => mol.molNo === vec.molNoTo)
+                        if(fromMol&&toMol){
+                            const fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
+                            const toAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidTo, "" )
+                            const nFromAtoms = fromAtoms.size()
+                            const nToAtoms = toAtoms.size()
+                            if(nFromAtoms>0&&nToAtoms>0){
+                                let totXFrom = 0
+                                let totYFrom = 0
+                                let totZFrom = 0
+                                for(let iFrom=0;iFrom<nFromAtoms;iFrom++){
+                                    const at = fromAtoms.get(iFrom)
+                                    totXFrom += at.x
+                                    totYFrom += at.y
+                                    totZFrom += at.z
+                                }
+                                totXFrom /= nFromAtoms
+                                totYFrom /= nFromAtoms
+                                totZFrom /= nFromAtoms
+                                let totXTo = 0
+                                let totYTo = 0
+                                let totZTo = 0
+                                for(let iTo=0;iTo<nToAtoms;iTo++){
+                                    const at = toAtoms.get(iTo)
+                                    totXTo += at.x
+                                    totYTo += at.y
+                                    totZTo += at.z
+                                }
+                                totXTo /= nToAtoms
+                                totYTo /= nToAtoms
+                                totZTo /= nToAtoms
+                                xFromOrig = totXFrom
+                                yFromOrig = totYFrom
+                                zFromOrig = totZFrom
+                                xToOrig = totXTo
+                                yToOrig = totYTo
+                                zToOrig = totZTo
+                            }
+                            fromAtoms.delete()
+                            toAtoms.delete()
+                        }
+                    }
+                }
+                if(xFromOrig!==undefined&&xToOrig!==undefined){
+                    let xFrom = xFromOrig
+                    let yFrom = yFromOrig
+                    let zFrom = zFromOrig
+                    let xTo = xToOrig
+                    let yTo = yToOrig
+                    let zTo = zToOrig
                     if(vec.labelMode==="start"){
                         newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
                     }
@@ -172,20 +232,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                         newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
                     }
                     if(vec.labelMode==="middle"){
-                        const xLabel = xFrom + 0.5 * (vec.xTo - vec.xFrom)
-                        const yLabel = yFrom + 0.5 * (vec.yTo - vec.yFrom)
-                        const zLabel = zFrom + 0.5 * (vec.zTo - vec.zFrom)
+                        const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
+                        const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
+                        const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
                         newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
                     }
                     if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                        xTo = xFrom + 0.8 * (vec.xTo - vec.xFrom)
-                        yTo = yFrom + 0.8 * (vec.yTo - vec.yFrom)
-                        zTo = zFrom + 0.8 * (vec.zTo - vec.zFrom)
+                        xTo = xFrom + 0.8 * (xToOrig - xFromOrig)
+                        yTo = yFrom + 0.8 * (yToOrig - yFromOrig)
+                        zTo = zFrom + 0.8 * (zToOrig - zFromOrig)
                     }
                     if(vec.arrowMode==="start"||vec.arrowMode==="both"){
-                        xFrom = xFrom + 0.2 * (vec.xTo - vec.xFrom)
-                        yFrom = yFrom + 0.2 * (vec.yTo - vec.yFrom)
-                        zFrom = zFrom + 0.2 * (vec.zTo - vec.zFrom)
+                        xFrom = xFrom + 0.2 * (xToOrig - xFromOrig)
+                        yFrom = yFrom + 0.2 * (yToOrig - yFromOrig)
+                        zFrom = zFrom + 0.2 * (zToOrig - zFromOrig)
                     }
                     const firstAtomInfo = {
                         pos: [xFrom, yFrom, zFrom],
@@ -206,12 +266,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                         solidPairs.push(pair)
                     }
                     if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                        const xFrom = vec.xFrom + 0.8 * (vec.xTo - vec.xFrom)
-                        const yFrom = vec.yFrom + 0.8 * (vec.yTo - vec.yFrom)
-                        const zFrom = vec.zFrom + 0.8 * (vec.zTo - vec.zFrom)
-                        const xTo = vec.xTo
-                        const yTo = vec.yTo
-                        const zTo = vec.zTo
+                        const xFrom = xFromOrig + 0.8 * (xToOrig - xFromOrig)
+                        const yFrom = yFromOrig + 0.8 * (yToOrig - yFromOrig)
+                        const zFrom = zFromOrig + 0.8 * (zToOrig - zFromOrig)
+                        const xTo = xToOrig
+                        const yTo = yToOrig
+                        const zTo = zToOrig
                         const firstAtomInfo = {
                             pos: [xFrom, yFrom, zFrom],
                             x: xFrom,
@@ -228,12 +288,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                         arrowHeadPairs.push(pair)
                     }
                     if(vec.arrowMode==="start"||vec.arrowMode==="both"){
-                        const xTo = vec.xFrom
-                        const yTo = vec.yFrom
-                        const zTo = vec.zFrom
-                        const xFrom = vec.xFrom + 0.2 * (vec.xTo - vec.xFrom)
-                        const yFrom = vec.yFrom + 0.2 * (vec.yTo - vec.yFrom)
-                        const zFrom = vec.zFrom + 0.2 * (vec.zTo - vec.zFrom)
+                        const xTo = xFromOrig
+                        const yTo = yFromOrig
+                        const zTo = zFromOrig
+                        const xFrom = xFromOrig + 0.2 * (xToOrig - xFromOrig)
+                        const yFrom = yFromOrig + 0.2 * (yToOrig - yFromOrig)
+                        const zFrom = zFromOrig + 0.2 * (zToOrig - zFromOrig)
                         const firstAtomInfo = {
                             pos: [xFrom, yFrom, zFrom],
                             x: xFrom,
