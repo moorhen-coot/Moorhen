@@ -141,7 +141,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if(glRef !== null && typeof glRef !== 'function') {
 
             let oldLabelBuffers = labelBuffers
-            console.log(oldLabelBuffers)
             vectorLabelBuffers.forEach((buffer) => {
                 oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
@@ -167,16 +166,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     let yTo = vec.yTo
                     let zTo = vec.zTo
                     if(vec.labelMode==="start"){
-                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                        newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
                     }
                     if(vec.labelMode==="end"){
-                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xTo,y:yTo,z:zTo},uuid:guid()})
+                        newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
                     }
                     if(vec.labelMode==="middle"){
                         const xLabel = xFrom + 0.5 * (vec.xTo - vec.xFrom)
                         const yLabel = yFrom + 0.5 * (vec.yTo - vec.yFrom)
                         const zLabel = zFrom + 0.5 * (vec.zTo - vec.zFrom)
-                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                        newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
                     }
                     if(vec.arrowMode==="end"||vec.arrowMode==="both"){
                         xTo = xFrom + 0.8 * (vec.xTo - vec.xFrom)
@@ -272,7 +271,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 buildBuffers(a)
             })
             setVectorBuffers(newBuffers)
-            console.log(oldLabelBuffers)
             setVectorLabelBuffers(newLabelBuffers)
             dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
             dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))

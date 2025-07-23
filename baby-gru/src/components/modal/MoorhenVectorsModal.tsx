@@ -70,7 +70,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         const aVector: moorhen.MoorhenVector = {
             coordsMode: "atoms",
             labelMode: "none",
-            labelText: "",
+            labelText: "vector label",
             drawMode: "cylinder",
             arrowMode: "none",
             xFrom: 0.0,
