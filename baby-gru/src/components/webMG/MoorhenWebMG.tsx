@@ -11,10 +11,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers } from "../../store/glRefSlice"
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
 import * as quat4 from 'gl-matrix/quat';
 import { gemmiAtomPairsToCylindersInfo } from '../../utils/utils'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
+import { guid } from '../../utils/utils';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -134,9 +135,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
     const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
     const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
+    const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+
+            let oldLabelBuffers = labelBuffers
+            console.log(oldLabelBuffers)
+            vectorLabelBuffers.forEach((buffer) => {
+                oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            })
 
             let oldBuffers = displayBuffers
             vectorBuffers.forEach((buffer) => {
@@ -149,6 +157,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const dashPairs = []
             const solidPairs = []
             const arrowHeadPairs = []
+            const newLabelBuffers = []
             vectorsList.forEach(vec => {
                 if(vec.coordsMode==="points"){
                     let xFrom = vec.xFrom
@@ -157,6 +166,18 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     let xTo = vec.xTo
                     let yTo = vec.yTo
                     let zTo = vec.zTo
+                    if(vec.labelMode==="start"){
+                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                    }
+                    if(vec.labelMode==="end"){
+                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xTo,y:yTo,z:zTo},uuid:guid()})
+                    }
+                    if(vec.labelMode==="middle"){
+                        const xLabel = xFrom + 0.5 * (vec.xTo - vec.xFrom)
+                        const yLabel = yFrom + 0.5 * (vec.yTo - vec.yFrom)
+                        const zLabel = zFrom + 0.5 * (vec.zTo - vec.zFrom)
+                        newLabelBuffers.push({label:{font:"24px Arial",text:"A vector",x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                    }
                     if(vec.arrowMode==="end"||vec.arrowMode==="both"){
                         xTo = xFrom + 0.8 * (vec.xTo - vec.xFrom)
                         yTo = yFrom + 0.8 * (vec.yTo - vec.yFrom)
@@ -251,7 +272,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 buildBuffers(a)
             })
             setVectorBuffers(newBuffers)
+            console.log(oldLabelBuffers)
+            setVectorLabelBuffers(newLabelBuffers)
             dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
+            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
         }
     }, [vectorsList])
 

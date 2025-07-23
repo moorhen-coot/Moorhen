@@ -1506,7 +1506,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.measureText2DCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,768,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
-        this.labelsTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,128,2048);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
         this.texturedShapes = [];
 
         self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
