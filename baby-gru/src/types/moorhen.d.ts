@@ -1181,9 +1181,11 @@ export namespace moorhen {
             atomInfoIds: any[]
         }
         coreRefs: {
+            videoRecorder: any;
             paths: {
                 monomerLibrary: string;
                 moorhenIcons: string;
+                urlPrefix: string;
             };
             commandCentre: React.RefObject<CommandCentre>;
             timeCapsule: React.RefObject<TimeCapsule>;

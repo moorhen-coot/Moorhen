@@ -99,7 +99,6 @@ export const moorhenKeyPress = (
                     monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
                     commandCentre: commandCentre,
                     cidRef: fragmentCid,
-                    glRef: glRef,
                     moleculeRef: chosenMolecule,
                     persist: true
                 })
@@ -355,7 +354,6 @@ export const moorhenKeyPress = (
         enqueueSnackbar("screenshot", {
             variant: "screenshot",
             persist: true,
-            glRef: glRef,
             videoRecorderRef: videoRecorderRef 
         })
     }

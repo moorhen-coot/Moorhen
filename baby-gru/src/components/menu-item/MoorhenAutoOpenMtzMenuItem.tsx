@@ -1,21 +1,15 @@
 import { useCallback, useRef } from "react"
 import { Form, Row } from "react-bootstrap"
 import { useDispatch } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
 import { useSnackbar } from "notistack"
 import { MoorhenMap } from "../../utils/MoorhenMap"
-import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL"
-import { libcootApi } from "../../types/libcoot"
 import { setActiveMap } from "../../store/generalStatesSlice"
-import { addMap, addMapList } from "../../store/mapsSlice"
+import { addMapList } from "../../store/mapsSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
-    store: Store;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -53,7 +47,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             enqueueSnackbar('Error reading mtz file', {variant: "error"})
         }
         
-    }, [filesRef.current, props.commandCentre, props.glRef])
+    }, [filesRef.current, props.commandCentre,])
 
     return <MoorhenBaseMenuItem
         id='auto-open-mtz-menu-item'

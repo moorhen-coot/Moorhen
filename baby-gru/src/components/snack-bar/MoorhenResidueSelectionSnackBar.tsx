@@ -341,15 +341,14 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
                 dispatch( setHoveredAtom({ molecule: null, cid: null }) )
                 dispatch( setIsDraggingAtoms(true) )
                 enqueueSnackbar("accept-reject-dragging-atoms", {
-                    onClose: () => residueSelection.molecule.drawResidueSelection(cid.join('||')),
+                    onClose: () => residueSelection.molecule.drawResidueSelection(cid.join("||")),
                     variant: "acceptRejectDraggingAtoms",
                     persist: true,
                     commandCentre: residueSelection.molecule.commandCentre,
                     monomerLibraryPath: residueSelection.molecule.monomerLibraryPath,
-                    glRef: residueSelection.molecule.glRef,
                     cidRef: { current: cid },
-                    moleculeRef: { current: residueSelection.molecule }
-                })
+                    moleculeRef: { current: residueSelection.molecule },
+                });
             })
         }
     }, [residueSelection])
@@ -461,3 +460,5 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, {id: s
             </Tooltip>
         </SnackbarContent>
 })
+
+MoorhenResidueSelectionSnackBar.displayName = "MoorhenResidueSelectionSnackBar";

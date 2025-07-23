@@ -81,9 +81,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             monomerLibraryPath: props.monomerLibraryPath,
             commandCentre: props.commandCentre,
             cidRef: fragmentCid,
-            glRef: props.glRef,
-            moleculeRef: chosenMolecule
-        })
+            moleculeRef: chosenMolecule,
+        });
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsDraggingAtoms(true))

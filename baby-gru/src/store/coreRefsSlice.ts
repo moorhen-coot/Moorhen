@@ -4,18 +4,22 @@ import { moorhen } from "../types/moorhen";
 interface coreRefs {
     commandCentre: React.RefObject<moorhen.CommandCentre> | null;
     timeCapsule: React.RefObject<moorhen.TimeCapsule> | null;
+    videoRecorder: React.RefObject<moorhen.ScreenRecorder | null>;
     paths: {
         monomerLibrary: string;
         moorhenIcons: string;
+        urlPrefix: string;
     }
 }
 
 const initialState: coreRefs = {
     commandCentre: null,
     timeCapsule: null,
+    videoRecorder: null,
     paths: {
         monomerLibrary: '',
-        moorhenIcons: ''
+        moorhenIcons: '',
+        urlPrefix: ''
     }
 };
 
@@ -29,7 +33,13 @@ const coreRefsSlice = createSlice({
         setTimeCapsule: (state, action: PayloadAction<React.RefObject<moorhen.TimeCapsule>>) => {
             state.timeCapsule = action.payload;
         },
-        setPaths: (state, action: PayloadAction<{ monomerLibrary: string; moorhenIcons: string }>) => {
+        setVideoRecorder: (state, action: PayloadAction<React.RefObject<moorhen.ScreenRecorder>>) => {
+            return {
+                ...state,
+                videoRecorder: action.payload
+            };
+        },
+        setPaths: (state, action: PayloadAction<{ monomerLibrary: string; moorhenIcons: string; urlPrefix: string }>) => {
             state.paths = action.payload;
         },
         setMonomerLibraryPath: (state, action: PayloadAction<string>) => {
@@ -37,9 +47,12 @@ const coreRefsSlice = createSlice({
         },
         setMoorhenIconsPath: (state, action: PayloadAction<string>) => {
             state.paths.moorhenIcons = action.payload;
+        },
+        setUrlPrefix: (state, action: PayloadAction<string>) => {
+            state.paths.urlPrefix = action.payload;
         }
     }
 });
 
-export const { setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath } = coreRefsSlice.actions;
+export const { setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath, setUrlPrefix, setVideoRecorder } = coreRefsSlice.actions;
 export default coreRefsSlice.reducer;

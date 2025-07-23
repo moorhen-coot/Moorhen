@@ -1,13 +1,11 @@
 import { Form } from "react-bootstrap"
 import { useSelector, useDispatch, batch } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { emptyMolecules } from "../../store/moleculesSlice";
 import { emptyMaps } from "../../store/mapsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenDeleteEverythingMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
 }) => {
 

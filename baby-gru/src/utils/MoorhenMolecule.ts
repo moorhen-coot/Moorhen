@@ -187,15 +187,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.uniqueId = guid()
         this.defaultColourRules = null
         this.moleculeDiameter = null
-        this.unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
+        this.unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre)
         this.unitCellRepresentation.setParentMolecule(this)
-        this.environmentRepresentation = new MoorhenMoleculeRepresentation('environment', null, this.commandCentre, this.glRef)
+        this.environmentRepresentation = new MoorhenMoleculeRepresentation('environment', null, this.commandCentre)
         this.environmentRepresentation.setParentMolecule(this)
-        this.hoverRepresentation = new MoorhenMoleculeRepresentation('hover', null, this.commandCentre, this.glRef)
+        this.hoverRepresentation = new MoorhenMoleculeRepresentation('hover', null, this.commandCentre)
         this.hoverRepresentation.setParentMolecule(this)
-        this.selectionRepresentation = new MoorhenMoleculeRepresentation('residueSelection', null, this.commandCentre, this.glRef)
+        this.selectionRepresentation = new MoorhenMoleculeRepresentation('residueSelection', null, this.commandCentre)
         this.selectionRepresentation.setParentMolecule(this)
-        this.adaptativeBondsRepresentation = new MoorhenMoleculeRepresentation('adaptativeBonds', null, this.commandCentre, this.glRef)
+        this.adaptativeBondsRepresentation = new MoorhenMoleculeRepresentation('adaptativeBonds', null, this.commandCentre)
         this.adaptativeBondsRepresentation.setParentMolecule(this)
     }
 
@@ -1228,7 +1228,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async drawWithStyleFromMesh(style: moorhen.RepresentationStyles, meshObjects: any[], cid: string = "/*/*/*/*", fetchAtomBuffers: boolean = false): Promise<void> {
         let representation = this.representations.find(item => item.style === style && item.cid === cid)
         if (!representation) {
-            representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
+            representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre)
             representation.setParentMolecule(this)
             this.representations.push(representation)
         }
@@ -1267,7 +1267,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
-        const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
+        const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre)
         representation.isCustom = isCustom
         representation.setParentMolecule(this)
         representation.setColourRules(colourRules)

@@ -40,7 +40,7 @@ import sceneSettingsReducer, { setDefaultBackgroundColor, setDrawCrosshairs, set
 import backupSettingsReducer, { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import generalStatesReducer, { 
     setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
-    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates, setUseGemmi, setShowHoverInfo, setUrlPrefix
+    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates, setUseGemmi, setShowHoverInfo,
  } from './store/generalStatesSlice';
 import mapsReducer, { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
 import hoveringStatesReducer, { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from './store/hoveringStatesSlice';
@@ -70,6 +70,8 @@ import glRefSliceReducer, { setOrigin, setRequestDrawScene, setIsWebGL2, setActi
 import overlaysReducer from './store/overlaysSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
+import {setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath, setUrlPrefix } from './store/coreRefsSlice';
+import { setBusy } from './store/userInterfaceSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -83,7 +85,7 @@ export {
     setActiveMap, setCootInitialized, setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly,
     setCursorStyle, setEnableAtomHovering, setHoveredAtom, addAvailableFontList, setAtomLabelDepthMode, 
     setGLLabelsFontFamily, setGLLabelsFontSize, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, 
-    setDefaultMapSurface, setDefaultExpandDisplayCards, setUrlPrefix, setTransparentModalsOnMouseOut, setEnableRefineAfterMod,
+    setDefaultMapSurface, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setEnableRefineAfterMod,
     addMolecule, removeMolecule, emptyMolecules, addMoleculeList, setContourWheelSensitivityFactor, MoorhenFetchOnlineSourcesForm,
     setZoomWheelSensitivityFactor, setMouseSensitivity, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts,
     setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, MoorhenSlider,
@@ -111,5 +113,8 @@ export {
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
-    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, 
+    setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath, setUrlPrefix,
+    setBusy
+
 };

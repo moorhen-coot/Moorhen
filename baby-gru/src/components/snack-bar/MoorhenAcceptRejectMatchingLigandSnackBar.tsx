@@ -112,3 +112,5 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenAcceptRejectMatchingLigandSnackBar.displayName = "MoorhenAcceptRejectMatchingLigandSnackBar";

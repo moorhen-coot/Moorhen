@@ -14,7 +14,6 @@ export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
     {
         commandCentre: React.RefObject<moorhen.CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         mapMolNo: number
     }
 >((props, ref) => {
@@ -181,3 +180,5 @@ export const MoorhenTomogramSnackBar = forwardRef<
         }
     </SnackbarContent>
 })
+
+MoorhenTomogramSnackBar.displayName = "MoorhenTomogramSnackBar";

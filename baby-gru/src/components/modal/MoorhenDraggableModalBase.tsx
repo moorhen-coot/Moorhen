@@ -139,7 +139,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         enforceMaxBodyDimensions = true,
     } = { ...props };
 
-    const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
+    const urlPrefix = MoorhenStore.getState().coreRefs.paths.urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);

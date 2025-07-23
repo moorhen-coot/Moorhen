@@ -12,8 +12,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenImportMapMenuItem = (props: { 
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -73,7 +71,7 @@ export const MoorhenImportMapMenuItem = (props: {
                 document.body.click();
             }
         }
-    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps]);
+    }, [filesRef.current, isDiffRef.current, props.commandCentre, molecules, maps]);
 
     const panelContent = <>
         <Row>

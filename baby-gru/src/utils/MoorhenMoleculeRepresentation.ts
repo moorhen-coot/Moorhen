@@ -2,7 +2,7 @@ import { batch } from 'react-redux'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { libcootApi } from '../types/libcoot';
-import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
+import {  setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { MoorhenColourRule } from './MoorhenColourRule';
@@ -65,12 +65,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     residueSelectionColor: number[];
     mergeBufferObjects: (bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]) => libcootApi.InstancedMeshJS[]
 
-    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid()
         this.cid = cid
         this.setStyle(style)
         this.commandCentre = commandCentre
-        this.glRef = glRef
         this.parentMolecule = null
         this.buffers = null
         this.visible = false

@@ -3,12 +3,10 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { atomInfoToResSpec, cidToSpec, getTooltipShortcutLabel, sleep } from '../../utils/utils';
-import { webGL } from '../../types/mgWebGL';
 import { clearResidueSelection, setResidueSelection } from '../../store/generalStatesSlice';
 
 export const MoorhenSnackBarManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const { enqueueSnackbar, closeSnackbar } = useSnackbar()

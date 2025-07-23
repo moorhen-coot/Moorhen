@@ -13,8 +13,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
 }) => {
 
@@ -78,7 +76,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
                 console.log(`Cannot read file`)
             }      
         }
-    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps])
+    }, [filesRef.current, isDiffRef.current,  props.commandCentre, molecules, maps])
 
     const panelContent = <>
         <Row>

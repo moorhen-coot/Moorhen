@@ -6,6 +6,7 @@ import { SnackbarProvider } from "notistack";
 import { createLocalStorageInstance, parseAtomInfoLabel } from "../utils/utils";
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
+import { MoorhenScreenRecorder } from "../utils/MoorhenScreenRecorder";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
@@ -21,9 +22,8 @@ import {
     setTheme,
     toggleCootCommandExit,
     toggleCootCommandStart,
-    setUrlPrefix,
 } from "../store/generalStatesSlice";
-import { setCommandCentre, setTimeCapsule } from "../store/coreRefsSlice";
+import { setCommandCentre, setTimeCapsule, setUrlPrefix, setVideoRecorder } from "../store/coreRefsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
 import { setRefinementSelection } from "../store/refinementSettingsSlice";
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
@@ -66,14 +66,12 @@ declare module "notistack" {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: React.RefObject<moorhen.Molecule>;
             cidRef: React.RefObject<string[]>;
-            glRef: React.RefObject<webGL.MGWebGL>;
             monomerLibraryPath: string;
         };
         atomInformation: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
             moleculeRef: moorhen.Molecule;
             cidRef: string;
-            glRef: React.RefObject<webGL.MGWebGL>;
             monomerLibraryPath: string;
         };
         acceptRejectRotateTranslateAtoms: {
@@ -102,18 +100,15 @@ declare module "notistack" {
             sleepTime?: number;
         };
         updatingMaps: {
-            glRef: React.RefObject<webGL.MGWebGL>;
             commandCentre: React.RefObject<moorhen.CommandCentre>;
         };
         modelTrajectory: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
-            glRef: React.RefObject<webGL.MGWebGL>;
             moleculeMolNo: number;
             representationStyle: string;
         };
         tomogram: {
             commandCentre: React.RefObject<moorhen.CommandCentre>;
-            glRef: React.RefObject<webGL.MGWebGL>;
             mapMolNo: number;
         };
         mapContourLevel: {
@@ -124,11 +119,9 @@ declare module "notistack" {
             moleculeMolNo: number;
             chosenAtom: moorhen.ResidueSpec;
             commandCentre: React.RefObject<moorhen.CommandCentre>;
-            glRef: React.RefObject<webGL.MGWebGL>;
         };
         screenshot: {
             videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-            glRef: React.RefObject<webGL.MGWebGL>;
         };
         sideBar: {
             children: React.JSX.Element;
@@ -363,7 +356,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 await timeCapsuleRef.current.init();
                 dispatch(setTimeCapsule(timeCapsuleRef));
             }
-            
         };
         initTimeCapsule();
     }, [userPreferencesMounted]);
@@ -403,7 +395,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
 
         style.rel = "stylesheet";
-        // style.async = true; 
+        // style.async = true;
         style.type = "text/css";
 
         head.appendChild(style);
@@ -466,7 +458,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         const initCommandCentre = async () => {
             setWindowDimensions();
-            
+
             // eslint-disable-next-line react-hooks/react-compiler
             commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
                 onCootInitialized: () => {
@@ -609,7 +601,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
             <MoorhenSnackBarManager {...collectedProps} />
 
-            <MoorhenUpdatingMapsManager commandCentre={commandCentre} glRef={glRef} />
+            <MoorhenUpdatingMapsManager commandCentre={commandCentre} />
 
             <MoorhenMapsHeadManager />
 

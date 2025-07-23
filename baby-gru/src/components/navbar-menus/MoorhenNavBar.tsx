@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, use } from "react";
 import { Spinner, Form, Overlay, Popover, Stack } from "react-bootstrap";
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import {
@@ -32,7 +32,7 @@ import { MoorhenFileMenu } from "./MoorhenFileMenu";
 // import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
 // import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
 // import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
- import { MoorhenStore } from "../../moorhen";
+import { MoorhenStore } from "../../moorhen";
 
 export interface MoorhenNavBarExtendedControlsInterface extends moorhen.CollectedProps {
     dropdownId: string;
@@ -76,10 +76,11 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
-    const urlPrefix = MoorhenStore.getState().generalStates.urlPrefix;
 
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
-    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
+    const urlPrefix = MoorhenStore.getState().coreRefs.paths.urlPrefix;
+    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
+    const timeCapsuleRef = MoorhenStore.getState().coreRefs.timeCapsule;
+    const videoRecorderRef = useSelector((state: moorhen.State) => state.coreRefs.videoRecorder);
 
     useEffect(() => {
         if (commandCentre && commandCentre.current) {
@@ -305,7 +306,9 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                     >
                         <Popover className="moorhen-nav-popover" style={{ maxWidth: convertViewtoPx(35, width) }}>
                             <Popover.Body>
-                                {navBarActiveMenu === "File" && <MoorhenFileMenu dropdownId="File" />}
+                                {navBarActiveMenu === "File" && (
+                                    <MoorhenFileMenu dropdownId="File" videoRecorderRef={videoRecorderRef} />
+                                )}
                                 {/*
                                 {navBarActiveMenu === "Edit" && (
                                     <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />

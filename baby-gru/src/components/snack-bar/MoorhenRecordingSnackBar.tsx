@@ -50,3 +50,5 @@ export const MoorhenRecordingSnackBar = forwardRef<HTMLDivElement, {videoRecorde
             </Stack>
     </SnackbarContent>
 })
+
+MoorhenRecordingSnackBar.displayName = "MoorhenRecordingSnackBar";

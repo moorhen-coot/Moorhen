@@ -53,3 +53,5 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.E
         { !isCollapsed && props.children }
     </SnackbarContent>
 })
+
+MoorhenSideBar.displayName = "MoorhenSideBar";

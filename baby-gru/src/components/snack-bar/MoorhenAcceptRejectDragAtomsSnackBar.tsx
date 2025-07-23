@@ -5,7 +5,6 @@ import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
@@ -17,7 +16,6 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         moleculeRef: React.RefObject<moorhen.Molecule>;
         cidRef: React.RefObject<string[]>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         monomerLibraryPath: string;
         id: string;
     }
@@ -189,3 +187,5 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
                 </Stack>
     </SnackbarContent>
 })
+
+MoorhenAcceptRejectDragAtomsSnackBar.displayName = "MoorhenAcceptRejectDragAtomsSnackBar";

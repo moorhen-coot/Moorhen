@@ -7,7 +7,6 @@ import { SnackbarContent, useSnackbar } from "notistack"
 import { moorhen } from "../../types/moorhen"
 import { getTooltipShortcutLabel } from '../../utils/utils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
-import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { setActiveMolecule } from "../../store/glRefSlice"
 
@@ -16,7 +15,6 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
     {
         moleculeRef: React.RefObject<moorhen.Molecule>;
         cidRef: React.RefObject<string>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         id: string;
     }
 >((props, ref) => {
@@ -125,3 +123,5 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenAcceptRejectRotateTranslateSnackBar.displayName = "MoorhenAcceptRejectRotateTranslateSnackBar";

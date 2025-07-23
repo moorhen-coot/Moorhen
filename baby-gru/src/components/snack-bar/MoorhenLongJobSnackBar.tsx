@@ -16,3 +16,5 @@ export const MoorhenLongJobSnackBar = forwardRef<HTMLDivElement, { commandCentre
                 </Stack>
             </SnackbarContent>
 })
+
+MoorhenLongJobSnackBar.displayName = "MoorhenLongJobSnackBar";

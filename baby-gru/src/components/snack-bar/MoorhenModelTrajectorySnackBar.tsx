@@ -6,7 +6,6 @@ import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
 import { sleep } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { hideMolecule, showMolecule } from '../../store/moleculesSlice';
@@ -15,7 +14,6 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     HTMLDivElement, 
     {
         commandCentre: React.RefObject<moorhen.CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         moleculeMolNo: number;
         representationStyle: string;
         id: string;
@@ -100,8 +98,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true))
-            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle as moorhen.RepresentationStyles, '/*/*/*/*', props.commandCentre, props.glRef)
-            setBusyComputingFrames(true)
+            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle as moorhen.RepresentationStyles, '/*/*/*/*', props.commandCentre)
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current)
             setNFrames(framesRef.current.length)
             setBusyComputingFrames(false)
@@ -158,3 +155,5 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
         }
     </SnackbarContent>
 })
+
+MoorhenModelTrajectorySnackBar.displayName = "MoorhenModelTrajectorySnackBar";

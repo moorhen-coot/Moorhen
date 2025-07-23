@@ -7,13 +7,11 @@ import { forwardRef, useCallback, useRef, useState } from "react";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { moorhen } from "../../types/moorhen";
 import { getCentreAtom } from "../../utils/utils";
-import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenGoToResidueSnackbar = forwardRef<
     HTMLDivElement, 
     {
         commandCentre: React.RefObject<moorhen.CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         id: string;
     }
 >((props, ref) => {
@@ -32,7 +30,7 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
             return
         }
         
-        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, props.commandCentre, props.glRef)
+        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, props.commandCentre)
         if (!chosenMolecule) {
             return
         }
@@ -63,3 +61,5 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenGoToResidueSnackbar.displayName = "MoorhenGoToResidueSnackbar";

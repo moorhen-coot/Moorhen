@@ -5,14 +5,12 @@ import { IconButton, Tooltip } from "@mui/material"
 import { CameraAlt, CloseOutlined, Photo, PhotoOutlined } from "@mui/icons-material"
 import { moorhen } from "../../types/moorhen"
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
-import { webGL } from "../../types/mgWebGL"
 
 export const MoorhenScreenshotSnackBar = forwardRef<
     HTMLDivElement,
     { 
         id: string;
         videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-        glRef: React.RefObject<webGL.MGWebGL>;
     }
 >((props, ref) => {
     
@@ -59,3 +57,5 @@ export const MoorhenScreenshotSnackBar = forwardRef<
             </Tooltip>
     </SnackbarContent>
 })
+
+MoorhenScreenshotSnackBar.displayName = "MoorhenScreenshotSnackBar";

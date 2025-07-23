@@ -12,6 +12,7 @@ import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { setVideoRecorder } from '../../store/coreRefsSlice';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -169,11 +170,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [hoveredAtom])
 
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function') {
-            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
-        }
-    }, [])
+    // useEffect(() => {
+    //     if (glRef !== null && typeof glRef !== 'function') {
+    //         props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
+    //         dispatch(setVideoRecorder(props.videoRecorderRef))
+    //     }
+    // }, [])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

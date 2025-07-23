@@ -1,30 +1,32 @@
 import { Form } from "react-bootstrap";
 import { useState, useCallback } from "react";
 import { MenuItem } from "@mui/material";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from "react-redux";
 import { useSnackbar } from "notistack";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm"
-import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
+import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm";
+import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem";
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
-import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
-import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem"
-import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem"
-import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
-import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
-import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
+import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem";
+import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem";
+import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem";
+import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem";
+import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem";
+import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem";
 import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
-import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { moorhen } from "../../types/moorhen";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
-import { MoorhenReduxStore } from "../../moorhen";
+import { MoorhenStore } from "../../moorhen";
 
 interface MoorhenFileMenuProps {
     dropdownId: string;
+    extraFileMenuItems?: React.JSX.Element[];
+    videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
 }
 
 export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
@@ -44,11 +46,10 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
-    const timeCapsule = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
-    const paths = useSelector((state: moorhen.State) => state.coreRefs.paths);
+    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
+    const timeCapsule = MoorhenStore.getState().coreRefs.timeCapsule;
+    const paths = MoorhenStore.getState().coreRefs.paths;
 
-    const menuItemProps = { setPopoverIsShown, ...props };
     //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
     const loadPdbFiles = async (files: FileList) => {
@@ -172,7 +173,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const store = MoorhenReduxStore;
+        const store = MoorhenStore;
         const files: File[] = [];
         for (let ifile = 0; ifile < e.target.files.length; ifile++) {
             files.push(e.target.files[ifile]);
@@ -210,9 +211,9 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         return timeCapsule.current.createBackup(keyString, sessionString);
     };
 
-    /*
+    const videoRecorderRef = useSelector((state: moorhen.State) => state.coreRefs.videoRecorder);
     const handleRecording = useCallback(() => {
-        if (!props.videoRecorderRef.current) {
+        if (!videoRecorderRef.current) {
             console.warn("Attempted to record screen before webGL is initated...");
             return;
         } else if (props.videoRecorderRef.current.isRecording()) {
@@ -227,8 +228,12 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                 persist: true,
             });
         }
-    }, [props.videoRecorderRef]);
-    */
+    }, [videoRecorderRef]);
+    const menuItemProps = {
+        commandCentre,
+        setPopoverIsShown,
+    };
+
     return (
         <>
             <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
@@ -267,7 +272,6 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     Query online services with a sequence...
                 </MenuItem>
 
-                {/*
                 {!disableFileUploads && (
                     <>
                         <MoorhenAssociateReflectionsToMap {...menuItemProps} />
@@ -297,7 +301,6 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                         enqueueSnackbar("screenshot", {
                             variant: "screenshot",
                             persist: true,
-                            glRef: props.glRef,
                             videoRecorderRef: props.videoRecorderRef,
                         });
                         document.body.click();
@@ -314,7 +317,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     Record a video
                 </MenuItem>
 
-                {!props.disableFileUploads && devMode && false && (
+                {!disableFileUploads && devMode && false && (
                     <MenuItem id="load-mrbump-menu-item" onClick={handleLoadMrBump}>
                         MrBump results...
                     </MenuItem>
@@ -333,7 +336,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     </Form.Group>
                 )}
 
-                {!props.disableFileUploads && devMode && (
+                {!disableFileUploads && devMode && (
                     <MenuItem id="load-mrparse-menu-item" onClick={handleLoadMrParse}>
                         MrParse results...
                     </MenuItem>
@@ -343,7 +346,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
                 <hr></hr>
 
-                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />*/}
+                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
             </div>
         </>
     );

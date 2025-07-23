@@ -45,3 +45,5 @@ export const MoorhenMapContourLevelSnackBar = forwardRef<
         {`Level: ${contourLevel?.toFixed(selectedMap?.isEM ? Math.abs(Math.floor(Math.log10(props.mapPrecision))) : 2)} ${selectedMap?.mapRmsd ? '(' + (contourLevel / selectedMap?.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
     </SnackbarContent>
 })
+
+MoorhenMapContourLevelSnackBar.displayName = "MoorhenMapContourLevelSnackBar";

@@ -164,3 +164,5 @@ export const MoorhenRotamerChangeSnackBar =  forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenRotamerChangeSnackBar.displayName = "MoorhenRotamerChangeSnackBar";
