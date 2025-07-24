@@ -8,12 +8,13 @@ import { MoorhenStore } from "../../moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
-    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     const dispatch = useDispatch()
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const maps = useSelector((state: moorhen.State) => state.maps)

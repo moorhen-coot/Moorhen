@@ -6,7 +6,6 @@ import { SnackbarProvider } from "notistack";
 import { createLocalStorageInstance, parseAtomInfoLabel } from "../utils/utils";
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
-import { MoorhenScreenRecorder } from "../utils/MoorhenScreenRecorder";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
@@ -23,12 +22,12 @@ import {
     toggleCootCommandExit,
     toggleCootCommandStart,
 } from "../store/generalStatesSlice";
-import { setCommandCentre, setTimeCapsule, setUrlPrefix, setVideoRecorder } from "../store/coreRefsSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
 import { setRefinementSelection } from "../store/refinementSettingsSlice";
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { setRequestDrawScene } from "../store/glRefSlice";
+import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG";
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar";
 import { MoorhenModalsContainer } from "./misc/MoorhenModalsContainer";
@@ -51,6 +50,7 @@ import { MoorhenSideBar } from "./snack-bar/MoorhenSideBar";
 import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
+
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -340,7 +340,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 timeCapsuleRef.current.maxBackupCount = maxBackupCount;
                 timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold;
                 await timeCapsuleRef.current.init();
-                dispatch(setTimeCapsule(timeCapsuleRef));
+                moorhenGlobalInstance.setTimeCapsule(timeCapsuleRef.current);
             }
         };
         initTimeCapsule();
@@ -458,13 +458,12 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 },
             });
             await commandCentre.current.init();
-            dispatch(setCommandCentre(commandCentre));
+            moorhenGlobalInstance.setCommandCentre(commandCentre.current);
         };
+        initCommandCentre();   
 
-        initCommandCentre();
         return () => {
             commandCentre.current.close();
-            dispatch(setCommandCentre(null));
         };
     }, []);
 
@@ -542,9 +541,11 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         }
     }, [activeMap]);
 
-    useLayoutEffect(() => {
-        dispatch(setUrlPrefix(urlPrefix));
-    }, [urlPrefix]);
+    useEffect(() => {
+        moorhenGlobalInstance.paths.urlPrefix = urlPrefix;
+        moorhenGlobalInstance.paths.monomerLibrary = monomerLibraryPath;
+        console.log(`Moorhen paths set`);
+    }, [urlPrefix, monomerLibraryPath]);
 
     return (
         <SnackbarProvider
@@ -634,7 +635,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                                     onAtomHovered={onAtomHovered}
                                     urlPrefix={urlPrefix}
                                     viewOnly={viewOnly}
-                                    videoRecorderRef={videoRecorderRef}
                                 />
                             </div>
                         </Col>

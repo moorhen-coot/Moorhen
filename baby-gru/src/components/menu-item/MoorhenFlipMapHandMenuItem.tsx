@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenFlipMapHandMenuItem = () => {
 
@@ -14,7 +15,7 @@ export const MoorhenFlipMapHandMenuItem = () => {
     const maps = useSelector((state: moorhen.State) => state.maps)
     
     const selectRef = useRef<HTMLSelectElement>(null)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     const onCompleted = async () => {
         if (!selectRef.current.value) {

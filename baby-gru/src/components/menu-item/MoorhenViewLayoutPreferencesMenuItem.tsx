@@ -19,11 +19,12 @@ import {
     setThreeWayViewOrder,
 } from "../../store/sceneSettingsSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 function SortableItem(props: { id: string, urlPrefix: string }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.id })
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const urlPrefix = useSelector((state: moorhen.State) => state.coreRefs.paths.urlPrefix)
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
     let bgcolor
     if (isDark) bgcolor = "#5C5C5C"
@@ -114,7 +115,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: { popoverPlacement?:
         (state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns
     )
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const urlPrefix = useSelector((state: moorhen.State) => state.coreRefs.paths.urlPrefix)
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
     let theTiles = ["Z", "X", "Y", " "]
     if (threeWayViewOrder && threeWayViewOrder.length === 4) theTiles = threeWayViewOrder.split("")

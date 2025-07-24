@@ -1180,17 +1180,7 @@ export namespace moorhen {
         atomInfoCards: {
             atomInfoIds: any[]
         }
-        coreRefs: {
-            videoRecorder: any;
-            paths: {
-                monomerLibrary: string;
-                moorhenIcons: string;
-                urlPrefix: string;
-            };
-            commandCentre: React.RefObject<CommandCentre>;
-            timeCapsule: React.RefObject<TimeCapsule>;
-        }
-        userInterface: {
+        globalUI: {
             busy: boolean;
         }
     }

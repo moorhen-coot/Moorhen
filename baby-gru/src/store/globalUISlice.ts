@@ -8,8 +8,8 @@ const initialState: userInterface = {
     busy: false
 };
 
-const userInterfaceSlice = createSlice({
-    name: 'userInterface',
+const globalUISlice = createSlice({
+    name: 'globalUI',
     initialState,
     reducers: {
         setBusy: (state, action: PayloadAction<boolean>) => {
@@ -18,5 +18,5 @@ const userInterfaceSlice = createSlice({
     }
 });
 
-export const { setBusy } = userInterfaceSlice.actions;
-export default userInterfaceSlice.reducer;
+export const { setBusy } = globalUISlice.actions;
+export default globalUISlice.reducer;

@@ -9,12 +9,13 @@ import { modalKeys } from "../../utils/enums"
 import { showModal } from "../../store/modalsSlice"
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 export const MoorhenOpenLhasaMenuItem = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
-    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
 
     const [selectedCoordMolNo, setSelectedCoordMolNo] = useState<number>(molecules[0]?.molNo ?? null)
     const [onStartLigandSource, setOnStartLigandSource] = useState<string>('none')

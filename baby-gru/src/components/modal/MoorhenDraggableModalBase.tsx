@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
 import { MoorhenStore } from "../../moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
@@ -139,7 +140,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         enforceMaxBodyDimensions = true,
     } = { ...props };
 
-    const urlPrefix = MoorhenStore.getState().coreRefs.paths.urlPrefix;
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);

@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen"
 import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
 import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 export const MoorhenRefinementSettingsMenuItem = () => {
 
@@ -23,7 +24,7 @@ export const MoorhenRefinementSettingsMenuItem = () => {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     useEffect(() => {
         const fetchInitialData = async () => {

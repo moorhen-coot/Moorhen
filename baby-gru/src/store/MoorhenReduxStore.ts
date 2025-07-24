@@ -21,8 +21,7 @@ import glRefSliceReducer from './glRefSlice'
 import overlaysSliceReducer from './overlaysSlice'
 import menusReducer from './menusSlice'
 import atomInfoCardsReducer from './atomInfoCardsSlice'
-import coreRefsSliceReducer from './coreRefsSlice'
-import userInterfaceSliceReducer from './userInterfaceSlice'
+import globalUISliceReducer from './globalUISlice'
 
 export default configureStore({
     reducer: {
@@ -48,8 +47,7 @@ export default configureStore({
         overlays: overlaysSliceReducer,
         menus: menusReducer,
         atomInfoCards: atomInfoCardsReducer,
-        coreRefs: coreRefsSliceReducer,
-        userInterface: userInterfaceSliceReducer,
+        globalUISlice: globalUISliceReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

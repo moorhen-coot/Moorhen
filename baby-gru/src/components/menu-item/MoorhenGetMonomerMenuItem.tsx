@@ -11,6 +11,7 @@ import { moorhen } from "../../types/moorhen";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
@@ -54,8 +55,8 @@ export const MoorhenGetMonomerMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'
 }) => {
 
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre);
-    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary);
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)

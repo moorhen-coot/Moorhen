@@ -7,6 +7,7 @@ import { representationLabelMapping } from "../../utils/enums";
 import { MoorhenStore } from "../../moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 
@@ -19,7 +20,7 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const [representationStyle, setRepresentationStyle] = useState<string>("CBs")
 
-    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
 
     const { enqueueSnackbar } = useSnackbar()

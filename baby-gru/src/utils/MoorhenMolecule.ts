@@ -21,6 +21,8 @@ import {
     getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel,
     readGemmiCifDocument
  } from './utils'
+ import { moorhenGlobalInstance } from '../InstanceManager/MoorhenGlobalInstance.js';
+import { useRef } from 'react';
 
 /**
  * Represents a molecule
@@ -113,8 +115,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null> = null, monomerLibraryPath = null, reduxStore: Store = MoorhenReduxStore) {
         this.type = 'molecule'
         this.store = reduxStore
-        this.commandCentre = commandCentre? commandCentre : this.store.getState().coreRefs.commandCentre;
-        this.monomerLibraryPath = monomerLibraryPath? monomerLibraryPath : this.store.getState().coreRefs.paths.monomerLibrary;
+        this.commandCentre = commandCentre ? commandCentre : moorhenGlobalInstance.getCommandCentreRef();
+        this.monomerLibraryPath = monomerLibraryPath ? monomerLibraryPath : moorhenGlobalInstance.paths.monomerLibrary;
         this.atomsDirty = true
         this.name = "unnamed"
         this.molNo = null

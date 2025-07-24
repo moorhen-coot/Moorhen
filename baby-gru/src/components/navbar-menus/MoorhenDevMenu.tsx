@@ -7,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 
 export const MoorhenDevMenu = (props: {dropdownId: string}) => {
@@ -22,8 +23,7 @@ export const MoorhenDevMenu = (props: {dropdownId: string}) => {
 
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi)
 
-    const urlPrefix = useSelector((state: moorhen.State) => state.coreRefs.paths.urlPrefix)
-
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.

@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenSharpenBlurMapMenuItem = () => {
 
@@ -18,7 +19,7 @@ export const MoorhenSharpenBlurMapMenuItem = () => {
     const resampleFactorRef = useRef<string>(null)
     const selectRef = useRef<HTMLSelectElement>(null)
     const useResampleSwitchRef = useRef<HTMLInputElement>(null)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     
     const [useResample, setUseResample] = useState<boolean>(false)
 

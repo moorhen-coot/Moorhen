@@ -21,6 +21,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenFileMenu } from "./MoorhenFileMenu";
 import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
 import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
@@ -32,7 +33,6 @@ import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
 import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
 import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
-import { MoorhenStore } from "../../moorhen";
 
 
 interface MoorhenNavBarProps {
@@ -73,22 +73,22 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
 
-    const urlPrefix = MoorhenStore.getState().coreRefs.paths.urlPrefix;
-    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
-    const timeCapsuleRef = MoorhenStore.getState().coreRefs.timeCapsule;
-    const videoRecorderRef = useSelector((state: moorhen.State) => state.coreRefs.videoRecorder);
+    const commandCentre = moorhenGlobalInstance.getCommandCentre();
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsule();
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
     useEffect(() => {
-        if (commandCentre && commandCentre.current) {
+        if (commandCentre) {
             // eslint-disable-next-line react-hooks/react-compiler
-            commandCentre.current.onActiveMessagesChanged = (newActiveMessages) =>
+            commandCentre.onActiveMessagesChanged = (newActiveMessages) =>
                 setBusy(newActiveMessages.length !== 0);
         }
     }, [cootInitialized]);
 
     useEffect(() => {
-        if (timeCapsuleRef && timeCapsuleRef.current) {
-            timeCapsuleRef.current.onIsBusyChange = (newValue: boolean) => {
+        if (timeCapsule) {
+            timeCapsule.onIsBusyChange = (newValue: boolean) => {
                 if (newValue) {
                     setTimeCapsuleBusy(true);
                 } else {
@@ -96,7 +96,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                 }
             };
         }
-    }, [timeCapsuleRef]);
+    }, [timeCapsule]);
 
     const navBarMenus = {
         File: { icon: <DescriptionOutlined />, name: "File", ref: fileSpeedDialActionRef },
@@ -333,7 +333,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                                 )}
                                 {navBarActiveMenu === "Dev" && <MoorhenDevMenu dropdownId="Dev"  />}
                                 {props.extraNavBarMenus &&
-                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement}
+                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement} 
                             </Popover.Body>
                         </Popover>
                     </Overlay>

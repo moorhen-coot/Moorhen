@@ -5,6 +5,7 @@ import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useSelector } from "react-redux"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 export const MoorhenBackupsMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -13,7 +14,7 @@ export const MoorhenBackupsMenuItem = (props: {
     loadSession: (sessionDataString: string) => Promise<void>;
 }) => {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null)
-    const timeCapsule = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule)
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef()
 
     const { enqueueSnackbar } = useSnackbar()
 

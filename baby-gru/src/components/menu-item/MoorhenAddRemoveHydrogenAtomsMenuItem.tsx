@@ -5,6 +5,7 @@ import { MoorhenStore } from "../../moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 
 export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
@@ -14,7 +15,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
     
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 
     const handleClick = useCallback(async (cootCommand: string) => {
         if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {

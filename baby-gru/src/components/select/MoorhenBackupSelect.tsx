@@ -2,6 +2,7 @@ import { useEffect,useState,forwardRef} from "react";
 import { Form, FormSelect } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 type MoorhenBackupSelectPropsType = {
     height?: string;
@@ -11,7 +12,7 @@ type MoorhenBackupSelectPropsType = {
 
 export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSelectPropsType>((props, selectRef) => {
 
-    const timeCapsule = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule);
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
     
     const defaultProps = { height: '4rem', width: '20rem', label: "Backup" }
 

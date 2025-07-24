@@ -70,8 +70,7 @@ import glRefSliceReducer, { setOrigin, setRequestDrawScene, setIsWebGL2, setActi
 import overlaysReducer from './store/overlaysSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
-import {setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath, setUrlPrefix } from './store/coreRefsSlice';
-import { setBusy } from './store/userInterfaceSlice';
+import { setBusy } from './store/globalUISlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
@@ -114,7 +113,6 @@ export {
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
     setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, 
-    setCommandCentre, setTimeCapsule, setPaths, setMonomerLibraryPath, setMoorhenIconsPath, setUrlPrefix,
     setBusy
 
 };

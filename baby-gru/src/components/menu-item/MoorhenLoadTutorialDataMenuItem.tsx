@@ -8,6 +8,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMapList } from "../../store/mapsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -19,7 +20,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
-    const urlPrefix = useSelector((state: moorhen.State) => state.coreRefs.paths.urlPrefix);    
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;  
 
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {

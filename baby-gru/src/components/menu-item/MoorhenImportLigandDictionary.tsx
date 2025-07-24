@@ -12,6 +12,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const MoorhenImportLigandDictionary = (props: {
     id: string;
@@ -34,7 +35,7 @@ const MoorhenImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
@@ -165,7 +166,7 @@ const MoorhenImportLigandDictionary = (props: {
 
 export const MoorhenSMILESToLigandMenuItem = () => {
 
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     const [smile, setSmile] = useState<string>('')
     const [tlc, setTlc] = useState<string>('')
     const [createInstance, setCreateInstance] = useState<boolean>(true)

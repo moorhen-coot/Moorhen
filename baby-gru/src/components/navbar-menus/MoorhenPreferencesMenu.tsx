@@ -18,6 +18,7 @@ import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shor
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenPreferencesMenu = (props:{dropdownId: string}) => {
 
@@ -34,7 +35,7 @@ export const MoorhenPreferencesMenu = (props:{dropdownId: string}) => {
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards)
     const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule)
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
     const [showModal, setShowModal] = useState<boolean | null>(null);
 
     useEffect(() => {

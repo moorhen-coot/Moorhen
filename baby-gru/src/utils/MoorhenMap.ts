@@ -8,6 +8,7 @@ import { setOrigin, setRequestDrawScene, setDisplayBuffers } from "../store/glRe
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
+import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -90,7 +91,7 @@ export class MoorhenMap implements moorhen.Map {
         this.store = reduxStore
         this.isEM = false
         this.molNo = null
-        this.commandCentre = commandCentre? commandCentre : this.store.getState().coreRefs.commandCentre;
+        this.commandCentre = commandCentre? commandCentre : moorhenGlobalInstance.getCommandCentreRef()
         this.levelRange = null
         this.webMGContour = false
         this.showOnLoad = true

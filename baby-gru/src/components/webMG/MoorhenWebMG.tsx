@@ -12,7 +12,7 @@ import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
-import { setVideoRecorder } from '../../store/coreRefsSlice';
+import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -21,7 +21,6 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
-    videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
 
 const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
@@ -50,6 +49,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef()
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
@@ -170,12 +170,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [hoveredAtom])
 
-    // useEffect(() => {
-    //     if (glRef !== null && typeof glRef !== 'function') {
-    //         props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
-    //         dispatch(setVideoRecorder(props.videoRecorderRef))
-    //     }
-    // }, [])
+    useEffect(() => {
+       if (glRef !== null && typeof glRef !== 'function') {
+           const videoRecorder = new MoorhenScreenRecorder(glRef, getCanvasRef())
+           moorhenGlobalInstance.setVideoRecorder(videoRecorder);
+       }
+    }, [])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -610,6 +610,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 dispatch,
                 enqueueSnackbar,
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
+                videoRecorderRef,
                 ...props
             },
             JSON.parse(shortCuts as string),

@@ -7,6 +7,7 @@ import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { convertViewtoPx } from "../../utils/utils";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
 
@@ -21,9 +22,9 @@ export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
 
     const { enqueueSnackbar } = useSnackbar()
 
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
-    const timeCapsuleRef = useSelector((state: moorhen.State) => state.coreRefs.timeCapsule)
-    const monomerLibraryPath = useSelector((state: moorhen.State) => state.coreRefs.paths.monomerLibrary)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
 
     const loadSession = useCallback(async (sessionData: string) => {
         try {

@@ -10,7 +10,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
-import { setBusy } from "../../store/userInterfaceSlice";
+import { setBusy } from "../../store/globalUISlice";
 
 
 export const MoorhenFetchOnlineSourcesForm = (props: {

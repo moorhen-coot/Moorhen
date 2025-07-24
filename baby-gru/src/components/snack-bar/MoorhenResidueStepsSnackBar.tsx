@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { sleep } from "../../utils/utils";
-import { MoorhenStore } from "../../moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 
 export const MoorhenResidueStepsSnackBar = forwardRef<
@@ -25,7 +25,7 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
     }
 >((props, ref) => {
 
-    const timeCapsuleRef = MoorhenStore.getState().coreRefs.timeCapsule
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
 
     const defaultProps = {
         disableTimeCapsule: true, sleepTime: 600,

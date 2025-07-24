@@ -5,6 +5,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenAddWatersMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,7 +17,7 @@ export const MoorhenAddWatersMenuItem = (props: {
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 
     const panelContent = <>
         <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />

@@ -1,5 +1,5 @@
-import { MoorhenStore } from "../../moorhen";
 import "./moorhen-icons.css";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 type MoorhenIconPropsType = {
     name: string;
@@ -9,7 +9,7 @@ type MoorhenIconPropsType = {
     className?: string; // Optional className for additional styling
 };
 export const MoorhenIcon = ({ name, alt, size, isActive = null, className = "" }: MoorhenIconPropsType) => {
-    const urlPrefix = MoorhenStore.getState().coreRefs.paths.urlPrefix;
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
     const file = `${urlPrefix}/pixmaps/moorhen_icons/${name}.svg`;
     const internalClassName = className
         ? className

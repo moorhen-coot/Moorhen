@@ -12,6 +12,7 @@ import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenMapMaskingMenuItem = () => {
 
@@ -32,7 +33,7 @@ export const MoorhenMapMaskingMenuItem = () => {
     const chainSelectRef = useRef<null | HTMLSelectElement>(null)
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidInputRef = useRef<null | HTMLInputElement>(null)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>

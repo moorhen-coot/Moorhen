@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenMakeMaskedMapsSplitByChainMenuItem = () => {
 
@@ -17,7 +18,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = () => {
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = useSelector((state: moorhen.State) => state.coreRefs.commandCentre)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     const { enqueueSnackbar } = useSnackbar()
 

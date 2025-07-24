@@ -22,6 +22,7 @@ import { moorhensession } from "../../protobuf/MoorhenSession";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
 import { MoorhenStore } from "../../moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 interface MoorhenFileMenuProps {
     dropdownId: string;
@@ -46,9 +47,9 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const commandCentre = MoorhenStore.getState().coreRefs.commandCentre;
-    const timeCapsule = MoorhenStore.getState().coreRefs.timeCapsule;
-    const paths = MoorhenStore.getState().coreRefs.paths;
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
+    const paths = moorhenGlobalInstance.paths;
 
     //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
@@ -78,7 +79,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, paths.monomerLibrary);
+        const newMolecule = new MoorhenMolecule();
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -211,7 +212,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         return timeCapsule.current.createBackup(keyString, sessionString);
     };
 
-    const videoRecorderRef = useSelector((state: moorhen.State) => state.coreRefs.videoRecorder);
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
     const handleRecording = useCallback(() => {
         if (!videoRecorderRef.current) {
             console.warn("Attempted to record screen before webGL is initated...");
