@@ -2,7 +2,7 @@ const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
-
+const { defineReactCompilerLoaderOption, reactCompilerLoader } = require('react-compiler-webpack');
 const path = require('path');
 
 const paths = {
@@ -87,8 +87,19 @@ module.exports = (env, argv) => {
       rules:[
         {
           test: /\.tsx$/,
-          use: 'ts-loader',
           exclude: /node_modules/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true // Skip type checking for faster builds with React Compiler
+              }
+            },
+            {
+              loader: reactCompilerLoader,
+              options: defineReactCompilerLoaderOption()
+            }
+          ]
         },
         {
           test: /\.ts$/,
@@ -102,7 +113,15 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.jsx$/,
-          loader: 'babel-loader',
+          exclude: /node_modules/,
+          use: [
+            'babel-loader',
+            {
+              loader: reactCompilerLoader,
+              options: defineReactCompilerLoaderOption({
+              })
+            }
+          ]
         },
         {
           test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,

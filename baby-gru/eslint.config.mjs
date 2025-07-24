@@ -108,6 +108,7 @@ export default [
       "jsx-a11y": pluginJsxA11y,
       "react-refresh": pluginReactRefresh,
       "react-perf": pluginReactPerf,
+      "@typescript-eslint": tseslint,
     },
     languageOptions: {
       globals: {
