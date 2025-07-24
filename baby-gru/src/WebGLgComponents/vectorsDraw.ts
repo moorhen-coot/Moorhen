@@ -9,13 +9,12 @@ export const getVectorsBuffers = (): any  => {
     const vectorsList = store.getState().vectors.vectorsList
     const molecules = store.getState().molecules.moleculeList
 
-    const atomColours = {}
-    const colour = [1.0,0.0,0.0,1.0]
     const dashPairs = []
     const solidPairs = []
     const arrowHeadPairs = []
     const newLabelBuffers = []
 
+    let nAtom = 0
     vectorsList.forEach(vec => {
         let xFromOrig;
         let yFromOrig;
@@ -23,6 +22,7 @@ export const getVectorsBuffers = (): any  => {
         let xToOrig;
         let yToOrig;
         let zToOrig;
+        const theColour = [vec.vectorColour.r/256,vec.vectorColour.g/256,vec.vectorColour.b/256,1.0]
         if(vec.coordsMode==="points"){
             xFromOrig = vec.xFrom
             yFromOrig = vec.yFrom
@@ -40,8 +40,14 @@ export const getVectorsBuffers = (): any  => {
             if(vec.molNoFrom!==undefined&&vec.cidFrom.length>0){
                 const fromMol = molecules.find(mol => mol.molNo === vec.molNoFrom)
                 if(fromMol){
-                    const fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
-                    const nFromAtoms = fromAtoms.size()
+                    let fromAtoms
+                    let nFromAtoms = 0
+                    try {
+                        fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
+                        nFromAtoms = fromAtoms.size()
+                    } catch(e) {
+                        console.log(e)
+                    }
                     if(nFromAtoms>0){
                         let totXFrom = 0
                         let totYFrom = 0
@@ -67,8 +73,14 @@ export const getVectorsBuffers = (): any  => {
             if(vec.molNoTo!==undefined&&vec.cidTo.length>0){
                 const toMol = molecules.find(mol => mol.molNo === vec.molNoTo)
                 if(toMol){
-                    const toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
-                    const nToAtoms = toAtoms.size()
+                    let toAtoms
+                    let nToAtoms = 0
+                    try {
+                        toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
+                        nToAtoms = toAtoms.size()
+                    } catch(e) {
+                        console.log(e)
+                    }
                     if(nToAtoms>0){
                         let totXTo = 0
                         let totYTo = 0
@@ -124,12 +136,16 @@ export const getVectorsBuffers = (): any  => {
                 x: xFrom,
                 y: yFrom,
                 z: zFrom,
+                serial: nAtom++,
+                colour: theColour
             }
             const secondAtomInfo = {
                 pos: [xTo, yTo, zTo],
                 x: xTo,
                 y: yTo,
                 z: zTo,
+                serial: nAtom++,
+                colour: theColour
             }
             const pair = [firstAtomInfo, secondAtomInfo]
             if(vec.drawMode==="dashedcylinder"){
@@ -149,12 +165,16 @@ export const getVectorsBuffers = (): any  => {
                     x: xFrom,
                     y: yFrom,
                     z: zFrom,
+                    serial: nAtom++,
+                    colour: theColour
                 }
                 const secondAtomInfo = {
                     pos: [xTo, yTo, zTo],
                     x: xTo,
                     y: yTo,
                     z: zTo,
+                    serial: nAtom++,
+                    colour: theColour
                 }
                 const pair = [firstAtomInfo, secondAtomInfo]
                 arrowHeadPairs.push(pair)
@@ -171,12 +191,16 @@ export const getVectorsBuffers = (): any  => {
                     x: xFrom,
                     y: yFrom,
                     z: zFrom,
+                    serial: nAtom++,
+                    colour: theColour
                 }
                 const secondAtomInfo = {
                     pos: [xTo, yTo, zTo],
                     x: xTo,
                     y: yTo,
                     z: zTo,
+                    serial: nAtom++,
+                    colour: theColour
                 }
                 const pair = [firstAtomInfo, secondAtomInfo]
                 arrowHeadPairs.push(pair)
@@ -184,18 +208,22 @@ export const getVectorsBuffers = (): any  => {
         }
     })
 
-    dashPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
-    solidPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
-    arrowHeadPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+    const dashColours = {}
+    const solidColours = {}
+    const arrowColours = {}
+
+    dashPairs.forEach(atom => { dashColours[`${atom[0].serial}`] =  atom[0].colour; dashColours[`${atom[1].serial}`] =  atom[0].colour })
+    solidPairs.forEach(atom => { solidColours[`${atom[0].serial}`] = atom[0].colour; solidColours[`${atom[1].serial}`] = atom[0].colour })
+    arrowHeadPairs.forEach(atom => { arrowColours[`${atom[0].serial}`] = atom[0].colour; arrowColours[`${atom[1].serial}`] = atom[0].colour })
 
     const objects = [
-        gemmiAtomPairsToCylindersInfo(dashPairs, 0.07, atomColours, false, 0.01, 1000.)
+        gemmiAtomPairsToCylindersInfo(dashPairs, 0.07, dashColours, false, 0.01, 1000.)
     ]
     objects.push(...[
-        gemmiAtomPairsToCylindersInfo(solidPairs, 0.07, atomColours, false, 0.01, 1000., false)
+        gemmiAtomPairsToCylindersInfo(solidPairs, 0.07, solidColours, false, 0.01, 1000., false)
     ])
     objects.push(...[
-        gemmiAtomPairsToCylindersInfo(arrowHeadPairs, 0.15, atomColours, false, 0.01, 1000., false, "cone")
+        gemmiAtomPairsToCylindersInfo(arrowHeadPairs, 0.15, arrowColours, false, 0.01, 1000., false, "cone")
     ])
 
     return [objects,newLabelBuffers]

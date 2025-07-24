@@ -1222,6 +1222,8 @@ export namespace moorhen {
         molNoFrom: number;
         molNoTo: number;
         uniqueId: string;
+        vectorColour: {r:number,g:number,b:number};
+        textColour: {r:number,g:number,b:number};
     }
 
 }

@@ -10,6 +10,7 @@ import { FormControlLabel, FormControl, RadioGroup, Radio, Slider, TextField, Me
 import {v4 as uuidv4} from 'uuid';
 import { addVector, removeVector } from "../../store/vectorsSlice"
 import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
+import MoorhenColourPicker from "../inputs/MoorhenColourPicker";
 
 const MoorhenDeleteVectorMenuItem = (props: {
     item: moorhen.Map | moorhen.Molecule;
@@ -83,13 +84,22 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
             cidTo: "",
             molNoFrom: 0,
             molNoTo: 0,
-            uniqueId: uuidv4()
+            uniqueId: uuidv4(),
+            vectorColour: {r:0,g:0,b:0},
+            textColour: {r:0,g:0,b:0},
         }
         return aVector
     }
 
+    interface RGBColour  {
+        r: number;
+        g: number;
+        b: number;
+    }
+
     const [theVector, setVector] = useState<moorhen.MoorhenVector>(newVector())
     const [selectedOption, setSelectedOption] = useState<string>("new")
+    const [vectorColour, setVectorColour] = useState({r:0,g:0,b:0})
 
     const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
         dispatch(removeVector(theVector))
@@ -129,6 +139,11 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         }
     }
 
+    const handleColorChange = (color: { r: number; g: number; b: number }) => {
+        setVectorColour(color)
+        updateVector({vectorColour:color})
+    }
+
     const headerContent =  <>
                             <div style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Select vector:</div>
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
@@ -148,7 +163,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             </Form.Group>
                         </>
 
-    const footer = <>{vectorSelectRef.current && selectedOption!=="new" && 
+    const footer = <>{vectorSelectRef.current && selectedOption!=="new" &&
                     <Button className='m-2' variant="danger" onClick={handleDelete}>Delete</Button>
                     }
                     <Button className='m-2' onClick={handleApply}>Apply</Button></>
@@ -170,6 +185,8 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         molNoFrom=undefined,
         molNoTo=undefined,
         uniqueId=undefined,
+        vectorColour=undefined,
+        textColour=undefined,
     }) => {
         const newVector: moorhen.MoorhenVector = {
             coordsMode: (coordsMode !== undefined) ? coordsMode : theVector.coordsMode,
@@ -188,6 +205,8 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
             molNoFrom: (molNoFrom !== undefined) ? molNoFrom : theVector.molNoFrom,
             molNoTo: (molNoTo !== undefined) ? molNoTo : theVector.molNoTo,
             uniqueId: (uniqueId !== undefined) ? uniqueId : theVector.uniqueId,
+            vectorColour: (vectorColour !== undefined) ? vectorColour : theVector.vectorColour,
+            textColour: (textColour !== undefined) ? textColour : theVector.textColour,
         }
         setVector(newVector)
     }
@@ -326,6 +345,31 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <option value="both">Both</option>
                                 </FormSelect>
                             </Form.Group>
+                            <Row>
+                            <Col className="align-items-start"
+                            style={{
+                                display: "flex",
+                                justifyContent: "left",
+                            }}
+                            >
+                            <div>Vector colour</div>
+                            </Col>
+                            <Col xs={10} className="align-items-start"
+                            style={{
+                                display: "flex",
+                                justifyContent: "left",
+                            }}
+                            >
+                            <MoorhenColourPicker
+                                colour={[theVector.vectorColour.r, theVector.vectorColour.g, theVector.vectorColour.b]}
+                                setColour={(color => {
+                                   handleColorChange({ r: color[0], g: color[1], b: color[2] });
+                                })}
+                                position="bottom"
+                                tooltip="Change vector colour"
+                            />
+                            </Col>
+                            </Row>
                             <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
                             <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Label mode</Form.Label>
                                 <FormSelect size="sm" ref={labelModeRef} defaultValue="none" onChange={(evt) => {
