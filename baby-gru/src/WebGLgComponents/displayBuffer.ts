@@ -87,21 +87,21 @@ export class DisplayBuffer {
     updateSymmetryAtoms() {
         this.symmetryAtoms = []
         this.symmetryMatrices.forEach(mat =>{
-                let symt = mat4.create();
+                const symt = mat4.create();
                 mat4.set(symt,
                         mat[0], mat[1], mat[2], mat[3],
                         mat[4], mat[5], mat[6], mat[7],
                         mat[8], mat[9], mat[10], mat[11],
                         mat[12], mat[13], mat[14], mat[15]);
-                let theseSymmAtoms = []
+                const theseSymmAtoms = []
                 for (let j = 0; j < this.atoms.length; j++) {
-                    let atx = this.atoms[j].x;
-                    let aty = this.atoms[j].y;
-                    let atz = this.atoms[j].z;
-                    let p = vec3Create([atx, aty, atz]);
-                    let atPosTrans = vec3Create([0, 0, 0]);
+                    const atx = this.atoms[j].x;
+                    const aty = this.atoms[j].y;
+                    const atz = this.atoms[j].z;
+                    const p = vec3Create([atx, aty, atz]);
+                    const atPosTrans = vec3Create([0, 0, 0]);
                     vec3.transformMat4(atPosTrans, p, symt);
-                    let symmAt = {
+                    const symmAt = {
                         charge: this.atoms[j].charge,
                         tempFactor: this.atoms[j].tempFactor,
                         element: this.atoms[j].element,

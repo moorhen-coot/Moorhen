@@ -2,13 +2,12 @@ import { OverlayTrigger, Stack, Tooltip } from "react-bootstrap"
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
-import { moorhen } from "../../types/moorhen"
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
+import { SnackbarContent, useSnackbar } from "notistack"
+import { moorhen } from "../../types/moorhen"
 import { getTooltipShortcutLabel } from '../../utils/utils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
-import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
-import { SnackbarContent, useSnackbar } from "notistack"
 import { setActiveMolecule } from "../../store/glRefSlice"
 
 export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
@@ -16,7 +15,6 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
     {
         moleculeRef: React.RefObject<moorhen.Molecule>;
         cidRef: React.RefObject<string>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         id: string;
     }
 >((props, ref) => {
@@ -125,3 +123,5 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenAcceptRejectRotateTranslateSnackBar.displayName = "MoorhenAcceptRejectRotateTranslateSnackBar";

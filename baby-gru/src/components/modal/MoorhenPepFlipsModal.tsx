@@ -1,15 +1,15 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Button, Row } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap";
 import { Tooltip } from "@mui/material";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenPepFlipsModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);

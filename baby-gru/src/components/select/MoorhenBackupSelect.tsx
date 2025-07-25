@@ -1,15 +1,18 @@
-import { useEffect,useState,forwardRef } from "react";
+import { useEffect,useState,forwardRef} from "react";
 import { Form, FormSelect } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
+import { useSelector } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 type MoorhenBackupSelectPropsType = {
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     height?: string;
     width?: string;
     label?: string;
 }
 
 export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSelectPropsType>((props, selectRef) => {
+
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
     
     const defaultProps = { height: '4rem', width: '20rem', label: "Backup" }
 
@@ -19,17 +22,17 @@ export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSe
 
     useEffect(() => {
         async function fetchKeys(): Promise<void> {
-            const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
+            const sortedKeys = await timeCapsule.current.getSortedKeys()
             const newStorageOptions = sortedKeys.map((key, index) => {
                 return <option key={`${key.label}-${index}`} value={JSON.stringify(key)}>{key.label}</option>
             })
             setBackupOptions(newStorageOptions)
         }
 
-        if (props.timeCapsuleRef.current) {
+        if (timeCapsule.current) {
             fetchKeys();
         }
-    }, [props.timeCapsuleRef]);
+    }, [timeCapsule]);
 
     return <Form.Group style={{ width: width, height:height }}>
                 <Form.Label>{label}</Form.Label>
@@ -38,4 +41,6 @@ export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSe
                 </FormSelect>
             </Form.Group>
 })
+
+MoorhenBackupSelect.displayName = "MoorhenBackupSelect";
 

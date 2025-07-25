@@ -1,10 +1,10 @@
 import { useCallback, useRef } from "react";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useDispatch, batch, useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { useSnackbar } from "notistack";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
@@ -81,9 +81,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.ContextButtonProps) => {
             monomerLibraryPath: props.monomerLibraryPath,
             commandCentre: props.commandCentre,
             cidRef: fragmentCid,
-            glRef: props.glRef,
-            moleculeRef: chosenMolecule
-        })
+            moleculeRef: chosenMolecule,
+        });
         batch(() => {
             dispatch(setHoveredAtom({ molecule: null, cid: null }))
             dispatch(setIsDraggingAtoms(true))

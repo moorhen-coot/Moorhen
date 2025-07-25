@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
@@ -8,45 +7,49 @@ type MoorhenCidInputFormPropsType = {
     width?: string;
     margin?: string;
     label?: string;
-    placeholder?: string; 
+    placeholder?: string;
     defaultValue?: string;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     invalidCid?: boolean;
     allowUseCurrentSelection?: boolean;
-}
+    ref?: React.Ref<HTMLInputElement>;
+};
 
-export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
-
-    const defaultProps = { 
-        height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", 
-        placeholder: "", defaultValue: "", invalidCid: false, allowUseCurrentSelection: false
-    }
-
-    const {
-        height, width, margin, label, placeholder, defaultValue, invalidCid, allowUseCurrentSelection
-    } = { ...defaultProps, ...props }
-    
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
-    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
+export const MoorhenCidInputForm = ({
+    height = "4rem",
+    width = "20rem",
+    margin = "0.1rem",
+    label = "Atom selection",
+    placeholder = "",
+    defaultValue = "",
+    invalidCid = false,
+    allowUseCurrentSelection = false,
+    onChange,
+    ref: cidFormRef,
+}: MoorhenCidInputFormPropsType) => {
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
+    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        if (props.onChange) {
-            props.onChange(evt)
+        if (onChange) {
+            onChange(evt);
         }
-        if(cidFormRef !== null && typeof cidFormRef !== 'function') cidFormRef.current.value = evt.target.value
-    }
+        if (cidFormRef && typeof cidFormRef === 'object' && 'current' in cidFormRef && cidFormRef.current) {
+            cidFormRef.current.value = evt.target.value;
+        }
+    };
 
     const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {
         if (evt.target.checked) {
             if (residueSelection.cid) {
-                // @ts-ignore
-                handleChange({target: {value: typeof residueSelection.cid === 'string' ? residueSelection.cid : residueSelection.cid.join('||')}})
+                // @ts-expect-error - Creating synthetic event object for handleChange
+                handleChange({ target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") } });
             }
         } else {
-            // @ts-ignore
-            handleChange({target: {value: ''}})
+            // @ts-expect-error - Creating synthetic event object for handleChange
+            handleChange({ target: { value: "" } });
         }
-    }
+    };
 
     return (
         <>
@@ -69,5 +72,4 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
             )}
         </>
     );
-})
-
+};

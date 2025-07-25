@@ -33,7 +33,7 @@ export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSele
     }
 
     const getChainOptions = (selectedCoordMolNo: number): React.JSX.Element[] => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
         if (selectedMolecule) {
             return selectedMolecule.sequences.map(sequence => allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
         }

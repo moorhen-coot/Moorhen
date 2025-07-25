@@ -2,18 +2,18 @@ import { useState, useCallback } from "react";
 import { PlayArrowOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import Editor from 'react-simple-code-editor';
+import { useSelector } from "react-redux";
+import { Store } from "@reduxjs/toolkit";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import Editor from 'react-simple-code-editor';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
-import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { Store } from "@reduxjs/toolkit";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -31,7 +31,7 @@ export const MoorhenScriptModal = (props: {
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.store, molecules, maps)
+            const scriptApi = new MoorhenScriptApi()
             scriptApi.exe(code)
         }
         catch (err) {

@@ -1,6 +1,6 @@
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenContactMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const MoorhenContactMenuItem = () => {
 
     const panelContent = <div style={{ maxWidth: "20rem" }}>
         <ul>
@@ -22,6 +22,5 @@ export const MoorhenContactMenuItem = (props: { setPopoverIsShown: React.Dispatc
         menuItemText="Contact..."
         onCompleted={() => { }}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

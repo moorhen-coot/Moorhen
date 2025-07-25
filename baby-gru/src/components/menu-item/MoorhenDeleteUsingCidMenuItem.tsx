@@ -1,21 +1,18 @@
 import { useCallback, useRef, useState } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Button } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
+import { moorhen } from "../../types/moorhen";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenDeleteUsingCidMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
-
+    
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidFormRef = useRef<null |HTMLInputElement>(null)
     
@@ -27,11 +24,11 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const deleteSelection = useCallback(async () => {
-        const selectedCid = cidFormRef.current.value
-        if (!selectedCid || !moleculeSelectRef.current.value) {
+        const selectedCid = cidFormRef.current?.value
+        if (!selectedCid || !moleculeSelectRef.current?.value) {
             return
         }
-        
+
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (!molecule) {
             return

@@ -1,9 +1,8 @@
 import { ClickAwayListener, FormGroup, IconButton } from "@mui/material"
 import { useCallback, useEffect, useRef } from "react"
 import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 
@@ -80,7 +79,6 @@ export const MoorhenContextButtonBase = (props: {
     needsMapData?: boolean;
     needsAtomData?: boolean;
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     cootCommandInput?: moorhen.cootCommandKwargs;
     setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;

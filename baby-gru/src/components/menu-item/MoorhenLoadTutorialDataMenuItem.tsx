@@ -1,31 +1,30 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
+import { useSelector, useDispatch, useStore } from 'react-redux';
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch, batch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMapList } from "../../store/mapsSlice";
-import { Store } from "@reduxjs/toolkit";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    monomerLibraryPath: string;
-    urlPrefix: string;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const dispatch = useDispatch()
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
     
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;  
 
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
@@ -50,29 +49,27 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             return
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
-        const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
-        await newMolecule.loadToCootFromURL(`${props.urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
+        const newMap = new MoorhenMap(props.commandCentre, store);
+        const newDiffMap = new MoorhenMap(props.commandCentre, store);
+        await newMolecule.loadToCootFromURL(`${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
         await newMolecule.centreOn('/*/*/*/*', true)
         await newMap.loadToCootFromMtzURL(
-            `${props.urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
+            `${urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `map-${tutorialNumber}`,
             { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
         await newDiffMap.loadToCootFromMtzURL(
-            `${props.urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
+            `${urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `diff-map-${tutorialNumber}`,
             { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
-        batch(() => {
-            dispatch( addMolecule(newMolecule) )
-            dispatch( addMapList([newMap, newDiffMap]) )
-            dispatch( setActiveMap(newMap) )   
-        })
+        dispatch( addMolecule(newMolecule) )
+        dispatch( addMapList([newMap, newDiffMap]) )
+        dispatch( setActiveMap(newMap) )   
     }
 
     return <MoorhenBaseMenuItem

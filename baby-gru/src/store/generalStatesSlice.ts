@@ -30,7 +30,7 @@ export const generalStatesSlice = createSlice({
   name: 'generalStates',
   initialState: initialState,
   reducers: {
-    resetGeneralStates: (state) => {
+    resetGeneralStates: () => {
       return initialState
     },
     setIsShowingTomograms: (state, action: {payload: boolean, type: string}) => {
@@ -122,7 +122,7 @@ export const {
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
   resetGeneralStates, setIsShowingTomograms, setDefaultExpandDisplayCards,
-  setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo
+  setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo,
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

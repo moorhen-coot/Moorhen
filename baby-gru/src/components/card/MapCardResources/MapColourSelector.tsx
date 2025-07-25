@@ -1,12 +1,12 @@
-import { moorhen } from "../../../types/moorhen";
 import { useMemo } from "react";
 import { useDispatch, useSelector} from "react-redux";
+import { moorhen } from "../../../types/moorhen";
 import {
     setMapColours,
     setNegativeMapColours,
     setPositiveMapColours,
 } from "../../../store/mapContourSettingsSlice";
-import MoorhenColourPicker from "../../inputs/MoorhenColourPicker";
+import { MoorhenColourPicker } from "../../inputs";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface MoorhenMapColorSelector {

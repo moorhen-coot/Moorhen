@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux";
 import { getTooltipShortcutLabel } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useDispatch, useSelector } from "react-redux";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRefineResiduesButton = (props: moorhen.ContextButtonProps) => {
     const dispatch = useDispatch()

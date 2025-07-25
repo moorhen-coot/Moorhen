@@ -5,7 +5,6 @@ const fs = require('fs')
 const path = require('path')
 const fetch = require('node-fetch')
 const {gzip, ungzip} = require('node-gzip');
-
 const createCootModule = require('../../public/moorhen')
 
 let cootModule;
@@ -36,7 +35,7 @@ describe("Testing gemmi", () => {
         cleanUpVariables = []
     })
 
-    test("Test small molecule to mmcif", async () => {
+    test("small molecule to mmcif", async () => {
         const response = await fetch("https://www.crystallography.net/cod/1100231.cif")
         expect(response.ok).toBeTruthy()
         const fileContents = await response.text()
@@ -63,7 +62,7 @@ describe("Testing gemmi", () => {
 
     })
 
-    test("Test parse_mon_lib_list_cif", async () => {
+    test("parse_mon_lib_list_cif", async () => {
         const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif")
         expect(response.ok).toBeTruthy()
         const fileContents = await response.text()
@@ -72,7 +71,7 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(table)
     })
 
-    test("Test get_coord_header_info with gemmi 3j2w.pdb", () => {
+    test("get_coord_header_info with gemmi 3j2w.pdb", () => {
         const filePath = './3j2w.pdb'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Pdb)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
@@ -93,7 +92,7 @@ describe("Testing gemmi", () => {
         cleanUpVariables.push(author,author_1,author_2,author_3,journal,header_info)
     })
 
-    test("Test get_coord_header_info with gemmi 5a3h.mmcif", () => {
+    test("get_coord_header_info with gemmi 5a3h.mmcif", () => {
         const filePath = './5a3h.mmcif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
@@ -127,7 +126,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_3,journal_4,journal_9,journal,header_info)
     })
 
-    test("Test get_coord_header_info with gemmi 8zuv_updated.cif", () => {
+    test("get_coord_header_info with gemmi 8zuv_updated.cif", () => {
         const filePath = './8zuv_updated.cif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
@@ -156,7 +155,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_2,journal_3,journal_7,journal,header_info)
     })
 
-    test("Test get_coord_header_info with gemmi 6owe.cif", () => {
+    test("get_coord_header_info with gemmi 6owe.cif", () => {
         const filePath = './6owe.cif'
         const st = cootModule.read_structure_file(filePath, cootModule.CoorFormat.Mmcif)
         const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data',filePath), 'utf8');
@@ -185,7 +184,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(author,author_1,author_2,author_3,journal_1,journal_2,journal_3,journal_7,journal,header_info)
     })
 
-    test("Test assembly 3j2w.pdb", () => {
+    test("assembly 3j2w.pdb", () => {
         const st = cootModule.read_structure_file('./3j2w.pdb', cootModule.CoorFormat.Pdb)
         const assemblies = st.assemblies
         const n_assembly = assemblies.size()
@@ -243,7 +242,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(assemblies,st)
     })
 
-    test("Test assembly 3j2w_updated.cif", () => {
+    test("assembly 3j2w_updated.cif", () => {
         const st = cootModule.read_structure_file('./3j2w_updated.cif', cootModule.CoorFormat.Mmcif)
         const assemblies = st.assemblies
         const n_assembly = assemblies.size()
@@ -301,7 +300,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(assemblies,st)
     })
 
-    test("Test read structure file", () => {
+    test("read structure file", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         const models = st.models
         expect(st.has_origx).toBeTruthy()
@@ -334,7 +333,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st, model, models, chain, chains, residue, residues, atom, atoms)
     })
 
-    test("Test ligands", () => {
+    test("ligands", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st)
         const model = st.first_model()
@@ -352,7 +351,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st, model, chain, chains, ligand, ligands)
     })
 
-    test("Test waters", () => {
+    test("waters", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st)
         const model = st.first_model()
@@ -373,7 +372,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
 
     })
 
-    test("Test remove waters and ligands", () => {
+    test("remove waters and ligands", () => {
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st)
         cootModule.remove_ligands_and_waters_structure(st)
@@ -384,7 +383,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st, model, chains)
     })
 
-    test("Test spacegroups", () => {
+    test("spacegroups", () => {
         const sgp1 = cootModule.get_spacegroup_by_name('P1')
         expect(cootModule.getSpaceGroupHMAsString(sgp1)).toBe('P 1')
         expect(sgp1.hm()).toBe('P 1')
@@ -393,7 +392,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(sgp1)
     })
 
-    test("Test count_residues_in_selection", () => {
+    test("count_residues_in_selection", () => {
         const selection = new cootModule.Selection('//A/31-33/*')
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         const residue_count = cootModule.count_residues_in_selection(st, selection)
@@ -401,7 +400,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st)
     })
 
-    test("Test remove_non_selected_residues", () => {
+    test("remove_non_selected_residues", () => {
         const selection = new cootModule.Selection('//A/31-33/*')
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
@@ -426,7 +425,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
     })
 
-    test("Test structure_is_ligand", () => {
+    test("structure_is_ligand", () => {
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
 

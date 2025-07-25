@@ -1,15 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 import { Col, Form } from "react-bootstrap";
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from "chart.js";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
 import annotationPlugin from "chartjs-plugin-annotation";
+import { useSelector , useDispatch } from "react-redux";
+import { MoorhenSlider } from "../inputs";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
-import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
-import { useSelector } from "react-redux";
-import { useDispatch } from 'react-redux';
 import { setOrigin } from "../../store/glRefSlice"
+import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -64,7 +63,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
     const colourPalette = (value: number) => {
-        let gfrac = 1 / value;
+        const gfrac = 1 / value;
         if (value > 0) {
             return "rgb(0, " + Math.floor(155 + 100 * gfrac) + ", 0)";
         } else {
@@ -78,7 +77,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
             return null;
         }
 
-        let promises = [
+        const promises = [
             props.commandCentre.current.cootCommand(
                 {
                     message: "coot_command",
@@ -99,9 +98,9 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
             ),
         ] as [Promise<moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>>, Promise<moorhen.WorkerResponse<number>>];
 
-        let responses = await Promise.all(promises);
-        let newPlotData = responses[0].data.result.result.reverse();
-        let newMapRmsd = responses[1].data.result.result;
+        const responses = await Promise.all(promises);
+        const newPlotData = responses[0].data.result.result.reverse();
+        const newMapRmsd = responses[1].data.result.result;
         setMapRmsd(newMapRmsd);
         return newPlotData;
     };
@@ -136,7 +135,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 ];
             };
 
-            let labels = plotData.map((peak, idx) => (idx % 10 === 0 ? idx : ""));
+            const labels = plotData.map((peak, idx) => (idx % 10 === 0 ? idx : ""));
             const barWidth = convertViewtoPx(35, width) / 40;
             const tooltipFontSize = 12;
             const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
@@ -144,7 +143,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
             const containerBody = document.getElementById(`${props.chartId}-container-body`);
             containerBody.style.width = labels.length * barWidth + "px";
 
-            let scales = {
+            const scales = {
                 x: {
                     stacked: false,
                     beginAtZero: true,
@@ -179,7 +178,7 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 },
             };
 
-            let datasets = [
+            const datasets = [
                 {
                     label: "Difference Map Peaks",
                     data: plotData.map((peak) => peak.featureValue),

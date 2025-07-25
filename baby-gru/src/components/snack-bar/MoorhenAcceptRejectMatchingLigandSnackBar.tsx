@@ -2,10 +2,10 @@ import { Stack } from "react-bootstrap"
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
-import { moorhen } from "../../types/moorhen"
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 import { forwardRef, useCallback, useEffect, useRef } from "react"
 import { SnackbarContent, useSnackbar } from "notistack"
+import { moorhen } from "../../types/moorhen"
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
 
 export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
     HTMLDivElement,
@@ -112,3 +112,5 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
         </Stack>
     </SnackbarContent>
 })
+
+MoorhenAcceptRejectMatchingLigandSnackBar.displayName = "MoorhenAcceptRejectMatchingLigandSnackBar";

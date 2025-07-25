@@ -1,12 +1,12 @@
+import { batch } from 'react-redux'
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { libcootApi } from '../types/libcoot';
+import {  setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
+import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, countResiduesInSelection, copyStructureSelection, centreOnGemmiAtoms } from './utils';
 import { MoorhenColourRule } from './MoorhenColourRule';
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums"
-import { setOrigin, setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice"
-import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
-import { batch } from 'react-redux'
 
 /**
  * Represents a molecule representation
@@ -65,12 +65,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     residueSelectionColor: number[];
     mergeBufferObjects: (bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]) => libcootApi.InstancedMeshJS[]
 
-    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid()
         this.cid = cid
         this.setStyle(style)
         this.commandCentre = commandCentre
-        this.glRef = glRef
         this.parentMolecule = null
         this.buffers = null
         this.visible = false
@@ -325,11 +324,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
-        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
+        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
             this.setAtomBuffers(atomBuffers)
         }
-        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        const selectionCentre = centreOnGemmiAtoms(atomBuffers)
         this.buffers.forEach(buf => {
             buf.origin = selectionCentre
         })
@@ -344,11 +343,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const objects = await this.getBufferObjects()
         this.deleteBuffers()
         this.buildBuffers(objects)
-        let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
+        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? '/*/*/*/*' : this.cid, true)
         if (this.styleHasAtomBuffers) {
             this.setAtomBuffers(atomBuffers)
         }
-        let selectionCentre = centreOnGemmiAtoms(atomBuffers)
+        const selectionCentre = centreOnGemmiAtoms(atomBuffers)
         this.buffers.forEach(buf => {
             if (buf.hasOwnProperty("origin")) {
                 buf.origin = selectionCentre
@@ -388,7 +387,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      */
     async show() {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers
-        let newLabelBuffers = []
+        const newLabelBuffers = []
         try {
             this.visible = true
             if (this.buffers && this.buffers.length > 0) {
@@ -521,11 +520,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @returns {libcootApi.InstancedMeshJS[]} A merged array with the buffer objects in the second and first array
      */
     static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[] {
-        let resultBufferObjects: libcootApi.InstancedMeshJS[] = []
+        const resultBufferObjects: libcootApi.InstancedMeshJS[] = []
 
         for (let i=0; i < bufferObj1.length; i++) {
-            let iObjects = {}
-            for (let key in bufferObj1[i]) {
+            const iObjects = {}
+            for (const key in bufferObj1[i]) {
                 if (!(key in bufferObj2[i])) {
                     console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`)
                 } else {
@@ -704,7 +703,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
 
-        let originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], labelled)
+        const originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], labelled)
 
         const hbondAtomsPairs = hbonds.map(hbond => {
             const start = hbond.start
@@ -728,7 +727,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             return pair
         })
 
-        let originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
+        const originNeighboursHBond = this.getGemmiAtomPairsBuffers(hbondAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
 
         return originNeighboursBump.concat(originNeighboursHBond)
     }
@@ -918,7 +917,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
      * @returns {any[]} An array of arguments passed to libcoot API
      */
     getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, number] {
-        let bondSettings: (string | boolean | number)[] = [
+        const bondSettings: (string | boolean | number)[] = [
             name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
             this.parentMolecule.isDarkBackground
         ]
@@ -949,7 +948,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
         const bondArgs = this.getBondArgs(name)
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
-        let returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
+        const returnType = name === 'VdwSpheres' ? "instanced_mesh_perfect_spheres" : "instanced_mesh"
 
         if (name === "ligands") {
             this.cid = this.parentMolecule.ligands.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join('||') : this.ligandsCid
@@ -1019,8 +1018,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection)
         const atomColours = {}
         selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
-        let sphere_size = 0.3
-        let objects = [
+        const sphere_size = 0.3
+        const objects = [
             gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)
         ]
         objects.forEach(object => {
@@ -1060,7 +1059,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     getGemmiAtomPairsBuffers(gemmiAtomPairs: [moorhen.AtomInfo, moorhen.AtomInfo][], colour: number[], labelled: boolean = false): libcootApi.InstancedMeshJS[] {
         const atomColours = {}
         gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
-        let objects = [
+        const objects = [
             gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled)
         ]
         return objects
@@ -1290,7 +1289,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const lines = getCubeLines(unitCell)
         unitCell.delete()
 
-        let objects = [
+        const objects = [
             gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false)
         ]
 
@@ -1318,7 +1317,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
         if (this.colourRules?.length > 0) {
             if (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
-                let colourObjectList: {cid: string; rgba: number[]; applyColourToNonCarbonAtoms: boolean}[] = []
+                const colourObjectList: {cid: string; rgba: number[]; applyColourToNonCarbonAtoms: boolean}[] = []
                 this.colourRules.forEach(rule => {
                     colourObjectList.push(...rule.getUserDefinedColours())
                 })

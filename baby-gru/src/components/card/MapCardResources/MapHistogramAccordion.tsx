@@ -1,14 +1,13 @@
 import { useRef, useEffect, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { moorhen } from "../../../types/moorhen";
-import { libcootApi } from "../../../types/libcoot";
-import { convertViewtoPx } from "../../../utils/utils";
 import { Stack, Spinner } from "react-bootstrap";
-import { IconButton } from "@mui/material";
+import { IconButton , Checkbox, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { ZoomInOutlined, ZoomOutOutlined, ExpandMoreOutlined } from "@mui/icons-material";
 import { useSelector, useDispatch } from "react-redux";
-import { Checkbox, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { convertViewtoPx } from "../../../utils/utils";
+import { libcootApi } from "../../../types/libcoot";
+import { moorhen } from "../../../types/moorhen";
 import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 
 Chart.register(...registerables);

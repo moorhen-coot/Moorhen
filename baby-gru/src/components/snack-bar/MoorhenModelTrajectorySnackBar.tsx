@@ -1,12 +1,11 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { webGL } from "../../types/mgWebGL";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { SnackbarContent, useSnackbar } from "notistack";
-import { sleep } from "../../utils/utils";
 import { Stack } from "react-bootstrap";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
+import { sleep } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
 import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
 import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { hideMolecule, showMolecule } from '../../store/moleculesSlice';
@@ -15,7 +14,6 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     HTMLDivElement, 
     {
         commandCentre: React.RefObject<moorhen.CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         moleculeMolNo: number;
         representationStyle: string;
         id: string;
@@ -45,14 +43,14 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
         
-        let frames: moorhen.DisplayObject[][] = []
+        const frames: moorhen.DisplayObject[][] = []
         const multiModelMolecules = await molecule.splitMultiModels(false)
 
         const nSteps = multiModelMolecules.length
         const stepPercent = nSteps / 50
         const singleStepPercent = 1 / stepPercent
 
-        for (let iMolecule of multiModelMolecules) {
+        for (const iMolecule of multiModelMolecules) {
             iMolecule.setAtomsDirty(true)
             await iMolecule.updateAtoms()
             representation.setParentMolecule(iMolecule)
@@ -100,8 +98,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true))
-            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle as moorhen.RepresentationStyles, '/*/*/*/*', props.commandCentre, props.glRef)
-            setBusyComputingFrames(true)
+            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle as moorhen.RepresentationStyles, '/*/*/*/*', props.commandCentre)
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current)
             setNFrames(framesRef.current.length)
             setBusyComputingFrames(false)
@@ -158,3 +155,5 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
         }
     </SnackbarContent>
 })
+
+MoorhenModelTrajectorySnackBar.displayName = "MoorhenModelTrajectorySnackBar";

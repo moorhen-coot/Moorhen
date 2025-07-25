@@ -1,6 +1,6 @@
-import { guid } from './utils';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
+import { guid } from './utils';
 
 const formatCommandString = (command: string) => {
     if(command === 'fill_partial_residue') {
@@ -16,7 +16,7 @@ const formatCommandString = (command: string) => {
         }
         return ''
     })
-    let formattedString = formattedWords.join(' ');
+    const formattedString = formattedWords.join(' ');
     return formattedString
 }
 

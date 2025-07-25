@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
+import { useCallback, useRef } from "react"
+import { ChartEvent, ChartType, TooltipItem } from "chart.js"
 import { moorhen } from "../../types/moorhen"
 import { getResidueInfo } from "../../utils/utils"
-import { useCallback, useRef } from "react"
 import { libcootApi } from "../../types/libcoot"
-import { ChartEvent, ChartType, TooltipItem } from "chart.js"
 import { setHoveredAtom } from "../../moorhen"
 import { residueCodesOneToThree } from "../../utils/enums"
+import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 
 export const MoorhenQScore = (props: moorhen.CollectedProps) => {
 
@@ -31,9 +31,9 @@ export const MoorhenQScore = (props: moorhen.CollectedProps) => {
     }
 
     const getSequenceData = useCallback((selectedMolNo: number, selectedChain: string) => {
-        let selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         if (selectedMolecule) {
-            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
+            const sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
             if (sequenceData) {
                 return sequenceData.sequence
             }    
@@ -95,12 +95,12 @@ export const MoorhenQScore = (props: moorhen.CollectedProps) => {
         }]
 
 
-        let sequenceData =  getSequenceData(selectedModel, selectedChain)
+        const sequenceData =  getSequenceData(selectedModel, selectedChain)
         if (!sequenceData) {
             return
         }
 
-        let labels = []
+        const labels = []
         sequenceData.forEach((residue, index) => {
             if (index % 10 !== 0) {
                 labels.push(residue.resCode)
@@ -109,7 +109,7 @@ export const MoorhenQScore = (props: moorhen.CollectedProps) => {
             }
         })
             
-        let scales = {
+        const scales = {
             x: {
                 ticks: {
                     color: isDark ? 'white' : 'black',

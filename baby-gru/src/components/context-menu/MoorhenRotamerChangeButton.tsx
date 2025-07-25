@@ -1,6 +1,6 @@
+import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useSnackbar } from "notistack";
 
 export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) => {
     
@@ -14,10 +14,9 @@ export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) =>
             variant: "rotamerChange",
             persist: true,
             commandCentre: props.commandCentre,
-            glRef: props.glRef,
             moleculeMolNo: molecule.molNo,
-            chosenAtom: chosenAtom
-        })
+            chosenAtom: chosenAtom,
+        });
     }
 
     return <MoorhenContextButtonBase

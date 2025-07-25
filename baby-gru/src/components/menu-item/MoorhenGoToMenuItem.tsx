@@ -1,15 +1,14 @@
 import { useRef, useState } from "react"
 import { Form } from "react-bootstrap"
+import { useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
 import { cidToSpec } from "../../utils/utils"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { useSelector } from 'react-redux';
-import { useSnackbar } from "notistack";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenGoToMenuItem = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

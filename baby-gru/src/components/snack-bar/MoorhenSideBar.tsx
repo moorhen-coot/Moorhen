@@ -1,10 +1,10 @@
 import { SnackbarContent, useSnackbar } from "notistack";
 import { forwardRef, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
 import { Stack } from "react-bootstrap";
 import { IconButton } from "@mui/material";
 import { CloseOutlined,  OpenInNewOutlined,  UnfoldLessOutlined, UnfoldMoreOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
 import { attachModalToSideBar, collapseSideBarModal, detachModalFromSideBar, expandSideBarModal, showModal } from "../../store/modalsSlice";
 
 export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.Element, id: string, title: string, modalId: string}>((props, ref) => {
@@ -53,3 +53,5 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.E
         { !isCollapsed && props.children }
     </SnackbarContent>
 })
+
+MoorhenSideBar.displayName = "MoorhenSideBar";

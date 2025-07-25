@@ -1,12 +1,12 @@
 import { Form } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { useSelector, useDispatch } from 'react-redux';
+import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useSelector, useDispatch } from 'react-redux';
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { removeMap } from "../../store/mapsSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
-import { useCallback } from "react";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props: {
     item: moorhen.Map | moorhen.Molecule;

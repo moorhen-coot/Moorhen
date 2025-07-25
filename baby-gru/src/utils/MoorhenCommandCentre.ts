@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import { MoorhenHistory } from "./MoorhenHistory"
 import { moorhen } from "../types/moorhen"
 import { webGL } from '../types/mgWebGL';
+import { MoorhenHistory } from "./MoorhenHistory"
 
 /**
  * A command centre used to communicate between Moorhen and a web worker running an instance of the 

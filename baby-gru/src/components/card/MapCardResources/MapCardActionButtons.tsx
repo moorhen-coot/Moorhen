@@ -1,13 +1,5 @@
-import { doDownload } from "../../../utils/utils";
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
-import { addMap } from "../../../store/mapsSlice";
-import { MoorhenRenameDisplayObjectMenuItem } from "../../menu-item/MoorhenRenameDisplayObjectMenuItem";
-import { MoorhenDeleteDisplayObjectMenuItem } from "../../menu-item/MoorhenDeleteDisplayObjectMenuItem";
-import { MoorhenSetMapWeight } from "../../menu-item/MoorhenSetMapWeight";
-import { MoorhenScaleMap } from "../../menu-item/MoorhenScaleMap";
-import { MoorhenMapInfoCard } from "../../card/MoorhenMapInfoCard";
 import { MenuItem } from "@mui/material";
 import { Button, DropdownButton } from "react-bootstrap";
 import {
@@ -20,9 +12,17 @@ import {
     FileCopyOutlined,
     FilterTiltShiftOutlined,
 } from "@mui/icons-material";
+import Tooltip from "@mui/material/Tooltip";
+import { doDownload } from "../../../utils/utils";
+import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
+import { addMap } from "../../../store/mapsSlice";
+import { MoorhenRenameDisplayObjectMenuItem } from "../../menu-item/MoorhenRenameDisplayObjectMenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem } from "../../menu-item/MoorhenDeleteDisplayObjectMenuItem";
+import { MoorhenSetMapWeight } from "../../menu-item/MoorhenSetMapWeight";
+import { MoorhenScaleMap } from "../../menu-item/MoorhenScaleMap";
+import { MoorhenMapInfoCard } from "../../card/MoorhenMapInfoCard";
 import { moorhen } from "../../../types/moorhen";
 import { webGL } from "../../../types/mgWebGL";
-import Tooltip from "@mui/material/Tooltip";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface ActionButtonPropsType {
@@ -53,7 +53,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
     const dispatch = useDispatch();
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false);
     const handleDownload = async () => {
-        let response = await props.map.getMap();
+        const response = await props.map.getMap();
         doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
     };
 
@@ -135,8 +135,8 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
 
     const maximumAllowedWidth = props.maxWidth;
     let currentlyUsedWidth = 0;
-    let expandedButtons:React.JSX.Element[] = [];
-    let compressedButtons:React.JSX.Element[] = [];
+    const expandedButtons:React.JSX.Element[] = [];
+    const compressedButtons:React.JSX.Element[] = [];
 
     Object.keys(actionButtons).forEach((key) => {
         if ("menuItem" in actionButtons[key]) {

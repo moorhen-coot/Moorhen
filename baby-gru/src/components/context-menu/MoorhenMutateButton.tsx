@@ -1,7 +1,7 @@
 import { useCallback } from "react"
+import { useSelector } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { useSelector } from 'react-redux';
 
 export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)

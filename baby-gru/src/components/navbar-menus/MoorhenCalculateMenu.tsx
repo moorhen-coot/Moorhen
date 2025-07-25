@@ -1,30 +1,30 @@
 import { useState } from "react";
+import { MenuItem } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
 import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
 import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
 import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem"
-import { MoorhenStepRefinementMenuItem } from "../menu-item/MoorhenStepRefinementMenuItem"
+//import { MoorhenStepRefinementMenuItem } from "../menu-item/MoorhenStepRefinementMenuItem"
 import { MoorhenShiftFieldBFactorRefinement } from "../menu-item/MoorhenShiftFieldBFactorRefinement"
 import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfactorMenuItem"
 import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MenuItem } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 
-export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenCalculateMenu = (props: {
+    dropdownId: string;
+    extraCalculateMenuItems? : React.ReactElement[];
+    allowScripting?: boolean;
+}) => {
 
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    
-    const dispatch = useDispatch()    
-    
-    const menuItemProps = { setPopoverIsShown, ...props }
+    const [, setPopoverIsShown] = useState<boolean>(false)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height) 
+    const dispatch = useDispatch()      
+    const menuItemProps = { setPopoverIsShown}
 
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
@@ -32,17 +32,13 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
                 dispatch(showModal(modalKeys.SUPERPOSE_MODELS))
                 document.body.click()
             }}>Superpose structures...</MenuItem>
-            <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>
+            {/* <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>  this is causing huge memory leak*/}
             <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps}/>
             <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps}/>
             <MoorhenCalculateTrajectoryMenuItem key="calcualte-trajectory" {...menuItemProps}/>
             <MoorhenSelfRestraintsMenuItem key="add-self-restraints" setPopoverIsShown={setPopoverIsShown}/>
             <MoorhenClearSelfRestraintsMenuItem key="clear-self-restraints" setPopoverIsShown={setPopoverIsShown}/>
-            <MoorhenRandomJiggleBlurMenuItem
-                glRef={props.glRef}
-                commandCentre={props.commandCentre}
-                setPopoverIsShown={setPopoverIsShown}
-            />
+            <MoorhenRandomJiggleBlurMenuItem setPopoverIsShown={setPopoverIsShown} />
             <MenuItem onClick={() => {
                 dispatch(showModal(modalKeys.SLICE_N_DICE))
                 document.body.click()

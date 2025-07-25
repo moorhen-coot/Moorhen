@@ -14,7 +14,7 @@ import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenPreferences } from "./utils/MoorhenPreferences";
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
-import { MoorhenSlider } from "./components/inputs/MoorhenSlider";
+import { MoorhenSlider } from "./components/inputs";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
 import { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
 import { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';
@@ -29,67 +29,48 @@ import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnm
 import { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
 import { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
 import { autoOpenFiles } from "./utils/MoorhenFileLoading"
-
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
-
-import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
+import sceneSettingsReducer, { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, setEdgeDetectNormalScale, resetSceneSettings,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setDrawScaleBar,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, 
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setDoAnaglyphStereo,
     setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView,
     setMultiViewColumns, setMultiViewRows, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from './store/sceneSettingsSlice';
-import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
-import { 
+import backupSettingsReducer, { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
+import generalStatesReducer, { 
     setActiveMap, setCootInitialized, setAppTittle, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut,
-    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates, setUseGemmi, setShowHoverInfo
+    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates, setUseGemmi, setShowHoverInfo,
  } from './store/generalStatesSlice';
-import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
-import { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from './store/hoveringStatesSlice';
-import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } from './store/labelSettingsSlice';
-import { 
+import mapsReducer, { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
+import hoveringStatesReducer, { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from './store/hoveringStatesSlice';
+import labelSettingsReducer, { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } from './store/labelSettingsSlice';
+import mapContourSettingsReducer, { 
     showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
     setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel, resetMapContourSettings
 } from './store/mapContourSettingsSlice';
-import { 
+import sliceNDiceReducer, { 
     setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor, resetSliceNDiceSlice,
     setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType, setPAEFileContents
  } from "./store/sliceNDiceSlice"
-import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
-import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
-import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
-import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
-import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
-import { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
-import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
-import { resetSharedSession } from './store/sharedSessionSlice';
-import { setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
+import refinementSettingsReducer, { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
+import moleculesReducer, { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, addGeneralRepresentation, removeGeneralRepresentation } from './store/moleculesSlice';
+import mouseSettingsReducer, { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
+import shortcutSettingsReducer, { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
+import moleculeMapUpdateReducer, { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
+import lhasaReducer, { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from './store/lhasaSlice';
+import modalsReducer, { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
+import sharedSessionReducer, { resetSharedSession } from './store/sharedSessionSlice';
+import glRefSliceReducer, { setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
     setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
     setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict } from './store/glRefSlice';
-
-import moleculesReducer from './store/moleculesSlice';
-import mapsReducer from './store/mapsSlice';
-import mouseSettingsReducer from './store/mouseSettings';
-import backupSettingsReducer from './store/backupSettingsSlice';
-import shortcutSettingsReducer from './store/shortCutsSlice';
-import labelSettingsReducer from './store/labelSettingsSlice';
-import sceneSettingsReducer from './store/sceneSettingsSlice';
-import generalStatesReducer from './store/generalStatesSlice';
-import hoveringStatesReducer from './store/hoveringStatesSlice';
-import modalsReducer from './store/modalsSlice';
-import mapContourSettingsReducer from './store/mapContourSettingsSlice';
-import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
-import sharedSessionReducer from './store/sharedSessionSlice';
-import refinementSettingsReducer from './store/refinementSettingsSlice';
-import lhasaReducer from './store/lhasaSlice';
-import sliceNDiceReducer from './store/sliceNDiceSlice';
 import overlaysReducer from './store/overlaysSlice';
-import glRefSliceReducer from './store/glRefSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
+import { setBusy } from './store/globalUISlice';
 import MoorhenStore from './store/MoorhenReduxStore';
 import jsonValidationReducer from './store/jsonValidation'
 import mrParseSliceReducer from './store/mrParseSlice'
@@ -133,5 +114,7 @@ export {
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
-    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, 
+    setBusy
+
 };

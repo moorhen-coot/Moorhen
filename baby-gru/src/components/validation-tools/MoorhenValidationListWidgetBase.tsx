@@ -1,10 +1,10 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
+import { useSelector } from "react-redux";
+import { LinearProgress } from "@mui/material";
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
-import { LinearProgress } from "@mui/material";
 import { usePersistentState } from "../../store/menusSlice";
 
 export const MoorhenValidationListWidgetBase = (props: {
@@ -81,7 +81,7 @@ export const MoorhenValidationListWidgetBase = (props: {
         if (selectedModel === null || (enableMapSelect && selectedMap === null)) {
             setCardData(null)
         } else {
-            let newData = await props.fetchData(selectedModel, selectedMap)
+            const newData = await props.fetchData(selectedModel, selectedMap)
             setCardData(newData)
         }
         setBusy(false)      

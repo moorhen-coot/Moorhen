@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react"
-import { MoorhenSlider } from "../inputs/MoorhenSlider"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
-import { moorhen } from "../../types/moorhen"
 import { useDispatch, useSelector } from "react-redux"
-import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
 import { InfoOutlined } from "@mui/icons-material"
+import { moorhen } from "../../types/moorhen"
+import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
+import { MoorhenSlider } from "../inputs";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
-export const MoorhenRefinementSettingsMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenRefinementSettingsMenuItem = () => {
 
     const useRamaRestraintsCheckRef = useRef<null | HTMLInputElement>(null)
     const useTorsionRestraintsCheckRef = useRef<null | HTMLInputElement>(null)
@@ -26,15 +24,16 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     useEffect(() => {
         const fetchInitialData = async () => {
-            const torsion = await props.commandCentre.current.cootCommand({
+            const torsion = await commandCentre.current.cootCommand({
                 command: 'get_torsion_restraints_weight',
                 commandArgs: [ ],
                 returnType: "int"
             }, false)
-            const rama = await props.commandCentre.current.cootCommand({
+            const rama = await commandCentre.current.cootCommand({
                 command: 'get_rama_plot_restraints_weight',
                 commandArgs: [ ],
                 returnType: "int"
@@ -52,14 +51,14 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
 
         return () => {
             if (ramaWeightSliderRef.current) {
-                props.commandCentre.current.cootCommand({
+                commandCentre.current.cootCommand({
                     command: 'set_rama_plot_restraints_weight',
                     commandArgs: [ramaWeightSliderRef.current],
                     returnType: "status"
                 }, false)    
             }
             if (torsionWeightSliderRef.current) {
-                props.commandCentre.current.cootCommand({
+                commandCentre.current.cootCommand({
                     command: 'set_torsion_restraints_weight',
                     commandArgs: [torsionWeightSliderRef.current],
                     returnType: "status"
@@ -69,7 +68,7 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     }, [])
 
     useEffect(()=> {
-        props.commandCentre.current.cootCommand({
+        commandCentre.current.cootCommand({
             command: 'set_use_rama_plot_restraints',
             commandArgs: [useRamaRestraints],
             returnType: "status"
@@ -77,7 +76,7 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
     }, [useRamaRestraints])
 
     useEffect(()=> {
-        props.commandCentre.current.cootCommand({
+        commandCentre.current.cootCommand({
             command: 'set_use_torsion_restraints',
             commandArgs: [useTorsionRestraints],
             returnType: "status"
@@ -170,7 +169,6 @@ export const MoorhenRefinementSettingsMenuItem = (props: {
         popoverContent={panelContent}
         showOkButton={false}
         menuItemText={"Refinement settings..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />
 }

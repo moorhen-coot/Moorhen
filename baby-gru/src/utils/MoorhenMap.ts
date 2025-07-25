@@ -1,13 +1,11 @@
-import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { libcootApi } from "../types/libcoot";
 import pako from "pako"
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { Store } from "@reduxjs/toolkit";
-import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
+import { moorhen } from "../types/moorhen";
+import { libcootApi } from "../types/libcoot";
 import { setOrigin, setRequestDrawScene, setDisplayBuffers } from "../store/glRefSlice"
 import { buildBuffers, appendOtherData } from '../WebGLgComponents/buildBuffers'
+import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -25,10 +23,8 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * @property {boolean} isDifference - Indicates whether this is a difference map instance
  * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
  * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
- * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
- * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
@@ -59,7 +55,6 @@ export class MoorhenMap implements moorhen.Map {
     molNo: number
     store: Store
     commandCentre: React.RefObject<moorhen.CommandCentre|null>
-    glRef: React.RefObject<webGL.MGWebGL|null>
     isOriginLocked: boolean
     mapCentre: [number, number, number]
     suggestedContourLevel: number
@@ -81,17 +76,17 @@ export class MoorhenMap implements moorhen.Map {
     defaultMapColour: {r: number, g: number, b: number};
     defaultPositiveMapColour: {r: number, g: number, b: number};
     defaultNegativeMapColour: {r: number, g: number, b: number};
-    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store) => Promise<moorhen.Map[]>;
+    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, store: Store) => Promise<moorhen.Map[]>;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, reduxStore: Store) {
         this.type = 'map'
         this.name = "unnamed"
         this.headerInfo = null
+        this.store = reduxStore
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
-        this.glRef = glRef
-        this.store = store
+        this.store = reduxStore
         this.levelRange = null
         this.webMGContour = false
         this.showOnLoad = true
@@ -263,14 +258,14 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
     loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        const $this = this
-        let reflectionData = await readDataFile(source)
+        //const $this = this likely not needed here
+        const reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
-        await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
+        await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
         if (selectedColumns.calcStructFact) {
-            await $this.associateToReflectionData(selectedColumns, asUIntArray)
+            await this.associateToReflectionData(selectedColumns, asUIntArray)
         }
-        return $this
+        return this
     }
 
     /**
@@ -360,11 +355,10 @@ export class MoorhenMap implements moorhen.Map {
      * Static method used to automatically read multiple maps from a single mtz file
      * @param {File} source - The mtz file
      * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
-     * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
      * @param {Store} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
-    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store): Promise<moorhen.Map[]> {
+    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, store: Store): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper()
         await mtzWrapper.loadHeaderFromFile(source)
 
@@ -396,7 +390,7 @@ export class MoorhenMap implements moorhen.Map {
 
         const newMaps = await Promise.all(
             response.data.result.result.filter(item => item.idx !== -1).map(async (autoReadInfo, index) => {
-                const newMap = new MoorhenMap(commandCentre, glRef, store)
+                const newMap = new MoorhenMap(commandCentre, store)
                 newMap.molNo = autoReadInfo.idx
                 newMap.name = `${source.name.replace('mtz', '')}-map-${index}`
                 newMap.isDifference = isDiffMapResponses[index].data.result.result
@@ -564,11 +558,11 @@ export class MoorhenMap implements moorhen.Map {
                     let i = 0;
                     object.idx_tri.forEach((idxss: number[][]) => {
                         let j = 0;
-                        let pos_idx = [];
-                        let neg_idx = [];
+                        const pos_idx = [];
+                        const neg_idx = [];
                         idxss.forEach((idxs: number[]) => {
-                            let this_pos_idx = [];
-                            let this_neg_idx = [];
+                            const this_pos_idx = [];
+                            const this_neg_idx = [];
                             for (let idx = 0; idx < idxs.length; idx++) {
                                 const col = object.col_tri[i][j][idxs[idx]*4]
                                 if (col < 0.5) {
@@ -614,8 +608,8 @@ export class MoorhenMap implements moorhen.Map {
                     if(print_timing) console.log("End loop",tl-t1)
                 }
                 if (this.isDifference) {
-                    let a = appendOtherData(object_positive, true);
-                    let b = appendOtherData(object_negative, true);
+                    const a = appendOtherData(object_positive, true);
+                    const b = appendOtherData(object_negative, true);
                     if(mapAlpha<0.99){
                         a[0].transparent = true;
                         b[0].transparent = true;
@@ -646,7 +640,7 @@ export class MoorhenMap implements moorhen.Map {
                         buildBuffers(this.displayObjects["Coot"])
                         newBuffers = [...newBuffers,...this.displayObjects["Coot"]]
                     } else {
-                       let a = appendOtherData(object, true);
+                       const a = appendOtherData(object, true);
                        if(mapAlpha>0.98){
                            a[0].setCustomColour([mapColour.r,mapColour.g,mapColour.b,1.0])
                        }
@@ -661,7 +655,7 @@ export class MoorhenMap implements moorhen.Map {
                     this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour);
                 } else {
                     //console.log("MOORHEN MAP do what keepCootColours wants")
-                    let a = appendOtherData(object, true);
+                    const a = appendOtherData(object, true);
                     this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a);
                     buildBuffers(a)
                     newBuffers = [...newBuffers,...a]
@@ -906,7 +900,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
-        const newMap = new MoorhenMap(this.commandCentre, this.glRef, this.store)
+        const newMap = new MoorhenMap(this.commandCentre, this.store)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
         const { mapRadius, contourLevel } = this.getMapContourParams()
         newMap.suggestedContourLevel = contourLevel
@@ -1075,14 +1069,14 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     async getVerticesHistogram(map2:number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
-        let posX:Number, posY:number, posZ : number
+        let posX:number, posY:number, posZ : number
         if (this.isOriginLocked)    {
             posX = Math.abs(this.mapCentre[0])
             posY = Math.abs(this.mapCentre[1])
             posZ = Math.abs(this.mapCentre[2])
         }
         else {
-           [posX, posY, posZ] = this.glRef.current.origin.map(coord => -coord) as [number, number, number]
+           [posX, posY, posZ] = this.store.getState().glRef.origin.map(coord => -coord) as [number, number, number]
         }
 
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams()

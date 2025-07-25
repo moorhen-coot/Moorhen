@@ -1,15 +1,15 @@
 import { useState, useMemo, Fragment, useRef, useCallback } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
-import { convertViewtoPx } from '../../utils/utils';
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material';
+import { useDispatch, useSelector } from "react-redux";
+import { convertViewtoPx } from '../../utils/utils';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenGenerateAssemblyMenuItem } from "../menu-item/MoorhenGenerateAssemblyMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from "react-redux";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
@@ -129,8 +129,8 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     const maximumAllowedWidth = props.sideBarWidth * 0.65
     let currentlyUsedWidth = 0
-    let expandedButtons: React.JSX.Element[] = []
-    let compressedButtons: React.JSX.Element[] = []
+    const expandedButtons: React.JSX.Element[] = []
+    const compressedButtons: React.JSX.Element[] = []
 
     Object.keys(actionButtons).forEach(key => {
         if (actionButtons[key].expanded === null) {

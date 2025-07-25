@@ -1,9 +1,9 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useDispatch } from 'react-redux';
 import { libcootApi } from '../../types/libcoot';
 import { moorhen } from '../../types/moorhen';
-import { useDispatch } from 'react-redux';
 import { setOrigin } from "../../store/glRefSlice"
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
 
@@ -17,8 +17,8 @@ export const MoorhenUnmodelledBlobs = (props: moorhen.CollectedProps) => {
             returnType:'interesting_places_data',
             commandArgs:[selectedModel, selectedMap, 1.4]
         }
-        let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
-        let blobs = response.data.result.result
+        const response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
+        const blobs = response.data.result.result
         return blobs
     }
 

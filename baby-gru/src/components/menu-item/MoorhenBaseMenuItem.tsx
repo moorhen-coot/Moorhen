@@ -7,7 +7,7 @@ export const MoorhenBaseMenuItem = (props: {
     popoverPlacement?: 'left' | 'right';
     onCompleted?: () => void;
     onEntering?: () => void;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+    setPopoverIsShown?: React.Dispatch<React.SetStateAction<boolean>>;
     onExiting?: () => void;
     menuItemTitle?: string;
     showOkButton?: boolean;
@@ -65,11 +65,11 @@ export const MoorhenBaseMenuItem = (props: {
             }}
 
             onEntered={() => {
-                setPopoverIsShown(true)
+                setPopoverIsShown?.(true)
             }}
 
             onExit={() => {
-                setPopoverIsShown(false)
+                setPopoverIsShown?.(false)
             }}
 
             onExiting={() => {

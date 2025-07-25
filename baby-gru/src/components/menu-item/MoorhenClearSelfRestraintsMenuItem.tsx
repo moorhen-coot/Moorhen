@@ -1,10 +1,10 @@
 import { useRef } from "react";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { useDispatch, useSelector } from 'react-redux';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeGeneralRepresentation } from "../../moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenClearSelfRestraintsMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

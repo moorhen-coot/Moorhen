@@ -1,13 +1,13 @@
 import { useRef } from "react"
 import { Col, Row } from "react-bootstrap"
+import { batch, useDispatch, useSelector } from 'react-redux';
+import { useSnackbar } from "notistack"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { batch, useDispatch, useSelector } from 'react-redux';
 import { setContourLevel } from "../../store/mapContourSettingsSlice"
 import { enableUpdatingMaps, setConnectedMoleculeMolNo, setFoFcMapMolNo, setReflectionMapMolNo, setTwoFoFcMapMolNo } from "../../store/moleculeMapUpdateSlice"
-import { useSnackbar } from "notistack"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenImportFSigFMenuItem = (props:{
     selectedMolNo?: number;

@@ -2,11 +2,11 @@ jest.setTimeout(10000)
 
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, within }  from '@testing-library/react'
-import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
@@ -73,7 +73,7 @@ describe('Testing MoorhenNavBar', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenNavBar render', async () => {
+    test('MoorhenNavBar render', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
@@ -129,7 +129,7 @@ describe('Testing MoorhenNavBar', () => {
         expect(preferences).toBeVisible()
     })
 
-    test('Test MoorhenNavBar render with extra menus', async () => {
+    test('MoorhenNavBar render with extra menus', async () => {
 
         collectedProps.extraNavBarMenus = [{
             name: 'test',
@@ -162,7 +162,7 @@ describe('Testing MoorhenNavBar', () => {
         expect(testMenuPopover).toBeVisible()
     })
 
-    test('Test MoorhenNavBar render with specific menu items', async () => {
+    test('MoorhenNavBar render with specific menu items', async () => {
 
         collectedProps.includeNavBarMenuNames = ['History' , 'Ligand', 'File', 'Calculate']
 
@@ -208,7 +208,7 @@ describe('Testing MoorhenNavBar', () => {
         expect(menuItems.map(item => item.textContent)).toEqual(collectedProps.includeNavBarMenuNames)
     })
 
-    test('Test MoorhenNavBar click interactions', async () => {
+    test('MoorhenNavBar click interactions', async () => {
 
         render(
             <Provider store={MoorhenStore}> 

@@ -11,8 +11,10 @@ jest.mock('chart.js', () => ({
 import '@testing-library/jest-dom'
 import { render, cleanup, screen }  from '@testing-library/react'
 import { Provider } from 'react-redux'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import userEvent from '@testing-library/user-event'
+import fetch from 'node-fetch'
+import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
@@ -21,10 +23,7 @@ import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
 import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
-import userEvent from '@testing-library/user-event'
-import fetch from 'node-fetch'
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
-
 const fs = require('fs')
 
 let cootModule = null
@@ -159,7 +158,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
     afterEach(cleanup)
 
-    test('Test MoorhenContainer load tutorial data 1', async () => {
+    test('MoorhenContainer load tutorial data 1', async () => {
 
         render(
             <Provider store={MoorhenStore}> 
@@ -220,7 +219,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         expect(maps_empty).toHaveLength(0)
     })
 
-    test.skip('Test MoorhenContainer connect map and molecule', async () => {
+    test.skip('MoorhenContainer connect map and molecule', async () => {
 
         render(
             <Provider store={MoorhenStore}> 

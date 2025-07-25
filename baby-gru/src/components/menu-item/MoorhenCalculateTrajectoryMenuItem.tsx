@@ -1,27 +1,27 @@
 import { useCallback, useRef, useState } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { Form, FormSelect } from "react-bootstrap";
-import { representationLabelMapping } from "../../utils/enums";
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { representationLabelMapping } from "../../utils/enums";
+import { MoorhenStore } from "../../moorhen";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const animationRepresentations = [ 'CBs', 'CAs', 'CRs', 'gaussian', 'MolecularSurface', 'VdwSpheres' ]
 
 export const MoorhenCalculateTrajectoryMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-
     const styleSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
-
     const [representationStyle, setRepresentationStyle] = useState<string>("CBs")
+
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -46,8 +46,7 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
             enqueueSnackbar("model-trajectory", {
                 variant: "modelTrajectory",
                 persist: true,
-                glRef: props.glRef,
-                commandCentre: props.commandCentre,
+                commandCentre: commandCentre,
                 moleculeMolNo: selectedMolecule.molNo,
                 representationStyle: styleSelectRef.current.value,
                 anchorOrigin: { vertical: "bottom", horizontal: "center" }

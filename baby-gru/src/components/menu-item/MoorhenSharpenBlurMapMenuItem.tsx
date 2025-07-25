@@ -1,36 +1,33 @@
 import { useRef, useState } from "react";
 import { Form, InputGroup } from "react-bootstrap";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm"
 import { moorhen } from "../../types/moorhen";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { webGL } from "../../types/mgWebGL";
-import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
-import { Store } from "@reduxjs/toolkit";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenSharpenBlurMapMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
-}) => {
+
+export const MoorhenSharpenBlurMapMenuItem = () => {
 
     const dispatch = useDispatch()
+    const store = useStore()
     const maps = useSelector((state: moorhen.State) => state.maps)
     
     const factorRef = useRef<string>(null)
     const resampleFactorRef = useRef<string>(null)
     const selectRef = useRef<HTMLSelectElement>(null)
     const useResampleSwitchRef = useRef<HTMLInputElement>(null)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     
     const [useResample, setUseResample] = useState<boolean>(false)
 
     const panelContent = <>
         <MoorhenMapSelect maps={maps} ref={selectRef} />
-        <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50.} allowNegativeValues={true}/>
+        <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50} allowNegativeValues={true}/>
         <InputGroup className='moorhen-input-group-check' style={{width: '100%'}}>
             <Form.Check 
                 ref={useResampleSwitchRef}
@@ -50,7 +47,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current)
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
+        const newMap = new MoorhenMap(commandCentre, store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
@@ -59,14 +56,14 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
 
         let result: moorhen.WorkerResponse<number>
         if (!useResampleSwitchRef.current.checked) {
-            result = await props.commandCentre.current.cootCommand({
+            result = await commandCentre.current.cootCommand({
                 returnType: 'int',
                 command: 'sharpen_blur_map',
                 commandArgs: [mapNo, bFactor, false]
             }, false) as moorhen.WorkerResponse<number>
         } else {
             const resampleFactor = parseFloat(resampleFactorRef.current)
-            result = await props.commandCentre.current.cootCommand({
+            result = await commandCentre.current.cootCommand({
                 returnType: 'int',
                 command: 'sharpen_blur_map_with_resample',
                 commandArgs: [mapNo, bFactor, resampleFactor, false]
@@ -79,14 +76,12 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
-            batch(() => {
-                dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
-                dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
-                dispatch( setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }) )
-                dispatch( setMapStyle({ molNo: newMap.molNo, style: mapStyle }) )
-                dispatch( hideMap(selectedMap) )
-                dispatch( addMap(newMap) )    
-            })
+            dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
+            dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
+            dispatch( setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }) )
+            dispatch( setMapStyle({ molNo: newMap.molNo, style: mapStyle }) )
+            dispatch( hideMap(selectedMap) )
+            dispatch( addMap(newMap) )    
         }
 
         return result
@@ -97,7 +92,6 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         popoverContent={panelContent}
         menuItemText="Sharpen/Blur map..."
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 

@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { useSelector } from 'react-redux';
 import { version } from '../../version'
 import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
 
-export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>, commandCentre:React.RefObject<moorhen.CommandCentre> }) => {
+
+export const MoorhenAboutMenuItem = () => {
 
     const [is64Bit, setIs64Bit] = useState<boolean>(false)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+
     useEffect(() => {
         const getIs64bit = async () => {
-            const is64bit = await props.commandCentre.current.cootCommand({
+            const is64bit = await commandCentre.current.cootCommand({
                     returnType: "boolean",
                     command: "is64bit",
                     commandArgs: []
@@ -42,6 +47,5 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
         menuItemText="About..."
         onCompleted={() => { }}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

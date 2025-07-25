@@ -1,16 +1,13 @@
 import { useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { Button } from "react-bootstrap";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { useSnackbar } from "notistack";
+import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenMatchLigandsMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenMatchLigandsMenuItem = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -62,7 +59,6 @@ export const MoorhenMatchLigandsMenuItem = (props: {
             refLigandCid: refLigandSelectRef.current.value,
             movingMolNo: movingMolecule.molNo,
             refMolNo: referenceMolecule.molNo,
-            commandCentre: props.commandCentre,
         })
 
     }, [molecules])
@@ -80,7 +76,6 @@ export const MoorhenMatchLigandsMenuItem = (props: {
     return <MoorhenBaseMenuItem
             popoverContent={panelContent}
             menuItemText={"Match ligands..."}
-            setPopoverIsShown={props.setPopoverIsShown}
             onCompleted={() => {}}
             showOkButton={false}/>
 }

@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button, Stack, InputGroup } from 'react-bootstrap';
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
+import { useDispatch, useSelector } from "react-redux";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 
 export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
@@ -68,7 +68,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 commandArgs: [selectedModel, selectedMap, bFactorLim, sigmaLevel, minDist, maxDist, ignorePartOccRef.current.checked, ignoreZeroOccRef.current.checked]
             }
             
-            let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>
+            const response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>
             if (response.data.result.result) {
                 badWaters = response.data.result.result
             } else if (response.data.result.status === 'Exception') {

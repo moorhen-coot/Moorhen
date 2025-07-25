@@ -1,307 +1,357 @@
 import { Form } from "react-bootstrap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { useState, useCallback } from "react";
-import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm"
-import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
-import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
-import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
-import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem"
-import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem"
-import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
-import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
-import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
+import { useSelector, useDispatch, useStore } from "react-redux";
+import { useSnackbar } from "notistack";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm";
+import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem";
+import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
+import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem";
+import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem";
+import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem";
+import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem";
+import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem";
+import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem";
 import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
-import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { moorhen } from "../../types/moorhen";
-import { useSelector, useDispatch } from 'react-redux';
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
-import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { MoorhenStore } from "../../moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
-export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+interface MoorhenFileMenuProps {
+    dropdownId: string;
+    extraFileMenuItems?: React.JSX.Element[];
+    videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
+}
 
-    const dispatch = useDispatch()
+export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
+    const dispatch = useDispatch();
 
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+    const disableFileUploads = false; /*** This is temporary add a store value to control this ***/
 
-    const maps = useSelector((state: moorhen.State) => state.maps)
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const [, setPopoverIsShown] = useState<boolean>(false);
 
-    const { enqueueSnackbar } = useSnackbar()
+    const maps = useSelector((state: moorhen.State) => state.maps);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
+    const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
 
-    const { commandCentre, glRef, monomerLibraryPath, setBusy, store } = props;
+    const { enqueueSnackbar } = useSnackbar();
 
-    const menuItemProps = { setPopoverIsShown, ...props }
-    const mrBumpenuItemProps = { monomerLibraryPath, setPopoverIsShown, ...props }
+    const store = useStore();
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
+    const paths = moorhenGlobalInstance.paths;
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
+
+    //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
     const loadPdbFiles = async (files: FileList) => {
-        let readPromises: Promise<moorhen.Molecule>[] = []
-        Array.from(files).forEach(file => {
-            readPromises.push(readPdbFile(file))
-        })
+        const readPromises: Promise<moorhen.Molecule>[] = [];
+        Array.from(files).forEach((file) => {
+            readPromises.push(readPdbFile(file));
+        });
 
-        let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
-        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            enqueueSnackbar("Failed to read molecule", { variant: "warning" })
-            newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
+        let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises);
+        if (!newMolecules.every((molecule) => molecule.molNo !== -1)) {
+            enqueueSnackbar("Failed to read molecule", { variant: "warning" });
+            newMolecules = newMolecules.filter((molecule) => molecule.molNo !== -1);
             if (newMolecules.length === 0) {
-                return
+                return;
             }
         }
 
-        let drawPromises: Promise<void>[] = []
+        const drawPromises: Promise<void>[] = [];
         for (const newMolecule of newMolecules) {
-            drawPromises.push(
-                newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? 'CRs' : 'CBs')
-            )
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? "CRs" : "CBs"));
         }
-        await Promise.all(drawPromises)
+        await Promise.all(drawPromises);
 
-        dispatch( addMoleculeList(newMolecules) )
-        newMolecules.at(-1).centreOn('/*/*/*/*', true)
-    }
+        dispatch(addMoleculeList(newMolecules));
+        newMolecules.at(-1).centreOn("/*/*/*/*", true);
+    };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
-        newMolecule.setBackgroundColour(backgroundColor)
-        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        await newMolecule.loadToCootFromFile(file)
-        return newMolecule
-    }
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        newMolecule.setBackgroundColour(backgroundColor);
+        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
+        await newMolecule.loadToCootFromFile(file);
+        return newMolecule;
+    };
 
     const handleLoadMrBump = async () => {
-        dispatch(showModal(modalKeys.MRBUMP))
-        document.body.click()
-    }
+        dispatch(showModal(modalKeys.MRBUMP));
+        document.body.click();
+    };
 
     const handleLoadMrParse = async () => {
-        dispatch(showModal(modalKeys.MRPARSE))
-        document.body.click()
-    }
+        dispatch(showModal(modalKeys.MRPARSE));
+        document.body.click();
+    };
 
     const handleExportGltf = async () => {
-        for (let map of maps) {
-            const gltfData = await map.exportAsGltf()
+        for (const map of maps) {
+            const gltfData = await map.exportAsGltf();
             if (gltfData) {
-                doDownload([gltfData], `${map.name}.glb`)
+                doDownload([gltfData], `${map.name}.glb`);
             }
         }
-        for (let molecule of molecules) {
-            let index = 0
-            for (let representation of molecule.representations) {
+        for (const molecule of molecules) {
+            let index = 0;
+            for (const representation of molecule.representations) {
                 if (representation.visible) {
-                    const gltfData = await representation.exportAsGltf()
+                    const gltfData = await representation.exportAsGltf();
                     if (gltfData) {
-                        index += 1
-                        doDownload([gltfData], `${molecule.name}-${index}.glb`)
+                        index += 1;
+                        doDownload([gltfData], `${molecule.name}-${index}.glb`);
                     }
                 }
             }
         }
-    }
+    };
 
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const arrayBuffer = await readDataFile(e.target.files[0])
-            const bytes = new Uint8Array(arrayBuffer)
-            const sessionMessage = moorhensession.Session.decode(bytes,undefined,undefined)
+            const arrayBuffer = await readDataFile(e.target.files[0]);
+            const bytes = new Uint8Array(arrayBuffer);
+            const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
             //console.log(JSON.stringify(sessionMessage, null, 4))
-            await loadSession(sessionMessage)
+            await loadSession(sessionMessage);
         } catch (err) {
-            console.log(err)
-            enqueueSnackbar("Error loading the session", {variant: "error"})
+            console.log(err);
+            enqueueSnackbar("Error loading the session", { variant: "error" });
         }
-    }
+    };
 
     const loadSession = async (session: string | object) => {
         try {
-            props.commandCentre.current.history.reset()
-            let status = -1
-            if (typeof session === 'string') {
+            commandCentre.current.history.reset();
+            let status = -1;
+            if (typeof session === "string") {
                 status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
-                    props.monomerLibraryPath,
+                    paths.monomerLibrary,
                     molecules,
                     maps,
-                    props.commandCentre,
-                    props.timeCapsuleRef,
-                    props.glRef,
+                    commandCentre,
+                    timeCapsule,
                     store,
                     dispatch
-                )
+                );
             } else {
                 status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
-                    props.monomerLibraryPath,
+                    paths.monomerLibrary,
                     molecules,
                     maps,
-                    props.commandCentre,
-                    props.timeCapsuleRef,
-                    props.glRef,
+                    commandCentre,
+                    timeCapsule,
                     store,
                     dispatch
-                )
+                );
             }
             if (status === -1) {
-                enqueueSnackbar("Failed to read backup (deprecated format)", {variant: "warning"})
+                enqueueSnackbar("Failed to read backup (deprecated format)", { variant: "warning" });
             }
         } catch (err) {
-            console.log(err)
-            enqueueSnackbar("Error loading session", {variant: "warning"})
+            console.log(err);
+            enqueueSnackbar("Error loading session", { variant: "warning" });
         }
-    }
+    };
 
     const getSession = async () => {
-        const sessionData = await props.timeCapsuleRef.current.fetchSession(true)
+        const sessionData = await timeCapsule.current.fetchSession(true);
         //console.log(JSON.stringify(sessionData, null, 4))
-        const sessionMessage = moorhensession.Session.fromObject(sessionData)
-        const sessionBytes = moorhensession.Session.encode(sessionMessage).finish()
-        doDownload([sessionBytes], 'moorhen_session.pb')
-    }
+        const sessionMessage = moorhensession.Session.fromObject(sessionData);
+        const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
+        doDownload([sessionBytes], "moorhen_session.pb");
+    };
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files: File[] = []
-        for(let ifile=0;ifile<e.target.files.length;ifile++){
-            files.push(e.target.files[ifile])
+        const store = MoorhenStore;
+        const files: File[] = [];
+        for (let ifile = 0; ifile < e.target.files.length; ifile++) {
+            files.push(e.target.files[ifile]);
         }
-        autoOpenFiles(files, commandCentre, glRef, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, props.timeCapsuleRef, dispatch)
-    }
+        autoOpenFiles(
+            files,
+            commandCentre,
+            store,
+            paths.monomerLibrary,
+            backgroundColor,
+            defaultBondSmoothness,
+            timeCapsule,
+            dispatch
+        );
+    };
 
     const createBackup = async () => {
-        await props.timeCapsuleRef.current.updateDataFiles()
-        const session = await props.timeCapsuleRef.current.fetchSession(false)
-        const sessionString = JSON.stringify(session)
+        await timeCapsule.current.updateDataFiles();
+        const session = await timeCapsule.current.fetchSession(false);
+        const sessionString = JSON.stringify(session);
         const key: moorhen.backupKey = {
             dateTime: `${Date.now()}`,
-            type: 'manual',
+            type: "manual",
             serNo: guid(),
-            molNames: session.moleculeData.map(mol => mol.name),
-            mapNames: session.mapData.map(map => map.uniqueId),
-            mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
-        }
+            molNames: session.moleculeData.map((mol) => mol.name),
+            mapNames: session.mapData.map((map) => map.uniqueId),
+            mtzNames: session.mapData
+                .filter((map) => map.hasReflectionData)
+                .map((map) => map.associatedReflectionFileName),
+        };
         const keyString = JSON.stringify({
             ...key,
-            label: MoorhenTimeCapsule.getBackupLabel(key)
-        })
-        return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
-    }
+            label: MoorhenTimeCapsule.getBackupLabel(key),
+        });
+        return timeCapsule.current.createBackup(keyString, sessionString);
+    };
 
-    const handleRecording = useCallback( () => {
-        if (!props.videoRecorderRef.current) {
-            console.warn('Attempted to record screen before webGL is initated...')
-            return
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
+    const handleRecording = useCallback(() => {
+        if (!videoRecorderRef.current) {
+            console.warn("Attempted to record screen before webGL is initated...");
+            return;
         } else if (props.videoRecorderRef.current.isRecording()) {
-            console.warn('Screen recoder already recording!')
-            return
+            console.warn("Screen recoder already recording!");
+            return;
         } else {
-            document.body.click()
-            props.videoRecorderRef.current.startRecording()
-            enqueueSnackbar("screen-recoder", {variant: "screenRecorder", videoRecorderRef: props.videoRecorderRef, persist: true})
+            document.body.click();
+            props.videoRecorderRef.current.startRecording();
+            enqueueSnackbar("screen-recoder", {
+                variant: "screenRecorder",
+                videoRecorderRef: props.videoRecorderRef,
+                persist: true,
+            });
         }
-    }, [props.videoRecorderRef])
+    }, [videoRecorderRef]);
+    const menuItemProps = {
+        commandCentre,
+        setPopoverIsShown,
+    };
 
-    return <>
-                <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
-
-                    {!props.disableFileUploads &&
-                    <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
+    return (
+        <>
+            <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
+                {!disableFileUploads && (
+                    <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
                         <Form.Label>Coordinates</Form.Label>
-                        <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent, .mol" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
-                    </Form.Group>}
+                        <Form.Control
+                            type="file"
+                            accept=".pdb, .mmcif, .cif, .ent, .mol"
+                            multiple={true}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                loadPdbFiles(e.target.files);
+                            }}
+                        />
+                    </Form.Group>
+                )}
 
-                    <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} store={store} />
+                <MoorhenFetchOnlineSourcesForm />
 
-                    {!props.disableFileUploads &&
-                    <Form.Group className='moorhen-form-group' controlId="upload-session-form">
+                {!disableFileUploads && (
+                    <Form.Group className="moorhen-form-group" controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload}/>
-                    </Form.Group>}
+                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload} />
+                    </Form.Group>
+                )}
 
-                    <hr></hr>
+                <hr></hr>
 
-                    <MenuItem id='query-online-services-sequence' onClick={() => {
-                        dispatch(showModal(modalKeys.SEQ_QUERY))
-                        document.body.click()
-                    }}>
-                        Query online services with a sequence...
-                    </MenuItem>
+                <MenuItem
+                    id="query-online-services-sequence"
+                    onClick={() => {
+                        dispatch(showModal(modalKeys.SEQ_QUERY));
+                        document.body.click();
+                    }}
+                >
+                    Query online services with a sequence...
+                </MenuItem>
 
-                    {!props.disableFileUploads &&
+                {!disableFileUploads && (
                     <>
                         <MoorhenAssociateReflectionsToMap {...menuItemProps} />
                         <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
                         <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
                         <MoorhenImportMapMenuItem {...menuItemProps} />
-                    </>}
+                    </>
+                )}
 
-                    <MoorhenImportFSigFMenuItem {...menuItemProps} />
+                <MoorhenImportFSigFMenuItem {...menuItemProps} />
 
-                    <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
+                <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-                    <MenuItem id='download-session-menu-item' onClick={getSession}>
-                        Download session
-                    </MenuItem>
+                <MenuItem id="download-session-menu-item" onClick={getSession}>
+                    Download session
+                </MenuItem>
 
-                    <MenuItem id='save-session-menu-item' onClick={createBackup} disabled={!enableTimeCapsule}>
-                        Save backup
-                    </MenuItem>
+                <MenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
+                    Save backup
+                </MenuItem>
 
-                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
+                <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
-                    <MenuItem id='screenshot-menu-item' onClick={() =>  {
+                <MenuItem
+                    id="screenshot-menu-item"
+                    onClick={() => {
                         enqueueSnackbar("screenshot", {
                             variant: "screenshot",
                             persist: true,
-                            glRef: props.glRef,
-                            videoRecorderRef: props.videoRecorderRef
-                        })
-                        document.body.click()
-                    }}>
-                        Screenshot
-                    </MenuItem>
+                            videoRecorderRef: props.videoRecorderRef,
+                        });
+                        document.body.click();
+                    }}
+                >
+                    Screenshot
+                </MenuItem>
 
-                    <MenuItem id='export-gltf-menu-item' onClick={handleExportGltf}>
-                        Export scene as gltf
-                    </MenuItem>
+                <MenuItem id="export-gltf-menu-item" onClick={handleExportGltf}>
+                    Export scene as gltf
+                </MenuItem>
 
-                    <MenuItem id='recording-menu-item' onClick={handleRecording}>
-                        Record a video
-                    </MenuItem>
+                <MenuItem id="recording-menu-item" onClick={handleRecording}>
+                    Record a video
+                </MenuItem>
 
-                    {(!props.disableFileUploads && devMode && false) &&
-                    <MenuItem id='load-mrbump-menu-item' onClick={handleLoadMrBump}>
-                    MrBump results...
+                {!disableFileUploads && devMode && false && (
+                    <MenuItem id="load-mrbump-menu-item" onClick={handleLoadMrBump}>
+                        MrBump results...
                     </MenuItem>
-                    }
+                )}
 
-                    {(devMode && false) &&
-                    <Form.Group className='moorhen-form-group' controlId="upload-coordinates-form">
+                {devMode && false && (
+                    <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
                         <Form.Label>Auto load</Form.Label>
-                    <Form.Control type="file" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { autoLoadHandler(e) }}/>
+                        <Form.Control
+                            type="file"
+                            multiple={true}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                autoLoadHandler(e);
+                            }}
+                        />
                     </Form.Group>
-                    }
+                )}
 
-                    {(!props.disableFileUploads && devMode) &&
-                    <MenuItem id='load-mrparse-menu-item' onClick={handleLoadMrParse}>
-                    MrParse results...
+                {!disableFileUploads && devMode && (
+                    <MenuItem id="load-mrparse-menu-item" onClick={handleLoadMrParse}>
+                        MrParse results...
                     </MenuItem>
-                    }
+                )}
 
-                    {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
+                {props.extraFileMenuItems && props.extraFileMenuItems.map((menu) => menu)}
 
-                    <hr></hr>
+                <hr></hr>
 
-                    <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
-                </div>
-    </>
-}
+                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
+            </div>
+        </>
+    );
+};

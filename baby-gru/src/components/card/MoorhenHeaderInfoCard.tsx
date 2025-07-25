@@ -1,10 +1,10 @@
 import { Backdrop, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import { moorhen } from "../../types/moorhen";
-import { libcootApi } from "../../types/libcoot";
 import { useSelector } from "react-redux";
-import { convertViewtoPx } from "../../utils/utils";
 import { useEffect, useState } from "react";
 import { Spinner } from "react-bootstrap";
+import { moorhen } from "../../types/moorhen";
+import { libcootApi } from "../../types/libcoot";
+import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenHeaderInfoCard = (props: {
     setShow: React.Dispatch<React.SetStateAction<boolean>>;

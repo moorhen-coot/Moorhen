@@ -1,0 +1,11 @@
+@import '../../../colors.css';
+
+.moorhen__button__icon-only {
+    padding: 0;
+    min-width: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+}

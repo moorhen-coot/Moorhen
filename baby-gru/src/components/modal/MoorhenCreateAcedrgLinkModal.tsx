@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from 'react-redux';
+import { moorhen } from "../../types/moorhen";
+import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { modalKeys } from '../../utils/enums';
 import { hideModal } from '../../store/modalsSlice';
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -76,7 +76,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         const blocks = doc.blocks
         const blocksSize = blocks.size()
         
-        let bonds: {
+        const bonds: {
             atom_id_1: string;
             atom_id_2: string;
             bond_type: string;

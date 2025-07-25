@@ -1,22 +1,22 @@
-import { cidToSpec, getCentreAtom } from "./utils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
+import { Dispatch, createRef, useState } from "react";
+import { AnyAction } from "@reduxjs/toolkit";
+import { useSelector } from 'react-redux';
+import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { Dispatch, createRef, useState } from "react";
-import { AnyAction } from "@reduxjs/toolkit";
-import { useSelector } from 'react-redux';
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,
          setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
-import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import store from '../store/MoorhenReduxStore'
+import { cidToSpec, getCentreAtom } from "./utils"
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -62,9 +62,9 @@ export const moorhenKeyPress = (
     const atomInfoIds = store.getState().atomInfoCards.atomInfoIds
 
     const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
-        let x = cursorPosition[0];
-        let y = cursorPosition[1];
-        let invQuat = quat4.create();
+        const x = cursorPosition[0];
+        const y = cursorPosition[1];
+        const invQuat = quat4.create();
         quat4Inverse(myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const ratio = width / height;
@@ -76,8 +76,8 @@ export const moorhenKeyPress = (
         const fracY = 1.0 * (y) / height
         const theX = minX + fracX * (maxX - minX);
         const theY = maxY - fracY * (maxY - minY);
-        let frontPos = vec3Create([theX, theY, -clipStart]); // Maybe should be -clipStart
-        let backPos = vec3Create([theX, theY, clipEnd]);
+        const frontPos = vec3Create([theX, theY, -clipStart]); // Maybe should be -clipStart
+        const backPos = vec3Create([theX, theY, clipEnd]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
         vec3.subtract(frontPos, frontPos, originState);
@@ -99,7 +99,6 @@ export const moorhenKeyPress = (
                     monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
                     commandCentre: commandCentre,
                     cidRef: fragmentCid,
-                    glRef: glRef,
                     moleculeRef: chosenMolecule,
                     persist: true
                 })
@@ -145,8 +144,8 @@ export const moorhenKeyPress = (
         return true
     }
     
-    let modifiers: string[] = []
-    let eventModifiersCodes: string[] = []
+    const modifiers: string[] = []
+    const eventModifiersCodes: string[] = []
 
     if (event.shiftKey) modifiers.push("<Shift>") && eventModifiersCodes.push('shiftKey')
     if (event.ctrlKey) modifiers.push("<Ctrl>") && eventModifiersCodes.push('ctrlKey')
@@ -276,7 +275,7 @@ export const moorhenKeyPress = (
             commandArgs: [goToBlobEvent.front[0], goToBlobEvent.front[1], goToBlobEvent.front[2], goToBlobEvent.back[0], goToBlobEvent.back[1], goToBlobEvent.back[2], 0.5]
         }, false)
         .then(response => {
-            let newOrigin = response.data.result.result;
+            const newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
                 dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
             }
@@ -355,7 +354,6 @@ export const moorhenKeyPress = (
         enqueueSnackbar("screenshot", {
             variant: "screenshot",
             persist: true,
-            glRef: glRef,
             videoRecorderRef: videoRecorderRef 
         })
     }
@@ -365,7 +363,7 @@ export const moorhenKeyPress = (
 
         if(shortCutHelp.length===0){
             showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
-                let modifiers = []
+                const modifiers = []
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")

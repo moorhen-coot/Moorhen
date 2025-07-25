@@ -1,13 +1,11 @@
 import { Form, InputGroup } from "react-bootstrap";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useSelector, useDispatch } from "react-redux";
+import { useCallback } from "react";
 import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { useCallback } from "react";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenScoresToastPreferencesMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const MoorhenScoresToastPreferencesMenuItem = () => {
 
     const dispatch = useDispatch()
     const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast)
@@ -56,7 +54,6 @@ export const MoorhenScoresToastPreferencesMenuItem = (props: {
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText={"Options for scores when updating maps..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
 

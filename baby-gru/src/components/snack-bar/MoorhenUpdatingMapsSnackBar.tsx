@@ -1,12 +1,11 @@
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { SnackbarContent, useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { SnackbarContent, useSnackbar } from "notistack";
 import { disableUpdatingMaps, setCurrentScores } from "../../store/moleculeMapUpdateSlice";
 
 export const MoorhenUpdatingMapsManager = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
@@ -32,9 +31,8 @@ export const MoorhenUpdatingMapsManager = (props: {
                 variant: "updatingMaps",
                 persist: true,
                 commandCentre: props.commandCentre,
-                glRef: props.glRef,
-                anchorOrigin: { vertical: 'top', horizontal: 'right' },
-            })
+                anchorOrigin: { vertical: "top", horizontal: "right" },
+            });
         } else if (updatingMapsIsEnabled) {
             enqueueSnackbar("Adjust preferences to display scores after map updates", {variant: "info"})
         }
@@ -65,7 +63,7 @@ export const MoorhenUpdatingMapsManager = (props: {
 
     useEffect(() => {
         const handleScoresUpdate = async () => {
-            if (updateMolNo !== null && connectedMoleculeMolNo === updateMolNo && props.glRef !== null && typeof props.glRef !== 'function') {
+            if (updateMolNo !== null && connectedMoleculeMolNo === updateMolNo) {
 
                 await Promise.all(
                     maps.filter(map => uniqueMaps.includes(map.molNo)).map(map => {
@@ -194,3 +192,5 @@ export const MoorhenUpdatingMapsSnackBar = forwardRef<
             }
             </SnackbarContent>
 })
+
+MoorhenUpdatingMapsSnackBar.displayName = "MoorhenUpdatingMapsSnackBar";

@@ -1,12 +1,12 @@
 import { Card, Col, Row } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { convertViewtoPx } from "../../utils/utils";
 import parse from 'html-react-parser'
-import { modalKeys } from "../../utils/enums";
 import { Autocomplete, createFilterOptions, MenuItem, TextField } from "@mui/material";
+import { convertViewtoPx } from "../../utils/utils";
+import { modalKeys } from "../../utils/enums";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const shortCutMouseActions = {
     open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],
@@ -105,7 +105,7 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
                     <Row style={{display: 'flex'}}>
                     <Col className="col-4" style={{overflowY: 'scroll', height: convertViewtoPx(65, height)}}>
                     {shortCuts && Object.keys(shortCuts).map(key => {
-                            let modifiers = []
+                            const modifiers = []
                             if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("Shift")
                             if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("Ctrl")
                             if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("Meta")

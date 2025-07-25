@@ -3,9 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Store } from 'redux';
 import { Container } from 'react-bootstrap';
 import { useDropzone } from 'react-dropzone';
+import { useSnackbar } from "notistack"
 import { MoorhenMolecule } from "../utils/MoorhenMolecule"
 import { MoorhenMap} from "../utils/MoorhenMap"
-import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../store/moleculesSlice"
 import { drawModels,loadCoordFiles,handleSessionUpload,loadMrParseFiles, autoOpenFiles } from "../utils/MoorhenFileLoading"
 import { setActiveMap } from "../store/generalStatesSlice"
@@ -38,7 +38,16 @@ export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
 
     const {getRootProps} = useDropzone({
         onDrop: async files => {
-            autoOpenFiles(files, props.commandCentre, props.glRef, props.store, props.monomerLibraryPath, backgroundColor, defaultBondSmoothness, props.timeCapsuleRef, dispatch)
+            autoOpenFiles(
+                files,
+                props.commandCentre,
+                props.store,
+                props.monomerLibraryPath,
+                backgroundColor,
+                defaultBondSmoothness,
+                props.timeCapsuleRef,
+                dispatch
+            );
         }
     });
 

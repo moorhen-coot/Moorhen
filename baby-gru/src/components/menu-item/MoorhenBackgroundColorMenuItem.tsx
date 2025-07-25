@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { RgbColorPicker } from "react-colorful";
-import { convertRemToPx } from "../../utils/utils";
 import { useDispatch, useSelector } from "react-redux";
+import { convertRemToPx , hexToRGB } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { setBackgroundColor } from "../../store/sceneSettingsSlice";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
-import { hexToRGB } from "../../utils/utils";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenBackgroundColorMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

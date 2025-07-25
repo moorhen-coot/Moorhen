@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
-import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { LinearProgress } from "@mui/material";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { modalKeys } from "../../utils/enums";
 
 export const MoorhenLigandList = (props: { 
@@ -28,7 +28,7 @@ export const MoorhenLigandList = (props: {
             return
         }
 
-        let ligandList: moorhen.LigandInfo[] = []
+        const ligandList: moorhen.LigandInfo[] = []
 
         for (const ligand of props.molecule.ligands) {
             const [svg, chemCompInfo,smilesInfo,flev_svg] = await Promise.all([

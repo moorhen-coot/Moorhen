@@ -1,22 +1,19 @@
 import { useCallback, useRef } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenStepRefinementMenuItem = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
 }) => {
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -40,7 +37,7 @@ export const MoorhenStepRefinementMenuItem = (props: {
             enqueueSnackbar("stepped-refine", {
                 variant: "residueSteps",
                 persist: true,
-                timeCapsuleRef: props.timeCapsuleRef,
+                timeCapsuleRef: timeCapsuleRef,
                 residueList: residueList,
                 onStep: handleStepRefine,
                 onStart: async () => {

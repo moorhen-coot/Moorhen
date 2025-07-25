@@ -1,16 +1,16 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef, useState } from "react";
 import { Button, Row } from "react-bootstrap";
-import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { Tooltip } from "@mui/material";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
 import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {     
     const menu = 'moorhenRamaPlotModal'   

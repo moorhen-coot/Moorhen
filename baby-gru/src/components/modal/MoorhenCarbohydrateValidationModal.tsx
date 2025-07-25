@@ -1,15 +1,15 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { CSSProperties, useRef } from "react";
 import { Button, Row, Stack } from "react-bootstrap";
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
-import { modalKeys } from "../../utils/enums";
 import { Tooltip } from "@mui/material";
-import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
       

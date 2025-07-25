@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     }
     
     async handleBackupDownload() {
-        const timeCapsule = new MoorhenTimeCapsule(null, null, null, null, null)
+        const timeCapsule = new MoorhenTimeCapsule(null, null, null, null);
         timeCapsule.storageInstance = createLocalStorageInstance('Moorhen-TimeCapsule') 
         await timeCapsule.init()
         const backup = await timeCapsule.retrieveLastBackup() as string
@@ -56,8 +56,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     render() {
         // If there is an error render custom fallback UI otherwise render children
         if (this.state.hasError) {
-            let head = document.head;
-            let style: any = document.createElement("link");
+            const head = document.head;
+            const style: any = document.createElement("link");
             style.href = `${this.props.urlPrefix}/flatly.css`
             style.rel = "stylesheet";
             style.async = true

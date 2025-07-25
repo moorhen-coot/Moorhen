@@ -1,8 +1,7 @@
-import { SnackbarContent } from "notistack";
+import { SnackbarContent , useSnackbar } from "notistack";
 import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { useSnackbar } from "notistack";
 
 export const MoorhenMapContourLevelSnackBar = forwardRef<
     HTMLDivElement,
@@ -46,3 +45,5 @@ export const MoorhenMapContourLevelSnackBar = forwardRef<
         {`Level: ${contourLevel?.toFixed(selectedMap?.isEM ? Math.abs(Math.floor(Math.log10(props.mapPrecision))) : 2)} ${selectedMap?.mapRmsd ? '(' + (contourLevel / selectedMap?.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
     </SnackbarContent>
 })
+
+MoorhenMapContourLevelSnackBar.displayName = "MoorhenMapContourLevelSnackBar";

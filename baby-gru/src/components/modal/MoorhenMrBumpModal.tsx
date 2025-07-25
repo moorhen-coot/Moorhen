@@ -1,16 +1,16 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen"
 import { useRef, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
-import { useSelector, useDispatch } from "react-redux"
+import { useSelector, useDispatch, useStore } from "react-redux"
+import { useSnackbar } from "notistack"
+import {  CenterFocusWeakOutlined,  VisibilityOutlined, DownloadOutlined } from '@mui/icons-material'
+import { Slider,Typography } from '@mui/material'
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
+import { moorhen } from "../../types/moorhen"
+import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils'
 import { modalKeys } from "../../utils/enums"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { readTextFile } from "../../utils/utils"
-import { useSnackbar } from "notistack"
 import { addMoleculeList } from "../../store/moleculesSlice"
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
-import { Slider,Typography } from '@mui/material'
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const mrbump_json_keys = ['modelName', 'rank', 'tarStart', 'tarEnd',
     'tarGroupStart', 'tarGroupEnd',
@@ -51,7 +51,7 @@ function rgb2hsv(r, g, b) {
     if (arguments.length === 1) {
         g = r.g, b = r.b, r = r.r;
     }
-    var max = Math.max(r, g, b), min = Math.min(r, g, b),
+    let max = Math.max(r, g, b), min = Math.min(r, g, b),
         d = max - min,
         h,
         s = (max === 0 ? 0 : d / max),
@@ -73,7 +73,7 @@ function rgb2hsv(r, g, b) {
 
 
 function hsv2rgb(h, s, v) {
-    var r, g, b, i, f, p, q, t;
+    let r, g, b, i, f, p, q, t;
     if (arguments.length === 1) {
         s = h.s, v = h.v, h = h.h;
     }
@@ -108,6 +108,10 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
 
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
+
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
@@ -119,7 +123,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const readPdbFileMrBump = async (file: File, domain: string): Promise<{molecule:moorhen.Molecule,domain:string}> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)
@@ -247,7 +251,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
 
         let alignText: string = ""
         let phmmerText: string = ""
-        let models_json: MrBUMPModelJson[] = []
+        const models_json: MrBUMPModelJson[] = []
 
         for (const file of files) {
             if(file.name==="models.json"&&file.webkitRelativePath.includes("logs/models.json")){
@@ -313,8 +317,8 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
             }
         }
 
-        let drawPromises: Promise<void>[] = []
-        let molecules: moorhen.Molecule[] = []
+        const drawPromises: Promise<void>[] = []
+        const molecules: moorhen.Molecule[] = []
 
         for (const newMolecule of newMolecules) {
             molecules.push(newMolecule.molecule)

@@ -7,13 +7,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { sleep } from "../../utils/utils";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 
 export const MoorhenResidueStepsSnackBar = forwardRef<
     HTMLDivElement,
     {
         id: string;
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
         residueList: { cid: string }[];
         onStep: (stepInput: any) => Promise<void>;
         onStart?: () => Promise<void> | void;
@@ -24,6 +24,8 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
         sleepTime?: number;
     }
 >((props, ref) => {
+
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
 
     const defaultProps = {
         disableTimeCapsule: true, sleepTime: 600,
@@ -48,15 +50,15 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
 
     const exit = useCallback(async () => {
         props.onStop?.()
-        if (disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
-        await props.timeCapsuleRef.current.addModification()
+        if (disableTimeCapsule) timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled
+        await timeCapsuleRef.current.addModification()
         closeSnackbar(props.id)
     }, [timeCapsuleIsEnabled])
 
     const init = async () => {
         await props.onStart?.()
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
-        if (disableTimeCapsule) props.timeCapsuleRef.current.disableBackups = true
+        if (disableTimeCapsule) timeCapsuleRef.current.disableBackups = true
     }
 
     const steppedRefine = async () => {
@@ -64,7 +66,7 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
         const nSteps = props.residueList.length
         const stepPercent = nSteps / 100
         const singleStepPercent = 1 / stepPercent
-        for (let residue of props.residueList) {
+        for (const residue of props.residueList) {
             setBuffer((prev) => prev + singleStepPercent)
             if (isClosedRef.current) {
                     await exit()
@@ -121,3 +123,5 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
                 </Stack>
     </SnackbarContent>
 })
+
+MoorhenResidueStepsSnackBar.displayName = "MoorhenResidueStepsSnackBar";

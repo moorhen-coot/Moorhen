@@ -1,5 +1,5 @@
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from "react-redux";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenMapManager} from "./MoorhenMapManager"
 
 export const MoorhenMapsHeadManager = () => {

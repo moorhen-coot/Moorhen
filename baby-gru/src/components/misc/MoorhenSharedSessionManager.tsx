@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { moorhen } from '../../types/moorhen';
-import { webGL } from '../../types/mgWebGL';
-import { MoorhenNotification } from './MoorhenNotification';
 import { Stack } from 'react-bootstrap';
 import { CloseOutlined, LocationOffOutlined, LocationOnOutlined, PeopleAltOutlined, ShareLocationOutlined, ShareOutlined, SwapVertOutlined } from '@mui/icons-material';
 import { Box, Fade, IconButton, Popper, Badge, Slide, Avatar } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { webGL } from '../../types/mgWebGL';
+import { moorhen } from '../../types/moorhen';
 import { MoorhenMolecule } from '../../utils/MoorhenMolecule';
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenFleetManager } from '../../utils/MoorhenFleetManager'
 import { setSharedSessionToken, setShowSharedSessionManager } from "../../store/sharedSessionSlice";
-import { addMolecule } from "../../store/moleculesSlice";
+import { addMolecule , emptyMolecules } from "../../store/moleculesSlice";
 import { addMap, emptyMaps } from '../../store/mapsSlice';
-import { emptyMolecules } from '../../store/moleculesSlice';
 import { setActiveMap } from "../../store/generalStatesSlice";
+import { MoorhenNotification } from './MoorhenNotification';
 
 export const MoorhenSharedSessionManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -96,7 +95,7 @@ export const MoorhenSharedSessionManager = (props: {
                 const mapMolNos = Array.from(moorhenFleetManagerRef.current.maps.keys())
                 const sortedMolNos = [...moleculeMolNos.map(item => parseInt(item)), ...mapMolNos.map(item => parseInt(item))].sort((a, b) => a - b)
                 // TODO: Before this loop we need a function to increase the imol to the desired current value...
-                for (let molNo of sortedMolNos) {
+                for (const molNo of sortedMolNos) {
                     if (moleculeMolNos.includes(molNo.toString())) {
                         const molecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibrary)
                         const moleculeData = moorhenFleetManagerRef.current.molecules.get(molNo.toString())

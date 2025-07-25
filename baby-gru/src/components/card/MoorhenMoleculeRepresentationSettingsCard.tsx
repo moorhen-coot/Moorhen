@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import { Form, FormSelect, InputGroup, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
-import { MoorhenSlider } from '../inputs/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
+import { useSelector, useDispatch } from "react-redux";
+import { MoorhenSlider } from "../inputs";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from '../../types/mgWebGL';
-import { useSelector, useDispatch } from "react-redux";
 import { setRequestDrawScene } from "../../store/glRefSlice"
 
 

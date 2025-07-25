@@ -1,9 +1,9 @@
 import { useCallback, useRef } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from 'react-redux';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { moorhen } from "../../types/moorhen";
 import { addMoleculeList } from "../../store/moleculesSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenSplitModelsMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'

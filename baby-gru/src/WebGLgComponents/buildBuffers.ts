@@ -1,11 +1,11 @@
 import * as vec3 from 'gl-matrix/vec3';
+import store from '../store/MoorhenReduxStore'
+import { guid } from '../utils/utils';
+import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
-import store from '../store/MoorhenReduxStore'
 import { TexturedShape } from './texturedShape'
-import { guid } from '../utils/utils';
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 
 export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
 
@@ -39,7 +39,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
             if(jsondata.prim_types){
                 if(jsondata.prim_types[idat].length>0){
                     if(jsondata.prim_types[idat][0]==="TEXTLABELS"){
-                        let labels = []
+                        const labels = []
                         for(let ilabel=0;ilabel<jsondata.idx_tri[idat].length;ilabel++){
                             const t = jsondata.label_tri[idat][ilabel];
                             const x = jsondata.vert_tri[idat][ilabel*3];
@@ -119,12 +119,12 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
         const index_length = axesIndices.length;
 
         const t1 = performance.now()
-        let axesNormals = new Float32Array(index_length * 9);
+        const axesNormals = new Float32Array(index_length * 9);
         let axesNormals_new;
         if (axesNormals_old) {
             axesNormals_new = new Float32Array(index_length * 9);
         }
-        let axesVertices_new = new Float32Array(index_length * 9);
+        const axesVertices_new = new Float32Array(index_length * 9);
         let axesColours_new;
         let axesIndexs_new;
         if (isWebGL2) {
@@ -265,7 +265,7 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
             let dy = y2 - y
             let dz = z2 - z
 
-            let d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
             if (d > 1e-8) {
                 dx *= size/d
                 dy *= size/d
@@ -303,7 +303,7 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
 
         let axesIdx_new = 0;
         for (let idx = 0; idx < index_length; idx += 2) {
-            let axesIdx_old = axesIdx_new;
+            const axesIdx_old = axesIdx_new;
             const idx3 = idx*3;
             axesIndexs_new[idx3]     = axesIdx_old;
             axesIndexs_new[idx3 +1 ] = axesIdx_old+2;
@@ -317,7 +317,7 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
         const t5 = performance.now()
         if(print_timing) console.log("do index loop in linesToThickLines",t5-t4)
 
-        let ret = {};
+        const ret = {};
         ret["vertices"] = axesVertices_new;
         ret["indices"] = axesIndexs_new;
         ret["normals"] = axesNormals;
@@ -332,10 +332,10 @@ const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: numbe
     }
 
 export const linesToThickLines = (axesVertices, axesColours, size) => {
-        let axesNormals = [];
-        let axesVertices_new = [];
-        let axesColours_new = [];
-        let axesIndexs_new = [];
+        const axesNormals = [];
+        const axesVertices_new = [];
+        const axesColours_new = [];
+        const axesIndexs_new = [];
         let axesIdx_new = 0;
 
         for (let il = 0; il < axesVertices.length; il += 6) {
@@ -376,7 +376,7 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
             axesNormals.push(axesVertices[il + 3] - axesVertices[il]);
             axesNormals.push(axesVertices[il + 4] - axesVertices[il + 1]);
             axesNormals.push(axesVertices[il + 5] - axesVertices[il + 2]);
-            let d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
+            const d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
             if (d > 1e-8) {
                 axesNormals[axesNormals.length - 1 - 2] *= size / d;
                 axesNormals[axesNormals.length - 1 - 1] *= size / d;
@@ -440,7 +440,7 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
             axesIndexs_new.push(axesIdx_new++);
         }
 
-        let ret = {};
+        const ret = {};
         ret["vertices"] = axesVertices_new;
         ret["indices"] = axesIndexs_new;
         ret["normals"] = axesNormals;
@@ -457,15 +457,15 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
         const gl = store.getState().glRef.glCtx
 
         const tbb1 = performance.now()
-        let xaxis = vec3Create([1.0, 0.0, 0.0]);
-        let yaxis = vec3Create([0.0, 1.0, 0.0]);
-        let zaxis = vec3Create([0.0, 0.0, 1.0]);
-        let Q = vec3.create();
-        let R = vec3.create();
+        const xaxis = vec3Create([1.0, 0.0, 0.0]);
+        const yaxis = vec3Create([0.0, 1.0, 0.0]);
+        const zaxis = vec3Create([0.0, 0.0, 1.0]);
+        const Q = vec3.create();
+        const R = vec3.create();
 
         // FIXME - These need to be global preferences or properties of primitive.
         // spline_accu = 4 is OK for 5kcr on QtWebKit, 8 runs out of memory.
-        let accuStep = 20;
+        const accuStep = 20;
 
         const thisdisplayBufferslength = displayBuffers.length;
         //console.log(thisdisplayBufferslength+" buffers to build");
@@ -557,7 +557,7 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
                     if(print_timing) console.log("buffering",t3-t2,j)
 
                 } else if (displayBuffers[idx].bufferTypes[j] === "LINES") {
-                    let size = mapLineWidth;
+                    const size = mapLineWidth;
                     const useIndices = displayBuffers[idx].supplementary["useIndices"][0];
                     let thickLines;
 
@@ -575,10 +575,10 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
                     const t2 = performance.now()
                     if(print_timing) console.log("linesToThickLines",t2-t1)
 
-                    let Normals_new = thickLines["normals"];
-                    let Vertices_new = thickLines["vertices"];
-                    let Colours_new = thickLines["colours"];
-                    let Indexs_new = thickLines["indices"];
+                    const Normals_new = thickLines["normals"];
+                    const Vertices_new = thickLines["vertices"];
+                    const Colours_new = thickLines["colours"];
+                    const Indexs_new = thickLines["indices"];
 
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Indexs_new, gl.STATIC_DRAW);

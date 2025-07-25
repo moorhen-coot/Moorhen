@@ -1,0 +1,17 @@
+.moorhen__modal__base__icon {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    cursor: se-resize;
+    width: 30px; 
+    height: 30px;
+    filter: invert(1) brightness(0.5);
+}
+
+.moorhen__modal__base__icon:hover {
+    transition: filter 0.15s ease-in;
+    filter: invert(1) brightness(var(--moorhen-icon-brightness)) drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+}
+.moorhen__modal__base__icon:active {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness)) drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+}

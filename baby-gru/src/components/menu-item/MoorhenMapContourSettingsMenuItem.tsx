@@ -1,12 +1,12 @@
 import { Slider } from "@mui/material";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { useEffect, useState } from "react";
-import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
-import { setDefaultMapSamplingRate, setMapLineWidth } from "../../store/mapContourSettingsSlice";
 import { Form, InputGroup } from "react-bootstrap";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
-import { setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
+import { moorhen } from "../../types/moorhen";
+import { setDefaultMapSamplingRate, setMapLineWidth , setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
+import { MoorhenSlider } from "../inputs";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []
@@ -26,9 +26,7 @@ const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = fa
 const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100]
 
 export const MapContourSettingsMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
     popoverPlacement?: "left" | "right";
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -38,17 +36,18 @@ export const MapContourSettingsMenuItem = (props: {
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
-    const [mapSampling, setMapSampling] = useState<number>(convertPercentageToSamplingRate(defaultMapSamplingRate, true))
+    const [mapSampling, setMapSampling] = useState<number>(() => convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 
     const dispatch = useDispatch()
 
     useEffect(() => {
         const setMapSamplingRate = async () => {
-            let newSamplingRate = convertPercentageToSamplingRate(mapSampling)
+            const newSamplingRate = convertPercentageToSamplingRate(mapSampling)
 
             if (newSamplingRate !== defaultMapSamplingRate) {
-                await props.commandCentre.current.cootCommand({
+                await commandCentre.current.cootCommand({
                     command: 'set_map_sampling_rate',
                     commandArgs: [newSamplingRate],
                     returnType: 'status'
@@ -62,7 +61,7 @@ export const MapContourSettingsMenuItem = (props: {
                     await Promise.all(
                         maps.filter(map => !map.isEM && map.hasReflectionData).map(async(map: moorhen.Map) => {
                             const reflectionData = await map.fetchReflectionData()
-                            await props.commandCentre.current.cootCommand({
+                            await commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: 'shim_replace_map_by_mtz_from_file',
                                 commandArgs: [map.molNo, reflectionData.data.result.mtzData, map.selectedColumns]
@@ -151,7 +150,6 @@ export const MapContourSettingsMenuItem = (props: {
         popoverContent={panelContent}
         showOkButton={false}
         menuItemText={"Map contour settings..."}
-        setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={() => {}}
     />
 }

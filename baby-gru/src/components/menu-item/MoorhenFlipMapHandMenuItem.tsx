@@ -1,26 +1,22 @@
 import { useRef } from "react";
+import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { webGL } from "../../types/mgWebGL";
-import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
-import { Store } from "@reduxjs/toolkit";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
-export const MoorhenFlipMapHandMenuItem = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
-}) => {
+export const MoorhenFlipMapHandMenuItem = () => {
 
     const dispatch = useDispatch()
 
     const maps = useSelector((state: moorhen.State) => state.maps)
     
     const selectRef = useRef<HTMLSelectElement>(null)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const store = useStore()
 
     const onCompleted = async () => {
         if (!selectRef.current.value) {
@@ -28,14 +24,14 @@ export const MoorhenFlipMapHandMenuItem = (props: {
         }
 
         const mapNo = parseInt(selectRef.current.value)
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
+        const newMap = new MoorhenMap(commandCentre, store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
             return
         }
 
-        const result  = await props.commandCentre.current.cootCommand({
+        const result  = await commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'flip_hand',
             commandArgs: [ mapNo ]
@@ -63,7 +59,6 @@ export const MoorhenFlipMapHandMenuItem = (props: {
         popoverContent={<MoorhenMapSelect maps={maps} ref={selectRef} />}
         menuItemText="Flip map..."
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 

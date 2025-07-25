@@ -1,13 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef, useState } from "react";
-import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
-import { modalKeys } from "../../utils/enums";
-import { readTextFile } from "../../utils/utils"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
+import { moorhen } from "../../types/moorhen";
+import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation"
+import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils';
+import { modalKeys } from "../../utils/enums";
 import { setValidationJson } from "../../store/jsonValidation"
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {        
 

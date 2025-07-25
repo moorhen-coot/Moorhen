@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, waitFor }  from '@testing-library/react'
-import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 
 describe('Testing MoorhenNumberForm', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenNumberForm label', async () => {
+    test('MoorhenNumberForm label', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNumberForm defaultValue={10} label="Test Label"/>
@@ -21,7 +21,7 @@ describe('Testing MoorhenNumberForm', () => {
         expect(labelNode).toBeVisible()
     })
 
-    test('Test MoorhenNumberForm disabled', async () => {
+    test('MoorhenNumberForm disabled', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNumberForm defaultValue={10} disabled={true}/>
@@ -33,7 +33,7 @@ describe('Testing MoorhenNumberForm', () => {
         expect(formNode).toBeDisabled()
     })
 
-    test('Test MoorhenNumberForm change values', async () => {
+    test('MoorhenNumberForm change values', async () => {
         const numberFormRef = createRef(null)
         
         render(
@@ -53,7 +53,7 @@ describe('Testing MoorhenNumberForm', () => {
         expect(formNode).toHaveValue(15)
     })
 
-    test('Test MoorhenNumberForm onChange', async () => {
+    test('MoorhenNumberForm onChange', async () => {
         const numberFormRef = createRef(null)
         
         const onChange = jest.fn()
@@ -71,7 +71,7 @@ describe('Testing MoorhenNumberForm', () => {
         expect(onChange).toHaveBeenCalled()
     })
 
-    test('Test MoorhenNumberForm allowNegativeValues', async () => {
+    test('MoorhenNumberForm allowNegativeValues', async () => {
         const numberFormRef = createRef(null)
         
         render(
@@ -90,7 +90,7 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm invalid negative values', async () => {
+    test('MoorhenNumberForm invalid negative values', async () => {
         const numberFormRef = createRef(null)
         
         render(
@@ -109,7 +109,7 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm invalid letter values', async () => {
+    test('MoorhenNumberForm invalid letter values', async () => {
         const numberFormRef = createRef(null)
         
         render(
@@ -128,7 +128,7 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm valid float values', async () => {
+    test('MoorhenNumberForm valid float values', async () => {
         const numberFormRef = createRef(null)
         
         render(

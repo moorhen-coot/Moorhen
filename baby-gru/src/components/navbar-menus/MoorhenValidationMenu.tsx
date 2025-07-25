@@ -1,4 +1,3 @@
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
@@ -6,7 +5,8 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 
-export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenValidationMenu = ( props:{dropdownId:string}) => {
+
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     
     const dispatch = useDispatch()

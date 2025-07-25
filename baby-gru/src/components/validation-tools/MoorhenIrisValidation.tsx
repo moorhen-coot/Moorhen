@@ -1,11 +1,11 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap'
-import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { convertRemToPx } from '../../utils/MoorhenUtils'
 import { useDispatch, useSelector } from "react-redux"
 import { Iris, IrisData, IrisAesthetics, IrisProps } from "iris-validation"
-import { moorhen } from "../../types/moorhen"
 import iris_module from "iris-validation-backend"
+import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
+import { convertRemToPx } from '../../utils/MoorhenUtils'
+import { moorhen } from "../../types/moorhen"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { gemmi } from "../../types/gemmi";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice"
@@ -124,8 +124,8 @@ export const MoorhenIrisValidation = (props: {
    
     useEffect(() => {
         setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
-            let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
+            const plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
+            const plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setPlotDimensions(plotWidth) : setPlotDimensions(plotHeigth)
             }

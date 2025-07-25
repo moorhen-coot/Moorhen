@@ -1,21 +1,15 @@
 import { useCallback, useRef } from "react"
 import { Form, Row } from "react-bootstrap"
-import { MoorhenMap } from "../../utils/MoorhenMap"
-import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL"
-import { libcootApi } from "../../types/libcoot"
-import { useDispatch } from 'react-redux';
-import { setActiveMap } from "../../store/generalStatesSlice"
-import { addMap, addMapList } from "../../store/mapsSlice"
-import { Store } from "@reduxjs/toolkit";
+import { useDispatch, useStore } from 'react-redux';
 import { useSnackbar } from "notistack"
+import { MoorhenMap } from "../../utils/MoorhenMap"
+import { moorhen } from "../../types/moorhen";
+import { setActiveMap } from "../../store/generalStatesSlice"
+import { addMapList } from "../../store/mapsSlice"
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
-    store: Store;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -24,6 +18,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
+    const store = useStore()
 
     const panelContent = <>
         <Row>
@@ -41,7 +36,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
 
         try {
             const file = filesRef.current.files[0]
-            const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, props.glRef, props.store)    
+            const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, store);    
             if (newMaps.length === 0) {
                 enqueueSnackbar('Error reading mtz file', {variant: "error"})
             } else {
@@ -53,7 +48,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             enqueueSnackbar('Error reading mtz file', {variant: "error"})
         }
         
-    }, [filesRef.current, props.commandCentre, props.glRef])
+    }, [filesRef.current, props.commandCentre,])
 
     return <MoorhenBaseMenuItem
         id='auto-open-mtz-menu-item'

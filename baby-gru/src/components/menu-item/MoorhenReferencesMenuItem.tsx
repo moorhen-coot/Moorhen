@@ -1,8 +1,8 @@
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { version } from '../../version'
 import { CSSProperties } from "react";
+import { version } from '../../version'
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const MoorhenReferencesMenuItem = () => {
 
     const divStyle : CSSProperties = {
       overflowY: 'scroll',
@@ -122,6 +122,5 @@ export const MoorhenReferencesMenuItem = (props: { setPopoverIsShown: React.Disp
         menuItemText="References..."
         onCompleted={() => { }}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

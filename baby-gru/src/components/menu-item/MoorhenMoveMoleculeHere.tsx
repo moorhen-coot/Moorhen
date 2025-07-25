@@ -1,15 +1,13 @@
 import { useCallback, useRef } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenMoveMoleculeHere = (props: {
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const dispatch = useDispatch()

@@ -1,4 +1,6 @@
-.residue-box {
+@import "../../colors.css";
+
+.moorhen__seqviewer__residue-box {
     cursor: pointer;
     min-width: var(--column-width, 1rem) ;
     max-width: var(--column-width, 1rem);
@@ -10,50 +12,54 @@
     user-select: none;
     font-size : 1rem;
     margin-bottom: 2px;
+    color: black
 }
 
-.residue-box.even {
+.moorhen__seqviewer__residue-box.msv__even {
     background-color: var(--overlay-color, rgb(198, 205, 238));
 }
 
-.residue-box.solid {
+.moorhen__seqviewer__residue-box.msv__solid {
     background-color: var(--overlay-color, rgb(198, 205, 238));
     border-left: 1px solid rgba(0,0,0,0.25);
 }
 
-.residue-box.odd {
+.moorhen__seqviewer__residue-box.msv__odd {
     background-color: color-mix(in srgb, var(--overlay-color, rgb(198, 205, 238)), rgb(256, 256, 256) 30%);
 }
 
-.residue-box.empty {
-    background-color: rgb(230, 230, 230);
+.moorhen__seqviewer__residue-box.msv__empty {
+    background-color: rgb(var(--moorhen-background));
 }
 
-.residue-box.hover {
+.moorhen__seqviewer__residue-box.msv__hover {
     background-color: rgb(230, 233, 166);
 }
 
-.residue-box:hover {
+.moorhen__seqviewer__residue-box:hover {
     background-color: rgb(230, 233, 166);
 }
 
-.residue-box.empty:hover {                       
-    background-color: rgba(230, 230, 230, 0.5);
+.moorhen__seqviewer__residue-box.empty:hover {                       
+    background-color: rgba(var(--moorhen-background));
 }
 
-.residue-box.selected {                       
+.moorhen__seqviewer__residue-box.msv__selected {                       
+    background-color: rgb(127, 224, 160);
+    font-weight: bold;
+    outline-offset: -2px;
+    box-shadow: 0 0 6px 4px rgba(30, 180, 90, 0.4);
+}
+
+.moorhen__seqviewer__residue-box.msv__selected:hover {                       
+    background-color: rgb(230, 233, 166);
+}
+
+.moorhen__seqviewer__residue-box.glideSelect:hover {                       
     background-color: rgb(127, 224, 160);
 }
 
-.residue-box.selected:hover {                       
-    background-color: rgb(230, 233, 166);
-}
-
-.residue-box.glideSelect:hover {                       
-    background-color: rgb(127, 224, 160);
-}
-
-.tick-mark {
+.moorhen__seqviewer__tick-mark {
     align-items: top;
     display: flex;
     justify-content: left;
@@ -63,9 +69,10 @@
     margin-bottom: 2px;
     font-size: small;
     position: relative;
+
 }
 
-.tick-mark::before {
+.moorhen__seqviewer__tick-mark::before {
     content: "";
     position: absolute;
     left: 0;
@@ -75,24 +82,26 @@
     border-left: 1px solid;
 }
 
-.sticky-tick-marks {
+.moorhen__seqviewer__sticky-tick-marks {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: white;
+    color: var(--moorhen-primary);
+    background: var(--moorhen-background);
     display: flex;
     flex-direction: row;
     width: fit-content;
     left: 0;
 }
 
-.sticky-left-column {
-    position: sticky;
+.moorhen__seqviewer__sticky-left-column {
+    position: absolute;
     left: 0;
     z-index: 1;
     overflow-x: hidden;
-    background: white;
-    border-right: 1px solid #ccc;
+    color: var(--moorhen-primary);
+    background: var(--moorhen-background);
+    border-right: 1px solid var(--moorhen-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,7 +110,15 @@
     max-height: 1.5rem;
 }
 
-.scrollable-table {
+.moorhen__seqviewer__left-column-spacer {
+    left: 0;
+    z-index: 1;
+    margin-bottom: 2px;
+    min-height: 1.5rem; 
+    max-height: 1.5rem;
+}
+
+.moorhen__seqviewer__scrollable-table {
     z-index: 0;
     padding-bottom: 10px;
     padding-right: 10px;

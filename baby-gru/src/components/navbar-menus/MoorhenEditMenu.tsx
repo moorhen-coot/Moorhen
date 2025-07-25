@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
 import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem"
 import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem"
@@ -11,32 +12,33 @@ import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdM
 import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem"
 import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
 import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem"
-import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 
-export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
+
+export const MoorhenEditMenu = (props: {
+    dropdownId: string,
+    extraEditMenuItems?: React.ReactNode[]}) => {
+
+    const [,setPopoverIsShown] = useState(false)
     
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
     
     const dispatch = useDispatch()
 
-    const menuItemProps = { setPopoverIsShown, ...props }
-    
+    const menuItemProps = { setPopoverIsShown }
+
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
-            <MoorhenAddSimpleMenuItem key="add_simple" setPopoverIsShown={() => {}} {...menuItemProps} />
-            <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
+            <MoorhenAddSimpleMenuItem key="add_simple" {...menuItemProps} />
+            <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps} />
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
-            <MoorhenMoveMoleculeHere key="move" {...menuItemProps}/>
-            <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps}/>
-            <MoorhenSetOccupancyMenuItem key="set-occupancy" {...menuItemProps}/>
-            <MoorhenSplitModelsMenuItem key="split_models" {...menuItemProps}/>
+            <MoorhenMoveMoleculeHere key="move" {...menuItemProps} />
+            <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps} />
+            <MoorhenSetOccupancyMenuItem key="set-occupancy" {...menuItemProps} />
+            <MoorhenSplitModelsMenuItem key="split_models" {...menuItemProps} />
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />

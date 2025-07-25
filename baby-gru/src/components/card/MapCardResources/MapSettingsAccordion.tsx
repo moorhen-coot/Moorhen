@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { Stack } from "react-bootstrap";
+import { Stack , ToggleButton, Form } from "react-bootstrap";
 import { ExpandMoreOutlined, LockOutline, LockOpen } from "@mui/icons-material";
-import { ToggleButton, Form } from "react-bootstrap";
-import { MoorhenSlider } from "../../inputs/MoorhenSlider";
+import { useDispatch, useSelector } from "react-redux";
+import { MoorhenSlider } from "../../inputs";
 import { moorhen } from "../../../types/moorhen";
 import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
-import { useDispatch, useSelector } from "react-redux";
 
 interface MoorhenMapCardSettings {
     map: moorhen.Map;
@@ -36,7 +35,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             if (props.map.headerInfo === null) {
                 return 100;
             }
-            let side = props.map.headerInfo.cell.a ? props.map.headerInfo.cell.a : 120;
+            const side = props.map.headerInfo.cell.a ? props.map.headerInfo.cell.a : 120;
             //    return Math.ceil((side  * 1.732) /2)
             return Math.ceil(side / 2);
         } else {

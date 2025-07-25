@@ -1,12 +1,10 @@
 import { useRef, memo, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
+import { MoorhenReduxStore, showMap } from "../../moorhen";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapAlphaListener } from "./MapAlphaListener";
-import { useDispatch } from "react-redux";
-import { showMap } from "../../moorhen";
-import { MoorhenReduxStore } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
@@ -119,23 +117,31 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
     }, []);
 
-    if (!map) {
-        return null;
-    }
-
     useEffect(() => {
         drawMap();
     }, [mapIsVisible, mapContourLevel, mapRadius, isOriginLocked, mapStyle]);
+
+    if (!map) {
+        return null;
+    }
 
     return (
         <>
             {mapIsVisible &&
                 !isOriginLocked &&
-                (!reContourMapOnlyOnMouseUp ? <MapOriginListener drawMap={drawMap} /> : <MapOriginListenerMouseUp drawMap={drawMap} />)}
+                (!reContourMapOnlyOnMouseUp ? (
+                    <MapOriginListener drawMap={drawMap} />
+                ) : (
+                    <MapOriginListenerMouseUp drawMap={drawMap} />
+                ))}
 
-            {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
+            {isMapActive && (
+                <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />
+            )}
 
             {mapIsVisible && <MapAlphaListener map={map} />}
         </>
     );
 });
+
+MoorhenMapManager.displayName = "MoorhenMapManager";

@@ -1,17 +1,15 @@
 import { useCallback, useRef } from "react"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { useDispatch, useSelector } from 'react-redux';
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
+import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
 export const MoorhenMergeMoleculesMenuItem = (props: {
     fromMolNo?: null | number; 
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     menuItemText?: string;
-    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const toRef = useRef<null | HTMLSelectElement>(null)
@@ -36,7 +34,7 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
         await toMolecule.mergeMolecules(otherMolecules, true)
         props.setPopoverIsShown(false)
         dispatch( triggerUpdate(toMolecule.molNo) )
-    }, [toRef.current, fromRef.current, molecules, props.fromMolNo, props.glRef])
+    }, [toRef.current, fromRef.current, molecules, props.fromMolNo])
 
     return <MoorhenBaseMenuItem
         id='merge-molecules-menu-item'

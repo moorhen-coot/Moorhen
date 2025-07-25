@@ -1,17 +1,16 @@
 import React from "react"
-import { emscriptem } from "./emscriptem";
+import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
+import type { privateer } from "./privateer";
 import { gemmi } from "./gemmi";
 import { libcootApi } from "./libcoot";
 import { webGL } from "./mgWebGL";
-import { MoorhenMolecule } from "../moorhen";
-import { Store } from "@reduxjs/toolkit";
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
+
 
 export namespace moorhen {
 
     interface Preferences {
         name: string;
-        static defaultPreferencesValues: PreferencesValues;
+        defaultPreferencesValues: PreferencesValues;
         localStorageInstance: {
             clear: () => void;
             setItem: (key: string, value: any) => Promise<string>;
@@ -151,9 +150,9 @@ export namespace moorhen {
         parentRepresentation: MoleculeRepresentation;
         applyColourToNonCarbonAtoms: boolean;
         uniqueId: string;
-        static initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
-        static initFromString(stringData: string, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
-        static parseHexToRgba(hex: string): [number, number, number, number];
+        initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        initFromString(stringData: string, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        parseHexToRgba(hex: string): [number, number, number, number];
         objectify(): ColourRuleObject;
         stringify(): string;
         setLabel(label: string): void;
@@ -264,7 +263,6 @@ export namespace moorhen {
         isMRSearchModel: boolean;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre|null>;
-        glRef: React.RefObject<webGL.MGWebGL|null>;
         store: Store;
         atomsDirty: boolean;
         name: string;
@@ -337,7 +335,7 @@ export namespace moorhen {
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
         setM2tParams(arg0: m2tParameters): void;
-        static mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
+        mergeBufferObjects(bufferObj1: libcootApi.InstancedMeshJS[], bufferObj2: libcootApi.InstancedMeshJS[]): libcootApi.InstancedMeshJS[];
         bondOptions: cootBondOptions;
         m2tParams: m2tParameters;
         nonCustomOpacity: number;
@@ -352,7 +350,6 @@ export namespace moorhen {
         visible: boolean;
         buffers: DisplayObject[];
         commandCentre: React.RefObject<CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         parentMolecule: Molecule;
         colourRules: ColourRule[];
         styleHasAtomBuffers: boolean;
@@ -421,7 +418,7 @@ export namespace moorhen {
 
     interface cootCommandKwargs {
         message?: string;
-        data?: {};
+        data?: unknown;
         returnType?: string;
         command?: string;
         commandArgs?: any[];
@@ -484,7 +481,6 @@ export namespace moorhen {
     interface ScreenRecorder {
         rec: MediaRecorder;
         chunks: Blob[];
-        glRef: React.RefObject<webGL.MGWebGL>;
         canvasRef: React.RefObject<HTMLCanvasElement>;
         _isRecording: boolean;
         stopRecording: () => void;
@@ -544,7 +540,7 @@ export namespace moorhen {
         setupContourBuffers(objects: any[], keepCootColours?: boolean): void;
         setOtherMapForColouring(molNo: number, min?: number, max?: number): void;
         exportAsGltf(): Promise<ArrayBuffer>;
-        static autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: Store): Promise<Map[]>;
+        autoReadMtz(source: File, commandCentre: React.RefObject<CommandCentre|null>, store: Store): Promise<Map[]>;
         store: Store;
         isEM: boolean;
         suggestedContourLevel: number;
@@ -555,7 +551,6 @@ export namespace moorhen {
         name: string;
         molNo: number;
         commandCentre: React.RefObject<CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         webMGContour: boolean;
         showOnLoad: boolean;
         displayObjects: any;
@@ -593,7 +588,7 @@ export namespace moorhen {
         coordFormat: coorFormats;
         representations: {
             cid: string;
-            style: strin;
+            style: string;
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
@@ -686,56 +681,51 @@ export namespace moorhen {
         addModification: () =>  Promise<string>;
         init: () => Promise<void>;
         retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
-        static getBackupLabel(key: backupKey): string;
-        static loadSessionData(
+        getBackupLabel(key: backupKey): string;
+        loadSessionData(
             sessionData: backupSession,
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>,
             fetchExternalUrl?: (uniqueId: string) => Promise<string>
         ): Promise<number>;
-        static loadSessionFromArrayBuffer(
+        loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
-        static loadSessionFromProtoMessage(
+        loadSessionFromProtoMessage(
             sessionProtoMessage: any,
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
-        static loadSessionFromJsonString(
+        loadSessionFromJsonString(
             sessionDataString: string,
             monomerLibraryPath: string,
             molecules: Molecule[],
             maps: Map[],
             commandCentre: React.RefObject<CommandCentre|null>,
             timeCapsuleRef: React.RefObject<TimeCapsule|null>,
-            glRef: React.RefObject<webGL.MGWebGL|null>,
             store: Store,
             dispatch: Dispatch<AnyAction>
         ): Promise<number>;
         store: Store;
         moleculesRef: React.RefObject<Molecule[]>;
         mapsRef: React.RefObject<Map[]>;
-        glRef: React.RefObject<webGL.MGWebGL>;
         activeMapRef: React.RefObject<Map>;
         busy: boolean;
         modificationCount: number;
@@ -823,6 +813,7 @@ export namespace moorhen {
         setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
+        setUrlPrefix: React.Dispatch<React.SetStateAction<string>>;
         setEnableRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
         setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;
@@ -920,7 +911,6 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
-        glRef: React.RefObject<webGL.MGWebGL>;
         setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
         timeCapsuleRef: React.RefObject<TimeCapsule>;
@@ -1186,6 +1176,9 @@ export namespace moorhen {
         }
         atomInfoCards: {
             atomInfoIds: any[]
+        }
+        globalUI: {
+            busy: boolean;
         }
     }
 

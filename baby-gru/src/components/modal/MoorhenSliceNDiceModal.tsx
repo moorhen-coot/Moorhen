@@ -1,13 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen"
-import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils"
 import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap"
 import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
+import { moorhen } from "../../types/moorhen"
+import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice"
-import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material"
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule"
 import { hideModal } from "../../store/modalsSlice"
 import { modalKeys } from "../../utils/enums"
@@ -15,6 +14,7 @@ import {
     setBFactorThreshold, setClusteringType, setMoleculeBfactors, setMoleculeMaxBfactor,
     setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
  } from "../../store/sliceNDiceSlice"
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -35,7 +35,7 @@ const MoorhenSliceNDiceCard = (props: {
     const isDirty = useRef<boolean>(false)
 
     const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
-        let residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
+        const residueMap: {[chainID: string]: { size: number; cid: string; }[]} = {}
         props.fragmentMolecule.sequences.forEach(sequence => {
             const currentChainId = sequence.chain
             residueMap[currentChainId] = []
@@ -58,8 +58,8 @@ const MoorhenSliceNDiceCard = (props: {
         if (isDirty.current) {
             isBusy.current = true
             isDirty.current = false
-            let toHideFragments = []
-            for (let chainId in residueMap) {
+            const toHideFragments = []
+            for (const chainId in residueMap) {
                 toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThresholdRef.current))
             }
             if (toHideFragments.length > 0) {
@@ -375,7 +375,7 @@ export const MoorhenSliceNDiceModal = (props: {
         if (slicingResults?.length > 0) {
             if (saveToMoorhen) {
                 const sortedMolecules = [...slicingResults].sort((a, b) => { return  b.molNo - a.molNo })
-                for (let sliceMolecule of sortedMolecules) {
+                for (const sliceMolecule of sortedMolecules) {
                     sliceMolecule.isMRSearchModel = true
                     await deleteHiddenResidues(sliceMolecule)
                     dispatch( addMolecule(sliceMolecule) )

@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import * as quat4 from 'gl-matrix/quat';
+import * as vec3 from 'gl-matrix/vec3';
 import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
 import store from '../../store/MoorhenReduxStore'
-import { useDispatch, useSelector } from 'react-redux'
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
-import * as quat4 from 'gl-matrix/quat';
-import * as vec3 from 'gl-matrix/vec3';
 
 
 interface ImageFrac2D {
@@ -17,7 +17,7 @@ interface ImageFrac2D {
     img: HTMLImageElement
 }
 
-let stereoQuats = []
+const stereoQuats = []
 let yForward = null
 let xForward = null
 let zForward = null
@@ -101,8 +101,8 @@ const createThreeWayQuats = () => {
 
 function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
 
-    var headLength = 10*scale;
-    var angle = Math.atan2(toy-fromy,tox-fromx);
+    const headLength = 10*scale;
+    const angle = Math.atan2(toy-fromy,tox-fromx);
 
     ctx.save();
     ctx.strokeStyle = color;
@@ -200,7 +200,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
     svgPathOverlays.forEach(t => {
         canvas2D_ctx.save()
-        let p = new Path2D(t.path)
+        const p = new Path2D(t.path)
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
         else canvas2D_ctx.lineWidth = 1.0
         if(t.drawStyle==="stroke"){
@@ -338,7 +338,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
         const end = width - 60*scale
 
-        let wh_ratio = 1.0 * width / height
+        const wh_ratio = 1.0 * width / height
         const l = 0.21 * width
 
         const vpos = 30*scale
@@ -468,9 +468,9 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
         const drawAxes = (theQuat,base_x,base_y,multiScale) => {
             const theMatrix = quatToMat4(theQuat);
-            let x_axis = vec3.create();
-            let y_axis = vec3.create();
-            let z_axis = vec3.create();
+            const x_axis = vec3.create();
+            const y_axis = vec3.create();
+            const z_axis = vec3.create();
             vec3.set(x_axis, 1.0, 0.0, 0.0);
             vec3.set(y_axis, 0.0, 1.0, 0.0);
             vec3.set(z_axis, 0.0, 0.0, 1.0);
@@ -522,8 +522,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 drawAxes(newQuat_y,base_x,base_y,0.75)
             } else {
                 if(threeWayViewOrder[0]!==" ") {
-                    let base_x = width*.46
-                    let base_y = height*.075
+                    const base_x = width*.46
+                    const base_y = height*.075
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[0]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -533,8 +533,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 }
                 if(threeWayViewOrder[1]!==" ") {
                     console.log(threeWayViewOrder[1])
-                    let base_x = width*.96
-                    let base_y = height*.075
+                    const base_x = width*.96
+                    const base_y = height*.075
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[1]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -543,8 +543,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                     drawAxes(newQuat,base_x,base_y,0.55)
                 }
                 if(threeWayViewOrder[2]!==" ") {
-                    let base_x = width*.46
-                    let base_y = height*.575
+                    const base_x = width*.46
+                    const base_y = height*.575
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[2]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -553,8 +553,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                     drawAxes(newQuat,base_x,base_y,0.55)
                 }
                 if(threeWayViewOrder[3]!==" ") {
-                    let base_x = width*.96
-                    let base_y = height*.575
+                    const base_x = width*.96
+                    const base_y = height*.575
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[3]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);

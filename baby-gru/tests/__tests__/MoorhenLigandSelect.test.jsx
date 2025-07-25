@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup }  from '@testing-library/react'
-import { MoorhenLigandSelect }  from '../../src/components/select/MoorhenLigandSelect'
-import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
+import { MoorhenLigandSelect }  from '../../src/components/select/MoorhenLigandSelect'
+import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenLigandSelect', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenLigandSelect label', () => {
+    test('MoorhenLigandSelect label', () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenLigandSelect molecules={[ ]} selectedCoordMolNo={null} label="Test Label"/>
@@ -24,7 +24,7 @@ describe('Testing MoorhenLigandSelect', () => {
         expect(selectNode).toBeVisible()
     })
 
-    test('Test MoorhenLigandSelect select ligands', async () => {
+    test('MoorhenLigandSelect select ligands', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
@@ -72,7 +72,7 @@ describe('Testing MoorhenLigandSelect', () => {
         expect(optionNode_3.selected).toBeTruthy()
     })
 
-    test('Test MoorhenLigandSelect onChange', async () => {
+    test('MoorhenLigandSelect onChange', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'

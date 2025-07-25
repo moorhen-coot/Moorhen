@@ -1,15 +1,15 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhen } from "../../types/moorhen";
 import { useRef } from "react";
 import { Button, Row } from "react-bootstrap";
-import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "@mui/material";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms"
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
 export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);

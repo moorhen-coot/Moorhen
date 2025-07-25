@@ -1,24 +1,23 @@
 import { useCallback, useRef, useState } from "react"
 import { Button, Col, Form, Row } from "react-bootstrap"
+import { batch, useDispatch, useSelector, useStore } from 'react-redux';
+import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { setActiveMap } from "../../store/generalStatesSlice";
+import { addMap } from "../../store/mapsSlice";
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
-import { setActiveMap } from "../../store/generalStatesSlice";
-import { batch, useDispatch, useSelector } from 'react-redux';
-import { addMap } from "../../store/mapsSlice";
-import { Store } from "@reduxjs/toolkit";
-import { useSnackbar } from "notistack";
+
 
 export const MoorhenImportMapMenuItem = (props: { 
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    store: Store;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
     const dispatch = useDispatch()
-    
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
     const filesRef = useRef<null | HTMLInputElement>(null)
@@ -34,7 +33,7 @@ export const MoorhenImportMapMenuItem = (props: {
             const newMaps = [];
             try {
                 for (const file of files) {
-                    const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store);
+                    const newMap = new MoorhenMap(commandCentre, store);
                     try {
                         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked);
                     } catch (err) {
@@ -73,7 +72,7 @@ export const MoorhenImportMapMenuItem = (props: {
                 document.body.click();
             }
         }
-    }, [filesRef.current, isDiffRef.current, props.glRef, props.commandCentre, molecules, maps]);
+    }, [filesRef.current, isDiffRef.current, commandCentre, molecules, maps]);
 
     const panelContent = <>
         <Row>

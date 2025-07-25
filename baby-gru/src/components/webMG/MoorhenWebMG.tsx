@@ -1,17 +1,18 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
-import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
-import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { useDispatch, useSelector } from 'react-redux';
+import { useSnackbar } from 'notistack';
+import * as quat4 from 'gl-matrix/quat';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
-import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
-import * as quat4 from 'gl-matrix/quat';
+import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
+import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -20,7 +21,6 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
-    videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
 
 const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
@@ -49,6 +49,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef()
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
@@ -152,7 +153,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
-        let newOrigin = response.data.result.result;
+        const newOrigin = response.data.result.result;
         dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
     }, [props.commandCentre, glRef])
 
@@ -170,9 +171,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [hoveredAtom])
 
     useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function') {
-            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
-        }
+       if (glRef !== null && typeof glRef !== 'function') {
+           const videoRecorder = new MoorhenScreenRecorder(glRef, getCanvasRef())
+           moorhenGlobalInstance.setVideoRecorder(videoRecorder);
+       }
     }, [])
 
     useEffect(() => {
@@ -608,6 +610,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 dispatch,
                 enqueueSnackbar,
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
+                videoRecorderRef,
                 ...props
             },
             JSON.parse(shortCuts as string),
@@ -707,3 +710,4 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             </>
 });
 
+MoorhenWebMG.displayName = "MoorhenWebMG";

@@ -1,12 +1,10 @@
 import { Form, InputGroup } from "react-bootstrap"
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView } from "../../store/sceneSettingsSlice"
-import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice"
-import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 
-export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const MoorhenLayoutSettings = () => {
 
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
@@ -101,7 +99,6 @@ export const MoorhenLayoutSettings = (props: { setPopoverIsShown: React.Dispatch
         menuItemText="Layout..."
         onCompleted={() => {}}
         showOkButton={false}
-        setPopoverIsShown={props.setPopoverIsShown}
     />
 
 }
