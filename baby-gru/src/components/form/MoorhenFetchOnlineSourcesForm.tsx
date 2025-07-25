@@ -1,6 +1,6 @@
 import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
 import { useState, useRef } from "react";
-import { useSelector, useDispatch, batch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
@@ -11,10 +11,10 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { setBusy } from "../../store/globalUISlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     sources?: string[];
     downloadMaps?: boolean;
     onMoleculeLoad?: (newMolecule: moorhen.Molecule) => any;
@@ -24,7 +24,11 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         downloadMaps: true,
     };
 
-    const { sources, downloadMaps, commandCentre } = { ...defaultProps, ...props };
+    const { sources, downloadMaps } = { ...defaultProps, ...props };
+    
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
 
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
@@ -132,7 +136,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         molName: string,
         isAF2?: boolean
     ): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule();
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         try {
@@ -166,7 +170,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         isDiffMap: boolean = false,
         contourLevel?: number
     ): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap();
+        const newMap = new MoorhenMap(commandCentre, store);
         try {
             try {
                 await newMap.loadToCootFromMapURL(url, mapName, isDiffMap);
@@ -181,10 +185,8 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             }
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...");
             if (contourLevel) newMap.suggestedContourLevel = contourLevel;
-            batch(() => {
-                dispatch(addMap(newMap));
-                dispatch(setActiveMap(newMap));
-            });
+            dispatch(addMap(newMap));
+            dispatch(setActiveMap(newMap));
         } catch (err) {
             console.warn(err);
             enqueueSnackbar("Failed to read map", { variant: "warning" });
@@ -199,14 +201,13 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         mapName: string,
         selectedColumns: moorhen.selectedMtzColumns
     ): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap();
+        const newMap = new MoorhenMap(commandCentre, store);
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns);
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...");
-            batch(() => {
-                dispatch(addMap(newMap));
-                dispatch(setActiveMap(newMap));
-            });
+            dispatch(addMap(newMap));
+            dispatch(setActiveMap(newMap));
+            
         } catch {
             enqueueSnackbar("Failed to read mtz", { variant: "error" });
             console.log(`Cannot fetch mtz from ${url}`);

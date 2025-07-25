@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap";
 import { useState, useCallback } from "react";
 import { MenuItem } from "@mui/material";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm";
@@ -47,9 +47,11 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
     const { enqueueSnackbar } = useSnackbar();
 
+    const store = useStore();
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
     const paths = moorhenGlobalInstance.paths;
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
 
     //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
@@ -79,7 +81,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule();
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -142,7 +144,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     maps,
                     commandCentre,
                     timeCapsule,
-
+                    store,
                     dispatch
                 );
             } else {
@@ -153,6 +155,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     maps,
                     commandCentre,
                     timeCapsule,
+                    store,
                     dispatch
                 );
             }
@@ -252,7 +255,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     </Form.Group>
                 )}
 
-                <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} />
+                <MoorhenFetchOnlineSourcesForm />
 
                 {!disableFileUploads && (
                     <Form.Group className="moorhen-form-group" controlId="upload-session-form">

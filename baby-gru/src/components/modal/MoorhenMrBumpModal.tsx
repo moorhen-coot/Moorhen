@@ -1,9 +1,10 @@
 import { useRef, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Tab, Tabs  } from "react-bootstrap"
-import { useSelector, useDispatch } from "react-redux"
+import { useSelector, useDispatch, useStore } from "react-redux"
 import { useSnackbar } from "notistack"
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings, InfoOutlined } from '@mui/icons-material'
+import {  CenterFocusWeakOutlined,  VisibilityOutlined, DownloadOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils'
 import { modalKeys } from "../../utils/enums"
@@ -107,6 +108,10 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
 
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
+
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
@@ -118,7 +123,7 @@ export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
 
     const readPdbFileMrBump = async (file: File, domain: string): Promise<{molecule:moorhen.Molecule,domain:string}> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)

@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react"
 import { Form, Row } from "react-bootstrap"
-import { useDispatch } from 'react-redux';
+import { useDispatch, useStore } from 'react-redux';
 import { useSnackbar } from "notistack"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { moorhen } from "../../types/moorhen";
@@ -18,6 +18,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()
+    const store = useStore()
 
     const panelContent = <>
         <Row>
@@ -35,7 +36,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
 
         try {
             const file = filesRef.current.files[0]
-            const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre);    
+            const newMaps = await MoorhenMap.autoReadMtz(file, props.commandCentre, store);    
             if (newMaps.length === 0) {
                 enqueueSnackbar('Error reading mtz file', {variant: "error"})
             } else {

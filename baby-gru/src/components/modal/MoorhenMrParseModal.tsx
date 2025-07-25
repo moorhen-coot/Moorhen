@@ -1,7 +1,7 @@
 import { useEffect, useRef, createRef, useCallback, useMemo } from "react";
 import { Form, Stack, Container, Button, Table } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import {
     CenterFocusWeakOutlined,
     ExpandMoreOutlined,
@@ -10,6 +10,7 @@ import {
     DownloadOutlined,
 } from "@mui/icons-material";
 import Fasta from "biojs-io-fasta";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { moorhen } from "../../types/moorhen";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { modalKeys } from "../../utils/enums";
@@ -103,6 +104,9 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     const filesRef = useRef<null | HTMLInputElement>(null);
 
     const dispatch = useDispatch();
+    const store = useStore();
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
 
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -312,7 +316,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     };
 
     const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromString(fileString, fileName);
@@ -320,7 +324,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -710,6 +714,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
             props.monomerLibraryPath,
             backgroundColor,
             defaultBondSmoothness,
+            store,
             dispatch
         );
     };
@@ -747,6 +752,7 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                                 props.monomerLibraryPath,
                                 backgroundColor,
                                 defaultBondSmoothness,
+                                store,
                                 dispatch
                             );
                         }}

@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { batch, useDispatch, useSelector } from 'react-redux';
+import { batch, useDispatch, useSelector, useStore } from 'react-redux';
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
@@ -12,11 +13,12 @@ import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 export const MoorhenMapMaskingMenuItem = () => {
 
     const dispatch = useDispatch()
+    const store = useStore()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
@@ -118,7 +120,7 @@ export const MoorhenMapMaskingMenuItem = () => {
         }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
-            const newMap = new MoorhenMap()
+            const newMap = new MoorhenMap(commandCentre, store)
             newMap.molNo = result.data.result.result
             newMap.name = `Map ${mapNo} masked`
             await newMap.getSuggestedSettings()

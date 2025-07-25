@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     }
     
     async handleBackupDownload() {
-        const timeCapsule = new MoorhenTimeCapsule(null, null, null);
+        const timeCapsule = new MoorhenTimeCapsule(null, null, null, null);
         timeCapsule.storageInstance = createLocalStorageInstance('Moorhen-TimeCapsule') 
         await timeCapsule.init()
         const backup = await timeCapsule.retrieveLastBackup() as string

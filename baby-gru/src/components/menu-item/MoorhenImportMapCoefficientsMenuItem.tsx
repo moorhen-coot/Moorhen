@@ -1,15 +1,15 @@
 import { Dispatch, RefObject, SetStateAction, useCallback, useRef, useState } from "react"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
-import { batch, useDispatch, useSelector } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
+import { batch, useDispatch, useSelector, useStore } from 'react-redux';
 import { useSnackbar } from "notistack"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL"
 import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
@@ -17,6 +17,8 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)
@@ -57,7 +59,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
                 Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
                 FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
             }
-            const newMap = new MoorhenMap(props.commandCentre);
+            const newMap = new MoorhenMap(commandCentre, store);
             try {
                 await newMap.loadToCootFromMtzFile(file, selectedColumns)
                 if (newMap.molNo === -1) {

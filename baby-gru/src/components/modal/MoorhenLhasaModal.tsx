@@ -1,25 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
-import { Store } from "@reduxjs/toolkit";
 import { Backdrop } from "@mui/material";
 import { Spinner, Stack } from "react-bootstrap";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 import { modalKeys } from "../../utils/enums";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { addMolecule } from "../../store/moleculesSlice";
-import { webGL } from "../../types/mgWebGL";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const LhasaWrapper = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    monomerLibraryPath: string;
-    store: Store;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
 }) => {
@@ -30,6 +25,10 @@ const LhasaWrapper = (props: {
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
+
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
 
     const dispatch = useDispatch()
 
@@ -54,7 +53,7 @@ const LhasaWrapper = (props: {
         try {
             props.setBusy(true)
             const ligandName = id ?? "LIG"
-            const smilesResult = await props.commandCentre.current.cootCommand({
+            const smilesResult = await commandCentre.current.cootCommand({
                 command: 'smiles_to_pdb',
                 commandArgs: [smiles, ligandName, 10, 100],
                 returnType: 'str_str_pair'
@@ -66,7 +65,7 @@ const LhasaWrapper = (props: {
                 return
             }
     
-            const readDictResult = await props.commandCentre.current.cootCommand({
+            const readDictResult = await commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'read_dictionary_string',
                 commandArgs: [smilesResult.data.result.result.second, -999999],
@@ -79,7 +78,7 @@ const LhasaWrapper = (props: {
                 return
             }
 
-            const getMonomerResult = await props.commandCentre.current.cootCommand({
+            const getMonomerResult = await commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'get_monomer_and_position_at',
                 commandArgs: [ligandName, -999999, ...originState.map(coord => -coord)]
@@ -88,7 +87,7 @@ const LhasaWrapper = (props: {
             if (getMonomerResult.data.result.result === -1) {
                 enqueueSnackbar("Unable to get monomer...", {variant: "error"})
             } else if (getMonomerResult.data.result.status === "Completed") {
-                const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath);
+                const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                 newMolecule.molNo = getMonomerResult.data.result.result
                 newMolecule.name = ligandName
                 newMolecule.setBackgroundColour(backgroundColor)
@@ -109,7 +108,7 @@ const LhasaWrapper = (props: {
             enqueueSnackbar("Something went wrong...", {variant: "warning"})
             props.setBusy(false)
         }
-    }, [props.commandCentre, props.glRef, props.store, props.monomerLibraryPath])
+    }, [commandCentre, store, monomerLibraryPath])
 
     return  isCootAttached ?
                 <LhasaComponent 
@@ -153,10 +152,6 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                 onClose={handleClose}
                 body={ 
                     <LhasaWrapper
-                        commandCentre={props.commandCentre}
-                        glRef={props.glRef}
-                        monomerLibraryPath={props.monomerLibraryPath}
-                        store={props.store}
                         urlPrefix={props.urlPrefix}
                         setBusy={setBusy}/>
                 }

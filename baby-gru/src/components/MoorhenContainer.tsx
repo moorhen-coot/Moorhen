@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { Container, Col, Row, Spinner } from "react-bootstrap";
 import { Backdrop } from "@mui/material";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import { SnackbarProvider } from "notistack";
 import { createLocalStorageInstance, parseAtomInfoLabel } from "../utils/utils";
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
@@ -25,7 +25,6 @@ import {
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
 import { setRefinementSelection } from "../store/refinementSettingsSlice";
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { setRequestDrawScene } from "../store/glRefSlice";
 import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG";
@@ -247,7 +246,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowScripting: true,
         backupStorageInstance: createLocalStorageInstance("Moorhen-TimeCapsule"),
         aceDRGInstance: null,
-        store: MoorhenReduxStore,
+        store: useStore(),
         allowAddNewFittedLigand: false,
         allowMergeFittedLigand: true,
     };
@@ -335,7 +334,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     useEffect(() => {
         const initTimeCapsule = async () => {
             if (userPreferencesMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef);
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, store);
                 timeCapsuleRef.current.storageInstance = backupStorageInstance;
                 timeCapsuleRef.current.maxBackupCount = maxBackupCount;
                 timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold;

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Form, InputGroup } from "react-bootstrap";
-import { batch, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm"
@@ -8,11 +9,12 @@ import { moorhen } from "../../types/moorhen";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 export const MoorhenSharpenBlurMapMenuItem = () => {
 
     const dispatch = useDispatch()
+    const store = useStore()
     const maps = useSelector((state: moorhen.State) => state.maps)
     
     const factorRef = useRef<string>(null)
@@ -45,7 +47,7 @@ export const MoorhenSharpenBlurMapMenuItem = () => {
         
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current)
-        const newMap = new MoorhenMap()
+        const newMap = new MoorhenMap(commandCentre, store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {
@@ -74,14 +76,12 @@ export const MoorhenSharpenBlurMapMenuItem = () => {
             await newMap.getSuggestedSettings()
             newMap.isDifference = selectedMap.isDifference
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams()
-            batch(() => {
-                dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
-                dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
-                dispatch( setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }) )
-                dispatch( setMapStyle({ molNo: newMap.molNo, style: mapStyle }) )
-                dispatch( hideMap(selectedMap) )
-                dispatch( addMap(newMap) )    
-            })
+            dispatch( setMapRadius({ molNo: newMap.molNo, radius: mapRadius }) )
+            dispatch( setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }) )
+            dispatch( setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }) )
+            dispatch( setMapStyle({ molNo: newMap.molNo, style: mapStyle }) )
+            dispatch( hideMap(selectedMap) )
+            dispatch( addMap(newMap) )    
         }
 
         return result

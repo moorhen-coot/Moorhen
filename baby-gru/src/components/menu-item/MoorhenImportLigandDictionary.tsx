@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react"
 import { FormSelect, OverlayTrigger, Tooltip , Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap";
 import { TextField } from "@mui/material"
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, useStore } from 'react-redux';
 import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot"
 import { addMolecule } from "../../store/moleculesSlice"
@@ -12,7 +13,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { readTextFile } from "../../utils/utils"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 const MoorhenImportLigandDictionary = (props: {
     id: string;
@@ -35,7 +36,9 @@ const MoorhenImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
 
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
@@ -84,7 +87,7 @@ const MoorhenImportLigandDictionary = (props: {
                     ...originState.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number>
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule()
+                newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)

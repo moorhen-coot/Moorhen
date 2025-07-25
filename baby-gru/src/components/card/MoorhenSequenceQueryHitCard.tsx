@@ -1,34 +1,32 @@
 import { useCallback, useMemo } from "react";
 import { Card, Row, Col, Button } from "react-bootstrap";
-import { useSelector, useDispatch } from 'react-redux';
-import { Store } from "@reduxjs/toolkit";
+import { useSelector, useDispatch, useStore} from 'react-redux';
 import { enqueueSnackbar } from "notistack";
 import { getMultiColourRuleArgs } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
-import { webGL } from "../../types/mgWebGL";
 import { addMolecule } from "../../store/moleculesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenQueryHitCard = (props: { 
     data: GetPolimerInfoQuery;
     idx: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    monomerLibraryPath: string;
-    store: Store;
     selectedMolNo: number;
     selectedChain: string;
  }) => {
 
     const { 
-        commandCentre, selectedMolNo, data, idx,
-        glRef, monomerLibraryPath, store, selectedChain,
+        selectedMolNo, data, idx,selectedChain,
     } = props
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
+
 
     const dispatch = useDispatch()
 
@@ -55,7 +53,7 @@ export const MoorhenQueryHitCard = (props: {
     }, [data, idx])
 
     const fetchMoleculeFromURL = useCallback(async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {

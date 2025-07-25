@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, useStore } from 'react-redux';
 import { useSnackbar } from "notistack";
 import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import parse from 'html-react-parser';
 import { InfoOutlined } from "@mui/icons-material";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
@@ -55,6 +55,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'
 }) => {
 
+    const store = useStore()
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
 
@@ -127,7 +128,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     }, [])
 
     const createNewLigandMolecule = useCallback(async (tlc: string, molNo: number, ligandDict?: string) => {
-        const newMolecule = new MoorhenMolecule()
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.molNo = molNo
         newMolecule.name = tlc
         newMolecule.setBackgroundColour(backgroundColor)
@@ -214,7 +215,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
         let result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
 
         if (result.data.result.result === -1) {
-            const newMolecule = new MoorhenMolecule()
+            const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath)
             await newMolecule.loadMissingMonomer(newTlc, fromMolNo)
             result = await getMonomerFromLibcootAPI(newTlc, fromMolNo)
         }

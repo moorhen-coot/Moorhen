@@ -1,12 +1,12 @@
 import { useRef } from "react";
-import { batch, useDispatch, useSelector } from "react-redux";
+import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { addMap } from "../../store/mapsSlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 export const MoorhenFlipMapHandMenuItem = () => {
 
@@ -16,6 +16,7 @@ export const MoorhenFlipMapHandMenuItem = () => {
     
     const selectRef = useRef<HTMLSelectElement>(null)
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const store = useStore()
 
     const onCompleted = async () => {
         if (!selectRef.current.value) {
@@ -23,7 +24,7 @@ export const MoorhenFlipMapHandMenuItem = () => {
         }
 
         const mapNo = parseInt(selectRef.current.value)
-        const newMap = new MoorhenMap()
+        const newMap = new MoorhenMap(commandCentre, store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {

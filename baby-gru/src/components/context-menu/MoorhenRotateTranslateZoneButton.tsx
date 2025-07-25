@@ -59,7 +59,6 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.ContextButtonPro
             variant: "acceptRejectRotateTranslateAtoms",
             persist: true,
             cidRef: fragmentCid,
-            glRef: props.glRef,
             moleculeRef: chosenMolecule
         })
     }

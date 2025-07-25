@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
-import { useSelector, useDispatch, batch } from 'react-redux';
+import { useSelector, useDispatch, useStore } from 'react-redux';
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
@@ -8,7 +9,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMapList } from "../../store/mapsSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -16,6 +17,9 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
 }) => {
 
     const dispatch = useDispatch()
+    const store = useStore()
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
     
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
@@ -45,11 +49,11 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             return
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule();
+        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
-        const newMap = new MoorhenMap(props.commandCentre);
-        const newDiffMap = new MoorhenMap(props.commandCentre);
+        const newMap = new MoorhenMap(props.commandCentre, store);
+        const newDiffMap = new MoorhenMap(props.commandCentre, store);
         await newMolecule.loadToCootFromURL(`${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
         await newMolecule.centreOn('/*/*/*/*', true)
@@ -63,11 +67,9 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             `diff-map-${tutorialNumber}`,
             { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber] }
         )
-        batch(() => {
-            dispatch( addMolecule(newMolecule) )
-            dispatch( addMapList([newMap, newDiffMap]) )
-            dispatch( setActiveMap(newMap) )   
-        })
+        dispatch( addMolecule(newMolecule) )
+        dispatch( addMapList([newMap, newDiffMap]) )
+        dispatch( setActiveMap(newMap) )   
     }
 
     return <MoorhenBaseMenuItem

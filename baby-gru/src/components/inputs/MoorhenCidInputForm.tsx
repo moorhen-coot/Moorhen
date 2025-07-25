@@ -16,7 +16,6 @@ type MoorhenCidInputFormPropsType = {
 };
 
 export const MoorhenCidInputForm = ({
-    ref: cidFormRef,
     height = "4rem",
     width = "20rem",
     margin = "0.1rem",
@@ -26,6 +25,7 @@ export const MoorhenCidInputForm = ({
     invalidCid = false,
     allowUseCurrentSelection = false,
     onChange,
+    ref: cidFormRef,
 }: MoorhenCidInputFormPropsType) => {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
@@ -34,7 +34,9 @@ export const MoorhenCidInputForm = ({
         if (onChange) {
             onChange(evt);
         }
-        if (cidFormRef !== null && typeof cidFormRef !== "function") cidFormRef.current.value = evt.target.value;
+        if (cidFormRef && typeof cidFormRef === 'object' && 'current' in cidFormRef && cidFormRef.current) {
+            cidFormRef.current.value = evt.target.value;
+        }
     };
 
     const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { SaveOutlined } from "@mui/icons-material";
 import { Stack } from "react-bootstrap";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, useStore } from 'react-redux';
 import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
@@ -14,6 +14,7 @@ export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
     const [historyHead, setHistoryHead] = useState(0)
 
     const dispatch = useDispatch()
+    const store = useStore()
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -35,6 +36,7 @@ export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
                 maps,
                 commandCentre,
                 timeCapsuleRef,
+                store,
                 dispatch
             )
             if (status === -1) {
