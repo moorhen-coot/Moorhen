@@ -12,7 +12,6 @@ import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { setRequestDrawScene, setOrigin, setZoom, setQuat } from "../store/glRefSlice"
 import { MoorhenColourRule } from "./MoorhenColourRule"
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
@@ -21,8 +20,6 @@ import {
     getRandomMoleculeColour, doDownload, formatLigandSVG, getCentreAtom, parseAtomInfoLabel,
     readGemmiCifDocument
  } from './utils'
- import { moorhenGlobalInstance } from '../InstanceManager/MoorhenGlobalInstance.js';
-import { useRef } from 'react';
 
 /**
  * Represents a molecule
@@ -112,11 +109,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null> = null, monomerLibraryPath = null, reduxStore: Store = MoorhenReduxStore) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = 'molecule'
         this.store = reduxStore
-        this.commandCentre = commandCentre ? commandCentre : moorhenGlobalInstance.getCommandCentreRef();
-        this.monomerLibraryPath = monomerLibraryPath ? monomerLibraryPath : moorhenGlobalInstance.paths.monomerLibrary;
+        this.commandCentre = commandCentre 
+        this.monomerLibraryPath = monomerLibraryPath
         this.atomsDirty = true
         this.name = "unnamed"
         this.molNo = null
@@ -615,7 +612,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [useGemmi],
         }, true)
         const coordString = await this.getAtoms()
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-copy`
 
         const response = await this.commandCentre.current.cootCommand({
@@ -647,7 +644,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "copy_fragment_using_cid",
             commandArgs: [this.molNo, cid],
         }, true) as moorhen.WorkerResponse<number>
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
         newMolecule.molNo = response.data.result.result
         await this.transferMetaData(newMolecule)
@@ -669,7 +666,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {moorhen.Molecule} A new molecule instance that can be used for refinement
      */
     async copyFragmentForRefinement(cid: string[], refinementMap: moorhen.Map, redraw: boolean = true, redrawFragmentFirst: boolean = true): Promise<moorhen.Molecule> {
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
         const copyResult = await this.commandCentre.current.cootCommand({
             returnType: 'int',
             command: 'copy_fragment_for_refinement_using_cid',
@@ -1747,7 +1744,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             result = await getMonomer()
         }
         if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-            const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+            const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
             newMolecule.setAtomsDirty(true)
             newMolecule.molNo = result.data.result.result
             newMolecule.name = resType.toUpperCase()
@@ -2255,7 +2252,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             const ligandMolecule: moorhen.Molecule = this.store.getState().molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo)
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: (number | libcootApi.fitLigandInfo), idx: number) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
                     newMolecule.molNo = fitRightHere ? fitLigandResult as number : (fitLigandResult as libcootApi.fitLigandInfo).imol
                     newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`
                     newMolecule.isDarkBackground = this.isDarkBackground
@@ -2544,7 +2541,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      */
     async generateAssembly(assemblyNumber: string, draw: boolean = false): Promise<moorhen.Molecule> {
         const coordString = await this.gemmiStructure.as_string()
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-assembly-${assemblyNumber}`
         const response = await this.commandCentre.current.cootCommand({
             returnType: 'status',
@@ -2578,7 +2575,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
             return await Promise.all(
                 result.data.result.result.map(async (molNo, index) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath)
                     newMolecule.name = `${this.name}-${index+1}`
                     newMolecule.molNo = molNo
                     await this.transferMetaData(newMolecule)
