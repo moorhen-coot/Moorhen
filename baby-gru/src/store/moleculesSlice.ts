@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { moorhen } from "../types/moorhen"
 
 const initialState = {
@@ -12,11 +12,11 @@ export const moleculesSlice = createSlice({
   name: 'molecules',
   initialState: initialState,
   reducers: {
-    addMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
+    addMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
       state = { ...state, moleculeList: [...state.moleculeList, action.payload] }
       return state
     },
-    removeMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
+    removeMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
       state = {
         ...state,
         generalRepresentations: state.generalRepresentations.filter(item => item.parentMolecule.molNo !== action.payload.molNo),
@@ -29,33 +29,33 @@ export const moleculesSlice = createSlice({
     emptyMolecules: () => {
       return initialState
     },
-    addMoleculeList: (state, action: {payload: moorhen.Molecule[], type: string}) => {
+    addMoleculeList: (state, action: PayloadAction<moorhen.Molecule[]>) => {
       state = { ...state, moleculeList: [...state.moleculeList, ...action.payload] }
       return state
     },
-    showMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
+    showMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
       if (!state.visibleMolecules.includes(action.payload.molNo)) {
         state = { ...state, visibleMolecules: [...state.visibleMolecules, action.payload.molNo] }
       }
       return state
     },
-    hideMolecule: (state, action: {payload: moorhen.Molecule, type: string}) => {
+    hideMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
       state = { ...state, visibleMolecules: state.visibleMolecules.filter(item => item !== action.payload.molNo) }
       return state
     },
-    addCustomRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+    addCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
       state = { ...state, customRepresentations: [...state.customRepresentations, action.payload] }
       return state
     },
-    removeCustomRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+    removeCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
       state = { ...state, customRepresentations: state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId) }
       return state
     },
-    addGeneralRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+    addGeneralRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
       state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] }
       return state
     },
-    removeGeneralRepresentation: (state, action: {payload: moorhen.MoleculeRepresentation, type: string}) => {
+    removeGeneralRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
       state = { ...state, generalRepresentations: state.generalRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId) }
       return state
     },

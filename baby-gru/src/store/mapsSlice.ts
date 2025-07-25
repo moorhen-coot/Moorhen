@@ -1,21 +1,21 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { moorhen } from "../types/moorhen"
 
 export const mapsSlice = createSlice({
   name: 'maps',
-  initialState: [],
+  initialState: [] as moorhen.Map[],
   reducers: {
-    addMap: (state: moorhen.Map[], action: {payload: moorhen.Map, type: string}) => {
+    addMap: (state, action: PayloadAction<moorhen.Map>) => {
         state.push(action.payload)
         return state
     },
-    removeMap: (state: moorhen.Map[], action: {payload: moorhen.Map, type: string}) => {
+    removeMap: (state, action: PayloadAction<moorhen.Map>) => {
       return state.filter(item => item.molNo !== action.payload.molNo)
     },
-    emptyMaps: (state: moorhen.Map[]) => {
-      return []
+    emptyMaps: () => {
+      return [] as moorhen.Map[]
     },
-    addMapList: (state: moorhen.Map[], action: {payload: moorhen.Map[], type: string}) => {
+    addMapList: (state, action: PayloadAction<moorhen.Map[]>) => {
       state.push(...action.payload)
       return state
   },
