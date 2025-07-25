@@ -1,17 +1,17 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, act }  from '@testing-library/react'
-import { MoorhenCidInputForm }  from '../../src/components/inputs/MoorhenCidInputForm'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
+import { createRef } from 'react'
+import { MoorhenCidInputForm }  from '../../src/components/inputs/MoorhenCidInputForm'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { setResidueSelection, setShowResidueSelection } from '../../src/store/generalStatesSlice'
-import { createRef } from 'react'
 
 describe('Testing MoorhenCidIputForm', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenCidInputForm label', async () => {
+    test('MoorhenCidInputForm label', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenCidInputForm label="Test Label"/>
@@ -24,7 +24,7 @@ describe('Testing MoorhenCidIputForm', () => {
         expect(formNode).toHaveValue('')
     })
 
-    test('Test MoorhenCidInputForm default value', async () => {
+    test('MoorhenCidInputForm default value', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenCidInputForm defaultValue="//A"/>
@@ -36,7 +36,7 @@ describe('Testing MoorhenCidIputForm', () => {
         expect(formNode).toHaveValue('//A')
     })
 
-    test('Test MoorhenCidInputForm input', async () => {
+    test('MoorhenCidInputForm input', async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenCidInputForm/>
@@ -50,7 +50,7 @@ describe('Testing MoorhenCidIputForm', () => {
         expect(formNode).toHaveValue('//B')
     })
 
-    test('Test MoorhenCidInputForm residue selection', async () => {
+    test('MoorhenCidInputForm residue selection', async () => {
         const cidRef = createRef(null)
         
         const dom = render(

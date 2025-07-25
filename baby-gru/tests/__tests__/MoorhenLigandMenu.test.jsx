@@ -11,19 +11,19 @@ jest.mock('chart.js', () => ({
 import '@testing-library/jest-dom'
 import { render, cleanup, screen, within }  from '@testing-library/react'
 import { Provider } from 'react-redux'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import { act } from 'react-dom/test-utils'
+import userEvent from '@testing-library/user-event'
+import fetch from 'node-fetch'
+import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
-import { act } from 'react-dom/test-utils'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
 import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
-import userEvent from '@testing-library/user-event'
-import fetch from 'node-fetch'
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 const fs = require('fs')
@@ -162,7 +162,7 @@ describeIfWasmExists('Testing MoorhenLigandMenu', () => {
 
     afterEach(cleanup)
 
-    test.skip("Test MoorhenLigandMenu find ligand" , async () => {
+    test.skip("MoorhenLigandMenu find ligand" , async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>

@@ -9,6 +9,7 @@ import pluginJsxA11y from "eslint-plugin-jsx-a11y";
 import pluginReactRefresh from "eslint-plugin-react-refresh";
 import pluginReactPerf from "eslint-plugin-react-perf";
 import pluginImport from "eslint-plugin-import";
+import pluginJest from "eslint-plugin-jest";
 
 export default [
   js.configs.recommended,
@@ -177,6 +178,60 @@ export default [
       react: {
         version: "detect",
       },
+    },
+  },
+  // Jest/Testing files configuration
+  {
+    files: ["**/*.test.{js,jsx,ts,tsx}", "**/*.spec.{js,jsx,ts,tsx}", "**/tests/**/*.{js,jsx,ts,tsx}", "**/__tests__/**/*.{js,jsx,ts,tsx}"],
+    plugins: {
+      jest: pluginJest,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+        test: "readonly",
+        expect: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        jest: "readonly",
+      },
+    },
+    rules: {
+      // Jest specific rules
+      ...pluginJest.configs.recommended.rules,
+      "jest/no-disabled-tests": "warn",
+      "jest/no-focused-tests": "error",
+      "jest/no-identical-title": "error",
+      "jest/prefer-to-have-length": "warn",
+      "jest/valid-expect": "error",
+      "jest/no-conditional-expect": "error",
+      "jest/no-interpolation-in-snapshots": "error",
+      "jest/no-jasmine-globals": "error",
+      "jest/no-mocks-import": "error",
+      "jest/no-standalone-expect": "error",
+      "jest/no-test-prefixes": "error",
+      "jest/valid-describe-callback": "error",
+      "jest/valid-expect-in-promise": "error",
+      "jest/valid-title": "error",
+      "jest/prefer-expect-assertions": "off",
+      "jest/expect-expect": "warn",
+      "jest/prefer-to-be": "warn",
+      "jest/prefer-to-contain": "warn",
+      "jest/prefer-strict-equal": "warn",
+      
+      // Relax some general rules for test files
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "no-magic-numbers": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/display-name": "off",
+      "react/prop-types": "off",
     },
   },
 ];

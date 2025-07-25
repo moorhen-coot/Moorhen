@@ -11,19 +11,19 @@ jest.mock('chart.js', () => ({
 import '@testing-library/jest-dom'
 import { render, cleanup, screen }  from '@testing-library/react'
 import { Provider } from 'react-redux'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import { act } from 'react-dom/test-utils'
+import userEvent from '@testing-library/user-event'
+import fetch from 'node-fetch'
+import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
-import { act } from 'react-dom/test-utils'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
 import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
-import userEvent from '@testing-library/user-event'
-import fetch from 'node-fetch'
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 const fs = require('fs')
@@ -133,11 +133,11 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
         allowScripting = true
         aceDRGInstance = null
 
-        glRef.current = new MockWebGL()
+        //glRef.current = new MockWebGL()
         commandCentre.current = new MockMoorhenCommandCentre(molecules_container, cootModule)
 
         collectedProps = {
-            glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+            commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
             urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
             extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
             videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
@@ -162,7 +162,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
 
     afterEach(cleanup)
 
-    test("Test MoorhenEditMenu merge molecules" , async () => {
+    test("MoorhenEditMenu merge molecules" , async () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenNavBar {...collectedProps}/>

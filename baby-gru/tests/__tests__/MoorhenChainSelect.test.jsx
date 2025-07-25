@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup }  from '@testing-library/react'
-import { MoorhenChainSelect }  from '../../src/components/select/MoorhenChainSelect'
-import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
+import { MoorhenChainSelect }  from '../../src/components/select/MoorhenChainSelect'
+import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenChainSelect', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenChainSelect label', () => {
+    test('MoorhenChainSelect label', () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenChainSelect molecules={[ ]} selectedCoordMolNo={null} label="Test Label"/>
@@ -24,7 +24,7 @@ describe('Testing MoorhenChainSelect', () => {
         expect(selectNode).toBeVisible()
     })
 
-    test('Test MoorhenChainSelect select chains', async () => {
+    test('MoorhenChainSelect select chains', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
@@ -75,7 +75,7 @@ describe('Testing MoorhenChainSelect', () => {
         expect(optionNode_3.selected).toBeTruthy()
     })
 
-    test('Test MoorhenChainSelect allowedTypes', () => {
+    test('MoorhenChainSelect allowedTypes', () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
@@ -121,7 +121,7 @@ describe('Testing MoorhenChainSelect', () => {
         expect(optionNode_1.selected).toBeTruthy()
     })
 
-    test('Test MoorhenChainSelect onChange', async () => {
+    test('MoorhenChainSelect onChange', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'

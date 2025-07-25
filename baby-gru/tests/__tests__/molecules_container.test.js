@@ -5,7 +5,6 @@ jest.setTimeout(60000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-
 const createCootModule = require('../../public/moorhen')
 
 let cootModule;
@@ -46,7 +45,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables = []
     })
 
-    test('Test get_map_cell', () => {
+    test('get_map_cell', () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
         const cell = molecules_container.get_map_cell(mapMolNo)
@@ -63,16 +62,16 @@ describe('Testing molecules_container_js', () => {
         expect(resol).toBeCloseTo(1.82,2)
     })
 
-    test('Test fill_rotamer_probability_tables', () => {
+    test('fill_rotamer_probability_tables', () => {
         molecules_container.fill_rotamer_probability_tables()
     })
 
-    test('Test add', () => {
+    test('add', () => {
         const ret = molecules_container.add(0)
         expect(ret).toBe(1)
     })
 
-    test("Test header_info", () => {
+    test("header_info", () => {
         const coordMol = molecules_container.read_pdb('./5a3h.pdb')
         const header_info = molecules_container.get_header_info(coordMol)
         const journal_lines = header_info.journal_lines
@@ -86,7 +85,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(journal_lines, author_lines, compound_lines, helix_info)
     })
 
-    test("Test metaballs", () => {
+    test("metaballs", () => {
         const coordMol = molecules_container.read_pdb('./5a3h.pdb')
         const gridSize = 0.15
         const radius = 0.65
@@ -96,7 +95,7 @@ describe('Testing molecules_container_js', () => {
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
     })
 
-    test("Test H-Bonds", () => {
+    test("H-Bonds", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const coordMolNo_2 = molecules_container.read_pdb('./5a3h.pdb')
         const g2fTlc = "G2F"
@@ -116,14 +115,14 @@ describe('Testing molecules_container_js', () => {
         expect(hbonds_1.size()).toBe(hbonds_2.size())
     })
 
-    test("Test read PDB", () => {
+    test("read PDB", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo)
         expect(coordMolNo).toBe(0)
         expect(atomCount).toBe(2765)
     })
 
-    test("Test read MTZ", () => {
+    test("read MTZ", () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
 
@@ -142,7 +141,7 @@ describe('Testing molecules_container_js', () => {
         expect(suggestedLevel).toBeCloseTo(0.56, 1)
     })
 
-    test('Test glycoblocks', async () => {
+    test('glycoblocks', async () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
         const glycoMeshData = molecules_container.DrawGlycoBlocks(coordMolNo, "//")
         const geom = glycoMeshData.geom
@@ -153,7 +152,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(triangles, meshData, geom)
     })
 
-    test('Test copy fragment', () => {
+    test('copy fragment', () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const coordMolNo_2 = molecules_container.copy_fragment_using_cid(coordMolNo_1, "//A/32-33/*");
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo_2)
@@ -161,7 +160,7 @@ describe('Testing molecules_container_js', () => {
         expect(atomCount).toBe(14)
     })
 
-    test("Test get_svg_for_residue_type", () => {
+    test("get_svg_for_residue_type", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
@@ -174,7 +173,7 @@ describe('Testing molecules_container_js', () => {
         expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
-    test("Test get_svg_for_residue_type -- any molecule", () => {
+    test("get_svg_for_residue_type -- any molecule", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.mmcif')
 
         const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, "dark-bonds/opaque-bg")
@@ -187,7 +186,7 @@ describe('Testing molecules_container_js', () => {
         expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
-    test('Test fit_ligand_right_here 1', () => {
+    test('fit_ligand_right_here 1', () => {
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
         expect(result_import_dict).toBe(1)
@@ -209,7 +208,7 @@ describe('Testing molecules_container_js', () => {
         expect(result.size()).toBeGreaterThan(0)
     })
 
-    test('Test fit_ligand_right_here 2', () => {
+    test('fit_ligand_right_here 2', () => {
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
         expect(result_import_dict).toBe(1)
@@ -231,7 +230,7 @@ describe('Testing molecules_container_js', () => {
         expect(result.size()).toBeGreaterThan(0)
     })
 
-    test("Test close_molecule", () => {
+    test("close_molecule", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
         const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo)
@@ -241,7 +240,7 @@ describe('Testing molecules_container_js', () => {
         expect(isValid_2).toBeFalsy()
     })
 
-    test("Test close_map", () => {
+    test("close_map", () => {
         const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
         expect(imol_map).toBe(0)
         const isValid_1 = molecules_container.is_valid_map_molecule(imol_map)
@@ -251,7 +250,7 @@ describe('Testing molecules_container_js', () => {
         expect(isValid_2).toBeFalsy()
     })
 
-    test("Test pop_back", () => {
+    test("pop_back", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
         const isValid_1 = molecules_container.is_valid_model_molecule(coordMolNo_1)
@@ -263,7 +262,7 @@ describe('Testing molecules_container_js', () => {
         expect(coordMolNo_2).toBe(coordMolNo_1)
     })
 
-    test('Test delete methods', () => {
+    test('delete methods', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const result_cid = molecules_container.delete_using_cid(coordMolNo, "A/32-33/*", "LITERAL")
@@ -275,7 +274,7 @@ describe('Testing molecules_container_js', () => {
         expect(result_sideChain.second).toBe(2744)
     })
 
-    test('Test add_terminal_residue methods', () => {
+    test('add_terminal_residue methods', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         molecules_container.set_imol_refinement_map(mapMolNo)
@@ -291,7 +290,7 @@ describe('Testing molecules_container_js', () => {
         expect(atom_count_3).toBe(atom_count_2 + 5)
     })
 
-    test('Test merge molecules', () => {
+    test('merge molecules', () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const coordMolNo_2 = molecules_container.read_pdb('./tm-A.pdb')
         const mergeMols = coordMolNo_2.toString()
@@ -301,7 +300,7 @@ describe('Testing molecules_container_js', () => {
         expect(mi0.chain_id).toBe("C")
     })
 
-    test("Test water validation", () => {
+    test("water validation", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(coordMolNo).toBe(0)
@@ -317,7 +316,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(bad_water_info)
     })
 
-    test('Test ramachandran_validation', () => {
+    test('ramachandran_validation', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const rama_info = molecules_container.ramachandran_validation(coordMolNo)
         const rama_info_size = rama_info.size()
@@ -335,7 +334,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(rama_info)
     })
 
-    test.skip('Test get_residue', () => {
+    test.skip('get_residue', () => {
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const res = molecules_container.get_residue(coordMolNo, resSpec)
@@ -404,7 +403,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(atom, res, movedVector)
     })
 
-    test('Test get_single_letter_codes_for_chain', () => {
+    test('get_single_letter_codes_for_chain', () => {
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const codes = molecules_container.get_single_letter_codes_for_chain(imol, "A")
@@ -419,7 +418,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(codes)
     })
 
-    test.skip('Test auto_fit_rotamer', () => {
+    test.skip('auto_fit_rotamer', () => {
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
@@ -437,7 +436,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(res, resSpec)
     })
 
-    test.skip("Test change rotamer", () => {
+    test.skip("change rotamer", () => {
         molecules_container.geometry_init_standard()
         const imol_molecule = molecules_container.read_pdb('./5a3h.pdb')
 
@@ -461,7 +460,7 @@ describe('Testing molecules_container_js', () => {
         expect(atom_new.z).toBe(atom_fragment.z)
     })
 
-    test('Test Rama mesh', () => {
+    test('Rama mesh', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_ramachandran_validation_markup_mesh(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(22052)
@@ -469,7 +468,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(simpleMesh)
     })
 
-    test('Test Dodo mesh', () => {
+    test('Dodo mesh', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_rotamer_dodecs(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(39000)
@@ -477,7 +476,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(simpleMesh)
     })
 
-    test('Test Dodo instanced mesh', () => {
+    test('Dodo instanced mesh', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const instanceMesh = molecules_container.get_rotamer_dodecs_instanced(coordMolNo);
         const geom = instanceMesh.geom
@@ -490,7 +489,7 @@ describe('Testing molecules_container_js', () => {
         }
     })
 
-    test.skip('Test backups', () => {
+    test.skip('backups', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const resSpec = new cootModule.residue_spec_t("A", 32, "");
@@ -513,7 +512,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(resSpec)
     })
 
-    test.skip('Test flip_peptide by residue spec', () => {
+    test.skip('flip_peptide by residue spec', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
 
@@ -594,7 +593,7 @@ describe('Testing molecules_container_js', () => {
         expect(c_a).toBeCloseTo(1.0, 5)
     })
 
-    test('Test Surface mesh', () => {
+    test('Surface mesh', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
             0, "//", "colorRampChainsScheme", "MolecularSurface", true
@@ -603,7 +602,7 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
 
-    test("Test ligand surface", () => {
+    test("ligand surface", () => {
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
         expect(result_import_dict).toBe(1)
@@ -621,7 +620,7 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
-    test("Test import ligands with same name and animated refinement", () => {
+    test("import ligands with same name and animated refinement", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const coordMolNo_2 = molecules_container.read_pdb('./5fjj.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
@@ -692,7 +691,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
     })
 
-    test("Test get_acedrg_types_for_residue_t", async () => {
+    test("get_acedrg_types_for_residue_t", async () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
         expect(coordMolNo).toBe(0)
         const pdbChemLig = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/LIG.cif`).then(response=>response.text())
@@ -712,13 +711,13 @@ describe('Testing molecules_container_js', () => {
         expect(result_301.bond_types.size()).toBe(14)
     })
 
-    test("Test smiles_to_pdb", () => {
+    test("smiles_to_pdb", () => {
         const result_1 = molecules_container.smiles_to_pdb('c1ccccc1', 'LIG', 10, 100)
         const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
         expect(result_1.second).toBe(fileContents_1)
     })
 
-    test("Test histogram map", () => {
+    test("histogram map", () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
 
@@ -728,19 +727,19 @@ describe('Testing molecules_container_js', () => {
         expect(result.counts.size()).toBe(200)
     })
 
-    test("Test get_molecule_atoms pdb", () => {
+    test("get_molecule_atoms pdb", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString = molecules_container.get_molecule_atoms(coordMolNo, "pdb")
         expect(pdbString).toHaveLength(258719)
     })
 
-    test("Test get_molecule_atoms mmcif", () => {
+    test("get_molecule_atoms mmcif", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString = molecules_container.get_molecule_atoms(coordMolNo, "mmcif")
         expect(pdbString).toHaveLength(297616)
     })
 
-    test("Test read_coords_string pdb-format", () => {
+    test("read_coords_string pdb-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1 = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
@@ -751,7 +750,7 @@ describe('Testing molecules_container_js', () => {
         expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test read_coords_string mmcif-format", () => {
+    test("read_coords_string mmcif-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1 = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
         expect(pdbString_1).toHaveLength(297616)
@@ -763,7 +762,7 @@ describe('Testing molecules_container_js', () => {
         // expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test replace_molecule_by_model_from_string", () => {
+    test("replace_molecule_by_model_from_string", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1 = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
@@ -773,7 +772,7 @@ describe('Testing molecules_container_js', () => {
         expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test get_gphl_chem_comp_info 1 -pdb", () => {
+    test("get_gphl_chem_comp_info 1 -pdb", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -804,7 +803,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, result_1, result_2, result_3, result_4)
     })
 
-    test("Test get_gphl_chem_comp_info 1 -mmcif", () => {
+    test("get_gphl_chem_comp_info 1 -mmcif", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
         expect(coordMolNo_1).toBe(0)
@@ -835,7 +834,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, result_1, result_2, result_3, result_4)
     })
 
-    test("Test get_gphl_chem_comp_info 2", () => {
+    test("get_gphl_chem_comp_info 2", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -866,7 +865,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, result_1, result_2, result_3, result_4)
     })
 
-    test.skip("Test get_gphl_chem_comp_info 3", () => {
+    test.skip("get_gphl_chem_comp_info 3", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -891,7 +890,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, result_1, result_2, result_3, result_4)
     })
 
-    test("Test merge ligand and gemmi parse -mmcif", () => {
+    test("merge ligand and gemmi parse -mmcif", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
         expect(coordMolNo_1).toBe(0)
@@ -930,7 +929,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, st, model, chains)
     })
 
-    test("Test merge ligand and gemmi parse -pdb", () => {
+    test("merge ligand and gemmi parse -pdb", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -968,7 +967,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, st, model, chains)
     })
 
-    test("Test merge ligand.restraints dict and gemmi parse -pdb", () => {
+    test("merge ligand.restraints dict and gemmi parse -pdb", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -1007,7 +1006,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, st, model, chains)
     })
 
-    test("Test merge ligand.restraints dict and gemmi parse -mmcif", () => {
+    test("merge ligand.restraints dict and gemmi parse -mmcif", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
         expect(coordMolNo_1).toBe(0)
@@ -1046,7 +1045,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, st, model, chains)
     })
 
-    test("Test merge ligand and gemmi parse cross-format 1", () => {
+    test("merge ligand and gemmi parse cross-format 1", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo_1).toBe(0)
@@ -1093,7 +1092,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains)
     })
 
-    test("Test merge ligand and gemmi parse cross-format 2", () => {
+    test("merge ligand and gemmi parse cross-format 2", () => {
 
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.mmcif')
         expect(coordMolNo_1).toBe(0)
@@ -1138,7 +1137,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(merge_info, old_chains, old_model, old_st, st, model, chains)
     })
 
-    test.skip('Test test_the_threading --pool false', () => {
+    test.skip('test_the_threading --pool false', () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
 
@@ -1153,7 +1152,7 @@ describe('Testing molecules_container_js', () => {
         }
     })
 
-    test.skip('Test test_the_threading --pool true', () => {
+    test.skip('test_the_threading --pool true', () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
 
@@ -1166,7 +1165,7 @@ describe('Testing molecules_container_js', () => {
         }
     })
 
-    test.skip("Test find ligand (long ligand name)", () => {
+    test.skip("find ligand (long ligand name)", () => {
         const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
         const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
         expect(coordMolNo).toBe(0)
@@ -1215,7 +1214,7 @@ describe('Testing molecules_container_js', () => {
 
     })
 
-    test.skip("Test merge ligand (long ligand name)", () => {
+    test.skip("merge ligand (long ligand name)", () => {
         const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
         const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
         expect(coordMolNo).toBe(0)
@@ -1260,7 +1259,7 @@ describe('Testing molecules_container_js', () => {
 
     })
 
-    test.skip("Test refine & merge ligand (long ligand name)", () => {
+    test.skip("refine & merge ligand (long ligand name)", () => {
         const coordMolNo = molecules_container.read_pdb('./1cxq.cif')
         const mapMolNo = molecules_container.read_mtz('./1cxq_phases.mtz', 'FWT', 'PHWT', "", false, false)
         expect(coordMolNo).toBe(0)
@@ -1308,7 +1307,7 @@ describe('Testing molecules_container_js', () => {
 
     })
 
-    test("Test updating maps", () => {
+    test("updating maps", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
         const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
@@ -1338,7 +1337,7 @@ describe('Testing molecules_container_js', () => {
         expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
     })
 
-    test.skip("Test get_diff_diff_map_peaks", () => {
+    test.skip("get_diff_diff_map_peaks", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
         const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
@@ -1359,7 +1358,7 @@ describe('Testing molecules_container_js', () => {
         expect(diff_diff_map_peaks.size()).toBeGreaterThan(0)
     })
 
-    test("Test export_model_molecule_as_gltf", () => {
+    test("export_model_molecule_as_gltf", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const fileName = 'molecule-test.glb'
@@ -1369,7 +1368,7 @@ describe('Testing molecules_container_js', () => {
         expect(fileContents.byteLength).toBeGreaterThan(1000000)
     })
 
-    test("Test export_map_molecule_as_gltf", () => {
+    test("export_map_molecule_as_gltf", () => {
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
 
         const fileName = 'map-test.glb'
@@ -1379,7 +1378,7 @@ describe('Testing molecules_container_js', () => {
         expect(fileContents.byteLength).toBeGreaterThan(1000000)
     })
 
-    test("Test getSecondaryStructure", () => {
+    test("getSecondaryStructure", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const ss2_vector = molecules_container.GetSecondaryStructure(coordMolNo, 1)
@@ -1388,7 +1387,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(ss2_vector)
     })
 
-    test("Test privateer_validate", () => {
+    test("privateer_validate", () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
         const results = molecules_container.privateer_validate(coordMolNo)
         const first = results.get(0)
@@ -1397,14 +1396,14 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(results)
     });
 
-    test("Test get molecule diameter", () => {
+    test("get molecule diameter", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
         expect(diameter).toBeLessThanOrEqual(50)
         expect(diameter).toBeGreaterThanOrEqual(30)
     })
 
-    test("Test non-drawn bonds and selection mesh", () => {
+    test("non-drawn bonds and selection mesh", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1426,7 +1425,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test colour rules and bond mesh", () => {
+    test("colour rules and bond mesh", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
@@ -1496,7 +1495,7 @@ describe('Testing molecules_container_js', () => {
     })
 
 
-    test("Test colour rules and multi CID selection mesh --first", () => {
+    test("colour rules and multi CID selection mesh --first", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1565,7 +1564,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
     })
 
-    test("Test colour rules and multi CID selection mesh --second", () => {
+    test("colour rules and multi CID selection mesh --second", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1634,7 +1633,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
     })
 
-    test("Test colour rules and multi CID selection mesh --third", () => {
+    test("colour rules and multi CID selection mesh --third", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1703,7 +1702,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2, indexedResiduesVec, colourMap, geom_2, geom_1)
     })
 
-    test("Test non-drawn bonds and multi CID selection mesh --first", () => {
+    test("non-drawn bonds and multi CID selection mesh --first", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1725,7 +1724,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test non-drawn bonds and multi CID selection mesh --second", () => {
+    test("non-drawn bonds and multi CID selection mesh --second", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_for_selection_instanced(
@@ -1753,7 +1752,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test non-drawn bonds and bonds mesh", () => {
+    test("non-drawn bonds and bonds mesh", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         const instanceMesh_1 = molecules_container.get_bonds_mesh_instanced(
@@ -1775,7 +1774,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanceMesh_1, instanceMesh_2)
     })
 
-    test("Test change chain ID -- whole chain", () => {
+    test("change chain ID -- whole chain", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         let original_chains = []
@@ -1804,7 +1803,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID -- residue range", () => {
+    test("change chain ID -- residue range", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         let original_chains = []
@@ -1847,7 +1846,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec)
     })
 
-    test("Test change chain ID -- colour rules", () => {
+    test("change chain ID -- colour rules", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
 
         molecules_container.delete_colour_rules(coordMolNo)
@@ -1932,7 +1931,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(original_chains_vec, new_chains_vec, instanceMesh_1, instanceMesh_2, colourMap_2, colourMap, indexedResiduesVec)
     })
 
-    test.skip("Test shift_field_b_factor_refinement", () => {
+    test.skip("shift_field_b_factor_refinement", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
         const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
@@ -2004,7 +2003,7 @@ describe('Testing molecules_container_js', () => {
         )
     })
 
-    test("Test multiply_residue_temperature_factors", () => {
+    test("multiply_residue_temperature_factors", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
         const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)
@@ -2075,7 +2074,7 @@ describe('Testing molecules_container_js', () => {
         )
     })
 
-    test("Test clear", () => {
+    test("clear", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', 'FOM', false, false)
         const diffMapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'DELFWT', 'PHDELWT', 'FOM', false, true)

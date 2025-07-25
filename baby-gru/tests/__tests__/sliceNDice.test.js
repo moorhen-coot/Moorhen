@@ -5,7 +5,6 @@ jest.setTimeout(40000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-
 const createCootModule = require('../../public/moorhen')
 
 let cootModule;
@@ -59,7 +58,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables = []
     })
 
-    test("Test kmeans", () => {
+    test("kmeans", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -73,7 +72,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test birch", () => {
+    test("birch", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -87,7 +86,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test agglomerative", () => {
+    test("agglomerative", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -101,7 +100,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test pae", () => {
+    test("pae", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
 

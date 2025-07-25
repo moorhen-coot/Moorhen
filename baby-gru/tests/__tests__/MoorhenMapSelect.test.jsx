@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup }  from '@testing-library/react'
-import { MoorhenMapSelect }  from '../../src/components/select/MoorhenMapSelect'
-import { MoorhenMap } from '../../src/utils/MoorhenMap'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
+import { MoorhenMapSelect }  from '../../src/components/select/MoorhenMapSelect'
+import { MoorhenMap } from '../../src/utils/MoorhenMap'
 import MoorhenStore from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenMapSelect', () => {
     
     afterEach(cleanup)
 
-    test('Test MoorhenMapSelect label', () => {
+    test('MoorhenMapSelect label', () => {
         render(
             <Provider store={MoorhenStore}> 
                 <MoorhenMapSelect label="Test Label"/>
@@ -24,7 +24,7 @@ describe('Testing MoorhenMapSelect', () => {
         expect(selectNode).toBeVisible()
     })
 
-    test('Test MoorhenMapSelect select maps', async () => {
+    test('MoorhenMapSelect select maps', async () => {
         const map_1 = new MoorhenMap(null, null)
         map_1.molNo = 0
         map_1.name = 'map-1'
@@ -60,7 +60,7 @@ describe('Testing MoorhenMapSelect', () => {
         expect(optionNode_2.selected).toBeTruthy()
     })
 
-    test('Test MoorhenMapSelect filter', () => {
+    test('MoorhenMapSelect filter', () => {
         const map_1 = new MoorhenMap(null, null)
         map_1.molNo = 0
         map_1.name = 'map-1'
@@ -96,7 +96,7 @@ describe('Testing MoorhenMapSelect', () => {
         expect(optionNode_2.selected).toBeTruthy()
     })
 
-    test('Test MoorhenMapSelect onChange', async () => {
+    test('MoorhenMapSelect onChange', async () => {
         const map_1 = new MoorhenMap(null, null)
         map_1.molNo = 0
         map_1.name = 'map-1'
