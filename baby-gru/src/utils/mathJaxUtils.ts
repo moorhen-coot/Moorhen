@@ -1,5 +1,4 @@
 export const getMathJaxSVG = async (input:string) => {
-    // @ts-ignore
     const mj = window.MathJax
     if(mj){
         const output = document.getElementById('mathjaxout');
