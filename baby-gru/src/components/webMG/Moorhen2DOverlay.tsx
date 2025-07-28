@@ -613,7 +613,6 @@ export const Moorhen2DOverlay = ((props) => {
                     img.crossOrigin = "Anonymous"
                     const parser = new DOMParser()
                     const doc = parser.parseFromString(svg, "image/svg+xml");
-                    const rects = doc.getElementsByTagName("rect")
                     const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
                     new_images.push(img_frac)
                 }
