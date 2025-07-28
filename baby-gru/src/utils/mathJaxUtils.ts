@@ -18,8 +18,8 @@ export const getMathJaxSVG = async (input:string) => {
                     let whratio = -1
                     try {
                             //I am *assuming* a MathJax node is an SVG containing the dimensions
-                            const svg_width = parseInt(svg[0].attributes["width"].nodeValue)
-                            const svg_height = parseInt(svg[0].attributes["height"].nodeValue)
+                            const svg_width = parseFloat(svg[0].attributes["width"].nodeValue)
+                            const svg_height = parseFloat(svg[0].attributes["height"].nodeValue)
                             whratio = svg_width/svg_height
                     } catch(e) {
                         whratio = -1
