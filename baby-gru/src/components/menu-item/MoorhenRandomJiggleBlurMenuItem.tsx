@@ -1,14 +1,14 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenStore } from "../../moorhen";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 export const MoorhenRandomJiggleBlurMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

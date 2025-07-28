@@ -1,7 +1,7 @@
 import { useRef, memo, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenReduxStore, showMap } from "../../moorhen";
+import { showMap } from "../../moorhen";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapAlphaListener } from "./MapAlphaListener";
@@ -13,6 +13,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const lastDrawTimeout = useRef<NodeJS.Timeout | null>(null);
     const isWorkingRef = useRef<boolean>(false);
     const mapMolNo = props.mapMolNo;
+    const store = useStore<moorhen.State>();
 
     const map = useSelector((state: moorhen.State) => {
         const map = state.maps.find((item) => item.molNo === mapMolNo);
@@ -65,8 +66,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         const style = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle =
-                MoorhenReduxStore.getState().mapContourSettings.defaultMapLitLines ||
-                MoorhenReduxStore.getState().mapContourSettings.defaultMapSurface ||
+                store.getState().mapContourSettings.defaultMapLitLines ||
+                store.getState().mapContourSettings.defaultMapSurface ||
                 "lines";
             return defaultStyle;
         }

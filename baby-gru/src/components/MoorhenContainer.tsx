@@ -172,7 +172,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null);
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
 
-    const maps = useSelector((state: moorhen.State) => state.maps);
+    //const maps = useSelector((state: moorhen.State) => state.maps);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle);
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
@@ -227,7 +227,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     activeMapRef.current = activeMap;
     moleculesRef.current = molecules;
-    mapsRef.current = maps;
 
     const defaultProps = {
         onUserPreferencesChange: () => {},
