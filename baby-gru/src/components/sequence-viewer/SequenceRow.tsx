@@ -32,7 +32,7 @@ export const SequenceRow = memo(
                 return (
                     <div
                         key={sequence.molNo + sequence.chain + "empty" + j}
-                        className="residue-box empty"
+                        className="moorhen__seqviewer__residue-box msv__empty"
                         style={{ "--column-width": `${columnWidth}rem` } as React.CSSProperties}
                     ></div>
                 );
