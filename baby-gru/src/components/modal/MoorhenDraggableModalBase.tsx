@@ -7,8 +7,8 @@ import { ResizableBox } from "react-resizable";
 import { moorhen } from "../../types/moorhen";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-import { MoorhenStore } from "../../moorhen";
 import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import "./MoorhenDraggableModalBase.css";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
