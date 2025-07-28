@@ -75,7 +75,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addCallback(exampleCallBack))
             const input = String.raw`{{\rm \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
             const mathJaxInfo = await getMathJaxSVG(input)
-            dispatch(addImageOverlay({src:mathJaxInfo.svg,x:0.25,y:0.25,width:mathJaxInfo.width,height:mathJaxInfo.height}))
+            if(mathJaxInfo.width>0&&mathJaxInfo.height>0){
+                dispatch(addImageOverlay({src:mathJaxInfo.svg,x:0.25,y:0.25,width:mathJaxInfo.width,height:mathJaxInfo.height}))
+            }
         }
     }
 
