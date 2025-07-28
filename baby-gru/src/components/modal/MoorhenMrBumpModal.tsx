@@ -97,7 +97,7 @@ function hsv2rgb(h, s, v) {
     };
 }
 
-export const MoorhenMrBumpModal = (props: moorhen.CollectedProps) => {
+export const MoorhenMrBumpModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null)
     const canvasRef = useRef<null | HTMLCanvasElement>(null)
     const [canvasDimensions, setCanvasDimensions] = useState<number>(700)

@@ -28,7 +28,9 @@ import { MoorhenColourMapByOtherMapModal } from '../modal/MoorhenColourMapByOthe
 import { moorhen } from '../../types/moorhen';
 import { modalKeys } from "../../utils/enums";
 
-export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
+export type ExtraDraggableModals = React.JSX.Element[];
+
+export const MoorhenModalsContainer = (props: {extraDraggableModals: ExtraDraggableModals}) => {
     const showCreateAcedrgLinkModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.ACEDRG))
     const showQuerySequenceModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SEQ_QUERY))
     const showScriptingModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCRIPTING))
@@ -55,103 +57,103 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showColorMapByMapModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.COLOR_MAP_BY_MAP))
 
     return <>
-        <MoorhenModelsModal {...props}/>
+        <MoorhenModelsModal />
 
-        <MoorhenMapsModal {...props}/>
+        <MoorhenMapsModal />
 
         {showCreateAcedrgLinkModal &&
-            <MoorhenCreateAcedrgLinkModal width={45} {...props} />
+            <MoorhenCreateAcedrgLinkModal width={45}  />
         }
 
         {showQuerySequenceModal &&
-            <MoorhenQuerySequenceModal {...props} />
+            <MoorhenQuerySequenceModal  />
         }
 
         {showScriptingModal &&
-            <MoorhenScriptModal {...props} />
+            <MoorhenScriptModal  />
         }
 
         {showControlsModal &&
-            <MoorhenControlsModal {...props} />
+            <MoorhenControlsModal  />
         }
 
         {showFitLigandModal &&
-            <MoorheFindLigandModal {...props}/>
+            <MoorheFindLigandModal />
         }
 
         {showRamaPlotModal &&
-            <MoorhenRamaPlotModal {...props} />
+            <MoorhenRamaPlotModal  />
         }
 
         {showDiffMapPeaksModal &&
-            <MoorhenDiffMapPeaksModal {...props} />
+            <MoorhenDiffMapPeaksModal  />
         }
 
         {showValidationPlotModal &&
-            <MoorhenValidationPlotModal {...props} />
+            <MoorhenValidationPlotModal  />
         }
 
         {showMmrrccModal &&
-            <MoorhenMmrrccModal {...props} />
+            <MoorhenMmrrccModal  />
         }
 
         {showJsonValidationModal &&
-            <MoorhenJsonValidationModal {...props} />
+            <MoorhenJsonValidationModal  />
         }
 
         {showWaterValidationModal &&
-            <MoorhenWaterValidationModal {...props} />
+            <MoorhenWaterValidationModal  />
         }
 
         {showLigandValidationModal &&
-            <MoorhenLigandValidationModal {...props} />
+            <MoorhenLigandValidationModal  />
         }
 
         {showMoorhenMrBumpModal &&
-            <MoorhenMrBumpModal {...props} />
+            <MoorhenMrBumpModal  />
         }
 
         {showMoorhenMrParseModal &&
-            <MoorhenMrParseModal {...props} />
+            <MoorhenMrParseModal  />
         }
 
         {showCarbohydrateValidationModal &&
-            <MoorhenCarbohydrateValidationModal {...props} />
+            <MoorhenCarbohydrateValidationModal  />
         }
 
         {showPepFlipsValidationModal &&
-            <MoorhenPepFlipsModal {...props} />
+            <MoorhenPepFlipsModal  />
         }
 
         {showUnmodelledBlobsModal &&
-            <MoorhenUnmodelledBlobsModal {...props} />
+            <MoorhenUnmodelledBlobsModal  />
         }
 
         {showFillPartialResValidationModal &&
-            <MoorhenFillPartialResiduesModal {...props} />
+            <MoorhenFillPartialResiduesModal  />
         }
 
         {showSceneSettingsModal &&
-            <MoorhenSceneSettingsModal {...props} />
+            <MoorhenSceneSettingsModal  />
         }
 
         {showSliceNDiceModal &&
-            <MoorhenSliceNDiceModal {...props} />
+            <MoorhenSliceNDiceModal  />
         }
 
         {showSuperposeModal &&
-            <MoorheSuperposeStructuresModal {...props} />
+            <MoorheSuperposeStructuresModal  />
         }
 
         {showLhasaModal &&
-            <MoorhenLhasaModal {...props} />
+            <MoorhenLhasaModal  />
         }
 
         {showQScoreModal &&
-            <MoorhenQScoreModal {...props}/>
+            <MoorhenQScoreModal />
         }
         {showColorMapByMapModal &&
-            <MoorhenColourMapByOtherMapModal {...props} />
+            <MoorhenColourMapByOtherMapModal  />
         }
 
         {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}

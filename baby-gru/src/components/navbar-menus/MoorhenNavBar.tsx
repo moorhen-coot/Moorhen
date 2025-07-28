@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, use } from "react";
+import { useEffect, useState, useRef, useCallback} from "react";
 import { Spinner, Form, Overlay, Popover, Stack } from "react-bootstrap";
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import {
@@ -34,10 +34,25 @@ import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
 import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
 import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
 
+export type ExtraNavBarMenus = {
+    name: string; 
+    ref: React.RefObject<any> ; 
+    icon: React.JSX.Element; 
+    JSXElement: React.JSX.Element[];
+}[];
+
+export type ExtraNavBarModals = {
+    name: string;
+    ref: React.RefObject<any>;
+    icon: React.JSX.Element;
+    JSXElement: React.JSX.Element;
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+}[];
 
 interface MoorhenNavBarProps {
-    extraNavBarMenus?: moorhen.ContainerOptionalProps["extraNavBarMenus"];
-    extraNavBarModals?: moorhen.ContainerOptionalProps["extraNavBarModals"];
+    extraNavBarMenus?: ExtraNavBarMenus;
+    extraNavBarModals?: ExtraNavBarModals;
     includeNavBarMenuNames: string[];
     viewOnly: boolean;
 }
@@ -160,7 +175,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
         navBarMenuNames = props.includeNavBarMenuNames;
     }
 
-    let selectedExtraNavBarModal: moorhen.ContainerOptionalProps["extraNavBarModals"][number] | undefined;
+    let selectedExtraNavBarModal: ExtraNavBarModals[number] | undefined;
     useEffect(() => {
         switch (navBarActiveMenu) {
             case "-1":

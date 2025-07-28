@@ -30,7 +30,7 @@ export const MoorhenQScoreModal = (props) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenQScore {...props}/>
+                            <MoorhenQScore />
                         </Row>
                     </div>
                 }

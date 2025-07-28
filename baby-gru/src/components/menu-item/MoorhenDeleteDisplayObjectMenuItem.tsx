@@ -2,7 +2,6 @@ import { Form } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
 import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { removeMap } from "../../store/mapsSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
@@ -10,7 +9,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props: {
     item: moorhen.Map | moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
+export const MoorhenModelsModal = () => {
     const cardListRef = useRef([])
     
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
@@ -41,7 +41,7 @@ export const MoorhenModelsModal = (props: moorhen.CollectedProps) => {
             molecule={molecule}
             currentDropdownMolNo={currentDropdownMolNo}
             setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-            {...props} />
+            />
     })
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 

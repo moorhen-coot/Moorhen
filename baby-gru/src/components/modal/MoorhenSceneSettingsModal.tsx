@@ -25,7 +25,7 @@ import { setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
-const EdgeDetectPanel = (props: {}) => {
+const EdgeDetectPanel = () => {
 
     const dispatch = useDispatch()
 
@@ -92,7 +92,7 @@ const EdgeDetectPanel = (props: {}) => {
     </div>
 }
 
-const OcclusionPanel = (props: {}) => {
+const OcclusionPanel = () => {
     const dispatch = useDispatch()
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
@@ -127,7 +127,7 @@ const OcclusionPanel = (props: {}) => {
     </div>
 }
 
-const BackgroundColorPanel = (props: {}) => {
+const BackgroundColorPanel = () => {
     
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const dispatch = useDispatch()
@@ -192,9 +192,7 @@ const BackgroundColorPanel = (props: {}) => {
     </Stack>
 }
 
-const DepthBlurPanel = (props: {
-
-}) => {
+const DepthBlurPanel = () => {
 
     const dispatch = useDispatch()
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
@@ -236,9 +234,7 @@ const DepthBlurPanel = (props: {
     </div>
 }
 
-const ClipFogPanel = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+const ClipFogPanel = () => {
 
     const dispatch = useDispatch()
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
@@ -304,9 +300,7 @@ const ClipFogPanel = (props: {
     </div>
 }
 
-const LightingPanel = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+const LightingPanel = () => {
 
     const busyLighting = useRef<boolean>(false)
     const newLightPosition = useRef<[number, number, number]>(null)
@@ -375,26 +369,24 @@ const LightingPanel = (props: {
     </div>
 }
 
-const MoorhenSceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical";}) => {
+const MoorhenSceneSettings = (props: {stackDirection: "horizontal" | "vertical";}) => {
 
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2)
     return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: "100%"}}>
         <Stack gap={2} direction="vertical">
-            <ClipFogPanel glRef={props.glRef}/>
+            <ClipFogPanel />
             <BackgroundColorPanel/>
             <EdgeDetectPanel/>
         </Stack>
         <Stack gap={1} direction="vertical">
-            <LightingPanel glRef={props.glRef}/>
+            <LightingPanel />
             {isWebGL2 && <DepthBlurPanel/>}
             <OcclusionPanel/>
         </Stack>
     </Stack>
 }
 
-export const MoorhenSceneSettingsModal = (props: {
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+export const MoorhenSceneSettingsModal = () => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -414,7 +406,7 @@ export const MoorhenSceneSettingsModal = (props: {
                 maxWidth={convertRemToPx(60)}
                 enforceMaxBodyDimensions={true}
                 body={
-                    <MoorhenSceneSettings glRef={props.glRef} stackDirection="horizontal" />
+                    <MoorhenSceneSettings  stackDirection="horizontal" />
                 }
                 footer={null}
                 additionalHeaderButtons={[
@@ -428,7 +420,7 @@ export const MoorhenSceneSettingsModal = (props: {
                                 title: "Scene settings",
                                 modalId: modalKeys.SCENE_SETTINGS,
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '50vh' }}>
-                                    <MoorhenSceneSettings glRef={props.glRef} stackDirection="vertical" />
+                                    <MoorhenSceneSettings  stackDirection="vertical" />
                                 </div>
                             })                
                         }}>
@@ -436,6 +428,5 @@ export const MoorhenSceneSettingsModal = (props: {
                         </Button>
                     </Tooltip>
                 ]}
-                {...props}
                 />
 }

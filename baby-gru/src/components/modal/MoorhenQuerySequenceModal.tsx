@@ -40,12 +40,7 @@ query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
   }
 }`);
 
-export const MoorhenQuerySequenceModal = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    monomerLibraryPath: string;
-    store: Store;
-}) => {
+export const MoorhenQuerySequenceModal = () => {
     const client = useRef(
         new ApolloClient({
             uri: "https://data.rcsb.org/graphql",
@@ -55,17 +50,12 @@ export const MoorhenQuerySequenceModal = (props: {
 
     return (
         <ApolloProvider client={client.current}>
-            <MoorhenQuerySequence {...props} />
+            <MoorhenQuerySequence/>
         </ApolloProvider>
     );
 };
 
-const MoorhenQuerySequence = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    monomerLibraryPath: string;
-    store: Store;
-}) => {
+const MoorhenQuerySequence = () => {
     const [selectedModel, setSelectedModel] = useState<null | number>(null);
     const [selectedChain, setSelectedChain] = useState<string | null>(null);
     const [selectedSource, setSelectedSource] = useState<string>("PDB");
@@ -316,7 +306,6 @@ const MoorhenQuerySequence = (props: {
                                                         selectedChain={chainSelectRef.current.value}
                                                         data={data}
                                                         idx={idx}
-                                                        {...props}
                                                     />
                                                 );
                                             })}
@@ -361,7 +350,6 @@ const MoorhenQuerySequence = (props: {
                     </Stack>
                 </>
             }
-            {...props}
         />
     );
 };

@@ -14,7 +14,7 @@ import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
 
-interface MoorhenMapCardPropsInterface extends moorhen.CollectedProps {
+interface MoorhenMapCardPropsInterface {
     map: moorhen.Map;
     initialContour?: number;
     initialRadius?: number;
@@ -92,7 +92,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         setLastCall(Date.now());
     };
 
-    const [currentName, setCurrentName] = useState<string>(props.map.name);
+    const [, setCurrentName] = useState<string>(props.map.name);
 
     const getLabelAndActionButtonSpace = () => {
         const buttonToShow = 4;
@@ -145,7 +145,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                 isCollapsed={props.isCollapsed}
                                 onCollapseToggle={handleCollapseToggle}
                                 setCurrentName={setCurrentName}
-                                glRef={props.glRef}
                                 maxWidth={actionButtonSpace}
                             />
                         </Col>

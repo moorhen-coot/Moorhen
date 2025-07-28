@@ -256,7 +256,7 @@ export const MoorheFindLigandModal = (props: {
                             setLigandCardMolNoFocus={setLigandCardMolNoFocus}
                             ligandResults={ligandResults}
                             setLigandResults={setLigandResults}
-                            {...props}/>
+                            />
             })
             }</div> : <span>No results...</span>}
         </Row>

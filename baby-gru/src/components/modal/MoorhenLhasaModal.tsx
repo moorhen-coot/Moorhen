@@ -122,11 +122,12 @@ const LhasaWrapper = (props: {
                 /> : null
 }
 
-export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
+export const MoorhenLhasaModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;    
 
     const [busy, setBusy] = useState<boolean>(false)
 
@@ -152,7 +153,7 @@ export const MoorhenLhasaModal = (props: moorhen.CollectedProps) => {
                 onClose={handleClose}
                 body={ 
                     <LhasaWrapper
-                        urlPrefix={props.urlPrefix}
+                        urlPrefix={urlPrefix}
                         setBusy={setBusy}/>
                 }
                 additionalChildren={

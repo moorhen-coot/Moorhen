@@ -7,7 +7,7 @@ import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenMmrrccModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenMmrrccModal = () => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -30,7 +30,7 @@ export const MoorhenMmrrccModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenMMRRCCPlot {...props}/>
+                            <MoorhenMMRRCCPlot />
                         </Row>
                     </div>
                 }

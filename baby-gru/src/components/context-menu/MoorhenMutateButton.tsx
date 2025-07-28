@@ -58,6 +58,6 @@ export const MoorhenMutateButton = (props: moorhen.ContextButtonProps) => {
                 props.setDefaultActionButtonSettings({ key: 'mutate', value: newValue })
             }
         }}
-        {...props}
+      {...props}  
     />
 }

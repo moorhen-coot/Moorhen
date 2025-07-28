@@ -7,6 +7,7 @@ import { convertViewtoPx } from "../../utils/utils";
 import { modalKeys } from "../../utils/enums";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const shortCutMouseActions = {
     open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],
@@ -23,12 +24,13 @@ const shortCutMouseActions = {
     contour_lvl: ['mouse-scroll-arrows', 'two-finger-scroll']
 }
 
-export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
+export const MoorhenControlsModal = () => {
 
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix
 
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false)
     const [svgString, setSvgString] = useState<string | null>(null)
@@ -49,7 +51,7 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
 
     useEffect(() => {
         const fetchSVG = async () => {
-            const response = await fetch(`${props.urlPrefix}/pixmaps/keyboard-blank.svg`)
+            const response = await fetch(`${urlPrefix}/pixmaps/keyboard-blank.svg`)
             if (response.ok) {
                 const text = await response.text()
                 setSvgString(text)
@@ -187,6 +189,5 @@ export const MoorhenControlsModal = (props: { urlPrefix: string }) => {
                     </Col>
                     </Row>
                 }
-                {...props}
             />
 }

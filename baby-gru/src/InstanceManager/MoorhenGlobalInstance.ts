@@ -17,6 +17,7 @@ class MoorhenGlobalInstance {
     private timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     private videoRecorder: moorhen.ScreenRecorder
     private videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
+    private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     
     public paths: {
         urlPrefix: string;
@@ -66,6 +67,14 @@ class MoorhenGlobalInstance {
 
     public getVideoRecorderRef(): React.RefObject<moorhen.ScreenRecorder> {
         return this.videoRecorderRef;
+    }
+
+    public setAceDRGInstance(aceDRGInstance: moorhen.AceDRGInstance): void {
+        this.aceDRGInstance = aceDRGInstance;
+    }
+
+    public getAceDRGInstance(): moorhen.AceDRGInstance | null {
+        return this.aceDRGInstance;
     }
 
     public cleanup(): void {

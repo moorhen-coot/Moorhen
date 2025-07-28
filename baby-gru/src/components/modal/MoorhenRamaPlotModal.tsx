@@ -1,10 +1,9 @@
-import { useRef, useState } from "react";
 import { Button, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { Tooltip } from "@mui/material";
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
+import { convertViewtoPx} from '../../utils/utils';
 import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
@@ -12,7 +11,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {     
+export const MoorhenRamaPlotModal = () => {     
     const menu = 'moorhenRamaPlotModal'   
     const dispatch = useDispatch()
     
@@ -54,7 +53,7 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"rama-validation-tool-container-row"}>
-                            <MoorhenRamachandran size={modalSize} resizeTrigger={false} {...props}/>
+                            <MoorhenRamachandran size={modalSize} resizeTrigger={false}/>
                         </Row>
                     </div>
                 }
@@ -70,7 +69,7 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
                                 title: "Rama. Plot",
                                 children: <div style={{height: '100%'}} >
                                 <Row className={"rama-validation-tool-container-row"}>
-                                    <MoorhenRamachandran resizeTrigger={false} {...props}/>
+                                    <MoorhenRamachandran resizeTrigger={false} />
                                 </Row>
                             </div>
                             })

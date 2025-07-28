@@ -7,7 +7,7 @@ import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValida
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenLigandValidationModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenLigandValidationModal = () => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -30,7 +30,7 @@ export const MoorhenLigandValidationModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenLigandValidation {...props}/>
+                            <MoorhenLigandValidation />
                         </Row>
                     </div>
                 }

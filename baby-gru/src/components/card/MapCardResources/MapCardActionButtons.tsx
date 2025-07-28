@@ -22,7 +22,6 @@ import { MoorhenSetMapWeight } from "../../menu-item/MoorhenSetMapWeight";
 import { MoorhenScaleMap } from "../../menu-item/MoorhenScaleMap";
 import { MoorhenMapInfoCard } from "../../card/MoorhenMapInfoCard";
 import { moorhen } from "../../../types/moorhen";
-import { webGL } from "../../../types/mgWebGL";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 
 interface ActionButtonPropsType {
@@ -31,7 +30,6 @@ interface ActionButtonPropsType {
     isCollapsed: boolean;
     onCollapseToggle?: () => void;
     setCurrentName: React.Dispatch<React.SetStateAction<string>>;
-    glRef: React.MutableRefObject<null | webGL.MGWebGL>;
     maxWidth: number;
 }
 
@@ -129,7 +127,7 @@ export const MapCardActionButtons = (props: ActionButtonPropsType) => {
         99: {
             label: "Delete map",
             key: "delete-map",
-            menuItem: <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} item={props.map} />,
+            menuItem: <MoorhenDeleteDisplayObjectMenuItem key="delete-map" setPopoverIsShown={setPopoverIsShown} item={props.map} />,
         },
     };
 

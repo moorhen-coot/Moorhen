@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { Container, Col, Row, Spinner } from "react-bootstrap";
 import { Backdrop } from "@mui/material";
 import { useSelector, useDispatch, useStore } from "react-redux";
+import type { Store } from "redux";
 import { SnackbarProvider } from "notistack";
 import { createLocalStorageInstance, parseAtomInfoLabel } from "../utils/utils";
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
@@ -49,7 +50,8 @@ import { MoorhenSideBar } from "./snack-bar/MoorhenSideBar";
 import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
-
+import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar";
+import type { ExtraDraggableModals } from "./misc/MoorhenModalsContainer";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -162,7 +164,44 @@ declare module "notistack" {
  *          </MoorhenReduxProvider>
  *
  */
-export const MoorhenContainer = (props: moorhen.ContainerProps) => {
+
+   interface ContainerRefs {
+        glRef: React.RefObject<null | webGL.MGWebGL>;
+        timeCapsuleRef: React.RefObject<null | moorhen.TimeCapsule>;
+        commandCentre: React.RefObject<moorhen.CommandCentre>;
+        videoRecorderRef: React.RefObject<null | moorhen.ScreenRecorder>;
+        moleculesRef: React.RefObject<null | moorhen.Molecule[]>;
+        mapsRef: React.RefObject<null | moorhen.Map[]>;
+        activeMapRef: React.RefObject<moorhen.Map>;
+        lastHoveredAtomRef: React.RefObject<null | moorhen.HoveredAtom>;
+    }
+
+    interface ContainerOptionalProps {
+        onUserPreferencesChange: (key: string, value: any) => void;
+        disableFileUploads: boolean;
+        urlPrefix: string;
+        extraNavBarMenus: ExtraNavBarMenus[];
+        extraNavBarModals: ExtraNavBarModals[];
+        viewOnly: boolean;
+        extraDraggableModals: React.JSX.Element[];
+        monomerLibraryPath: string;
+        setMoorhenDimensions?: null | ( () => [number, number] );
+        extraFileMenuItems: React.JSX.Element[];
+        allowScripting: boolean;
+        backupStorageInstance?: any;
+        extraEditMenuItems: React.JSX.Element[];
+        extraCalculateMenuItems: React.JSX.Element[];
+        aceDRGInstance: moorhen.AceDRGInstance | null;
+        includeNavBarMenuNames: string[];
+        store: Store;
+        allowAddNewFittedLigand: boolean;
+        allowMergeFittedLigand: boolean;
+    }
+
+    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
+
+export const MoorhenContainer = (props: ContainerProps) => {
+
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
@@ -172,7 +211,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerActiveMapRef = useRef<null | moorhen.Map>(null);
     const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
 
-    //const maps = useSelector((state: moorhen.State) => state.maps);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle);
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
@@ -198,7 +236,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     const dispatch = useDispatch();
 
-    const innerRefsMap: moorhen.ContainerRefs = {
+    const innerRefsMap: ContainerRefs = {
         glRef: innerGlRef,
         timeCapsuleRef: innerTimeCapsuleRef,
         commandCentre: innnerCommandCentre,
@@ -209,7 +247,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         videoRecorderRef: innerVideoRecorderRef,
     };
 
-    const refs = {} as moorhen.ContainerRefs;
+    const refs = {} as ContainerRefs;
     Object.keys(innerRefsMap).forEach((key) => {
         refs[key] = props[key] ? props[key] : innerRefsMap[key];
     });
@@ -272,33 +310,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         allowMergeFittedLigand,
     } = { ...defaultProps, ...props };
 
-    const collectedProps: moorhen.CollectedProps = {
-        glRef,
-        commandCentre,
-        timeCapsuleRef,
-        disableFileUploads,
-        extraDraggableModals,
-        aceDRGInstance,
-        urlPrefix,
-        viewOnly,
-        mapsRef,
-        allowScripting,
-        extraCalculateMenuItems,
-        extraEditMenuItems,
-        extraNavBarMenus,
-        monomerLibraryPath,
-        moleculesRef,
-        extraFileMenuItems,
-        activeMapRef,
-        videoRecorderRef,
-        lastHoveredAtomRef,
-        onUserPreferencesChange,
-        extraNavBarModals,
-        store,
-        includeNavBarMenuNames,
-        allowAddNewFittedLigand,
-        allowMergeFittedLigand,
-    };
 
     useLayoutEffect(() => {
         const head = document.head;
@@ -577,14 +588,21 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                     <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                     <span>Starting moorhen...</span>
                 </Backdrop>
-                <MoorhenNavBar {...collectedProps} />
+                <MoorhenNavBar
+                    extraNavBarMenus={extraNavBarMenus}
+                    extraNavBarModals={extraNavBarModals}
+                    includeNavBarMenuNames={includeNavBarMenuNames}
+                    viewOnly={viewOnly}
+                />
             </div>
 
-            <MoorhenModalsContainer {...collectedProps} />
+            <MoorhenModalsContainer
+             extraDraggableModals={extraDraggableModals}
+             />
 
             <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
 
-            <MoorhenSnackBarManager {...collectedProps} />
+            <MoorhenSnackBarManager />
 
             <MoorhenUpdatingMapsManager commandCentre={commandCentre} />
 
@@ -603,11 +621,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
             <Container fluid className={`baby-gru ${theme}`}>
                 <MoorhenDroppable
-                    glRef={glRef}
                     monomerLibraryPath={monomerLibraryPath}
                     timeCapsuleRef={timeCapsuleRef}
                     commandCentre={commandCentre}
-                    store={store}
                 >
                     <Row>
                         <Col style={{ paddingLeft: "0", paddingRight: "0" }}>

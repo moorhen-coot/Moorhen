@@ -3,6 +3,7 @@ import { Col, Row, Form, Button } from 'react-bootstrap'
 import { Chart, TooltipItem, registerables } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { useDispatch, useSelector } from "react-redux"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
@@ -12,12 +13,12 @@ import { setHoveredAtom } from "../../store/hoveringStatesSlice"
 import { moorhen } from "../../types/moorhen"
 import { libcootApi } from "../../types/libcoot"
 
+
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-export const MoorhenMMRRCCPlot = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenMMRRCCPlot = () => {
+    const commandCentre = moorhenGlobalInstance.getCommandCentre();
     const chartCardRef = useRef<HTMLDivElement>(null);
     const chartBoxRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -109,7 +110,7 @@ export const MoorhenMMRRCCPlot = (props: {
     }
 
     const fetchData = async () => {
-        const response = await props.commandCentre.current.cootCommand({
+        const response = await commandCentre.cootCommand({
             message: 'coot_command', 
             command: 'mmrrcc', 
             returnType: 'mmrrcc_stats', 

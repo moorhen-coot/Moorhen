@@ -106,7 +106,7 @@ const LskqbResidueRangeMatchCard = (props: {
     </Card>
 }
 
-export const MoorheSuperposeStructuresModal = (props: { commandCentre: React.RefObject<moorhen.CommandCentre> }) => {    
+export const MoorheSuperposeStructuresModal = () => {    
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -173,8 +173,7 @@ export const MoorheSuperposeStructuresModal = (props: { commandCentre: React.Ref
         setBusy(false)
         dispatch( hideModal(modalKeys.SUPERPOSE_MODELS) )
         
-    }, [molecules, props.commandCentre, lsqkbResidueRanges])
-
+    }, [molecules, lsqkbResidueRanges])
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))

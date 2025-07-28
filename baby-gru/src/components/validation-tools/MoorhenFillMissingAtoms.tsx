@@ -2,6 +2,7 @@ import { Col, Row, Card, Button } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback } from 'react';
 import { useSnackbar } from 'notistack';
+import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
@@ -10,17 +11,17 @@ import { hideModal } from '../../store/modalsSlice';
 import { modalKeys } from '../../utils/enums';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-
-export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
+export const MoorhenFillMissingAtoms = () => {
     const dispatch = useDispatch()
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const commandCentre = moorhenGlobalInstance.getCommandCentre()
 
     const { enqueueSnackbar } = useSnackbar()
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.cootCommand({
             returnType: "status",
             command: "fill_partial_residue",
             commandArgs: [selectedMolecule.molNo, chainId, resNum, insCode],
@@ -28,7 +29,7 @@ export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
         }, true)
 
         if (enableRefineAfterMod) {
-            await props.commandCentre.current.cootCommand({
+            await commandCentre.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',
                 commandArgs: [selectedMolecule.molNo, `//${chainId}/${resNum}`, 'TRIPLE', 4000],
@@ -54,7 +55,7 @@ export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
             commandArgs: [selectedModel]
         }
 
-        const response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
+        const response = await commandCentre.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
         const newResidueList = response.data.result.result
         return newResidueList
     }
@@ -78,7 +79,6 @@ export const MoorhenFillMissingAtoms = (props: moorhen.CollectedProps) => {
             enqueueSnackbar("fill-all-atoms", {
                 variant: "residueSteps",
                 persist: true,
-                timeCapsuleRef: props.timeCapsuleRef,
                 residueList: residueList,
                 sleepTime: 1500,
                 onStep: handleStepFillAtoms,

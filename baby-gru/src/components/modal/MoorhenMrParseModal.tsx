@@ -94,7 +94,7 @@ type DisplaySettingsType = {
     displaySequence: string;
 };
 
-export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
+export const MoorhenMrParseModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -710,8 +710,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
         const urlBase = "http://localhost:8000/";
         loadMrParseUrl(
             urlBase,
-            props.commandCentre,
-            props.monomerLibraryPath,
+            commandCentre,
+            monomerLibraryPath,
             backgroundColor,
             defaultBondSmoothness,
             store,
@@ -748,8 +748,8 @@ export const MoorhenMrParseModal = (props: moorhen.CollectedProps) => {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             loadMrParseFiles(
                                 Array.from(e.target.files),
-                                props.commandCentre,
-                                props.monomerLibraryPath,
+                                commandCentre,
+                                monomerLibraryPath,
                                 backgroundColor,
                                 defaultBondSmoothness,
                                 store,

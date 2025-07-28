@@ -9,7 +9,6 @@ import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDi
 import { MoorhenGenerateAssemblyMenuItem } from "../menu-item/MoorhenGenerateAssemblyMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
@@ -20,7 +19,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleUndo: () => Promise<void>;
     handleShowInfo: () => void;
     molecule: moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
     isCollapsed: boolean;
     setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -196,7 +194,6 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         <MoorhenDeleteDisplayObjectMenuItem
             key="deleteDisplayObjectMenuItem"
             setPopoverIsShown={setPopoverIsShown}
-            glRef={props.glRef}
             item={props.molecule} />
     )
 

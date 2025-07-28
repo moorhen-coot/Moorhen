@@ -13,22 +13,19 @@ export const MoorhenApp = () => {
     const mapsRef = useRef<null | moorhen.Map[]>(null);
     const activeMapRef = useRef<null | moorhen.Map>(null);
     const lastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null);
-    const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null);
 
-    const collectedProps = {
-        glRef,
-        timeCapsuleRef,
-        commandCentre,
-        moleculesRef,
-        mapsRef,
-        activeMapRef,
-        lastHoveredAtom,
-        prevActiveMoleculeRef,
-    };
 
     return (
         <Provider store={store}>
-            <MoorhenContainer {...collectedProps} />
+            <MoorhenContainer 
+                glRef={glRef}
+                timeCapsuleRef={timeCapsuleRef}
+                commandCentre={commandCentre}
+                moleculesRef={moleculesRef}
+                mapsRef={mapsRef}
+                activeMapRef={activeMapRef}
+                lastHoveredAtomRef={lastHoveredAtom}
+            />
         </Provider>
     );
 };

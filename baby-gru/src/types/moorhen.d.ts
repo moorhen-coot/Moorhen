@@ -3,10 +3,11 @@ import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
 import type { privateer } from "./privateer";
 import { gemmi } from "./gemmi";
 import { libcootApi } from "./libcoot";
-import { webGL } from "./mgWebGL";
-
+import type { ContainerProps as ImportedContainerProps } from "./MoorhenContainer";
 
 export namespace moorhen {
+
+    export type ContainerProps = ImportedContainerProps;
 
     interface Preferences {
         name: string;
@@ -923,43 +924,7 @@ export namespace moorhen {
         setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
     }
 
-    interface ContainerRefs {
-        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
-        commandCentre: React.MutableRefObject<CommandCentre>;
-        videoRecorderRef: React.MutableRefObject<null | ScreenRecorder>;
-        moleculesRef: React.MutableRefObject<null | Molecule[]>;
-        mapsRef: React.MutableRefObject<null | Map[]>;
-        activeMapRef: React.MutableRefObject<Map>;
-        lastHoveredAtomRef: React.MutableRefObject<null | HoveredAtom>;
-    }
-
-    interface ContainerOptionalProps {
-        onUserPreferencesChange: (key: string, value: any) => void;
-        disableFileUploads: boolean;
-        urlPrefix: string;
-        extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: React.JSX.Element; JSXElement: React.JSX.Element}[];
-        extraNavBarModals: {name: string; ref: React.RefObject<any> ; icon: React.JSX.Element; JSXElement: React.JSX.Element; show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>>;}[];
-        viewOnly: boolean;
-        extraDraggableModals: React.JSX.Element[];
-        monomerLibraryPath: string;
-        setMoorhenDimensions?: null | ( () => [number, number] );
-        extraFileMenuItems: React.JSX.Element[];
-        allowScripting: boolean;
-        backupStorageInstance?: any;
-        extraEditMenuItems: React.JSX.Element[];
-        extraCalculateMenuItems: React.JSX.Element[];
-        aceDRGInstance: AceDRGInstance | null;
-        includeNavBarMenuNames: string[];
-        store: Store;
-        allowAddNewFittedLigand: boolean;
-        allowMergeFittedLigand: boolean;
-    }
-
-    interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> { }
-
-    interface CollectedProps extends ContainerRefs, ContainerOptionalProps { }
-
+ 
     interface State {
         molecules: {
             moleculeList: Molecule[];
@@ -1179,6 +1144,9 @@ export namespace moorhen {
         }
         globalUI: {
             busy: boolean;
+        }
+        setup: {
+            disableFileUpload: boolean;
         }
     }
 

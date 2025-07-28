@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
@@ -69,7 +68,6 @@ const initialRuleState: moorhen.ColourRule[] = []
 export const MoorhenModifyColourRulesCard = memo((props: {
     urlPrefix: string;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     molecule: moorhen.Molecule;
     showColourRulesToast: boolean;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;

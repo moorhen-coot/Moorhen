@@ -13,16 +13,18 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 Chart.register(...registerables);
 
 const menu = "colour-map-by-other-map-menu-item";
 
-export const MoorhenColourMapByOtherMapModal = (props: { glRef: React.RefObject<webGL.MGWebGL>; commandCentre: React.RefObject<moorhen.CommandCentre> }) => {
+export const MoorhenColourMapByOtherMapModal = () => {
     const dispatch = useDispatch();
     const chartRef = useRef<Chart | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const commandCentre = moorhenGlobalInstance.getCommandCentre();
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
@@ -80,7 +82,7 @@ export const MoorhenColourMapByOtherMapModal = (props: { glRef: React.RefObject<
     };
 
     const handleApplyColourTable = async () => {
-        const response = await props.commandCentre.current.cootCommand(
+        await commandCentre.cootCommand(
             {
                 command: "shim_set_colour_map_for_map_coloured_by_other_map",
                 commandArgs: colourTable,

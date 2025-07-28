@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react"
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { useSelector, useDispatch } from 'react-redux';
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
 import { residueCodesOneToThree } from '../../utils/enums'
 import { libcootApi } from "../../types/libcoot";
@@ -9,12 +10,9 @@ import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 
+
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
-
-interface Props extends moorhen.CollectedProps {
-    chartId: string;
-}
 
 const colourPalettes = {
     density_correlation_analysis: (value) => {return 'rgb(255, 255, '+ Math.floor(256 * value) + ')'},
@@ -32,12 +30,13 @@ const metricInfoScaling = {
     peptide_omega_analysis: (value) => {return value - 180},
 }
 
-export const MoorhenValidation = (props: Props) => {
+export const MoorhenValidation = (props:{chartId: string}) => {
     const dispatch = useDispatch()
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 
     const chartRef = useRef(null);
 
@@ -112,7 +111,7 @@ export const MoorhenValidation = (props: Props) => {
         const promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
         availableMetrics.forEach(metric => {
             const inputData = { message:'coot_command', ...metric }
-            promises.push(props.commandCentre.current.cootCommand(inputData, false))
+            promises.push(commandCentre.current.cootCommand(inputData, false))
         })
         const responses = await Promise.all(promises) 
         
