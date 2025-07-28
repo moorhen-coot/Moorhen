@@ -73,10 +73,19 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addFracPathOverlay({path:[[0.4,0.2],[0.8,0.6]],drawStyle:"stroke",strokeStyle:"red",lineWidth:8}))
             dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
             dispatch(addCallback(exampleCallBack))
-            const input = String.raw`{{\rm \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
+            const input = String.raw`{{\rm What\ is\ going\ on\ here? \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
+            const input2 = String.raw`{\sqrt{\pi}\sqrt{\pi}}`
             const mathJaxInfo = await getMathJaxSVG(input)
-            if(mathJaxInfo.width>0&&mathJaxInfo.height>0){
-                dispatch(addImageOverlay({src:mathJaxInfo.svg,x:0.25,y:0.25,width:mathJaxInfo.width,height:mathJaxInfo.height}))
+            if(mathJaxInfo.whratio>0){
+                const wh_ratio = mathJaxInfo.whratio
+                const svg_height = 60
+                dispatch(addImageOverlay({src:mathJaxInfo.svg,x:0.10,y:0.25,width:svg_height*wh_ratio,height:svg_height}))
+            }
+            const mathJaxInfo2 = await getMathJaxSVG(input2)
+            if(mathJaxInfo.whratio>0){
+                const wh_ratio = mathJaxInfo2.whratio
+                const svg_height = 80
+                dispatch(addImageOverlay({src:mathJaxInfo2.svg,x:0.10,y:0.45,width:svg_height*wh_ratio,height:svg_height}))
             }
         }
     }
