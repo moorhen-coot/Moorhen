@@ -35,6 +35,45 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    const getMathJaxSVG = () => {
+        // @ts-ignore
+        const mj = window.MathJax
+        if(mj){
+            const output = document.getElementById('mathjaxout');
+            output.innerHTML = '';
+            output.style.width = "0"
+            output.style.height = "0"
+            output.style.display = "none"
+            let input = String.raw`{{\rm \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
+            let options = mj.getMetricsFor(output);
+            options.display = false
+            mj.tex2svgPromise(input, options).then(function (node) {
+                const svg = node.getElementsByTagName("svg")
+                if(svg.length>0){
+                    const rects = svg[0].getElementsByTagName("rect")
+                    let width = 200
+                    let height = 200
+                    for(let irect=0;irect<rects.length;irect++){
+                        try {
+                            //I am *assuming* a MathJax node has an SVG containing a rect giving the dimensions
+                            const dum1 = rects[irect].attributes["x"].nodeValue
+                            const dum2 = rects[irect].attributes["y"].nodeValue
+                            width = rects[irect].attributes["width"].nodeValue
+                            height = rects[irect].attributes["height"].nodeValue
+                        } catch(e) {
+                        }
+                    }
+                    dispatch(addImageOverlay({src:svg[0].outerHTML,x:0.25,y:0.25,width:width,height:height}))
+                }
+                mj.startup.document.clear();
+                mj.startup.document.updateDocument();
+            }).catch(function (err) {
+                console.error("Failed to render with MathJax")
+                console.error(err)
+            });
+        }
+    }
+
     const exampleCallBack = (ctx,backgroundColor,cbWidth,cbHeight,scale) => {
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
         if(bright_y<0.5){
@@ -72,6 +111,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addFracPathOverlay({path:[[0.4,0.2],[0.8,0.6]],drawStyle:"stroke",strokeStyle:"red",lineWidth:8}))
             dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
             dispatch(addCallback(exampleCallBack))
+            getMathJaxSVG()
         }
     }
 
