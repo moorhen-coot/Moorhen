@@ -197,7 +197,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const redrawEnvironment = useCallback(async () => {
         if (drawInteractions) {
-            const [molecule, cid] = await getCentreAtom(molecules, props.commandCentre, props.glRef)
+            const [molecule, cid] = await getCentreAtom(molecules, props.commandCentre)
             if (molecule?.molNo === props.molecule.molNo) {
                 props.molecule.clearBuffersOfStyle('environment')
                 await props.molecule.drawEnvironment(cid)
@@ -207,14 +207,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         } else {
             props.molecule.clearBuffersOfStyle('environment')
         }
-    }, [drawInteractions, molecules, props.commandCentre, props.glRef, props.molecule])
+    }, [drawInteractions, molecules, props.commandCentre, props.molecule])
     
     const redrawOriginRepresentations = useCallback(async () => {
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
             if (props.molecule.adaptativeBondsEnabled || drawInteractions) {
-                const [molecule, cid] = await getCentreAtom(molecules, props.commandCentre, props.glRef)
+                const [molecule, cid] = await getCentreAtom(molecules, props.commandCentre)
                 if (molecule.molNo === props.molecule.molNo) {
                     if (props.molecule.adaptativeBondsEnabled) {
                         await props.molecule.redrawAdaptativeBonds(cid)

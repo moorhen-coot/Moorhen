@@ -21,7 +21,6 @@ import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
-import { MoorhenStore } from "../../moorhen";
 import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 interface MoorhenFileMenuProps {
@@ -32,10 +31,12 @@ interface MoorhenFileMenuProps {
 
 export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const dispatch = useDispatch();
+    const store = useStore();
 
     const disableFileUploads = false; /*** This is temporary add a store value to control this ***/
 
     const [, setPopoverIsShown] = useState<boolean>(false);
+
 
     const maps = useSelector((state: moorhen.State) => state.maps);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -46,8 +47,6 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
 
     const { enqueueSnackbar } = useSnackbar();
-
-    const store = useStore();
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
     const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
     const paths = moorhenGlobalInstance.paths;
@@ -177,7 +176,6 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     };
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const store = MoorhenStore;
         const files: File[] = [];
         for (let ifile = 0; ifile < e.target.files.length; ifile++) {
             files.push(e.target.files[ifile]);

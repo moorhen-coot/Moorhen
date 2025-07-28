@@ -1443,7 +1443,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {string} The active atom CID
      */
     async getActiveAtom(): Promise<string> {
-        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre, this.glRef)
+        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre)
         return activeAtomCid
     }
 
@@ -1494,7 +1494,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.environmentRepresentation.cid = selectionCid
             await this.environmentRepresentation.redraw()
         } else {
-            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.glRef)
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre)
             this.clearBuffersOfStyle('environment')
             if (molecule?.molNo === this.molNo && cid) {
                 this.environmentRepresentation.cid = cid

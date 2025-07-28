@@ -4,7 +4,6 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
-import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import store from '../store/MoorhenReduxStore'
 
@@ -12,7 +11,7 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
 }
 
-export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL> = null): Promise<[moorhen.Molecule, string]> => {
+export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre: React.RefObject<moorhen.CommandCentre>): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible())
     const originState = store.getState().glRef.origin
     if (visibleMolecules.length === 0) {

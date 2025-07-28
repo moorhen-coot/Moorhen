@@ -1,18 +1,18 @@
 import { useCallback, useRef } from "react";
 import { Form, Button } from "react-bootstrap";
 import { useSelector } from 'react-redux';
-import { MoorhenStore } from "../../moorhen";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 
 export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-    
+
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef()

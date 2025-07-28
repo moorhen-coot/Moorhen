@@ -71,13 +71,12 @@ import overlaysReducer from './store/overlaysSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import { setBusy } from './store/globalUISlice';
-import MoorhenStore from './store/MoorhenReduxStore';
 import jsonValidationReducer from './store/jsonValidation'
 import mrParseSliceReducer from './store/mrParseSlice'
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
-    MoorhenCommandCentre, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenStore,
+    MoorhenCommandCentre, MoorhenMapSelect, MoorhenDraggableModalBase, 
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,

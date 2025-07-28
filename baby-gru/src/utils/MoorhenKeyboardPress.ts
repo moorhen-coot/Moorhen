@@ -114,7 +114,7 @@ export const moorhenKeyPress = (
         let residueCid: string
         
         if (!shortcutOnHoveredAtom) {
-            [chosenMolecule, residueCid] = await getCentreAtom(molecules, commandCentre, glRef)
+            [chosenMolecule, residueCid] = await getCentreAtom(molecules, commandCentre)
             if (typeof chosenMolecule === 'undefined' || !residueCid) {
                 console.log('Cannot find atom in the centre of the view...')
                 return true
@@ -384,7 +384,7 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        getCentreAtom(molecules, commandCentre, glRef)
+        getCentreAtom(molecules, commandCentre)
         .then(result => {
             if (!result) {
                 return
