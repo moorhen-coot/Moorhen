@@ -140,6 +140,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
 
     useEffect(() => {
+        const dispatchVectorsBuffers = async() => {
         if(glRef !== null && typeof glRef !== 'function') {
 
             let oldLabelBuffers = labelBuffers
@@ -153,7 +154,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
 
-            const [objects,newLabelBuffers] = getVectorsBuffers()
+            const [objects,newLabelBuffers] = await getVectorsBuffers()
 
             let newBuffers = []
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
@@ -167,6 +168,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
             dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
         }
+        }
+        dispatchVectorsBuffers()
     }, [vectorsList])
 
     const setClipFogByZoom = (): void => {

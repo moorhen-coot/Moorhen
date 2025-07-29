@@ -151,21 +151,75 @@ export class TextCanvasTexture {
 
     }
 
-    addImageToBigTexture(t : string, textColour : string, font : string) : number[] {
+    addImageToBigTexture(t : string, textColour : string, font : string, imgData: ImageData) : number[] {
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
-        let textMetric = this.contextBig.measureText(t);
-        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+
         this.contextBig.fillStyle = textColour;
+
+        let actualHeight = imgData.height+1
+        let actualBoundingBoxRight = imgData.width
+        let width = imgData.width
+
         if(!(textColour in this.textureCache)){
             this.textureCache[textColour] = {};
         }
+
         if(!(font.toLowerCase() in this.textureCache[textColour])){
             this.textureCache[textColour][font.toLowerCase()] = {};
         }
+
         if(t in this.textureCache[textColour][font.toLowerCase()]){
             return this.textureCache[textColour][font.toLowerCase()][t];
         }
+
+        if(this.bigTextureCurrentBaseLine+actualHeight>this.contextBig.canvas.height){
+            this.bigTextureCurrentBaseLine = 0;
+            this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
+            this.maxCurrentColumnWidth = 0;
+        }
+        const x1 = this.bigTextureCurrentWidth / this.contextBig.canvas.width;
+        const y1 = (this.bigTextureCurrentBaseLine)/ this.contextBig.canvas.height;
+        this.bigTextureCurrentBaseLine += actualHeight;
+        const x2 = x1 + actualBoundingBoxRight / this.contextBig.canvas.width;
+        const y2 = this.bigTextureCurrentBaseLine / this.contextBig.canvas.height;
+
+        this.contextBig.fillStyle = textColour;
+        this.contextBig.putImageData(imgData, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualHeight);
+
+        if(width>this.maxCurrentColumnWidth){
+            this.maxCurrentColumnWidth = width;
+        }
+        this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
+        return [x1,y1,x2,y2]
+    }
+
+    addTextToBigTexture(t : string, textColour : string, font : string) : number[] {
+
+        this.contextBig.textBaseline = "alphabetic";
+        this.contextBig.font = font;
+
+        this.contextBig.fillStyle = textColour;
+
+        let textMetric = this.contextBig.measureText(t);
+
+        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+        let actualBoundingBoxRight = textMetric.actualBoundingBoxRight
+        let actualBoundingBoxDescent = textMetric.actualBoundingBoxDescent
+        let width = textMetric.width
+
+        if(!(textColour in this.textureCache)){
+            this.textureCache[textColour] = {};
+        }
+
+        if(!(font.toLowerCase() in this.textureCache[textColour])){
+            this.textureCache[textColour][font.toLowerCase()] = {};
+        }
+
+        if(t in this.textureCache[textColour][font.toLowerCase()]){
+            return this.textureCache[textColour][font.toLowerCase()][t];
+        }
+
         if(this.bigTextureCurrentBaseLine+actualHeight>this.contextBig.canvas.height){
             this.bigTextureCurrentBaseLine = 0;
             this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
@@ -174,11 +228,14 @@ export class TextCanvasTexture {
         const x1 = this.bigTextureCurrentWidth / this.contextBig.canvas.width;
         const y1 = (this.bigTextureCurrentBaseLine + 1)/ this.contextBig.canvas.height;
         this.bigTextureCurrentBaseLine += actualHeight;
-        const x2 = x1 + textMetric.actualBoundingBoxRight / this.contextBig.canvas.width;
+        const x2 = x1 + actualBoundingBoxRight / this.contextBig.canvas.width;
         const y2 = this.bigTextureCurrentBaseLine / this.contextBig.canvas.height;
-        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-textMetric.actualBoundingBoxDescent, textMetric.width);
-        if(textMetric.width>this.maxCurrentColumnWidth){
-            this.maxCurrentColumnWidth = textMetric.width;
+
+        this.contextBig.fillStyle = textColour;
+        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualBoundingBoxDescent, width);
+
+        if(width>this.maxCurrentColumnWidth){
+            this.maxCurrentColumnWidth = width;
         }
         this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
         return [x1,y1,x2,y2]
@@ -240,7 +297,12 @@ export class TextCanvasTexture {
         else
             colour = "black";
 
-        const t = this.addImageToBigTexture(textObject.text,colour,textObject.font);
+        let t;
+        if(textObject.imgData){
+            t = this.addImageToBigTexture(textObject.text,colour,textObject.font,textObject.imgData);
+        } else {
+            t = this.addTextToBigTexture(textObject.text,colour,textObject.font);
+        }
         const s = [fontSize*this.contextBig.canvas.width / this.contextBig.canvas.height * (t[2]-t[0])/0.25, fontSize*(t[3]-t[1]) /0.25, 1.0];
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);

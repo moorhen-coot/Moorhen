@@ -74,7 +74,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
             dispatch(addCallback(exampleCallBack))
             const input = String.raw`{{\rm What\ is\ going\ on\ here? \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
-            const input2 = String.raw`{\sqrt{\pi}\sqrt{\pi}}`
+            const input2 = String.raw`\displaystyle  \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}`
             const mathJaxInfo = await getMathJaxSVG(input)
             if(mathJaxInfo.whratio>0){
                 const wh_ratio = mathJaxInfo.whratio
