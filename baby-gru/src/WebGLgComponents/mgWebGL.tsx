@@ -6494,7 +6494,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
 
-        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, (20 * font_scale).toFixed(0)+"px helvetica", false);
+        let fontMult = 1.0
+        if(window.devicePixelRatio){
+            fontMult *= window.devicePixelRatio
+        }
+        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, (fontMult * 20 * font_scale).toFixed(0)+"px helvetica", false);
 
         let lastPoint = null;
         let lastLastPoint = null;
@@ -6503,9 +6507,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.measurePointsArray.forEach(point => {
                 if(lastPoint){
+                    let fnSize = 24
+                    if(window.devicePixelRatio){
+                        fnSize *= window.devicePixelRatio
+                    }
+                    const fnSizePx = fnSize + "px"
                     const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
                     const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
-                    drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, "22px helvetica", false);
+                    drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, fnSizePx+" helvetica", false);
                     if(lastLastPoint){
                         let l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
                         l1.x /= dist / this.zoom;
@@ -6517,7 +6526,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
                         const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
                         const angle_t = angle.toFixed(1)+"º";
-                        drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, "22px helvetica", false);
+                        drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, fnSizePx+" helvetica", false);
                     }
                     lastLastPoint = lastPoint;
                 }

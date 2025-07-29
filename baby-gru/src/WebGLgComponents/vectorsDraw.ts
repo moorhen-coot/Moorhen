@@ -109,7 +109,14 @@ export const getVectorsBuffers = async (): Promise<any>  => {
             let xTo = xToOrig
             let yTo = yToOrig
             let zTo = zToOrig
-            const labelScale = 3.0
+            let labelScale = 2.0
+            let fnSize = 24
+            if(window.devicePixelRatio){
+                fnSize *= window.devicePixelRatio
+                labelScale *= window.devicePixelRatio
+            }
+            const fnSizePx = fnSize + "px"
+
             if(vec.labelText.startsWith("$")&&vec.labelText.endsWith("$")){
                 const mjdata = await getMathJaxSVG(vec.labelText.substring(1,vec.labelText.length-1))
 
@@ -127,29 +134,29 @@ export const getVectorsBuffers = async (): Promise<any>  => {
                 const myImageData = ctx.getImageData(0, 0, img.width*labelScale,img.height*labelScale)
 
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:"24px Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:"24px Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{imgData:myImageData, font:"24px Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
                 }
             } else {
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{font:"24px Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
                 }
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){

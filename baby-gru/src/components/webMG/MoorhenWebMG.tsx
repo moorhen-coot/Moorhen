@@ -612,7 +612,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
+            let deviceScale = 1
+            if(window.devicePixelRatio) deviceScale = window.devicePixelRatio
+            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize*deviceScale)
             glRef.current.drawScene()
         }
     }, [GLLabelsFontSize, GLLabelsFontFamily])
