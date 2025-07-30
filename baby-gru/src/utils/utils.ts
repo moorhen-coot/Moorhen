@@ -597,9 +597,9 @@ export const getCone = (cylinder_accu: number): [number[], number[], number[]] =
             const y1 = Math.cos(theta1);
             const x2 = Math.sin(theta2);
             const y2 = Math.cos(theta2);
-            thisNorm.push(...[x1, y1, 0.0])
-            thisNorm.push(...[x1, y1, 0.0])
-            thisNorm.push(...[x2, y2, 0.0])
+            thisNorm.push(...[x1, y1, 0.5])
+            thisNorm.push(...[0, 0, 0.01])
+            thisNorm.push(...[x2, y2, 0.5])
             thisPos.push(...[x1, y1, 0.0])
             thisPos.push(...[0, 0, 1.0])
             thisPos.push(...[x2, y2, 0.0])
@@ -694,7 +694,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
 
-    const [thisPos, thisNorm, thisIdxs] = style == "cylinder" ? getDashedCylinder(dashed ? 15 : 1, 16) : getCone(16);
+    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? 15 : 1, 16) : getCone(16);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []
