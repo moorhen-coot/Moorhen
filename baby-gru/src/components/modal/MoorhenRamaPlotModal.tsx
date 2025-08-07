@@ -21,21 +21,22 @@ export const MoorhenRamaPlotModal = (props: moorhen.CollectedProps) => {
     const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
         menu,
         'modalSize',{
-        width: 600,
-        height: 700
+        width: convertRemToPx(50),
+        height: convertRemToPx(42)
     })
+
  
     const { enqueueSnackbar } = useSnackbar()
 
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.RAMA_PLOT}
                 left={width / 6}
-                top={height / 3}
-                initialWidth={modalSize.width}
-                initialHeight={modalSize.height}
+                top={height / 6}
+                lockAspectRatio={true}
+                initialHeight={convertRemToPx(50)}
+                initialWidth={convertRemToPx(42)}
                 onResize={(evt, ref, direction, delta, size) => {
-                    setModalSize(size)
-                    console.log("size", size)
+                   setModalSize(size)
                 }}
                 minHeight={300}
                 minWidth={200}
