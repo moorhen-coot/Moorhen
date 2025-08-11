@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef,  memo } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
@@ -19,8 +19,8 @@ import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinemen
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen"
 
-export const MoorhenPreferencesContainer = (props: {
-    onUserPreferencesChange?: (key: string, value: any) => void;
+export const MoorhenPreferencesContainer = memo((props: {
+    onUserPreferencesChange?: (key: string, value: unknown) => void;
 }) => {
 
     const localForageInstanceRef = useRef<null | moorhen.Preferences>(null)
@@ -208,7 +208,7 @@ export const MoorhenPreferencesContainer = (props: {
 
     }, [])
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (reContourMapOnlyOnMouseUp === null) {
             return
@@ -218,7 +218,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp));
     }, [reContourMapOnlyOnMouseUp]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (transparentModalsOnMouseOut === null) {
             return
@@ -229,7 +229,7 @@ export const MoorhenPreferencesContainer = (props: {
     }, [transparentModalsOnMouseOut]);
 
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultMapSamplingRate === null) {
             return
@@ -239,7 +239,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultMapSamplingRate', defaultMapSamplingRate));
     }, [defaultMapSamplingRate]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (shortcutOnHoveredAtom === null) {
             return
@@ -249,7 +249,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('shortcutOnHoveredAtom', shortcutOnHoveredAtom));
     }, [shortcutOnHoveredAtom]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (devMode === null) {
             return
@@ -259,7 +259,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('devMode', devMode));
     }, [devMode]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (useGemmi === null) {
             return
@@ -269,7 +269,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('useGemmi', useGemmi));
     }, [useGemmi]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (elementsIndicesRestrict === null) {
             return
@@ -279,7 +279,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('elementsIndicesRestrict', elementsIndicesRestrict));
     }, [elementsIndicesRestrict]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (contourWheelSensitivityFactor === null) {
             return
@@ -289,7 +289,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('contourWheelSensitivityFactor', contourWheelSensitivityFactor));
     }, [contourWheelSensitivityFactor]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (enableTimeCapsule === null) {
             return
@@ -299,7 +299,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('enableTimeCapsule', enableTimeCapsule));
     }, [enableTimeCapsule]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (maxBackupCount === null) {
             return
@@ -309,7 +309,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('maxBackupCount', maxBackupCount));
     }, [maxBackupCount]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (modificationCountBackupThreshold === null) {
             return
@@ -319,7 +319,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('modificationCountBackupThreshold', modificationCountBackupThreshold));
     }, [modificationCountBackupThreshold]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (clipCap === null) {
             return
@@ -329,7 +329,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('clipCap', clipCap));
     }, [clipCap]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (resetClippingFogging === null) {
             return
@@ -339,7 +339,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('resetClippingFogging', resetClippingFogging));
     }, [resetClippingFogging]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (zoomWheelSensitivityFactor === null) {
             return
@@ -349,7 +349,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor));
     }, [zoomWheelSensitivityFactor]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (showShortcutToast === null) {
             return
@@ -359,7 +359,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('showShortcutToast', showShortcutToast));
     }, [showShortcutToast]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (showScoresToast === null) {
             return
@@ -369,7 +369,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('showScoresToast', showScoresToast));
     }, [showScoresToast]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultUpdatingScores === null) {
             return
@@ -379,7 +379,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultUpdatingScores', defaultUpdatingScores));
     }, [defaultUpdatingScores]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultBondSmoothness === null) {
             return
@@ -389,7 +389,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultBondSmoothness', defaultBondSmoothness));
     }, [defaultBondSmoothness]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultMapSurface === null) {
             return
@@ -399,7 +399,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultMapSurface', defaultMapSurface));
     }, [defaultMapSurface]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (makeBackups === null) {
             return
@@ -409,7 +409,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('makeBackups', makeBackups));
     }, [makeBackups]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (enableRefineAfterMod === null) {
             return
@@ -419,7 +419,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('enableRefineAfterMod', enableRefineAfterMod));
     }, [enableRefineAfterMod]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (mapLineWidth === null) {
             return
@@ -429,7 +429,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('mapLineWidth', mapLineWidth));
     }, [mapLineWidth]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (drawAxes === null) {
             return
@@ -439,7 +439,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('drawAxes', drawAxes));
     }, [drawAxes]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (drawScaleBar === null) {
             return
@@ -449,7 +449,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('drawScaleBar', drawScaleBar));
     }, [drawScaleBar]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (drawCrosshairs === null) {
             return
@@ -459,7 +459,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('drawCrosshairs', drawCrosshairs));
     }, [drawCrosshairs]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (drawFPS === null) {
             return
@@ -469,7 +469,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('drawFPS', drawFPS));
     }, [drawFPS]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (drawMissingLoops === null) {
             return
@@ -479,7 +479,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('drawMissingLoops', drawMissingLoops));
     }, [drawMissingLoops]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doPerspectiveProjection === null) {
             return
@@ -489,7 +489,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doPerspectiveProjection', doPerspectiveProjection));
     }, [doPerspectiveProjection]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (depthBlurDepth === null) {
             return
@@ -499,7 +499,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('depthBlurDepth', depthBlurDepth));
     }, [depthBlurDepth]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (animateRefine === null) {
             return
@@ -509,7 +509,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('animateRefine', animateRefine));
     }, [animateRefine]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (edgeDetectDepthThreshold === null) {
             return
@@ -519,7 +519,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('edgeDetectDepthThreshold', edgeDetectDepthThreshold));
     }, [edgeDetectDepthThreshold]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (edgeDetectNormalThreshold === null) {
             return
@@ -529,7 +529,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('edgeDetectNormalThreshold', edgeDetectNormalThreshold));
     }, [edgeDetectNormalThreshold]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (edgeDetectDepthScale === null) {
             return
@@ -539,7 +539,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('edgeDetectDepthScale', edgeDetectDepthScale));
     }, [edgeDetectDepthScale]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (edgeDetectNormalScale === null) {
             return
@@ -549,7 +549,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('edgeDetectNormalScale', edgeDetectNormalScale));
     }, [edgeDetectNormalScale]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (ssaoBias === null) {
             return
@@ -559,7 +559,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('ssaoBias', ssaoBias));
     }, [ssaoBias]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (ssaoRadius === null) {
             return
@@ -569,7 +569,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('ssaoRadius', ssaoRadius));
     }, [ssaoRadius]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (depthBlurRadius === null) {
             return
@@ -579,7 +579,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('depthBlurRadius', depthBlurRadius));
     }, [depthBlurRadius]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (useOffScreenBuffers === null) {
             return
@@ -589,7 +589,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('useOffScreenBuffers', useOffScreenBuffers));
     }, [useOffScreenBuffers]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doShadowDepthDebug === null) {
             return
@@ -599,7 +599,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doShadowDepthDebug', doShadowDepthDebug));
     }, [doShadowDepthDebug]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doOutline === null) {
             return
@@ -609,7 +609,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doOutline', doOutline));
     }, [doOutline]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doShadow === null) {
             return
@@ -619,7 +619,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doShadow', doShadow));
     }, [doShadow]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doSSAO === null) {
             return
@@ -629,7 +629,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doSSAO', doSSAO));
     }, [doSSAO]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (doEdgeDetect === null) {
             return
@@ -639,7 +639,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('doEdgeDetect', doEdgeDetect));
     }, [doEdgeDetect]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (GLLabelsFontFamily === null) {
             return
@@ -649,7 +649,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('GLLabelsFontFamily', GLLabelsFontFamily));
     }, [GLLabelsFontFamily]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (GLLabelsFontSize === null) {
             return
@@ -659,7 +659,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('GLLabelsFontSize', GLLabelsFontSize));
     }, [GLLabelsFontSize]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (mouseSensitivity === null) {
             return
@@ -669,7 +669,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('mouseSensitivity', mouseSensitivity));
     }, [mouseSensitivity]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (atomLabelDepthMode === null) {
             return
@@ -679,7 +679,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('atomLabelDepthMode', atomLabelDepthMode));
     }, [atomLabelDepthMode]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultBackgroundColor === null) {
             return
@@ -689,7 +689,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultBackgroundColor', defaultBackgroundColor));
     }, [defaultBackgroundColor]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultExpandDisplayCards === null) {
             return
@@ -699,7 +699,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('defaultExpandDisplayCards', defaultExpandDisplayCards));
     }, [defaultExpandDisplayCards]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (shortCuts === null) {
             return
@@ -709,7 +709,7 @@ export const MoorhenPreferencesContainer = (props: {
         .then(_ => props.onUserPreferencesChange('shortCuts', shortCuts));
     }, [shortCuts]);
 
-    useMemo(() => {
+    useEffect(() => {
 
         if (defaultMapLitLines === null) {
             return
@@ -720,4 +720,6 @@ export const MoorhenPreferencesContainer = (props: {
     }, [defaultMapLitLines]);
 
     return  null
-}
+});
+
+MoorhenPreferencesContainer.displayName = "MoorhenPreferencesContainer";

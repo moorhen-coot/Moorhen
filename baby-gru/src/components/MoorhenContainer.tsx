@@ -44,7 +44,6 @@ import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar";
-import { PropaneSharp } from "@mui/icons-material";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -195,24 +194,23 @@ declare module "notistack" {
 
 export const MoorhenContainer = (props: ContainerProps) => {
         const {
-        onUserPreferencesChange= () => {},
         urlPrefix= "/baby-gru",
         monomerLibraryPath= "./baby-gru/monomers",
         setMoorhenDimensions= null,
-        disableFileUploads= false,
+        //disableFileUploads= false,
         includeNavBarMenuNames= [],
         extraNavBarModals= [],
         extraNavBarMenus= [],
-        extraFileMenuItems= [],
-        extraEditMenuItems= [],
-        extraCalculateMenuItems= [],
+        // extraFileMenuItems= [],
+        // extraEditMenuItems= [],
+        // extraCalculateMenuItems= [],
         extraDraggableModals= [],
         viewOnly= false,
-        allowScripting= true,
+        //allowScripting= true,
         backupStorageInstance= createLocalStorageInstance("Moorhen-TimeCapsule"),
         aceDRGInstance= null,
-        allowAddNewFittedLigand= false,
-        allowMergeFittedLigand= true,
+        // allowAddNewFittedLigand= false,
+        // allowMergeFittedLigand= true,
     } = props;
 
 
@@ -258,6 +256,13 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const dispatch = useDispatch();
     const store= useStore();
+
+ const onUserPreferencesChange = useCallback(
+    (key: string, value: unknown) => {
+        props.onUserPreferencesChange?.(key, value);
+    }, 
+    [props.onUserPreferencesChange]
+);
 
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
@@ -400,7 +405,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops, cootInitialized]);
 
-    useEffect(() => {
+    useEffect(function setupGlobalInstance() {
         moorhenGlobalInstance.startInstance(
         dispatch,
         store,
@@ -418,6 +423,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
             mapsRef: mapsRef
         },
         );
+
+        if (aceDRGInstance) {
+            moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance);
+        }
+
     }, [userPreferencesMounted]);
 
     useEffect(() => {
@@ -530,9 +540,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
             />
 
             <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-
             <MoorhenSnackBarManager />
-
             <MoorhenUpdatingMapsManager commandCentre={commandCentre} />
             <MoorhenMapsHeadManager />
 
