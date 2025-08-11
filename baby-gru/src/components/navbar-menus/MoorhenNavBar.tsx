@@ -39,7 +39,7 @@ export type ExtraNavBarMenus = {
     ref: React.RefObject<any> ; 
     icon: React.JSX.Element; 
     JSXElement: React.JSX.Element[];
-}[];
+};
 
 export type ExtraNavBarModals = {
     name: string;
@@ -48,11 +48,11 @@ export type ExtraNavBarModals = {
     JSXElement: React.JSX.Element;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}[];
+};
 
 interface MoorhenNavBarProps {
-    extraNavBarMenus?: ExtraNavBarMenus;
-    extraNavBarModals?: ExtraNavBarModals;
+    extraNavBarMenus?: ExtraNavBarMenus[];
+    extraNavBarModals?: ExtraNavBarModals[];
     includeNavBarMenuNames: string[];
     viewOnly: boolean;
 }
@@ -175,7 +175,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
         navBarMenuNames = props.includeNavBarMenuNames;
     }
 
-    let selectedExtraNavBarModal: ExtraNavBarModals[number] | undefined;
+    let selectedExtraNavBarModal: ExtraNavBarModals[][number] | undefined;
     useEffect(() => {
         switch (navBarActiveMenu) {
             case "-1":
