@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef,  memo } from "react";
+import { useEffect, useRef,  memo } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 import { setDefaultMapLitLines, setDefaultMapSamplingRate, setDefaultMapSurface, setMapLineWidth, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
@@ -12,12 +12,13 @@ import {
     setDoPerspectiveProjection, setDoSSAO, setDoShadow, setDoShadowDepthDebug, setDrawAxes, setDrawCrosshairs, setUseOffScreenBuffers,
     setDrawFPS, setDrawMissingLoops, setResetClippingFogging, setSsaoBias, setSsaoRadius, setEdgeDetectNormalScale,
     setDrawScaleBar, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale,
-    setDrawEnvBOcc
 } from "../../store/sceneSettingsSlice";
 import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut , setDevMode, setUserPreferencesMounted, setUseGemmi } from "../../store/generalStatesSlice";
 import { setAnimateRefine, setEnableRefineAfterMod } from '../../store/refinementSettingsSlice';
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen"
+
+
 
 export const MoorhenPreferencesContainer = memo((props: {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
@@ -152,6 +153,15 @@ export const MoorhenPreferencesContainer = memo((props: {
         51: { label: "elementsIndicesRestrict", value: elementsIndicesRestrict, valueSetter: setElementsIndicesRestrict},
     }
 
+    const usePreferencePersistence = (key: string, value: unknown, onUserPreferencesChange?: (key: string, value: unknown) => void) => {
+    useEffect(() => {
+        if (value === null) return;
+        
+        localForageInstanceRef.current?.localStorageInstance.setItem(key, value)
+            .then(_ => onUserPreferencesChange?.(key, value));
+    }, [key, value, onUserPreferencesChange]);
+};
+
     const restoreDefaults = (preferences: moorhen.Preferences, defaultValues: moorhen.PreferencesValues)=> {
         localForageInstanceRef.current.localStorageInstance.setItem('version', defaultValues.version)
         Object.keys(preferencesMap).forEach(key => {
@@ -208,516 +218,59 @@ export const MoorhenPreferencesContainer = memo((props: {
 
     }, [])
 
-    useEffect(() => {
-
-        if (reContourMapOnlyOnMouseUp === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp)
-        .then(_ => props.onUserPreferencesChange('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp));
-    }, [reContourMapOnlyOnMouseUp]);
-
-    useEffect(() => {
-
-        if (transparentModalsOnMouseOut === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('transparentModalsOnMouseOut', transparentModalsOnMouseOut)
-        .then(_ => props.onUserPreferencesChange('transparentModalsOnMouseOut', transparentModalsOnMouseOut));
-    }, [transparentModalsOnMouseOut]);
-
-
-    useEffect(() => {
-
-        if (defaultMapSamplingRate === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSamplingRate', defaultMapSamplingRate)
-        .then(_ => props.onUserPreferencesChange('defaultMapSamplingRate', defaultMapSamplingRate));
-    }, [defaultMapSamplingRate]);
-
-    useEffect(() => {
-
-        if (shortcutOnHoveredAtom === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('shortcutOnHoveredAtom', shortcutOnHoveredAtom)
-        .then(_ => props.onUserPreferencesChange('shortcutOnHoveredAtom', shortcutOnHoveredAtom));
-    }, [shortcutOnHoveredAtom]);
-
-    useEffect(() => {
-
-        if (devMode === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('devMode', devMode)
-        .then(_ => props.onUserPreferencesChange('devMode', devMode));
-    }, [devMode]);
-
-    useEffect(() => {
-
-        if (useGemmi === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('useGemmi', useGemmi)
-        .then(_ => props.onUserPreferencesChange('useGemmi', useGemmi));
-    }, [useGemmi]);
-
-    useEffect(() => {
-
-        if (elementsIndicesRestrict === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('elementsIndicesRestrict', elementsIndicesRestrict)
-        .then(_ => props.onUserPreferencesChange('elementsIndicesRestrict', elementsIndicesRestrict));
-    }, [elementsIndicesRestrict]);
-
-    useEffect(() => {
-
-        if (contourWheelSensitivityFactor === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('contourWheelSensitivityFactor', contourWheelSensitivityFactor)
-        .then(_ => props.onUserPreferencesChange('contourWheelSensitivityFactor', contourWheelSensitivityFactor));
-    }, [contourWheelSensitivityFactor]);
-
-    useEffect(() => {
-
-        if (enableTimeCapsule === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('enableTimeCapsule', enableTimeCapsule)
-        .then(_ => props.onUserPreferencesChange('enableTimeCapsule', enableTimeCapsule));
-    }, [enableTimeCapsule]);
-
-    useEffect(() => {
-
-        if (maxBackupCount === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('maxBackupCount', maxBackupCount)
-        .then(_ => props.onUserPreferencesChange('maxBackupCount', maxBackupCount));
-    }, [maxBackupCount]);
-
-    useEffect(() => {
-
-        if (modificationCountBackupThreshold === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('modificationCountBackupThreshold', modificationCountBackupThreshold)
-        .then(_ => props.onUserPreferencesChange('modificationCountBackupThreshold', modificationCountBackupThreshold));
-    }, [modificationCountBackupThreshold]);
-
-    useEffect(() => {
-
-        if (clipCap === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('clipCap', clipCap)
-        .then(_ => props.onUserPreferencesChange('clipCap', clipCap));
-    }, [clipCap]);
-
-    useEffect(() => {
-
-        if (resetClippingFogging === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('resetClippingFogging', resetClippingFogging)
-        .then(_ => props.onUserPreferencesChange('resetClippingFogging', resetClippingFogging));
-    }, [resetClippingFogging]);
-
-    useEffect(() => {
-
-        if (zoomWheelSensitivityFactor === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor)
-        .then(_ => props.onUserPreferencesChange('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor));
-    }, [zoomWheelSensitivityFactor]);
-
-    useEffect(() => {
-
-        if (showShortcutToast === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('showShortcutToast', showShortcutToast)
-        .then(_ => props.onUserPreferencesChange('showShortcutToast', showShortcutToast));
-    }, [showShortcutToast]);
-
-    useEffect(() => {
-
-        if (showScoresToast === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('showScoresToast', showScoresToast)
-        .then(_ => props.onUserPreferencesChange('showScoresToast', showScoresToast));
-    }, [showScoresToast]);
-
-    useEffect(() => {
-
-        if (defaultUpdatingScores === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultUpdatingScores', defaultUpdatingScores)
-        .then(_ => props.onUserPreferencesChange('defaultUpdatingScores', defaultUpdatingScores));
-    }, [defaultUpdatingScores]);
-
-    useEffect(() => {
-
-        if (defaultBondSmoothness === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultBondSmoothness', defaultBondSmoothness)
-        .then(_ => props.onUserPreferencesChange('defaultBondSmoothness', defaultBondSmoothness));
-    }, [defaultBondSmoothness]);
-
-    useEffect(() => {
-
-        if (defaultMapSurface === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapSurface', defaultMapSurface)
-        .then(_ => props.onUserPreferencesChange('defaultMapSurface', defaultMapSurface));
-    }, [defaultMapSurface]);
-
-    useEffect(() => {
-
-        if (makeBackups === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('makeBackups', makeBackups)
-        .then(_ => props.onUserPreferencesChange('makeBackups', makeBackups));
-    }, [makeBackups]);
-
-    useEffect(() => {
-
-        if (enableRefineAfterMod === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('enableRefineAfterMod', enableRefineAfterMod)
-        .then(_ => props.onUserPreferencesChange('enableRefineAfterMod', enableRefineAfterMod));
-    }, [enableRefineAfterMod]);
-
-    useEffect(() => {
-
-        if (mapLineWidth === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('mapLineWidth', mapLineWidth)
-        .then(_ => props.onUserPreferencesChange('mapLineWidth', mapLineWidth));
-    }, [mapLineWidth]);
-
-    useEffect(() => {
-
-        if (drawAxes === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawAxes', drawAxes)
-        .then(_ => props.onUserPreferencesChange('drawAxes', drawAxes));
-    }, [drawAxes]);
-
-    useEffect(() => {
-
-        if (drawScaleBar === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawScaleBar', drawScaleBar)
-        .then(_ => props.onUserPreferencesChange('drawScaleBar', drawScaleBar));
-    }, [drawScaleBar]);
-
-    useEffect(() => {
-
-        if (drawCrosshairs === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawCrosshairs', drawCrosshairs)
-        .then(_ => props.onUserPreferencesChange('drawCrosshairs', drawCrosshairs));
-    }, [drawCrosshairs]);
-
-    useEffect(() => {
-
-        if (drawFPS === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawFPS', drawFPS)
-        .then(_ => props.onUserPreferencesChange('drawFPS', drawFPS));
-    }, [drawFPS]);
-
-    useEffect(() => {
-
-        if (drawMissingLoops === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('drawMissingLoops', drawMissingLoops)
-        .then(_ => props.onUserPreferencesChange('drawMissingLoops', drawMissingLoops));
-    }, [drawMissingLoops]);
-
-    useEffect(() => {
-
-        if (doPerspectiveProjection === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doPerspectiveProjection', doPerspectiveProjection)
-        .then(_ => props.onUserPreferencesChange('doPerspectiveProjection', doPerspectiveProjection));
-    }, [doPerspectiveProjection]);
-
-    useEffect(() => {
-
-        if (depthBlurDepth === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('depthBlurDepth', depthBlurDepth)
-        .then(_ => props.onUserPreferencesChange('depthBlurDepth', depthBlurDepth));
-    }, [depthBlurDepth]);
-
-    useEffect(() => {
-
-        if (animateRefine === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('animateRefine', animateRefine)
-        .then(_ => props.onUserPreferencesChange('animateRefine', animateRefine));
-    }, [animateRefine]);
-
-    useEffect(() => {
-
-        if (edgeDetectDepthThreshold === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthThreshold', edgeDetectDepthThreshold)
-        .then(_ => props.onUserPreferencesChange('edgeDetectDepthThreshold', edgeDetectDepthThreshold));
-    }, [edgeDetectDepthThreshold]);
-
-    useEffect(() => {
-
-        if (edgeDetectNormalThreshold === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalThreshold', edgeDetectNormalThreshold)
-        .then(_ => props.onUserPreferencesChange('edgeDetectNormalThreshold', edgeDetectNormalThreshold));
-    }, [edgeDetectNormalThreshold]);
-
-    useEffect(() => {
-
-        if (edgeDetectDepthScale === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectDepthScale', edgeDetectDepthScale)
-        .then(_ => props.onUserPreferencesChange('edgeDetectDepthScale', edgeDetectDepthScale));
-    }, [edgeDetectDepthScale]);
-
-    useEffect(() => {
-
-        if (edgeDetectNormalScale === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('edgeDetectNormalScale', edgeDetectNormalScale)
-        .then(_ => props.onUserPreferencesChange('edgeDetectNormalScale', edgeDetectNormalScale));
-    }, [edgeDetectNormalScale]);
-
-    useEffect(() => {
-
-        if (ssaoBias === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('ssaoBias', ssaoBias)
-        .then(_ => props.onUserPreferencesChange('ssaoBias', ssaoBias));
-    }, [ssaoBias]);
-
-    useEffect(() => {
-
-        if (ssaoRadius === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('ssaoRadius', ssaoRadius)
-        .then(_ => props.onUserPreferencesChange('ssaoRadius', ssaoRadius));
-    }, [ssaoRadius]);
-
-    useEffect(() => {
-
-        if (depthBlurRadius === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('depthBlurRadius', depthBlurRadius)
-        .then(_ => props.onUserPreferencesChange('depthBlurRadius', depthBlurRadius));
-    }, [depthBlurRadius]);
-
-    useEffect(() => {
-
-        if (useOffScreenBuffers === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('useOffScreenBuffers', useOffScreenBuffers)
-        .then(_ => props.onUserPreferencesChange('useOffScreenBuffers', useOffScreenBuffers));
-    }, [useOffScreenBuffers]);
-
-    useEffect(() => {
-
-        if (doShadowDepthDebug === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doShadowDepthDebug', doShadowDepthDebug)
-        .then(_ => props.onUserPreferencesChange('doShadowDepthDebug', doShadowDepthDebug));
-    }, [doShadowDepthDebug]);
-
-    useEffect(() => {
-
-        if (doOutline === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doOutline', doOutline)
-        .then(_ => props.onUserPreferencesChange('doOutline', doOutline));
-    }, [doOutline]);
-
-    useEffect(() => {
-
-        if (doShadow === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doShadow', doShadow)
-        .then(_ => props.onUserPreferencesChange('doShadow', doShadow));
-    }, [doShadow]);
-
-    useEffect(() => {
-
-        if (doSSAO === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doSSAO', doSSAO)
-        .then(_ => props.onUserPreferencesChange('doSSAO', doSSAO));
-    }, [doSSAO]);
-
-    useEffect(() => {
-
-        if (doEdgeDetect === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('doEdgeDetect', doEdgeDetect)
-        .then(_ => props.onUserPreferencesChange('doEdgeDetect', doEdgeDetect));
-    }, [doEdgeDetect]);
-
-    useEffect(() => {
-
-        if (GLLabelsFontFamily === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontFamily', GLLabelsFontFamily)
-        .then(_ => props.onUserPreferencesChange('GLLabelsFontFamily', GLLabelsFontFamily));
-    }, [GLLabelsFontFamily]);
-
-    useEffect(() => {
-
-        if (GLLabelsFontSize === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('GLLabelsFontSize', GLLabelsFontSize)
-        .then(_ => props.onUserPreferencesChange('GLLabelsFontSize', GLLabelsFontSize));
-    }, [GLLabelsFontSize]);
-
-    useEffect(() => {
-
-        if (mouseSensitivity === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('mouseSensitivity', mouseSensitivity)
-        .then(_ => props.onUserPreferencesChange('mouseSensitivity', mouseSensitivity));
-    }, [mouseSensitivity]);
-
-    useEffect(() => {
-
-        if (atomLabelDepthMode === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('atomLabelDepthMode', atomLabelDepthMode)
-        .then(_ => props.onUserPreferencesChange('atomLabelDepthMode', atomLabelDepthMode));
-    }, [atomLabelDepthMode]);
-
-    useEffect(() => {
-
-        if (defaultBackgroundColor === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultBackgroundColor', defaultBackgroundColor)
-        .then(_ => props.onUserPreferencesChange('defaultBackgroundColor', defaultBackgroundColor));
-    }, [defaultBackgroundColor]);
-
-    useEffect(() => {
-
-        if (defaultExpandDisplayCards === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultExpandDisplayCards', defaultExpandDisplayCards)
-        .then(_ => props.onUserPreferencesChange('defaultExpandDisplayCards', defaultExpandDisplayCards));
-    }, [defaultExpandDisplayCards]);
-
-    useEffect(() => {
-
-        if (shortCuts === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('shortCuts', shortCuts)
-        .then(_ => props.onUserPreferencesChange('shortCuts', shortCuts));
-    }, [shortCuts]);
-
-    useEffect(() => {
-
-        if (defaultMapLitLines === null) {
-            return
-        }
-
-        localForageInstanceRef.current?.localStorageInstance.setItem('defaultMapLitLines', defaultMapLitLines)
-        .then(_ => props.onUserPreferencesChange('defaultMapLitLines', defaultMapLitLines));
-    }, [defaultMapLitLines]);
+    
+    // Replace all the individual useEffect hooks with these calls:
+    usePreferencePersistence('reContourMapOnlyOnMouseUp', reContourMapOnlyOnMouseUp, props.onUserPreferencesChange);
+    usePreferencePersistence('transparentModalsOnMouseOut', transparentModalsOnMouseOut, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultMapSamplingRate', defaultMapSamplingRate, props.onUserPreferencesChange);
+    usePreferencePersistence('shortcutOnHoveredAtom', shortcutOnHoveredAtom, props.onUserPreferencesChange);
+    usePreferencePersistence('devMode', devMode, props.onUserPreferencesChange);
+    usePreferencePersistence('useGemmi', useGemmi, props.onUserPreferencesChange);
+    usePreferencePersistence('elementsIndicesRestrict', elementsIndicesRestrict, props.onUserPreferencesChange);
+    usePreferencePersistence('contourWheelSensitivityFactor', contourWheelSensitivityFactor, props.onUserPreferencesChange);
+    usePreferencePersistence('enableTimeCapsule', enableTimeCapsule, props.onUserPreferencesChange);
+    usePreferencePersistence('maxBackupCount', maxBackupCount, props.onUserPreferencesChange);
+    usePreferencePersistence('modificationCountBackupThreshold', modificationCountBackupThreshold, props.onUserPreferencesChange);
+    usePreferencePersistence('clipCap', clipCap, props.onUserPreferencesChange);
+    usePreferencePersistence('resetClippingFogging', resetClippingFogging, props.onUserPreferencesChange);
+    usePreferencePersistence('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor, props.onUserPreferencesChange);
+    usePreferencePersistence('showShortcutToast', showShortcutToast, props.onUserPreferencesChange);
+    usePreferencePersistence('showScoresToast', showScoresToast, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultUpdatingScores', defaultUpdatingScores, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultBondSmoothness', defaultBondSmoothness, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultMapSurface', defaultMapSurface, props.onUserPreferencesChange);
+    usePreferencePersistence('makeBackups', makeBackups, props.onUserPreferencesChange);
+    usePreferencePersistence('enableRefineAfterMod', enableRefineAfterMod, props.onUserPreferencesChange);
+    usePreferencePersistence('mapLineWidth', mapLineWidth, props.onUserPreferencesChange);
+    usePreferencePersistence('drawAxes', drawAxes, props.onUserPreferencesChange);
+    usePreferencePersistence('drawScaleBar', drawScaleBar, props.onUserPreferencesChange);
+    usePreferencePersistence('drawCrosshairs', drawCrosshairs, props.onUserPreferencesChange);
+    usePreferencePersistence('drawFPS', drawFPS, props.onUserPreferencesChange);
+    usePreferencePersistence('drawMissingLoops', drawMissingLoops, props.onUserPreferencesChange);
+    usePreferencePersistence('doPerspectiveProjection', doPerspectiveProjection, props.onUserPreferencesChange);
+    usePreferencePersistence('depthBlurDepth', depthBlurDepth, props.onUserPreferencesChange);
+    usePreferencePersistence('animateRefine', animateRefine, props.onUserPreferencesChange);
+    usePreferencePersistence('edgeDetectDepthThreshold', edgeDetectDepthThreshold, props.onUserPreferencesChange);
+    usePreferencePersistence('edgeDetectNormalThreshold', edgeDetectNormalThreshold, props.onUserPreferencesChange);
+    usePreferencePersistence('edgeDetectDepthScale', edgeDetectDepthScale, props.onUserPreferencesChange);
+    usePreferencePersistence('edgeDetectNormalScale', edgeDetectNormalScale, props.onUserPreferencesChange);
+    usePreferencePersistence('ssaoBias', ssaoBias, props.onUserPreferencesChange);
+    usePreferencePersistence('ssaoRadius', ssaoRadius, props.onUserPreferencesChange);
+    usePreferencePersistence('depthBlurRadius', depthBlurRadius, props.onUserPreferencesChange);
+    usePreferencePersistence('useOffScreenBuffers', useOffScreenBuffers, props.onUserPreferencesChange);
+    usePreferencePersistence('doShadowDepthDebug', doShadowDepthDebug, props.onUserPreferencesChange);
+    usePreferencePersistence('doOutline', doOutline, props.onUserPreferencesChange);
+    usePreferencePersistence('doShadow', doShadow, props.onUserPreferencesChange);
+    usePreferencePersistence('doSSAO', doSSAO, props.onUserPreferencesChange);
+    usePreferencePersistence('doEdgeDetect', doEdgeDetect, props.onUserPreferencesChange);
+    usePreferencePersistence('GLLabelsFontFamily', GLLabelsFontFamily, props.onUserPreferencesChange);
+    usePreferencePersistence('GLLabelsFontSize', GLLabelsFontSize, props.onUserPreferencesChange);
+    usePreferencePersistence('mouseSensitivity', mouseSensitivity, props.onUserPreferencesChange);
+    usePreferencePersistence('atomLabelDepthMode', atomLabelDepthMode, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultBackgroundColor', defaultBackgroundColor, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultExpandDisplayCards', defaultExpandDisplayCards, props.onUserPreferencesChange);
+    usePreferencePersistence('shortCuts', shortCuts, props.onUserPreferencesChange);
+    usePreferencePersistence('defaultMapLitLines', defaultMapLitLines, props.onUserPreferencesChange);
 
     return  null
 });
