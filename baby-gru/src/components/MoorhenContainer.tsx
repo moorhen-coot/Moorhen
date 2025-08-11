@@ -1,12 +1,10 @@
 import { useEffect, useCallback, useRef, useLayoutEffect } from "react";
-import { Container, Col, Row, Spinner } from "react-bootstrap";
+import { Container,  Spinner } from "react-bootstrap";
 import { Backdrop } from "@mui/material";
 import { useSelector, useDispatch, useStore } from "react-redux";
 import type { Store } from "redux";
 import { SnackbarProvider } from "notistack";
 import { createLocalStorageInstance, parseAtomInfoLabel } from "../utils/utils";
-import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
-import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
@@ -17,12 +15,7 @@ import {
     setIsDark,
     setWidth,
 } from "../store/sceneSettingsSlice";
-import {
-    setCootInitialized,
-    setTheme,
-    toggleCootCommandExit,
-    toggleCootCommandStart,
-} from "../store/generalStatesSlice";
+import {setTheme,} from "../store/generalStatesSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice";
 import { setRefinementSelection } from "../store/refinementSettingsSlice";
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager";
@@ -51,7 +44,6 @@ import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager";
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar";
-import type { ExtraDraggableModals } from "./misc/MoorhenModalsContainer";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -119,7 +111,7 @@ declare module "notistack" {
 }
 
 /**
- * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxprovider.
+ * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxProvider.
  * @property {React.RefObject<webGL.mgWebGL>} [glRef] - React reference holding the webGL rendering component
  * @property {React.RefObject<moorhen.TimeCapsule>} [timeCapsuleRef] - React reference holding an instance of MoorhenTimeCapsule which is in charge of backups
  * @property {React.RefObject<moorhen.commandCentre>} [commandCentre] - React reference holding an instance of MoorhenCommandCentre which is in charge of communication with libcoot instance
@@ -138,7 +130,7 @@ declare module "notistack" {
  * @property {React.JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
  * @property {React.JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
  * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
- * @property {boolean} [allowScripting=true] - Indicates if the scrpting interface is enabled
+ * @property {boolean} [allowScripting=true] - Indicates if the scripting interface is enabled
  * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
  * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
  * @example
@@ -177,7 +169,7 @@ declare module "notistack" {
     }
 
     interface ContainerOptionalProps {
-        onUserPreferencesChange: (key: string, value: any) => void;
+        onUserPreferencesChange: (key: string, value: unknown) => void;
         disableFileUploads: boolean;
         urlPrefix: string;
         extraNavBarMenus: ExtraNavBarMenus[];
@@ -188,7 +180,7 @@ declare module "notistack" {
         setMoorhenDimensions?: null | ( () => [number, number] );
         extraFileMenuItems: React.JSX.Element[];
         allowScripting: boolean;
-        backupStorageInstance?: any;
+        backupStorageInstance?: moorhen.LocalStorageInstance;
         extraEditMenuItems: React.JSX.Element[];
         extraCalculateMenuItems: React.JSX.Element[];
         aceDRGInstance: moorhen.AceDRGInstance | null;
@@ -205,11 +197,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);
-    const innnerCommandCentre = useRef<null | moorhen.CommandCentre>(null);
+    const innerCommandCentre = useRef<null | moorhen.CommandCentre>(null);
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null);
     const innerMapsRef = useRef<null | moorhen.Map[]>(null);
     const innerActiveMapRef = useRef<null | moorhen.Map>(null);
-    const innerlastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
+    const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle);
@@ -239,11 +231,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const innerRefsMap: ContainerRefs = {
         glRef: innerGlRef,
         timeCapsuleRef: innerTimeCapsuleRef,
-        commandCentre: innnerCommandCentre,
+        commandCentre: innerCommandCentre,
         moleculesRef: innerMoleculesRef,
         mapsRef: innerMapsRef,
         activeMapRef: innerActiveMapRef,
-        lastHoveredAtomRef: innerlastHoveredAtomRef,
+        lastHoveredAtomRef: innerLastHoveredAtomRef,
         videoRecorderRef: innerVideoRecorderRef,
     };
 
@@ -259,7 +251,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         moleculesRef,
         mapsRef,
         activeMapRef,
-        videoRecorderRef,
         lastHoveredAtomRef,
     } = refs;
 
@@ -311,12 +302,32 @@ export const MoorhenContainer = (props: ContainerProps) => {
     } = { ...defaultProps, ...props };
 
 
+    const onAtomHovered = useCallback(
+        (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
+            if (identifier == null) {
+                if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
+                    dispatch(setHoveredAtom({ molecule: null, cid: null }));
+                }
+            } else {
+                molecules.forEach((molecule) => {
+                    if (molecule.buffersInclude(identifier.buffer)) {
+                        const newCid = parseAtomInfoLabel(identifier.atom);
+                        if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
+                            dispatch(setHoveredAtom({ molecule: molecule, cid: newCid }));
+                        }
+                    }
+                });
+            }
+        },
+        [molecules]
+    );
+
+    // Style append to header at initialisation
     useLayoutEffect(() => {
         const head = document.head;
         const style: HTMLLinkElement = document.createElement("link");
         style.href = `${urlPrefix}/moorhen.css`;
         style.rel = "stylesheet";
-        //style.async = true; seem to not exist?
         style.type = "text/css";
         head.appendChild(style);
     }, []);
@@ -339,21 +350,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         return () => {
             window.removeEventListener("resize", setWindowDimensions);
         };
-    }, [setWindowDimensions]);
-
-    useEffect(() => {
-        const initTimeCapsule = async () => {
-            if (userPreferencesMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, store);
-                timeCapsuleRef.current.storageInstance = backupStorageInstance;
-                timeCapsuleRef.current.maxBackupCount = maxBackupCount;
-                timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold;
-                await timeCapsuleRef.current.init();
-                moorhenGlobalInstance.setTimeCapsule(timeCapsuleRef.current);
-            }
-        };
-        initTimeCapsule();
-    }, [userPreferencesMounted]);
+    }, []);
 
     useEffect(() => {
         const onCootInitialized = async () => {
@@ -449,33 +446,30 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops, cootInitialized]);
 
-    /** Initialize the command centre and set it in the Redux store. */
     useEffect(() => {
-        const initCommandCentre = async () => {
-            setWindowDimensions();
+        moorhenGlobalInstance.startInstance(
+        dispatch,
+        store,
+        null,
+        {
+            defaultMapSamplingRate: defaultMapSamplingRate
+        },
+        null,
+        {
+            activeMapRef: activeMapRef,
+            providedBackupStorageInstance: backupStorageInstance,
+            maxBackupCount: maxBackupCount,
+            modificationCountBackupThreshold: modificationCountBackupThreshold,
+            moleculesRef: moleculesRef,
+            mapsRef: mapsRef
+        },
+        );
+    }, [userPreferencesMounted]);
 
-            // eslint-disable-next-line react-hooks/react-compiler
-            commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
-                onCootInitialized: () => {
-                    dispatch(setCootInitialized(true));
-                },
-                onCommandExit: () => {
-                    dispatch(toggleCootCommandExit());
-                },
-                onCommandStart: () => {
-                    dispatch(toggleCootCommandStart());
-                },
-            });
-            await commandCentre.current.init();
-            moorhenGlobalInstance.setCommandCentre(commandCentre.current);
-        };
-        initCommandCentre();   
-
-        return () => {
-            commandCentre.current.close();
-        };
+    useEffect(() => {
+        setWindowDimensions();
     }, []);
-
+    
     useEffect(() => {
         const checkMoleculeSizes = async () => {
             const moleculeAtomCounts = await Promise.all(
@@ -492,25 +486,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         checkMoleculeSizes();
     }, [molecules]);
 
-    const onAtomHovered = useCallback(
-        (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
-            if (identifier == null) {
-                if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
-                    dispatch(setHoveredAtom({ molecule: null, cid: null }));
-                }
-            } else {
-                molecules.forEach((molecule) => {
-                    if (molecule.buffersInclude(identifier.buffer)) {
-                        const newCid = parseAtomInfoLabel(identifier.atom);
-                        if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
-                            dispatch(setHoveredAtom({ molecule: molecule, cid: newCid }));
-                        }
-                    }
-                });
-            }
-        },
-        [molecules]
-    );
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -605,7 +580,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
             <MoorhenSnackBarManager />
 
             <MoorhenUpdatingMapsManager commandCentre={commandCentre} />
-
             <MoorhenMapsHeadManager />
 
             {/**
@@ -625,8 +599,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     timeCapsuleRef={timeCapsuleRef}
                     commandCentre={commandCentre}
                 >
-                    <Row>
-                        <Col style={{ paddingLeft: "0", paddingRight: "0" }}>
                             <div
                                 id="moorhen-canvas-background"
                                 style={{
@@ -651,8 +623,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                                     viewOnly={viewOnly}
                                 />
                             </div>
-                        </Col>
-                    </Row>
                 </MoorhenDroppable>
             </Container>
         </SnackbarProvider>

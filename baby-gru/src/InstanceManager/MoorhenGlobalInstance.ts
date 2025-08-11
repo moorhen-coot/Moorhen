@@ -1,5 +1,15 @@
 import React from "react";
+import { Dispatch, Store, UnknownAction } from "redux";
 import { moorhen } from "../types/moorhen";
+import { setGlobalInstanceReady } from "../store/globalUISlice";
+import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
+import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
+import {
+    setCootInitialized,
+    toggleCootCommandExit,
+    toggleCootCommandStart,
+} from "../store/generalStatesSlice";
+import { createLocalStorageInstance } from "../utils/utils";
 
 
 /**
@@ -18,6 +28,15 @@ class MoorhenGlobalInstance {
     private videoRecorder: moorhen.ScreenRecorder
     private videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
+    private dispatch: Dispatch<UnknownAction>;
+    private store: Store;
+
+    constructor() {
+        this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
+        this.commandCentreRef = React.createRef<moorhen.CommandCentre>();
+        this.videoRecorderRef = React.createRef<moorhen.ScreenRecorder>();
+    }
+
     
     public paths: {
         urlPrefix: string;
@@ -43,7 +62,6 @@ class MoorhenGlobalInstance {
 
     public setTimeCapsule(timeCapsule: moorhen.TimeCapsule): void {
         this.timeCapsule = timeCapsule;
-        this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
         this.timeCapsuleRef.current = timeCapsule;
     }
 
@@ -57,7 +75,6 @@ class MoorhenGlobalInstance {
 
     public setVideoRecorder(videoRecorder: moorhen.ScreenRecorder): void {
         this.videoRecorder = videoRecorder;
-        this.videoRecorderRef = React.createRef<moorhen.ScreenRecorder>();
         this.videoRecorderRef.current = videoRecorder;
     }
 
@@ -75,6 +92,71 @@ class MoorhenGlobalInstance {
 
     public getAceDRGInstance(): moorhen.AceDRGInstance | null {
         return this.aceDRGInstance;
+    }
+
+    public async startInstance(
+        dispatch: Dispatch<UnknownAction>,
+        store: Store,
+        commandCentre?: moorhen.CommandCentre | null,
+        commandCentreConfig?: {
+            defaultMapSamplingRate?: number
+        },
+        timeCapsule?: moorhen.TimeCapsule | null,
+        timeCapsuleConfig?: {
+            activeMapRef?: React.RefObject<moorhen.Map | null>
+            providedBackupStorageInstance?: moorhen.LocalStorageInstance | null
+            maxBackupCount: number
+            modificationCountBackupThreshold: number
+            moleculesRef: React.RefObject<moorhen.Molecule[] | null>,
+            mapsRef: React.RefObject<moorhen.Map[] | null>
+        },
+
+    ): Promise<void> {
+        this.dispatch = dispatch
+        this.store = store
+
+        if (timeCapsule) {
+            this.setTimeCapsule(timeCapsule)
+        } else {
+            const activeMapRef = timeCapsuleConfig?.activeMapRef || React.createRef<moorhen.Map | null>()
+            const newTimeCapsule = new MoorhenTimeCapsule(timeCapsuleConfig.moleculesRef, timeCapsuleConfig.mapsRef, activeMapRef, this.store)
+            const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
+                ? timeCapsuleConfig.providedBackupStorageInstance
+                : createLocalStorageInstance("Moorhen-TimeCapsule")
+            newTimeCapsule.storageInstance = backupStorageInstance
+            newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount
+            newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold
+            await newTimeCapsule.init()
+            this.setTimeCapsule(newTimeCapsule)
+        }
+
+        if (commandCentre) {
+            this.setCommandCentre(commandCentre)
+        } else {
+            const newCommandCentre = new MoorhenCommandCentre(this.paths.urlPrefix, null, this.timeCapsuleRef, {
+                onCootInitialized: () => {
+                    this.dispatch(setCootInitialized(true))
+                },
+                onCommandExit: () => {
+                    this.dispatch(toggleCootCommandExit())
+                },
+                onCommandStart: () => {
+                    this.dispatch(toggleCootCommandStart())
+                },
+            })
+            await newCommandCentre.init()
+            this.setCommandCentre(newCommandCentre)
+
+            await newCommandCentre.cootCommand(
+                {
+                    command: "set_map_sampling_rate",
+                    commandArgs: [commandCentreConfig?.defaultMapSamplingRate || 1],
+                    returnType: "status",
+                },
+                false
+            )
+        }
+        dispatch(setGlobalInstanceReady(true))
     }
 
     public cleanup(): void {
