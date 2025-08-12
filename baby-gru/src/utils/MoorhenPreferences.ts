@@ -64,7 +64,6 @@ import { setElementsIndicesRestrict } from "../store/glRefSlice"
 function generateDefaultPreferencesFromMap(): moorhen.PreferencesValues {
     const defaults: unknown = {
         version: "v41",
-        drawEnvBOcc: false, // This property is not in the preferences map
     }
 
     // Iterate through PREFERENCES_MAP and extract defaultValue for each preference
@@ -109,7 +108,7 @@ export class MoorhenPreferences implements moorhen.Preferences {
     }
 }
 
-const DEFAULT_SHORTCUTS = {
+const DEFAULT_SHORTCUTS = JSON.stringify({
             decrease_front_clip: {
                 modifiers: [],
                 keyPress: "2",
@@ -326,7 +325,7 @@ const DEFAULT_SHORTCUTS = {
                 label: "Show atom info",
                 viewOnly: true,
             },
-        }
+        })
 
 
 export type PreferenceEntry<T = unknown> = {

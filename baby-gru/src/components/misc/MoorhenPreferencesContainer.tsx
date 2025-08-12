@@ -20,15 +20,9 @@ export const MoorhenPreferencesContainer = memo((props: {
     const restoreDefaults = (defaultValues: moorhen.PreferencesValues)=> {
         localForageInstanceRef.current.localStorageInstance.setItem('version', defaultValues.version)
         Object.keys(PREFERENCES_MAP).forEach(key => {
-            if (PREFERENCES_MAP[key].label === 'shortCuts') {
-                dispatch(
-                    PREFERENCES_MAP[key].valueSetter(JSON.stringify(defaultValues[PREFERENCES_MAP[key].label]))
-                )
-            } else {
                 dispatch(
                     PREFERENCES_MAP[key].valueSetter(defaultValues[PREFERENCES_MAP[key].label])
                 )
-            }
         })
     }
 
@@ -58,6 +52,8 @@ export const MoorhenPreferencesContainer = memo((props: {
         }
 
         fetchStoredContext();
+
+        //restoreDefaults(MoorhenPreferences.defaultPreferencesValues);
 
     }, [])
    
@@ -102,7 +98,14 @@ const usePreferencePersistence = (preference: PreferenceEntry, localForageInstan
         
         useEffect(() => {
             insideForageInstanceRef.current?.localStorageInstance.getItem(preference.label)
-                .then(value => {dispatch(preference.valueSetter(value))})
+                .then(value => {
+                    if (value !== null && (typeof value === typeof preference.defaultValue)) {
+                        console.log(`MoorhenPreferencesContainer: ${label} value retrieved from local storage`, value);
+                        dispatch(preference.valueSetter(value));
+                    } else {
+                        dispatch(preference.valueSetter(preference.defaultValue));
+                    }
+                })
                 .catch(err => console.error(`Error retrieving ${preference.label} from local storage:`, err));
         }, [])
         
