@@ -158,14 +158,14 @@ declare module "notistack" {
  */
 
 interface ContainerRefs {
-    glRef: React.RefObject<null | webGL.MGWebGL>
-    timeCapsuleRef: React.RefObject<null | moorhen.TimeCapsule>
-    commandCentre: React.RefObject<moorhen.CommandCentre>
-    videoRecorderRef: React.RefObject<null | moorhen.ScreenRecorder>
-    moleculesRef: React.RefObject<null | moorhen.Molecule[]>
-    mapsRef: React.RefObject<null | moorhen.Map[]>
-    activeMapRef: React.RefObject<moorhen.Map>
-    lastHoveredAtomRef: React.RefObject<null | moorhen.HoveredAtom>
+    glRef?: React.RefObject<null | webGL.MGWebGL>
+    timeCapsuleRef?: React.RefObject<null | moorhen.TimeCapsule>
+    commandCentre?: React.RefObject<moorhen.CommandCentre>
+    videoRecorderRef?: React.RefObject<null | moorhen.ScreenRecorder>
+    moleculesRef?: React.RefObject<null | moorhen.Molecule[]>
+    mapsRef?: React.RefObject<null | moorhen.Map[]>
+    activeMapRef?: React.RefObject<moorhen.Map>
+    lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>
 }
 
 interface ContainerOptionalProps {
@@ -215,8 +215,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const glRef = props.glRef ? props.glRef : innerGlRef
-    //const innerVideoRecorderRef = useRef<null | moorhen.ScreenRecorder>(null);
-    //const videoRecorderRef = props.videoRecorderRef ? props.videoRecorderRef : innerVideoRecorderRef;
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null)
     const timeCapsuleRef = props.timeCapsuleRef ? props.timeCapsuleRef : innerTimeCapsuleRef
     const innerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
