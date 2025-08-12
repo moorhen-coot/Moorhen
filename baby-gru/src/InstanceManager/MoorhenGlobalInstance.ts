@@ -98,9 +98,6 @@ class MoorhenGlobalInstance {
         dispatch: Dispatch<UnknownAction>,
         store: Store,
         commandCentre?: moorhen.CommandCentre | null,
-        commandCentreConfig?: {
-            defaultMapSamplingRate?: number
-        },
         timeCapsule?: moorhen.TimeCapsule | null,
         timeCapsuleConfig?: {
             activeMapRef?: React.RefObject<moorhen.Map | null>
@@ -144,19 +141,11 @@ class MoorhenGlobalInstance {
                     this.dispatch(toggleCootCommandStart())
                 },
             })
-            await newCommandCentre.init()
             this.setCommandCentre(newCommandCentre)
-
-            await newCommandCentre.cootCommand(
-                {
-                    command: "set_map_sampling_rate",
-                    commandArgs: [commandCentreConfig?.defaultMapSamplingRate || 1],
-                    returnType: "status",
-                },
-                false
-            )
+            dispatch(setGlobalInstanceReady(true))
+            
+            await newCommandCentre.init()
         }
-        dispatch(setGlobalInstanceReady(true))
     }
 
     public cleanup(): void {

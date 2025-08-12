@@ -315,11 +315,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [])
 
-    useEffect(() => {
-        if (userPreferencesMounted && defaultBackgroundColor !== backgroundColor) {
-            dispatch(setBackgroundColor(defaultBackgroundColor))
-        }
-    }, [userPreferencesMounted])
 
     useLayoutEffect(() => {
         const head = document.head
@@ -424,9 +419,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 dispatch,
                 store,
                 null,
-                {
-                    defaultMapSamplingRate: defaultMapSamplingRate,
-                },
                 null,
                 {
                     activeMapRef: activeMapRef,
@@ -441,9 +433,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
             if (aceDRGInstance) {
                 moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance)
             }
-
+            dispatch(setBackgroundColor(defaultBackgroundColor))
             setSamplingRate()
             setDrawMissingLoopAPI()
+            
         },
         [userPreferencesMounted]
     )

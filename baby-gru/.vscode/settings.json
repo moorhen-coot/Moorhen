@@ -3,5 +3,9 @@
         "Gemmi",
         "libcoot",
         "notistack"
-    ]
+    ],
+
+    "workbench.colorCustomizations": {
+    "tree.indentGuidesStroke": "#3376b6"
+},
 }
