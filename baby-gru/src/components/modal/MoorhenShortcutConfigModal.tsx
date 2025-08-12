@@ -5,6 +5,7 @@ import { moorhen } from "../../types/moorhen"
 import { setShortCuts } from "../../store/shortCutsSlice";
 import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
 
+
 export const MoorhenShortcutConfigModal = (props: {
     setShowModal: React.Dispatch<React.SetStateAction<boolean>>; 
     showModal: boolean; 
@@ -46,10 +47,17 @@ export const MoorhenShortcutConfigModal = (props: {
         if (evt.metaKey) modifiers.push("metaKey")
         if (evt.altKey) modifiers.push("altKey")
 
+
+
         setStagedShortCuts((prev) => {
-            prev[waitingNewShortCut as string].keyPress = evt.key.toLowerCase()
-            prev[waitingNewShortCut as string].modifiers = modifiers
-            return prev
+            return {
+                ...prev,
+                [waitingNewShortCut as string]: {
+                    ...prev[waitingNewShortCut as string],
+                    keyPress: evt.key.toLowerCase(),
+                    modifiers: modifiers
+                }
+            }
         })
 
         setWaitingNewShortCut(false)
