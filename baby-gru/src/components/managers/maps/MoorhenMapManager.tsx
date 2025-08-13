@@ -1,10 +1,26 @@
-import { useRef, memo, useEffect } from "react";
+import { useRef, memo, useEffect, useMemo } from "react";
 import { useSelector, useDispatch, useStore } from "react-redux";
-import { moorhen } from "../../types/moorhen";
-import { showMap } from "../../moorhen";
+import { moorhen } from "../../../types/moorhen";
+import { showMap } from "../../../moorhen";
+import { SelectorEffect } from "../../hookComponent/SelectorEffect";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
-import { MapAlphaListener } from "./MapAlphaListener";
+
+
+/**
+ * `MoorhenMapManager` is a React memoized component responsible for managing the rendering and state synchronization
+ * of a specific map object within the Moorhen application. It listens to various Redux state slices to determine
+ * map visibility, contour settings, style, and other properties, and triggers map drawing or hiding accordingly.
+ * 
+ * The component debounces map drawing operations to optimize performance and avoid redundant renders. It also
+ * attaches listeners for map origin changes and scroll wheel events when appropriate, and manages map alpha
+ * updates via a selector effect.
+ * 
+ * @param props - The component props.
+ * @param props.mapMolNo - The unique molecule number identifying the map to manage.
+ * 
+ * @returns A React fragment containing listeners and effects for the managed map, or null if the map is not found.
+ */
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
@@ -122,6 +138,14 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         drawMap();
     }, [mapIsVisible, mapContourLevel, mapRadius, isOriginLocked, mapStyle]);
 
+
+
+    const alphaListener = useMemo(() => {
+        return <SelectorEffect
+            selector={(state: moorhen.State) => state.mapContourSettings.mapAlpha.find((item) => item.molNo === map.molNo)}
+            effect={() => {map.fetchMapAlphaAndRedraw()}} />;
+    }, [map]);
+
     if (!map) {
         return null;
     }
@@ -140,7 +164,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
                 <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />
             )}
 
-            {mapIsVisible && <MapAlphaListener map={map} />}
+            {mapIsVisible && alphaListener}
         </>
     );
 });

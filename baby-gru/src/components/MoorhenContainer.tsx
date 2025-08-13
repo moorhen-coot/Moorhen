@@ -24,7 +24,7 @@ import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance"
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG"
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from "./misc/MoorhenModalsContainer"
-import { MoorhenPreferencesContainer } from "./misc/MoorhenPreferencesContainer"
+import { MoorhenPreferencesContainer } from "./managers/preferences/MoorhenPreferencesContainer"
 import { MoorhenGoToResidueSnackbar } from "./snack-bar/MoorhenGoToResidueSnackbar"
 import { MoorhenRecordingSnackBar } from "./snack-bar/MoorhenRecordingSnackBar"
 import { MoorhenResidueSelectionSnackBar } from "./snack-bar/MoorhenResidueSelectionSnackBar"
@@ -42,7 +42,7 @@ import { MoorhenScreenshotSnackBar } from "./snack-bar/MoorhenScreenshotSnackBar
 import { MoorhenSideBar } from "./snack-bar/MoorhenSideBar"
 import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar"
 import { MoorhenDroppable } from "./MoorhenDroppable"
-import { MoorhenMapsHeadManager } from "./managers/MoorhenMapsHeadManager"
+import { MoorhenMapsHeadManager } from "./managers/maps/MoorhenMapsHeadManager"
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar"
 
 declare module "notistack" {

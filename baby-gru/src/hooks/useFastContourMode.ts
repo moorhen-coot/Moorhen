@@ -17,6 +17,27 @@ interface FastContourModeReturn {
     fastMapContourLevel: (newContourLevel: number) => void;
 }
 
+/**
+ * Custom React hook to enable a "fast contour mode" for map visualization.
+ * 
+ * This hook temporarily reduces the map radius and unlocks the map origin to speed up contour level updates,
+ * then restores the original parameters after a specified timeout. It is useful for improving UI responsiveness
+ * when users rapidly adjust contour levels.
+ * 
+ * @param map - The map object to operate on, expected to have `molNo`, `isOriginLocked`, and `toggleOriginLock` properties.
+ * @param mapRadius - The current radius of the map.
+ * @param radiusThreshold - The radius threshold above which fast mode is triggered (default: 25).
+ * @param fastRadius - The reduced radius to use during fast mode (default: 20).
+ * @param timeoutDelay - The delay in milliseconds after which fast mode ends (default: 1000).
+ * 
+ * @returns An object containing:
+ *   - `isInFastMode`: A boolean indicating if fast mode is currently active.
+ *   - `fastMapContourLevel`: A function to set the contour level, automatically managing fast mode as needed.
+ * 
+ * @remarks
+ * - Automatically cleans up and restores original map parameters if the component unmounts during fast mode.
+ * - Designed for use with Redux dispatch and map state management.
+ */
 export const useFastContourMode = ({
     map,
     mapRadius,
@@ -30,7 +51,7 @@ export const useFastContourMode = ({
     const [isInFastMode, setIsInFastMode] = useState<boolean>(false);
     const fastModeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const startFastMode = (newContourLevel: number) => {
+    const startFastMode = () => {
         console.log("Starting fast mode for map", map.molNo);
         setOriginalParameters({ radius: mapRadius, originLocked: map.isOriginLocked });
         if (map.isOriginLocked) {
@@ -64,7 +85,7 @@ export const useFastContourMode = ({
         }
 
         if (!isInFastMode) {
-            startFastMode(newContourLevel);
+            startFastMode();
         }
         dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
 

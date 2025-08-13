@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import { moorhen } from "../../types/moorhen";
-import { useFastContourMode } from "../../hooks/useFastContourMode";
-import { useDocumentEventListener } from "../../hooks/useDocumentEventListener";
+import { moorhen } from "../../../types/moorhen";
+import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
 
 export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map }) => {
     const mapContourLevelRef = useRef<number>(1);
@@ -76,7 +76,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         }, debounceDelayMs);
     };
 
-    useDocumentEventListener("wheelContourLevelChanged", handleWheelContourLevel);
+    useDocumentEventListener<moorhen.WheelContourLevelEvent>("wheelContourLevelChanged", handleWheelContourLevel);
 
     return null;
 };

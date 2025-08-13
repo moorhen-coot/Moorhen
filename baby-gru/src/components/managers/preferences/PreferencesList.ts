@@ -1,27 +1,57 @@
-import localforage from "localforage"
+/**
+ * A mapping of user preferences for the application, where each entry defines a configurable setting.
+ * Each preference is represented by a {@link PreferenceEntry} object, which includes:
+ * - `label`: The unique string identifier for the preference.
+ * - `valueSetter`: The Redux action creator used to update the preference value.
+ * - `selector`: A function to select the current value from the Redux state.
+ * - `defaultValue`: The default value for the preference.
+ *
+ * ## How to add a new preference
+ * 1. Create a new Redux action and selector for your setting if they do not already exist.
+ * 2. Add a new entry to the `PREFERENCES_MAP` object with a unique numeric key.
+ * 3. Set the `label` to a unique string identifier for your preference.
+ * 4. Set the `valueSetter` to your Redux action creator.
+ * 5. Set the `selector` to a function that retrieves the value from the Redux state.
+ * 6. Set the `defaultValue` to the desired default.
+ *
+ * @example
+ * ```typescript
+ * 52: {
+ *   label: "myNewPreference",
+ *   valueSetter: setMyNewPreference,
+ *   selector: (state: moorhen.State) => state.mySettings.myNewPreference,
+ *   defaultValue: false,
+ * }
+ * ```
+ *
+ * @see PreferenceEntry
+ * @see moorhen.State
+ */
+
+
 import { UnknownAction } from "@reduxjs/toolkit"
-import { moorhen } from "../types/moorhen"
+import { moorhen } from "../../../types/moorhen"
 import {
     setDefaultMapLitLines,
     setDefaultMapSamplingRate,
     setDefaultMapSurface,
     setMapLineWidth,
     setReContourMapOnlyOnMouseUp,
-} from "../store/mapContourSettingsSlice"
+} from "../../../store/mapContourSettingsSlice"
 import {
     setContourWheelSensitivityFactor,
     setMouseSensitivity,
     setZoomWheelSensitivityFactor,
-} from "../store/mouseSettings"
+} from "../../../store/mouseSettings"
 import {
     setEnableTimeCapsule,
     setMakeBackups,
     setMaxBackupCount,
     setModificationCountBackupThreshold,
-} from "../store/backupSettingsSlice"
-import { overwriteMapUpdatingScores, setShowScoresToast } from "../store/moleculeMapUpdateSlice"
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../store/shortCutsSlice"
-import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../store/labelSettingsSlice"
+} from "../../../store/backupSettingsSlice"
+import { overwriteMapUpdatingScores, setShowScoresToast } from "../../../store/moleculeMapUpdateSlice"
+import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice"
+import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice"
 import {
     setClipCap,
     setDefaultBackgroundColor,
@@ -47,286 +77,16 @@ import {
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalThreshold,
     setEdgeDetectDepthScale,
-} from "../store/sceneSettingsSlice"
+} from "../../../store/sceneSettingsSlice"
 import {
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setDevMode,
     setUseGemmi,
-} from "../store/generalStatesSlice"
-import { setAnimateRefine, setEnableRefineAfterMod } from "../store/refinementSettingsSlice"
-import { setElementsIndicesRestrict } from "../store/glRefSlice"
-
-
-/**
- * Generates default preferences values from the preferences map
- */
-function generateDefaultPreferencesFromMap(): moorhen.PreferencesValues {
-    const defaults: unknown = {
-        version: "v41",
-    }
-
-    // Iterate through PREFERENCES_MAP and extract defaultValue for each preference
-    Object.values(PREFERENCES_MAP).forEach((preference: PreferenceEntry) => {
-        defaults[preference.label] = preference.defaultValue
-    })
-    
-    return defaults as moorhen.PreferencesValues
-}
-
-/**
- * Interface for the Moorhen preferences kept in the browser local storage
- * @property {string} name - The name of the local storage instance
- * @property {LocalForage} localStorageInstance - The local storage instance
- * @constructor
- * @param {string} name - The name of the local storage instance
- */
-export class MoorhenPreferences implements moorhen.Preferences {
-    localStorageInstance: LocalForage
-    name: string
-    defaultPreferencesValues: moorhen.PreferencesValues
-
-    constructor(name: string = "babyGru-localStorage") {
-        this.name = name
-        this.createLocalForageInstance()
-    }
-
-    createLocalForageInstance(empty: boolean = false): LocalForage {
-        this.localStorageInstance = localforage.createInstance({
-            driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-            name: this.name,
-            storeName: this.name,
-        })
-        if (empty) {
-            this.localStorageInstance.clear()
-        }
-        return this.localStorageInstance
-    }
-
-    static get defaultPreferencesValues(): moorhen.PreferencesValues {
-        return generateDefaultPreferencesFromMap()
-    }
-}
-
-const DEFAULT_SHORTCUTS = JSON.stringify({
-            decrease_front_clip: {
-                modifiers: [],
-                keyPress: "2",
-                label: "Decrease front clip",
-                viewOnly: true,
-            },
-            increase_front_clip: {
-                modifiers: [],
-                keyPress: "1",
-                label: "Increase front clip",
-                viewOnly: true,
-            },
-            decrease_back_clip: {
-                modifiers: [],
-                keyPress: "3",
-                label: "Decrease back clip",
-                viewOnly: true,
-            },
-            increase_back_clip: {
-                modifiers: [],
-                keyPress: "4",
-                label: "Increase back clip",
-                viewOnly: true,
-            },
-            go_to_residue: {
-                modifiers: ["shiftKey"],
-                keyPress: "g",
-                label: "Go to residue",
-                viewOnly: false,
-            },
-            sphere_refine: {
-                modifiers: ["shiftKey"],
-                keyPress: "r",
-                label: "Refine sphere",
-                viewOnly: false,
-            },
-            flip_peptide: {
-                modifiers: ["shiftKey"],
-                keyPress: "q",
-                label: "Flip peptide",
-                viewOnly: false,
-            },
-            triple_refine: {
-                modifiers: ["shiftKey"],
-                keyPress: "h",
-                label: "Refine triplet",
-                viewOnly: false,
-            },
-            auto_fit_rotamer: {
-                modifiers: ["shiftKey"],
-                keyPress: "j",
-                label: "Autofit rotamer",
-                viewOnly: false,
-            },
-            add_terminal_residue: {
-                modifiers: ["shiftKey"],
-                keyPress: "y",
-                label: "Add terminal residue",
-                viewOnly: false,
-            },
-            delete_residue: {
-                modifiers: ["shiftKey"],
-                keyPress: "d",
-                label: "Delete residue",
-                viewOnly: false,
-            },
-            eigen_flip: {
-                modifiers: ["shiftKey"],
-                keyPress: "e",
-                label: "Eigen flip ligand",
-                viewOnly: false,
-            },
-            undo: {
-                modifiers: ["ctrlKey"],
-                keyPress: "z",
-                label: "Undo last action",
-                viewOnly: false,
-            },
-            redo: {
-                modifiers: ["ctrlKey", "shiftKey"],
-                keyPress: "z",
-                label: "Redo previous action",
-                viewOnly: false,
-            },
-            show_shortcuts: {
-                modifiers: [],
-                keyPress: "h",
-                label: "Show shortcuts",
-                viewOnly: true,
-            },
-            restore_scene: {
-                modifiers: [],
-                keyPress: "r",
-                label: "Restore scene",
-                viewOnly: true,
-            },
-            clear_labels: {
-                modifiers: [],
-                keyPress: "c",
-                label: "Clear labels",
-                viewOnly: true,
-            },
-            move_up: {
-                modifiers: [],
-                keyPress: "arrowup",
-                label: "Move model up",
-                viewOnly: true,
-            },
-            move_down: {
-                modifiers: [],
-                keyPress: "arrowdown",
-                label: "Move model down",
-                viewOnly: true,
-            },
-            move_left: {
-                modifiers: [],
-                keyPress: "arrowleft",
-                label: "Move model left",
-                viewOnly: true,
-            },
-            move_right: {
-                modifiers: [],
-                keyPress: "arrowright",
-                label: "Move model right",
-                viewOnly: true,
-            },
-            go_to_blob: {
-                modifiers: [],
-                keyPress: "g",
-                label: "Go to blob",
-                viewOnly: true,
-            },
-            take_screenshot: {
-                modifiers: [],
-                keyPress: "s",
-                label: "Take a screenshot",
-                viewOnly: true,
-            },
-            residue_camera_wiggle: {
-                modifiers: [],
-                keyPress: "z",
-                label: "Wiggle camera while rotating a residue",
-                viewOnly: true,
-            },
-            measure_distances: {
-                modifiers: [],
-                keyPress: "m",
-                label: "Measure distances and angles between atoms on click",
-                viewOnly: true,
-            },
-            measure_angles: {
-                modifiers: ["shiftKey"],
-                keyPress: "m",
-                label: "(Not enabled currently - use above)",
-                viewOnly: true,
-            },
-            dist_ang_2d: {
-                modifiers: [],
-                keyPress: "a",
-                label: "Measure arbitrary distances and angles",
-                viewOnly: true,
-            },
-            label_atom: {
-                modifiers: [],
-                keyPress: "l",
-                label: "Label an atom on click",
-                viewOnly: true,
-            },
-            residue_selection: {
-                modifiers: ["shiftKey"],
-                keyPress: "shift",
-                label: "Create a residue selection",
-                viewOnly: false,
-            },
-            center_atom: {
-                modifiers: ["altKey"],
-                keyPress: "alt",
-                label: "Center on clicked atom",
-                viewOnly: true,
-            },
-            set_map_contour: {
-                modifiers: ["ctrlKey"],
-                keyPress: "control",
-                label: "Set map contour on scroll",
-                viewOnly: true,
-            },
-            jump_next_residue: {
-                modifiers: [],
-                keyPress: " ",
-                label: "Jump to the next residue",
-                viewOnly: true,
-            },
-            jump_previous_residue: {
-                modifiers: ["shiftKey"],
-                keyPress: " ",
-                label: "Jump to the previous residue",
-                viewOnly: true,
-            },
-            increase_map_radius: {
-                modifiers: [],
-                keyPress: "]",
-                label: "Increase map radius",
-                viewOnly: true,
-            },
-            decrease_map_radius: {
-                modifiers: [],
-                keyPress: "[",
-                label: "Decrease map radius",
-                viewOnly: true,
-            },
-            show_atom_info: {
-                modifiers: [],
-                keyPress: "i",
-                label: "Show atom info",
-                viewOnly: true,
-            },
-        })
-
+} from "../../../store/generalStatesSlice"
+import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice"
+import { setElementsIndicesRestrict } from "../../../store/glRefSlice"
+import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts"
 
 export type PreferenceEntry<T = unknown> = {
     label: string;

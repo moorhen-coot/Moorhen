@@ -1,10 +1,14 @@
 import { useEffect, useRef,  useMemo, memo } from "react";
-import { useSelector, useDispatch } from "react-redux"
-import { setUserPreferencesMounted } from "../../store/generalStatesSlice";
-import { moorhen } from "../../types/moorhen"
-import { MoorhenPreferences , PreferenceEntry, PREFERENCES_MAP } from "../../utils/MoorhenPreferences";
+import { useDispatch } from "react-redux"
+import { moorhenGlobalInstance } from "../../../InstanceManager/MoorhenGlobalInstance";
+import { setUserPreferencesMounted } from "../../../store/generalStatesSlice";
+import { moorhen } from "../../../types/moorhen"
+import { MoorhenPreferences} from "./MoorhenPreferences";
+import { PreferenceEntry, PREFERENCES_MAP } from "./PreferencesList"
+import { usePreferencePersistence } from "./usePreferencePersistence"
 
-/* to add a new preference directly update PREFERENCE_MAP in MoorhenPreferences.ts
+
+/* to add a new preference directly update PREFERENCE_MAP in PreferencesList.ts
  * and it will be automatically added to the component.
  * The component will automatically save the preferences to local storage.
  * It will also restore the preferences from local storage when the component mounts.
@@ -14,7 +18,7 @@ export const MoorhenPreferencesContainer = memo((props: {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
 }) => {
 
-    const localForageInstanceRef = useRef<moorhen.Preferences>(new MoorhenPreferences());
+    const localForageInstanceRef = useRef<moorhen.Preferences>(moorhenGlobalInstance.getPreferences());
     const dispatch = useDispatch()
 
     const restoreDefaults = (defaultValues: moorhen.PreferencesValues)=> {
@@ -79,37 +83,6 @@ export const MoorhenPreferencesContainer = memo((props: {
 
 MoorhenPreferencesContainer.displayName = "MoorhenPreferencesContainer";
 
-
-const usePreferencePersistence = (preference: PreferenceEntry, localForageInstanceRef?: React.RefObject<moorhen.Preferences>, onUserPreferencesChange?: (key: string, value: unknown) => void) => {
-        const state = useSelector(preference.selector); 
-        const dispatch = useDispatch();
-
-        const insideForageInstanceRef = useRef<moorhen.Preferences>(localForageInstanceRef ? localForageInstanceRef.current : new MoorhenPreferences());
-
-        const label = preference.label;
-        //console.log(`MoorhenPreferencesContainer: ${key} state`, state);
-        useEffect(() => {
-            if (state === null) return;  
-            console.log(`MoorhenPreferencesContainer: ${label} state`, state);      
-            insideForageInstanceRef.current?.localStorageInstance.setItem(label, state)
-                .then(_ => onUserPreferencesChange?.(label, state));
-        }, [label, state, onUserPreferencesChange]);
-
-        
-        useEffect(() => {
-            insideForageInstanceRef.current?.localStorageInstance.getItem(preference.label)
-                .then(value => {
-                    if (value !== null && (typeof value === typeof preference.defaultValue)) {
-                        console.log(`MoorhenPreferencesContainer: ${label} value retrieved from local storage`, value);
-                        dispatch(preference.valueSetter(value));
-                    } else {
-                        dispatch(preference.valueSetter(preference.defaultValue));
-                    }
-                })
-                .catch(err => console.error(`Error retrieving ${preference.label} from local storage:`, err));
-        }, [])
-        
-    };
 
 // Helper component that uses the hook
 const PreferenceHandler = ({ 

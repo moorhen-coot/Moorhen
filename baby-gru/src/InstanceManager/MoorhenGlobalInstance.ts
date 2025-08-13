@@ -10,6 +10,7 @@ import {
     toggleCootCommandStart,
 } from "../store/generalStatesSlice";
 import { createLocalStorageInstance } from "../utils/utils";
+import { MoorhenPreferences } from "../components/managers/preferences/MoorhenPreferences";
 
 
 /**
@@ -30,11 +31,13 @@ class MoorhenGlobalInstance {
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private dispatch: Dispatch<UnknownAction>;
     private store: Store;
+    private preferences: MoorhenPreferences;
 
     constructor() {
         this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
         this.commandCentreRef = React.createRef<moorhen.CommandCentre>();
         this.videoRecorderRef = React.createRef<moorhen.ScreenRecorder>();
+        this.preferences = new MoorhenPreferences();
     }
 
     
@@ -84,6 +87,10 @@ class MoorhenGlobalInstance {
 
     public getVideoRecorderRef(): React.RefObject<moorhen.ScreenRecorder> {
         return this.videoRecorderRef;
+    }
+
+    public getPreferences(): MoorhenPreferences {
+        return this.preferences;
     }
 
     public setAceDRGInstance(aceDRGInstance: moorhen.AceDRGInstance): void {
