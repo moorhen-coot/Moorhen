@@ -1,5 +1,5 @@
-import { useEffect, useCallback, useRef, useLayoutEffect } from "react"
-import { Container, Spinner } from "react-bootstrap"
+import { useEffect, useCallback, useRef, useLayoutEffect, useMemo } from "react"
+import CircularProgress from '@mui/material/CircularProgress';
 import { Backdrop } from "@mui/material"
 import { useSelector, useDispatch, useStore } from "react-redux"
 import type { Store } from "redux"
@@ -15,12 +15,20 @@ import {
     setIsDark,
     setWidth,
 } from "../store/sceneSettingsSlice"
-import { setAllowAddNewFittedLigand, setAllowMergeFittedLigand, setAllowScripting, setDisableFileUpload, setTheme, setViewOnly } from "../store/generalStatesSlice"
+import {
+    setAllowAddNewFittedLigand,
+    setAllowMergeFittedLigand,
+    setAllowScripting,
+    setDisableFileUpload,
+    setTheme,
+    setViewOnly,
+} from "../store/generalStatesSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice"
 import { setRefinementSelection } from "../store/refinementSettingsSlice"
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager"
 import { setRequestDrawScene } from "../store/glRefSlice"
 import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance"
+import { useWindowEventListener } from "../hooks/useWindowEventListener"
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG"
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { MoorhenModalsContainer } from "./misc/MoorhenModalsContainer"
@@ -44,6 +52,7 @@ import { MoorhenAtomInfoSnackBar } from "./snack-bar/MoorhenAtomInfoSnackBar"
 import { MoorhenDroppable } from "./MoorhenDroppable"
 import { MoorhenMapsHeadManager } from "./managers/maps/MoorhenMapsHeadManager"
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar"
+import { cootAPIHelpers } from "./ContainerHelpers"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -149,17 +158,17 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/baby-gru",
         monomerLibraryPath = "./baby-gru/monomers",
-        setMoorhenDimensions = null,     
+        setMoorhenDimensions = null,
         includeNavBarMenuNames = [],
         extraNavBarModals = [],
         extraNavBarMenus = [],
-        disableFileUploads= false,
-        extraFileMenuItems= [],
-        extraEditMenuItems= [],
-        extraCalculateMenuItems= [],
-        allowScripting= true,
-        allowAddNewFittedLigand= false,
-        allowMergeFittedLigand= true,
+        disableFileUploads = false,
+        extraFileMenuItems = [],
+        extraEditMenuItems = [],
+        extraCalculateMenuItems = [],
+        allowScripting = true,
+        allowAddNewFittedLigand = false,
+        allowMergeFittedLigand = true,
         extraDraggableModals = [],
         viewOnly = false,
         backupStorageInstance = createLocalStorageInstance("Moorhen-TimeCapsule"),
@@ -177,34 +186,45 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
     const lastHoveredAtomRef = props.lastHoveredAtomRef ? props.lastHoveredAtomRef : innerLastHoveredAtomRef
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle)
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
-    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized)
-    const theme = useSelector((state: moorhen.State) => state.generalStates.theme)
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted)
-    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops)
-    const defaultMapSamplingRate = useSelector(
-        (state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate
-    )
-    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor)
-    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups)
-    const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount)
-    const modificationCountBackupThreshold = useSelector(
-        (state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold
-    )
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const globalInstanceIsReady = useSelector((state: moorhen.State) => state.globalUI.globalInstanceIsReady)
+    // Grouped selectors for better readability and potential memoization
+    const { molecules, hoveredAtom, cursorStyle } = useSelector((state: moorhen.State) => ({
+        molecules: state.molecules.moleculeList,
+        hoveredAtom: state.hoveringStates.hoveredAtom,
+        cursorStyle: state.hoveringStates.cursorStyle,
+    }))
 
-    //const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi); // unused selector
+    const { cootInitialized, userPreferencesMounted, activeMap, globalInstanceIsReady } = useSelector(
+        (state: moorhen.State) => ({
+            cootInitialized: state.generalStates.cootInitialized,
+            userPreferencesMounted: state.generalStates.userPreferencesMounted,
+            activeMap: state.generalStates.activeMap,
+            globalInstanceIsReady: state.globalUI.globalInstanceIsReady,
+        })
+    )
+
+    const { backgroundColor, height, width, isDark, drawMissingLoops, defaultBackgroundColor } = useSelector(
+        (state: moorhen.State) => ({
+            backgroundColor: state.sceneSettings.backgroundColor,
+            height: state.sceneSettings.height,
+            width: state.sceneSettings.width,
+            isDark: state.sceneSettings.isDark,
+            drawMissingLoops: state.sceneSettings.drawMissingLoops,
+            defaultBackgroundColor: state.sceneSettings.defaultBackgroundColor,
+        })
+    )
+
+    const { defaultMapSamplingRate } = useSelector((state: moorhen.State) => ({
+        defaultMapSamplingRate: state.mapContourSettings.defaultMapSamplingRate,
+    }))
+
+    const { makeBackups, maxBackupCount, modificationCountBackupThreshold } = useSelector((state: moorhen.State) => ({
+        makeBackups: state.backupSettings.makeBackups,
+        maxBackupCount: state.backupSettings.maxBackupCount,
+        modificationCountBackupThreshold: state.backupSettings.modificationCountBackupThreshold,
+    }))
 
     const dispatch = useDispatch()
     const store = useStore()
-
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
     const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef()
 
@@ -258,13 +278,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         head.appendChild(style)
     }, [])
 
-    useEffect(() => {
-        window.addEventListener("resize", setWindowDimensions)
-        return () => {
-            window.removeEventListener("resize", setWindowDimensions)
-        }
-    }, [])
-
+    useWindowEventListener("resize", setWindowDimensions)
 
     useLayoutEffect(() => {
         const head = document.head
@@ -300,59 +314,15 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [backgroundColor])
 
-    /* Coot Setups */
-
-    async function setMakeBackupsAPI() {
-        if (commandCentre.current === null || !cootInitialized) {
-            return
-        }
-        await commandCentre.current.cootCommand(
-            {
-                command: "set_make_backups",
-                commandArgs: [makeBackups],
-                returnType: "status",
-            },
-            false
-        )
-    }
-
-    const setSamplingRate = async () => {
-        if (commandCentre.current === null || !cootInitialized) {
-            return
-        }
-        await commandCentre.current.cootCommand(
-            {
-                command: "set_map_sampling_rate",
-                commandArgs: [defaultMapSamplingRate],
-                returnType: "status",
-                },
-                false
-            )
-        }
-
-    async function setDrawMissingLoopAPI() {
-        if (commandCentre.current === null || !cootInitialized) {
-            return
-        }
-        await commandCentre.current.cootCommand(
-            {
-                command: "set_draw_missing_residue_loops",
-                commandArgs: [drawMissingLoops],
-                returnType: "status",
-            },
-            false
-        )
-    }
-
     useEffect(() => {
         if (commandCentre.current && makeBackups !== null && cootInitialized) {
-            setMakeBackupsAPI()
+            cootAPIHelpers.setMakeBackups(commandCentre, makeBackups)
         }
     }, [makeBackups])
 
     useEffect(() => {
         if (drawMissingLoops !== null && cootInitialized) {
-            setDrawMissingLoopAPI()
+            cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops)
         }
     }, [drawMissingLoops])
 
@@ -390,14 +360,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance)
             }
             dispatch(setBackgroundColor(defaultBackgroundColor))
-            setSamplingRate()
-            setDrawMissingLoopAPI()
-            
+            cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate)
+            cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops)
         }
         startupEffect()
-    },
-        [userPreferencesMounted]
-    )
+    }, [userPreferencesMounted])
 
     useEffect(() => {
         const checkMoleculeSizes = async () => {
@@ -453,91 +420,95 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [activeMap])
 
+    const backgroundStyle = useMemo(
+        () => ({
+            backgroundColor: `rgba(
+            ${255 * backgroundColor[0]},
+            ${255 * backgroundColor[1]},
+            ${255 * backgroundColor[2]},
+            ${backgroundColor[3]})`,
+            cursor: cursorStyle,
+            margin: 0,
+            padding: 0,
+            height: Math.floor(height),
+        }),
+        [backgroundColor, cursorStyle, height]
+    )
+
+    const snackbarComponents = {
+        goToResidue: MoorhenGoToResidueSnackbar,
+        screenRecorder: MoorhenRecordingSnackBar,
+        residueSelection: MoorhenResidueSelectionSnackBar,
+        acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
+        acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
+        acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
+        longJobNotification: MoorhenLongJobSnackBar,
+        residueSteps: MoorhenResidueStepsSnackBar,
+        updatingMaps: MoorhenUpdatingMapsSnackBar,
+        modelTrajectory: MoorhenModelTrajectorySnackBar,
+        tomogram: MoorhenTomogramSnackBar,
+        mapContourLevel: MoorhenMapContourLevelSnackBar,
+        rotamerChange: MoorhenRotamerChangeSnackBar,
+        screenshot: MoorhenScreenshotSnackBar,
+        sideBar: MoorhenSideBar,
+        atomInformation: MoorhenAtomInfoSnackBar,
+    }
+
+    // ========== Loading Screen ==========
     if (!globalInstanceIsReady) {
         return (
-            <Backdrop sx={{ color: "#fff", zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={true}>
-                <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
-                <span>Starting moorhen...</span>
+            <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={true}
+            >
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: '16px' 
+                }}>
+                    <div>Moorhen is loading...</div>
+                    <CircularProgress color="inherit" />
+                </div>
                 <MoorhenPreferencesContainer />
             </Backdrop>
         )
     }
 
+    // ========== Main Interface ==========
     return (
+        <div style={backgroundStyle}>
         <SnackbarProvider
             hideIconVariant={false}
             autoHideDuration={4000}
             maxSnack={20}
             anchorOrigin={{ horizontal: "center", vertical: "top" }}
             transitionDuration={{ enter: 500, exit: 300 }}
-            Components={{
-                goToResidue: MoorhenGoToResidueSnackbar,
-                screenRecorder: MoorhenRecordingSnackBar,
-                residueSelection: MoorhenResidueSelectionSnackBar,
-                acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
-                acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
-                acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
-                longJobNotification: MoorhenLongJobSnackBar,
-                residueSteps: MoorhenResidueStepsSnackBar,
-                updatingMaps: MoorhenUpdatingMapsSnackBar,
-                modelTrajectory: MoorhenModelTrajectorySnackBar,
-                tomogram: MoorhenTomogramSnackBar,
-                mapContourLevel: MoorhenMapContourLevelSnackBar,
-                rotamerChange: MoorhenRotamerChangeSnackBar,
-                screenshot: MoorhenScreenshotSnackBar,
-                sideBar: MoorhenSideBar,
-                atomInformation: MoorhenAtomInfoSnackBar,
-            }}
+            Components={snackbarComponents}
             preventDuplicate={true}
         >
-            <div>
-                <MoorhenNavBar
-                    extraNavBarMenus={extraNavBarMenus}
-                    extraNavBarModals={extraNavBarModals}
-                    extraFileMenuItems= {extraFileMenuItems}
-                    extraEditMenuItems= {extraEditMenuItems}
-                    extraCalculateMenuItems= {extraCalculateMenuItems}
-                    includeNavBarMenuNames={includeNavBarMenuNames}
-                />
-            </div>
+            <MoorhenNavBar
+                extraNavBarMenus={extraNavBarMenus}
+                extraNavBarModals={extraNavBarModals}
+                extraFileMenuItems={extraFileMenuItems}
+                extraEditMenuItems={extraEditMenuItems}
+                extraCalculateMenuItems={extraCalculateMenuItems}
+                includeNavBarMenuNames={includeNavBarMenuNames}
+            />
 
             <MoorhenModalsContainer extraDraggableModals={extraDraggableModals} />
             <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
             <MoorhenSnackBarManager />
-            <MoorhenUpdatingMapsManager/>
+            <MoorhenUpdatingMapsManager />
             <MoorhenMapsHeadManager />
 
-            {/**
-    <MoorhenSharedSessionManager
-        commandCentre={props.commandCentre}
-        glRef={props.glRef}
-        monomerLibrary={monomerLibraryPath}
-        moleculesRef={moleculesRef}
-        mapsRef={mapsRef}
-        activeMapRef={activeMapRef}
-    />
-    */}
-
-            <Container fluid className={`baby-gru ${theme}`}>
+                
                 <MoorhenDroppable
                     monomerLibraryPath={monomerLibraryPath}
                     timeCapsuleRef={timeCapsuleRef}
                     commandCentre={commandCentre}
                 >
-                    <div
-                        id="moorhen-canvas-background"
-                        style={{
-                            backgroundColor: `rgba(
-                            ${255 * backgroundColor[0]},
-                            ${255 * backgroundColor[1]},
-                            ${255 * backgroundColor[2]},
-                            ${backgroundColor[3]})`,
-                            cursor: cursorStyle,
-                            margin: 0,
-                            padding: 0,
-                            height: Math.floor(height),
-                        }}
-                    >
+                          
                         <MoorhenWebMG
                             ref={glRef}
                             monomerLibraryPath={monomerLibraryPath}
@@ -547,9 +518,9 @@ export const MoorhenContainer = (props: ContainerProps) => {
                             urlPrefix={urlPrefix}
                             viewOnly={viewOnly}
                         />
-                    </div>
                 </MoorhenDroppable>
-            </Container>
+                
         </SnackbarProvider>
+        </div>
     )
 }
