@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { LastPageOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { Tooltip } from "@mui/material";
-import { convertViewtoPx} from '../../utils/utils';
+import { convertViewtoPx, convertRemToPx} from '../../utils/utils';
 import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
