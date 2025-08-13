@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Col, Row, Form, Card, Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 import { MoorhenSlider } from "../inputs";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -12,10 +13,12 @@ import { modalKeys } from "../../utils/enums";
 import { usePersistentState } from "../../store/menusSlice";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
+
+export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
     const dispatch = useDispatch();
+    const commandCentre = moorhenGlobalInstance.getCommandCentre();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -25,7 +28,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
     const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await props.commandCentre.current.cootCommand(
+        await commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "flipPeptide_cid",
@@ -36,7 +39,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
         );
 
         if (enableRefineAfterMod) {
-            await props.commandCentre.current.cootCommand(
+            await commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "refine_residues_using_atom_cid",
@@ -70,7 +73,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
             commandArgs: [selectedModel, selectedMap, selectedRmsd],
         };
 
-        const response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
+        const response = (await commandCentre.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
         const newPepflips = response.data.result.result;
 
         return newPepflips;
@@ -96,7 +99,6 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                 enqueueSnackbar("flip-all-peptides", {
                     variant: "residueSteps",
                     persist: true,
-                    timeCapsuleRef: props.timeCapsuleRef,
                     residueList: residueList,
                     sleepTime: 1500,
                     onStep: handleStepFlipPeptide,

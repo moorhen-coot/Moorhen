@@ -41,7 +41,6 @@ export const MoorhenAddCustomRepresentationCard = memo(
         anchorEl: React.RefObject<HTMLDivElement>;
         molecule: moorhen.Molecule;
         urlPrefix: string;
-        glRef: React.RefObject<webGL.MGWebGL>;
         mode?: "add" | "edit";
         representation?: moorhen.MoleculeRepresentation;
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;

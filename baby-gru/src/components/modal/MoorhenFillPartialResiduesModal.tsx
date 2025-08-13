@@ -11,7 +11,7 @@ import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenFillPartialResiduesModal = () => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -38,7 +38,7 @@ export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) =
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenFillMissingAtoms {...props}/>
+                            <MoorhenFillMissingAtoms />
                         </Row>
                     </div>
                 }
@@ -54,7 +54,7 @@ export const MoorhenFillPartialResiduesModal = (props: moorhen.CollectedProps) =
                                 title: "Fill partial res.",
                                 children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' }}>
                                             <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenFillMissingAtoms {...props}/>
+                                                <MoorhenFillMissingAtoms />
                                             </Row>
                                         </div>
                             })

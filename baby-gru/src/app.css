@@ -372,3 +372,15 @@ img.moorhen-context-button__icon {
   color : red;
   margin-right: 0.5rem;
 }
+
+:root {
+--moorhen-background-color : rgb(165, 23, 23);
+}
+
+.moorhen__canvas__background {
+  background-color: var(--moorhen-background-color);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}

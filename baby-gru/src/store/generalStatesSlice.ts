@@ -9,7 +9,7 @@ const initialState = {
   cootInitialized: false,
   activeMap: null,
   theme: 'flatly',
-  viewOnly: false,
+  
   showHoverInfo: true,
   residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
   showResidueSelection: false,
@@ -24,7 +24,12 @@ const initialState = {
   newCootCommandStart: false,
   useRamaRefinementRestraints: false,
   useTorsionRefinementRestraints: false,
-}
+  viewOnly: false,
+  allowScripting: false,
+  allowAddNewFittedLigand: false,
+  allowMergeFittedLigand: false,
+  disableFileUpload: false
+};
 
 export const generalStatesSlice = createSlice({
   name: 'generalStates',
@@ -112,6 +117,19 @@ export const generalStatesSlice = createSlice({
     setTransparentModalsOnMouseOut: (state, action: {payload: boolean, type: string}) => {
       return {...state, transparentModalsOnMouseOut: action.payload}
     },
+    setAllowScripting: (state, action: {payload: boolean, type: string}) => {
+      return {...state, allowScripting: action.payload}
+    },
+    setAllowAddNewFittedLigand: (state, action: {payload: boolean, type: string}) => {
+      return {...state, allowAddNewFittedLigand: action.payload}
+    },
+    setAllowMergeFittedLigand: (state, action: {payload: boolean, type: string}) => {
+      return {...state, allowMergeFittedLigand: action.payload}
+    },
+    setDisableFileUpload: (state, action: {payload: boolean, type: string}) => {
+      return {...state, disableFileUpload: action.payload}
+    },
+    
 }})
 
 export const {
@@ -123,6 +141,8 @@ export const {
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
   resetGeneralStates, setIsShowingTomograms, setDefaultExpandDisplayCards,
   setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo,
+  setAllowScripting, setAllowAddNewFittedLigand, setAllowMergeFittedLigand,
+  setDisableFileUpload,
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

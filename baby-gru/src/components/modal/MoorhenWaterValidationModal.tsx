@@ -7,7 +7,7 @@ import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenWaterValidationModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenWaterValidationModal = () => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -30,7 +30,7 @@ export const MoorhenWaterValidationModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"small-validation-tool-container-row"}>
-                            <MoorhenWaterValidation {...props}/>
+                            <MoorhenWaterValidation />
                         </Row>
                     </div>
                 }

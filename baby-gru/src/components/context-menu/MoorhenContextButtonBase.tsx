@@ -5,16 +5,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     label: string;
     options: string[];
-    extraInput?: (arg0: React.MutableRefObject<any>) => React.JSX.Element;
+    extraInput?: (arg0: React.RefObject<any>) => React.JSX.Element;
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
     doEdit: (arg0: moorhen.cootCommandKwargs) => void;
-    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.MutableRefObject<any>) => moorhen.cootCommandKwargs;
+    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.RefObject<any>) => moorhen.cootCommandKwargs;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec; 
     defaultValue?: string;
@@ -72,7 +73,6 @@ const MoorhenPopoverOptions = (props: {
 
 
 export const MoorhenContextButtonBase = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
     refineAfterMod?: boolean;
@@ -82,7 +82,6 @@ export const MoorhenContextButtonBase = (props: {
     cootCommandInput?: moorhen.cootCommandKwargs;
     setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
     onExit?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: any) => void;
     onCompleted?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => void;
@@ -114,6 +113,7 @@ export const MoorhenContextButtonBase = (props: {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
+    const commandCentre = moorhenGlobalInstance.getCommandCentre()
 
     const dispatch = useDispatch()
 
@@ -121,7 +121,7 @@ export const MoorhenContextButtonBase = (props: {
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
         props.setShowContextMenu(false)
         
-        const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
+        const cootResult = await commandCentre.cootCommand(cootCommandInput, true)
         
         props.onCompleted?.(props.selectedMolecule, props.chosenAtom)
         

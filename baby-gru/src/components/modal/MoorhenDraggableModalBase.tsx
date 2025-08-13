@@ -89,9 +89,9 @@ type MoorhenDraggableModalBaseProps = {
  *                    <Stack direction='horizontal' gap={2}
  *                             style={{display: 'flex', justifyContent: 'space-between'}}>
  *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick}
- *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} />
  *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick}
- *                           setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+ *                           setAwaitAtomClick={setAwaitAtomClick} />
  *                    </Stack>
  *                }
  *                footer={

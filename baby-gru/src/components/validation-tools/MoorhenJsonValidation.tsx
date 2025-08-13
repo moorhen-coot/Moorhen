@@ -1,24 +1,19 @@
-import { useEffect, useCallback, useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Table, Container } from 'react-bootstrap';
 import { useDispatch, useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import { Icon, Button, IconButton , Accordion, AccordionDetails, AccordionSummary, Typography, Collapse, Box, Grid, Checkbox, FormGroup, FormControlLabel} from "@mui/material";
-import { ExpandMoreOutlined, CenterFocusWeakOutlined } from "@mui/icons-material";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Icon, Button, IconButton, Collapse, Box, Grid, Checkbox, FormControlLabel} from "@mui/material";
+import { CenterFocusWeakOutlined } from "@mui/icons-material";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { ThemeProvider } from '@mui/material/styles';
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { modalKeys } from "../../utils/enums";
-import { hideModal } from "../../store/modalsSlice";
-import { cidToSpec, sleep , rgbToHsv,hsvToRgb } from '../../utils/utils';
+import {  rgbToHsv,hsvToRgb } from '../../utils/utils';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { libcootApi } from "../../types/libcoot";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
-export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
+export const MoorhenJsonValidation = () => {
 
     const dispatch = useDispatch()
 
@@ -26,6 +21,8 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const useRamaRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useRamaRefinementRestraints)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const commandCentre = moorhenGlobalInstance.getCommandCentre()
+    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -42,7 +39,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
     const validationJson = useSelector((state: moorhen.State) => state.jsonValidation.validationJson)
 
     const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.cootCommand({
             returnType: "status",
             command: "side_chain_180",
             commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`],
@@ -59,7 +56,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
     const handleRefine = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string, method: string, tripleWithRama: boolean) => {
 
         if(tripleWithRama){
-            await props.commandCentre.current.cootCommand({
+            await commandCentre.cootCommand({
                 command: 'set_use_rama_plot_restraints',
                 commandArgs: [true],
                 returnType: "status"
@@ -70,7 +67,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
 
         if(tripleWithRama){
             //Restore previous setting, whether true or false
-            await props.commandCentre.current.cootCommand({
+            await commandCentre.cootCommand({
                 command: 'set_use_rama_plot_restraints',
                 commandArgs: [useRamaRestraints],
                 returnType: "status"
@@ -83,7 +80,7 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
     }
 
     const handleAutoFitRotamer = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.cootCommand({
             returnType: "status",
             command: "fill_partial_residue",
             commandArgs: [
@@ -109,10 +106,10 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
         }
     }
 
-    const refine_svg = `${props.urlPrefix}/pixmaps/refine-1.svg`
-    const refine_rama_svg = `${props.urlPrefix}/pixmaps/refine-rama.svg`
-    const flip_side_svg = isDark ? `${props.urlPrefix}/pixmaps/side-chain-180-dark.svg` : `${props.urlPrefix}/pixmaps/side-chain-180.svg`
-    const auto_fit_svg = `${props.urlPrefix}/pixmaps/auto-fit-rotamer.svg`
+    const refine_svg = `${urlPrefix}/pixmaps/refine-1.svg`
+    const refine_rama_svg = `${urlPrefix}/pixmaps/refine-rama.svg`
+    const flip_side_svg = isDark ? `${urlPrefix}/pixmaps/side-chain-180-dark.svg` : `${urlPrefix}/pixmaps/side-chain-180.svg`
+    const auto_fit_svg = `${urlPrefix}/pixmaps/auto-fit-rotamer.svg`
 
     const refineRamaSvgIcon = (
         <Icon>
@@ -303,7 +300,6 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
                 if(sectionSortable.keys[section_index]){
                     additionalLabel += " ("+issue.badness+")"
                 }
-                console.log
                 return <Table key={index} style={{ margin: '0', padding:'0'}}>
                         <tbody>
                              <tr>

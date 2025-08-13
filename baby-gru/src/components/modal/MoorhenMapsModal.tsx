@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo} from "react";
 import { UnfoldLessOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
-export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
+export const MoorhenMapsModal = () => {
     const [collapseAll, setCollapseAll] = useState<boolean>(false);
     const [collapsedCards, setCollapsedCards] = useState<number[]>([]);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -50,7 +50,6 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
                 onCollapseToggle={(key) => handleCollapseToggle(key)}
                 modalWidth={modalWidth}
-                {...props}
             />
         ));
     }, [modalWidth, collapsedCards, collapseAll, maps]);

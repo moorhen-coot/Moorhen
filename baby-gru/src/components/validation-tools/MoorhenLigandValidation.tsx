@@ -3,7 +3,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-export const MoorhenLigandValidation = (props: moorhen.CollectedProps) => {
+export const MoorhenLigandValidation = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<moorhen.LigandInfo[]> => {

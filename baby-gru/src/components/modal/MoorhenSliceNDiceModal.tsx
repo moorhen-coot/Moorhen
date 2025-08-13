@@ -15,6 +15,7 @@ import {
     setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
  } from "../../store/sliceNDiceSlice"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -122,10 +123,7 @@ const MoorhenSliceNDiceCard = (props: {
     </Card>
 }
 
-export const MoorhenSliceNDiceModal = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    disableFileUploads: boolean;
-}) => {
+export const MoorhenSliceNDiceModal = () => {
     
     const paeFileContentsRef = useRef<null | string>(null)
     const paeFileUploadFormRef = useRef<null | HTMLInputElement>(null)
@@ -159,12 +157,15 @@ export const MoorhenSliceNDiceModal = (props: {
     const slicingResults = useSelector((state: moorhen.State) => state.sliceNDice.slicingResults)
     // This is messy but it is how we pre-load input for slice-n-dice... Needed for CCP4 Cloud...
     const paeFileContents = useSelector((state: moorhen.State) => state.sliceNDice.paeFileContents)
+    const disableFileUploads = useSelector((state: moorhen.State) => state.generalStates.disableFileUpload)
+
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 
     const dispatch = useDispatch()
 
     const setColourRule = useCallback(async (molecule: moorhen.Molecule, colourRuleType: string) => {
         const newColourRule = new MoorhenColourRule(
-            colourRuleType, "/*/*/*/*", "#ffffff", props.commandCentre, true
+            colourRuleType, "/*/*/*/*", "#ffffff", commandCentre, true
         )
         newColourRule.setLabel(colourRuleType ===  'af2-plddt' ? "PLDDT" : "B-Factor")
         const ruleArgs = await getMultiColourRuleArgs(molecule, colourRuleType)
@@ -172,7 +173,7 @@ export const MoorhenSliceNDiceModal = (props: {
         newColourRule.setParentMolecule(molecule)
         molecule.defaultColourRules = [ newColourRule ]
         return newColourRule
-    }, [props.commandCentre])
+    }, [commandCentre])
 
     useEffect(() => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value))
@@ -308,7 +309,7 @@ export const MoorhenSliceNDiceModal = (props: {
             return
         }
 
-        const result = await props.commandCentre.current.cootCommand({
+        const result = await commandCentre.current.cootCommand({
             command: 'slicendice_slice',
             commandArgs: commandArgs,
             returnType: 'vector_pair_string_int'
@@ -333,7 +334,7 @@ export const MoorhenSliceNDiceModal = (props: {
             const colorHue = Math.floor((index * 40) + Math.floor(Math.random() * 6))
             const selectedColour = isDark ? hslToHex(colorHue, 80, 70) : hslToHex(colorHue, 50, 50)
             const newColourRule = new MoorhenColourRule(
-                'cid', "/*/*/*/*", selectedColour, props.commandCentre
+                'cid', "/*/*/*/*", selectedColour, commandCentre
             )
             newColourRule.setArgs(["/*/*/*/*", selectedColour])
             newColourRule.setParentMolecule(newMolecule)
@@ -400,7 +401,7 @@ export const MoorhenSliceNDiceModal = (props: {
             }
         }
 
-        await props.commandCentre.current.cootCommand({
+        await commandCentre.current.cootCommand({
             command: 'end_delete_closed_molecules',
             commandArgs: [ ],
             returnType: 'void'
@@ -415,7 +416,7 @@ export const MoorhenSliceNDiceModal = (props: {
             }))
             if (mergeSlices) {
                 const moleculeCopy = await slicingResults[0].copyMolecule(false)
-                await props.commandCentre.current.cootCommand({
+                await commandCentre.current.cootCommand({
                     command: 'merge_molecules',
                     commandArgs: [moleculeCopy.molNo, slicingResults.map(sliceMolecule => sliceMolecule.molNo).slice(1).join(':')],
                     returnType: "merge_molecules_return",    
@@ -455,7 +456,7 @@ export const MoorhenSliceNDiceModal = (props: {
 
     const bodyContent = <Stack direction="vertical" gap={1}>
         <Stack direction="horizontal" gap={1} style={{display: 'flex', width: '100%'}}>
-            <MoorhenMoleculeSelect {...props} width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
+            <MoorhenMoleculeSelect width="100%" molecules={molecules} allowAny={false} ref={moleculeSelectRef} onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}/>
             <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                 <Form.Label>Clustering algorithm...</Form.Label>
                 <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={'birch'} onChange={handleClusteringTypeChange}>
@@ -568,7 +569,7 @@ export const MoorhenSliceNDiceModal = (props: {
                 <Tooltip title='Predicted Aligned Error (PAE) .json file' placement="top">
                     <InfoOutlined style={{marginLeft: '0.1rem', marginBottom: '0.2rem', width: '15px', height: '15px'}}/>
                 </Tooltip>
-                {props.disableFileUploads ?
+                {disableFileUploads ?
                 <FormSelect size="sm" ref={paeFileSelectFormRef} onChange={(evt) => {
                     if (evt.target.value) {
                         paeFileContentsRef.current = evt.target.value

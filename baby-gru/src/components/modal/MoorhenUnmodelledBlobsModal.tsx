@@ -11,7 +11,7 @@ import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenUnmodelledBlobsModal = () => {        
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -38,7 +38,7 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className="big-validation-tool-container-row">
-                            <MoorhenUnmodelledBlobs {...props}/>
+                            <MoorhenUnmodelledBlobs />
                         </Row>
                     </div>
                 }
@@ -54,7 +54,7 @@ export const MoorhenUnmodelledBlobsModal = (props: moorhen.CollectedProps) => {
                                 modalId: modalKeys.UNMODELLED_BLOBS,
                                 children: <div style={{maxHeight: '30vh', overflowY: 'scroll', overflowX: "hidden"}} >
                                             <Row className={"big-validation-tool-container-row"}>
-                                                <MoorhenUnmodelledBlobs {...props}/>
+                                                <MoorhenUnmodelledBlobs />
                                             </Row>
                                         </div>
                             })

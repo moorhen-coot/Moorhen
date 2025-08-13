@@ -14,15 +14,15 @@ import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenLigandMenu = (props: {
     dropdownId: string;
-    disableFileUploads?: boolean;
 }) => {
 
+    const disableFileUploads = useSelector((state: moorhen.State) => state.generalStates.disableFileUpload)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const dispatch = useDispatch()
  
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenGetMonomerMenuItem  />
-            {!props.disableFileUploads && <MoorhenImportDictionaryMenuItem  />}
+            {!disableFileUploads && <MoorhenImportDictionaryMenuItem  />}
             <MoorhenSMILESToLigandMenuItem  />
             <MoorhenCentreOnLigandMenuItem  />
             <MoorhenMinimizeEnergyMenuItem  />

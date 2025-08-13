@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux"
-import { useRef, useState } from "react";
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table  } from "react-bootstrap"
+import { useRef, } from "react";
+import { Form, Row, Stack} from "react-bootstrap"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation"
 import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils';
@@ -8,7 +8,7 @@ import { modalKeys } from "../../utils/enums";
 import { setValidationJson } from "../../store/jsonValidation"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenJsonValidationModal = () => {        
 
     const dispatch = useDispatch()
     
@@ -33,8 +33,6 @@ export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {
         </Stack>
     </Stack>
 
-    const collectedProps = {collectedProps:props}
-
     return <MoorhenDraggableModalBase
                 modalId={modalKeys.JSON_VALIDATION}
                 left={width / 6}
@@ -52,7 +50,7 @@ export const MoorhenJsonValidationModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"small-validation-tool-container-row"}>
-                            <MoorhenJsonValidation {...props} />
+                            <MoorhenJsonValidation  />
                         </Row>
                     </div>
                 }

@@ -1,4 +1,4 @@
-import { CSSProperties, useRef } from "react";
+import { CSSProperties} from "react";
 import { Button, Row, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "@mui/material";
@@ -11,7 +11,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenCarbohydrateValidationModal = () => {        
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -33,7 +33,7 @@ export const MoorhenCarbohydrateValidationModal = (props: moorhen.CollectedProps
 
     const body = (style: CSSProperties) => <div style={style} >
                                 <Row className={"big-validation-tool-container-row"}>
-                                    <MoorhenCarbohydrateValidation {...props}/>
+                                    <MoorhenCarbohydrateValidation />
                                 </Row>
                             </div> 
 

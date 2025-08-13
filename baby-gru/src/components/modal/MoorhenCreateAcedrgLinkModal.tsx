@@ -7,6 +7,7 @@ import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "
 import { modalKeys } from '../../utils/enums';
 import { hideModal } from '../../store/modalsSlice';
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -237,14 +238,17 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 
 })
 
+AceDRGtomPicker.displayName = "AceDRGtomPicker"
+
 export const MoorhenCreateAcedrgLinkModal = (props: {
-    aceDRGInstance: moorhen.AceDRGInstance;
-    monomerLibraryPath: string;   
     width: number;
 }) => {
     
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
+
+    const aceDRGInstance = moorhenGlobalInstance.getAceDRGInstance() 
+    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
 
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
@@ -264,9 +268,9 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
         const atomTwoFormData = atomPickerTwoRef.current.getFormData() as moorhen.createCovLinkAtomInput
         console.log(atomOneFormData)
         console.log(atomTwoFormData)
-        if (props.aceDRGInstance) {
+        if (aceDRGInstance) {
             try {
-                await props.aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
+                await aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
                 dispatch( hideModal(modalKeys.ACEDRG) )
             } catch (err) {
                 console.log('Something went wrong while trying to run aceDRG...')
@@ -296,8 +300,8 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
                 }
                 body={
                     <Stack direction='horizontal' gap={2} style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: '100%'}}>
-                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
-                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} monomerLibraryPath={monomerLibraryPath}/>
+                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} monomerLibraryPath={monomerLibraryPath}/>
                     </Stack>
                 }
                 footer={
@@ -311,6 +315,6 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
                     </div>
                     </div>
                 }
-                {...props}
+                
             />
 }

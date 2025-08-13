@@ -34,6 +34,6 @@ export const MoorhenAddTerminalResidueButton = (props: moorhen.ContextButtonProp
         needsMapData={true}
         toolTipLabel={toolTip}
         cootCommandInput={getCootCommandInput(selectedMolecule, chosenAtom)}
-        {...props}
+        {...props}      
     />
 }

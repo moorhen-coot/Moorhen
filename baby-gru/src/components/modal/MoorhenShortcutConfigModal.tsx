@@ -3,7 +3,8 @@ import { Modal, Button, Card, Row, Col } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../../types/moorhen"
 import { setShortCuts } from "../../store/shortCutsSlice";
-import { MoorhenPreferences } from "../../utils/MoorhenPreferences";
+import { MoorhenPreferences } from "../managers/preferences/MoorhenPreferences";
+
 
 export const MoorhenShortcutConfigModal = (props: {
     setShowModal: React.Dispatch<React.SetStateAction<boolean>>; 
@@ -25,11 +26,7 @@ export const MoorhenShortcutConfigModal = (props: {
 
     const restoreDefaults = () => {
         const defaultValues = MoorhenPreferences.defaultPreferencesValues
-        props.setShowModal(false)
-        setStagedShortCuts(defaultValues.shortCuts as {[label: string]: moorhen.Shortcut})
-        dispatch(
-            setShortCuts(JSON.stringify(defaultValues.shortCuts))
-        )
+        setStagedShortCuts(JSON.parse(defaultValues.shortCuts as string))
     }
 
     const handleSaveChanges = () => {
@@ -46,10 +43,17 @@ export const MoorhenShortcutConfigModal = (props: {
         if (evt.metaKey) modifiers.push("metaKey")
         if (evt.altKey) modifiers.push("altKey")
 
+
+
         setStagedShortCuts((prev) => {
-            prev[waitingNewShortCut as string].keyPress = evt.key.toLowerCase()
-            prev[waitingNewShortCut as string].modifiers = modifiers
-            return prev
+            return {
+                ...prev,
+                [waitingNewShortCut as string]: {
+                    ...prev[waitingNewShortCut as string],
+                    keyPress: evt.key.toLowerCase(),
+                    modifiers: modifiers
+                }
+            }
         })
 
         setWaitingNewShortCut(false)

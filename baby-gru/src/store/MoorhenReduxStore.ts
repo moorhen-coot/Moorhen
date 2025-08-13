@@ -47,7 +47,7 @@ export default configureStore({
         overlays: overlaysSliceReducer,
         menus: menusReducer,
         atomInfoCards: atomInfoCardsReducer,
-        globalUISlice: globalUISliceReducer
+        globalUI: globalUISliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

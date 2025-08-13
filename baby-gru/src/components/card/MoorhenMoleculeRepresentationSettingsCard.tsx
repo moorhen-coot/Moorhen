@@ -185,8 +185,6 @@ const SymmetrySettingsPanel = (props: {
     symmetryRadius: number;
     setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
     molecule: moorhen.Molecule;
-    glRef: React.RefObject<webGL.MGWebGL>;
-
 }) => {
 
     const [symmetryOn, setSymmetryOn] = useState<boolean>(props.molecule.symmetryOn)
@@ -546,7 +544,6 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
     urlPrefix: string;
-    glRef: React.RefObject<webGL.MGWebGL>;
     symmetrySettingsProps: {
         symmetryRadius: number;
         setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
@@ -637,7 +634,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                 <Stack gap={1} direction='vertical' style={{width: '23rem', margin: '0.5rem', display: "flex", flexDirection: "column", justifyContent: "center"}}>
                     <BondSettingsPanel {...props.bondSettingsProps}/>
                     <SurfaceSettingsPanel {...props.gaussianSettingsProps}/>
-                    <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} glRef={props.glRef}/>
+                    <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule}/>
                     <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps}/>
                 </Stack>
                 <Stack gap={1} direction='vertical' style={{width: '23rem', margin: '0.5rem', display: "flex", flexDirection: "column", justifyContent: "center"}}>

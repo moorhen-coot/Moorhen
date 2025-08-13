@@ -1,14 +1,16 @@
 import { useCallback, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button, Stack, InputGroup } from 'react-bootstrap';
 import { useDispatch, useSelector } from "react-redux";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 
-export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
+
+
+export const MoorhenWaterValidation = () => {
 
     const isDirty = useRef<boolean>(false)
     const busyFetching = useRef<boolean>(false)
@@ -26,6 +28,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const [maxDist, setMaxDist] = useState<number>(3.5)
     const [ignorePartOcc, setIgnorePartOcc] = useState<boolean>(false)
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -68,7 +71,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 commandArgs: [selectedModel, selectedMap, bFactorLim, sigmaLevel, minDist, maxDist, ignorePartOccRef.current.checked, ignoreZeroOccRef.current.checked]
             }
             
-            const response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>
+            const response = await commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>
             if (response.data.result.result) {
                 badWaters = response.data.result.result
             } else if (response.data.result.status === 'Exception') {

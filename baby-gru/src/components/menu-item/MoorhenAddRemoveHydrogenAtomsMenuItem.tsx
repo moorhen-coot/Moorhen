@@ -36,7 +36,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
     }, [moleculeSelectRef, molecules, commandCentre])
 
     const panelContent = <Form.Group>
-        <MoorhenMoleculeSelect {...props} molecules={molecules} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
+        <MoorhenMoleculeSelect  molecules={molecules} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
         <Button className="mx-2" variant='primary' onClick={() => handleClick('add_hydrogen_atoms')}>
             Add
         </Button>

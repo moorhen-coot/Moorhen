@@ -40,7 +40,7 @@
     background-color: rgb(230, 233, 166);
 }
 
-.moorhen__seqviewer__residue-box.empty:hover {                       
+.moorhen__seqviewer__residue-box.msv__empty:hover {                       
     background-color: rgba(var(--moorhen-background));
 }
 

@@ -32,8 +32,8 @@ interface MoorhenFileMenuProps {
 export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const dispatch = useDispatch();
     const store = useStore();
+    const disableFileUploads = useSelector((state: moorhen.State) => state.generalStates.disableFileUpload)
 
-    const disableFileUploads = false; /*** This is temporary add a store value to control this ***/
 
     const [, setPopoverIsShown] = useState<boolean>(false);
 
@@ -318,13 +318,13 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                 <MenuItem id="recording-menu-item" onClick={handleRecording}>
                     Record a video
                 </MenuItem>
-
+                {/* eslint-disable-next-line */}
                 {!disableFileUploads && devMode && false && (
                     <MenuItem id="load-mrbump-menu-item" onClick={handleLoadMrBump}>
                         MrBump results...
                     </MenuItem>
                 )}
-
+                {/* eslint-disable-next-line */}
                 {devMode && false && (
                     <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
                         <Form.Label>Auto load</Form.Label>

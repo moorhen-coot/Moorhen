@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
@@ -7,7 +6,7 @@ import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 
-export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {        
+export const MoorhenDiffMapPeaksModal = () => {        
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -28,7 +27,7 @@ export const MoorhenDiffMapPeaksModal = (props: moorhen.CollectedProps) => {
                 body={
                     <div style={{height: '100%'}} >
                         <Row className={"big-validation-tool-container-row"}>
-                            <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" {...props}/>
+                            <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" />
                         </Row>
                     </div>
                 }

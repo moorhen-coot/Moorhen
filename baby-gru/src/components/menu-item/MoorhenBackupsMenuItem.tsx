@@ -37,7 +37,7 @@ export const MoorhenBackupsMenuItem = (props: {
 
     const panelContent = <>
         <Row style={{ width: '30rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-            <MoorhenBackupSelect {...props} ref={backupSelectRef} width='100%' label='Select backup' />
+            <MoorhenBackupSelect  ref={backupSelectRef} width='100%' label='Select backup' />
         </Row>
         <Row>
             <Stack direction='horizontal' gap={2}>
