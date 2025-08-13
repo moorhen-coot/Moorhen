@@ -15,7 +15,7 @@ import {
     setIsDark,
     setWidth,
 } from "../store/sceneSettingsSlice"
-import { setTheme } from "../store/generalStatesSlice"
+import { setAllowAddNewFittedLigand, setAllowMergeFittedLigand, setAllowScripting, setDisableFileUpload, setTheme, setViewOnly } from "../store/generalStatesSlice"
 import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSlice"
 import { setRefinementSelection } from "../store/refinementSettingsSlice"
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager"
@@ -110,53 +110,6 @@ declare module "notistack" {
     }
 }
 
-/**
- * A container for the Moorhen app. Needs to be rendered within a MoorhenReduxProvider.
- * @property {React.RefObject<webGL.mgWebGL>} [glRef] - React reference holding the webGL rendering component
- * @property {React.RefObject<moorhen.TimeCapsule>} [timeCapsuleRef] - React reference holding an instance of MoorhenTimeCapsule which is in charge of backups
- * @property {React.RefObject<moorhen.commandCentre>} [commandCentre] - React reference holding an instance of MoorhenCommandCentre which is in charge of communication with libcoot instance
- * @property {React.RefObject<moorhen.Molecule[]>} [moleculesRef] - React reference holding a list of loaded MoorhenMolecule instances
- * @property {React.RefObject<moorhen.Map[]>} [mapsRef] - React reference holding a list of loaded MoorhenMap instances
- * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
- * @property {string} [monomerLibraryPath='./monomers'] - A string with the path to the monomer library, relative to the root of the app
- * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
- * @property {function} onUserPreferencesChange - Callback executed whenever a user-defined preference changes (key: string, value: any) => void.
- * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should be disabled
- * @property {string[]} [includeNavBarMenuNames] - An array of menu names to include in the Moorhen navbar. If empty array then all menus will be included. It can also be used to set their order.
- * @property {object[]} extraNavBarModals - A list with additional draggable modals with buttons rendered under the navigation menu
- * @property {object[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
- * @property {React.JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
- * @property {React.JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
- * @property {React.JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
- * @property {React.JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
- * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
- * @property {boolean} [allowScripting=true] - Indicates if the scripting interface is enabled
- * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
- * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
- * @example
- * import { MoorhenContainer } from "moorhen";
- *
- * const ExampleApp = () => {
- *
- *  const doClick = (evt) => { console.log('Click!') }
- *
- *  const exportMenuItem =  <MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
- *                              Example extra menu
- *                          </MenuItem>
- *
- * const setDimensions = () => {
- *   return [window.innerWidth, window.innerHeight]
- * }
- *
- * return <MoorhenReduxProvider>
- *              <MoorhenContainer
- *                  allowScripting={false}
- *                  setMoorhenDimensions={setDimensions}
- *                  extraFileMenuItems={[exportMenuItem]}/>
- *          </MoorhenReduxProvider>
- *
- */
-
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>
     timeCapsuleRef?: React.RefObject<null | moorhen.TimeCapsule>
@@ -196,29 +149,25 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/baby-gru",
         monomerLibraryPath = "./baby-gru/monomers",
-        setMoorhenDimensions = null,
-        //disableFileUploads= false,
+        setMoorhenDimensions = null,     
         includeNavBarMenuNames = [],
         extraNavBarModals = [],
         extraNavBarMenus = [],
-        // extraFileMenuItems= [],
-        // extraEditMenuItems= [],
-        // extraCalculateMenuItems= [],
+        disableFileUploads= false,
+        extraFileMenuItems= [],
+        extraEditMenuItems= [],
+        extraCalculateMenuItems= [],
+        allowScripting= true,
+        allowAddNewFittedLigand= false,
+        allowMergeFittedLigand= true,
         extraDraggableModals = [],
         viewOnly = false,
-        //allowScripting= true,
         backupStorageInstance = createLocalStorageInstance("Moorhen-TimeCapsule"),
         aceDRGInstance = null,
-        // allowAddNewFittedLigand= false,
-        // allowMergeFittedLigand= true,
     } = props
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const glRef = props.glRef ? props.glRef : innerGlRef
-    const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null)
-    const timeCapsuleRef = props.timeCapsuleRef ? props.timeCapsuleRef : innerTimeCapsuleRef
-    const innerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
-    const commandCentre = props.commandCentre ? props.commandCentre : innerCommandCentre
     const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const moleculesRef = props.moleculesRef ? props.moleculesRef : innerMoleculesRef
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
@@ -255,6 +204,9 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const dispatch = useDispatch()
     const store = useStore()
+
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef()
 
     const onUserPreferencesChange = useCallback(
         (key: string, value: unknown) => {
@@ -404,9 +356,15 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops])
 
-    useEffect(
+    useEffect(() => {
         function startupEffect() {
             setWindowDimensions()
+            dispatch(setViewOnly(viewOnly))
+            dispatch(setDisableFileUpload(disableFileUploads))
+            dispatch(setAllowScripting(allowScripting))
+            dispatch(setAllowAddNewFittedLigand(allowAddNewFittedLigand))
+            dispatch(setAllowMergeFittedLigand(allowMergeFittedLigand))
+
             if (!userPreferencesMounted) {
                 return
             }
@@ -416,8 +374,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
             moorhenGlobalInstance.startInstance(
                 dispatch,
                 store,
-                null,
-                null,
+                props.commandCentre ? props.commandCentre.current : null,
+                props.timeCapsuleRef ? props.timeCapsuleRef.current : null,
                 {
                     activeMapRef: activeMapRef,
                     providedBackupStorageInstance: backupStorageInstance,
@@ -435,7 +393,9 @@ export const MoorhenContainer = (props: ContainerProps) => {
             setSamplingRate()
             setDrawMissingLoopAPI()
             
-        },
+        }
+        startupEffect()
+    },
         [userPreferencesMounted]
     )
 
@@ -534,16 +494,17 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 <MoorhenNavBar
                     extraNavBarMenus={extraNavBarMenus}
                     extraNavBarModals={extraNavBarModals}
+                    extraFileMenuItems= {extraFileMenuItems}
+                    extraEditMenuItems= {extraEditMenuItems}
+                    extraCalculateMenuItems= {extraCalculateMenuItems}
                     includeNavBarMenuNames={includeNavBarMenuNames}
-                    viewOnly={viewOnly}
                 />
             </div>
 
             <MoorhenModalsContainer extraDraggableModals={extraDraggableModals} />
-
             <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
             <MoorhenSnackBarManager />
-            <MoorhenUpdatingMapsManager commandCentre={commandCentre} />
+            <MoorhenUpdatingMapsManager/>
             <MoorhenMapsHeadManager />
 
             {/**

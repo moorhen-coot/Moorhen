@@ -18,13 +18,13 @@ import { moorhen } from "../../types/moorhen";
 export const MoorhenCalculateMenu = (props: {
     dropdownId: string;
     extraCalculateMenuItems? : React.ReactElement[];
-    allowScripting?: boolean;
 }) => {
 
     const [, setPopoverIsShown] = useState<boolean>(false)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height) 
     const dispatch = useDispatch()      
     const menuItemProps = { setPopoverIsShown}
+    const allowScripting = useSelector((state: moorhen.State) => state.generalStates.allowScripting)
 
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
@@ -45,7 +45,7 @@ export const MoorhenCalculateMenu = (props: {
             }}>
                 Slice-n-Dice...
             </MenuItem>
-            {props.allowScripting && 
+            {allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
                 <MenuItem id="interactive-scripting-menu-item" onClick={() => { 

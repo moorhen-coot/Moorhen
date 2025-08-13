@@ -996,7 +996,7 @@ export namespace moorhen {
             width: number;
             isDark: boolean;
         };
-        generalStates: {
+        generalStates: {         
             devMode: boolean;
             useGemmi: boolean;
             userPreferencesMounted: boolean;
@@ -1016,6 +1016,11 @@ export namespace moorhen {
             defaultExpandDisplayCards: boolean;
             transparentModalsOnMouseOut: boolean;
             showHoverInfo: boolean;
+            viewOnly: boolean;
+            allowScripting: boolean;
+            allowAddNewFittedLigand: boolean;
+            allowMergeFittedLigand: boolean;
+            disableFileUpload: boolean;
         };
         sharedSession: {
             isInSharedSession: boolean;
@@ -1145,9 +1150,6 @@ export namespace moorhen {
         globalUI: {
             globalInstanceIsReady: boolean;
             busy: boolean;
-        }
-        setup: {
-            disableFileUpload: boolean;
         }
     }
 

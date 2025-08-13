@@ -22,7 +22,6 @@ import overlaysSliceReducer from './overlaysSlice'
 import menusReducer from './menusSlice'
 import atomInfoCardsReducer from './atomInfoCardsSlice'
 import globalUISliceReducer from './globalUISlice'
-import setupReducer from './setupSlice'
 
 export default configureStore({
     reducer: {
@@ -49,7 +48,6 @@ export default configureStore({
         menus: menusReducer,
         atomInfoCards: atomInfoCardsReducer,
         globalUI: globalUISliceReducer,
-        setup: setupReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

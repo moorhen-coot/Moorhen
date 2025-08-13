@@ -4,10 +4,9 @@ import { SnackbarContent, useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { disableUpdatingMaps, setCurrentScores } from "../../store/moleculeMapUpdateSlice";
+import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
 
-export const MoorhenUpdatingMapsManager = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenUpdatingMapsManager = () => {
 
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
@@ -20,6 +19,7 @@ export const MoorhenUpdatingMapsManager = (props: {
     const foFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.foFcMap)
     const twoFoFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.twoFoFcMap)
     const uniqueMaps = useSelector((state: moorhen.State) => state.moleculeMapUpdate.uniqueMaps)
+    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
 
     const dispatch = useDispatch()
 
@@ -30,7 +30,7 @@ export const MoorhenUpdatingMapsManager = (props: {
             enqueueSnackbar("updating-maps-scores", {
                 variant: "updatingMaps",
                 persist: true,
-                commandCentre: props.commandCentre,
+                commandCentre: commandCentre,
                 anchorOrigin: { vertical: "top", horizontal: "right" },
             });
         } else if (updatingMapsIsEnabled) {
@@ -41,7 +41,7 @@ export const MoorhenUpdatingMapsManager = (props: {
     useEffect(() => {
         const handleConnectMaps = async () => {
             if (updatingMapsIsEnabled) {
-                const currentScores = await props.commandCentre.current.cootCommand({
+                const currentScores = await commandCentre.current.cootCommand({
                     returnType: "r_factor_stats",
                     command: "get_r_factor_stats",
                     commandArgs: [],
@@ -71,7 +71,7 @@ export const MoorhenUpdatingMapsManager = (props: {
                     })
                 )
                 
-                const currentScores = await props.commandCentre.current.cootCommand({
+                const currentScores = await commandCentre.current.cootCommand({
                     returnType: "r_factor_stats",
                     command: "get_r_factor_stats",
                     commandArgs: [],

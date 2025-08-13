@@ -157,7 +157,7 @@ export const MoorhenSliceNDiceModal = () => {
     const slicingResults = useSelector((state: moorhen.State) => state.sliceNDice.slicingResults)
     // This is messy but it is how we pre-load input for slice-n-dice... Needed for CCP4 Cloud...
     const paeFileContents = useSelector((state: moorhen.State) => state.sliceNDice.paeFileContents)
-    const disableFileUploads = useSelector((state: moorhen.State) => state.setup.disableFileUpload)
+    const disableFileUploads = useSelector((state: moorhen.State) => state.generalStates.disableFileUpload)
 
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
 

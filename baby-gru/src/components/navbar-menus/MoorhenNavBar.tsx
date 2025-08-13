@@ -53,8 +53,10 @@ export type ExtraNavBarModals = {
 interface MoorhenNavBarProps {
     extraNavBarMenus?: ExtraNavBarMenus[];
     extraNavBarModals?: ExtraNavBarModals[];
+    extraFileMenuItems?: React.JSX.Element[];
+    extraEditMenuItems?: React.JSX.Element[];
+    extraCalculateMenuItems?: React.JSX.Element[];
     includeNavBarMenuNames: string[];
-    viewOnly: boolean;
 }
 
 export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
@@ -87,6 +89,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
+    const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly)
 
     const commandCentre = moorhenGlobalInstance.getCommandCentre();
     const timeCapsule = moorhenGlobalInstance.getTimeCapsule();
@@ -234,7 +237,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                     setSpeedDialOpen(!speedDialOpen);
                 }}
                 sx={{
-                    display: props.viewOnly ? "none" : "flex",
+                    display: viewOnly ? "none" : "flex",
                     position: "absolute",
                     top: canvasTop + convertRemToPx(0.5),
                     left: canvasLeft + convertRemToPx(0.5),
@@ -316,14 +319,17 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                         <Popover className="moorhen-nav-popover" style={{ maxWidth: convertViewtoPx(35, width) }}>
                             <Popover.Body>
                                 {navBarActiveMenu === "File" && (
-                                    <MoorhenFileMenu dropdownId="File" videoRecorderRef={videoRecorderRef} />
+                                    <MoorhenFileMenu dropdownId="File" 
+                                    videoRecorderRef={videoRecorderRef} 
+                                    extraFileMenuItems={props.extraFileMenuItems} 
+                                />
                                 )}
                         
                                 {navBarActiveMenu === "Edit" && (
-                                    <MoorhenEditMenu dropdownId="Edit" />
+                                    <MoorhenEditMenu dropdownId="Edit" extraEditMenuItems={props.extraEditMenuItems} />
                                 )}
                                 {navBarActiveMenu === "Calculate" && (
-                                    <MoorhenCalculateMenu dropdownId="Calculate" />
+                                    <MoorhenCalculateMenu dropdownId="Calculate" extraCalculateMenuItems={props.extraCalculateMenuItems} />
                                 )}
                                 {navBarActiveMenu === "Ligand" && (
                                     <MoorhenLigandMenu dropdownId="Ligand"/>
