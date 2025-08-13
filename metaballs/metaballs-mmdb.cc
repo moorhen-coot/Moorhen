@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <set>
 #include <stdlib.h>
-#include "Cartesian.h"
+#include "cartesian.h"
 #include <vector>
 #include <utility>
 #include <map>
