@@ -35,7 +35,7 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map",
-    "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map",
+    "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map --no-optimization-minimize --no-optimization-concatenate-modules",
     "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md",
     "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
     "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
