@@ -20,7 +20,7 @@ import { MoorhenPreferences } from "../components/managers/preferences/MoorhenPr
  * 
  */
 
-class MoorhenGlobalInstance {
+export class MoorhenGlobalInstance {
 
     private commandCentre: moorhen.CommandCentre;
     private commandCentreRef: React.RefObject<moorhen.CommandCentre>;
@@ -91,6 +91,11 @@ class MoorhenGlobalInstance {
 
     public getPreferences(): MoorhenPreferences {
         return this.preferences;
+    }
+
+    public setPaths(urlPrefix: string, monomerLibrary: string): void {
+        this.paths.urlPrefix = urlPrefix;
+        this.paths.monomerLibrary = monomerLibrary;
     }
 
     public setAceDRGInstance(aceDRGInstance: moorhen.AceDRGInstance): void {

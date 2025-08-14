@@ -27,7 +27,7 @@ import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSl
 import { setRefinementSelection } from "../store/refinementSettingsSlice"
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager"
 import { setRequestDrawScene } from "../store/glRefSlice"
-import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance"
+import { useMoorhenGlobalInstance } from "../InstanceManager";
 import { useWindowEventListener } from "../hooks/useWindowEventListener"
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG"
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
@@ -225,6 +225,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const dispatch = useDispatch()
     const store = useStore()
+    const moorhenGlobalInstance = useMoorhenGlobalInstance()
     const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
     const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef()
 
@@ -338,9 +339,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
             if (!userPreferencesMounted) {
                 return
             }
-
-            moorhenGlobalInstance.paths.urlPrefix = urlPrefix
-            moorhenGlobalInstance.paths.monomerLibrary = monomerLibraryPath
+            moorhenGlobalInstance.setPaths(urlPrefix, monomerLibraryPath)
             moorhenGlobalInstance.startInstance(
                 dispatch,
                 store,
