@@ -1,8 +1,6 @@
 import { useEffect,useState,forwardRef} from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
-import { useSelector } from "react-redux";
-import { useCommandCentre } from "../../InstanceManager";
+import { useTimeCapsule } from "../../InstanceManager";
 
 type MoorhenBackupSelectPropsType = {
     height?: string;
