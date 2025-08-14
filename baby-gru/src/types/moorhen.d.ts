@@ -1148,7 +1148,7 @@ export namespace moorhen {
             atomInfoIds: any[]
         }
         globalUI: {
-            globalInstanceIsReady: boolean;
+            isGlobalInstanceReady: boolean;
             busy: boolean;
         }
     }

@@ -193,12 +193,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
         cursorStyle: state.hoveringStates.cursorStyle,
     }))
 
-    const { cootInitialized, userPreferencesMounted, activeMap, globalInstanceIsReady } = useSelector(
+    const { cootInitialized, userPreferencesMounted, activeMap, isGlobalInstanceReady } = useSelector(
         (state: moorhen.State) => ({
             cootInitialized: state.generalStates.cootInitialized,
             userPreferencesMounted: state.generalStates.userPreferencesMounted,
             activeMap: state.generalStates.activeMap,
-            globalInstanceIsReady: state.globalUI.globalInstanceIsReady,
+            isGlobalInstanceReady: state.globalUI.isGlobalInstanceReady,
         })
     )
 
@@ -455,7 +455,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }
 
     // ========== Loading Screen ==========
-    if (!globalInstanceIsReady) {
+    if (!isGlobalInstanceReady) {
         return (
             <Backdrop
                 sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}

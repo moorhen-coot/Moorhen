@@ -24,6 +24,7 @@ export const MoorhenSnackBarManager = () => {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const isAnimatingTrajectory = useSelector((state: moorhen.State) => state.generalStates.isAnimatingTrajectory)
     const isShowingTomograms = useSelector((state: moorhen.State) => state.generalStates.isShowingTomograms)
+    const isGlobalInstanceReady = useSelector((state: moorhen.State) => state.globalUI.isGlobalInstanceReady)
     const commandCentre = moorhenGlobalInstance.getCommandCentre();
     const commandCentreRef = moorhenGlobalInstance.getCommandCentreRef();
 
@@ -146,11 +147,18 @@ export const MoorhenSnackBarManager = () => {
     }, [residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms])
 
     useEffect(() => {
-        if (cootInitialized && userPreferencesMounted) {
-            const shortCut = JSON.parse(shortCuts as string).show_shortcuts
-            enqueueSnackbar(`Press ${getTooltipShortcutLabel(shortCut)} to show help`, {variant: 'info'})
+        if (isGlobalInstanceReady) {
+         const shortCut = JSON.parse(shortCuts as string).show_shortcuts
+            try {
+                enqueueSnackbar(`Press ${getTooltipShortcutLabel(shortCut)} to show help`, {variant: 'info'})
+            } catch (error) {
+                console.error("Error parsing shortcuts:", error)
+                const json = JSON.parse(shortCuts)
+                console.log("Parsed Shortcuts", json, "keys", Object.keys(json))
+
+            }
         }
-    }, [cootInitialized, userPreferencesMounted])
+    }, [isGlobalInstanceReady])
 
     useEffect(() => {
         document.addEventListener('atomClicked', handleAtomClicked)

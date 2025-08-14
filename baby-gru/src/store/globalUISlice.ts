@@ -2,12 +2,12 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface userInterface {
     busy: boolean;
-    globalInstanceIsReady: boolean;
+    isGlobalInstanceReady: boolean;
 }
 
 const initialState: userInterface = {
     busy: false,
-    globalInstanceIsReady: false
+    isGlobalInstanceReady: false
 };
 
 const globalUISlice = createSlice({
@@ -18,7 +18,7 @@ const globalUISlice = createSlice({
             state.busy = action.payload;
         },
         setGlobalInstanceReady: (state, action: PayloadAction<boolean>) => {
-            state.globalInstanceIsReady = action.payload;
+            state.isGlobalInstanceReady = action.payload;
         }
     }
 });

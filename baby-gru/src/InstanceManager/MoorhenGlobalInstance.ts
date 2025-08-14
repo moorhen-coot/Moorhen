@@ -149,10 +149,10 @@ class MoorhenGlobalInstance {
                 },
             })
             this.setCommandCentre(newCommandCentre)
-            dispatch(setGlobalInstanceReady(true))
-            
             await newCommandCentre.init()
         }
+        console.log("Global instance is ready CommandCentre:", this.getCommandCentreRef().current)
+        dispatch(setGlobalInstanceReady(true))
     }
 
     public cleanup(): void {
