@@ -43,10 +43,10 @@ export class MoorhenGlobalInstance {
     
     public paths: {
         urlPrefix: string;
-        monomerLibrary: string;
+        monomerLibraryPath: string;
     } = {
         urlPrefix: "",
-        monomerLibrary: ""
+        monomerLibraryPath: ""
     };
 
     public setCommandCentre(commandCentre: moorhen.CommandCentre): void {
@@ -95,7 +95,7 @@ export class MoorhenGlobalInstance {
 
     public setPaths(urlPrefix: string, monomerLibrary: string): void {
         this.paths.urlPrefix = urlPrefix;
-        this.paths.monomerLibrary = monomerLibrary;
+        this.paths.monomerLibraryPath = monomerLibrary;
     }
 
     public setAceDRGInstance(aceDRGInstance: moorhen.AceDRGInstance): void {

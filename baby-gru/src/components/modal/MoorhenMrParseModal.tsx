@@ -10,7 +10,7 @@ import {
     DownloadOutlined,
 } from "@mui/icons-material";
 import Fasta from "biojs-io-fasta";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths  } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { modalKeys } from "../../utils/enums";
@@ -105,9 +105,8 @@ export const MoorhenMrParseModal = () => {
 
     const dispatch = useDispatch();
     const store = useStore();
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
-
+    const commandCentre = useCommandCentre();
+    const monomerLibraryPath = usePaths().monomerLibraryPath;
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const visibleMolecules = useSelector((state: moorhen.State) => state.molecules.visibleMolecules);

@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenSlider } from "../inputs";
@@ -14,7 +14,7 @@ export const MoorhenRandomJiggleBlurMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
     const dispatch = useDispatch()
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
     const maps = useSelector((state: moorhen.State) => state.maps)

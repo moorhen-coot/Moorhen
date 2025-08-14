@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { Form, Button } from "react-bootstrap";
 import { useSelector } from 'react-redux';
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
@@ -15,7 +15,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const commandCentre = useCommandCentre()
 
     const handleClick = useCallback(async (cootCommand: string) => {
         if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {

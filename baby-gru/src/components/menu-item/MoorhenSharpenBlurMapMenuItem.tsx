@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm"
@@ -21,7 +21,7 @@ export const MoorhenSharpenBlurMapMenuItem = () => {
     const resampleFactorRef = useRef<string>(null)
     const selectRef = useRef<HTMLSelectElement>(null)
     const useResampleSwitchRef = useRef<HTMLInputElement>(null)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
     
     const [useResample, setUseResample] = useState<boolean>(false)
 

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button, Stack, InputGroup } from 'react-bootstrap';
 import { useDispatch, useSelector } from "react-redux";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -28,7 +28,7 @@ export const MoorhenWaterValidation = () => {
     const [maxDist, setMaxDist] = useState<number>(3.5)
     const [ignorePartOcc, setIgnorePartOcc] = useState<boolean>(false)
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const commandCentre = useCommandCentre()
 
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)

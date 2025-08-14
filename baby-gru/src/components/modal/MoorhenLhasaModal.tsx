@@ -3,7 +3,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
 import { Backdrop } from "@mui/material";
 import { Spinner, Stack } from "react-bootstrap";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { LhasaComponent } from '../../LhasaReact/src/Lhasa';
 import { modalKeys } from "../../utils/enums";
@@ -27,9 +27,8 @@ const LhasaWrapper = (props: {
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
 
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const dispatch = useDispatch()
 
     const { enqueueSnackbar } = useSnackbar()
@@ -127,7 +126,7 @@ export const MoorhenLhasaModal = () => {
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;    
+    const urlPrefix = usePaths().urlPrefix;    
 
     const [busy, setBusy] = useState<boolean>(false)
 

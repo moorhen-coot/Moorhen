@@ -7,7 +7,7 @@ import { ResizableBox } from "react-resizable";
 import { moorhen } from "../../types/moorhen";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
 import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { usePaths } from "../../InstanceManager";
 import "./MoorhenDraggableModalBase.css";
 
 type MoorhenDraggableModalBaseProps = {
@@ -131,7 +131,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         enforceMaxBodyDimensions = true,
     } = { ...props };
 
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
+    const urlPrefix = usePaths().urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);

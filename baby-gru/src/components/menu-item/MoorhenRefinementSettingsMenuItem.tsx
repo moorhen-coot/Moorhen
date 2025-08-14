@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react"
 import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { InfoOutlined } from "@mui/icons-material"
+import { useCommandCentre } from "../../InstanceManager"
 import { moorhen } from "../../types/moorhen"
 import { setAnimateRefine, setEnableRefineAfterMod, setRefinementSelection, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints } from "../../store/refinementSettingsSlice"
 import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 export const MoorhenRefinementSettingsMenuItem = () => {
 
@@ -24,7 +24,7 @@ export const MoorhenRefinementSettingsMenuItem = () => {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     useEffect(() => {
         const fetchInitialData = async () => {

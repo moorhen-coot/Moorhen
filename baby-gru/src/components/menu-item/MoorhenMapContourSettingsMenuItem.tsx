@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { setDefaultMapSamplingRate, setMapLineWidth , setDefaultMapLitLines, setDefaultMapSurface, setReContourMapOnlyOnMouseUp } from "../../store/mapContourSettingsSlice";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = []
@@ -36,7 +36,7 @@ export const MapContourSettingsMenuItem = (props: {
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines)
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface)
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     const [mapSampling, setMapSampling] = useState<number>(() => convertPercentageToSamplingRate(defaultMapSamplingRate, true))
 

@@ -2,7 +2,7 @@ import { useCallback, useRef } from "react"
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { useSelector, useDispatch } from 'react-redux';
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { getResidueInfo, convertViewtoPx } from '../../utils/utils'
 import { residueCodesOneToThree } from '../../utils/enums'
 import { libcootApi } from "../../types/libcoot";
@@ -36,7 +36,7 @@ export const MoorhenValidation = (props:{chartId: string}) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const commandCentre = useCommandCentre()
 
     const chartRef = useRef(null);
 

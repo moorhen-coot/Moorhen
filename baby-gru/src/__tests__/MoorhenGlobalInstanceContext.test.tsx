@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MoorhenGlobalInstanceProvider } from '../InstanceManager/MoorhenGlobalInstanceContext';
-import { MoorhenGlobalInstance } from '../InstanceManager/MoorhenGlobalInstance';
-import { useMoorhenGlobalInstance } from '../hooks/useMoorhenGlobalInstance';
+import { MoorhenGlobalInstance, useMoorhenGlobalInstance } from '../InstanceManager';
 
 // Mock component to test the hook
 const TestComponent: React.FC = () => {

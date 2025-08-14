@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 're
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, TextField } from "@mui/material";
 import { useDispatch, useSelector } from 'react-redux';
+import { usePaths, useMoorhenGlobalInstance } from '../../InstanceManager';
 import { moorhen } from "../../types/moorhen";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { modalKeys } from '../../utils/enums';
 import { hideModal } from '../../store/modalsSlice';
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -247,9 +248,9 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
+    const moorhenGlobalInstance = useMoorhenGlobalInstance()
     const aceDRGInstance = moorhenGlobalInstance.getAceDRGInstance() 
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
     

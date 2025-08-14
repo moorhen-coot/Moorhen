@@ -21,7 +21,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useMoorhenGlobalInstance } from "../../InstanceManager";
 import { MoorhenFileMenu } from "./MoorhenFileMenu";
 import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
 import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
@@ -91,6 +91,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
     const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly)
 
+    const moorhenGlobalInstance = useMoorhenGlobalInstance();
     const commandCentre = moorhenGlobalInstance.getCommandCentre();
     const timeCapsule = moorhenGlobalInstance.getTimeCapsule();
     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();

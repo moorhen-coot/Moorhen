@@ -7,8 +7,14 @@ export {
 // Hooks for accessing the context
 export { 
     useMoorhenGlobalInstance,
-    getMoorhenGlobalInstance 
-} from '../hooks/useMoorhenGlobalInstance';
+
+} from './useMoorhenGlobalInstance';
+
+export {    
+    useTimeCapsule,
+    useCommandCentre,
+    useCommandAndCapsule,
+    usePaths } from './hooks'
 
 // Re-export the class for convenience
 export { MoorhenGlobalInstance } from './MoorhenGlobalInstance';

@@ -27,7 +27,7 @@ import { setEnableAtomHovering, setHoveredAtom } from "../store/hoveringStatesSl
 import { setRefinementSelection } from "../store/refinementSettingsSlice"
 import { MoorhenSnackBarManager } from "../components/snack-bar/MoorhenSnackBarManager"
 import { setRequestDrawScene } from "../store/glRefSlice"
-import { useMoorhenGlobalInstance } from "../InstanceManager";
+import { useCommandAndCapsule, useMoorhenGlobalInstance } from "../InstanceManager";
 import { useWindowEventListener } from "../hooks/useWindowEventListener"
 import { MoorhenWebMG } from "./webMG/MoorhenWebMG"
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
@@ -226,8 +226,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const dispatch = useDispatch()
     const store = useStore()
     const moorhenGlobalInstance = useMoorhenGlobalInstance()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef()
+    const { commandCentre, timeCapsuleRef } = useCommandAndCapsule()
 
     const onUserPreferencesChange = useCallback(
         (key: string, value: unknown) => {

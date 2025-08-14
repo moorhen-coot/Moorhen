@@ -73,6 +73,7 @@ import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import { setBusy } from './store/globalUISlice';
 import jsonValidationReducer from './store/jsonValidation'
 import mrParseSliceReducer from './store/mrParseSlice'
+import { MoorhenGlobalInstanceProvider } from './InstanceManager';
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
@@ -114,6 +115,6 @@ export {
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
     setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, 
-    setBusy
+    setBusy, MoorhenGlobalInstanceProvider
 
 };

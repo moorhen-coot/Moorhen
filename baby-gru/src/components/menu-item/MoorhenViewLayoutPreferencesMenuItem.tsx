@@ -10,6 +10,7 @@ import {
     rectSwappingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { usePaths } from "../../InstanceManager"
 import { get_grid } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen"
 import {
@@ -19,12 +20,11 @@ import {
     setThreeWayViewOrder,
 } from "../../store/sceneSettingsSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 function SortableItem(props: { id: string, urlPrefix: string }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.id })
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
+    const urlPrefix = usePaths().urlPrefix;
 
     let bgcolor
     if (isDark) bgcolor = "#5C5C5C"
@@ -115,7 +115,7 @@ export const MoorhenViewLayoutPreferencesMenuItem = (props: { popoverPlacement?:
         (state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns
     )
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
+    const urlPrefix = usePaths().urlPrefix;
 
     let theTiles = ["Z", "X", "Y", " "]
     if (threeWayViewOrder && threeWayViewOrder.length === 4) theTiles = threeWayViewOrder.split("")

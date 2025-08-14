@@ -1,6 +1,6 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+import { useCommandCentre } from '../../InstanceManager';
 import { libcootApi } from '../../types/libcoot';
 import { moorhen } from '../../types/moorhen';
 import { setOrigin } from "../../store/glRefSlice"
@@ -10,7 +10,7 @@ import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBa
 export const MoorhenUnmodelledBlobs = () => {
 
     const dispatch = useDispatch()
-    const commandCentre = moorhenGlobalInstance.getCommandCentre()
+    const commandCentre = useCommandCentre();
 
     //FIXME - RMSD cutoff should be user settable.
     async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
@@ -20,7 +20,7 @@ export const MoorhenUnmodelledBlobs = () => {
             returnType:'interesting_places_data',
             commandArgs:[selectedModel, selectedMap, 1.4]
         }
-        const response = await commandCentre.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
+        const response = await commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
         const blobs = response.data.result.result
         return blobs
     }

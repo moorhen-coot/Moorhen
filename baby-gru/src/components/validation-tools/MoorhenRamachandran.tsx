@@ -7,7 +7,7 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 
 interface MoorhenRamachandranProps {
     resizeTrigger?: boolean;
@@ -16,8 +16,8 @@ interface MoorhenRamachandranProps {
 }
 
 export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
-    const commandCentre = moorhenGlobalInstance.getCommandCentre()
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
+    const commandCentre = useCommandCentre();
+    const urlPrefix = usePaths().urlPrefix;
     
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
     const ramaPlotDivRef = useRef<HTMLDivElement>(null);
@@ -424,7 +424,7 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
             return
         }
         const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-        const response = await commandCentre.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+        const response = await commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
         setRamaPlotData(response.data.result.result)
     }, [])
 

@@ -19,7 +19,6 @@ import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenReduxStore } from "../moorhen";
-import { moorhenGlobalInstance } from "../InstanceManager/MoorhenGlobalInstance";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -39,7 +38,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre> = null, store:Store = null, molecules: moorhen.Molecule[] = null, maps: moorhen.Map[] = null) {
         this.store = store ? store : MoorhenReduxStore;
-        this.commandCentre = commandCentre? commandCentre : moorhenGlobalInstance.getCommandCentreRef();
+        this.commandCentre = commandCentre
         this.molecules = molecules ? molecules : MoorhenReduxStore.getState().molecules.moleculeList;
         this.maps = maps ? maps : MoorhenReduxStore.getState().maps;
     }

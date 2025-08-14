@@ -3,11 +3,12 @@ import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import parse from 'html-react-parser'
 import { Autocomplete, createFilterOptions, MenuItem, TextField } from "@mui/material";
+import { usePaths } from "../../InstanceManager";
 import { convertViewtoPx } from "../../utils/utils";
 import { modalKeys } from "../../utils/enums";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 const shortCutMouseActions = {
     open_context_menu: ['circle-right-mouse-click', 'two-finger-tap'],
@@ -30,7 +31,7 @@ export const MoorhenControlsModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix
+    const urlPrefix = usePaths().urlPrefix
 
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false)
     const [svgString, setSvgString] = useState<string | null>(null)

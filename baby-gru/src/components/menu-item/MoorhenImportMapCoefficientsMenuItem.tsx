@@ -2,7 +2,7 @@ import { Dispatch, RefObject, SetStateAction, useCallback, useRef, useState } fr
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { batch, useDispatch, useSelector, useStore } from 'react-redux';
 import { useSnackbar } from "notistack"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { setActiveMap } from "../../store/generalStatesSlice"
 import { addMap } from "../../store/mapsSlice"
@@ -18,7 +18,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
 
     const dispatch = useDispatch()
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const commandCentre = useCommandCentre()
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const maps = useSelector((state: moorhen.State) => state.maps)

@@ -1,11 +1,10 @@
 import { useCallback, useRef } from "react"
 import { Button, Row, Stack } from "react-bootstrap"
 import { useSnackbar } from "notistack"
+import { useCommandAndCapsule } from "../../InstanceManager"
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { useSelector } from "react-redux"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
 
 export const MoorhenBackupsMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -14,7 +13,8 @@ export const MoorhenBackupsMenuItem = (props: {
     loadSession: (sessionDataString: string) => Promise<void>;
 }) => {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null)
-    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef()
+    const {commandCentre, timeCapsuleRef} = useCommandAndCapsule()
+
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -22,8 +22,8 @@ export const MoorhenBackupsMenuItem = (props: {
         if (backupSelectRef.current.value) {
             try {
                 const key = backupSelectRef.current.value
-                const backupData = await timeCapsule.current.retrieveBackup(key) as string
-                props.commandCentre.current.history.reset()
+                const backupData = await timeCapsuleRef.current.retrieveBackup(key) as string
+                commandCentre.current.history.reset()
                 props.loadSession(backupData)
             } catch (err) {
                 enqueueSnackbar("Error loading the session", {variant: "error"})
@@ -33,7 +33,7 @@ export const MoorhenBackupsMenuItem = (props: {
 
         document.body.click()
 
-    }, [props.setPopoverIsShown, props.loadSession, timeCapsule])
+    }, [props.setPopoverIsShown, props.loadSession, timeCapsuleRef])
 
     const panelContent = <>
         <Row style={{ width: '30rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>

@@ -14,7 +14,7 @@ import { addGeneralRepresentation, addMolecule, removeCustomRepresentation, remo
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenColourRule } from '../../utils/MoorhenColourRule';
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+import { useCommandCentre, usePaths} from '../../InstanceManager';
 import { MoorhenHeaderInfoCard } from './MoorhenHeaderInfoCard';
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
@@ -47,8 +47,8 @@ export type clickedResidueType = {
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
 
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
+    const commandCentre  = useCommandCentre();
+    const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
@@ -928,7 +928,7 @@ const CustomRepresentationChip = (props: {
 }) => {
     
     const { representation, molecule } = props
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix
+    const urlPrefix = usePaths().urlPrefix
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false)
     

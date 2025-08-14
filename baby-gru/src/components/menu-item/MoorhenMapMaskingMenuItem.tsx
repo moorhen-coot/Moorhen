@@ -3,7 +3,7 @@ import { Form, FormSelect } from "react-bootstrap";
 import { batch, useDispatch, useSelector, useStore } from 'react-redux';
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
@@ -35,7 +35,7 @@ export const MoorhenMapMaskingMenuItem = () => {
     const chainSelectRef = useRef<null | HTMLSelectElement>(null)
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidInputRef = useRef<null | HTMLInputElement>(null)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { useSelector, useDispatch, useStore } from 'react-redux';
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
@@ -18,13 +18,13 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
 
     const dispatch = useDispatch()
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
+    const commandCentre = useCommandCentre()
+
     
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;  
+    const { urlPrefix, monomerLibraryPath } = usePaths();
 
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {

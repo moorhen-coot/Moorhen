@@ -3,16 +3,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
+import { useMoorhenGlobalInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
 import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
-import { setQuat, setOrigin, setRequestDrawScene, setZoom,
+import { setQuat, setOrigin, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+
+
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -49,7 +51,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
-    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef()
+    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)

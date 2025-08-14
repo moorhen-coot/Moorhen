@@ -9,7 +9,7 @@ import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setDraggableMolecule } from "../../store/glRefSlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     HTMLDivElement, 
@@ -25,7 +25,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     const draggingDirty = useRef<boolean>(false)
     const refinementDirty = useRef<boolean>(false)
     const autoClearRestraintsRef = useRef<boolean>(true)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)

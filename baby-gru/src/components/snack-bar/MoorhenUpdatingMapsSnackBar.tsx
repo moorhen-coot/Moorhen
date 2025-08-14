@@ -4,7 +4,7 @@ import { SnackbarContent, useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { disableUpdatingMaps, setCurrentScores } from "../../store/moleculeMapUpdateSlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenUpdatingMapsManager = () => {
 
@@ -19,7 +19,7 @@ export const MoorhenUpdatingMapsManager = () => {
     const foFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.foFcMap)
     const twoFoFcMap = useSelector((state: moorhen.State) => state.moleculeMapUpdate.twoFoFcMap)
     const uniqueMaps = useSelector((state: moorhen.State) => state.moleculeMapUpdate.uniqueMaps)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch()
 

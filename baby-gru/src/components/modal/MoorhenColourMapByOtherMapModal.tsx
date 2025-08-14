@@ -3,17 +3,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "react-bootstrap";
 import { Stack } from "@mui/material";
 import { Chart, registerables } from "chart.js";
+import { moorhen } from "../../types/moorhen";
+import { useCommandCentre } from "../../InstanceManager";
 import { usePersistent, usePersistentState, dispatchPersistentStates } from "../../store/menusSlice";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenGradientPicker } from "../inputs";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+
 
 Chart.register(...registerables);
 
@@ -24,7 +24,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const chartRef = useRef<Chart | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const commandCentre = moorhenGlobalInstance.getCommandCentre();
+    const commandCentre  = useCommandCentre();
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
@@ -82,7 +82,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
     };
 
     const handleApplyColourTable = async () => {
-        await commandCentre.cootCommand(
+        await commandCentre.current.cootCommand(
             {
                 command: "shim_set_colour_map_for_map_coloured_by_other_map",
                 commandArgs: colourTable,

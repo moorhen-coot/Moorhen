@@ -5,7 +5,7 @@ import { useSnackbar } from "notistack";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useTimeCapsule } from "../../InstanceManager";
 
 export const MoorhenStepRefinementMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
@@ -13,7 +13,7 @@ export const MoorhenStepRefinementMenuItem = (props: {
     
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null)
-    const timeCapsuleRef = moorhenGlobalInstance.getTimeCapsuleRef();
+    const timeCapsuleRef = useTimeCapsule()
 
     const { enqueueSnackbar } = useSnackbar()
 

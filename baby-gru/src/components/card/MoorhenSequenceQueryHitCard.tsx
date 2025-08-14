@@ -8,7 +8,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { addMolecule } from "../../store/moleculesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { usePaths, useCommandCentre} from "../../InstanceManager";
 
 export const MoorhenQueryHitCard = (props: { 
     data: GetPolimerInfoQuery;
@@ -24,9 +24,8 @@ export const MoorhenQueryHitCard = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
 
     const dispatch = useDispatch()
 

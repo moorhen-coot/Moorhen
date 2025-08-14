@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
 import { setOrigin, setZoom, setTexturedShapes } from "../../store/glRefSlice"
 import { appendOtherData } from '../../WebGLgComponents/buildBuffers'
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
@@ -25,7 +25,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const frameDataRef = useRef(null)
     const framesRef = useRef([])
     const iFrameRef = useRef<number>(0)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     const [progressBufferedFrames, setProgressBufferedFrames] = useState<{value: number; label: string}[]>([])
     const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(false)

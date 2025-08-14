@@ -4,7 +4,7 @@ import { useSelector, useDispatch, useStore } from "react-redux"
 import { useSnackbar } from "notistack"
 import {  CenterFocusWeakOutlined,  VisibilityOutlined, DownloadOutlined } from '@mui/icons-material'
 import { Slider,Typography } from '@mui/material'
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
+import { useCommandCentre, usePaths } from "../../InstanceManager"
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, convertViewtoPx, readTextFile } from '../../utils/utils'
 import { modalKeys } from "../../utils/enums"
@@ -109,9 +109,8 @@ export const MoorhenMrBumpModal = () => {
     const filesRef = useRef<null | HTMLInputElement>(null)
 
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const { enqueueSnackbar } = useSnackbar()
 
     const dispatch = useDispatch()

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useCommandCentre } from '../../InstanceManager';
 import { version } from '../../version'
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+
 
 
 export const MoorhenAboutMenuItem = () => {
 
     const [is64Bit, setIs64Bit] = useState<boolean>(false)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
     useEffect(() => {
         const getIs64bit = async () => {

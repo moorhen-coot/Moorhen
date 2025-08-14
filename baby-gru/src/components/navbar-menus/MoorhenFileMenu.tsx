@@ -21,7 +21,7 @@ import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { modalKeys } from "../../utils/enums";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, useMoorhenGlobalInstance, usePaths, useTimeCapsule  } from "../../InstanceManager";
 
 interface MoorhenFileMenuProps {
     dropdownId: string;
@@ -47,11 +47,9 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
 
     const { enqueueSnackbar } = useSnackbar();
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
-    const timeCapsule = moorhenGlobalInstance.getTimeCapsuleRef();
-    const paths = moorhenGlobalInstance.paths;
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
-
+    const commandCentre = useCommandCentre();
+    const timeCapsule = useTimeCapsule();
+    const monomerLibraryPath = usePaths().monomerLibraryPath;
     //const mrBumpenuItemProps = { setPopoverIsShown, ...props };
 
     const loadPdbFiles = async (files: FileList) => {
@@ -138,7 +136,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             if (typeof session === "string") {
                 status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
-                    paths.monomerLibrary,
+                    monomerLibraryPath,
                     molecules,
                     maps,
                     commandCentre,
@@ -149,7 +147,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             } else {
                 status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
-                    paths.monomerLibrary,
+                    monomerLibraryPath,
                     molecules,
                     maps,
                     commandCentre,
@@ -184,7 +182,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             files,
             commandCentre,
             store,
-            paths.monomerLibrary,
+            monomerLibraryPath,
             backgroundColor,
             defaultBondSmoothness,
             timeCapsule,
@@ -213,6 +211,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         return timeCapsule.current.createBackup(keyString, sessionString);
     };
 
+    const moorhenGlobalInstance = useMoorhenGlobalInstance();
     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
     const handleRecording = useCallback(() => {
         if (!videoRecorderRef.current) {

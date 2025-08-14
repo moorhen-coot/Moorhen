@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react"
 import { useSelector } from 'react-redux';
 import { Form, FormSelect } from "react-bootstrap";
 import { useSnackbar } from "notistack";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { representationLabelMapping } from "../../utils/enums";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
@@ -20,7 +20,7 @@ export const MoorhenCalculateTrajectoryMenuItem = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const [representationStyle, setRepresentationStyle] = useState<string>("CBs")
 
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
 
 
     const { enqueueSnackbar } = useSnackbar()

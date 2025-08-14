@@ -146,6 +146,9 @@ declare module 'moorhen' {
     let MoorhenContainer: any;
     module.exports = MoorhenContainer;
 
+    let MoorhenGlobalInstanceProvider: any;
+    module.exports = MoorhenGlobalInstanceProvider;
+
     let MoorhenCarbohydrateValidation: any;
     module.exports = MoorhenCarbohydrateValidation;
 

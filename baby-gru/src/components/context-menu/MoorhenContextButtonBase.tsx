@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -113,7 +113,7 @@ export const MoorhenContextButtonBase = (props: {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine)
-    const commandCentre = moorhenGlobalInstance.getCommandCentre()
+    const commandCentre = useCommandCentre()
 
     const dispatch = useDispatch()
 
@@ -121,7 +121,7 @@ export const MoorhenContextButtonBase = (props: {
         dispatch( setHoveredAtom({molecule: null, cid: null}) )
         props.setShowContextMenu(false)
         
-        const cootResult = await commandCentre.cootCommand(cootCommandInput, true)
+        const cootResult = await commandCentre.current.cootCommand(cootCommandInput, true)
         
         props.onCompleted?.(props.selectedMolecule, props.chosenAtom)
         

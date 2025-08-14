@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Button, FormControl, FormGroup, FormLabel, FormSelect } from "react-bootstrap"
 import { useSnackbar } from "notistack"
+import { useCommandCentre, usePaths } from "../../InstanceManager"
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
@@ -9,14 +10,13 @@ import { modalKeys } from "../../utils/enums"
 import { showModal } from "../../store/modalsSlice"
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
+
 
 export const MoorhenOpenLhasaMenuItem = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const [selectedCoordMolNo, setSelectedCoordMolNo] = useState<number>(molecules[0]?.molNo ?? null)
     const [onStartLigandSource, setOnStartLigandSource] = useState<string>('none')
 

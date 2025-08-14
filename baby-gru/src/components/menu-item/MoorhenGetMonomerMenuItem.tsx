@@ -5,7 +5,7 @@ import { useSnackbar } from "notistack";
 import { Autocomplete, CircularProgress, createFilterOptions, MenuItem, Skeleton, TextField } from "@mui/material";
 import parse from 'html-react-parser';
 import { InfoOutlined } from "@mui/icons-material";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
@@ -56,9 +56,8 @@ export const MoorhenGetMonomerMenuItem = (props: {
 }) => {
 
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary;
-
+    const commandCentre = useCommandCentre();
+    const monomerLibraryPath = usePaths().monomerLibraryPath;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)

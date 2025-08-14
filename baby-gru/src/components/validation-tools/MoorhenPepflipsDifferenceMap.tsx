@@ -3,7 +3,7 @@ import { Col, Row, Form, Card, Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 import { MoorhenSlider } from "../inputs";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -18,7 +18,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
     const dispatch = useDispatch();
-    const commandCentre = moorhenGlobalInstance.getCommandCentre();
+    const commandCentre = useCommandCentre();;
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -28,7 +28,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
     const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await commandCentre.cootCommand(
+        await commandCentre.current.cootCommand(
             {
                 returnType: "status",
                 command: "flipPeptide_cid",
@@ -39,7 +39,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
         );
 
         if (enableRefineAfterMod) {
-            await commandCentre.cootCommand(
+            await commandCentre.current.cootCommand(
                 {
                     returnType: "status",
                     command: "refine_residues_using_atom_cid",
@@ -73,7 +73,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
             commandArgs: [selectedModel, selectedMap, selectedRmsd],
         };
 
-        const response = (await commandCentre.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
+        const response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
         const newPepflips = response.data.result.result;
 
         return newPepflips;

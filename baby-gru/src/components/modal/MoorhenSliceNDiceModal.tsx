@@ -15,8 +15,7 @@ import {
     setMoleculeMinBfactor, setNClusters, setPaeFileIsUploaded, setSlicingResults, setThresholdType
  } from "../../store/sliceNDiceSlice"
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
-
+import { useCommandCentre } from "../../InstanceManager"
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
         await molecule.deleteCid(molecule.excludedSelections.join('||'), false)
@@ -159,7 +158,7 @@ export const MoorhenSliceNDiceModal = () => {
     const paeFileContents = useSelector((state: moorhen.State) => state.sliceNDice.paeFileContents)
     const disableFileUploads = useSelector((state: moorhen.State) => state.generalStates.disableFileUpload)
 
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
+    const commandCentre = useCommandCentre()
 
     const dispatch = useDispatch()
 

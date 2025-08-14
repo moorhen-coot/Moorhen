@@ -1,6 +1,6 @@
 import { useEffect, useRef,  useMemo, memo } from "react";
 import { useDispatch } from "react-redux"
-import { moorhenGlobalInstance } from "../../../InstanceManager/MoorhenGlobalInstance";
+import { useMoorhenGlobalInstance } from "../../../InstanceManager";
 import { setUserPreferencesMounted } from "../../../store/generalStatesSlice";
 import { moorhen } from "../../../types/moorhen"
 import { MoorhenPreferences} from "./MoorhenPreferences";
@@ -18,6 +18,7 @@ export const MoorhenPreferencesContainer = memo((props: {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
 }) => {
 
+    const moorhenGlobalInstance = useMoorhenGlobalInstance();
     const localForageInstanceRef = useRef<moorhen.Preferences>(moorhenGlobalInstance.getPreferences());
     const dispatch = useDispatch()
 

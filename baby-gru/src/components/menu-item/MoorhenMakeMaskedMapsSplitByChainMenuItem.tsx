@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useSnackbar } from "notistack";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -19,7 +19,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = () => {
     const dispatch = useDispatch()
     const maps = useSelector((state: moorhen.State) => state.maps)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
     const store = useStore()
 
     const { enqueueSnackbar } = useSnackbar()

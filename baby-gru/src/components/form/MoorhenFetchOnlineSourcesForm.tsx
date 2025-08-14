@@ -11,7 +11,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 import { setBusy } from "../../store/globalUISlice";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
@@ -27,9 +27,8 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const { sources, downloadMaps } = { ...defaultProps, ...props };
     
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 

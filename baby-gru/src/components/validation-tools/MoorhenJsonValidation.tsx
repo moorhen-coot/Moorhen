@@ -11,7 +11,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import {  rgbToHsv,hsvToRgb } from '../../utils/utils';
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 
 export const MoorhenJsonValidation = () => {
 
@@ -21,8 +21,8 @@ export const MoorhenJsonValidation = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const useRamaRestraints = useSelector((state: moorhen.State) => state.refinementSettings.useRamaRefinementRestraints)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const commandCentre = moorhenGlobalInstance.getCommandCentre()
-    const urlPrefix = moorhenGlobalInstance.paths.urlPrefix
+    const commandCentre = useCommandCentre();
+    const urlPrefix = usePaths().urlPrefix
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -39,7 +39,7 @@ export const MoorhenJsonValidation = () => {
     const validationJson = useSelector((state: moorhen.State) => state.jsonValidation.validationJson)
 
     const flipSide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await commandCentre.cootCommand({
+        await commandCentre.current.cootCommand({
             returnType: "status",
             command: "side_chain_180",
             commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`],
@@ -56,7 +56,7 @@ export const MoorhenJsonValidation = () => {
     const handleRefine = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string, method: string, tripleWithRama: boolean) => {
 
         if(tripleWithRama){
-            await commandCentre.cootCommand({
+            await commandCentre.current.cootCommand({
                 command: 'set_use_rama_plot_restraints',
                 commandArgs: [true],
                 returnType: "status"
@@ -67,7 +67,7 @@ export const MoorhenJsonValidation = () => {
 
         if(tripleWithRama){
             //Restore previous setting, whether true or false
-            await commandCentre.cootCommand({
+            await commandCentre.current.cootCommand({
                 command: 'set_use_rama_plot_restraints',
                 commandArgs: [useRamaRestraints],
                 returnType: "status"
@@ -80,7 +80,7 @@ export const MoorhenJsonValidation = () => {
     }
 
     const handleAutoFitRotamer = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await commandCentre.cootCommand({
+        await commandCentre.current.cootCommand({
             returnType: "status",
             command: "fill_partial_residue",
             commandArgs: [

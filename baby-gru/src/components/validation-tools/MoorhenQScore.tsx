@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import { useCallback, useRef } from "react"
 import { ChartEvent, ChartType, TooltipItem } from "chart.js"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance"
+import { useCommandCentre } from "../../InstanceManager"
 import { moorhen } from "../../types/moorhen"
 import { getResidueInfo } from "../../utils/utils"
 import { libcootApi } from "../../types/libcoot"
@@ -13,7 +13,7 @@ import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidget
 export const MoorhenQScore = () => {
 
     const chartRef = useRef(null)
-    const commandCentre = moorhenGlobalInstance.getCommandCentre()
+    const commandCentre = useCommandCentre();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -24,7 +24,7 @@ export const MoorhenQScore = () => {
         if (selectedModel === null || selectedChain === null || selectedChain === null) {
             return null
         }
-        const result = await commandCentre.cootCommand({
+        const result = await commandCentre.current.cootCommand({
             command: 'get_q_score',
             commandArgs: [selectedModel, selectedMap],
             returnType: "validation_data"

@@ -4,7 +4,7 @@ import { TextField } from "@mui/material"
 import { useSelector, useDispatch, useStore } from 'react-redux';
 import { InfoOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack"
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot"
 import { addMolecule } from "../../store/moleculesSlice"
@@ -37,9 +37,8 @@ const MoorhenImportLigandDictionary = (props: {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const store = useStore()
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenGlobalInstance.paths.monomerLibrary
-
+    const commandCentre = useCommandCentre()
+    const monomerLibraryPath = usePaths().monomerLibraryPath
     const {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
@@ -169,7 +168,7 @@ const MoorhenImportLigandDictionary = (props: {
 
 export const MoorhenSMILESToLigandMenuItem = () => {
 
-    const commandCentre = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentre = useCommandCentre();
     const [smile, setSmile] = useState<string>('')
     const [tlc, setTlc] = useState<string>('')
     const [createInstance, setCreateInstance] = useState<boolean>(true)

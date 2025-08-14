@@ -3,7 +3,7 @@ import { Col, Form } from "react-bootstrap";
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useSelector , useDispatch } from "react-redux";
-import { moorhenGlobalInstance } from "../../InstanceManager/MoorhenGlobalInstance";
+import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenSlider } from "../inputs";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
@@ -19,7 +19,7 @@ Chart.register(annotationPlugin);
 export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
 
     const dispatch = useDispatch()
-    const commandCentre = moorhenGlobalInstance.getCommandCentre();
+    const commandCentre = useCommandCentre();;
     const chartRef = useRef(null);
 
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5);
@@ -78,7 +78,7 @@ export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
         }
 
         const promises = [
-            commandCentre.cootCommand(
+            commandCentre.current.cootCommand(
                 {
                     message: "coot_command",
                     command: "difference_map_peaks",
@@ -87,7 +87,7 @@ export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
                 },
                 false
             ),
-            commandCentre.cootCommand(
+            commandCentre.current.cootCommand(
                 {
                     message: "coot_command",
                     command: "get_map_rmsd_approx",

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
 import { atomInfoToResSpec, cidToSpec, getTooltipShortcutLabel, sleep } from '../../utils/utils';
 import { clearResidueSelection, setResidueSelection } from '../../store/generalStatesSlice';
-import { moorhenGlobalInstance } from '../../InstanceManager/MoorhenGlobalInstance';
+import { useCommandCentre } from '../../InstanceManager';
 
 export const MoorhenSnackBarManager = () => {
 
@@ -25,8 +25,7 @@ export const MoorhenSnackBarManager = () => {
     const isAnimatingTrajectory = useSelector((state: moorhen.State) => state.generalStates.isAnimatingTrajectory)
     const isShowingTomograms = useSelector((state: moorhen.State) => state.generalStates.isShowingTomograms)
     const isGlobalInstanceReady = useSelector((state: moorhen.State) => state.globalUI.isGlobalInstanceReady)
-    const commandCentre = moorhenGlobalInstance.getCommandCentre();
-    const commandCentreRef = moorhenGlobalInstance.getCommandCentreRef();
+    const commandCentreRef = useCommandCentre();;
 
     const longJobSnackRef = useRef<SnackbarKey | null>(null)
 
@@ -50,7 +49,7 @@ export const MoorhenSnackBarManager = () => {
     const checkWorkerBusy = useCallback(async () => {
         for (let i = 0; i < 30; i++) {
             await sleep(100)
-            if (commandCentre?.activeMessages.length === 0) {
+            if (commandCentreRef.current?.activeMessages.length === 0) {
                 break
             }
             if (i === 29 && longJobSnackRef.current === null && !isAnimatingTrajectory && !isShowingTomograms) {
@@ -64,15 +63,15 @@ export const MoorhenSnackBarManager = () => {
     }, [isAnimatingTrajectory, isShowingTomograms])
 
     const debouncedClearBusy = useCallback(() => {
-        if (commandCentre?.activeMessages.length === 0 && longJobSnackRef.current !== null) {
+        if (commandCentreRef.current?.activeMessages.length === 0 && longJobSnackRef.current !== null) {
             closeSnackbar(longJobSnackRef.current)
             longJobSnackRef.current = null
         }
     }, []);
 
     useEffect(() => {
-        const messages = commandCentre?.activeMessages.map(item => item?.messageId)
-        if (commandCentre?.activeMessages.length > 0) {
+        const messages = commandCentreRef.current?.activeMessages.map(item => item?.messageId)
+        if (commandCentreRef.current?.activeMessages.length > 0) {
             // Check if any of the jobs in the list spends more than 3 seconds in the queue
             const timeoutId = setTimeout(() => {
                 checkJobInQueueTooLong(messages)
@@ -87,7 +86,7 @@ export const MoorhenSnackBarManager = () => {
     }, [newCommandStart, checkWorkerBusy, checkJobInQueueTooLong])
 
     useEffect(() => {
-        if (commandCentre?.activeMessages.length === 0) {
+        if (commandCentreRef.current?.activeMessages.length === 0) {
             // If in 500 ms the queue is still empty then the worker is not busy anymore
             const timeoutId = setTimeout(debouncedClearBusy, 500)
             return () => {
