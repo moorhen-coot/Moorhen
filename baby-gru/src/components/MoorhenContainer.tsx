@@ -342,8 +342,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
             moorhenGlobalInstance.startInstance(
                 dispatch,
                 store,
-                props.commandCentre ? props.commandCentre.current : null,
-                props.timeCapsuleRef ? props.timeCapsuleRef.current : null,
+                props.commandCentre,
+                props.timeCapsuleRef,
                 {
                     activeMapRef: activeMapRef,
                     providedBackupStorageInstance: backupStorageInstance,
@@ -505,8 +505,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     monomerLibraryPath={monomerLibraryPath}
                     timeCapsuleRef={timeCapsuleRef}
                     commandCentre={commandCentre}
-                >
-                          
+                >                          
                         <MoorhenWebMG
                             ref={glRef}
                             monomerLibraryPath={monomerLibraryPath}

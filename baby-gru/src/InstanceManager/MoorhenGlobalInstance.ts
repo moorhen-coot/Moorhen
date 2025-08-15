@@ -109,8 +109,8 @@ export class MoorhenGlobalInstance {
     public async startInstance(
         dispatch: Dispatch<UnknownAction>,
         store: Store,
-        commandCentre?: moorhen.CommandCentre | null,
-        timeCapsule?: moorhen.TimeCapsule | null,
+        externalCommandCentreRef?: React.RefObject<moorhen.CommandCentre | null>,
+        externalTimeCapsuleRef?: React.RefObject<moorhen.TimeCapsule | null>,
         timeCapsuleConfig?: {
             activeMapRef?: React.RefObject<moorhen.Map | null>
             providedBackupStorageInstance?: moorhen.LocalStorageInstance | null
@@ -124,38 +124,41 @@ export class MoorhenGlobalInstance {
         this.dispatch = dispatch
         this.store = store
 
-        if (timeCapsule) {
-            this.setTimeCapsule(timeCapsule)
-        } else {
-            const activeMapRef = timeCapsuleConfig?.activeMapRef || React.createRef<moorhen.Map | null>()
-            const newTimeCapsule = new MoorhenTimeCapsule(timeCapsuleConfig.moleculesRef, timeCapsuleConfig.mapsRef, activeMapRef, this.store)
-            const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
-                ? timeCapsuleConfig.providedBackupStorageInstance
-                : createLocalStorageInstance("Moorhen-TimeCapsule")
-            newTimeCapsule.storageInstance = backupStorageInstance
-            newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount
-            newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold
-            await newTimeCapsule.init()
-            this.setTimeCapsule(newTimeCapsule)
+        // == Init Time capsule ==
+        const activeMapRef = timeCapsuleConfig?.activeMapRef || React.createRef<moorhen.Map | null>()
+        const newTimeCapsule = new MoorhenTimeCapsule(timeCapsuleConfig.moleculesRef, timeCapsuleConfig.mapsRef, activeMapRef, this.store)
+        const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
+            ? timeCapsuleConfig.providedBackupStorageInstance
+            : createLocalStorageInstance("Moorhen-TimeCapsule")
+        newTimeCapsule.storageInstance = backupStorageInstance
+        newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount
+        newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold
+        await newTimeCapsule.init()
+        this.setTimeCapsule(newTimeCapsule)
+        if (externalTimeCapsuleRef) {
+            externalTimeCapsuleRef.current = this.timeCapsule
         }
 
-        if (commandCentre) {
-            this.setCommandCentre(commandCentre)
-        } else {
-            const newCommandCentre = new MoorhenCommandCentre(this.paths.urlPrefix, null, this.timeCapsuleRef, {
-                onCootInitialized: () => {
-                    this.dispatch(setCootInitialized(true))
-                },
-                onCommandExit: () => {
-                    this.dispatch(toggleCootCommandExit())
-                },
-                onCommandStart: () => {
-                    this.dispatch(toggleCootCommandStart())
-                },
-            })
-            this.setCommandCentre(newCommandCentre)
-            await newCommandCentre.init()
+
+        // == Init Command Centre ==
+        const newCommandCentre = new MoorhenCommandCentre(this.paths.urlPrefix, null, this.timeCapsuleRef, {
+            onCootInitialized: () => {
+                this.dispatch(setCootInitialized(true))
+            },
+            onCommandExit: () => {
+                this.dispatch(toggleCootCommandExit())
+            },
+            onCommandStart: () => {
+                this.dispatch(toggleCootCommandStart())
+            },
+        })
+        this.setCommandCentre(newCommandCentre)
+        if (externalCommandCentreRef) {
+            externalCommandCentreRef.current = this.commandCentre
         }
+        
+        await newCommandCentre.init()
+        
         console.log("Global instance is ready CommandCentre:", this.getCommandCentreRef().current)
         dispatch(setGlobalInstanceReady(true))
     }

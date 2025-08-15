@@ -39,7 +39,11 @@ export const usePreferencePersistence = (preference: PreferenceEntry, localForag
                     if (value !== null && (typeof value === typeof preference.defaultValue)) {
                         dispatch(preference.valueSetter(value));
                     } else {
-                        dispatch(preference.valueSetter(preference.defaultValue));
+                        if (preference.label === 'shortCuts') {
+                            dispatch(preference.valueSetter(JSON.stringify(preference.defaultValue)));
+                        } else {
+                            dispatch(preference.valueSetter(preference.defaultValue));
+                        }
                     }
                 })
                 .catch(err => console.error(`Error retrieving ${preference.label} from local storage:`, err));
