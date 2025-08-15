@@ -1,13 +1,16 @@
 import React from "react"
 import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
+import type { MoorhenGlobalInstanceProviderProps } from "../InstanceManager";
 import type { privateer } from "./privateer";
 import { gemmi } from "./gemmi";
 import { libcootApi } from "./libcoot";
-import type { ContainerProps as ImportedContainerProps } from "./MoorhenContainer";
+import type { ContainerProps  } from "./MoorhenContainer";
+
 
 export namespace moorhen {
 
-    export type ContainerProps = ImportedContainerProps;
+    export type ContainerProps = ContainerProps;
+    export type MoorhenGlobalInstanceProviderProps = MoorhenGlobalInstanceProviderProps;
 
     interface Preferences {
         name: string;
@@ -497,7 +500,7 @@ export namespace moorhen {
         resolution: number;
     }
 
-    interface Map {
+    type Map = {
         getVerticesHistogram(map2:number, nBins?: number): Promise<libcootApi.HistogramInfoJS>;
         setMapWeight(weight?: number): Promise<WorkerResponse>;
         toggleOriginLock(val?: boolean): void;

@@ -177,12 +177,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const glRef = props.glRef ? props.glRef : innerGlRef
-    const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
-    const moleculesRef = props.moleculesRef ? props.moleculesRef : innerMoleculesRef
-    const innerMapsRef = useRef<null | moorhen.Map[]>(null)
-    const mapsRef = props.mapsRef ? props.mapsRef : innerMapsRef
-    const innerActiveMapRef = useRef<null | moorhen.Map>(null)
-    const activeMapRef = props.activeMapRef ? props.activeMapRef : innerActiveMapRef
     const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null)
     const lastHoveredAtomRef = props.lastHoveredAtomRef ? props.lastHoveredAtomRef : innerLastHoveredAtomRef
 
@@ -192,6 +186,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
         hoveredAtom: state.hoveringStates.hoveredAtom,
         cursorStyle: state.hoveringStates.cursorStyle,
     }))
+
+    if (props.moleculesRef) {
+        // eslint-disable-next-line 
+        props.moleculesRef.current = molecules
+    }
 
     const { cootInitialized, userPreferencesMounted, activeMap, isGlobalInstanceReady } = useSelector(
         (state: moorhen.State) => ({
@@ -224,7 +223,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }))
 
     const dispatch = useDispatch()
-    const store = useStore()
+    const store: Store = useStore()
     const moorhenGlobalInstance = useMoorhenGlobalInstance()
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule()
 
@@ -345,18 +344,20 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 props.commandCentre,
                 props.timeCapsuleRef,
                 {
-                    activeMapRef: activeMapRef,
+                    activeMapRef: null,
                     providedBackupStorageInstance: backupStorageInstance,
                     maxBackupCount: maxBackupCount,
                     modificationCountBackupThreshold: modificationCountBackupThreshold,
-                    moleculesRef: moleculesRef,
-                    mapsRef: mapsRef,
+                    moleculesRef: null,
+                    mapsRef: null,
                 }
             )
 
             if (aceDRGInstance) {
                 moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance)
             }
+
+
             dispatch(setBackgroundColor(defaultBackgroundColor))
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate)
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops)
