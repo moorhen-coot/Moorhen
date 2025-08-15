@@ -25,9 +25,15 @@ export const MoorhenPreferencesContainer = memo((props: {
     const restoreDefaults = (defaultValues: moorhen.PreferencesValues)=> {
         localForageInstanceRef.current.localStorageInstance.setItem('version', defaultValues.version)
         Object.keys(PREFERENCES_MAP).forEach(key => {
+            if (PREFERENCES_MAP[key].label === 'shortCuts') {
+                dispatch(
+                    PREFERENCES_MAP[key].valueSetter(JSON.stringify(defaultValues[PREFERENCES_MAP[key].label]))
+                )
+            } else {
                 dispatch(
                     PREFERENCES_MAP[key].valueSetter(defaultValues[PREFERENCES_MAP[key].label])
                 )
+            }
         })
     }
 

@@ -1,4 +1,4 @@
-export const DEFAULT_SHORTCUTS = JSON.stringify({
+export const DEFAULT_SHORTCUTS = {
             decrease_front_clip: {
                 modifiers: [],
                 keyPress: "2",
@@ -215,4 +215,4 @@ export const DEFAULT_SHORTCUTS = JSON.stringify({
                 label: "Show atom info",
                 viewOnly: true,
             },
-        })
+        }
