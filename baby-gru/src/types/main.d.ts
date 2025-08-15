@@ -1,248 +1,176 @@
-import { moorhen as _moorhen } from "./moorhen"
+import type { Store } from "redux"
+import type { moorhen } from "./moorhen"
 import { webGL } from "./mgWebGL";
 
+
 declare module 'moorhen' {
-    let MoorhenStore: any;
-    module.exports = MoorhenStore
+    let MoorhenStore: Store<moorhen.State>;
 
     let setOrigin: any
-    module.exports = setOrigin
 
     let setRequestDrawScene: any
-    module.exports = setRequestDrawScene
 
     let setIsWebGL2: any
-    module.exports = setIsWebGL2
 
     let setActiveMolecule: any
-    module.exports = setActiveMolecule
 
     let setLightPosition: any
-    module.exports = setLightPosition
 
     let setAmbient: any
-    module.exports = setAmbient
 
     let setSpecular: any
-    module.exports = setSpecular
 
     let setDiffuse: any
-    module.exports = setDiffuse
 
     let setSpecularPower: any
-    module.exports = setSpecularPower
 
     let setZoom: any
-    module.exports = setZoom
 
     let setQuat: any
-    module.exports = setQuat
 
     let setFogClipOffset: any
-    module.exports = setFogClipOffset
 
     let setFogStart: any
-    module.exports = setFogStart
 
     let setFogEnd: any
-    module.exports = setFogEnd
 
     let setClipStart: any
-    module.exports = setClipStart
 
     let setClipEnd: any
-    module.exports = setClipEnd
 
     let setShortCutHelp: any
-    module.exports = setShortCutHelp
 
     let triggerRedrawEnv: any
-    module.exports = triggerRedrawEnv
 
     let triggerClearLabels: any
-    module.exports = triggerClearLabels
 
     let setDisplayBuffers: any
-    module.exports = setDisplayBuffers
 
     let setHoverSize: any
-    module.exports = setHoverSize
 
     let setLabelBuffers: any
-    module.exports = setLabelBuffers
 
     let setTexturedShapes: any
-    module.exports = setTexturedShapes
 
     let setElementsIndicesRestrict: any
-    module.exports = setElementsIndicesRestrict
 
     let moleculesReducer: any;
-    module.exports = moleculesReducer
 
     let mapsReducer: any;
-    module.exports = mapsReducer
 
     let mouseSettingsReducer: any;
-    module.exports = mouseSettingsReducer
 
     let backupSettingsReducer: any;
-    module.exports = backupSettingsReducer
 
     let shortcutSettingsReducer: any;
-    module.exports = shortcutSettingsReducer
 
     let labelSettingsReducer: any;
-    module.exports = labelSettingsReducer
 
     let sceneSettingsReducer: any;
-    module.exports = sceneSettingsReducer
 
     let miscAppSettingsReducer: any;
-    module.exports = miscAppSettingsReducer
 
     let generalStatesReducer: any;
-    module.exports = generalStatesReducer
 
     let hoveringStatesReducer: any;
-    module.exports = hoveringStatesReducer
 
     let modalsReducer: any;
-    module.exports = modalsReducer
 
     let mapContourSettingsReducer: any;
-    module.exports = mapContourSettingsReducer
 
     let moleculeMapUpdateReducer: any;
-    module.exports = moleculeMapUpdateReducer
 
     let sharedSessionReducer: any;
-    module.exports = sharedSessionReducer
 
     let refinementSettingsReducer: any;
-    module.exports = refinementSettingsReducer
 
     let lhasaReducer: any;
-    module.exports = lhasaReducer
 
     let sliceNDiceReducer: any;
-    module.exports = sliceNDiceReducer
 
     let glRefSliceReducer: any;
-    module.exports = glRefSliceReducer
 
     let atomInfoCardsReducer: any;
-    module.exports = atomInfoCardsReducer
 
     let overlaysReducer: any;
-    module.exports = overlaysReducer
 
     let menusReducer: any;
-    module.exports = menusReducer
 
-    let MoorhenReduxStore: any;
-    module.exports = MoorhenReduxStore
+    let MoorhenReduxStore: Store;
 
-    let MoorhenContainer: any;
-    module.exports = MoorhenContainer;
+    let MoorhenContainer: React.FC<moorhen.ContainerProps>;
 
-    let MoorhenGlobalInstanceProvider: any;
-    module.exports = MoorhenGlobalInstanceProvider;
+    let MoorhenGlobalInstanceProvider: React.FC<moorhen.MoorhenGlobalInstanceProviderProps>;
 
     let MoorhenCarbohydrateValidation: any;
-    module.exports = MoorhenCarbohydrateValidation;
 
     let MoorhenDifferenceMapPeaks: any;
-    module.exports = MoorhenDifferenceMapPeaks;
 
     let MoorhenFillMissingAtoms: any;
-    module.exports = MoorhenFillMissingAtoms;
 
     let MoorhenJsonValidation: any;
-    module.exports = MoorhenJsonValidation;
 
     let MoorhenLigandValidation: any;
-    module.exports = MoorhenLigandValidation;
 
     let MoorhenMMRRCCPlot: any;
-    module.exports = MoorhenMMRRCCPlot;
 
     let MoorhenPepflipsDifferenceMap: any;
-    module.exports = MoorhenPepflipsDifferenceMap;
 
     let MoorhenQScore: any;
-    module.exports = MoorhenQScore;
 
     let MoorhenRamachandran: any;
-    module.exports = MoorhenRamachandran;
 
     let MoorhenUnmodelledBlobs: any;
-    module.exports = MoorhenUnmodelledBlobs;
 
     let MoorhenValidation: any;
-    module.exports = MoorhenValidation;
 
     let MoorhenWaterValidation: any;
-    module.exports = MoorhenWaterValidation;
 
     let autoOpenFiles: any;
-    module.exports = autoOpenFiles;
 
     let ErrorBoundary: any;
-    module.exports = ErrorBoundary;
 
     let MoorhenDraggableModalBase: any;
-    module.exports = MoorhenDraggableModalBase;
 
     let MoorhenMoleculeSelect: any;
-    module.exports = MoorhenMoleculeSelect;
 
     let MoorhenQuerySequenceModal: any;
-    module.exports = MoorhenQuerySequenceModal;
 
     let MoorhenMapSelect: any;
-    module.exports = MoorhenMapSelect;
-
 
     let MoorhenSlider: any;
-    module.exports = MoorhenSlider;
-
 
     let MoorhenFetchOnlineSourcesForm: any;
-    module.exports = MoorhenFetchOnlineSourcesForm;
 
-    interface MoorhenPreferences extends _moorhen.Preferences { }
+    interface MoorhenPreferences extends moorhen.Preferences { }
     class MoorhenPreferences implements MoorhenPreferences {
-        static defaultPreferencesValues: _moorhen.PreferencesValues;
+        static defaultPreferencesValues: moorhen.PreferencesValues;
     }
-    module.exports.MoorhenPreferences = MoorhenPreferences
 
-    interface MoorhenColourRule extends _moorhen.ColourRule { }
+    interface MoorhenColourRule extends moorhen.ColourRule { }
     class MoorhenColourRule implements MoorhenColourRule {
-        constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
-        static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
-        static initFromDataObject: (data: _moorhen.ColourRuleObject, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, molecule: _moorhen.Molecule) => _moorhen.ColourRule;
+        constructor(ruleType: string, cid: string, color: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>, isMultiColourRule?: boolean, applyColourToNonCarbonAtoms?: boolean)
+        static initFromString: (stringifiedObject: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) => moorhen.ColourRule;
+        static initFromDataObject: (data: moorhen.ColourRuleObject, commandCentre: React.RefObject<moorhen.CommandCentre|null>, molecule: moorhen.Molecule) => moorhen.ColourRule;
         static parseHexToRgba: (hex: string) => [number, number, number, number];
     }
-    module.exports.MoorhenColourRule = MoorhenColourRule
 
-    interface MoorhenMoleculeRepresentation extends _moorhen.MoleculeRepresentation { }
+    interface MoorhenMoleculeRepresentation extends moorhen.MoleculeRepresentation { }
     class MoorhenMoleculeRepresentation implements MoorhenMoleculeRepresentation {
-        constructor(style: _moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>)
+        constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre|null>)
     }
-    module.exports.MoorhenMoleculeRepresentation = MoorhenMoleculeRepresentation
 
-    interface MoorhenTimeCapsule extends _moorhen.TimeCapsule { }
+    interface MoorhenTimeCapsule extends moorhen.TimeCapsule { }
     class MoorhenTimeCapsule implements MoorhenTimeCapsule {
-        constructor(moleculesRef: React.RefObject<_moorhen.Molecule[]>, mapsRef: React.RefObject<_moorhen.Map[]>, activeMapRef: React.RefObject<_moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: any)
-        static getBackupLabel(key: _moorhen.backupKey): string;
+        constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, store: any)
+        static getBackupLabel(key: moorhen.backupKey): string;
         static loadSessionData(
-            sessionData: _moorhen.backupSession,
+            sessionData: moorhen.backupSession,
             monomerLibraryPath: string,
-            molecules: _moorhen.Molecule[],
-            maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            molecules: moorhen.Molecule[],
+            maps: moorhen.Map[],
+            commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
             glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any,
@@ -251,10 +179,10 @@ declare module 'moorhen' {
         static loadSessionFromArrayBuffer(
             sessionArrayBuffer: ArrayBuffer,
             monomerLibraryPath: string,
-            molecules: _moorhen.Molecule[],
-            maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            molecules: moorhen.Molecule[],
+            maps: moorhen.Map[],
+            commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
             glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
@@ -262,10 +190,10 @@ declare module 'moorhen' {
         static loadSessionFromProtoMessage(
             sessionProtoMessage: any,
             monomerLibraryPath: string,
-            molecules: _moorhen.Molecule[],
-            maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            molecules: moorhen.Molecule[],
+            maps: moorhen.Map[],
+            commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
             glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
@@ -273,372 +201,254 @@ declare module 'moorhen' {
         static loadSessionFromJsonString(
             sessionDataString: string,
             monomerLibraryPath: string,
-            molecules: _moorhen.Molecule[],
-            maps: _moorhen.Map[],
-            commandCentre: React.RefObject<_moorhen.CommandCentre|null>,
-            timeCapsuleRef: React.RefObject<_moorhen.TimeCapsule|null>,
+            molecules: moorhen.Molecule[],
+            maps: moorhen.Map[],
+            commandCentre: React.RefObject<moorhen.CommandCentre|null>,
+            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule|null>,
             glRef: React.RefObject<webGL.MGWebGL|null>,
             store: any,
             dispatch: any
         ): Promise<number>;
     }
-    module.exports.MoorhenTimeCapsule = MoorhenTimeCapsule
 
-    interface MoorhenMolecule extends _moorhen.Molecule { }
+    interface MoorhenMolecule extends moorhen.Molecule { }
     class MoorhenMolecule implements MoorhenMolecule {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store?: any, monomerLibrary?: string)
+        constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, reduxStore: Store, monomerLibraryPath: string)
     }
-    module.exports.MoorhenMolecule = MoorhenMolecule
 
-    interface MoorhenMap extends _moorhen.Map { }
+    interface MoorhenMap extends moorhen.Map { }
     class MoorhenMap implements MoorhenMap {
-        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store?: any)
-        static autoReadMtz(source: File, commandCentre: React.RefObject<_moorhen.CommandCentre|null>, glRef: React.RefObject<webGL.MGWebGL|null>, store: any): Promise<_moorhen.Map[]>;
+        constructor(commandCentre: React.RefObject<moorhen.CommandCentre|null>, reduxStore: Store)
+        static autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre|null>, store: Store): Promise<moorhen.Map[]>;
     }
-    module.exports.MoorhenMap = MoorhenMap
 
-    function getMultiColourRuleArgs(molecule: _moorhen.Molecule, ruleType: string): Promise<string>;
-    module.exports = getMultiColourRuleArgs;
+    function getMultiColourRuleArgs(molecule: moorhen.Molecule, ruleType: string): Promise<string>;
 
     function setPositiveMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
-    module.exports = setPositiveMapColours;
 
     function setNegativeMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
-    module.exports = setNegativeMapColours;
 
     function setMapColours(arg0: {molNo: number, rgb: {r: number; g: number; b: number}}): any;
-    module.exports = setMapColours;
 
     function setMapAlpha(arg0: {molNo: number, alpha: number}): any;
-    module.exports = setMapAlpha;
 
     function showMap(arg0: {molNo: number, show: boolean}): any;
-    module.exports = showMap;
 
     function hideMap(arg0: {molNo: number}): any;
-    module.exports = hideMap;
 
     function setContourLevel(arg0: {molNo: number, level: number}): any;
-    module.exports = setContourLevel;
 
     function showMolecule(arg0: {molNo: number, show: boolean}): any;
-    module.exports = showMolecule;
 
     function hideMolecule(arg0: {molNo: number}): any;
-    module.exports = hideMolecule;
 
     function setMapStyle(arg0: {molNo: number, style: "lines" | "solid" | "lit-lines"}): any;
-    module.exports = setMapStyle;
 
     function setMapRadius(arg0: {molNo: number, radius: number}): any;
-    module.exports = setMapRadius;
 
     function setDefaultBackgroundColor(arg0: [number, number, number, number]): any;
-    module.exports = setDefaultBackgroundColor;
 
     function setDrawScaleBar(arg0: boolean): any;
-    module.exports = setDrawScaleBar;
 
     function setDrawCrosshairs(arg0: boolean): any;
-    module.exports = setDrawCrosshairs;
 
     function setDrawFPS(arg0: boolean): any;
-    module.exports = setDrawFPS;
 
     function setDrawMissingLoops(arg0: boolean): any;
-    module.exports = setDrawMissingLoops;
 
     function setDefaultBondSmoothness(arg0: number): any;
-    module.exports = setDefaultBondSmoothness;
 
     function setDrawInteractions(arg0: boolean): any;
-    module.exports = setDrawInteractions;
 
     function setDoSSAO(arg0: boolean): any;
-    module.exports = setDoSSAO;
 
     function setDoEdgeDetect(arg0: boolean): any;
-    module.exports = setDoEdgeDetect;
 
     function setEdgeDetectDepthThreshold(arg0: number): any;
-    module.exports = setEdgeDetectDepthThreshold;
 
     function setEdgeDetectNormalThreshold(arg0: number): any;
-    module.exports = setEdgeDetectNormalThreshold;
 
     function setEdgeDetectDepthScale(arg0: number): any;
-    module.exports = setEdgeDetectDepthScale;
 
     function setEdgeDetectNormalScale(arg0: number): any;
-    module.exports = setEdgeDetectNormalScale;
 
     function setSsaoRadius(arg0: number): any;
-    module.exports = setSsaoRadius;
 
     function setSsaoBias(arg0: number): any;
-    module.exports = setSsaoBias;
 
     function setResetClippingFogging(arg0: boolean): any;
-    module.exports = setResetClippingFogging;
 
     function setClipCap(arg0: boolean): any;
-    module.exports = setClipCap;
 
     function setUseOffScreenBuffers(arg0: boolean): any;
-    module.exports = setUseOffScreenBuffers;
 
     function setDoShadowDepthDebug(arg0: boolean): any;
-    module.exports = setDoShadowDepthDebug;
 
     function setDoShadow(arg0: boolean): any;
-    module.exports = setDoShadow;
 
     function setMultiViewRows(arg0: boolean): any;
-    module.exports = setMultiViewRows;
 
     function setThreeWayViewOrder(arg0: boolean): any;
-    module.exports = setThreeWayViewOrder;
 
     function setMultiViewColumns(arg0: boolean): any;
-    module.exports = setMultiViewColumns;
 
     function setSpecifyMultiViewRowsColumns(arg0: boolean): any;
-    module.exports = setSpecifyMultiViewRowsColumns;
 
     function setDoThreeWayView(arg0: boolean): any;
-    module.exports = setDoThreeWayView;
 
     function setDoAnaglyphStereo(arg0: boolean): any;
-    module.exports = setDoAnaglyphStereo;
 
     function setDoCrossEyedStereo(arg0: boolean): any;
-    module.exports = setDoCrossEyedStereo;
 
     function setDoSideBySideStereo(arg0: boolean): any;
-    module.exports = setDoSideBySideStereo;
 
     function setDoMultiView(arg0: boolean): any;
-    module.exports = setDoMultiView;
 
     function setDoSpin(arg0: boolean): any;
-    module.exports = setDoSpin;
 
     function setDoOutline(arg0: boolean): any;
-    module.exports = setDoOutline;
 
     function setDepthBlurRadius(arg0: number): any;
-    module.exports = setDepthBlurRadius;
 
     function setDepthBlurDepth(arg0: number): any;
-    module.exports = setDepthBlurDepth;
 
     function setDrawAxes(arg0: boolean): any;
-    module.exports = setDrawAxes;
 
     function setDoPerspectiveProjection(arg0: boolean): any;
-    module.exports = setDoPerspectiveProjection;
 
     function setEnableTimeCapsule(arg0: boolean): any;
-    module.exports = setEnableTimeCapsule;
 
     function setMakeBackups(arg0: boolean): any;
-    module.exports = setMakeBackups;
 
     function setMaxBackupCount(arg0: number): any;
-    module.exports = setMaxBackupCount;
 
     function setModificationCountBackupThreshold(arg0: number): any;
-    module.exports = setModificationCountBackupThreshold;
 
     function setHeight(arg0: number): any;
-    module.exports = setHeight;
 
     function setWidth(arg0: number): any;
-    module.exports = setWidth;
 
     function setIsDark(arg0: boolean): any;
-    module.exports = setIsDark;
 
     function setBackgroundColor(arg0: [number, number, number, number]): any;
-    module.exports = setBackgroundColor;
 
-    function setActiveMap(arg0: _moorhen.Map): any;
-    module.exports = setActiveMap;
+    function setActiveMap(arg0: moorhen.Map): any;
 
     function setCootInitialized(arg0: boolean): any;
-    module.exports = setCootInitialized;
 
     function setAppTitle(arg0: string): any;
-    module.exports = setAppTitle;
 
     function setUserPreferencesMounted(arg0: boolean): any;
-    module.exports = setUserPreferencesMounted;
 
     function setDevMode(arg0: boolean): any;
-    module.exports = setDevMode;
 
     function setUseGemmi(arg0: boolean): any;
-    module.exports = setUseGemmi;
 
     function setTheme(arg0: string): any;
-    module.exports = setTheme;
 
     function setViewOnly(arg0: boolean): any;
-    module.exports = setViewOnly;
 
     function setShowBackDropNavBar(arg0: boolean): any;
-    module.exports = setShowBackDropNavBar;
 
     function setCursorStyle(arg0: string): any;
-    module.exports = setCursorStyle;
 
     function setEnableAtomHovering(arg0: boolean): any;
-    module.exports = setEnableAtomHovering;
 
-    function setHoveredAtom(arg0: {molecule: null | _moorhen.Molecule; cid: null | string}): any;
-    module.exports = setHoveredAtom;
+    function setHoveredAtom(arg0: {molecule: null | moorhen.Molecule; cid: null | string}): any;
 
     function addAvailableFontList(arg0: string): any;
-    module.exports = addAvailableFontList;
 
     function setAtomLabelDepthMode(arg0: boolean): any;
-    module.exports = setAtomLabelDepthMode;
 
     function setGLLabelsFontFamily(arg0: string): any;
-    module.exports = setGLLabelsFontFamily;
 
     function setGLLabelsFontSize(arg0: number): any;
-    module.exports = setGLLabelsFontSize;
 
     function setDefaultMapSamplingRate(arg0: number): any;
-    module.exports = setDefaultMapSamplingRate;
 
     function setDefaultMapLitLines(arg0: boolean): any;
-    module.exports = setDefaultMapLitLines;
 
     function setMapLineWidth(arg0: number): any;
-    module.exports = setMapLineWidth;
 
     function setDefaultMapSurface(arg0: boolean): any;
-    module.exports = setDefaultMapSurface;
 
     function setDefaultExpandDisplayCards(arg0: boolean): any;
-    module.exports = setDefaultExpandDisplayCards;
 
     function setUrlPrefix(arg0: string): any;
-    module.exports = setUrlPrefix;
 
     function setTransparentModalsOnMouseOut(arg0: boolean): any;
-    module.exports = setTransparentModalsOnMouseOut;
 
     function setEnableRefineAfterMod(arg0: boolean): any;
-    module.exports = setEnableRefineAfterMod;
 
-    function addMolecule(arg0: _moorhen.Molecule): any;
-    module.exports = addMolecule;
+    function addMolecule(arg0: moorhen.Molecule): any;
 
-    function removeMolecule(arg0: _moorhen.Molecule): any;
-    module.exports = removeMolecule;
+    function removeMolecule(arg0: moorhen.Molecule): any;
 
     function emptyMolecules(): any;
-    module.exports = emptyMolecules;
 
-    function addMoleculeList(arg0: _moorhen.Molecule[]): any;
-    module.exports = addMoleculeList;
+    function addMoleculeList(arg0: moorhen.Molecule[]): any;
 
     function setContourWheelSensitivityFactor(arg0: number): any;
-    module.exports = setContourWheelSensitivityFactor;
 
     function setZoomWheelSensitivityFactor(arg0: number): any;
-    module.exports = setZoomWheelSensitivityFactor;
 
     function setMouseSensitivity(arg0: number): any;
-    module.exports = setMouseSensitivity;
 
     function setShowShortcutToast(arg0: boolean): any;
-    module.exports = setShowShortcutToast;
 
     function setShowHoverInfo(arg0: boolean): any;
-    module.exports = setShowHoverInfo;
 
     function setShortcutOnHoveredAtom(arg0: boolean): any;
-    module.exports = setShortcutOnHoveredAtom;
 
     function setShortCuts(arg0: string): any;
-    module.exports = setShortCuts;
 
     function setShowScoresToast(arg0: boolean): any;
-    module.exports = setShowScoresToast;
 
-    function addMapUpdatingScore(arg0: _moorhen.Map): any;
-    module.exports = addMapUpdatingScore;
+    function addMapUpdatingScore(arg0: moorhen.Map): any;
 
-    function removeMapUpdatingScore(arg0: _moorhen.Map): any;
-    module.exports = removeMapUpdatingScore;
+    function removeMapUpdatingScore(arg0: moorhen.Map): any;
 
-    function overwriteMapUpdatingScores(arg0: _moorhen.Map[]): any;
-    module.exports = overwriteMapUpdatingScores;
+    function overwriteMapUpdatingScores(arg0: moorhen.Map[]): any;
 
-    function addMap(arg0: _moorhen.Map): any;
-    module.exports = addMap;
+    function addMap(arg0: moorhen.Map): any;
 
-    function removeMap(arg0: _moorhen.Map): any;
-    module.exports = removeMap;
+    function removeMap(arg0: moorhen.Map): void;
 
-    function emptyMaps(): any;
-    module.exports = emptyMaps;
+    function emptyMaps(): void;
 
-    function addMapList(arg0: _moorhen.Map[]): any;
-    module.exports = addMapList;
+    function addMapList(arg0: moorhen.Map[]): void;
 
-    function resetSceneSettings(): any;
-    module.exports = resetSceneSettings;
+    function resetSceneSettings(): void;
 
-    function setPAEFileContents(arg0: { fileContents: string; fileName: string }[]): any;
-    module.exports = setPAEFileContents;
+    function setPAEFileContents(arg0: { fileContents: string; fileName: string }[]): void;
 
-    function resetSliceNDiceSlice(): any;
-    module.exports = resetSliceNDiceSlice;
+    function resetSliceNDiceSlice(): void;
 
-    function resetBackupSettings(): any;
-    module.exports = resetBackupSettings;
+    function resetBackupSettings(): void;
 
-    function resetDefaultMouseSettings(): any;
-    module.exports = resetDefaultMouseSettings;
+    function resetDefaultMouseSettings(): void;
 
-    function resetGeneralStates(): any;
-    module.exports = resetGeneralStates;
+    function resetGeneralStates(): void;
 
-    function resetHoveringStates(): any;
-    module.exports = resetHoveringStates;
+    function resetHoveringStates(): void;
 
-    function resetLabelSettings(): any;
-    module.exports = resetLabelSettings;
+    function resetLabelSettings(): void;
 
-    function resetMapContourSettings(): any;
-    module.exports = resetMapContourSettings;
+    function resetMapContourSettings(): void;
 
-    function resetMiscAppSettings(): any;
-    module.exports = resetMiscAppSettings;
+    function resetMiscAppSettings(): void;
 
-    function resetMoleculeMapUpdates(): any;
-    module.exports = resetMoleculeMapUpdates;
+    function resetMoleculeMapUpdates(): void;
 
-    function resetRefinementSettings(): any;
-    module.exports = resetRefinementSettings;
+    function resetRefinementSettings(): void;
 
-    function resetShortcutSettings(): any;
-    module.exports = resetShortcutSettings;
+    function resetShortcutSettings(): void;
 
-    function resetActiveModals(): any;
-    module.exports = resetActiveModals;
+    function resetActiveModals(): void;
 
-    function focusOnModal(): any;
-    module.exports = focusOnModal;
+    function focusOnModal(): void;
 
-    function unFocusModal(): any;
-    module.exports = unFocusModal;
+    function unFocusModal(): void;
 
-    function resetSharedSession(): any;
-    module.exports = resetSharedSession;
+    function resetSharedSession(): void;
 }
