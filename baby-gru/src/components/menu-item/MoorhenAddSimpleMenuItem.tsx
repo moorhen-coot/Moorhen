@@ -19,7 +19,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
     const dispatch = useDispatch()
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
-    const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'NA', 'K', 'MG', 'CA', 'MN', 'FE', 'CO', 'NI', 'CU', 'ZN', 'CL', 'BR', 'IOD' ]
+    const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'NA', 'K', 'MG', 'CA', 'MN', 'FE', 'CO', 'NI', 'CU', 'ZN', 'XE', 'CL', 'BR', 'IOD' ]
 
     const panelContent = <>
         <Form.Group className='moorhen-form-group' controlId="MoorhenAddSimpleMenuItem">
