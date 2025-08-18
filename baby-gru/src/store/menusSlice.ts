@@ -3,7 +3,7 @@ import { Dispatch, useState } from 'react';
 import { useSelector, useDispatch } from "react-redux";
 import { moorhen } from "../types/moorhen";
 
-interface MenuState {
+export type MenuState = {
     settings: Record<string, Record<string, any>>; 
 }
 

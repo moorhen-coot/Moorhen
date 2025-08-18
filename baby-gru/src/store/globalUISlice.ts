@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface userInterface {
+export type userInterface = {
     busy: boolean;
     isGlobalInstanceReady: boolean;
 }

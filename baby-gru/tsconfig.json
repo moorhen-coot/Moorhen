@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "allowJs": true,
+        "allowJs": false,
         "outDir": "tsDist",
         "module": "es6",
         "target": "es6",
@@ -11,7 +11,8 @@
         "esModuleInterop": true,
         "jsx": "react-jsx",
         "sourceMap": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+
       },
       "include": [
         "src/*"
@@ -23,6 +24,7 @@
         "nginx/*",
         "test/*",
         "src/__tests__/*",
-        "webpack.config.js"
+        "webpack.config.js",
+        "src/protobuf/MoorhenSession.js"
       ]
 }

@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
+        "cids",
+        "Crosshairs",
         "Gemmi",
         "libcoot",
         "notistack",
@@ -11,4 +13,5 @@
     "workbench.colorCustomizations": {
     "tree.indentGuidesStroke": "#3376b6"
 },
+"cmake.ignoreCMakeListsMissing": true,
 }
