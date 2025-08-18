@@ -1,9 +1,9 @@
 import React from 'react';
-import * as vec3 from 'gl-matrix/vec3';
-import * as vec4 from 'gl-matrix/vec4';
-import * as quat4 from 'gl-matrix/quat';
-import * as mat4 from 'gl-matrix/mat4';
-import * as mat3 from 'gl-matrix/mat3';
+//import * as vec3 from 'gl-matrix/vec3';
+//import * as vec4 from 'gl-matrix/vec4';
+import { quat4 } from 'gl-matrix';
+//import * as mat4 from 'gl-matrix/mat4';
+//import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
 
 export namespace webGL {

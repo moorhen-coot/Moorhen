@@ -1,3 +1,5 @@
+/* Main entry point */
+// @ts-strict
 import "./app.css"
 
 export { ErrorBoundary } from "./ErrorBoundary"
@@ -31,206 +33,27 @@ export { MoorhenValidation } from "./components/validation-tools/MoorhenValidati
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation"
 export { autoOpenFiles } from "./utils/MoorhenFileLoading"
 export { default as MoorhenReduxStore } from "./store/MoorhenReduxStore"
-export {
-    default as sceneSettingsReducer,
-    setDefaultBackgroundColor,
-    setDrawCrosshairs,
-    setDrawFPS,
-    setDrawMissingLoops,
-    setDefaultBondSmoothness,
-    setDoSSAO,
-    setSsaoRadius,
-    setSsaoBias,
-    setResetClippingFogging,
-    setClipCap,
-    setEdgeDetectNormalScale,
-    resetSceneSettings,
-    setUseOffScreenBuffers,
-    setDoShadowDepthDebug,
-    setDoShadow,
-    setDoSpin,
-    setDoOutline,
-    setDepthBlurRadius,
-    setDrawScaleBar,
-    setDepthBlurDepth,
-    setDrawAxes,
-    setDoPerspectiveProjection,
-    setHeight,
-    setWidth,
-    setIsDark,
-    setBackgroundColor,
-    setDoEdgeDetect,
-    setEdgeDetectDepthThreshold,
-    setEdgeDetectNormalThreshold,
-    setEdgeDetectDepthScale,
-    setDoAnaglyphStereo,
-    setDoCrossEyedStereo,
-    setDoSideBySideStereo,
-    setDoThreeWayView,
-    setDoMultiView,
-    setMultiViewColumns,
-    setMultiViewRows,
-    setSpecifyMultiViewRowsColumns,
-    setThreeWayViewOrder,
-} from "./store/sceneSettingsSlice"
-export {
-    default as backupSettingsReducer,
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-    resetBackupSettings,
-} from "./store/backupSettingsSlice"
-export {
-    default as generalStatesReducer,
-    setActiveMap,
-    setCootInitialized,
-    setAppTittle,
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setUserPreferencesMounted,
-    setDevMode,
-    setTheme,
-    setViewOnly,
-    resetGeneralStates,
-    setUseGemmi,
-    setShowHoverInfo,
-} from "./store/generalStatesSlice"
-export { default as mapsReducer, addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice"
-export {
-    default as hoveringStatesReducer,
-    setCursorStyle,
-    setEnableAtomHovering,
-    setHoveredAtom,
-    resetHoveringStates,
-} from "./store/hoveringStatesSlice"
-export {
-    default as labelSettingsReducer,
-    addAvailableFontList,
-    setAtomLabelDepthMode,
-    setGLLabelsFontFamily,
-    setGLLabelsFontSize,
-    resetLabelSettings,
-} from "./store/labelSettingsSlice"
-export {
-    default as mapContourSettingsReducer,
-    showMap,
-    hideMap,
-    setPositiveMapColours,
-    setNegativeMapColours,
-    setMapAlpha,
-    setMapColours,
-    setMapRadius,
-    setMapStyle,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setContourLevel,
-    resetMapContourSettings,
-} from "./store/mapContourSettingsSlice"
-export {
-    default as sliceNDiceReducer,
-    setBFactorThreshold,
-    setClusteringType,
-    setMoleculeBfactors,
-    setMoleculeMaxBfactor,
-    resetSliceNDiceSlice,
-    setMoleculeMinBfactor,
-    setNClusters,
-    setPaeFileIsUploaded,
-    setSlicingResults,
-    setThresholdType,
-    setPAEFileContents,
-} from "./store/sliceNDiceSlice"
-export {
-    default as refinementSettingsReducer,
-    setEnableRefineAfterMod,
-    setUseRamaRefinementRestraints,
-    setuseTorsionRefinementRestraints,
-    setAnimateRefine,
-    resetRefinementSettings,
-} from "./store/refinementSettingsSlice"
-export {
-    default as moleculesReducer,
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    removeCustomRepresentation,
-    addGeneralRepresentation,
-    removeGeneralRepresentation,
-} from "./store/moleculesSlice"
-export {
-    default as mouseSettingsReducer,
-    setContourWheelSensitivityFactor,
-    setZoomWheelSensitivityFactor,
-    setMouseSensitivity,
-    resetDefaultMouseSettings,
-} from "./store/mouseSettings"
-export {
-    default as shortcutSettingsReducer,
-    setShowShortcutToast,
-    setShortcutOnHoveredAtom,
-    setShortCuts,
-    resetShortcutSettings,
-} from "./store/shortCutsSlice"
-export {
-    default as moleculeMapUpdateReducer,
-    setShowScoresToast,
-    addMapUpdatingScore,
-    removeMapUpdatingScore,
-    overwriteMapUpdatingScores,
-    resetMoleculeMapUpdates,
-} from "./store/moleculeMapUpdateSlice"
-export {
-    default as lhasaReducer,
-    resetLhasaSettings,
-    addRdkitMoleculePickle,
-    removeRdkitMoleculePickle,
-    emptyRdkitMoleculePickleList,
-} from "./store/lhasaSlice"
-export { default as modalsReducer, resetActiveModals, focusOnModal, unFocusModal } from "./store/modalsSlice"
-export { default as sharedSessionReducer, resetSharedSession } from "./store/sharedSessionSlice"
-export {
-    default as glRefSliceReducer,
-    setOrigin,
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setLightPosition,
-    setAmbient,
-    setSpecular,
-    setDiffuse,
-    setSpecularPower,
-    setZoom,
-    setQuat,
-    setFogClipOffset,
-    setFogStart,
-    setFogEnd,
-    setClipStart,
-    setClipEnd,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-} from "./store/glRefSlice"
-export { default as overlaysReducer } from "./store/overlaysSlice"
-export { default as menusReducer } from "./store/menusSlice"
-export { default as atomInfoCardsReducer } from "./store/atomInfoCardsSlice"
-export { setBusy } from "./store/globalUISlice"
-export { default as jsonValidationReducer } from "./store/jsonValidation"
-export { default as mrParseSliceReducer } from "./store/mrParseSlice"
+export * from "./store/sceneSettingsSlice"
+export * from "./store/backupSettingsSlice"
+export * from "./store/generalStatesSlice"
+export * from "./store/mapsSlice"
+export * from "./store/hoveringStatesSlice"
+export * from "./store/labelSettingsSlice"
+export * from "./store/mapContourSettingsSlice"
+export * from "./store/sliceNDiceSlice"
+export * from "./store/refinementSettingsSlice"
+export * from "./store/moleculesSlice"
+export * from "./store/mouseSettings"
+export * from "./store/shortCutsSlice"
+export * from "./store/moleculeMapUpdateSlice"
+export * from "./store/lhasaSlice"
+export * from "./store/modalsSlice"
+export * from "./store/sharedSessionSlice"
+export * from "./store/glRefSlice"
+export * from "./store/overlaysSlice"
+export * from "./store/menusSlice"
+export * from "./store/atomInfoCardsSlice"
+export * from "./store/globalUISlice"
+export * from "./store/jsonValidation"
+export * from "./store/mrParseSlice"
 export { MoorhenGlobalInstanceProvider } from "./InstanceManager"

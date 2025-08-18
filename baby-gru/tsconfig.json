@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "allowJs": false,
         "outDir": "tsDist",
         "module": "es6",
         "target": "es6",
@@ -12,7 +11,7 @@
         "jsx": "react-jsx",
         "sourceMap": true,
         "moduleResolution": "node",
-
+        "declaration": true,
       },
       "include": [
         "src/*"
@@ -25,6 +24,6 @@
         "test/*",
         "src/__tests__/*",
         "webpack.config.js",
-        "src/protobuf/MoorhenSession.js"
+        "src/protobuf/MoorhenSession.js",
       ]
 }
