@@ -1,7 +1,7 @@
-import * as vec3 from 'gl-matrix/vec3';
-import * as quat4 from 'gl-matrix/quat';
-import * as mat4 from 'gl-matrix/mat4';
-import * as mat3 from 'gl-matrix/mat3';
+import { vec3, mat4 } from 'gl-matrix';
+//import * as quat4 from 'gl-matrix/quat';
+//import * as mat4 from 'gl-matrix';
+//import * as mat3 from 'gl-matrix/mat3';
 import { vec3Create  } from './mgMaths.js';
 
 interface MGWebGLBuffer {
