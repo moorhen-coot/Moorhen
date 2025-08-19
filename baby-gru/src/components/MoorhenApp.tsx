@@ -1,7 +1,7 @@
 import { Provider } from 'react-redux';
 import store from '../store/MoorhenReduxStore';
 import { MoorhenGlobalInstanceProvider } from '../InstanceManager';
-import { MoorhenContainer } from "./MoorhenContainer";
+import { MoorhenContainer } from "./container/MoorhenContainer";
 
 export const MoorhenApp = () => {
 

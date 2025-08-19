@@ -1,7 +1,7 @@
 import React from "react";
 import { Dispatch, Store, UnknownAction } from "redux";
 import { moorhen } from "../types/moorhen";
-import { setGlobalInstanceReady } from "../store/globalUISlice";
+import { setGlobalInstanceReady, setBusy, setTimeCapsuleBusy } from "../store/globalUISlice";
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import {
@@ -12,7 +12,6 @@ import {
 import { createLocalStorageInstance } from "../utils/utils";
 import { MoorhenPreferences } from "../components/managers/preferences/MoorhenPreferences";
 
-
 /**
  * MoorhenGlobalInstance is a singleton class that manages global instances
  * of CommandCentre, TimeCapsule, and ScreenRecorder.
@@ -22,6 +21,7 @@ import { MoorhenPreferences } from "../components/managers/preferences/MoorhenPr
 
 export class MoorhenGlobalInstance {
 
+    public dispatch: Dispatch<UnknownAction>;
     private commandCentre: moorhen.CommandCentre;
     private commandCentreRef: React.RefObject<moorhen.CommandCentre>;
     private timeCapsule: moorhen.TimeCapsule;
@@ -29,9 +29,10 @@ export class MoorhenGlobalInstance {
     private videoRecorder: moorhen.ScreenRecorder
     private videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
-    private dispatch: Dispatch<UnknownAction>;
     private store: Store;
     private preferences: MoorhenPreferences;
+    private maps: moorhen.Map[] = [];
+    private molecules: moorhen.Molecule[] = [];
 
     constructor() {
         this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
@@ -134,6 +135,14 @@ export class MoorhenGlobalInstance {
         newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount
         newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold
         await newTimeCapsule.init()
+
+        newTimeCapsule.onIsBusyChange = (newValue: boolean) => {
+                if (newValue) {
+                    this.dispatch(setTimeCapsuleBusy(true));
+                } else {
+                    setTimeout(() => this.dispatch(setTimeCapsuleBusy(false)), 1000);
+                }}
+        
         this.setTimeCapsule(newTimeCapsule)
         if (externalTimeCapsuleRef) {
             externalTimeCapsuleRef.current = this.timeCapsule
@@ -152,6 +161,8 @@ export class MoorhenGlobalInstance {
                 this.dispatch(toggleCootCommandStart())
             },
         })
+        newCommandCentre.onActiveMessagesChanged = (newActiveMessages) =>
+                this.dispatch(setBusy(newActiveMessages.length !== 0));
         this.setCommandCentre(newCommandCentre)
         if (externalCommandCentreRef) {
             externalCommandCentreRef.current = this.commandCentre
@@ -160,11 +171,11 @@ export class MoorhenGlobalInstance {
         await newCommandCentre.init()
         
         console.log("Global instance is ready CommandCentre:", this.getCommandCentreRef().current)
-        dispatch(setGlobalInstanceReady(true))
+        this.dispatch(setGlobalInstanceReady(true))
     }
 
     public cleanup(): void {
-
+        this.commandCentre.close()
     }
 }
 

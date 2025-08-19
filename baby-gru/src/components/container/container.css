@@ -1,0 +1,22 @@
+@import "../../colors.css";
+.moorhen__activity-indicator {
+    position: absolute;
+    z-index: 1000;
+    top: 0.1rem;
+    right: 0.1rem;
+    border-radius: 2rem;
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow);
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: default;
+    border: 1px solid var(--moorhen-border);
+    outline: none;
+    transition: box-shadow 0.2s;
+    padding: 0 1rem; /* Add horizontal padding for extra space */
+    box-sizing: border-box;
+}

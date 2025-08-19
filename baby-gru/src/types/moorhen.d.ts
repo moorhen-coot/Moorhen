@@ -1152,6 +1152,7 @@ export namespace moorhen {
         }
         globalUI: {
             isGlobalInstanceReady: boolean;
+            isTimeCapsuleBusy: boolean;
             busy: boolean;
         }
     }

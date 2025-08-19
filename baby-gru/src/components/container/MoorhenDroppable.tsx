@@ -1,7 +1,7 @@
 import { useSelector, useDispatch, useStore } from 'react-redux';
 import { useDropzone } from 'react-dropzone';
-import { autoOpenFiles } from "../utils/MoorhenFileLoading"
-import { moorhen } from '../types/moorhen';
+import { autoOpenFiles } from "../../utils/MoorhenFileLoading"
+import { moorhen } from '../../types/moorhen';
 
 interface MoorhenDroppablePropsInterface {
     monomerLibraryPath: string;

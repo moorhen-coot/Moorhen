@@ -1,5 +1,5 @@
 import { RefObject } from "react"
-import type { moorhen }from "../types/moorhen"
+import type { moorhen }from "../../types/moorhen"
 
 export const cootAPIHelpers = {
     setMakeBackups: async (commandCentre: RefObject<moorhen.CommandCentre>, makeBackups: boolean) => {

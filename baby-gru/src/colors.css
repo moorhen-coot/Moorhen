@@ -2,12 +2,13 @@
     
     /* Moorhen specific colors */
     --moorhen-primary: #212529;
+    --moorhen-background: #fff;
+    --moorhen-background-secondary: #606060;
+    --moorhen-border: #898f96; 
+    --moorhen-input-background: rgba(219, 219, 219, 0.075);
     --moorhen-accent: #0d6efd;
     --moorhen-focus: #86b7fe;
-    --moorhen-background: #fff;
     --moorhen-middle: #d3d3d3;
-    --moorhen-border: #898f96;  
-    --moorhen-input-background: rgba(219, 219, 219, 0.075);
     --moorhen-error: #dc3545;
     --moorhen-disabled:  #6c757d;
     

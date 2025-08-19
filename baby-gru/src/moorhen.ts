@@ -2,7 +2,7 @@ import "./app.css"
 
 export { ErrorBoundary } from "./ErrorBoundary"
 export { MoorhenApp } from "./components/MoorhenApp"
-export { MoorhenContainer } from "./components/MoorhenContainer"
+export { MoorhenContainer } from "./components/container/MoorhenContainer"
 export { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase"
 export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal"
 export { MoorhenColourRule } from "./utils/MoorhenColourRule"

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback} from "react";
+import { useEffect, useState, useRef, useCallback, memo} from "react";
 import { Spinner, Form, Overlay, Popover, Stack } from "react-bootstrap";
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import {
@@ -36,14 +36,14 @@ import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
 
 export type ExtraNavBarMenus = {
     name: string; 
-    ref: React.RefObject<any> ; 
+    ref: React.RefObject<unknown> ; 
     icon: React.JSX.Element; 
     JSXElement: React.JSX.Element[];
 };
 
 export type ExtraNavBarModals = {
     name: string;
-    ref: React.RefObject<any>;
+    ref: React.RefObject<unknown>;
     icon: React.JSX.Element;
     JSXElement: React.JSX.Element;
     show: boolean;
@@ -51,21 +51,20 @@ export type ExtraNavBarModals = {
 };
 
 interface MoorhenNavBarProps {
-    extraNavBarMenus?: ExtraNavBarMenus[];
-    extraNavBarModals?: ExtraNavBarModals[];
-    extraFileMenuItems?: React.JSX.Element[];
-    extraEditMenuItems?: React.JSX.Element[];
-    extraCalculateMenuItems?: React.JSX.Element[];
+    extraNavBarMenus: ExtraNavBarMenus[];
+    extraNavBarModals: ExtraNavBarModals[];
+    extraFileMenuItems: React.JSX.Element[];
+    extraEditMenuItems: React.JSX.Element[];
+    extraCalculateMenuItems: React.JSX.Element[];
     includeNavBarMenuNames: string[];
 }
 
-export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
-    const [timeCapsuleBusy, setTimeCapsuleBusy] = useState<boolean>(false);
-    const [busy, setBusy] = useState<boolean>(false);
+export const MoorhenNavBar = memo((props: MoorhenNavBarProps) => {
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false);
     const [navBarActiveMenu, setNavBarActiveMenu] = useState<string>("-1");
     const [popoverTargetRef, setPopoverTargetRef] = useState();
 
+    
     const speedDialRef = useRef(null);
     const fileSpeedDialActionRef = useRef(null);
     const editSpeedDialActionRef = useRef(null);
@@ -82,40 +81,18 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const devDialActionRef = useRef(null);
 
     const dispatch = useDispatch();
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
-    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized);
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
     const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly)
 
+
     const moorhenGlobalInstance = useMoorhenGlobalInstance();
-    const commandCentre = moorhenGlobalInstance.getCommandCentre();
-    const timeCapsule = moorhenGlobalInstance.getTimeCapsule();
     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
     const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
-    useEffect(() => {
-        if (commandCentre) {
-            // eslint-disable-next-line react-hooks/react-compiler
-            commandCentre.onActiveMessagesChanged = (newActiveMessages) =>
-                setBusy(newActiveMessages.length !== 0);
-        }
-    }, [cootInitialized]);
 
-    useEffect(() => {
-        if (timeCapsule) {
-            timeCapsule.onIsBusyChange = (newValue: boolean) => {
-                if (newValue) {
-                    setTimeCapsuleBusy(true);
-                } else {
-                    setTimeout(() => setTimeCapsuleBusy(false), 1000);
-                }
-            };
-        }
-    }, [timeCapsule]);
 
     const navBarMenus = {
         File: { icon: <DescriptionOutlined />, name: "File", ref: fileSpeedDialActionRef },
@@ -173,36 +150,37 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     }
 
     let navBarMenuNames: string[] = [];
-    if (props.includeNavBarMenuNames.length === 0) {
+    if (props.includeNavBarMenuNames?.length === 0) {
         navBarMenuNames = Object.keys(navBarMenus);
     } else {
         navBarMenuNames = props.includeNavBarMenuNames;
     }
 
     let selectedExtraNavBarModal: ExtraNavBarModals[][number] | undefined;
+    
     useEffect(() => {
-        switch (navBarActiveMenu) {
-            case "-1":
-                break;
-            case "Models":
-                dispatch(showModal(modalKeys.MODELS));
+    switch (navBarActiveMenu) {
+        case "-1":
+            break;
+        case "Models":
+            dispatch(showModal(modalKeys.MODELS));
+            setNavBarActiveMenu("-1");
+            break;
+        case "Maps":
+            dispatch(showModal(modalKeys.MAPS));
+            setNavBarActiveMenu("-1");
+            break;
+        default:
+            selectedExtraNavBarModal = props.extraNavBarModals.find((modal) => modal.name === navBarActiveMenu);
+            if (selectedExtraNavBarModal) {
+                selectedExtraNavBarModal.setShow(true);
                 setNavBarActiveMenu("-1");
-                break;
-            case "Maps":
-                dispatch(showModal(modalKeys.MAPS));
-                setNavBarActiveMenu("-1");
-                break;
-            default:
-                selectedExtraNavBarModal = props.extraNavBarModals.find((modal) => modal.name === navBarActiveMenu);
-                if (selectedExtraNavBarModal) {
-                    selectedExtraNavBarModal.setShow(true);
-                    setNavBarActiveMenu("-1");
-                } else {
-                    setPopoverTargetRef(navBarMenus[navBarActiveMenu]?.ref.current);
-                }
-                break;
-        }
-    }, [navBarActiveMenu]);
+            } else {
+                setPopoverTargetRef(navBarMenus[navBarActiveMenu]?.ref.current);
+            }
+            break;
+    }
+}, [navBarActiveMenu, dispatch, props.extraNavBarModals]);
 
     const handleDialActionClick = useCallback(
         (actionName) => {
@@ -364,41 +342,8 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
 
             {props.extraNavBarModals &&
                 props.extraNavBarModals.filter((modal) => modal.show).map((modal) => modal.JSXElement)}
-
-            {showHoverInfo && (
-                <Fab
-                    variant="extended"
-                    size="large"
-                    sx={{
-                        position: "absolute",
-                        top: canvasTop + convertRemToPx(0.5),
-                        right: canvasLeft + convertRemToPx(0.5),
-                        display: hoveredAtom.cid || busy || timeCapsuleBusy ? "flex" : "none",
-                        color: isDark ? "grey" : "white",
-                        bgcolor: isDark ? "grey" : "white",
-                        "&:hover": {
-                            bgcolor: isDark ? "grey" : "white",
-                        },
-                    }}
-                >
-                    {hoveredAtom.cid && (
-                        <Form.Control
-                            className="moorhen-hovered-atom-form"
-                            type="text"
-                            readOnly={true}
-                            value={`${
-                                hoveredAtom.molecule.name.length > 10
-                                    ? `${hoveredAtom.molecule.name.substring(0, 7)}...`
-                                    : `${hoveredAtom.molecule.name}:`
-                            }${hoveredAtom.cid}`}
-                        />
-                    )}
-                    {busy && (
-                        <Spinner className="moorhen-spinner" animation="border" variant={isDark ? "light" : "dark"} />
-                    )}
-                    {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: "black" }} />}
-                </Fab>
-            )}
         </>
     );
-};
+});
+
+MoorhenNavBar.displayName = "MoorhenNavBar"; 
