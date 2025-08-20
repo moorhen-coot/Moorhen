@@ -48,64 +48,76 @@ const MAIN_MENU_CONFIG = {
     1: {
         label: "File",
         icon: <DescriptionOutlined />,
-        component: MoorhenFileMenu
+        component: MoorhenFileMenu,
+        props: {},
     },
     2: {
         label: "Edit",
         icon: <EditOutlined />,
-        component: MoorhenEditMenu
+        component: MoorhenEditMenu,
+        props: {},
     },
     3: {
         label: "Calculate",
         icon: <CalculateOutlined />,
-        component: MoorhenCalculateMenu
+        component: MoorhenCalculateMenu,
+        props: {},
     },
     4: {
         label: "View",
         icon: <VisibilityOutlined />,
-        component: MoorhenViewMenu
+        component: MoorhenViewMenu,
+        props: {},
     },
     5: {
         label: "Validation",
         icon: <FactCheckOutlined />,
-        component: MoorhenValidationMenu
+        component: MoorhenValidationMenu,
+        props: {},
     },
     6: {
         label: "Ligand",
         icon: <MoorhenIcon name={`menu-ligands`} size="medium" alt="Ligand" />,
-        component: MoorhenLigandMenu
+        component: MoorhenLigandMenu,
+        props: {},
     },
     7: {
         label: "Map Tools",
         icon: <ConstructionOutlined />,
-        component: MoorhenMapToolsMenu
+        component: MoorhenMapToolsMenu,
+        props: {},
     },
     8: {
         label: "Models",
         icon: <MoorhenIcon name={`menu-models`} size="medium" alt="Models" />,
-        component: "MoorhenModelsMenu"
+        component: "MoorhenModelsMenu",
+        props: {},
     },
     9: {
         label: "Maps",
         icon: <MoorhenIcon name={`menu-maps`} size="medium" alt="Maps" />,
-        component: "MoorhenMapsMenu"
+        component: "MoorhenMapsMenu",
+        props: {},
     },
     10: {
         label: "History",
         icon: <HistoryOutlined />,
-        component: MoorhenHistoryMenu
+        component: MoorhenHistoryMenu,
+        props: {},
     },
     11: {
         label: "Preferences",
         icon: <SettingsSuggestOutlined />,
-        component: MoorhenPreferencesMenu
+        component: MoorhenPreferencesMenu,
+        props: {},
     },
     12: {
         label: "Help",
         icon: <HelpOutlineOutlined />,
-        component: MoorhenHelpMenu
-    }
-};
+        component: MoorhenHelpMenu,
+        props: {},
+    },
+}
 
 export const MoorhenMainMenu = () => {
 
@@ -115,7 +127,7 @@ export const MoorhenMainMenu = () => {
     const renderSubMenu = useMemo(() => {
         if (!activeMenu) return null;
         const menu = Object.values(MAIN_MENU_CONFIG).find(m => m.label === activeMenu);
-        return menu ? <menu.component {...menu.props} /> : null;
+        return menu ? <menu.component {...(menu.props || {})} /> : null
     }, [activeMenu]);
 
     const renderMenu = () => {
