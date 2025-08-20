@@ -49,6 +49,7 @@ import { MoorhenRotamerChangeSnackBar } from "../snack-bar/MoorhenRotamerChangeS
 import { MoorhenScreenshotSnackBar } from "../snack-bar/MoorhenScreenshotSnackBar"
 import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar"
 import { MoorhenAtomInfoSnackBar } from "../snack-bar/MoorhenAtomInfoSnackBar"
+import { MoorhenMainMenu } from "../navbar-menus/MoorhenMainMenu"
 import { MoorhenDroppable } from "./MoorhenDroppable"
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager"
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar"
@@ -170,14 +171,24 @@ export const MoorhenContainer = (props: ContainerProps) => {
         aceDRGInstance = null,
     } = props
 
-    const navBarProps = useMemo(() => ({
-        extraNavBarMenus: props.extraNavBarMenus || [],
-        extraNavBarModals: props.extraNavBarModals || [],
-        extraFileMenuItems: props.extraFileMenuItems || [],
-        extraEditMenuItems: props.extraEditMenuItems || [],
-        extraCalculateMenuItems: props.extraCalculateMenuItems || [],
-        includeNavBarMenuNames: props.includeNavBarMenuNames || []
-    }), [props.extraNavBarMenus, props.extraNavBarModals, props.extraFileMenuItems, props.extraEditMenuItems, props.extraCalculateMenuItems, props.includeNavBarMenuNames])
+    const navBarProps = useMemo(
+        () => ({
+            extraNavBarMenus: props.extraNavBarMenus || [],
+            extraNavBarModals: props.extraNavBarModals || [],
+            extraFileMenuItems: props.extraFileMenuItems || [],
+            extraEditMenuItems: props.extraEditMenuItems || [],
+            extraCalculateMenuItems: props.extraCalculateMenuItems || [],
+            includeNavBarMenuNames: props.includeNavBarMenuNames || [],
+        }),
+        [
+            props.extraNavBarMenus,
+            props.extraNavBarModals,
+            props.extraFileMenuItems,
+            props.extraEditMenuItems,
+            props.extraCalculateMenuItems,
+            props.includeNavBarMenuNames,
+        ]
+    )
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const glRef = props.glRef ? props.glRef : innerGlRef
@@ -192,7 +203,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }))
 
     if (props.moleculesRef) {
-        // eslint-disable-next-line 
+        // eslint-disable-next-line
         props.moleculesRef.current = molecules
     }
 
@@ -342,25 +353,18 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 return
             }
             moorhenGlobalInstance.setPaths(urlPrefix, monomerLibraryPath)
-            moorhenGlobalInstance.startInstance(
-                dispatch,
-                store,
-                props.commandCentre,
-                props.timeCapsuleRef,
-                {
-                    activeMapRef: null,
-                    providedBackupStorageInstance: backupStorageInstance,
-                    maxBackupCount: maxBackupCount,
-                    modificationCountBackupThreshold: modificationCountBackupThreshold,
-                    moleculesRef: null,
-                    mapsRef: null,
-                }
-            )
+            moorhenGlobalInstance.startInstance(dispatch, store, props.commandCentre, props.timeCapsuleRef, {
+                activeMapRef: null,
+                providedBackupStorageInstance: backupStorageInstance,
+                maxBackupCount: maxBackupCount,
+                modificationCountBackupThreshold: modificationCountBackupThreshold,
+                moleculesRef: null,
+                mapsRef: null,
+            })
 
             if (aceDRGInstance) {
                 moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance)
             }
-
 
             dispatch(setBackgroundColor(defaultBackgroundColor))
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate)
@@ -460,16 +464,15 @@ export const MoorhenContainer = (props: ContainerProps) => {
     // ========== Loading Screen ==========
     if (!isGlobalInstanceReady) {
         return (
-            <Backdrop
-                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                open={true}
-            >
-                <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    gap: '16px' 
-                }}>
+            <Backdrop sx={(theme) => ({ color: "#fff", zIndex: theme.zIndex.drawer + 1 })} open={true}>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "16px",
+                    }}
+                >
                     <div>Moorhen is loading...</div>
                     <CircularProgress color="inherit" />
                 </div>
@@ -481,44 +484,41 @@ export const MoorhenContainer = (props: ContainerProps) => {
     // ========== Main Interface ==========
     return (
         <div style={backgroundStyle}>
-        <SnackbarProvider
-            hideIconVariant={false}
-            autoHideDuration={4000}
-            maxSnack={20}
-            anchorOrigin={{ horizontal: "center", vertical: "top" }}
-            transitionDuration={{ enter: 500, exit: 300 }}
-            Components={snackbarComponents}
-            preventDuplicate={true}
-        >
-            <MoorhenNavBar
-                {...navBarProps}
-            />
-            <ActivityIndicator />
+            <SnackbarProvider
+                hideIconVariant={false}
+                autoHideDuration={4000}
+                maxSnack={20}
+                anchorOrigin={{ horizontal: "center", vertical: "top" }}
+                transitionDuration={{ enter: 500, exit: 300 }}
+                Components={snackbarComponents}
+                preventDuplicate={true}
+            >
+                <MoorhenMainMenu />
+                {/* <MoorhenNavBar {...navBarProps} /> */}
+                <ActivityIndicator />
 
-            <MoorhenModalsContainer extraDraggableModals={extraDraggableModals} />
-            <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-            <MoorhenSnackBarManager />
-            <MoorhenUpdatingMapsManager />
-            <MoorhenMapsHeadManager />
+                <MoorhenModalsContainer extraDraggableModals={extraDraggableModals} />
+                <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                <MoorhenSnackBarManager />
+                <MoorhenUpdatingMapsManager />
+                <MoorhenMapsHeadManager />
 
-                
                 <MoorhenDroppable
                     monomerLibraryPath={monomerLibraryPath}
                     timeCapsuleRef={timeCapsuleRef}
                     commandCentre={commandCentre}
-                >                          
-                        <MoorhenWebMG
-                            ref={glRef}
-                            monomerLibraryPath={monomerLibraryPath}
-                            timeCapsuleRef={timeCapsuleRef}
-                            commandCentre={commandCentre}
-                            onAtomHovered={onAtomHovered}
-                            urlPrefix={urlPrefix}
-                            viewOnly={viewOnly}
-                        />
+                >
+                    <MoorhenWebMG
+                        ref={glRef}
+                        monomerLibraryPath={monomerLibraryPath}
+                        timeCapsuleRef={timeCapsuleRef}
+                        commandCentre={commandCentre}
+                        onAtomHovered={onAtomHovered}
+                        urlPrefix={urlPrefix}
+                        viewOnly={viewOnly}
+                    />
                 </MoorhenDroppable>
-                
-        </SnackbarProvider>
+            </SnackbarProvider>
         </div>
     )
 }

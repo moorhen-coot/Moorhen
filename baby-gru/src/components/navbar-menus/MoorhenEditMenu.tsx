@@ -18,22 +18,20 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 
 
-export const MoorhenEditMenu = (props: {
-    dropdownId: string,
-    extraEditMenuItems?: React.ReactNode[]}) => {
+export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] }) => {
+    const [, setPopoverIsShown] = useState(false)
 
-    const [,setPopoverIsShown] = useState(false)
-    
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
-    
+
     const dispatch = useDispatch()
 
     const menuItemProps = { setPopoverIsShown }
 
-    return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
+    return (
+        <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
             <MoorhenAddSimpleMenuItem key="add_simple" {...menuItemProps} />
-            <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps} />
+            <MoorhenAddRemoveHydrogenAtomsMenuItem key="add_remove_hydrogens" {...menuItemProps} />
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenMoveMoleculeHere key="move" {...menuItemProps} />
             <MoorhenChangeChainIdMenuItem key="change_chain_id" {...menuItemProps} />
@@ -43,14 +41,17 @@ export const MoorhenEditMenu = (props: {
             <MoorhenCreateSelectionMenuItem key="create-selection" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
-            {devMode &&
-                <MenuItem onClick={() => {
-                    dispatch(showModal(modalKeys.ACEDRG))
-                    document.body.click()
-                }}>
+            {devMode && (
+                <MenuItem
+                    onClick={() => {
+                        dispatch(showModal(modalKeys.ACEDRG))
+                        document.body.click()
+                    }}
+                >
                     Create covalent link between two atoms...
-                </MenuItem>            
-            }
-            {props.extraEditMenuItems && props.extraEditMenuItems.map( menu => menu)}
-    </div>
+                </MenuItem>
+            )}
+            {props.extraEditMenuItems && props.extraEditMenuItems.map((menu) => menu)}
+        </div>
+    )
 }

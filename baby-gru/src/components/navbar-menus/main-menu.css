@@ -1,0 +1,68 @@
+@import "../../colors.css";
+
+.moorhen__main-menu-container {
+    position: absolute;
+    top:0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.moorhen__main-logo{
+    width: 40px; 
+    height: 40px;
+}
+
+.moorhen__main-menu {
+    position: relative;
+    transform: translate(-30px, -30px);
+    animation: slideInFade 0.1s ease-out forwards;
+}
+
+@keyframes slideInFade {
+    from {
+        opacity: 0;
+        transform: translate(-30px, -30px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+}
+
+
+.moorhen__main-menu-button, .moorhen__main-menu-toggle{
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    position: relative;
+    top: 1rem;
+    left: 1.5rem;
+    border-radius: 2rem; 
+    border: none;
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    box-shadow: 0px 3px 5px 2px var(--moorhen-inactive-shadow);
+    height: 3rem;
+    width: 10rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    padding-left: 1.5rem;
+    justify-content: left;
+    font-size: 1rem;
+    outline: none;
+}
+
+.moorhen__main-menu-toggle {
+    left: 0.5rem;
+    top: 0.5rem;
+    width: 6rem;
+    padding: 0;
+    justify-content: center;
+    transform: translate(-50px, -50px);
+    animation: slideInFade 0.3s ease-out forwards;
+}
+
+.moorhen__main-menu-button:hover, .moorhen__main-menu-toggle:hover {
+    background: color-mix(in srgb, var(--moorhen-focus) 10%, transparent);
+    box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow);
+}

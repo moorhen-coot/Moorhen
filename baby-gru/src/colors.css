@@ -15,6 +15,7 @@
     /* Shadow colors */
     --moorhen-focus-shadow: rgba(46, 112, 211, 0.25);
     --moorhen-error-shadow: rgba(161, 53, 98, 0.25);
+    --moorhen-inactive-shadow: rgba(0, 0, 0, 0.1);
 
     /* Icon brightness */
     --moorhen-icon-brightness: 0.15;
