@@ -18,7 +18,7 @@ import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { store } from "../moorhen";
+import { MoorhenReduxStore as store } from "../moorhen";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];

@@ -23,7 +23,7 @@ import menusReducer from "./menusSlice";
 import atomInfoCardsReducer from "./atomInfoCardsSlice";
 import globalUISliceReducer from "./globalUISlice";
 
-export const store = configureStore({
+export const MoorhenReduxStore = configureStore({
     reducer: {
         molecules: moleculesReducer,
         maps: mapsReducer,
@@ -56,8 +56,8 @@ export const store = configureStore({
 });
 
 // Get the type of our store variable
-export type MoorhenReduxStore = typeof store;
+export type MoorhenReduxStoreType = typeof MoorhenReduxStore;
 // Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<MoorhenReduxStore["getState"]>;
+export type RootState = ReturnType<MoorhenReduxStoreType["getState"]>;
 // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = MoorhenReduxStore["dispatch"];
+export type AppDispatch = MoorhenReduxStoreType["dispatch"];
