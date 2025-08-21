@@ -1,6 +1,40 @@
 import React from "react";
 import { libcootApi } from "./libcoot";
 
+/**
+ * @deprecated This declarations file and the ambient `moorhen` namespace are deprecated and will be removed.
+ *
+ * Inside the moorhen package:
+ * - Prefer creating/defining types locally and importing them directly from their source modules (utils, store, etc.).
+ * - Avoid referencing types through the ambient `moorhen` namespace.
+ *
+ * Outside the moorhen package (when using `moorhen` as a module):
+ * - Import the needed types explicitly from the package entry:
+ *   import type { Molecule, Map, CommandCentre } from 'moorhen';
+ * - Or import the whole module namespace and reference types from it:
+ *   import type * as Moorhen from 'moorhen';
+ *   const f = (m: Moorhen.Molecule, map: Moorhen.Map) => {};
+ *
+ * Examples:
+ * @example Inside the moorhen package
+ * import type { Molecule } from '../utils/MoorhenMolecule';
+ * import type { Map } from '../utils/MoorhenMap';
+ * const fit = (mol: Molecule, map: Map) => {
+ *   // ...
+ * };
+ *
+ * @example Outside the moorhen package — specific imports
+ * import type { Molecule, Map } from 'moorhen';
+ * const fit = (mol: Molecule, map: Map) => {
+ *   // ...
+ * };
+ *
+ * @example Outside the moorhen package — module namespace
+ * import Moorhen from 'moorhen';
+ * const draw = (mol: Moorhen.Molecule) => {
+ *   // ...
+ * };
+ */
 export namespace moorhen {
     type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
     type Map = import("../utils/MoorhenMap").MoorhenMap;

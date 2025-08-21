@@ -13,7 +13,7 @@
     ],
 
     "workbench.colorCustomizations": {
-        "tree.indentGuidesStroke": "#3376b6"
+        "tree.indentGuidesStroke": "#b633a5"
     },
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": { "*.json": "jsonc" }
