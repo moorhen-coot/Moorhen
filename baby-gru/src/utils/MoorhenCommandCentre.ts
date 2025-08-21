@@ -36,7 +36,7 @@ import { MoorhenHistory } from "./MoorhenHistory"
  * })
  * 
  */
-export class MoorhenCommandCentre implements moorhen.CommandCentre {
+export class MoorhenCommandCentre {
     urlPrefix: string;
     cootWorker: Worker;
     activeMessages: moorhen.WorkerMessage[];

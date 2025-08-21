@@ -15,7 +15,7 @@ import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,
          setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
-import store from '../store/MoorhenReduxStore'
+import { store } from '../store/MoorhenReduxStore'
 import { cidToSpec, getCentreAtom } from "./utils"
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {

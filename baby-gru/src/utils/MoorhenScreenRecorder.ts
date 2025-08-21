@@ -3,7 +3,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
 import { moorhen } from '../types/moorhen.js';
-import store from '../store/MoorhenReduxStore'
+import { store } from '../store/MoorhenReduxStore'
 import { setOrigin } from "../store/glRefSlice"
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 

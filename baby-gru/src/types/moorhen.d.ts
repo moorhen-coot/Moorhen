@@ -1,8 +1,14 @@
-
-import React from "react"
+import React from "react";
 import { libcootApi } from "./libcoot";
 
 export namespace moorhen {
+    type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
+    type Map = import("../utils/MoorhenMap").MoorhenMap;
+    type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
+    type CommandCentre = import("../utils/MoorhenCommandCentre").MoorhenCommandCentre;
+    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoorhenMoleculeRepresentation;
+    type State = import("../store/MoorhenReduxStore").RootState;
+    type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
 
     interface Preferences {
         name: string;
@@ -18,7 +24,7 @@ export namespace moorhen {
         resCode: string;
         resNum: number;
         cid: string;
-    }
+    };
 
     type LigandInfo = {
         resName: string;
@@ -29,15 +35,15 @@ export namespace moorhen {
         svg?: string;
         flev_svg?: string;
         smiles?: string;
-        chem_comp_info?: {first: string; second: string}[];
-    }
+        chem_comp_info?: { first: string; second: string }[];
+    };
 
     type Sequence = {
         name: string;
         chain: string;
         type: number;
         sequence: ResidueInfo[];
-    }
+    };
 
     type ResidueSpec = {
         mol_name: string;
@@ -48,8 +54,8 @@ export namespace moorhen {
         atom_name: string;
         ins_code: string;
         alt_conf: string;
-        cid: string
-    }
+        cid: string;
+    };
 
     type AtomInfo = {
         x: number;
@@ -62,12 +68,12 @@ export namespace moorhen {
         occupancy: number;
         name: string;
         has_altloc: boolean;
-        alt_loc: string;
+        alt_loc?: string;
         mol_name: string;
         chain_id: string;
         res_no: string;
         res_name: string;
-    }
+    };
 
     type DisplayObject = {
         symmetryMatrices: any;
@@ -76,7 +82,7 @@ export namespace moorhen {
         atoms: any[];
         origin: number[];
         [attr: string]: any;
-    }
+    };
 
     type cootBondOptions = {
         smoothness: number;
@@ -85,7 +91,7 @@ export namespace moorhen {
         showAniso: boolean;
         showOrtep: boolean;
         showHs: boolean;
-    }
+    };
 
     type gaussianSurfSettings = {
         sigma: number;
@@ -93,7 +99,7 @@ export namespace moorhen {
         boxRadius: number;
         gridScale: number;
         bFactor: number;
-    }
+    };
 
     type m2tParameters = {
         ribbonStyleCoilThickness: number;
@@ -110,7 +116,7 @@ export namespace moorhen {
         nucleotideRibbonStyle: "StickBases" | "DishyBases";
         dishStyleAngularSampling: number;
         ssUsageScheme: number;
-    }
+    };
 
     type residueEnvironmentOptions = {
         maxDist: number;
@@ -119,7 +125,7 @@ export namespace moorhen {
         labelled: boolean;
         showHBonds: boolean;
         showContacts: boolean;
-    }
+    };
 
     type ColourRuleObject = {
         cid: string;
@@ -146,8 +152,16 @@ export namespace moorhen {
         parentRepresentation: MoleculeRepresentation;
         applyColourToNonCarbonAtoms: boolean;
         uniqueId: string;
-        initFromDataObject(data: ColourRuleObject, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
-        initFromString(stringData: string, commandCentre: React.RefObject<CommandCentre>, molecule: Molecule): ColourRule;
+        initFromDataObject(
+            data: ColourRuleObject,
+            commandCentre: React.RefObject<CommandCentre>,
+            molecule: Molecule
+        ): ColourRule;
+        initFromString(
+            stringData: string,
+            commandCentre: React.RefObject<CommandCentre>,
+            molecule: Molecule
+        ): ColourRule;
         parseHexToRgba(hex: string): [number, number, number, number];
         objectify(): ColourRuleObject;
         stringify(): string;
@@ -156,24 +170,53 @@ export namespace moorhen {
         setParentMolecule(molecule: Molecule): void;
         setParentRepresentation(representation: MoleculeRepresentation): void;
         setApplyColourToNonCarbonAtoms(newVal: boolean): void;
-        getUserDefinedColours(): { cid: string; rgba: [number, number, number, number]; applyColourToNonCarbonAtoms: boolean }[];
+        getUserDefinedColours(): {
+            cid: string;
+            rgba: [number, number, number, number];
+            applyColourToNonCarbonAtoms: boolean;
+        }[];
         apply(style?: string, ruleIndex: number): Promise<void>;
-    }
+    };
 
-    type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';
-    
+    type coorFormats = "pdb" | "mmcif" | "unk" | "mmjson" | "xml";
 
     type lskqbResidueRangeMatch = {
         refChainId: string;
         movChainId: string;
         refResidueRange: [number, number];
         movResidueRange: [number, number];
-    }
+    };
 
-    type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' |
-    'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' |
-    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation' | 'glycoBlocks' | 'restraints' |
-    'residueSelection' | 'MetaBalls' | 'adaptativeBonds' | 'StickBases' | 'residue_environment' | 'transformation'
+    type RepresentationStyles =
+        | "VdwSpheres"
+        | "ligands"
+        | "CAs"
+        | "CBs"
+        | "CDs"
+        | "gaussian"
+        | "allHBonds"
+        | "rama"
+        | "rotamer"
+        | "CRs"
+        | "MolecularSurface"
+        | "DishyBases"
+        | "VdWSurface"
+        | "Calpha"
+        | "unitCell"
+        | "hover"
+        | "environment"
+        | "ligand_environment"
+        | "contact_dots"
+        | "chemical_features"
+        | "ligand_validation"
+        | "glycoBlocks"
+        | "restraints"
+        | "residueSelection"
+        | "MetaBalls"
+        | "adaptativeBonds"
+        | "StickBases"
+        | "residue_environment"
+        | "transformation";
 
     type ResidueSelection = {
         molecule: null | Molecule;
@@ -182,12 +225,12 @@ export namespace moorhen {
         cid: null | string | string[];
         isMultiCid: boolean;
         label: string;
-    }
+    };
 
     type HoveredAtom = {
-        molecule: Molecule | null,
-        cid: string | null
-    }
+        molecule: Molecule | null;
+        cid: string | null;
+    };
 
     interface History {
         reset(): void;
@@ -206,7 +249,7 @@ export namespace moorhen {
         timeCapsule: React.RefObject<TimeCapsule>;
     }
 
-    interface HistoryEntry extends cootCommandKwargs{
+    interface HistoryEntry extends cootCommandKwargs {
         uniqueId: string;
         associatedBackupKey: string;
         label: string;
@@ -220,11 +263,11 @@ export namespace moorhen {
         isClosed: boolean;
         init: () => Promise<void>;
         close: () => Promise<void>;
-        onCootInitialized: null | ( () => void );
-        onConsoleChanged: null | ( (msg: string) => void );
-        onCommandStart : null | ( (kwargs: any) => void );
-        onCommandExit : null | ( (kwargs: any) => void );
-        onActiveMessagesChanged: null | ( (activeMessages: WorkerMessage[]) => void );
+        onCootInitialized: null | (() => void);
+        onConsoleChanged: null | ((msg: string) => void);
+        onCommandStart: null | ((kwargs: any) => void);
+        onCommandExit: null | ((kwargs: any) => void);
+        onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
         cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
         postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
@@ -245,24 +288,24 @@ export namespace moorhen {
         messageId: string;
         handler: (reply: WorkerResponse) => void;
         kwargs: cootCommandKwargs;
-    }
+    };
 
     type WorkerResult<T = any> = {
         result: {
             status: string;
             result: T;
             [key: string]: any;
-        }
+        };
         command: string;
         messageId: string;
         myTimeStamp: string;
         message: string;
         consoleMessage: string;
-    }
+    };
 
     type WorkerResponse<T = any> = {
         data: WorkerResult<T>;
-    }
+    };
 
     type createCovLinkAtomInput = {
         selectedMolNo: number;
@@ -275,7 +318,7 @@ export namespace moorhen {
         changeBondOrder: boolean;
         changeSelectedBondOrder: string;
         newBondOrder: string;
-    }
+    };
 
     interface AceDRGInstance {
         createCovalentLink: (arg0: createCovLinkAtomInput, arg1: createCovLinkAtomInput) => void;
@@ -290,7 +333,7 @@ export namespace moorhen {
         isDifference?: boolean;
         useWeight?: boolean;
         calcStructFact?: any;
-    }
+    };
 
     interface ScreenRecorder {
         rec: MediaRecorder;
@@ -308,7 +351,7 @@ export namespace moorhen {
         spacegroup: string;
         cell: libcootApi.mapCellJS;
         resolution: number;
-    }
+    };
 
     interface backupKey {
         name?: string;
@@ -328,25 +371,25 @@ export namespace moorhen {
         coordFormat: coorFormats;
         representations: {
             cid: string;
-            style: string;
+            style: RepresentationStyles;
             isCustom: boolean;
             colourRules: ColourRuleObject[];
             bondOptions: cootBondOptions;
             m2tParams: m2tParameters;
             nonCustomOpacity: number;
             resEnvOptions: residueEnvironmentOptions;
-         }[];
+        }[];
         defaultBondOptions: cootBondOptions;
         defaultM2tParams: m2tParameters;
         defaultResEnvOptions: residueEnvironmentOptions;
         defaultColourRules: ColourRuleObject[];
         connectedToMaps: number[];
-        ligandDicts: {[comp_id: string]: string};
+        ligandDicts: { [comp_id: string]: string };
         symmetryOn: boolean;
         biomolOn: boolean;
         symmetryRadius: number;
         uniqueId: string;
-    }
+    };
 
     type mapDataSession = {
         name: string;
@@ -358,9 +401,9 @@ export namespace moorhen {
         contourLevel: number;
         radius: number;
         rgba: {
-            mapColour: {r: number, g: number, b: number};
-            positiveDiffColour: {r: number, g: number, b: number};
-            negativeDiffColour: {r: number, g: number, b: number};
+            mapColour: { r: number; g: number; b: number };
+            positiveDiffColour: { r: number; g: number; b: number };
+            negativeDiffColour: { r: number; g: number; b: number };
             a: number;
         };
         style: "solid" | "lit-lines" | "lines";
@@ -368,7 +411,7 @@ export namespace moorhen {
         selectedColumns: selectedMtzColumns;
         hasReflectionData: boolean;
         associatedReflectionFileName: string;
-    }
+    };
 
     type viewDataSession = {
         origin: [number, number, number];
@@ -386,7 +429,7 @@ export namespace moorhen {
         clipEnd: number;
         quat4: any[];
         shadows: boolean;
-        ssao: {enabled: boolean; radius: number; bias: number};
+        ssao: { enabled: boolean; radius: number; bias: number };
         edgeDetection: {
             enabled: boolean;
             depthScale: number;
@@ -395,8 +438,8 @@ export namespace moorhen {
             normalThreshold: number;
         };
         doPerspectiveProjection: boolean;
-        blur: {enabled: boolean; depth: number; radius: number};
-    }
+        blur: { enabled: boolean; depth: number; radius: number };
+    };
 
     type backupSession = {
         version: string;
@@ -406,44 +449,43 @@ export namespace moorhen {
         viewData: viewDataSession;
         activeMapIndex: number;
         dataIsEmbedded: boolean;
-    }
-
+    };
 
     type AtomRightClickEventInfo = {
         atom: AtomInfo;
-        buffer: {id: string};
-        coords: string,
+        buffer: { id: string };
+        coords: string;
         pageX: number;
         pageY: number;
-    }
+    };
 
-    type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
+    type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>;
 
     type AtomDraggedEvent = CustomEvent<{
-        atom: AtomInfo
+        atom: AtomInfo;
         buffer: any;
-    }>
+    }>;
 
-    type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number]; }>
+    type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number] }>;
 
-    type WheelContourLevelEvent = CustomEvent<{ factor: number; }>
+    type WheelContourLevelEvent = CustomEvent<{ factor: number }>;
 
-    type MapRadiusChangeEvent = CustomEvent<{ factor: number; }>
+    type MapRadiusChangeEvent = CustomEvent<{ factor: number }>;
 
     type AtomClickedEvent = CustomEvent<{
         buffer: { id: string };
         atom: AtomInfo;
         isResidueSelection: boolean;
-    }>
+    }>;
 
     type NewMapContourEvent = CustomEvent<{
         molNo: number;
         mapRadius: number;
         isVisible: boolean;
         contourLevel: number;
-        mapColour: [number, number, number, number],
+        mapColour: [number, number, number, number];
         litLines: boolean;
-    }>
+    }>;
 
     interface LocalStorageInstance {
         clear: () => Promise<void>;
@@ -458,7 +500,7 @@ export namespace moorhen {
         keyPress: string;
         label: string;
         viewOnly: boolean;
-    }
+    };
 
     interface ContextSetters {
         setDefaultMapSamplingRate: React.Dispatch<React.SetStateAction<number>>;
@@ -510,7 +552,7 @@ export namespace moorhen {
         setZoomWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
         setShortCuts: React.Dispatch<React.SetStateAction<string>>;
         setDefaultUpdatingScores: React.Dispatch<{
-            action: 'Add' | 'Remove' | 'Overwrite';
+            action: "Add" | "Remove" | "Overwrite";
             item?: string;
             items?: string[];
         }>;
@@ -559,29 +601,31 @@ export namespace moorhen {
         makeBackups: boolean;
         showShortcutToast: boolean;
         defaultMapSurface: boolean;
-        defaultBondSmoothness: number,
+        defaultBondSmoothness: number;
         showScoresToast: boolean;
         shortcutOnHoveredAtom: boolean;
         resetClippingFogging: boolean;
         clipCap: boolean;
-        defaultUpdatingScores: string[],
+        defaultUpdatingScores: string[];
         maxBackupCount: number;
         modificationCountBackupThreshold: number;
         animateRefine: boolean;
         devMode: boolean;
         useGemmi: boolean;
-        shortCuts: string | {
-            [label: string]: Shortcut;
-        };
+        shortCuts:
+            | string
+            | {
+                  [label: string]: Shortcut;
+              };
         elementsIndicesRestrict: boolean;
     }
 
-    interface Context extends ContextSetters, PreferencesValues { }
+    interface Context extends ContextSetters, PreferencesValues {}
 
     type ContextButtonProps = {
         monomerLibraryPath: string;
         urlPrefix: string;
-        commandCentre: React.RefObject<CommandCentre>
+        commandCentre: React.RefObject<CommandCentre>;
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
         setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
@@ -593,16 +637,42 @@ export namespace moorhen {
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<React.JSX.Element | boolean>>;
         showContextMenu: false | AtomRightClickEventInfo;
         defaultActionButtonSettings: actionButtonSettings;
-        setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
-    }
+        setDefaultActionButtonSettings: (arg0: { key: string; value: string }) => void;
+    };
 
     type actionButtonSettings = {
-        mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
-        refine: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE' | 'BIG_SPHERE' | 'CHAIN' | 'ALL';
-        delete: 'ATOM' | 'RESIDUE' | 'RESIDUE HYDROGENS' | 'RESIDUE SIDE-CHAIN' | 'CHAIN' | 'CHAIN HYDROGENS' | 'MOLECULE HYDROGENS';
-        rotateTranslate: 'ATOM' | 'RESIDUE' | 'CHAIN' | 'MOLECULE';
-        drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
-        rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
-    }
-
+        mutate:
+            | "ALA"
+            | "CYS"
+            | "ASP"
+            | "GLU"
+            | "PHE"
+            | "GLY"
+            | "HIS"
+            | "ILE"
+            | "LYS"
+            | "LEU"
+            | "MET"
+            | "ASN"
+            | "PRO"
+            | "GLN"
+            | "ARG"
+            | "SER"
+            | "THR"
+            | "VAL"
+            | "TRP"
+            | "TYR";
+        refine: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "SPHERE" | "BIG_SPHERE" | "CHAIN" | "ALL";
+        delete:
+            | "ATOM"
+            | "RESIDUE"
+            | "RESIDUE HYDROGENS"
+            | "RESIDUE SIDE-CHAIN"
+            | "CHAIN"
+            | "CHAIN HYDROGENS"
+            | "MOLECULE HYDROGENS";
+        rotateTranslate: "ATOM" | "RESIDUE" | "CHAIN" | "MOLECULE";
+        drag: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "SPHERE";
+        rigidBodyFit: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "CHAIN" | "ALL";
+    };
 }

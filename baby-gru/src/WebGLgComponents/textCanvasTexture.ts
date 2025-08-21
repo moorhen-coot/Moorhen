@@ -1,5 +1,5 @@
 import { webGL } from '../types/mgWebGL';
-import store from '../store/MoorhenReduxStore'
+import { store } from '../store/MoorhenReduxStore'
 
 interface Dictionary<T> {
     [Key: string]: T;

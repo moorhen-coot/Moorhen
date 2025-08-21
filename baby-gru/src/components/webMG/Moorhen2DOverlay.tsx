@@ -4,7 +4,7 @@ import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
 import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
-import store from '../../store/MoorhenReduxStore'
+import { store } from "../../store/MoorhenReduxStore"
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 

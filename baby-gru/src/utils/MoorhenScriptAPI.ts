@@ -1,4 +1,4 @@
-import { Store } from "@reduxjs/toolkit";
+import type { Store } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
 import { addMolecule } from "../store/moleculesSlice";
@@ -18,7 +18,7 @@ import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { MoorhenColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoorhenReduxStore } from "../moorhen";
+import { store } from "../moorhen";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
@@ -37,10 +37,10 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     store: Store;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre> = null, store:Store = null, molecules: moorhen.Molecule[] = null, maps: moorhen.Map[] = null) {
-        this.store = store ? store : MoorhenReduxStore;
+        this.store = store ? store : store;
         this.commandCentre = commandCentre
-        this.molecules = molecules ? molecules : MoorhenReduxStore.getState().molecules.moleculeList;
-        this.maps = maps ? maps : MoorhenReduxStore.getState().maps;
+        this.molecules = molecules ? molecules : store.getState().molecules.moleculeList;
+        this.maps = maps ? maps : store.getState().maps;
     }
 
     doRigidBodyFit = async (molNo: number, cidsString: string, mapNo: number) => {

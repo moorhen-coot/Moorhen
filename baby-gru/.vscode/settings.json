@@ -6,13 +6,15 @@
         "libcoot",
         "notistack",
         "Ramachandran",
+        "rdkit",
         "registerables",
         "Rotamers",
         "Viewto"
     ],
 
     "workbench.colorCustomizations": {
-    "tree.indentGuidesStroke": "#3376b6"
-},
-"cmake.ignoreCMakeListsMissing": true,
+        "tree.indentGuidesStroke": "#3376b6"
+    },
+    "cmake.ignoreCMakeListsMissing": true,
+    "files.associations": { "*.json": "jsonc" }
 }

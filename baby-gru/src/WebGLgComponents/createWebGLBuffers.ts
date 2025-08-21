@@ -1,5 +1,5 @@
 import { guid } from '../utils/utils';
-import store from '../store/MoorhenReduxStore'
+import { store } from '../store/MoorhenReduxStore'
 import { DisplayBuffer } from './displayBuffer'
 import { getEncodedData } from './encodedData'
 

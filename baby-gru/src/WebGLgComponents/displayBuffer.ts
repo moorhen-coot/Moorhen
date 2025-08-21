@@ -2,7 +2,9 @@ import { vec3, mat4 } from 'gl-matrix';
 //import * as quat4 from 'gl-matrix/quat';
 //import * as mat4 from 'gl-matrix';
 //import * as mat3 from 'gl-matrix/mat3';
+import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
+
 
 interface MGWebGLBuffer {
     itemSize: number;
@@ -16,7 +18,7 @@ export class DisplayBuffer {
     display_class: string;
     transparent: boolean;
     alphaChanged: boolean;
-    atoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, x: number, y: number, z: number, element: string}[];
+    atoms: moorhen.AtomInfo[];
     symmetryAtoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, pos: vec3, element: string}[][];
     symmetryMatrices: number[];
     changeColourWithSymmetry: boolean;

@@ -35,7 +35,7 @@ import { guid } from "./utils";
  * @property {number} modificationCountBackupThreshold - Number of modifications to trigger an automatic backup
  * @property {function} onIsBusyChange - Callback function called whenever there's a change in the `this.busy` state
  */
-export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
+export class MoorhenTimeCapsule  {
 
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;

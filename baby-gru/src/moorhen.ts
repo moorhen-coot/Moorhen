@@ -32,7 +32,7 @@ export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnm
 export { MoorhenValidation } from "./components/validation-tools/MoorhenValidation"
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation"
 export { autoOpenFiles } from "./utils/MoorhenFileLoading"
-export { default as MoorhenReduxStore } from "./store/MoorhenReduxStore"
+export * from "./store/MoorhenReduxStore"
 export * from "./store/sceneSettingsSlice"
 export * from "./store/backupSettingsSlice"
 export * from "./store/generalStatesSlice"

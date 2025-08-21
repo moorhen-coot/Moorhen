@@ -60,7 +60,7 @@ import {
  *    await molecule.delete();
  * }
  */
-export class MoorhenMolecule implements moorhen.Molecule {
+export class MoorhenMolecule {
 
     type: string;
     atomCount: number;
