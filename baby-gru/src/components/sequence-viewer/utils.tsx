@@ -1,4 +1,4 @@
-import { moorhen } from "../../types/moorhen";
+import type { Sequence } from "../../utils/MoorhenMolecule";
 import type { SeqElement } from "./MoorhenSeqViewTypes";
 
 export function stringToSeqViewer(
@@ -27,11 +27,7 @@ export function stringToSeqViewer(
     return sequence;
 }
 
-export function moorhenSequenceToSeqViewer(
-    sequence: moorhen.Sequence,
-    molName: string,
-    molNo: number
-): SeqElement | null {
+export function moorhenSequenceToSeqViewer(sequence: Sequence, molName: string, molNo: number): SeqElement | null {
     if (sequence !== null && sequence.sequence.length > 0) {
         return {
             molName: molName,

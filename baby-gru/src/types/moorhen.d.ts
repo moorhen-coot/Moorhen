@@ -40,44 +40,13 @@ export namespace moorhen {
     type Map = import("../utils/MoorhenMap").MoorhenMap;
     type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
     type CommandCentre = import("../utils/MoorhenCommandCentre").MoorhenCommandCentre;
-    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoorhenMoleculeRepresentation;
+    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoleculeRepresentation;
     type State = import("../store/MoorhenReduxStore").RootState;
     type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
-
-    interface Preferences {
-        name: string;
-        defaultPreferencesValues: PreferencesValues;
-        localStorageInstance: {
-            clear: () => void;
-            setItem: (key: string, value: any) => Promise<string>;
-            getItem: (key: string) => Promise<any>;
-        };
-    }
-
-    type ResidueInfo = {
-        resCode: string;
-        resNum: number;
-        cid: string;
-    };
-
-    type LigandInfo = {
-        resName: string;
-        chainName: string;
-        resNum: string;
-        modelName: string;
-        cid: string;
-        svg?: string;
-        flev_svg?: string;
-        smiles?: string;
-        chem_comp_info?: { first: string; second: string }[];
-    };
-
-    type Sequence = {
-        name: string;
-        chain: string;
-        type: number;
-        sequence: ResidueInfo[];
-    };
+    type PreferencesValues = import("../components/managers/preferences").PreferencesValues;
+    type Sequence = import("../utils/MoorhenMolecule").Sequence;
+    type ResidueInfo = import("../utils/MoorhenMolecule").ResidueInfo;
+    type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
 
     type ResidueSpec = {
         mol_name: string;
@@ -174,43 +143,7 @@ export namespace moorhen {
         parentRepresentationUniqueId: string;
     };
 
-    type ColourRule = {
-        ruleType: string;
-        cid: string;
-        color: string;
-        args: (string | number)[];
-        label: string;
-        isMultiColourRule: boolean;
-        commandCentre: React.RefObject<CommandCentre>;
-        parentMolecule: Molecule;
-        parentRepresentation: MoleculeRepresentation;
-        applyColourToNonCarbonAtoms: boolean;
-        uniqueId: string;
-        initFromDataObject(
-            data: ColourRuleObject,
-            commandCentre: React.RefObject<CommandCentre>,
-            molecule: Molecule
-        ): ColourRule;
-        initFromString(
-            stringData: string,
-            commandCentre: React.RefObject<CommandCentre>,
-            molecule: Molecule
-        ): ColourRule;
-        parseHexToRgba(hex: string): [number, number, number, number];
-        objectify(): ColourRuleObject;
-        stringify(): string;
-        setLabel(label: string): void;
-        setArgs(args: (string | number)[]): void;
-        setParentMolecule(molecule: Molecule): void;
-        setParentRepresentation(representation: MoleculeRepresentation): void;
-        setApplyColourToNonCarbonAtoms(newVal: boolean): void;
-        getUserDefinedColours(): {
-            cid: string;
-            rgba: [number, number, number, number];
-            applyColourToNonCarbonAtoms: boolean;
-        }[];
-        apply(style?: string, ruleIndex: number): Promise<void>;
-    };
+    type ColourRule = import("../utils/MoorhenColourRule").ColourRule;
 
     type coorFormats = "pdb" | "mmcif" | "unk" | "mmjson" | "xml";
 
@@ -266,46 +199,7 @@ export namespace moorhen {
         cid: string | null;
     };
 
-    interface History {
-        reset(): void;
-        setSkipTracking(arg0: boolean): void;
-        setCurrentHead(uniqueId: string): void;
-        setCommandCentre(arg0: CommandCentre): void;
-        addEntry: (newEntry: cootCommandKwargs) => Promise<void>;
-        getEntriesForMolNo: (molNo: number) => cootCommandKwargs[];
-        getModifiedMolNo: () => number[];
-        lastModifiedMolNo: () => number;
-        rebase: (id: string) => void;
-        toggleSkipTracking(): void;
-        entries: HistoryEntry[];
-        headId: string;
-        headIsDetached: boolean;
-        timeCapsule: React.RefObject<TimeCapsule>;
-    }
-
-    interface HistoryEntry extends cootCommandKwargs {
-        uniqueId: string;
-        associatedBackupKey: string;
-        label: string;
-    }
-
-    interface CommandCentre {
-        urlPrefix: string;
-        cootWorker: Worker;
-        history: History;
-        activeMessages: WorkerMessage[];
-        isClosed: boolean;
-        init: () => Promise<void>;
-        close: () => Promise<void>;
-        onCootInitialized: null | (() => void);
-        onConsoleChanged: null | ((msg: string) => void);
-        onCommandStart: null | ((kwargs: any) => void);
-        onCommandExit: null | ((kwargs: any) => void);
-        onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
-        cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
-        cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
-        postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
-    }
+    type History = import("../utils/MoorhenHistory").History;
 
     interface cootCommandKwargs {
         message?: string;
@@ -369,17 +263,7 @@ export namespace moorhen {
         calcStructFact?: any;
     };
 
-    interface ScreenRecorder {
-        rec: MediaRecorder;
-        chunks: Blob[];
-        canvasRef: React.RefObject<HTMLCanvasElement>;
-        _isRecording: boolean;
-        stopRecording: () => void;
-        startRecording: () => void;
-        isRecording: () => boolean;
-        downloadVideo: (blob: Blob) => Promise<void>;
-        takeScreenShot: (fileName: string, doTransparentBackground?: boolean) => void;
-    }
+    type ScreenRecorder = import("../utils/MoorhenScreenRecorder").ScreenRecorder;
 
     type mapHeaderInfo = {
         spacegroup: string;
@@ -521,21 +405,6 @@ export namespace moorhen {
         litLines: boolean;
     }>;
 
-    interface LocalStorageInstance {
-        clear: () => Promise<void>;
-        keys: () => Promise<string[]>;
-        setItem: (key: string, value: string) => Promise<string>;
-        removeItem: (key: string) => Promise<void>;
-        getItem: (key: string) => Promise<string>;
-    }
-
-    type Shortcut = {
-        modifiers: string[];
-        keyPress: string;
-        label: string;
-        viewOnly: boolean;
-    };
-
     interface ContextSetters {
         setDefaultMapSamplingRate: React.Dispatch<React.SetStateAction<number>>;
         setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
@@ -591,67 +460,6 @@ export namespace moorhen {
             items?: string[];
         }>;
         setTransparentModalsOnMouseOut: React.Dispatch<React.SetStateAction<boolean>>;
-    }
-
-    interface PreferencesValues {
-        version?: string;
-        reContourMapOnlyOnMouseUp: boolean;
-        isMounted?: boolean;
-        defaultMapSamplingRate: number;
-        transparentModalsOnMouseOut: boolean;
-        defaultBackgroundColor: [number, number, number, number];
-        atomLabelDepthMode: boolean;
-        enableTimeCapsule: boolean;
-        defaultExpandDisplayCards: boolean;
-        defaultMapLitLines: boolean;
-        enableRefineAfterMod: boolean;
-        drawScaleBar: boolean;
-        drawCrosshairs: boolean;
-        drawAxes: boolean;
-        drawFPS: boolean;
-        drawEnvBOcc: boolean;
-        drawMissingLoops: boolean;
-        doPerspectiveProjection: boolean;
-        useOffScreenBuffers: boolean;
-        depthBlurRadius: number;
-        depthBlurDepth: number;
-        ssaoBias: number;
-        ssaoRadius: number;
-        doShadowDepthDebug: boolean;
-        doShadow: boolean;
-        doSSAO: boolean;
-        doEdgeDetect: boolean;
-        edgeDetectDepthThreshold: number;
-        edgeDetectNormalThreshold: number;
-        edgeDetectDepthScale: number;
-        edgeDetectNormalScale: number;
-        doOutline: boolean;
-        GLLabelsFontFamily: string;
-        GLLabelsFontSize: number;
-        mouseSensitivity: number;
-        zoomWheelSensitivityFactor: number;
-        contourWheelSensitivityFactor: number;
-        mapLineWidth: number;
-        makeBackups: boolean;
-        showShortcutToast: boolean;
-        defaultMapSurface: boolean;
-        defaultBondSmoothness: number;
-        showScoresToast: boolean;
-        shortcutOnHoveredAtom: boolean;
-        resetClippingFogging: boolean;
-        clipCap: boolean;
-        defaultUpdatingScores: string[];
-        maxBackupCount: number;
-        modificationCountBackupThreshold: number;
-        animateRefine: boolean;
-        devMode: boolean;
-        useGemmi: boolean;
-        shortCuts:
-            | string
-            | {
-                  [label: string]: Shortcut;
-              };
-        elementsIndicesRestrict: boolean;
     }
 
     interface Context extends ContextSetters, PreferencesValues {}

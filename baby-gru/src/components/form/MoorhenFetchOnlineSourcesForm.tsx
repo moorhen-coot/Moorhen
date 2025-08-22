@@ -9,10 +9,9 @@ import { moorhen } from "../../types/moorhen";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
-import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ColourRule } from "../../utils/MoorhenColourRule";
 import { setBusy } from "../../store/globalUISlice";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
-
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     sources?: string[];
@@ -25,10 +24,10 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     };
 
     const { sources, downloadMaps } = { ...defaultProps, ...props };
-    
-    const store = useStore()
-    const commandCentre = useCommandCentre()
-    const monomerLibraryPath = usePaths().monomerLibraryPath
+
+    const store = useStore();
+    const commandCentre = useCommandCentre();
+    const monomerLibraryPath = usePaths().monomerLibraryPath;
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
@@ -143,7 +142,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             if (newMolecule.molNo === -1) {
                 throw new Error("Cannot read the fetched molecule...");
             } else if (isAF2) {
-                const newColourRule = new MoorhenColourRule("af2-plddt", "/*/*/*/*", "#ffffff", commandCentre, true);
+                const newColourRule = new ColourRule("af2-plddt", "/*/*/*/*", "#ffffff", commandCentre, true);
                 newColourRule.setLabel("PLDDT");
                 const ruleArgs = await getMultiColourRuleArgs(newMolecule, "af2-plddt");
                 newColourRule.setArgs([ruleArgs]);
@@ -206,7 +205,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...");
             dispatch(addMap(newMap));
             dispatch(setActiveMap(newMap));
-            
         } catch {
             enqueueSnackbar("Failed to read mtz", { variant: "error" });
             console.log(`Cannot fetch mtz from ${url}`);
@@ -221,7 +219,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             <InputGroup>
                 <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
                     {sources.map((source) => {
-
                         return (
                             <Dropdown.Item
                                 key={source}

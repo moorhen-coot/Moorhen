@@ -13,7 +13,11 @@
     ],
 
     "workbench.colorCustomizations": {
-        "tree.indentGuidesStroke": "#b633a5"
+        "tree.indentGuidesStroke": "#b633a5",
+        //"activityBar.background": "#5F0621",
+        "titleBar.activeBackground": "#620885",
+        "titleBar.inactiveBackground": "#620885",
+        "titleBar.activeForeground": "#FFFBFC"
     },
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": { "*.json": "jsonc" }

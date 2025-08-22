@@ -5,7 +5,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { useMoorhenGlobalInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
-import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
+import { ScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
@@ -175,7 +175,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
        if (glRef !== null && typeof glRef !== 'function') {
-           const videoRecorder = new MoorhenScreenRecorder(glRef, getCanvasRef())
+           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef())
            moorhenGlobalInstance.setVideoRecorder(videoRecorder);
        }
     }, [])

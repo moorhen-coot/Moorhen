@@ -1,6 +1,6 @@
-import { useSelector } from "react-redux"
-import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap"
-import { useEffect, useRef, useState } from "react"
+import { useSelector } from "react-redux";
+import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
 import {
     CenterFocusStrongOutlined,
     HelpOutlined,
@@ -8,8 +8,8 @@ import {
     RadioButtonUncheckedOutlined,
     DownloadOutlined,
     ExpandMoreOutlined,
-} from "@mui/icons-material"
-import parse from "html-react-parser"
+} from "@mui/icons-material";
+import parse from "html-react-parser";
 import {
     Accordion,
     AccordionDetails,
@@ -22,74 +22,75 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-} from "@mui/material"
-import { convertViewtoPx, guid } from "../../utils/utils"
-import { moorhen } from "../../types/moorhen"
-import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard"
+} from "@mui/material";
+import { convertViewtoPx, guid } from "../../utils/utils";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
+import { LigandInfo } from "../../utils/MoorhenMolecule";
 
 export const MoorhenLigandCard = (props: {
-    ligand: moorhen.LigandInfo
-    molecule: moorhen.Molecule
-    validationStyles?: moorhen.RepresentationStyles[]
-    calculateQScore?: boolean
+    ligand: LigandInfo;
+    molecule: moorhen.Molecule;
+    validationStyles?: moorhen.RepresentationStyles[];
+    calculateQScore?: boolean;
 }) => {
     const validationLabels = {
         chemical_features: "Chem. Feat.",
         ligand_environment: "Env. Dist.",
         contact_dots: "Cont. dots",
         ligand_validation: "Geom. Validation",
-    }
+    };
 
-    const anchorEl = useRef(null)
+    const anchorEl = useRef(null);
 
-    const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
-    const [showInfoTable, setShowInfoTable] = useState<boolean>(false)
-    const [qScore, setQScore] = useState<number | null>(null)
-    const [flevAccordianExpanded, setFlevAccordianExpanded] = useState<boolean>(false)
+    const [showState, setShowState] = useState<{ [key: string]: boolean }>({});
+    const [showInfoTable, setShowInfoTable] = useState<boolean>(false);
+    const [qScore, setQScore] = useState<number | null>(null);
+    const [flevAccordianExpanded, setFlevAccordianExpanded] = useState<boolean>(false);
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
 
     const defaultValidationStyles: moorhen.RepresentationStyles[] = [
         "contact_dots",
         "chemical_features",
         "ligand_environment",
         "ligand_validation",
-    ]
+    ];
 
     const { ligand, molecule, validationStyles, calculateQScore } = {
         validationStyles: defaultValidationStyles,
         calculateQScore: false,
         ...props,
-    }
+    };
 
     useEffect(() => {
-        const changedState = { ...showState }
+        const changedState = { ...showState };
         validationStyles.forEach(
             (style) =>
                 (changedState[style] = molecule.representations.some(
                     (representation) => representation.style === style && representation.visible
                 ))
-        )
-        setShowState(changedState)
+        );
+        setShowState(changedState);
         return () => {
             validationStyles.forEach((key) => {
-                molecule.hide(key, ligand.cid)
-            })
-        }
-    }, [])
+                molecule.hide(key, ligand.cid);
+            });
+        };
+    }, []);
 
     useEffect(() => {
         const getQScore = async () => {
             if (activeMap && calculateQScore) {
-                const qScoreResponse = await molecule.calculateQscore(activeMap, ligand.cid)
-                setQScore(qScoreResponse?.[0]?.value)
+                const qScoreResponse = await molecule.calculateQscore(activeMap, ligand.cid);
+                setQScore(qScoreResponse?.[0]?.value);
             }
-        }
-        getQScore()
-    }, [])
+        };
+        getQScore();
+    }, []);
 
     const getToggleButton = (style: moorhen.RepresentationStyles, label: string) => {
         return (
@@ -107,15 +108,15 @@ export const MoorhenLigandCard = (props: {
                 }}
                 onClick={() => {
                     if (showState[style]) {
-                        molecule.hide(style, ligand.cid)
-                        const changedState = { ...showState }
-                        changedState[style] = false
-                        setShowState(changedState)
+                        molecule.hide(style, ligand.cid);
+                        const changedState = { ...showState };
+                        changedState[style] = false;
+                        setShowState(changedState);
                     } else {
-                        molecule.show(style, ligand.cid)
-                        const changedState = { ...showState }
-                        changedState[style] = true
-                        setShowState(changedState)
+                        molecule.show(style, ligand.cid);
+                        const changedState = { ...showState };
+                        changedState[style] = true;
+                        setShowState(changedState);
                     }
                 }}
                 value={""}
@@ -123,12 +124,12 @@ export const MoorhenLigandCard = (props: {
                 {showState[style] ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
                 <span style={{ marginLeft: "0.5rem" }}>{label}</span>
             </ToggleButton>
-        )
-    }
+        );
+    };
 
-    let flev_placeholder = true
+    let flev_placeholder = true;
     if (ligand && ligand.flev_svg)
-        flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model")
+        flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model");
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return (
@@ -214,30 +215,30 @@ export const MoorhenLigandCard = (props: {
                                 variant="secondary"
                                 style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
                                 onClick={() => {
-                                    molecule.centreOn(ligand.cid, true, true)
+                                    molecule.centreOn(ligand.cid, true, true);
                                 }}
                             >
                                 <CenterFocusStrongOutlined style={{ marginRight: "0.5rem" }} />
                                 {ligand.cid}
                             </Button>
                             {validationStyles.map((style) => {
-                                return getToggleButton(style, validationLabels[style])
+                                return getToggleButton(style, validationLabels[style]);
                             })}
                             {ligand.svg && (
                                 <Button
                                     variant="secondary"
                                     style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
                                     onClick={() => {
-                                        let link: any = document.getElementById("download_svg_link")
+                                        let link: any = document.getElementById("download_svg_link");
                                         if (!link) {
-                                            link = document.createElement("a")
-                                            link.id = "download_svg_link"
-                                            document.body.appendChild(link)
+                                            link = document.createElement("a");
+                                            link.id = "download_svg_link";
+                                            document.body.appendChild(link);
                                         }
-                                        const file = new Blob([ligand.svg], { type: "image/svg+xml" })
-                                        link.href = URL.createObjectURL(file)
-                                        link.download = ligand.resName + ".svg"
-                                        link.click()
+                                        const file = new Blob([ligand.svg], { type: "image/svg+xml" });
+                                        link.href = URL.createObjectURL(file);
+                                        link.download = ligand.resName + ".svg";
+                                        link.click();
                                     }}
                                 >
                                     <DownloadOutlined />
@@ -329,18 +330,18 @@ export const MoorhenLigandCard = (props: {
                                                             }}
                                                             onClick={() => {
                                                                 let link: any =
-                                                                    document.getElementById("download_flev_svg_link")
+                                                                    document.getElementById("download_flev_svg_link");
                                                                 if (!link) {
-                                                                    link = document.createElement("a")
-                                                                    link.id = "download_flev_svg_link"
-                                                                    document.body.appendChild(link)
+                                                                    link = document.createElement("a");
+                                                                    link.id = "download_flev_svg_link";
+                                                                    document.body.appendChild(link);
                                                                 }
                                                                 const file = new Blob([ligand.flev_svg], {
                                                                     type: "image/svg+xml",
-                                                                })
-                                                                link.href = URL.createObjectURL(file)
-                                                                link.download = ligand.resName + "_flev.svg"
-                                                                link.click()
+                                                                });
+                                                                link.href = URL.createObjectURL(file);
+                                                                link.download = ligand.resName + "_flev.svg";
+                                                                link.click();
                                                             }}
                                                         >
                                                             <DownloadOutlined />
@@ -357,5 +358,5 @@ export const MoorhenLigandCard = (props: {
                     )}
             </Card.Body>
         </Card>
-    )
-}
+    );
+};
