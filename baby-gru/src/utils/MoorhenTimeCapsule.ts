@@ -1,6 +1,5 @@
 import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
 import { batch } from "react-redux";
-import type localforage from "localforage";
 import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
 import { addMap, emptyMaps } from "../store/mapsSlice";
 import { webGL } from "../types/mgWebGL";
@@ -58,6 +57,104 @@ import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { guid } from "./utils";
 
+export interface backupKey {
+    name?: string;
+    label?: string;
+    dateTime: string;
+    type: string;
+    serNo: string | number;
+    molNames: string[];
+    mapNames?: string[];
+    mtzNames?: string[];
+}
+
+type moleculeSessionData = {
+    name: string;
+    molNo: number;
+    coordString: string;
+    coordFormat: moorhen.coorFormats;
+    representations: {
+        cid: string;
+        style: moorhen.RepresentationStyles;
+        isCustom: boolean;
+        colourRules: moorhen.ColourRuleObject[];
+        bondOptions: moorhen.cootBondOptions;
+        m2tParams: moorhen.m2tParameters;
+        nonCustomOpacity: number;
+        resEnvOptions: moorhen.residueEnvironmentOptions;
+    }[];
+    defaultBondOptions: moorhen.cootBondOptions;
+    defaultM2tParams: moorhen.m2tParameters;
+    defaultResEnvOptions: moorhen.residueEnvironmentOptions;
+    defaultColourRules: moorhen.ColourRuleObject[];
+    connectedToMaps: number[];
+    ligandDicts: { [comp_id: string]: string };
+    symmetryOn: boolean;
+    biomolOn: boolean;
+    symmetryRadius: number;
+    uniqueId: string;
+};
+
+type mapDataSession = {
+    name: string;
+    molNo: number;
+    uniqueId: string;
+    mapData: Uint8Array;
+    reflectionData: Uint8Array;
+    showOnLoad: boolean;
+    contourLevel: number;
+    radius: number;
+    rgba: {
+        mapColour: { r: number; g: number; b: number };
+        positiveDiffColour: { r: number; g: number; b: number };
+        negativeDiffColour: { r: number; g: number; b: number };
+        a: number;
+    };
+    style: "solid" | "lit-lines" | "lines";
+    isDifference: boolean;
+    selectedColumns: moorhen.selectedMtzColumns;
+    hasReflectionData: boolean;
+    associatedReflectionFileName: string;
+};
+
+type viewDataSession = {
+    origin: [number, number, number];
+    backgroundColor: [number, number, number, number];
+    ambientLight: [number, number, number, number];
+    diffuseLight: [number, number, number, number];
+    lightPosition: [number, number, number, number];
+    specularLight: [number, number, number, number];
+    specularPower: number;
+    fogStart: number;
+    fogEnd: number;
+    zoom: number;
+    doDrawClickedAtomLines: boolean;
+    clipStart: number;
+    clipEnd: number;
+    quat4: any[];
+    shadows: boolean;
+    ssao: { enabled: boolean; radius: number; bias: number };
+    edgeDetection: {
+        enabled: boolean;
+        depthScale: number;
+        normalScale: number;
+        depthThreshold: number;
+        normalThreshold: number;
+    };
+    doPerspectiveProjection: boolean;
+    blur: { enabled: boolean; depth: number; radius: number };
+};
+
+export type backupSession = {
+    version: string;
+    includesAdditionalMapData: boolean;
+    moleculeData: moleculeSessionData[];
+    mapData: mapDataSession[];
+    viewData: viewDataSession;
+    activeMapIndex: number;
+    dataIsEmbedded: boolean;
+};
+
 /**
  * Represents a time capsule with session backups
  * @constructor
@@ -87,9 +184,9 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: Store;
     onIsBusyChange: (arg0: boolean) => void;
-    getBackupLabel: (key: moorhen.backupKey) => string;
+    getBackupLabel: (key: backupKey) => string;
     loadSessionData: (
-        sessionData: moorhen.backupSession,
+        sessionData: backupSession,
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
@@ -199,13 +296,9 @@ export class MoorhenTimeCapsule {
      */
     async updateDataFiles(): Promise<(string | void)[]> {
         const allKeyStrings = await this.storageInstance.keys();
-        const allKeys: moorhen.backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
-        const currentMtzFiles = allKeys
-            .filter((key: moorhen.backupKey) => key.type === "mtzData")
-            .map((key) => key.name);
-        const currentMapData = allKeys
-            .filter((key: moorhen.backupKey) => key.type === "mapData")
-            .map((key) => key.name);
+        const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
+        const currentMtzFiles = allKeys.filter((key: backupKey) => key.type === "mtzData").map((key) => key.name);
+        const currentMapData = allKeys.filter((key: backupKey) => key.type === "mapData").map((key) => key.name);
 
         const promises: Promise<string | void>[] = [];
         this.mapsRef.current.map(async (map: moorhen.Map) => {
@@ -234,22 +327,19 @@ export class MoorhenTimeCapsule {
     /**
      * Fetch a backup session
      * @param {boolean} [includeAdditionalMapData=true] - True if map data should be fetched and included in the resulting session
-     * @returns {Promise<moorhen.backupSession>} A backup for the current session
+     * @returns {Promise<backupSession>} A backup for the current session
      */
-    async fetchSession(
-        includeAdditionalMapData: boolean = true,
-        embedData: boolean = true
-    ): Promise<moorhen.backupSession> {
+    async fetchSession(includeAdditionalMapData: boolean = true, embedData: boolean = true): Promise<backupSession> {
         this.setBusy(true);
         const keyStrings = await this.storageInstance.keys();
         const mtzFileNames = keyStrings
             .map((keyString: string) => JSON.parse(keyString))
-            .filter((key: moorhen.backupKey) => key.type === "mtzData")
-            .map((key: moorhen.backupKey) => key.name);
+            .filter((key: backupKey) => key.type === "mtzData")
+            .map((key: backupKey) => key.name);
         const mapNames = keyStrings
             .map((keyString: string) => JSON.parse(keyString))
-            .filter((key: moorhen.backupKey) => key.type === "mapData")
-            .map((key: moorhen.backupKey) => key.name);
+            .filter((key: backupKey) => key.type === "mapData")
+            .map((key: backupKey) => key.name);
         const state = this.store.getState();
 
         const promises = await Promise.all([
@@ -323,7 +413,7 @@ export class MoorhenTimeCapsule {
             }
         });
 
-        const moleculeData: moorhen.moleculeSessionData[] = this.moleculesRef.current.map((molecule, index) => {
+        const moleculeData: moleculeSessionData[] = this.moleculesRef.current.map((molecule, index) => {
             return {
                 name: molecule.name,
                 molNo: molecule.molNo,
@@ -360,7 +450,7 @@ export class MoorhenTimeCapsule {
             };
         });
 
-        const mapData: moorhen.mapDataSession[] = this.mapsRef.current.map((map, index) => {
+        const mapData: mapDataSession[] = this.mapsRef.current.map((map, index) => {
             return {
                 name: map.name,
                 molNo: map.molNo,
@@ -419,7 +509,7 @@ export class MoorhenTimeCapsule {
         const doPerspectiveProjection = this.store.getState().sceneSettings.doPerspectiveProjection;
         const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
 
-        const viewData: moorhen.viewDataSession = {
+        const viewData: viewDataSession = {
             origin: this.store.getState().glRef.origin,
             backgroundColor: backgroundColor,
             ambientLight: ambient,
@@ -455,7 +545,7 @@ export class MoorhenTimeCapsule {
             },
         };
 
-        const session: moorhen.backupSession = {
+        const session: backupSession = {
             includesAdditionalMapData: includeAdditionalMapData,
             moleculeData: moleculeData,
             mapData: mapData,
@@ -480,10 +570,10 @@ export class MoorhenTimeCapsule {
             this.modificationCount = 0;
 
             await this.updateDataFiles();
-            const session: moorhen.backupSession = await this.fetchSession(false);
+            const session: backupSession = await this.fetchSession(false);
             const sessionString: string = JSON.stringify(session);
 
-            const key: moorhen.backupKey = {
+            const key: backupKey = {
                 dateTime: `${Date.now()}`,
                 type: "automatic",
                 serNo: guid(),
@@ -508,7 +598,7 @@ export class MoorhenTimeCapsule {
      */
     async cleanupIfFull(): Promise<void> {
         const keyStrings: string[] = await this.storageInstance.keys();
-        const keys: moorhen.backupKey[] = keyStrings
+        const keys: backupKey[] = keyStrings
             .map((keyString: string) => JSON.parse(keyString))
             .filter((key) => key.type === "automatic");
         const sortedKeys = keys
@@ -528,14 +618,14 @@ export class MoorhenTimeCapsule {
      */
     async cleanupUnusedDataFiles(): Promise<void> {
         const allKeyStrings = await this.storageInstance.keys();
-        const allKeys: moorhen.backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
-        const backupKeys = allKeys.filter((key: moorhen.backupKey) => ["automatic", "manual"].includes(key.type));
-        const [usedNames] = [...backupKeys.map((key: moorhen.backupKey) => [...key.mtzNames, ...key.mapNames])];
+        const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
+        const backupKeys = allKeys.filter((key: backupKey) => ["automatic", "manual"].includes(key.type));
+        const [usedNames] = [...backupKeys.map((key: backupKey) => [...key.mtzNames, ...key.mapNames])];
 
         await Promise.all(
             allKeys
-                .filter((key: moorhen.backupKey) => ["mtzData", "mapData"].includes(key.type))
-                .map((key: moorhen.backupKey) => {
+                .filter((key: backupKey) => ["mtzData", "mapData"].includes(key.type))
+                .map((key: backupKey) => {
                     if (typeof usedNames === "undefined" || !usedNames.includes(key.name)) {
                         return this.removeBackup(JSON.stringify(key));
                     }
@@ -618,11 +708,11 @@ export class MoorhenTimeCapsule {
 
     /**
      * Get backup keys sorted by date
-     * @returns {moorhen.backupKey[]} A list of backup keys
+     * @returns {backupKey[]} A list of backup keys
      */
-    async getSortedKeys(): Promise<moorhen.backupKey[]> {
+    async getSortedKeys(): Promise<backupKey[]> {
         const keyStrings = await this.storageInstance.keys();
-        const keys: moorhen.backupKey[] = keyStrings
+        const keys: backupKey[] = keyStrings
             .map((keyString: string) => JSON.parse(keyString))
             .filter((key) => ["automatic", "manual"].includes(key.type));
         const sortedKeys = keys
@@ -635,10 +725,10 @@ export class MoorhenTimeCapsule {
 
     /**
      * A static function that can be used to get the backup label for a given key object
-     * @param {moorhen.backupKey} key - An object with the backup key data
+     * @param {backupKey} key - An object with the backup key data
      * @returns {string} A string corresponding with the backup label
      */
-    static getBackupLabel(key: moorhen.backupKey): string {
+    static getBackupLabel(key: backupKey): string {
         const dateOptions = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
         const intK: number = parseInt(key.dateTime);
         const date: Date = new Date(intK);
@@ -653,7 +743,7 @@ export class MoorhenTimeCapsule {
 
     /**
      * A static function that can be used to load a session data object
-     * @param {moorhen.backupSession} sessionData - An object containing session data
+     * @param {backupSession} sessionData - An object containing session data
      * @param {string} monomerLibraryPath - Path to the monomer library
      * @param {moorhen.Molecule[]} molecules - State containing current molecules loaded in the session
      * @param {moorhen.Map[]} maps - State containing current maps loaded in the session
@@ -666,7 +756,7 @@ export class MoorhenTimeCapsule {
      * @returns {number} Returns -1 if there was an error loading the session otherwise 0
      */
     static async loadSessionData(
-        sessionData: moorhen.backupSession,
+        sessionData: backupSession,
         monomerLibraryPath: string,
         molecules: moorhen.Molecule[],
         maps: moorhen.Map[],
@@ -1029,7 +1119,7 @@ export class MoorhenTimeCapsule {
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
         timeCapsuleRef.current.setBusy(true);
-        const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as moorhen.backupSession;
+        const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
             monomerLibraryPath,
@@ -1068,7 +1158,7 @@ export class MoorhenTimeCapsule {
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
         timeCapsuleRef.current.setBusy(true);
-        const sessionData: moorhen.backupSession = JSON.parse(sessionDataString);
+        const sessionData: backupSession = JSON.parse(sessionDataString);
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
             monomerLibraryPath,

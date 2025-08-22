@@ -2,7 +2,7 @@ import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 
 import { useDispatch, useSelector } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
-import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
+import { MoorhenContextMenu, ActionButtonSettings } from "../context-menu/MoorhenContextMenu"
 import { useMoorhenGlobalInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
 import { ScreenRecorder } from "../../utils/MoorhenScreenRecorder"
@@ -25,7 +25,7 @@ interface MoorhenWebMGPropsInterface {
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
 }
 
-const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
+const intialDefaultActionButtonSettings: ActionButtonSettings = {
     mutate: 'ALA',
     refine: 'TRIPLE',
     delete: 'RESIDUE',
@@ -34,7 +34,7 @@ const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
     rigidBodyFit: 'CHAIN',
 }
 
-const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettings, change: {key: string; value: string}) => {
+const actionButtonSettingsReducer = (defaultSettings: ActionButtonSettings, change: {key: string; value: string}) => {
     defaultSettings[change.key] = change.value
     return defaultSettings
 }

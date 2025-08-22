@@ -38,8 +38,7 @@ import { libcootApi } from "./libcoot";
 export namespace moorhen {
     type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
     type Map = import("../utils/MoorhenMap").MoorhenMap;
-    type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
-    type CommandCentre = import("../utils/MoorhenCommandCentre").MoorhenCommandCentre;
+    type CommandCentre = import("../utils/MoorhenCommandCentre").CommandCentre;
     type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoleculeRepresentation;
     type State = import("../store/MoorhenReduxStore").RootState;
     type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
@@ -47,6 +46,10 @@ export namespace moorhen {
     type Sequence = import("../utils/MoorhenMolecule").Sequence;
     type ResidueInfo = import("../utils/MoorhenMolecule").ResidueInfo;
     type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
+
+    type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
+    type backupKey = import("../utils/MoorhenTimeCapsule").backupKey;
+    type backupSession = import("../utils/MoorhenTimeCapsule").backupSession;
 
     type ResidueSpec = {
         mol_name: string;
@@ -194,11 +197,6 @@ export namespace moorhen {
         label: string;
     };
 
-    type HoveredAtom = {
-        molecule: Molecule | null;
-        cid: string | null;
-    };
-
     type History = import("../utils/MoorhenHistory").History;
 
     interface cootCommandKwargs {
@@ -269,104 +267,6 @@ export namespace moorhen {
         spacegroup: string;
         cell: libcootApi.mapCellJS;
         resolution: number;
-    };
-
-    interface backupKey {
-        name?: string;
-        label?: string;
-        dateTime: string;
-        type: string;
-        serNo: string | number;
-        molNames: string[];
-        mapNames?: string[];
-        mtzNames?: string[];
-    }
-
-    type moleculeSessionData = {
-        name: string;
-        molNo: number;
-        coordString: string;
-        coordFormat: coorFormats;
-        representations: {
-            cid: string;
-            style: RepresentationStyles;
-            isCustom: boolean;
-            colourRules: ColourRuleObject[];
-            bondOptions: cootBondOptions;
-            m2tParams: m2tParameters;
-            nonCustomOpacity: number;
-            resEnvOptions: residueEnvironmentOptions;
-        }[];
-        defaultBondOptions: cootBondOptions;
-        defaultM2tParams: m2tParameters;
-        defaultResEnvOptions: residueEnvironmentOptions;
-        defaultColourRules: ColourRuleObject[];
-        connectedToMaps: number[];
-        ligandDicts: { [comp_id: string]: string };
-        symmetryOn: boolean;
-        biomolOn: boolean;
-        symmetryRadius: number;
-        uniqueId: string;
-    };
-
-    type mapDataSession = {
-        name: string;
-        molNo: number;
-        uniqueId: string;
-        mapData: Uint8Array;
-        reflectionData: Uint8Array;
-        showOnLoad: boolean;
-        contourLevel: number;
-        radius: number;
-        rgba: {
-            mapColour: { r: number; g: number; b: number };
-            positiveDiffColour: { r: number; g: number; b: number };
-            negativeDiffColour: { r: number; g: number; b: number };
-            a: number;
-        };
-        style: "solid" | "lit-lines" | "lines";
-        isDifference: boolean;
-        selectedColumns: selectedMtzColumns;
-        hasReflectionData: boolean;
-        associatedReflectionFileName: string;
-    };
-
-    type viewDataSession = {
-        origin: [number, number, number];
-        backgroundColor: [number, number, number, number];
-        ambientLight: [number, number, number, number];
-        diffuseLight: [number, number, number, number];
-        lightPosition: [number, number, number, number];
-        specularLight: [number, number, number, number];
-        specularPower: number;
-        fogStart: number;
-        fogEnd: number;
-        zoom: number;
-        doDrawClickedAtomLines: boolean;
-        clipStart: number;
-        clipEnd: number;
-        quat4: any[];
-        shadows: boolean;
-        ssao: { enabled: boolean; radius: number; bias: number };
-        edgeDetection: {
-            enabled: boolean;
-            depthScale: number;
-            normalScale: number;
-            depthThreshold: number;
-            normalThreshold: number;
-        };
-        doPerspectiveProjection: boolean;
-        blur: { enabled: boolean; depth: number; radius: number };
-    };
-
-    type backupSession = {
-        version: string;
-        includesAdditionalMapData: boolean;
-        moleculeData: moleculeSessionData[];
-        mapData: mapDataSession[];
-        viewData: viewDataSession;
-        activeMapIndex: number;
-        dataIsEmbedded: boolean;
     };
 
     type AtomRightClickEventInfo = {
@@ -463,58 +363,4 @@ export namespace moorhen {
     }
 
     interface Context extends ContextSetters, PreferencesValues {}
-
-    type ContextButtonProps = {
-        monomerLibraryPath: string;
-        urlPrefix: string;
-        commandCentre: React.RefObject<CommandCentre>;
-        selectedMolecule: Molecule;
-        chosenAtom: ResidueSpec;
-        setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
-        setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
-        timeCapsuleRef: React.RefObject<TimeCapsule>;
-        setToolTip: React.Dispatch<React.SetStateAction<string>>;
-        setShowContextMenu: React.Dispatch<React.SetStateAction<false | AtomRightClickEventInfo>>;
-        setOpacity: React.Dispatch<React.SetStateAction<number>>;
-        setOverrideMenuContents: React.Dispatch<React.SetStateAction<React.JSX.Element | boolean>>;
-        showContextMenu: false | AtomRightClickEventInfo;
-        defaultActionButtonSettings: actionButtonSettings;
-        setDefaultActionButtonSettings: (arg0: { key: string; value: string }) => void;
-    };
-
-    type actionButtonSettings = {
-        mutate:
-            | "ALA"
-            | "CYS"
-            | "ASP"
-            | "GLU"
-            | "PHE"
-            | "GLY"
-            | "HIS"
-            | "ILE"
-            | "LYS"
-            | "LEU"
-            | "MET"
-            | "ASN"
-            | "PRO"
-            | "GLN"
-            | "ARG"
-            | "SER"
-            | "THR"
-            | "VAL"
-            | "TRP"
-            | "TYR";
-        refine: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "SPHERE" | "BIG_SPHERE" | "CHAIN" | "ALL";
-        delete:
-            | "ATOM"
-            | "RESIDUE"
-            | "RESIDUE HYDROGENS"
-            | "RESIDUE SIDE-CHAIN"
-            | "CHAIN"
-            | "CHAIN HYDROGENS"
-            | "MOLECULE HYDROGENS";
-        rotateTranslate: "ATOM" | "RESIDUE" | "CHAIN" | "MOLECULE";
-        drag: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "SPHERE";
-        rigidBodyFit: "SINGLE" | "TRIPLE" | "QUINTUPLE" | "HEPTUPLE" | "CHAIN" | "ALL";
-    };
 }
