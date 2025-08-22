@@ -644,6 +644,7 @@ export class MoorhenTimeCapsule {
         if (!this.disableBackups) {
             try {
                 await this.storageInstance.setItem(key, value);
+                console.log(`Created backup with value: ${value}`);
                 await this.cleanupIfFull();
                 this.setBusy(false);
                 return key;

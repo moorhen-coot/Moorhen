@@ -26,6 +26,10 @@ export class MoorhenGlobalInstance {
     private dispatch: Dispatch<UnknownAction>;
     private store: Store;
     private preferences: MoorhenPreferences;
+    private maps: moorhen.Map[];
+    private molecules: moorhen.Molecule[];
+    private moleculesRef: React.RefObject<moorhen.Molecule[] | null>;
+    private mapsRef: React.RefObject<moorhen.Map[] | null>;
 
     constructor() {
         this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
@@ -99,6 +103,14 @@ export class MoorhenGlobalInstance {
         return this.aceDRGInstance;
     }
 
+    public setMoleculesAndMapsRefs(
+        moleculesRef: React.RefObject<moorhen.Molecule[] | null>,
+        mapsRef: React.RefObject<moorhen.Map[] | null>
+    ): void {
+        this.moleculesRef = moleculesRef;
+        this.mapsRef = mapsRef;
+    }
+
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -117,25 +129,17 @@ export class MoorhenGlobalInstance {
         externalCommandCentreRef?: React.RefObject<moorhen.CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<moorhen.TimeCapsule | null>,
         timeCapsuleConfig?: {
-            activeMapRef?: React.RefObject<moorhen.Map | null>;
             providedBackupStorageInstance?: LocalForage | null;
             maxBackupCount: number;
             modificationCountBackupThreshold: number;
-            moleculesRef: React.RefObject<moorhen.Molecule[] | null>;
-            mapsRef: React.RefObject<moorhen.Map[] | null>;
         }
     ): Promise<void> {
         this.dispatch = dispatch;
         this.store = store;
 
         // == Init Time capsule ==
-        const activeMapRef = timeCapsuleConfig?.activeMapRef || React.createRef<moorhen.Map | null>();
-        const newTimeCapsule = new MoorhenTimeCapsule(
-            timeCapsuleConfig.moleculesRef,
-            timeCapsuleConfig.mapsRef,
-            activeMapRef,
-            this.store
-        );
+        const activeMapRef = React.createRef<moorhen.Map | null>();
+        const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
         const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
             ? timeCapsuleConfig.providedBackupStorageInstance
             : MoorhenGlobalInstance.createLocalStorageInstance("Moorhen-TimeCapsule");

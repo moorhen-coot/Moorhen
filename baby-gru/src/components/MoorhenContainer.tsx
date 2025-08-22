@@ -142,7 +142,7 @@ interface ContainerOptionalProps {
     setMoorhenDimensions?: null | (() => [number, number]);
     extraFileMenuItems: React.JSX.Element[];
     allowScripting: boolean;
-    backupStorageInstance?: LocalForage;
+    backupStorageInstance?: any;
     extraEditMenuItems: React.JSX.Element[];
     extraCalculateMenuItems: React.JSX.Element[];
     aceDRGInstance: moorhen.AceDRGInstance | null;
@@ -179,47 +179,43 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
     const lastHoveredAtomRef = props.lastHoveredAtomRef ? props.lastHoveredAtomRef : innerLastHoveredAtomRef;
 
-    // Grouped selectors for better readability and potential memoization
-    const { molecules, hoveredAtom, cursorStyle } = useSelector((state: moorhen.State) => ({
-        molecules: state.molecules.moleculeList,
-        hoveredAtom: state.hoveringStates.hoveredAtom,
-        cursorStyle: state.hoveringStates.cursorStyle,
-    }));
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const maps = useSelector((state: moorhen.State) => state.maps);
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
+    const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle);
+
+    const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized);
+    const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted);
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+    const isGlobalInstanceReady = useSelector((state: moorhen.State) => state.globalUI.isGlobalInstanceReady);
+
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
+    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
+
+    const defaultMapSamplingRate = useSelector(
+        (state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate
+    );
+
+    const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups);
+    const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount);
+    const modificationCountBackupThreshold = useSelector(
+        (state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold
+    );
 
     if (props.moleculesRef) {
         // eslint-disable-next-line
         props.moleculesRef.current = molecules;
     }
 
-    const { cootInitialized, userPreferencesMounted, activeMap, isGlobalInstanceReady } = useSelector(
-        (state: moorhen.State) => ({
-            cootInitialized: state.generalStates.cootInitialized,
-            userPreferencesMounted: state.generalStates.userPreferencesMounted,
-            activeMap: state.generalStates.activeMap,
-            isGlobalInstanceReady: state.globalUI.isGlobalInstanceReady,
-        })
-    );
+    const timeCapsuleMapRef = useRef<moorhen.Map[]>(maps);
+    const timeCapsuleMoleculeRef = useRef<moorhen.Molecule[]>(molecules);
 
-    const { backgroundColor, height, width, isDark, drawMissingLoops, defaultBackgroundColor } = useSelector(
-        (state: moorhen.State) => ({
-            backgroundColor: state.sceneSettings.backgroundColor,
-            height: state.sceneSettings.height,
-            width: state.sceneSettings.width,
-            isDark: state.sceneSettings.isDark,
-            drawMissingLoops: state.sceneSettings.drawMissingLoops,
-            defaultBackgroundColor: state.sceneSettings.defaultBackgroundColor,
-        })
-    );
-
-    const { defaultMapSamplingRate } = useSelector((state: moorhen.State) => ({
-        defaultMapSamplingRate: state.mapContourSettings.defaultMapSamplingRate,
-    }));
-
-    const { makeBackups, maxBackupCount, modificationCountBackupThreshold } = useSelector((state: moorhen.State) => ({
-        makeBackups: state.backupSettings.makeBackups,
-        maxBackupCount: state.backupSettings.maxBackupCount,
-        modificationCountBackupThreshold: state.backupSettings.modificationCountBackupThreshold,
-    }));
+    timeCapsuleMapRef.current = maps;
+    timeCapsuleMoleculeRef.current = molecules;
 
     const dispatch = useDispatch();
     const store: Store = useStore();
@@ -336,14 +332,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
             if (!userPreferencesMounted) {
                 return;
             }
+            moorhenGlobalInstance.setMoleculesAndMapsRefs(timeCapsuleMoleculeRef, timeCapsuleMapRef);
             moorhenGlobalInstance.setPaths(urlPrefix, monomerLibraryPath);
             moorhenGlobalInstance.startInstance(dispatch, store, props.commandCentre, props.timeCapsuleRef, {
-                activeMapRef: null,
                 providedBackupStorageInstance: props.backupStorageInstance,
                 maxBackupCount: maxBackupCount,
                 modificationCountBackupThreshold: modificationCountBackupThreshold,
-                moleculesRef: null,
-                mapsRef: null,
             });
 
             if (aceDRGInstance) {
