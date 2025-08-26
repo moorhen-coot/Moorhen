@@ -608,6 +608,14 @@ export const Moorhen2DOverlay = ((props) => {
                     img.crossOrigin = "Anonymous"
                     const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
                     new_images.push(img_frac)
+                } else if(imgSrc.src.startsWith("data:image")){
+                    if(imgSrc.src.indexOf(";")>10){
+                        const mimeType = imgSrc.src.substring(5,imgSrc.src.indexOf(";"))
+                        img.src = imgSrc.src
+                        img.crossOrigin = "Anonymous"
+                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+                        new_images.push(img_frac)
+                    }
                 } else {
                     img.src = imgSrc.src
                     img.crossOrigin = "Anonymous"

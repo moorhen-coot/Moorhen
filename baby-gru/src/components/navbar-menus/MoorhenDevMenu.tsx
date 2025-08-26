@@ -51,6 +51,8 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         dispatch(emptyOverlays())
         setOverlaysOn(evt.target.checked)
         if(evt.target.checked){
+            const base64Image = "data:image/png;base64,   iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==   "
+            dispatch(addImageOverlay({src:base64Image,x:0.8,y:0.15,width:20,height:20}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
