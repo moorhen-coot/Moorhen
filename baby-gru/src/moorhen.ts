@@ -14,7 +14,7 @@ export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";
 export { CommandCentre } from "./utils/MoorhenCommandCentre";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
-export { MoorhenPreferences } from "./components/managers/preferences/MoorhenPreferences";
+export { Preferences } from "./components/managers/preferences/MoorhenPreferences";
 export { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 export { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 export { MoorhenSlider } from "./components/inputs";
