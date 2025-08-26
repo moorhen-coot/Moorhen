@@ -600,16 +600,16 @@ export const Moorhen2DOverlay = ((props) => {
         imageOverlays.forEach(imgSrc => {
             const img = new window.Image()
             if(imgSrc.src.length>0){
-                if(imgSrc.src.endsWith(".svg")){
-                    img.src = imgSrc.src
-                    img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
-                    new_images.push(img_frac)
-                } else if(imgSrc.src.startsWith("<svg")){
+                if(imgSrc.src.startsWith("<svg")){
                     const svg = imgSrc.src
                     const blob = new Blob([svg], {type: 'image/svg+xml'})
                     const blobUrl = URL.createObjectURL(blob)
                     img.src = blobUrl
+                    img.crossOrigin = "Anonymous"
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+                    new_images.push(img_frac)
+                } else {
+                    img.src = imgSrc.src
                     img.crossOrigin = "Anonymous"
                     const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
                     new_images.push(img_frac)
