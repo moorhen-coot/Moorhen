@@ -24,7 +24,7 @@ function generateDefaultPreferencesFromMap(): PreferencesValues {
  * @constructor
  * @param {string} name - The name of the local storage instance
  */
-export class MoorhenPreferences {
+export class Preferences {
     name: string;
     defaultPreferencesValues: PreferencesValues;
     localStorageInstance: LocalForage;

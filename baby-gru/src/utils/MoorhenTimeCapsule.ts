@@ -68,7 +68,7 @@ export interface backupKey {
     mtzNames?: string[];
 }
 
-type moleculeSessionData = {
+export type moleculeSessionData = {
     name: string;
     molNo: number;
     coordString: string;
@@ -95,7 +95,7 @@ type moleculeSessionData = {
     uniqueId: string;
 };
 
-type mapDataSession = {
+export type mapDataSession = {
     name: string;
     molNo: number;
     uniqueId: string;
@@ -117,7 +117,7 @@ type mapDataSession = {
     associatedReflectionFileName: string;
 };
 
-type viewDataSession = {
+export type viewDataSession = {
     origin: [number, number, number];
     backgroundColor: [number, number, number, number];
     ambientLight: [number, number, number, number];

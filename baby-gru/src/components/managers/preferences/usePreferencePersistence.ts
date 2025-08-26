@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { MoorhenPreferences } from "./MoorhenPreferences";
+import { Preferences } from "./MoorhenPreferences";
 import { PreferenceEntry } from "./PreferencesList";
 
 /**
@@ -20,14 +20,14 @@ import { PreferenceEntry } from "./PreferencesList";
  */
 export const usePreferencePersistence = (
     preference: PreferenceEntry,
-    localForageInstanceRef?: React.RefObject<MoorhenPreferences>,
+    localForageInstanceRef?: React.RefObject<Preferences>,
     onUserPreferencesChange?: (key: string, value: unknown) => void
 ) => {
     const state = useSelector(preference.selector);
     const dispatch = useDispatch();
 
-    const insideForageInstanceRef = useRef<MoorhenPreferences>(
-        localForageInstanceRef ? localForageInstanceRef.current : new MoorhenPreferences()
+    const insideForageInstanceRef = useRef<Preferences>(
+        localForageInstanceRef ? localForageInstanceRef.current : new Preferences()
     );
 
     const label = preference.label;

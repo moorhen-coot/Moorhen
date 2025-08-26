@@ -6,7 +6,7 @@ import { setGlobalInstanceReady } from "../store/globalUISlice";
 import { CommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
-import { MoorhenPreferences } from "../components/managers/preferences/MoorhenPreferences";
+import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
 
 /**
  * MoorhenGlobalInstance is a singleton class that manages global instances
@@ -25,7 +25,7 @@ export class MoorhenGlobalInstance {
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private dispatch: Dispatch<UnknownAction>;
     private store: Store;
-    private preferences: MoorhenPreferences;
+    private preferences: Preferences;
     private maps: moorhen.Map[];
     private molecules: moorhen.Molecule[];
     private moleculesRef: React.RefObject<moorhen.Molecule[] | null>;
@@ -35,7 +35,7 @@ export class MoorhenGlobalInstance {
         this.timeCapsuleRef = React.createRef<moorhen.TimeCapsule>();
         this.commandCentreRef = React.createRef<moorhen.CommandCentre>();
         this.videoRecorderRef = React.createRef<moorhen.ScreenRecorder>();
-        this.preferences = new MoorhenPreferences();
+        this.preferences = new Preferences();
     }
 
     public paths: {
@@ -86,7 +86,7 @@ export class MoorhenGlobalInstance {
         return this.videoRecorderRef;
     }
 
-    public getPreferences(): MoorhenPreferences {
+    public getPreferences(): Preferences {
         return this.preferences;
     }
 

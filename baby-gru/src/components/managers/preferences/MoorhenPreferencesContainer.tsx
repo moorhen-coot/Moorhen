@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo, memo } from "react";
 import { useDispatch } from "react-redux";
 import { useMoorhenGlobalInstance } from "../../../InstanceManager";
 import { setUserPreferencesMounted } from "../../../store/generalStatesSlice";
-import { MoorhenPreferences } from "./MoorhenPreferences";
+import { Preferences } from "./MoorhenPreferences";
 import { PREFERENCES_MAP } from "./PreferencesList";
 import type { PreferenceEntry, PreferencesValues } from "./PreferencesList";
 import { usePreferencePersistence } from "./usePreferencePersistence";
@@ -16,7 +16,7 @@ import { usePreferencePersistence } from "./usePreferencePersistence";
 export const MoorhenPreferencesContainer = memo(
     (props: { onUserPreferencesChange?: (key: string, value: unknown) => void }) => {
         const moorhenGlobalInstance = useMoorhenGlobalInstance();
-        const localForageInstanceRef = useRef<MoorhenPreferences>(moorhenGlobalInstance.getPreferences());
+        const localForageInstanceRef = useRef<Preferences>(moorhenGlobalInstance.getPreferences());
         const dispatch = useDispatch();
 
         const restoreDefaults = (defaultValues: PreferencesValues) => {
@@ -41,7 +41,7 @@ export const MoorhenPreferencesContainer = memo(
             const fetchStoredContext = async () => {
                 try {
                     const storedVersion = await localForageInstanceRef.current?.localStorageInstance.getItem("version");
-                    const defaultValues = MoorhenPreferences.defaultPreferencesValues;
+                    const defaultValues = Preferences.defaultPreferencesValues;
                     if (storedVersion !== defaultValues.version) {
                         restoreDefaults(defaultValues);
                         dispatch(setUserPreferencesMounted(true));
@@ -87,7 +87,7 @@ const PreferenceHandler = ({
     onUserPreferencesChange,
 }: {
     preference: PreferenceEntry;
-    localForageInstanceRef?: React.RefObject<MoorhenPreferences>;
+    localForageInstanceRef?: React.RefObject<Preferences>;
     onUserPreferencesChange?: (key: string, value: unknown) => void;
 }) => {
     usePreferencePersistence(preference, localForageInstanceRef, onUserPreferencesChange);

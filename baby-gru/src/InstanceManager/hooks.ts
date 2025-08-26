@@ -11,7 +11,6 @@ export const useCommandCentre = () => {
 };
 
 export const useCommandAndCapsule = () => {
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
     const commandCentre = useCommandCentre();
     const timeCapsuleRef = useTimeCapsule();
     return { commandCentre, timeCapsuleRef };

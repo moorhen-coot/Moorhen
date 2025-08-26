@@ -15,13 +15,6 @@ import { libcootApi } from "./libcoot";
  *   import type * as Moorhen from 'moorhen';
  *   const f = (m: Moorhen.Molecule, map: Moorhen.Map) => {};
  *
- * Examples:
- * @example Inside the moorhen package
- * import type { Molecule } from '../utils/MoorhenMolecule';
- * import type { Map } from '../utils/MoorhenMap';
- * const fit = (mol: Molecule, map: Map) => {
- *   // ...
- * };
  *
  * @example Outside the moorhen package — specific imports
  * import type { Molecule, Map } from 'moorhen';
@@ -32,6 +25,14 @@ import { libcootApi } from "./libcoot";
  * @example Outside the moorhen package — module namespace
  * import Moorhen from 'moorhen';
  * const draw = (mol: Moorhen.Molecule) => {
+ *   // ...
+ * };
+ *
+ * Examples:
+ * @example Inside the moorhen package
+ * import type { Molecule } from '../utils/MoorhenMolecule';
+ * import type { Map } from '../utils/MoorhenMap';
+ * const fit = (mol: Molecule, map: Map) => {
  *   // ...
  * };
  */
@@ -46,10 +47,20 @@ export namespace moorhen {
     type Sequence = import("../utils/MoorhenMolecule").Sequence;
     type ResidueInfo = import("../utils/MoorhenMolecule").ResidueInfo;
     type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
-
     type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
     type backupKey = import("../utils/MoorhenTimeCapsule").backupKey;
     type backupSession = import("../utils/MoorhenTimeCapsule").backupSession;
+    type Preferences = import("../components/managers/preferences").Preferences;
+    type HistoryEntry = import("../utils/MoorhenHistory").HistoryEntry;
+    type moleculeSessionData = import("../utils/MoorhenTimeCapsule").moleculeSessionData;
+    type mapDataSession = import("../utils/MoorhenTimeCapsule").mapDataSession;
+    type viewDataSession = import("../utils/MoorhenTimeCapsule").viewDataSession;
+    type Shortcut = import("../components/managers/preferences/DefaultShortcuts").Shortcut;
+    type actionButtonSettings = import("../components/context-menu/MoorhenContextMenu").ActionButtonSettings;
+
+    type LocalStorageInstance = import("../utils/localStorage").LocalStorageInstance;
+
+    type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 
     type ResidueSpec = {
         mol_name: string;
