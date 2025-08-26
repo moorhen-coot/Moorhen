@@ -29,7 +29,7 @@
 #include <iostream>
 #include <set>
 #include <stdlib.h>
-#include "Cartesian.hh"
+#include "Cartesian.h"
 #include "ccp4mg-utils/matrix.h"
 #include <vector>
 #include <utility>
