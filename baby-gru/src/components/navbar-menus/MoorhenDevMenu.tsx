@@ -7,10 +7,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { useSnackbar } from "notistack";
 import { setUseGemmi } from "../../store/generalStatesSlice";
-import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
+import { addLatexOverlay, addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
 import { showModal } from '../../store/modalsSlice';
 import { modalKeys } from '../../utils/enums';
-import { getMathJaxSVG } from '../../utils/mathJaxUtils';
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -78,18 +77,8 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addCallback(exampleCallBack))
             const input = String.raw`{{\rm What\ is\ going\ on\ here? \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
             const input2 = String.raw`\displaystyle  \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}`
-            const mathJaxInfo = await getMathJaxSVG(input)
-            if(mathJaxInfo.whratio>0){
-                const wh_ratio = mathJaxInfo.whratio
-                const svg_height = 60
-                dispatch(addImageOverlay({src:mathJaxInfo.svg,x:0.10,y:0.25,width:svg_height*wh_ratio,height:svg_height}))
-            }
-            const mathJaxInfo2 = await getMathJaxSVG(input2)
-            if(mathJaxInfo.whratio>0){
-                const wh_ratio = mathJaxInfo2.whratio
-                const svg_height = 80
-                dispatch(addImageOverlay({src:mathJaxInfo2.svg,x:0.10,y:0.45,width:svg_height*wh_ratio,height:svg_height}))
-            }
+            dispatch(addLatexOverlay({text:input,x:0.10,y:0.25,height:60}))
+            dispatch(addLatexOverlay({text:input2,x:0.10,y:0.45,height:80}))
         }
     }
 

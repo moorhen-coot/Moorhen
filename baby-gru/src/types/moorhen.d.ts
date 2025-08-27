@@ -1177,6 +1177,7 @@ export namespace moorhen {
         overlays: {
             imageOverlayList: any[]
             textOverlayList: any[]
+            latexOverlayList: any[]
             svgPathOverlayList: any[]
             fracPathOverlayList: any[]
             callBacks: any[]

@@ -32,6 +32,13 @@ interface TextFrac {
     lineWidth?: number
 }
 
+interface LatexSrcFrac {
+    x: number
+    y: number
+    height: number
+    text: string
+}
+
 interface ImageSrcFrac {
     x: number
     y: number
@@ -42,6 +49,7 @@ interface ImageSrcFrac {
 
 const initialState = {
     imageOverlayList: [],
+    latexOverlayList: [],
     textOverlayList: [],
     svgPathOverlayList: [],
     fracPathOverlayList: [],
@@ -54,6 +62,10 @@ export const overlaysSlice = createSlice({
   reducers: {
     addImageOverlay: (state, action: {payload: ImageSrcFrac, type: string}) => {
       state = { ...state, imageOverlayList: [...state.imageOverlayList, action.payload] }
+      return state
+    },
+    addLatexOverlay: (state, action: {payload: LatexSrcFrac, type: string}) => {
+      state = { ...state, latexOverlayList: [...state.latexOverlayList, action.payload] }
       return state
     },
     addTextOverlay: (state, action: {payload: TextFrac, type: string}) => {
@@ -78,7 +90,7 @@ export const overlaysSlice = createSlice({
 }})
 
 export const {
-    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback
+    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback, addLatexOverlay
 } = overlaysSlice.actions
 
 export default overlaysSlice.reducer

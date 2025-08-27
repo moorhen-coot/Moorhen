@@ -7,7 +7,7 @@ import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay,
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
-
+import { getMathJaxSVG } from '../../utils/mathJaxUtils';
 
 interface ImageFrac2D {
     x: number
@@ -568,7 +568,6 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             const base_y = height*.125
             drawAxes(quat,base_x,base_y,1.0)
         }
-
     }
 }
 
@@ -581,6 +580,7 @@ export const Moorhen2DOverlay = ((props) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
+    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList)
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
@@ -597,6 +597,24 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         const new_images = []
+        const buildLatexImages = async() => {
+            for(let ilo=0;ilo<latexOverlays.length;ilo++){
+                const mathJaxInfo = await getMathJaxSVG(latexOverlays[ilo].text)
+                if(mathJaxInfo.whratio>0){
+                    const img = new window.Image()
+                    const wh_ratio = mathJaxInfo.whratio
+                    const svg_height = latexOverlays[ilo].height
+                    const svg = mathJaxInfo.svg
+                    const blob = new Blob([svg], {type: 'image/svg+xml'})
+                    const blobUrl = URL.createObjectURL(blob)
+                    img.src = blobUrl
+                    img.crossOrigin = "Anonymous"
+                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height}
+                    new_images.push(img_frac)
+                }
+            }
+        }
+        buildLatexImages()
         imageOverlays.forEach(imgSrc => {
             const img = new window.Image()
             if(imgSrc.src.length>0){
@@ -625,7 +643,7 @@ export const Moorhen2DOverlay = ((props) => {
             }
         })
         setImages(new_images)
-    }, [imageOverlays])
+    }, [latexOverlays,imageOverlays])
 
     const getContext = useCallback(() => {
         if(!canvas2DRef) return null
