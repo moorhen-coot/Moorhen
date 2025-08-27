@@ -7,13 +7,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
-import { representationLabelMapping , COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums";
+import { representationLabelMapping, COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../utils/enums";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { webGL } from "../../types/mgWebGL";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { addCustomRepresentation } from "../../store/moleculesSlice";
-import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenSlider } from "../inputs";
 import { NcsColourSwatch } from "./MoorhenColourRuleCard";
 import {
@@ -59,10 +58,12 @@ export const MoorhenAddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const colourSwatchRef = useRef<HTMLDivElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
-        const ncsColourRuleRef = useRef<null | moorhen.ColourRule>(null);
+        const ncsColourRuleRef = useRef<null | ColourRule>(null);
 
         const [ruleType, setRuleType] = useState<string>(props.representation ? "cid" : "molecule");
-        const [representationStyle, setRepresentationStyle] = useState<string>(props.representation?.style ?? "CBs");
+        const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(
+            props.representation?.style ?? "CBs"
+        );
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
                 if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
@@ -287,12 +288,12 @@ export const MoorhenAddCustomRepresentationCard = memo(
                 return;
             }
 
-            let colourRule: moorhen.ColourRule;
+            let colourRule: ColourRule;
             if (!useDefaultColoursSwitchRef.current.checked) {
                 const colourRuleCid = styleSelectRef.current.value === "residue_environment" ? "//*" : cidSelection;
                 switch (colourModeSelectRef.current.value) {
                     case "custom":
-                        colourRule = new MoorhenColourRule(
+                        colourRule = new ColourRule(
                             ruleSelectRef.current.value,
                             colourRuleCid,
                             colour,
@@ -318,7 +319,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     case "b-factor-norm":
                     case "electrostatics":
                     case "af2-plddt":
-                        colourRule = new MoorhenColourRule(
+                        colourRule = new ColourRule(
                             colourModeSelectRef.current.value,
                             "/*/*/*/*",
                             "#ffffff",
@@ -423,7 +424,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     : null;
             if (mode === "add") {
                 const representation = await props.molecule.addRepresentation(
-                    styleSelectRef.current.value,
+                    styleSelectRef.current.value as moorhen.RepresentationStyles,
                     cidSelection,
                     true,
                     colourRule ? [colourRule] : null,
@@ -439,7 +440,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                 );
                 if (representation) {
                     representation.cid = cidSelection;
-                    representation.setStyle(styleSelectRef.current.value);
+                    representation.setStyle(styleSelectRef.current.value as moorhen.RepresentationStyles);
                     representation.setUseDefaultColourRules(!colourRule);
                     representation.setColourRules(colourRule ? [colourRule] : null);
                     representation.setBondOptions(bondOptions);
@@ -520,7 +521,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                             size="sm"
                             value={representationStyle}
                             onChange={(evt) => {
-                                setRepresentationStyle(evt.target.value);
+                                setRepresentationStyle(evt.target.value as moorhen.RepresentationStyles);
                                 if (evt.target.value === "residue_environment") setRuleType("cid");
                             }}
                         >

@@ -1,6 +1,6 @@
 {
+    "$schema": "http://json.schemastore.org/tsconfig",
     "compilerOptions": {
-        "allowJs": true,
         "outDir": "tsDist",
         "module": "es6",
         "target": "es6",
@@ -11,7 +11,9 @@
         "esModuleInterop": true,
         "jsx": "react-jsx",
         "sourceMap": true,
-        "moduleResolution": "node"
+        "declarationMap": true,
+        "moduleResolution": "node",
+        "declaration": true,
       },
       "include": [
         "src/*"
@@ -23,6 +25,7 @@
         "nginx/*",
         "test/*",
         "src/__tests__/*",
-        "webpack.config.js"
+        "webpack.config.js",
+        "src/protobuf/MoorhenSession.js",
       ]
 }

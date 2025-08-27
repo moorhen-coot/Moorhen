@@ -1,17 +1,15 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface userInterface {
+const initialState: {
     busy: boolean;
     isGlobalInstanceReady: boolean;
-}
-
-const initialState: userInterface = {
+} = {
     busy: false,
-    isGlobalInstanceReady: false
+    isGlobalInstanceReady: false,
 };
 
 const globalUISlice = createSlice({
-    name: 'globalUI',
+    name: "globalUI",
     initialState,
     reducers: {
         setBusy: (state, action: PayloadAction<boolean>) => {
@@ -19,8 +17,8 @@ const globalUISlice = createSlice({
         },
         setGlobalInstanceReady: (state, action: PayloadAction<boolean>) => {
             state.isGlobalInstanceReady = action.payload;
-        }
-    }
+        },
+    },
 });
 
 export const { setBusy, setGlobalInstanceReady } = globalUISlice.actions;

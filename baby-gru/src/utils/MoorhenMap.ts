@@ -46,7 +46,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * map.delete();
 */
 
-export class MoorhenMap implements moorhen.Map {
+export class MoorhenMap {
 
     type: string
     name: string

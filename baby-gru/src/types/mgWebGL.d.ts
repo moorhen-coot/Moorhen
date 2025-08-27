@@ -1,9 +1,9 @@
-import React from 'react';
-import * as vec3 from 'gl-matrix/vec3';
-import * as vec4 from 'gl-matrix/vec4';
-import * as quat4 from 'gl-matrix/quat';
-import * as mat4 from 'gl-matrix/mat4';
-import * as mat3 from 'gl-matrix/mat3';
+import React from "react";
+//import * as vec3 from 'gl-matrix/vec3';
+//import * as vec4 from 'gl-matrix/vec4';
+import { quat4 } from "gl-matrix";
+//import * as mat4 from 'gl-matrix/mat4';
+//import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
 
 export namespace webGL {
@@ -23,7 +23,7 @@ export namespace webGL {
         z: number;
         charge: number;
         label: string;
-        symbol: string;
+        symbol?: string;
         displayBuffer: DisplayBuffer;
         circleData?: ImageData;
     }
@@ -31,7 +31,6 @@ export namespace webGL {
     interface Dictionary<T> {
         [Key: string]: T;
     }
-
 
     interface MGWebGLFrameBuffer extends WebGLFramebuffer {
         width: number;
@@ -217,11 +216,9 @@ export namespace webGL {
         screenZ: WebGLUniformLocation;
     }
 
-    interface ShaderGBuffersTriangles extends MGWebGLShader {
-    }
+    interface ShaderGBuffersTriangles extends MGWebGLShader {}
 
-    interface ShaderGBuffersThickLinesNormal extends ShaderThickLinesNormal {
-    }
+    interface ShaderGBuffersThickLinesNormal extends ShaderThickLinesNormal {}
 
     interface ShaderBlurX extends MGWebGLShader {
         vertexTextureAttribute: GLint;
@@ -298,23 +295,22 @@ export namespace webGL {
 
     interface ShaderTrianglesInstanced extends ShaderTriangles {
         vertexInstanceOriginAttribute: GLint;
-        vertexInstanceSizeAttribute : GLint;
-        vertexInstanceOrientationAttribute  : GLint;
-        outlineSize  : WebGLUniformLocation;
+        vertexInstanceSizeAttribute: GLint;
+        vertexInstanceOrientationAttribute: GLint;
+        outlineSize: WebGLUniformLocation;
     }
 
-    interface ShaderGBuffersPerfectSpheres extends ShaderPerfectSpheres {
-    }
+    interface ShaderGBuffersPerfectSpheres extends ShaderPerfectSpheres {}
 
     interface ShaderGBuffersTrianglesInstanced extends ShaderGBuffersTriangles {
         vertexInstanceOriginAttribute: GLint;
-        vertexInstanceSizeAttribute : GLint;
-        vertexInstanceOrientationAttribute  : GLint;
+        vertexInstanceSizeAttribute: GLint;
+        vertexInstanceOrientationAttribute: GLint;
     }
 
     interface ShaderOutLine extends MGWebGLShader {
-        outlineSize  : WebGLUniformLocation;
-        cursorPos  : WebGLUniformLocation;
+        outlineSize: WebGLUniformLocation;
+        cursorPos: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
     }
 
@@ -325,30 +321,30 @@ export namespace webGL {
 
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
-        onAtomHovered : (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
-        onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
-        onZoomChanged : (newZoom: number) =>  void;
-        onOriginChanged : (newOrigin: [number,number,number]) =>  void;
-        onQuatChanged : (newQuat: [number,number,number,number]) =>  void;
-        cursorPositionChanged : (x: number, y: number) =>  void;
-        messageChanged : ((d:Dictionary<string>) => void);
-        mouseSensitivityFactor :  number | null;
-        zoomWheelSensitivityFactor :  number | null;
-        keyboardAccelerators : Dictionary<string>;
-        showCrosshairs : boolean | null;
-        showScaleBar : boolean | null;
-        showAxes : boolean | null;
-        showFPS : boolean | null;
-        mapLineWidth : number;
-        width? : number;
-        height? : number;
-        setDrawQuat : (q: quat4) =>  void;
+        onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
+        onKeyPress: (event: KeyboardEvent) => boolean | Promise<boolean>;
+        onZoomChanged: (newZoom: number) => void;
+        onOriginChanged: (newOrigin: [number, number, number]) => void;
+        onQuatChanged: (newQuat: [number, number, number, number]) => void;
+        cursorPositionChanged: (x: number, y: number) => void;
+        messageChanged: (d: Dictionary<string>) => void;
+        mouseSensitivityFactor: number | null;
+        zoomWheelSensitivityFactor: number | null;
+        keyboardAccelerators: Dictionary<string>;
+        showCrosshairs: boolean | null;
+        showScaleBar: boolean | null;
+        showAxes: boolean | null;
+        showFPS: boolean | null;
+        mapLineWidth: number;
+        width?: number;
+        height?: number;
+        setDrawQuat: (q: quat4) => void;
     }
 
-    interface MGWebGL extends React.Component  {
+    interface MGWebGL extends React.Component {
         //These 2 are used in MoorhenScreenRecorder
-        getCanvasRef() : React.RefObject<HTMLCanvasElement>;
-        getPixelData(doTransparentBackground?:boolean) : Uint8Array;
+        getCanvasRef(): React.RefObject<HTMLCanvasElement>;
+        getPixelData(doTransparentBackground?: boolean): Uint8Array;
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];

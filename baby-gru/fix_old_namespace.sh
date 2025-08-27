@@ -1,0 +1,1 @@
+awk '{gsub(/import\(\s*["'\''][^"'\'']*["'\'']\s*\)/, "import(\"../moorhen\")")} 1' dist/types/moorhen.d.ts > dist/types/moorhen.d.ts.tmp && mv dist/types/moorhen.d.ts.tmp dist/types/moorhen.d.ts

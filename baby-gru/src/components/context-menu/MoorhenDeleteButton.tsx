@@ -1,79 +1,118 @@
-import { useEffect, useState } from "react"
-import { useSelector, useDispatch } from 'react-redux';
-import { getTooltipShortcutLabel } from "../../utils/utils"
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { getTooltipShortcutLabel } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
 import { removeMolecule } from "../../store/moleculesSlice";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
 
-export const MoorhenDeleteButton = (props: moorhen.ContextButtonProps) => {
-    const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")
-    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
-    const dispatch = useDispatch()
+export const MoorhenDeleteButton = (props: ContextButtonProps) => {
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item");
+    const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
+    const dispatch = useDispatch();
 
-    const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
+    const deleteModes = [
+        "ATOM",
+        "RESIDUE",
+        "RESIDUE HYDROGENS",
+        "RESIDUE SIDE-CHAIN",
+        "CHAIN",
+        "CHAIN HYDROGENS",
+        "MOLECULE HYDROGENS",
+    ];
 
     useEffect(() => {
         if (shortCuts) {
-            const shortCut = JSON.parse(shortCuts as string).delete_residue
-            setToolTipLabel(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
+            const shortCut = JSON.parse(shortCuts as string).delete_residue;
+            setToolTipLabel(`Delete Item ${getTooltipShortcutLabel(shortCut)}`);
         }
-    }, [shortCuts])
-
+    }, [shortCuts]);
 
     const deleteFormatArgs = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, pp: string) => {
-        let commandArgs: [number, string, string]
-        if (pp === 'CHAIN') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
-        } else if (pp === 'RESIDUE') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp === 'ATOM') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp === 'RESIDUE SIDE-CHAIN') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
-        } else if (pp === 'RESIDUE HYDROGENS') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, 'LITERAL']
-        } else if (pp === 'MOLECULE HYDROGENS') {
-            commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, 'LITERAL']
+        let commandArgs: [number, string, string];
+        if (pp === "CHAIN") {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, "LITERAL"];
+        } else if (pp === "RESIDUE") {
+            commandArgs = [
+                molecule.molNo,
+                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${
+                    chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
+                }`,
+                "LITERAL",
+            ];
+        } else if (pp === "ATOM") {
+            commandArgs = [
+                molecule.molNo,
+                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${
+                    chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
+                }`,
+                "LITERAL",
+            ];
+        } else if (pp === "RESIDUE SIDE-CHAIN") {
+            commandArgs = [
+                molecule.molNo,
+                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`,
+                "LITERAL",
+            ];
+        } else if (pp === "RESIDUE HYDROGENS") {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, "LITERAL"];
+        } else if (pp === "MOLECULE HYDROGENS") {
+            commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, "LITERAL"];
         } else {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, 'LITERAL']
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, "LITERAL"];
         }
-        return commandArgs
-    }
+        return commandArgs;
+    };
 
-    const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
+    const getCootCommandInput = (
+        selectedMolecule: moorhen.Molecule,
+        chosenAtom: moorhen.ResidueSpec,
+        selectedMode: string
+    ) => {
         return {
-            message: 'coot_command',
+            message: "coot_command",
             returnType: "status",
-            command: 'delete_using_cid',
+            command: "delete_using_cid",
             commandArgs: deleteFormatArgs(selectedMolecule, chosenAtom, selectedMode),
-            changesMolecules: [selectedMolecule.molNo]
-        }
-    }
+            changesMolecules: [selectedMolecule.molNo],
+        };
+    };
 
-    const deleteMoleculeIfEmpty = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, cootResult: moorhen.WorkerResponse<libcootApi.PairType<number, number>>) => {
+    const deleteMoleculeIfEmpty = (
+        molecule: moorhen.Molecule,
+        chosenAtom: moorhen.ResidueSpec,
+        cootResult: moorhen.WorkerResponse<libcootApi.PairType<number, number>>
+    ) => {
         if (cootResult.data.result.result.second < 1) {
-            console.log('Empty molecule detected, deleting it now...')
-            molecule.delete()
-            dispatch(removeMolecule(molecule))
+            console.log("Empty molecule detected, deleting it now...");
+            molecule.delete();
+            dispatch(removeMolecule(molecule));
         }
-    }
+    };
 
-    return <MoorhenContextButtonBase
-        icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/delete.svg`} alt="delete-item" />}
-        refineAfterMod={false}
-        needsMapData={false}
-        toolTipLabel={toolTipLabel}
-        onExit={deleteMoleculeIfEmpty}
-        popoverSettings={{
-            label: 'Delete mode',
-            options: deleteModes,
-            getCootCommandInput: getCootCommandInput,
-            defaultValue: props.defaultActionButtonSettings['delete'],
-            setDefaultValue: (newValue: string) => {
-                props.setDefaultActionButtonSettings({ key: 'delete', value: newValue })
+    return (
+        <MoorhenContextButtonBase
+            icon={
+                <img
+                    className="moorhen-context-button__icon"
+                    src={`${props.urlPrefix}/pixmaps/delete.svg`}
+                    alt="delete-item"
+                />
             }
-        }}
-        {...props}
-    />
-}
+            refineAfterMod={false}
+            needsMapData={false}
+            toolTipLabel={toolTipLabel}
+            onExit={deleteMoleculeIfEmpty}
+            popoverSettings={{
+                label: "Delete mode",
+                options: deleteModes,
+                getCootCommandInput: getCootCommandInput,
+                defaultValue: props.defaultActionButtonSettings["delete"],
+                setDefaultValue: (newValue: string) => {
+                    props.setDefaultActionButtonSettings({ key: "delete", value: newValue });
+                },
+            }}
+            {...props}
+        />
+    );
+};

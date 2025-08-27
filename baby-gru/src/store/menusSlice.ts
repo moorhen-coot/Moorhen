@@ -1,23 +1,21 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Dispatch, useState } from 'react';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { moorhen } from "../types/moorhen";
+import type { RootState, AppDispatch } from "./MoorhenReduxStore";
 
-interface MenuState {
-    settings: Record<string, Record<string, any>>; 
-}
-
-const initialState: MenuState = {
-    settings: {}
+const initialState: {
+    settings: Record<string, Record<string, unknown>>;
+} = {
+    settings: {},
 };
 
 const menusSlice = createSlice({
-    name: 'menus',
+    name: "menus",
     initialState,
     reducers: {
-        setMenuSetting: (state, action: PayloadAction<{ menu: string; key: string; value: any }>) => {
+        setMenuSetting: (state, action: PayloadAction<{ menu: string; key: string; value: unknown }>) => {
             if (!state.settings[action.payload.menu]) {
-                state.settings[action.payload.menu] = {}; 
+                state.settings[action.payload.menu] = {};
             }
             state.settings[action.payload.menu][action.payload.key] = action.payload.value;
         },
@@ -27,11 +25,10 @@ const menusSlice = createSlice({
             }
         },
         resetMenu: (state, action: PayloadAction<{ menu: string }>) => {
-            delete state.settings[action.payload.menu]; 
-        }
-    }
+            delete state.settings[action.payload.menu];
+        },
+    },
 });
-
 
 /**
  * Custom hook to retrieve a menu setting from the Redux store.
@@ -40,9 +37,9 @@ const menusSlice = createSlice({
  * @param defaultValue - The default value if the setting is not found in the Redux store.
  * @returns The value of the setting from the Redux store or the default value.
  */
-export const usePersistent = <T>(menu: string, key: string, defaultValue: T) => {
-    const storedValue: T = useSelector((state: moorhen.State) => state.menus.settings[menu]?.[key]) ?? defaultValue;
-    return storedValue as T;
+export const usePersistent = <T>(menu: string, key: string, defaultValue: T): T => {
+    const storedValue = useSelector((state: RootState) => state.menus.settings[menu]?.[key]);
+    return storedValue !== undefined ? (storedValue as T) : (defaultValue as T);
 };
 
 /**
@@ -54,10 +51,10 @@ export const usePersistent = <T>(menu: string, key: string, defaultValue: T) => 
  * @returns A tuple containing the current value and a function to update it.
  */
 export const usePersistentState = <T>(menu: string, key: string, defaultValue: T, autoUpdate: boolean = false) => {
-    const dispatch = useDispatch();
-    const storeValue: T = usePersistent(menu, key, defaultValue);
-    
-    const [value, setValue] = useState<T>(storeValue);   
+    const dispatch: AppDispatch = useDispatch();
+    const storeValue: T = usePersistent<T>(menu, key, defaultValue) as T;
+
+    const [value, setValue] = useState<T>(storeValue);
     const setStoreValue = (newValue: T) => {
         setValue(newValue);
         if (autoUpdate) {
@@ -75,8 +72,13 @@ export const usePersistentState = <T>(menu: string, key: string, defaultValue: T
  * @param menu - The name of the menu.
  * @param data - An array of key-value pairs to be stored.
  */
-export const dispatchPersistentStates = (dispatch: Dispatch<any>, menu: string, data: { key: string; value: any }[]) => {
-    data.forEach(item => {
+
+export const dispatchPersistentStates = (
+    dispatch: AppDispatch,
+    menu: string,
+    data: { key: string; value: unknown }[]
+) => {
+    data.forEach((item) => {
         dispatch(setMenuSetting({ menu, key: item.key, value: item.value }));
     });
 };
