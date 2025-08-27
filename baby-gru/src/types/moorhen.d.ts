@@ -1202,6 +1202,53 @@ export namespace moorhen {
         rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
     }
 
+    interface MoorhenOverlay2DFracPath {
+        path:[number,number][]
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        gradientBoundary?: [number,number,number,number]
+        gradientStops?: [number,string][]
+        lineWidth?: number
+    }
+
+    interface MoorhenOverlay2DSvgPath {
+        path: string
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        gradientBoundary?: [number,number,number,number]
+        gradientStops?: [number,string][]
+        lineWidth?: number
+    }
+
+    interface MoorhenOverlay2DTextFrac {
+        x: number
+        y: number
+        text: string
+        fontFamily: string
+        fontPixelSize: number
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        lineWidth?: number
+    }
+
+    interface MoorhenOverlay2DLatexSrcFrac {
+        x: number
+        y: number
+        height: number
+        text: string
+    }
+
+    interface MoorhenOverlay2DImageSrcFrac {
+        x: number
+        y: number
+        width: number
+        height: number
+        src: string
+    }
+
     type VectorsCoordMode = 'atoms'|'points'|'atompoint';
     type VectorsLabelMode = 'none'|'start'|'end'|'middle';
     type VectorsDrawMode = 'cylinder'|'dashedcylinder';
