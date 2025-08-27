@@ -10,6 +10,7 @@ import { setUseGemmi } from "../../store/generalStatesSlice";
 import { addLatexOverlay, addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback } from "../../store/overlaysSlice";
 import { showModal } from '../../store/modalsSlice';
 import { modalKeys } from '../../utils/enums';
+import {v4 as uuidv4} from 'uuid';
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -51,17 +52,17 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         setOverlaysOn(evt.target.checked)
         if(evt.target.checked){
             const base64Image = "data:image/png;base64,   iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==   "
-            dispatch(addImageOverlay({src:base64Image,x:0.8,y:0.15,width:20,height:20}))
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100}))
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30}))
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100}))
-            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red"}))
-            dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48}))
-            dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue"}))
-            dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta"}))
-            dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange"}))
-            dispatch(addSvgPathOverlay({path:"M610 300 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"green",lineWidth:6}))
-            dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77"}))
+            dispatch(addImageOverlay({src:base64Image,x:0.8,y:0.15,width:20,height:20,uniqueId:uuidv4()}))
+            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100,uniqueId:uuidv4()}))
+            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30,uniqueId:uuidv4()}))
+            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100,uniqueId:uuidv4()}))
+            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red",uniqueId:uuidv4()}))
+            dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48,uniqueId:uuidv4()}))
+            dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue",uniqueId:uuidv4()}))
+            dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta",uniqueId:uuidv4()}))
+            dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange",uniqueId:uuidv4()}))
+            dispatch(addSvgPathOverlay({path:"M610 300 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"green",lineWidth:6,uniqueId:uuidv4()}))
+            dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77",uniqueId:uuidv4()}))
             const gradientStops = []
             gradientStops.push([0, "red"]);
             gradientStops.push([0.35, "yellow"]);
@@ -69,16 +70,16 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             gradientStops.push([0.65, "cyan"]);
             gradientStops.push([0.8, "blue"]);
             gradientStops.push([1.0, "purple"]);
-            dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient"}))
-            dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient"}))
-            dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke"}))
-            dispatch(addFracPathOverlay({path:[[0.4,0.2],[0.8,0.6]],drawStyle:"stroke",strokeStyle:"red",lineWidth:8}))
-            dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient"}))
+            dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient",uniqueId:uuidv4()}))
+            dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient",uniqueId:uuidv4()}))
+            dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke",uniqueId:uuidv4()}))
+            dispatch(addFracPathOverlay({path:[[0.4,0.2],[0.8,0.6]],drawStyle:"stroke",strokeStyle:"red",lineWidth:8,uniqueId:uuidv4()}))
+            dispatch(addFracPathOverlay({path:[[0.2,0.5],[0.3,0.9],[0.1,0.7],[0.2,0.5]],gradientStops,gradientBoundary:[0.1,0,0.3,0],drawStyle:"gradient",uniqueId:uuidv4()}))
             dispatch(addCallback(exampleCallBack))
             const input = String.raw`{{\rm What\ is\ going\ on\ here? \textcolor{red}{Some}\ colour}} \textcolor{pink}\int_{-\textcolor{blue}\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
             const input2 = String.raw`\displaystyle  \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}`
-            dispatch(addLatexOverlay({text:input,x:0.10,y:0.25,height:60}))
-            dispatch(addLatexOverlay({text:input2,x:0.10,y:0.45,height:80}))
+            dispatch(addLatexOverlay({text:input,x:0.10,y:0.25,height:60,uniqueId:uuidv4()}))
+            dispatch(addLatexOverlay({text:input2,x:0.10,y:0.45,height:80,uniqueId:uuidv4()}))
         }
     }
 
