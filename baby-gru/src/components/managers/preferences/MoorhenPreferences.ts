@@ -17,6 +17,8 @@ function generateDefaultPreferencesFromMap(): PreferencesValues {
     return defaults as PreferencesValues;
 }
 
+export type LocalStorageInstance = LocalForage;
+
 /**
  * Interface for the Moorhen preferences kept in the browser local storage
  * @property {string} name - The name of the local storage instance

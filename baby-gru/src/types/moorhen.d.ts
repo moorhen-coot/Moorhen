@@ -57,10 +57,9 @@ export namespace moorhen {
     type viewDataSession = import("../utils/MoorhenTimeCapsule").viewDataSession;
     type Shortcut = import("../components/managers/preferences/DefaultShortcuts").Shortcut;
     type actionButtonSettings = import("../components/context-menu/MoorhenContextMenu").ActionButtonSettings;
+    type LocalStorageInstance = import("../components/managers/preferences/MoorhenPreferences").LocalStorageInstance;
 
-    type LocalStorageInstance = import("../utils/localStorage").LocalStorageInstance;
-
-    type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
+    //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 
     type ResidueSpec = {
         mol_name: string;
