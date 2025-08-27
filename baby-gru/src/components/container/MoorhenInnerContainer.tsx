@@ -54,6 +54,7 @@ import { MoorhenMainMenu } from "../navbar-menus/MoorhenMainMenu";
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { cootAPIHelpers } from "./ContainerHelpers";
+import { ActivityIndicator } from "./ActivityIndicator";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -471,6 +472,7 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
                 Components={snackbarComponents}
                 preventDuplicate={true}
             >
+                <ActivityIndicator />
                 <MoorhenMainMenu />
                 {/* <MoorhenNavBar
                     extraNavBarMenus={extraNavBarMenus}

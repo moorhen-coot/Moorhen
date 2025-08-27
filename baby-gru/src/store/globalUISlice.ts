@@ -2,11 +2,11 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     busy: boolean;
-    timeCapsuleBusy: boolean;
+    isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
 } = {
     busy: false,
-    timeCapsuleBusy: false,
+    isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
 };
 
@@ -21,7 +21,7 @@ const globalUISlice = createSlice({
             state.isGlobalInstanceReady = action.payload;
         },
         setTimeCapsuleBusy: (state, action: PayloadAction<boolean>) => {
-            state.timeCapsuleBusy = action.payload;
+            state.isTimeCapsuleBusy = action.payload;
         },
     },
 });
