@@ -7,14 +7,14 @@ export { MoorhenApp } from "./components/MoorhenApp";
 export { MoorhenContainer } from "./components/container/MoorhenContainer";
 export { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
 export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
-export { MoorhenColourRule } from "./utils/MoorhenColourRule";
-export { MoorhenMoleculeRepresentation } from "./utils/MoorhenMoleculeRepresentation";
+export { ColourRule } from "./utils/MoorhenColourRule";
+export { MoleculeRepresentation } from "./utils/MoorhenMoleculeRepresentation";
 export { MoorhenMolecule } from "./utils/MoorhenMolecule";
 export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";
-export { MoorhenCommandCentre } from "./utils/MoorhenCommandCentre";
+export { CommandCentre } from "./utils/MoorhenCommandCentre";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
-export { MoorhenPreferences } from "./components/managers/preferences/MoorhenPreferences";
+export { Preferences } from "./components/managers/preferences/MoorhenPreferences";
 export { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 export { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 export { MoorhenSlider } from "./components/inputs";
@@ -32,7 +32,7 @@ export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnm
 export { MoorhenValidation } from "./components/validation-tools/MoorhenValidation";
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
 export { autoOpenFiles } from "./utils/MoorhenFileLoading";
-export { default as MoorhenReduxStore } from "./store/MoorhenReduxStore";
+export { MoorhenReduxStore } from "./store/MoorhenReduxStore";
 export {
     default as sceneSettingsReducer,
     setDefaultBackgroundColor,

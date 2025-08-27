@@ -2,7 +2,7 @@ import React from "react";
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import { moorhen } from "../types/moorhen";
-import { setGlobalInstanceReady } from "../store/globalUISlice";
+import { setGlobalInstanceReady, setBusy } from "../store/globalUISlice";
 import { CommandCentre } from "../utils/MoorhenCommandCentre";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
@@ -18,20 +18,14 @@ import { MoorhenMap, MoorhenMolecule } from "../moorhen";
  */
 
 export class MoorhenGlobalInstance {
+    public dispatch: Dispatch<UnknownAction>;
+
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule>;
     private videoRecorder: ScreenRecorder;
     private videoRecorderRef: React.RefObject<ScreenRecorder>;
-
-    public dispatch: Dispatch<UnknownAction>;
-    private commandCentre: moorhen.CommandCentre;
-    private commandCentreRef: React.RefObject<moorhen.CommandCentre>;
-    private timeCapsule: moorhen.TimeCapsule;
-    private timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-    private videoRecorder: moorhen.ScreenRecorder;
-    private videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private store: Store;
     private preferences: Preferences;

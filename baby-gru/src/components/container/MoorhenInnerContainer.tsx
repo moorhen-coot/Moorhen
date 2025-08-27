@@ -30,7 +30,7 @@ import { setRequestDrawScene } from "../../store/glRefSlice";
 import { useCommandAndCapsule, useMoorhenGlobalInstance } from "../../InstanceManager";
 import { useWindowEventListener } from "../../hooks/useWindowEventListener";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
-import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
+//import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
 import { MoorhenModalsContainer } from "../misc/MoorhenModalsContainer";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenGoToResidueSnackbar } from "../snack-bar/MoorhenGoToResidueSnackbar";
@@ -50,7 +50,8 @@ import { MoorhenScreenshotSnackBar } from "../snack-bar/MoorhenScreenshotSnackBa
 import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
 import { MoorhenAtomInfoSnackBar } from "../snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
-import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
+import { MoorhenMainMenu } from "../navbar-menus/MoorhenMainMenu";
+//import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { cootAPIHelpers } from "./ContainerHelpers";
 
@@ -134,8 +135,8 @@ interface ContainerOptionalProps {
     onUserPreferencesChange: (key: string, value: unknown) => void;
     disableFileUploads: boolean;
     urlPrefix: string;
-    extraNavBarMenus: ExtraNavBarMenus[];
-    extraNavBarModals: ExtraNavBarModals[];
+    //extraNavBarMenus: ExtraNavBarMenus[];
+    //extraNavBarModals: ExtraNavBarModals[];
     viewOnly: boolean;
     extraDraggableModals: React.JSX.Element[];
     monomerLibraryPath: string;
@@ -159,13 +160,13 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
         urlPrefix = "/baby-gru",
         monomerLibraryPath = "./baby-gru/monomers",
         setMoorhenDimensions = null,
-        includeNavBarMenuNames = [],
-        extraNavBarModals = [],
-        extraNavBarMenus = [],
+        //includeNavBarMenuNames = [],
+        //extraNavBarModals = [],
+        //extraNavBarMenus = [],
         disableFileUploads = false,
-        extraFileMenuItems = [],
-        extraEditMenuItems = [],
-        extraCalculateMenuItems = [],
+        //extraFileMenuItems = [],
+        //extraEditMenuItems = [],
+        //extraCalculateMenuItems = [],
         allowScripting = true,
         allowAddNewFittedLigand = false,
         allowMergeFittedLigand = true,
@@ -470,14 +471,15 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
                 Components={snackbarComponents}
                 preventDuplicate={true}
             >
-                <MoorhenNavBar
+                <MoorhenMainMenu />
+                {/* <MoorhenNavBar
                     extraNavBarMenus={extraNavBarMenus}
                     extraNavBarModals={extraNavBarModals}
                     extraFileMenuItems={extraFileMenuItems}
                     extraEditMenuItems={extraEditMenuItems}
                     extraCalculateMenuItems={extraCalculateMenuItems}
                     includeNavBarMenuNames={includeNavBarMenuNames}
-                />
+                /> */}
 
                 <MoorhenModalsContainer extraDraggableModals={extraDraggableModals} />
                 <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
