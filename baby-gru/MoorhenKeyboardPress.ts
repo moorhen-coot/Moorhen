@@ -1,7 +1,8 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
-import { Dispatch } from "react";
+import { Dispatch, createRef, useState } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
+import { useSelector } from 'react-redux';
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
@@ -12,11 +13,10 @@ import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
-import { Shortcut } from '../components/managers/preferences';
-import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
+import { setOrigin, setZoom, setQuat, setShortCutHelp,
+         setClipStart, setClipEnd, setFogStart, setFogEnd, triggerClearLabels } from "../store/glRefSlice";
 import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { cidToSpec, getCentreAtom } from "./utils"
-
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -24,7 +24,6 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
     dispatch( setHoveredAtom({ molecule: null, cid: null }) )
     dispatch( triggerUpdate(molecule.molNo) )
 }
-
 
 export const moorhenKeyPress = (
     event: KeyboardEvent, 
@@ -39,7 +38,7 @@ export const moorhenKeyPress = (
         viewOnly: boolean;
         videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
     }, 
-    shortCuts: {[key: string]: Shortcut}, 
+    shortCuts: {[key: string]: moorhen.Shortcut}, 
     showShortcutToast: boolean, 
     shortcutOnHoveredAtom: boolean
 ): boolean | Promise<boolean> => {

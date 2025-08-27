@@ -1,20 +1,10 @@
 // Context Provider and related components
-export { 
-    MoorhenGlobalInstanceProvider,
-    MoorhenGlobalInstanceContext 
-} from './MoorhenGlobalInstanceContext';
+export { MoorhenGlobalInstanceProvider, MoorhenGlobalInstanceContext } from "./MoorhenGlobalInstanceContext";
 
 // Hooks for accessing the context
-export { 
-    useMoorhenGlobalInstance,
+export { useMoorhenGlobalInstance } from "./useMoorhenGlobalInstance";
 
-} from './useMoorhenGlobalInstance';
-
-export {    
-    useTimeCapsule,
-    useCommandCentre,
-    useCommandAndCapsule,
-    usePaths } from './hooks'
+export { useTimeCapsule, useCommandCentre, useCommandAndCapsule, usePaths } from "./hooks";
 
 // Re-export the class for convenience
-export { MoorhenGlobalInstance } from './MoorhenGlobalInstance';
+export { MoorhenGlobalInstance } from "./MoorhenGlobalInstance";

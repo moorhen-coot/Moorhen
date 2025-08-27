@@ -28,30 +28,29 @@
  * @see moorhen.State
  */
 
-
-import { UnknownAction } from "@reduxjs/toolkit"
-import { moorhen } from "../../../types/moorhen"
+import { UnknownAction } from "@reduxjs/toolkit";
+import { moorhen } from "../../../types/moorhen";
 import {
     setDefaultMapLitLines,
     setDefaultMapSamplingRate,
     setDefaultMapSurface,
     setMapLineWidth,
     setReContourMapOnlyOnMouseUp,
-} from "../../../store/mapContourSettingsSlice"
+} from "../../../store/mapContourSettingsSlice";
 import {
     setContourWheelSensitivityFactor,
     setMouseSensitivity,
     setZoomWheelSensitivityFactor,
-} from "../../../store/mouseSettings"
+} from "../../../store/mouseSettings";
 import {
     setEnableTimeCapsule,
     setMakeBackups,
     setMaxBackupCount,
     setModificationCountBackupThreshold,
-} from "../../../store/backupSettingsSlice"
-import { overwriteMapUpdatingScores, setShowScoresToast } from "../../../store/moleculeMapUpdateSlice"
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice"
-import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice"
+} from "../../../store/backupSettingsSlice";
+import { overwriteMapUpdatingScores, setShowScoresToast } from "../../../store/moleculeMapUpdateSlice";
+import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
+import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice";
 import {
     setClipCap,
     setDefaultBackgroundColor,
@@ -77,29 +76,25 @@ import {
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalThreshold,
     setEdgeDetectDepthScale,
-} from "../../../store/sceneSettingsSlice"
+} from "../../../store/sceneSettingsSlice";
 import {
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setDevMode,
     setUseGemmi,
-} from "../../../store/generalStatesSlice"
-import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice"
-import { setElementsIndicesRestrict } from "../../../store/glRefSlice"
-import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts"
+} from "../../../store/generalStatesSlice";
+import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice";
+import { setElementsIndicesRestrict } from "../../../store/glRefSlice";
+import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
     label: string;
-    valueSetter: ( value: T ) => UnknownAction;
+    valueSetter: (value: T) => UnknownAction;
     selector: (state: moorhen.State) => T;
     defaultValue: T;
 };
 
-export type PreferenceMap = {
-    [key: number]: PreferenceEntry;
-};
-
-export const PREFERENCES_MAP: PreferenceMap = {
+export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
     1: {
         label: "defaultBackgroundColor",
         valueSetter: setDefaultBackgroundColor,
@@ -122,7 +117,7 @@ export const PREFERENCES_MAP: PreferenceMap = {
         label: "shortCuts",
         valueSetter: setShortCuts,
         selector: (state: moorhen.State) => state.shortcutSettings.shortCuts,
-        defaultValue: DEFAULT_SHORTCUTS
+        defaultValue: DEFAULT_SHORTCUTS,
     },
     5: {
         label: "defaultMapLitLines",
@@ -154,9 +149,9 @@ export const PREFERENCES_MAP: PreferenceMap = {
         selector: (state: moorhen.State) => state.sceneSettings.drawCrosshairs,
         defaultValue: true,
     },
-    10: { 
-        label: "drawFPS", 
-        valueSetter: setDrawFPS, 
+    10: {
+        label: "drawFPS",
+        valueSetter: setDrawFPS,
         selector: (state: moorhen.State) => state.sceneSettings.drawFPS,
         defaultValue: false,
     },
@@ -232,9 +227,9 @@ export const PREFERENCES_MAP: PreferenceMap = {
         selector: (state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold,
         defaultValue: 5,
     },
-    23: { 
-        label: "clipCap", 
-        valueSetter: setClipCap, 
+    23: {
+        label: "clipCap",
+        valueSetter: setClipCap,
         selector: (state: moorhen.State) => state.sceneSettings.clipCap,
         defaultValue: true,
     },
@@ -268,9 +263,9 @@ export const PREFERENCES_MAP: PreferenceMap = {
         selector: (state: moorhen.State) => state.sceneSettings.drawAxes,
         defaultValue: false,
     },
-    29: { 
-        label: "devMode", 
-        valueSetter: setDevMode, 
+    29: {
+        label: "devMode",
+        valueSetter: setDevMode,
         selector: (state: moorhen.State) => state.generalStates.devMode,
         defaultValue: false,
     },
@@ -328,9 +323,9 @@ export const PREFERENCES_MAP: PreferenceMap = {
         selector: (state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate,
         defaultValue: 1.8,
     },
-    39: { 
-        label: "doSSAO", 
-        valueSetter: setDoSSAO, 
+    39: {
+        label: "doSSAO",
+        valueSetter: setDoSSAO,
         selector: (state: moorhen.State) => state.sceneSettings.doSSAO,
         defaultValue: false,
     },
@@ -406,4 +401,24 @@ export const PREFERENCES_MAP: PreferenceMap = {
         selector: (state: moorhen.State) => state.glRef.elementsIndicesRestrict,
         defaultValue: false,
     },
-}
+};
+
+type PreferenceLabel = (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP]["label"];
+type PreferenceDefaultValue<L extends PreferenceLabel> = Extract<
+    (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP],
+    { label: L }
+>["defaultValue"];
+
+export type PreferencesValues = {
+    version: string;
+} & {
+    [K in PreferenceLabel]: PreferenceDefaultValue<K>;
+};
+
+/* this is just to test the type expansion, works in vsCode */
+// eslint-disable-next-line
+const test: PreferencesValues = {
+    version: "1.0.0",
+    doPerspectiveProjection: true,
+    // Add other preference values here
+};

@@ -1,22 +1,17 @@
-import * as vec3 from 'gl-matrix/vec3';
-import * as quat4 from 'gl-matrix/quat';
-import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
-import { moorhen } from '../types/moorhen.js';
-import store from '../store/MoorhenReduxStore'
-import { setOrigin } from "../store/glRefSlice"
+import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 
-export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
+export class ScreenRecorder  {
 
     rec: MediaRecorder;
     chunks: Blob[];
-    glRef: React.RefObject<webGL.MGWebGL>;
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     _isRecording: boolean;
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>){
-        this.glRef = glRef
+        this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
         this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
@@ -153,7 +148,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         const imageOverlays = store.getState().overlays.imageOverlayList
         const promises = []
         imageOverlays.forEach(img => {
-            const p = this.loadImage(imageOverlays[0].src)
+            const p = this.loadImage(img.src) // BUG FIX: use img.src, not imageOverlays[0].src
             promises.push(p)
         })
 

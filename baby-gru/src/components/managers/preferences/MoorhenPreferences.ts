@@ -1,21 +1,23 @@
-import localforage from "localforage"
-import { moorhen } from "../../../types/moorhen"
-import { PREFERENCES_MAP, PreferenceEntry } from  "./PreferencesList"
+import localforage from "localforage";
+import { PREFERENCES_MAP, PreferenceEntry, PreferencesValues } from "./PreferencesList";
+
 /**
  * Generates default preferences values from the preferences map
  */
-function generateDefaultPreferencesFromMap(): moorhen.PreferencesValues {
+function generateDefaultPreferencesFromMap(): PreferencesValues {
     const defaults: unknown = {
         version: "v41",
-    }
+    };
 
     // Iterate through PREFERENCES_MAP and extract defaultValue for each preference
     Object.values(PREFERENCES_MAP).forEach((preference: PreferenceEntry) => {
-        defaults[preference.label] = preference.defaultValue
-    })
-    
-    return defaults as moorhen.PreferencesValues
+        defaults[preference.label] = preference.defaultValue;
+    });
+
+    return defaults as PreferencesValues;
 }
+
+export type LocalStorageInstance = LocalForage;
 
 /**
  * Interface for the Moorhen preferences kept in the browser local storage
@@ -24,14 +26,14 @@ function generateDefaultPreferencesFromMap(): moorhen.PreferencesValues {
  * @constructor
  * @param {string} name - The name of the local storage instance
  */
-export class MoorhenPreferences implements moorhen.Preferences {
-    localStorageInstance: LocalForage
-    name: string
-    defaultPreferencesValues: moorhen.PreferencesValues
+export class Preferences {
+    name: string;
+    defaultPreferencesValues: PreferencesValues;
+    localStorageInstance: LocalForage;
 
     constructor(name: string = "babyGru-localStorage") {
-        this.name = name
-        this.createLocalForageInstance()
+        this.name = name;
+        this.createLocalForageInstance();
     }
 
     createLocalForageInstance(empty: boolean = false): LocalForage {
@@ -39,14 +41,14 @@ export class MoorhenPreferences implements moorhen.Preferences {
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
             name: this.name,
             storeName: this.name,
-        })
+        });
         if (empty) {
-            this.localStorageInstance.clear()
+            this.localStorageInstance.clear();
         }
-        return this.localStorageInstance
+        return this.localStorageInstance;
     }
 
-    static get defaultPreferencesValues(): moorhen.PreferencesValues {
-        return generateDefaultPreferencesFromMap()
+    static get defaultPreferencesValues(): PreferencesValues {
+        return generateDefaultPreferencesFromMap();
     }
 }

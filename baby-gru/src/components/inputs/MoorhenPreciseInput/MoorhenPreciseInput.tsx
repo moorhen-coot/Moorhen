@@ -1,11 +1,9 @@
 import { useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { moorhen } from "../../../types/moorhen";
 import "./MoorhenPreciseInput.css";
 import "../../MoorhenStack.css";
 
 type MoorhenPreciseInputPropsType = {
-    value: number | null | undefined;
+    value: number | null;
     setValue: (newVal: string) => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
@@ -56,15 +54,24 @@ type MoorhenPreciseInputPropsType = {
  *   A React component that renders a precise input field with validation and optional label.
  */
 export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
-    const { allowNegativeValues = true, decimalDigits = 2, label = "", disabled = false, width, waitReturn = false, minMax = null, type = "standard" } = props;
+    const {
+        allowNegativeValues = true,
+        decimalDigits = 2,
+        label = "",
+        disabled = false,
+        width,
+        waitReturn = false,
+        minMax = null,
+        type = "standard",
+    } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
-    const [internalValue, setInternalValue] = useState<string>(props.value.toFixed(decimalDigits));
+    const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
     const isValidRef = useRef<boolean>(true);
 
     let displayValue: string = "";
     if (!isUserInteracting) {
-        displayValue = props.value.toFixed(decimalDigits);
+        displayValue = props.value?.toFixed(decimalDigits);
     } else {
         displayValue = internalValue;
     }

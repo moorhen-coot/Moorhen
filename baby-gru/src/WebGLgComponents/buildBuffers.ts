@@ -1,5 +1,5 @@
 import * as vec3 from 'gl-matrix/vec3';
-import store from '../store/MoorhenReduxStore'
+import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { guid } from '../utils/utils';
 import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';

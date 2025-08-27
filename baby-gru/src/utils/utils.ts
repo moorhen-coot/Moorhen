@@ -1,11 +1,12 @@
 import { hexToRgb } from "@mui/material";
-import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
-import store from '../store/MoorhenReduxStore'
+import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
+import { Shortcut } from "../components/managers/preferences";
+import type { ResidueInfo } from "./MoorhenMolecule";
 
 export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
@@ -181,7 +182,7 @@ export function guid(): string {
     return uuid;
 }
 
-export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
+export function sequenceIsValid(sequence: ResidueInfo[]): boolean {
     // If no sequence is present
     if (!sequence || sequence.length === 0) {
         return false
@@ -374,7 +375,7 @@ export const getResidueInfo = (molecules: moorhen.Molecule[], selectedMolNo: num
     }
 }
 
-export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
+export const getTooltipShortcutLabel = (shortCut: Shortcut): string => {
     const modifiers = []
     if (shortCut.modifiers.includes('shiftKey')) modifiers.push("Shift")
     if (shortCut.modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
@@ -569,17 +570,6 @@ export const hexToRGB = (hex: string): [number, number, number] => {
     return [r, g, b];
 }
 
-export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
-    const instance = localforage.createInstance({
-        driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-        name: name,
-        storeName: name
-    })
-    if (empty) {
-        instance.clear()
-    }
-    return instance
-}
 
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
     const thisPos = []

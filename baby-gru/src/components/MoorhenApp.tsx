@@ -1,16 +1,11 @@
-import { Provider } from 'react-redux';
-import store from '../store/MoorhenReduxStore';
-import { MoorhenGlobalInstanceProvider } from '../InstanceManager';
+import { Provider } from "react-redux";
+import { MoorhenReduxStore } from "../store/MoorhenReduxStore";
 import { MoorhenContainer } from "./container/MoorhenContainer";
 
 export const MoorhenApp = () => {
-
     return (
-        <Provider store={store}>
-            <MoorhenGlobalInstanceProvider>
-                <MoorhenContainer 
-                />
-            </MoorhenGlobalInstanceProvider>
+        <Provider store={MoorhenReduxStore}>
+            <MoorhenContainer />
         </Provider>
     );
 };

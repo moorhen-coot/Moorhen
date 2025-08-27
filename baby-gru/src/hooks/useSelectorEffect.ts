@@ -1,7 +1,6 @@
-import {useEffect} from "react";
-import {useSelector} from "react-redux";
-import {moorhen} from "../types/moorhen";
-
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { moorhen } from "../types/moorhen";
 
 /**
  * Custom React hook that runs a side effect whenever the selected state from the Redux store changes.
@@ -19,13 +18,13 @@ import {moorhen} from "../types/moorhen";
  * );
  */
 
-export const useSelectorEffect = <T = unknown> (
-    selector: (state: moorhen.State) => T, effect: (selectedState: T) => void ) => {
+export const useSelectorEffect = <T = unknown>(
+    selector: (state: moorhen.State) => T,
+    effect: (selectedState: T) => void
+) => {
     const selectedState = useSelector(selector);
-    console.log("useSelectorEffect", selectedState);
 
     useEffect(() => {
         effect(selectedState);
-
     }, [selectedState, effect]);
-}
+};
