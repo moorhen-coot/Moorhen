@@ -671,6 +671,8 @@ export namespace moorhen {
         viewData: viewDataSession;
         activeMapIndex: number;
         dataIsEmbedded: boolean;
+        vectorData?: MoorhenVector[];
+        overlay2dData?: Overlay2DSessionData;
     }
 
     interface TimeCapsule {
@@ -1200,6 +1202,14 @@ export namespace moorhen {
         rotateTranslate: 'ATOM' | 'RESIDUE' | 'CHAIN' | 'MOLECULE';
         drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
         rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
+    }
+
+    interface Overlay2DSessionData {
+        fracPath2D: MoorhenOverlay2DFracPath[]
+        svgPath2D: MoorhenOverlay2DSvgPath[]
+        textFracPath2D: MoorhenOverlay2DTextFrac[]
+        latexFracPath2D: MoorhenOverlay2DLatexSrcFrac[]
+        imageFracPath2D: MoorhenOverlay2DImageSrcFrac[]
     }
 
     interface MoorhenOverlay2DFracPath {

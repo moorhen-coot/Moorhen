@@ -20,6 +20,8 @@ import { moorhensession } from "../protobuf/MoorhenSession";
 import { Store } from "@reduxjs/toolkit";
 import { setOrigin, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom,
      setQuat, setFogStart, setFogEnd, setClipStart, setClipEnd } from "../store/glRefSlice"
+import { emptyOverlays, addFracPathOverlay, addSvgPathOverlay, addTextOverlay, addLatexOverlay, addImageOverlay } from "../store/overlaysSlice";
+import { emptyVectors, addVector } from "../store/vectorsSlice";
 
 /**
  * Represents a time capsule with session backups
@@ -388,6 +390,16 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         }
 
+        const vectorData: moorhen.MoorhenVector[] = this.store.getState().vectors.vectorsList
+
+        const overlay2dData: moorhen.Overlay2DSessionData = {
+            fracPath2D: this.store.getState().overlays.fracPathOverlayList,
+            svgPath2D: this.store.getState().overlays.svgPathOverlayList,
+            textFracPath2D: this.store.getState().overlays.textOverlayList,
+            latexFracPath2D: this.store.getState().overlays.latexOverlayList,
+            imageFracPath2D: this.store.getState().overlays.imageOverlayList,
+        }
+
         const session: moorhen.backupSession = {
             includesAdditionalMapData: includeAdditionalMapData,
             moleculeData: moleculeData,
@@ -395,7 +407,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             viewData: viewData,
             activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current?.molNo),
             version: this.version,
-            dataIsEmbedded: embedData
+            dataIsEmbedded: embedData,
+            overlay2dData: overlay2dData,
+            vectorData: vectorData
         }
 
         return session
@@ -615,8 +629,6 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         // Load molecules stored in session from coords string
         const newMoleculePromises = sessionData.moleculeData?.map( async (storedMoleculeData) => {
             const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
-            console.log(sessionData)
-            console.log(sessionData.dataIsEmbedded)
             if(sessionData.dataIsEmbedded||sessionData.dataIsEmbedded===undefined){
                 return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name)
             } else {
@@ -771,6 +783,34 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         // Set active map
         if (sessionData.activeMapIndex !== undefined && sessionData.activeMapIndex !== -1){
             dispatch( setActiveMap(newMaps[sessionData.activeMapIndex]) )
+        }
+
+        // Load vectors
+        dispatch(emptyVectors())
+        if(sessionData.vectorData){
+            sessionData.vectorData.forEach(d => {
+                dispatch(addVector(d))
+            })
+        }
+
+        // Load 2D canvas overlays
+        dispatch(emptyOverlays())
+        if(sessionData.overlay2dData){
+            sessionData.overlay2dData.fracPath2D.forEach(d => {
+                dispatch(addFracPathOverlay(d))
+            })
+            sessionData.overlay2dData.svgPath2D.forEach(d => {
+                dispatch(addSvgPathOverlay(d))
+            })
+            sessionData.overlay2dData.textFracPath2D.forEach(d => {
+                dispatch(addTextOverlay(d))
+            })
+            sessionData.overlay2dData.latexFracPath2D.forEach(d => {
+                dispatch(addLatexOverlay(d))
+            })
+            sessionData.overlay2dData.imageFracPath2D.forEach(d => {
+                dispatch(addImageOverlay(d))
+            })
         }
 
         // Set camera details
