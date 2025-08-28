@@ -53,7 +53,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
         if(evt.target.checked){
             const base64Image = "data:image/png;base64,   iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==   "
             dispatch(addImageOverlay({src:base64Image,x:0.8,y:0.15,width:20,height:20,uniqueId:uuidv4()}))
-            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.75,width:100,height:100,uniqueId:uuidv4()}))
+            dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.35,y:0.75,width:100,height:100,uniqueId:uuidv4()}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30,uniqueId:uuidv4()}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100,uniqueId:uuidv4()}))
             dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red",uniqueId:uuidv4()}))
@@ -64,12 +64,12 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addSvgPathOverlay({path:"M610 300 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"green",lineWidth:6,uniqueId:uuidv4()}))
             dispatch(addFracPathOverlay({path:[[0.7,0.5],[0.8,0.9],[0.6,0.7],[0.7,0.5]],drawStyle:"fill",fillStyle:"#00ffff77",uniqueId:uuidv4()}))
             const gradientStops = []
-            gradientStops.push([0, "red"]);
-            gradientStops.push([0.35, "yellow"]);
-            gradientStops.push([0.5, "green"]);
-            gradientStops.push([0.65, "cyan"]);
-            gradientStops.push([0.8, "blue"]);
-            gradientStops.push([1.0, "purple"]);
+            gradientStops.push({stop:0, colour:"red"});
+            gradientStops.push({stop:0.35, colour:"yellow"});
+            gradientStops.push({stop:0.5, colour:"green"});
+            gradientStops.push({stop:0.65, colour:"cyan"});
+            gradientStops.push({stop:0.8, colour:"blue"});
+            gradientStops.push({stop:1.0, colour:"purple"});
             dispatch(addSvgPathOverlay({path:"M190 10 h 480 v 80 h -480 Z",gradientStops,gradientBoundary:[190,0,670,0],drawStyle:"gradient",uniqueId:uuidv4()}))
             dispatch(addSvgPathOverlay({path:"M10 100 v 480 h 80 v -480 Z",gradientStops,gradientBoundary:[0,100,0,580],drawStyle:"gradient",uniqueId:uuidv4()}))
             dispatch(addFracPathOverlay({path:[[0.0,0.0],[1.0,1.0]],drawStyle:"stroke",uniqueId:uuidv4()}))
