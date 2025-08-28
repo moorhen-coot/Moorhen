@@ -9,8 +9,6 @@
   <meta name="description" content="Moorhen is a molecular graphics web application based on the Coot desktop program." />
   <link rel="manifest" href="manifest.json" />
 
-  <script id="MathJax-script" async src="/mathjax/tex-svg.js"></script>
-
   <script>
     // See https://github.com/facebook/react/issues/20829#issuecomment-802088260
     if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
@@ -21,11 +19,27 @@
     main UI thread (as opposed to the CootWorker)
   -->
 
+  <script id="MathJax-script" defer src="/mathjax/tex-svg.js"></script>
 
   <script>
-    window.onload = () => {
+    window.onload = async() => {
 
       window.MathJax = MathJax
+
+      //This is a dummy render with MathJax which seems to be necessary to make sure that \color works
+      //properly with loaded sessions.
+      const input = String.raw`{\displaystyle \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}{\color{blue}Hello}}`
+      const output = document.getElementById('mathjaxout');
+      output.innerHTML = '';
+      output.style.width = "0"
+      output.style.height = "0"
+      output.style.display = "none"
+      let options = MathJax.getMetricsFor(output);
+      options.display = false
+      const node = await MathJax.tex2svgPromise(input, options)
+      if(node){
+          const svg = node.getElementsByTagName("svg")
+      }
 
       const loadScript = (src) => {
         return new Promise((resolve, reject) => {
