@@ -1,28 +1,34 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
-import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+//import react from "@vitejs/plugin-react-swc";
+import crossOriginIsolation from "vite-plugin-cross-origin-isolation";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
-import checker from 'vite-plugin-checker';
+import checker from "vite-plugin-checker";
 
 export default defineConfig({
     css: {
-      preprocessorOptions: {
-        scss: {
-          api: 'modern',
-        }
-      }
+        preprocessorOptions: {
+            scss: {
+                api: "modern",
+            },
+        },
     },
     plugins: [
-        react(),
+        react({
+            babel: {
+                plugins: ["babel-plugin-react-compiler"],
+            },
+        }),
         wasm(),
         topLevelAwait(),
         crossOriginIsolation(),
-        checker({ typescript: {
-            root: './',
-            tsconfigPath: 'tsconfig.json'
-
-        }}),
+        checker({
+            typescript: {
+                root: "./",
+                tsconfigPath: "tsconfig.json",
+            },
+        }),
         {
             name: "configure-response-headers",
             configureServer: (server) => {
@@ -37,32 +43,32 @@ export default defineConfig({
     server: {
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp"
+            "Cross-Origin-Embedder-Policy": "require-corp",
         },
         watch: {
             ignored: [
-                '**/public/monomers/**',
-                '**/public/**.wasm',
-                '**/public/**.data',
-                '**/public/pixmaps/**',
-                '**/public/tutorials/**'
-            ]
-        }
+                "**/public/monomers/**",
+                "**/public/**.wasm",
+                "**/public/**.data",
+                "**/public/pixmaps/**",
+                "**/public/tutorials/**",
+            ],
+        },
     },
     build: {
         lib: {
-            entry: './src/moorhen.ts',
-            name: 'Moorhen',
-            fileName: 'moorhen',
+            entry: "./src/moorhen.ts",
+            name: "Moorhen",
+            fileName: "moorhen",
         },
         minify: true,
-        sourcemap: 'inline',
+        sourcemap: "inline",
         rollupOptions: {
-            external: [ 'react', 'react-dom' ],
+            external: ["react", "react-dom"],
         },
     },
-    base: './',
+    base: "./",
     optimizeDeps: {
-        exclude: ['iris-validation-backend']
-      }
+        exclude: ["iris-validation-backend"],
+    },
 });
