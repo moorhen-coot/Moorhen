@@ -101,6 +101,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={(evt) => { dispatch(showModal(modalKeys.VECTORS)); document.body.click() }}>
                         Vectors
                     </MenuItem>
+                    <MenuItem onClick={(evt) => { dispatch(showModal(modalKeys.OVERLAYS2D)); document.body.click() }}>
+                        2D Overlays
+                    </MenuItem>
                     <hr></hr>
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check

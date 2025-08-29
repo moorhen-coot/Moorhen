@@ -16,14 +16,13 @@ export const vectorsSlice = createSlice({
     removeVector: (state, action: {payload: moorhen.MoorhenVector, type: string}) => {
       state = {
         ...state,
-        vectorsList: state.vectorsList.filter(item => item.uniqueId !== action.payload.uniqueId) 
+        vectorsList: state.vectorsList.filter(item => item.uniqueId !== action.payload.uniqueId)
       }
       return state
     },
     emptyVectors: (state) => {
       return initialState
     },
-    
 }})
 
 export const {
