@@ -1,37 +1,65 @@
 @import "../../colors.css";
 
+.moorhen__main-menu {
+    position: absolute;
+    z-index: 999;
+}
+
 .moorhen__main-menu-container {
     position: absolute;
-    top: 0;
+    top: 3rem;
+    left: 1.5rem;
     display: flex;
     flex-direction: row;
     z-index: 1000;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .moorhen__sub-menu-container {
     position: relative;
-    top: 5rem;
-    left: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: auto;
+    margin-top: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: var(--moorhen-background);
     z-index: 999;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+    min-width: 16rem;
+    width: fit-content;
+    min-height: 2.5rem;
+    max-height: 46rem;
+    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
+    animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.moorhen__main-menu-button-container {
-    position: absolute;
+@keyframes popInFade {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.moorhen__main-menu-buttons-container {
+    position: static;
     top: 0;
     display: flex;
     flex-direction: column;
     z-index: 1000;
+    animation: slideInFade 0.3s ease-out forwards;
 }
 
 .moorhen__main-logo {
     width: 40px;
     height: 40px;
-}
-
-.moorhen__main-menu {
-    position: relative;
-    transform: translate(-30px, -30px);
-    animation: slideInFade 0.1s ease-out forwards;
 }
 
 @keyframes slideInFade {
@@ -45,23 +73,27 @@
     }
 }
 
+.moorhen__icon__menu {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+    width: 30px;
+    height: 30px;
+}
+
 .moorhen__main-menu-button,
 .moorhen__main-menu-toggle {
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
     position: relative;
     top: 1rem;
-    left: 1.5rem;
     border-radius: 2rem;
     border: none;
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
     box-shadow: 0px 3px 5px 2px var(--moorhen-inactive-shadow);
-    height: 3rem;
-    width: 10rem;
+    height: 2.8rem;
     margin-top: 0.5rem;
     display: flex;
     align-items: center;
-    padding-left: 1.5rem;
+    padding-left: 1rem;
     justify-content: left;
     font-size: 1rem;
     outline: none;
@@ -79,6 +111,6 @@
 
 .moorhen__main-menu-button:hover,
 .moorhen__main-menu-toggle:hover {
-    background: color-mix(in srgb, var(--moorhen-focus) 10%, transparent);
+    background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
     box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow);
 }

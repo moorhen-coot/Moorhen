@@ -2,34 +2,33 @@ import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
-import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem"
-import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem"
-import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
+import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem";
+import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem";
+import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem";
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
-import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
-import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere"
-import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem"
-import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem"
-import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem"
-import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem"
+import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem";
+import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere";
+import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem";
+import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem";
+import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem";
+import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 
-
 export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] }) => {
-    const [, setPopoverIsShown] = useState(false)
+    const [, setPopoverIsShown] = useState(false);
 
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
 
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
-    const menuItemProps = { setPopoverIsShown }
+    const menuItemProps = { setPopoverIsShown };
 
     return (
-        <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
+        <>
             <MoorhenAddSimpleMenuItem key="add_simple" {...menuItemProps} />
             <MoorhenAddRemoveHydrogenAtomsMenuItem key="add_remove_hydrogens" {...menuItemProps} />
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
@@ -44,14 +43,14 @@ export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] 
             {devMode && (
                 <MenuItem
                     onClick={() => {
-                        dispatch(showModal(modalKeys.ACEDRG))
-                        document.body.click()
+                        dispatch(showModal(modalKeys.ACEDRG));
+                        document.body.click();
                     }}
                 >
                     Create covalent link between two atoms...
                 </MenuItem>
             )}
             {props.extraEditMenuItems && props.extraEditMenuItems.map((menu) => menu)}
-        </div>
-    )
-}
+        </>
+    );
+};

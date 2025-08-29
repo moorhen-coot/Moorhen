@@ -1,174 +1,151 @@
 import "./main-menu.css";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MoorhenIcon } from "../icons";
-import {
-    CalculateOutlined,
-    DescriptionOutlined,
-    EditOutlined,
-    VisibilityOutlined,
-    FactCheckOutlined,
-    HelpOutlineOutlined,
-    MenuOutlined,
-    ScienceOutlined,
-    SettingsSuggestOutlined,
-    CloseOutlined,
-    HistoryOutlined,
-    ConstructionOutlined,
-    VpnLock,
-} from "@mui/icons-material";
-import { useDispatch, useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { showModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
-import { useMoorhenGlobalInstance } from "../../InstanceManager";
-import { MoorhenFileMenu } from "./MoorhenFileMenu";
-import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
-import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
-import { MoorhenViewMenu } from "./MoorhenViewMenu";
-import { MoorhenLigandMenu } from "./MoorhenLigandMenu";
-import { MoorhenHistoryMenu } from "./MoorhenHistoryMenu";
-import { MoorhenEditMenu } from "./MoorhenEditMenu";
-import { MoorhenDevMenu } from "./MoorhenDevMenu";
-import { MoorhenMapToolsMenu } from "./MoorhenMapToolsMenu";
-import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
-import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
+import { memo, useMemo, useState } from "react";
 import { ClickAwayListener } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { showModal } from "../../store/modalsSlice";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { MoorhenIcon } from "../icons";
+import { MAIN_MENU_CONFIG } from "./mainMenuConfig";
 
-export type MenuEntry<T = unknown> = {
-    label: string;
+export type ExtraNavBarMenus = {
     icon: React.JSX.Element;
-    component: React.ElementType | string;
-    props?: { [key: string]: unknown };
+    name: string;
+    ref?: React.RefObject<HTMLDivElement>;
+    JSXElement: React.JSX.Element;
+    align?: number;
 };
 
-export type MenuMap = {
-    [key: number]: MenuEntry;
+export type ExtraMenuProps = {
+    extraNavBarMenus?: ExtraNavBarMenus[];
 };
 
-const MAIN_MENU_CONFIG = {
-    1: {
-        label: "File",
-        icon: <DescriptionOutlined />,
-        component: MoorhenFileMenu,
-        props: { dropdownId: "file-menu" },
-    },
-    2: {
-        label: "Edit",
-        icon: <EditOutlined />,
-        component: MoorhenEditMenu,
-        props: { dropdownId: "edit-menu" },
-    },
-    3: {
-        label: "Calculate",
-        icon: <CalculateOutlined />,
-        component: MoorhenCalculateMenu,
-        props: { dropdownId: "calculate-menu" },
-    },
-    4: {
-        label: "View",
-        icon: <VisibilityOutlined />,
-        component: MoorhenViewMenu,
-        props: { dropdownId: "view-menu" },
-    },
-    5: {
-        label: "Validation",
-        icon: <FactCheckOutlined />,
-        component: MoorhenValidationMenu,
-        props: { dropdownId: "validation-menu" },
-    },
-    6: {
-        label: "Ligand",
-        icon: <MoorhenIcon name={`menu-ligands`} size="medium" alt="Ligand" />,
-        component: MoorhenLigandMenu,
-        props: { dropdownId: "ligand-menu" },
-    },
-    7: {
-        label: "Map Tools",
-        icon: <ConstructionOutlined />,
-        component: MoorhenMapToolsMenu,
-        props: { dropdownId: "map-tools-menu" },
-    },
-    8: {
-        label: "Models",
-        icon: <MoorhenIcon name={`menu-models`} size="medium" alt="Models" />,
-        component: "MoorhenModelsMenu",
-        props: { dropdownId: "models-menu" },
-    },
-    9: {
-        label: "Maps",
-        icon: <MoorhenIcon name={`menu-maps`} size="medium" alt="Maps" />,
-        component: "MoorhenMapsMenu",
-        props: { dropdownId: "maps-menu" },
-    },
-    10: {
-        label: "History",
-        icon: <HistoryOutlined />,
-        component: MoorhenHistoryMenu,
-        props: { dropdownId: "history-menu" },
-    },
-    11: {
-        label: "Preferences",
-        icon: <SettingsSuggestOutlined />,
-        component: MoorhenPreferencesMenu,
-        props: { dropdownId: "preferences-menu" },
-    },
-    12: {
-        label: "Help",
-        icon: <HelpOutlineOutlined />,
-        component: MoorhenHelpMenu,
-        props: { dropdownId: "help-menu" },
-    },
-};
-
-export const MoorhenMainMenu = () => {
+export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const isDevMode = useSelector((state: RootState) => state.generalStates.devMode);
+    const dispatch = useDispatch();
+
+    const handleMainMenuToggle = () => {
+        if (isOpen) {
+            setActiveMenu(null);
+        }
+        setIsOpen((prev) => !prev);
+    };
+    const handleClickAway = (event) => {
+        console.log("click away from menu: ", event);
+        if ((event.target as HTMLElement).closest(".moorhen__main-menu-buttons-container")) return;
+
+        setActiveMenu(null);
+    };
 
     const subMenu = useMemo(() => {
-        if (!activeMenu) return null;
-        const menu = Object.values(MAIN_MENU_CONFIG).find((m) => m.label === activeMenu);
-        return menu ? <menu.component {...menu.props} /> : null;
-    }, [activeMenu]);
+        if (!activeMenu || !isOpen) return null;
 
-    const menu = useMemo(() => {
-        if (!isOpen) return null;
+        const menuEntry = Object.values(MAIN_MENU_CONFIG).find((m) => m.label === activeMenu);
+
+        if (menuEntry) {
+            const style = menuEntry.align ? { top: `${menuEntry.align * 1.5}rem` } : {};
+            return (
+                <div key={menuEntry.label} className="moorhen__sub-menu-container" style={style}>
+                    <menuEntry.component {...menuEntry.props} />
+                </div>
+            );
+        } else {
+            const extraMenu = props.extraNavBarMenus.find((m) => m.name === activeMenu);
+            if (extraMenu) {
+                const style = extraMenu.align ? { top: `${extraMenu.align * 1.5}rem` } : { top: "5rem" };
+                return (
+                    <div key={extraMenu.name} className="moorhen__sub-menu-container" ref={extraMenu.ref} style={style}>
+                        {extraMenu.JSXElement}
+                    </div>
+                );
+            } else {
+                return null;
+            }
+        }
+    }, [activeMenu, isOpen]);
+
+    const extraMenu = useMemo(() => {
+        if (!isOpen || !props.extraNavBarMenus) return null;
         return (
-            <div className="moorhen__main-menu">
-                {Object.entries(MAIN_MENU_CONFIG).map(([key, menu]) => (
-                    <MenuComponent
-                        key={key}
+            <div className="moorhen__main-menu-buttons-container">
+                {props.extraNavBarMenus.map((menu) => (
+                    <MainMenuButton
+                        key={menu.name}
                         icon={menu.icon}
-                        label={menu.label}
-                        onClick={() => setActiveMenu(menu.label)}
+                        label={menu.name}
+                        onClick={() => {
+                            setActiveMenu(menu.name);
+                            menu.ref.current?.scrollIntoView({ behavior: "smooth" });
+                        }}
                     />
                 ))}
             </div>
         );
-    }, [isOpen]);
+    }, [isOpen, props.extraNavBarMenus]);
+
+    const menu = useMemo(() => {
+        if (!isOpen) return null;
+        const handleClick = (label: string) => {
+            setActiveMenu((current) => (current === label ? null : label));
+        };
+
+        const buttonsList = Object.entries(MAIN_MENU_CONFIG).map(([key, menu]) => {
+            if (menu.label === "Dev tools" && !isDevMode) {
+                return null;
+            }
+            return (
+                <MainMenuButton
+                    key={key}
+                    icon={menu.icon}
+                    label={menu.label}
+                    onClick={
+                        typeof menu.component === "function"
+                            ? () => handleClick(menu.label)
+                            : () => {
+                                  setActiveMenu(null);
+                                  dispatch(showModal(menu.component as string));
+                              }
+                    }
+                />
+            );
+        });
+
+        return (
+            <div className="moorhen__main-menu-buttons-container">
+                {buttonsList}
+                {extraMenu}
+            </div>
+        );
+    }, [isOpen, props.extraNavBarMenus, isDevMode]);
 
     return (
-        <ClickAwayListener onClickAway={() => setActiveMenu(null)}>
+        <div className="moorhen__main-menu">
+            <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
+                {isOpen ? (
+                    <MoorhenIcon name={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
+                ) : (
+                    <MoorhenIcon name={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
+                )}
+                &nbsp;&nbsp;
+                <MoorhenIcon name={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
+            </button>
             <div className="moorhen__main-menu-container">
-                <div className="moorhen__main-menu-buttons-container">
-                    <button className="moorhen__main-menu-toggle" onClick={() => setIsOpen(!isOpen)}>
-                        <MenuOutlined />
-                        &nbsp;&nbsp;
-                        <MoorhenIcon name={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
-                    </button>
-                    {menu}
-                </div>
-                <div className="moorhen__sub-menu-container">{subMenu}</div>
+                {menu}
+                {subMenu ? (
+                    <ClickAwayListener onClickAway={(event) => handleClickAway(event)}>{subMenu}</ClickAwayListener>
+                ) : null}
             </div>
-        </ClickAwayListener>
+        </div>
     );
-};
+});
+MoorhenMainMenu.displayName = "MoorhenMainMenu";
 
-const MenuComponent = (props: { icon: React.JSX.Element; label: string; onClick: () => void }) => {
+const MainMenuButton = (props: { icon: React.JSX.Element; label: string; onClick: () => void }) => {
     return (
         <button className="moorhen__main-menu-button" onClick={props.onClick}>
             {props.icon}
-            &nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;
             {props.label}
         </button>
     );

@@ -4,7 +4,7 @@ import { usePaths } from "../../InstanceManager";
 type MoorhenIconPropsType = {
     name: string;
     alt?: string;
-    size: "small" | "medium" | "large";
+    size?: "small" | "medium" | "large";
     isActive?: boolean; // Optional prop to indicate if the icon is active
     className?: string; // Optional className for additional styling
 };
@@ -13,6 +13,8 @@ export const MoorhenIcon = ({ name, alt, size, isActive = null, className = "" }
     const file = `${urlPrefix}/pixmaps/moorhen_icons/${name}.svg`;
     const internalClassName = className
         ? className
-        : `moorhen__icon__${size} ${isActive ? "moorhen__icon__active" : "moorhen__icon__inactive"}`;
+        : `moorhen__icon__${size} ${
+              isActive !== null ? (isActive ? "moorhen__icon__active" : "moorhen__icon__inactive") : ""
+          }`;
     return <img className={internalClassName} draggable="false" aria-label={alt ? alt : name} src={`${file}`} />;
 };
