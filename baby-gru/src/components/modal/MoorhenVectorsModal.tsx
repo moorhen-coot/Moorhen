@@ -463,12 +463,17 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 </FormSelect>
                             </Form.Group>
                             </Row>
-                            {theVector.labelMode !== "none" && <Form.Group  style={{display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem'}} className='moorhen-form-group' controlId="cidTo">
-                                <Form.Label>Label text</Form.Label>
+                            {theVector.labelMode !== "none" && 
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Label text
+                            </Col>
+                            <Form.Group  as={Col} className='mb-3' controlId="cidTo">
                                 <Form.Control ref={labelTextRef} type="text" value={theVector.labelText} onChange={(evt) => {
                                     updateVector({labelText:evt.target.value})
                                 }} />
                             </Form.Group>
+                            </Row>
                             }
                             </Card.Body>
                             </Card>
