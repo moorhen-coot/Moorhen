@@ -463,7 +463,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 </FormSelect>
                             </Form.Group>
                             </Row>
-                            {theVector.labelMode !== "none" && 
+                            {theVector.labelMode !== "none" &&
                             <Row style={{textAlign:'left'}}>
                             <Col sm={3}>
                             Label text
