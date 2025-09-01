@@ -1,7 +1,7 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, createRef, useCallback, useMemo, useState } from "react"
-import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table, FormSelect } from "react-bootstrap"
+import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table, FormSelect, InputGroup } from "react-bootstrap"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
@@ -59,7 +59,6 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
     const vectorSelectRef = useRef<null | HTMLSelectElement>(null)
-    const coordsModeRef = useRef<null | HTMLSelectElement>(null)
     const drawModeRef = useRef<null | HTMLSelectElement>(null)
     const arrowModeRef = useRef<null | HTMLSelectElement>(null)
     const labelModeRef = useRef<null | HTMLSelectElement>(null)
@@ -99,6 +98,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
 
     const [theVector, setVector] = useState<moorhen.MoorhenVector>(newVector())
     const [selectedOption, setSelectedOption] = useState<string>("new")
+    const [coordsModeButtonState, setCoordsModeButtonState] = useState<string>("atoms")
     const [vectorColour, setVectorColour] = useState({r:0,g:0,b:0})
 
     const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
@@ -123,7 +123,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                 if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "cylinder"
                 if(arrowModeRef !== null && typeof arrowModeRef !== 'function') arrowModeRef.current.value = "none"
                 if(labelModeRef !== null && typeof labelModeRef !== 'function') labelModeRef.current.value = "none"
-                if(coordsModeRef !== null && typeof coordsModeRef !== 'function') coordsModeRef.current.value = "atoms"
+                setCoordsModeButtonState("atoms")
             } else {
                 try {
                     const existingVector = vectorsList.find((element) => element.uniqueId===evt.target.value)
@@ -132,7 +132,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                     if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = existingVector.drawMode
                     if(arrowModeRef !== null && typeof arrowModeRef !== 'function') arrowModeRef.current.value =  existingVector.arrowMode
                     if(labelModeRef !== null && typeof labelModeRef !== 'function') labelModeRef.current.value =  existingVector.labelMode
-                    if(coordsModeRef !== null && typeof coordsModeRef !== 'function') coordsModeRef.current.value =  existingVector.coordsMode
+                    setCoordsModeButtonState(existingVector.coordsMode)
                 } catch(e) {
                 }
             }
@@ -144,9 +144,11 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
         updateVector({vectorColour:color})
     }
 
-    const headerContent =  <>
-                            <div style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Select vector:</div>
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
+    const headerContent =  <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Choose vector
+                            </Col>
+                            <Form.Group  as={Col} className='mb-3'>
                                 <FormSelect ref={vectorSelectRef} size="sm" onChange={handleVectorChange}>
                                 <option selected={selectedOption==="new"} value="new">New vector</option>
                                 {vectorsList.length>0 && vectorsList.map((vec,i) => {
@@ -161,7 +163,7 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 }
                                 </FormSelect>
                             </Form.Group>
-                        </>
+                        </Row>
 
     const footer = <>{vectorSelectRef.current && selectedOption!=="new" &&
                     <Button className='m-2' variant="danger" onClick={handleDelete}>Delete</Button>
@@ -218,48 +220,114 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
             updateVector({molNoFrom:parseInt(evt.target.value)})
     }
 
+    const handleModeChange = ((event,type) => {
+        setCoordsModeButtonState(type)
+        updateVector({coordsMode:type as moorhen.VectorsCoordMode})
+    })
+
     const bodyContent = <>
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
                             {headerContent}
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
-                            <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Between</Form.Label>
-                                <FormSelect size="sm" ref={coordsModeRef} defaultValue="atoms" onChange={(evt) => {
-                                    if (coordsModeRef !== null && typeof coordsModeRef !== 'function') {
-                                        coordsModeRef.current.value = evt.target.value
-                                        updateVector({coordsMode:evt.target.value as moorhen.VectorsCoordMode})
-                                    }
-                                }}>
-                                <option value="atoms">atoms</option>
-                                <option value="points">points</option>
-                                <option value="atompoint">an atom and a point</option>
-                                </FormSelect>
-                            </Form.Group>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Between
+                            </Col>
+                            <InputGroup as={Col} className='mb-3'>
+                            <Form.Check
+                              inline
+                              label="Atoms"
+                              name="vectortypegroup"
+                              type="radio"
+                              checked={coordsModeButtonState==="atoms"}
+                              onChange={(e) => {handleModeChange(e,"atoms")}}
+                            />
+                            <Form.Check
+                              inline
+                              label="Points"
+                              name="vectortypegroup"
+                              type="radio"
+                              checked={coordsModeButtonState==="points"}
+                              onChange={(e) => {handleModeChange(e,"points")}}
+                            />
+                            <Form.Check
+                              inline
+                              label="An atom and a point"
+                              name="vectortypegroup"
+                              type="radio"
+                              checked={coordsModeButtonState==="atompoint"}
+                              onChange={(e) => {handleModeChange(e,"atompoint")}}
+                            />
+                            </InputGroup>
+                            </Row>
+                            </Card.Body>
+                            </Card>
                             { (theVector.coordsMode === "atoms" || theVector.coordsMode === "atompoint") &&
-                            <>
-                            <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>From atom</div>
-                            <MoorhenMoleculeSelect molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, false)} />
-                            <Form.Group className='moorhen-form-group' controlId="cidFrom">
-                                <Form.Label>selection</Form.Label>
-                                <Form.Control ref={cidFromRef} type="text" value={theVector.cidFrom} onChange={(evt) => {
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
+                            <Row style={{textAlign:'left', marginBottom:"0.5rem" }}>
+                            <Col sm={3}>
+                            From atom
+                            </Col>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Molecule
+                            </Col>
+                            <Col>
+                            <MoorhenMoleculeSelect label={null} molecules={molecules} height="3rem" margin="0rem" onChange={(evt) => handleModelChange(evt, false)} />
+                            </Col>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            selection
+                            </Col>
+                            <Form.Group as={Col} className='mb-3' controlId="cidFrom">
+                                <Form.Control style={{height:"2rem"}} ref={cidFromRef} type="text" value={theVector.cidFrom} onChange={(evt) => {
                                     updateVector({cidFrom:evt.target.value})
                             }} />
                             </Form.Group>
-                            </>
+                            </Row>
+                            </Card.Body>
+                            </Card>
                             }
                             { theVector.coordsMode === "atoms" &&
-                            <>
-                            <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>To atom</div>
-                            <MoorhenMoleculeSelect molecules={molecules} width='20rem' onChange={(evt) => handleModelChange(evt, true)} />
-                            <Form.Group className='moorhen-form-group' controlId="cidTo">
-                                <Form.Label>selection</Form.Label>
-                                <Form.Control ref={cidToRef} type="text" value={theVector.cidTo} onChange={(evt) => {
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
+                            <Row style={{textAlign:'left', marginBottom:"0.5rem" }}>
+                            <Col sm={3}>
+                            To atom
+                            </Col>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Molecule
+                            </Col>
+                            <Col style={{verticalAlign:"top"}}>
+                            <MoorhenMoleculeSelect label={null} molecules={molecules} height="3rem" margin="0rem" onChange={(evt) => handleModelChange(evt, true)} />
+                            </Col>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            selection
+                            </Col>
+                            <Form.Group as={Col} className='mb-3' controlId="cidTo">
+                                <Form.Control style={{height:"2rem"}} ref={cidToRef} type="text" value={theVector.cidTo} onChange={(evt) => {
                                     updateVector({cidTo:evt.target.value})
                                 }} />
                             </Form.Group>
-                            </>
+                            </Row>
+                            </Card.Body>
+                            </Card>
                             }
                             { theVector.coordsMode === "points" &&
-                            <>
-                            <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>From point</div>
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
+                            <Row style={{textAlign:'left', marginBottom:"0.5rem" }}>
+                            <Col sm={3}>
+                            From point
+                            </Col>
+                            </Row>
                             <Row>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>x:</div></Col>
                                 <Col xs={2} sm md lg={3}><Form.Control value={theVector.xFrom} type="number" onChange={(evt) => {
@@ -286,11 +354,17 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                             </Row>
-                            </>
+                            </Card.Body>
+                            </Card>
                             }
                             { (theVector.coordsMode === "points" || theVector.coordsMode === "atompoint") &&
-                            <>
-                            <div style={{display:'flex', alignItems:'start', textAlign:'left'}}>To point</div>
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
+                            <Row style={{textAlign:'left', marginBottom:"0.5rem" }}>
+                            <Col sm={3}>
+                            To point
+                            </Col>
+                            </Row>
                             <Row>
                                 <Col xs={1} sm md lg={1}><div style={{display:'flex', alignItems:'start', textAlign:'left'}}>x:</div></Col>
                                 <Col xs={2} sm md lg={3}><Form.Control value={theVector.xTo} type="number" onChange={(evt) => {
@@ -317,10 +391,16 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                     }
                                 }} /></Col>
                             </Row>
-                            </>
+                            </Card.Body>
+                            </Card>
                             }
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
-                            <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Draw mode</Form.Label>
+                            <Card style={{marginBottom:'0.5rem'}}>
+                            <Card.Body>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Draw mode
+                            </Col>
+                            <Form.Group as={Col} className='mb-3'>
                                 <FormSelect size="sm" ref={drawModeRef} defaultValue="cylinder" onChange={(evt) => {
                                     if (drawModeRef !== null && typeof drawModeRef !== 'function') {
                                         drawModeRef.current.value = evt.target.value
@@ -331,8 +411,12 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <option value="dashedcylinder">Dashed cylinder</option>
                                 </FormSelect>
                             </Form.Group>
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
-                            <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Arrow mode</Form.Label>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Arrow mode
+                            </Col>
+                            <Form.Group as={Col} className='mb-3'>
                                 <FormSelect size="sm" ref={arrowModeRef} defaultValue="none" onChange={(evt) => {
                                     if (arrowModeRef !== null && typeof arrowModeRef !== 'function') {
                                         arrowModeRef.current.value = evt.target.value
@@ -345,21 +429,12 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <option value="both">Both</option>
                                 </FormSelect>
                             </Form.Group>
-                            <Row>
-                            <Col className="align-items-start"
-                            style={{
-                                display: "flex",
-                                justifyContent: "left",
-                            }}
-                            >
-                            <div>Vector colour</div>
+                            </Row>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Vector colour
                             </Col>
-                            <Col xs={10} className="align-items-start"
-                            style={{
-                                display: "flex",
-                                justifyContent: "left",
-                            }}
-                            >
+                            <Col className="mb-3">
                             <MoorhenColourPicker
                                 colour={[theVector.vectorColour.r, theVector.vectorColour.g, theVector.vectorColour.b]}
                                 setColour={(color => {
@@ -370,8 +445,11 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                             />
                             </Col>
                             </Row>
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
-                            <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Label mode</Form.Label>
+                            <Row style={{textAlign:'left'}}>
+                            <Col sm={3}>
+                            Label mode
+                            </Col>
+                            <Form.Group  as={Col} className='mb-3'>
                                 <FormSelect size="sm" ref={labelModeRef} defaultValue="none" onChange={(evt) => {
                                     if (labelModeRef !== null && typeof labelModeRef !== 'function') {
                                         labelModeRef.current.value = evt.target.value
@@ -384,12 +462,16 @@ export const MoorhenVectorsModal = (props: moorhen.CollectedProps) => {
                                 <option value="middle">Middle</option>
                                 </FormSelect>
                             </Form.Group>
+                            </Row>
                             {theVector.labelMode !== "none" && <Form.Group  style={{display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem'}} className='moorhen-form-group' controlId="cidTo">
                                 <Form.Label>Label text</Form.Label>
                                 <Form.Control ref={labelTextRef} type="text" value={theVector.labelText} onChange={(evt) => {
                                     updateVector({labelText:evt.target.value})
                                 }} />
-                            </Form.Group>}
+                            </Form.Group>
+                            }
+                            </Card.Body>
+                            </Card>
                         </>
 
     return <MoorhenDraggableModalBase

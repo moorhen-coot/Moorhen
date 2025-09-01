@@ -76,7 +76,7 @@ export const MoorhenMoleculeSelect = forwardRef<HTMLSelectElement, MoorhenMolecu
 
 
     return <Form.Group style={{ width: width, margin: margin, height:height }}>
-        <Form.Label>{label}</Form.Label>
+        {label !==null && <Form.Label>{label}</Form.Label>}
         <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} disabled={disabled} onChange={(evt) => {
             props.onChange?.(evt)
             if (selectRef !== null && typeof selectRef !== 'function') {
