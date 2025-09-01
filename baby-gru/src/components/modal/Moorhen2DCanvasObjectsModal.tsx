@@ -37,10 +37,16 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const drawModeRef = useRef<null | HTMLSelectElement>(null)
     const pathRef = useRef<null | HTMLInputElement>(null)
 
+//FIXME - The image edit path thing is probably not very useful.
+//TODO UI for fontPixelSize, fontFamily, drawStyle, gradientStops, gradientBoundary
+
+//TODO fontPixelSize, fontFamily
     const newOverlayObject = () => {
         const anOverlayObject = {
             drawMode: "text",
             path: "",
+            src: "",
+            text: "",
             drawStyle: "stroke",
             strokeStyle: "black",
             fillStyle: "black",
@@ -65,47 +71,52 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [selectedOption, setSelectedOption] = useState<string>("new")
     const [objectColour, setObjectColour] = useState({r:0,g:0,b:0})
 
-//TODO 2D overlays, not vectors!
-    const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
-        console.log(theOverlayObject.uniqueId)
+    const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeLatexOverlay(existingObject))
             setSelectedOption("new")
-            return
+            return "latex"
         }
         existingObject = imageOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeImageOverlay(existingObject))
             setSelectedOption("new")
-            return
+            return "image"
         }
         existingObject = textOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeTextOverlay(existingObject))
             setSelectedOption("new")
-            return
+            return "text"
         }
         existingObject = svgPathOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeSvgPathOverlay(existingObject))
             setSelectedOption("new")
-            return
+            return "svgpath"
         }
         existingObject = fracPathOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeFracPathOverlay(existingObject))
             setSelectedOption("new")
-            return
+            return "fracpath"
         }
     }
 
-//TODO 2D overlays, not vectors!
+    const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
+        deleteCurrentObject()
+    }
+
     const handleApply = (evt: React.MouseEvent<HTMLElement> ) => {
+        let objectType = null
         if(vectorSelectRef.current.value!=="new"){
-            //dispatch(removeVector(theVector))
+            objectType = deleteCurrentObject()
         }
-        //dispatch(addVector(theVector))
+//TODO All the other types, including new!
+        if(objectType==="text"){
+            dispatch(addTextOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,fontFamily:"serif",fontPixelSize:48,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
+        }
         setSelectedOption(theOverlayObject.uniqueId)
     }
 
@@ -115,7 +126,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             vectorSelectRef.current.value = evt.target.value
             if(vectorSelectRef.current.value==="new"){
                 setSelectedOption("new")
-                updateObject(newOverlayObject())
+                updateObject(newOverlayObject(),"text")
                 if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "text"
             } else {
                 try {
@@ -153,13 +164,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             console.log("Set type to",drawModeRef.current.value)
                         }
                     }
-                    updateObject(existingObject)
+                    updateObject(existingObject,drawModeRef.current.value)
                     setSelectedOption(existingObject.uniqueId)
-                    console.log("#####################")
-                    console.log(existingObject)
-                    console.log(drawModeRef)
-                    console.log(drawModeRef.current.value)
-                    console.log("#####################")
                 } catch(e) {
                 }
             }
@@ -168,31 +174,46 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     const handleColorChange = (color: { r: number; g: number; b: number }) => {
         setObjectColour(color)
-        updateObject({strokeStyle:color,fillStyle:color})
+        updateObject({strokeStyle:color,fillStyle:color},drawModeRef.current.value)
     }
 
     const combinedArrays = latexOverlays.concat(imageOverlays,textOverlays,svgPathOverlays,fracPathOverlays)
-    const headerContent =  <>
-                            <div style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Select object:</div>
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
+    const headerContent =  <Row>
+                                <Col sm={2}>
+                                Object:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3'>
                                 <FormSelect ref={vectorSelectRef} size="sm" onChange={handleObjectChange}>
                                 <option selected={selectedOption==="new"} value="new">New</option>
                                 {combinedArrays.length>0 && combinedArrays.map((vec,i) => {
-                                    return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.uniqueId}</option>
+                                    if(vec.path && (typeof vec.path)==="string"){
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"SVG path: "+vec.path.substring(0,50)}</option>
+                                    } else if(vec.path && (typeof vec.path)!=="string"){
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Fractional points path: "+vec.path.flat().map(number=>number.toFixed(3)).toString().substring(0,50)}</option>
+                                    } else if(vec.src){
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Image: "+vec.src.substring(0,50)}</option>
+                                    } else if(vec.text){
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Text: "+vec.text.substring(0,50)}</option>
+                                    } else {
+                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.uniqueId}</option>
+                                    }
                                 })
                                 }
                                 </FormSelect>
                             </Form.Group>
-                        </>
+                        </Row>
 
     const footer = <>{vectorSelectRef.current && selectedOption!=="new" &&
                     <Button className='m-2' variant="danger" onClick={handleDelete}>Delete</Button>
                     }
                     <Button className='m-2' onClick={handleApply}>Apply</Button></>
 
+//TODO fontPixelSize, fontFamily
     const updateObject = ({
         drawMode=undefined,
         path=undefined,
+        src=undefined,
+        text=undefined,
         drawStyle=undefined,
         strokeStyle=undefined,
         fillStyle=undefined,
@@ -203,10 +224,20 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         x=undefined,
         y=undefined,
         uniqueId=undefined,
-    }) => {
+    },objectType) => {
+        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        console.log("updateObject")
+        console.log("objectType",objectType)
+        console.trace()
+        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        //FIXME = objectType should determine which fields are filled.
         const newObject = {
-            drawMode: (drawMode !== undefined) ? drawMode : theOverlayObject.drawMode,
+            drawMode: (objectType !== undefined) ? objectType : theOverlayObject.drawMode,
             path: (path !== undefined) ? path : theOverlayObject.path,
+            src: (src !== undefined) ? src : theOverlayObject.src,
+            text: (text !== undefined) ? text : theOverlayObject.text,
             drawStyle: (drawStyle !== undefined) ? drawStyle : theOverlayObject.drawStyle,
             strokeStyle: (strokeStyle !== undefined) ? strokeStyle : theOverlayObject.strokeStyle,
             fillStyle: (fillStyle !== undefined) ? fillStyle : theOverlayObject.fillStyle,
@@ -218,17 +249,21 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             y: (y !== undefined) ? y : theOverlayObject.y,
             uniqueId: (uniqueId !== undefined) ? uniqueId : theOverlayObject.uniqueId,
         }
+        console.log(newObject)
         setOverlayObject(newObject)
     }
 
     const bodyContent = <>
                             {headerContent}
-                            <Form.Group style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>
-                            <Form.Label style={{ display:'flex', alignItems:'start', textAlign:'left', padding: '0.5rem' }}>Draw mode</Form.Label>
+                             <Row>
+                                <Col sm={2}>
+                                Type:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3'>
                                 <FormSelect size="sm" ref={drawModeRef} defaultValue="text" onChange={(evt) => {
                                     if (drawModeRef !== null && typeof drawModeRef !== 'function') {
                                         drawModeRef.current.value = evt.target.value
-                                        updateObject({drawMode:evt.target.value})
+                                        updateObject({drawMode:evt.target.value},evt.target.value)
                                     }
                                 }}>
                                 <option value="text">Text</option>
@@ -236,22 +271,105 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <option value="fracpath">Fractional points path</option>
                                 <option value="image">Image</option>
                                 </FormSelect>
-                            </Form.Group>
+                                </Form.Group>
+                            </Row>
+                            { drawModeRef.current && drawModeRef.current.value === "text" &&
+                            <>
+                             <Row>
+                                <Col sm={2}>
+                                Text:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textInput">
+                                <Col sm={10}>
+                                <Form.Control type="text" value={theOverlayObject.text}  onChange={(evt) => {
+                                   updateObject({text:evt.target.value},drawModeRef.current.value)
+                                }} />
+                                </Col>
+                                </Form.Group>
+                             </Row>
+                             <Row>
+                                <Col sm={2}>
+                                Position:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textInput">
+                                <Col sm={10}>
+                                <Form.Control type="text" value={theOverlayObject.x.toFixed(3)+", "+theOverlayObject.y.toFixed(3)} onChange={(evt) => {
+                                try {
+                                    const [new_x,new_y] = evt.target.value.split(",").map(a=>parseFloat(a))
+                                    console.log("x,y",new_x,new_y)
+                                    updateObject({x:new_x,y:new_y},drawModeRef.current.value)
+                                } catch(e) {
+                                }
+                                }}
+                                />
+                                </Col>
+                                </Form.Group>
+                             </Row>
+                             <Row>
+                                <Col sm={2}>
+                                Height:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textInput">
+                                <Col sm={10}>
+                                <Form.Control type="text" value={theOverlayObject.height} onChange={(evt) => {
+                                try {
+                                    const h = parseFloat(evt.target.value)
+                                    updateObject({height:h},drawModeRef.current.value)
+                                } catch(e) {
+                                }
+                                }}/>
+                                </Col>
+                                </Form.Group>
+                             </Row>
+                            </>
+                            }
+                            { drawModeRef.current && drawModeRef.current.value === "svgpath" &&
                             <Row>
-                            <Col className="align-items-start"
-                            style={{
-                                display: "flex",
-                                justifyContent: "left",
-                            }}
-                            >
-                            <div>Colour</div>
+                                <Col sm={2}>
+                                Path:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="svgPathInput">
+                                <Form.Control type="text" value={theOverlayObject.path} onChange={(evt) => {
+                                   updateObject({path:evt.target.value},drawModeRef.current.value)
+                                }} />
+                                </Form.Group>
+                            </Row>
+                            }
+                            { drawModeRef.current && drawModeRef.current.value === "fracpath" &&
+                            <Row>
+                                <Col sm={2}>
+                                Path:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="fracPathInput">
+                                <Form.Control type="text" value={theOverlayObject.path.flat().map(number=>number.toFixed(3)).toString()} onChange={(evt) => {
+                                   try {
+                                   const arr = evt.target.value.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
+                                   updateObject({path:arr},drawModeRef.current.value)
+                                   } catch(e) {
+                                       console.log("Not a valid array?")
+                                   }
+                                }}
+                                />
+                                </Form.Group>
+                            </Row>
+                            }
+                            { drawModeRef.current && drawModeRef.current.value === "image" &&
+                            <Row>
+                                <Col sm={2}>
+                                Path:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="imagePathInput">
+                                <Form.Control type="text" value={theOverlayObject.src} onChange={(evt) => {
+                                   updateObject({src:evt.target.value},drawModeRef.current.value)
+                                }} />
+                                </Form.Group>
+                            </Row>
+                            }
+                            <Row>
+                                <Col  sm={2}>
+                                Colour:
                             </Col>
-                            <Col xs={10} className="align-items-start"
-                            style={{
-                                display: "flex",
-                                justifyContent: "left",
-                            }}
-                            >
+                            <Col sm={10} className="mb-3">
                             <MoorhenColourPicker
                                 //colour={[theVector.objectColour.r, theVector.objectColour.g, theVector.objectColour.b]}
                                 colour={[1, 0, 0]}
