@@ -38,7 +38,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const pathRef = useRef<null | HTMLInputElement>(null)
 
 //FIXME - The image edit path thing is probably not very useful.
-//TODO UI for fontPixelSize, fontFamily, drawStyle, gradientStops, gradientBoundary
+//TODO lineWidth
+//TODO UI for fontPixelSize, fontFamily, drawStyle, gradientStops, gradientBoundary, lineWidth
 
     const newOverlayObject = () => {
         const anOverlayObject = {
@@ -57,6 +58,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             y: 0,
             fontPixelSize: 0,
             fontFamily: "serif",
+            lineWidth: 0,
             uniqueId: uuidv4(),
         }
         return anOverlayObject
@@ -70,6 +72,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
+    const [pathText, setPathText] = useState<string>("")
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -119,6 +122,14 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
+        } else if(objectType==="fracpath"){
+            let arr = [0,0,1,1]
+            try {
+                arr = pathText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
+            } catch(e) {
+                console.log("Not a valid array?")
+            }
+            dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         }
         setSelectedOption(theOverlayObject.uniqueId)
     }
@@ -169,6 +180,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     }
                     setOverlayObject(existingObject)
                     setSelectedOption(existingObject.uniqueId)
+                    setPathText("")
+                    if(existingObject.path&&drawModeRef.current.value === "fracpath"){
+                        console.log("Set to ....")
+                        setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
+                    }
                 } catch(e) {
                 }
             }
@@ -227,6 +243,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         y=undefined,
         fontPixelSize=undefined,
         fontFamily=undefined,
+        lineWidth=undefined,
         uniqueId=undefined,
     },objectType) => {
         const newObject = {
@@ -245,6 +262,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             y: (y !== undefined) ? y : theOverlayObject.y,
             fontPixelSize: (fontPixelSize !== undefined) ? fontPixelSize : theOverlayObject.fontPixelSize,
             fontFamily: (fontFamily !== undefined) ? fontFamily : theOverlayObject.fontFamily,
+            lineWidth: (lineWidth !== undefined) ? lineWidth : theOverlayObject.lineWidth,
             uniqueId: (uniqueId !== undefined) ? uniqueId : theOverlayObject.uniqueId,
         }
         setOverlayObject(newObject)
@@ -352,13 +370,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 Path:
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="fracPathInput">
-                                <Form.Control type="text" value={theOverlayObject.path.flat().map(number=>number.toFixed(3)).toString()} onChange={(evt) => {
-                                   try {
-                                   const arr = evt.target.value.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
-                                   updateObject({path:arr},drawModeRef.current.value)
-                                   } catch(e) {
-                                       console.log("Not a valid array?")
-                                   }
+                                <Form.Control type="text" value={pathText} onChange={(evt) => {
+                                    setPathText(evt.target.value)
                                 }}
                                 />
                                 </Form.Group>
