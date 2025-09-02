@@ -1,5 +1,4 @@
-
-@import '../../../colors.css';
+@import "../../../colors.css";
 
 .moorhen__slider__container {
     display: grid;
@@ -34,7 +33,7 @@
     grid-row: 2;
     justify-self: center;
     align-self: center;
-    width: 90%
+    width: 90%;
 }
 
 .moorhen__slider__minMaxVal {
@@ -59,12 +58,12 @@
     width: 100%;
     height: var(--moorhen-slider-track-height);
     border-radius: var(--moorhen-slider-track-height);
-    background: var(--moorhen-middle);
-    outline: none;
+    background: var(--moorhen-background);
+    border: 1px solid var(--moorhen-primary);
     opacity: 0.7;
     -webkit-transition: 0.5s;
     transition: opacity 0.5s;
-    cursor: pointer;  
+    cursor: pointer;
 }
 
 .moorhen__slider.slider::-webkit-slider-thumb {

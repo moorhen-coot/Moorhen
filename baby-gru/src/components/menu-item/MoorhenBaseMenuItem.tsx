@@ -1,14 +1,14 @@
-import { MenuItem } from "@mui/material";
-import { useRef } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Button } from "react-bootstrap";
+import { useRef, useState, useMemo, useEffect, useLayoutEffect } from "react";
+import ReactDOM from "react-dom";
+import { Button } from "react-bootstrap";
+import { ClickAwayListener } from "@mui/material";
+import { MoorhenMenuItem } from "./MenuItem";
 
-export const MoorhenBaseMenuItem = (props: {
+type MoorhenBaseMenuItemProps = {
     popoverContent?: React.JSX.Element;
     popoverPlacement?: "left" | "right";
     onCompleted?: () => void;
-    onEntering?: () => void;
     setPopoverIsShown?: React.Dispatch<React.SetStateAction<boolean>>;
-    onExiting?: () => void;
     menuItemTitle?: string;
     showOkButton?: boolean;
     buttonVariant?: string;
@@ -17,101 +17,97 @@ export const MoorhenBaseMenuItem = (props: {
     id?: string;
     menuItemText: string;
     disabled?: boolean;
-}) => {
-    const defaultProps = {
-        id: "",
-        showOkButton: true,
-        buttonText: "OK",
-        buttonVariant: "primary",
-        textClassName: "",
-        popoverPlacement: "right",
-        onEntering: () => {},
-        onExiting: () => {},
-        onCompleted: () => {},
-        disabled: false,
-    };
-
+};
+export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
     const {
-        popoverContent,
-        popoverPlacement,
-        onCompleted,
-        onEntering,
-        setPopoverIsShown,
-        onExiting,
-        menuItemTitle,
-        showOkButton,
-        buttonVariant,
-        buttonText,
-        textClassName,
-        id,
-        menuItemText,
-        disabled,
-    } = { ...defaultProps, ...props };
+        popoverContent = null,
+        popoverPlacement = "right",
+        onCompleted = () => {},
+        showOkButton = true,
+        buttonVariant = "primary",
+        buttonText = "OK",
+        menuItemText = "...",
+        disabled = false,
+    } = props;
 
     const resolveOrRejectRef = useRef({
-        resolve: (_arg0?: any) => {},
-        reject: (_arg0?: any) => {},
+        resolve: (_arg0?: unknown) => {},
+        reject: (_arg0?: unknown) => {},
     });
+
+    const menuItemRef = useRef<HTMLButtonElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const [isShown, setIsShown] = useState(false);
+    const [popoverStyle, setPopoverStyle] = useState({});
+    const handleClick = () => {
+        if (!disabled) setIsShown(!isShown);
+    };
+
+    useEffect(() => {
+        if (isShown) {
+            new Promise((resolve, reject) => {
+                resolveOrRejectRef.current = { resolve, reject };
+            })
+                .then((_result) => {
+                    onCompleted();
+                    document.body.click();
+                })
+                .catch((err) => console.log(err));
+        }
+    }, [isShown]);
+
+    useLayoutEffect(() => {
+        if (isShown && menuItemRef.current) {
+            const menuRect = menuItemRef.current.getBoundingClientRect();
+            const popoverRect = popoverRef.current.getBoundingClientRect();
+            const leftRight =
+                popoverPlacement === "left"
+                    ? menuRect.left + window.scrollX - popoverRect.width + 10
+                    : menuRect.right + window.scrollX - 15;
+            setPopoverStyle({
+                position: "absolute",
+                top: menuRect.top + window.scrollY + menuRect.height / 2 - popoverRect.height / 2,
+                left: leftRight, // or rect.left for left alignment
+                zIndex: 9999,
+            });
+        }
+    }, [isShown]);
+
+    const popover = useMemo(() => {
+        return (
+            <>
+                {ReactDOM.createPortal(
+                    <ClickAwayListener onClickAway={() => setIsShown(false)}>
+                        <div
+                            className={`moorhen__menu-item-popover ${popoverPlacement === "left" ? `right-arrow` : ``}`}
+                            style={popoverStyle}
+                            ref={popoverRef}
+                        >
+                            {popoverContent}
+                            {showOkButton ? (
+                                <Button
+                                    variant={buttonVariant}
+                                    onClick={() => {
+                                        resolveOrRejectRef.current.resolve();
+                                    }}
+                                >
+                                    {buttonText}
+                                </Button>
+                            ) : null}
+                        </div>
+                    </ClickAwayListener>,
+                    document.body
+                )}
+            </>
+        );
+    }, [props.popoverContent, popoverStyle]);
 
     return (
         <>
-            {popoverContent ? (
-                <OverlayTrigger
-                    rootClose
-                    placement={popoverPlacement as "left" | "right"}
-                    trigger="click"
-                    onToggle={(doShow) => {
-                        if (doShow) {
-                            new Promise((resolve, reject) => {
-                                resolveOrRejectRef.current = { resolve, reject };
-                            })
-                                .then((_result) => {
-                                    onCompleted();
-                                    document.body.click();
-                                })
-                                .catch((err) => console.log(err));
-                        }
-                    }}
-                    onEntering={() => {
-                        onEntering();
-                    }}
-                    onEntered={() => {
-                        setPopoverIsShown?.(true);
-                    }}
-                    onExit={() => {
-                        setPopoverIsShown?.(false);
-                    }}
-                    onExiting={() => {
-                        onExiting();
-                    }}
-                    overlay={
-                        <Popover style={{ maxWidth: "40rem", zIndex: 99999 }}>
-                            <PopoverHeader as="h3">{menuItemTitle}</PopoverHeader>
-                            <PopoverBody>
-                                {popoverContent}
-                                {showOkButton && (
-                                    <Button
-                                        variant={buttonVariant}
-                                        onClick={() => {
-                                            resolveOrRejectRef.current.resolve();
-                                        }}
-                                    >
-                                        {buttonText}
-                                    </Button>
-                                )}
-                            </PopoverBody>
-                        </Popover>
-                    }
-                >
-                    <MenuItem disabled={disabled} className={textClassName} id={id}>
-                        {menuItemText}
-                    </MenuItem>
-                </OverlayTrigger>
-            ) : (
-                <MenuItem disabled={disabled} className={textClassName}>
-                    {menuItemText}
-                </MenuItem>
-            )}
+            {isShown && popover}
+            <MoorhenMenuItem onClick={handleClick} ref={menuItemRef} selected={isShown}>
+                {menuItemText}
+            </MoorhenMenuItem>
         </>
     );
 };

@@ -3,7 +3,11 @@ import "./menu-item.css";
 
 interface MoorhenMenuItemProps {
     children: ReactNode;
+    selected?: boolean;
     onClick?: () => void;
+    ref?: React.Ref<HTMLButtonElement>;
+    id?: string;
+    disabled?: boolean;
 }
 /**
  * A thin wrapper around a standard HTML `<button>` element, applying Moorhen-specific styling.
@@ -16,8 +20,11 @@ interface MoorhenMenuItemProps {
  * @param props.onClick - Optional click handler for the button.
  */
 export const MoorhenMenuItem: React.FC<MoorhenMenuItemProps> = (props) => {
+    const className = !props.disabled
+        ? `moorhen__menu-item ${props.selected ? `moorhen__menu-item-selected` : ``}`
+        : `moorhen__menu-item-disabled`;
     return (
-        <button className="moorhen__menu-item" onClick={props.onClick}>
+        <button className={className} onClick={props.onClick} ref={props.ref} disabled={props.disabled}>
             {props.children}
         </button>
     );

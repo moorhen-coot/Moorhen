@@ -1,33 +1,33 @@
-@import '../MoorhenInput.css';
+@import "../MoorhenInput.css";
 
-.moorhen__input.precise {
+.moorhen__input__precise {
     padding-left: 0.5rem;
-    padding-right: 0.5rem;  
+    padding-right: 0.5rem;
     margin-top: 0.25rem;
     box-sizing: border-box;
-    width: 100%; 
-    border: 1px solid var(--moorhen-border); 
+    width: 100%;
+    border: 1px solid var(--moorhen-border);
 }
 
-.moorhen__input.number{
+.moorhen__input__number {
     height: 2.5rem;
     margin: 0.5rem 1rem;
 }
 
-.moorhen__input.compact{
+.moorhen__input__compact {
     height: 2rem;
     border-top: none;
     border-left: none;
-    border-bottom: 1px solid var(--moorhen-border); 
+    border-bottom: 1px solid var(--moorhen-border);
 }
 
-.moorhen__input.compact:focus {
+.moorhen__input__compact:focus {
     box-shadow: 2px 2px 4px 1px var(--moorhen-focus-shadow);
 }
 
-.moorhen__input.number:focus {
+.moorhen__input__number:focus {
     box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
-.moorhen__input.valid {
+.moorhen__input__valid {
     border-color: var(--moorhen-border);
 }

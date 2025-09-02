@@ -214,8 +214,10 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     };
 
     return (
-        <Form.Group className="moorhen-form-group" controlId="fetch-pdbe-form">
-            <Form.Label>Fetch from online services</Form.Label>
+        <>
+            <label htmlFor="fetch-online-sources" className="moorhen__input__label-menu">
+                Fetch from online services
+            </label>
             <InputGroup>
                 <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
                     {sources.map((source) => {
@@ -261,6 +263,6 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                     type="checkbox"
                 />
             )}
-        </Form.Group>
+        </>
     );
 };

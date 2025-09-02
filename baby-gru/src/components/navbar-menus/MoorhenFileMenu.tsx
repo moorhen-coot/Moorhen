@@ -1,8 +1,8 @@
-import { Form } from "react-bootstrap";
+import "../inputs/MoorhenInput.css";
 import { useState, useCallback } from "react";
-import { MenuItem } from "@mui/material";
 import { useSelector, useDispatch, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem";
@@ -13,7 +13,7 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem";
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem";
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem";
-import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
+import { doDownload, guid, readDataFile } from "../../utils/utils";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { moorhen } from "../../types/moorhen";
 import { addMoleculeList } from "../../store/moleculesSlice";
@@ -37,7 +37,6 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
@@ -233,118 +232,108 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
 
     return (
         <>
-            <div style={{ maxHeight: convertViewtoPx(65, height), overflow: "auto" }}>
-                {!disableFileUploads && (
-                    <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
-                        <Form.Label>Coordinates</Form.Label>
-                        <Form.Control
-                            type="file"
-                            accept=".pdb, .mmcif, .cif, .ent, .mol"
-                            multiple={true}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                loadPdbFiles(e.target.files);
-                            }}
-                        />
-                    </Form.Group>
-                )}
-
-                <MoorhenFetchOnlineSourcesForm />
-
-                {!disableFileUploads && (
-                    <Form.Group className="moorhen-form-group" controlId="upload-session-form">
-                        <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload} />
-                    </Form.Group>
-                )}
-
-                <hr></hr>
-
-                <MenuItem
-                    id="query-online-services-sequence"
-                    onClick={() => {
-                        dispatch(showModal(modalKeys.SEQ_QUERY));
-                        document.body.click();
+            <>
+                <label htmlFor="upload-form" className="moorhen__input__label-menu">
+                    Load files
+                </label>
+                <input
+                    id="upload-form"
+                    className="moorhen__input-files-upload"
+                    type="file"
+                    multiple={true}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        autoLoadHandler(e);
                     }}
-                >
-                    Query online services with a sequence...
-                </MenuItem>
-
-                {!disableFileUploads && (
-                    <>
-                        <MoorhenAssociateReflectionsToMap {...menuItemProps} />
-                        <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
-                        <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
-                        <MoorhenImportMapMenuItem {...menuItemProps} />
-                    </>
-                )}
-
-                <MoorhenImportFSigFMenuItem {...menuItemProps} />
-
-                <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
-
-                <MenuItem id="download-session-menu-item" onClick={getSession}>
-                    Download session
-                </MenuItem>
-
-                <MenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
-                    Save backup
-                </MenuItem>
-
-                <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
-
-                <MenuItem
-                    id="screenshot-menu-item"
-                    onClick={() => {
-                        enqueueSnackbar("screenshot", {
-                            variant: "screenshot",
-                            persist: true,
-                            videoRecorderRef: videoRecorderRef,
-                        });
-                        document.body.click();
+                />
+                <label htmlFor="coordinates-file-input" className="moorhen__input__label-menu">
+                    Coordinates
+                </label>
+                <input
+                    id="coordinates-file-input"
+                    className="moorhen__input-files-upload"
+                    type="file"
+                    accept=".pdb, .mmcif, .cif, .ent, .mol"
+                    multiple={true}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadPdbFiles(e.target.files);
                     }}
-                >
-                    Screenshot
-                </MenuItem>
-
-                <MenuItem id="export-gltf-menu-item" onClick={handleExportGltf}>
-                    Export scene as gltf
-                </MenuItem>
-
-                <MenuItem id="recording-menu-item" onClick={handleRecording}>
-                    Record a video
-                </MenuItem>
-                {/* eslint-disable-next-line */}
-                {!disableFileUploads && devMode && false && (
-                    <MenuItem id="load-mrbump-menu-item" onClick={handleLoadMrBump}>
-                        MrBump results...
-                    </MenuItem>
-                )}
-                {/* eslint-disable-next-line */}
-                {devMode && false && (
-                    <Form.Group className="moorhen-form-group" controlId="upload-coordinates-form">
-                        <Form.Label>Auto load</Form.Label>
-                        <Form.Control
-                            type="file"
-                            multiple={true}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                autoLoadHandler(e);
-                            }}
-                        />
-                    </Form.Group>
-                )}
-
-                {!disableFileUploads && devMode && (
-                    <MenuItem id="load-mrparse-menu-item" onClick={handleLoadMrParse}>
-                        MrParse results...
-                    </MenuItem>
-                )}
-
-                {props.extraFileMenuItems && props.extraFileMenuItems.map((menu) => menu)}
-
-                <hr></hr>
-
-                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
-            </div>
+                />
+            </>
+            <MoorhenFetchOnlineSourcesForm />
+            {!disableFileUploads && (
+                <>
+                    <label htmlFor="session-file-input" className="moorhen__input__label-menu">
+                        Load from stored session
+                    </label>
+                    <input
+                        className="moorhen__input-files-upload"
+                        type="file"
+                        accept=".pb,"
+                        multiple={false}
+                        onChange={handleSessionUpload}
+                        id="session-file-input"
+                    />
+                </>
+            )}
+            <hr></hr>
+            <MoorhenMenuItem
+                id="query-online-services-sequence"
+                onClick={() => {
+                    dispatch(showModal(modalKeys.SEQ_QUERY));
+                    document.body.click();
+                }}
+            >
+                Query online services with a sequence...
+            </MoorhenMenuItem>
+            {!disableFileUploads && (
+                <>
+                    <MoorhenAssociateReflectionsToMap {...menuItemProps} />
+                    <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
+                    <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
+                    <MoorhenImportMapMenuItem {...menuItemProps} />
+                </>
+            )}
+            <MoorhenImportFSigFMenuItem {...menuItemProps} />
+            <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
+            <MoorhenMenuItem id="download-session-menu-item" onClick={getSession}>
+                Download session
+            </MoorhenMenuItem>
+            <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
+                Save backup
+            </MoorhenMenuItem>
+            <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
+            <MoorhenMenuItem
+                id="screenshot-menu-item"
+                onClick={() => {
+                    enqueueSnackbar("screenshot", {
+                        variant: "screenshot",
+                        persist: true,
+                        videoRecorderRef: videoRecorderRef,
+                    });
+                    document.body.click();
+                }}
+            >
+                Screenshot
+            </MoorhenMenuItem>
+            <MoorhenMenuItem id="export-gltf-menu-item" onClick={handleExportGltf}>
+                Export scene as gltf
+            </MoorhenMenuItem>
+            <MoorhenMenuItem id="recording-menu-item" onClick={handleRecording}>
+                Record a video
+            </MoorhenMenuItem>
+            {!disableFileUploads && devMode && false && (
+                <MoorhenMenuItem id="load-mrbump-menu-item" onClick={handleLoadMrBump}>
+                    MrBump results...
+                </MoorhenMenuItem>
+            )}
+            {!disableFileUploads && devMode && (
+                <MoorhenMenuItem id="load-mrparse-menu-item" onClick={handleLoadMrParse}>
+                    MrParse results...
+                </MoorhenMenuItem>
+            )}
+            {props.extraFileMenuItems && props.extraFileMenuItems.map((menu) => menu)}
+            <hr></hr>
+            <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
         </>
     );
 };

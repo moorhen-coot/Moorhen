@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Form, InputGroup } from "react-bootstrap";
-import { MenuItem } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal";
 import { MoorhenGLFontMenuItem } from "../menu-item/MoorhenGLFontMenuItem";
 import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem";
@@ -143,13 +143,9 @@ export const MoorhenPreferencesMenu = () => {
             <MoorhenViewLayoutPreferencesMenuItem />
             <MapContourSettingsMenuItem />
             <MoorhenRefinementSettingsMenuItem />
-            <MenuItem
-                id="configure-shortcuts-menu-item"
-                onClick={() => setShowModal(true)}
-                style={{ marginTop: "0rem" }}
-            >
+            <MoorhenMenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)}>
                 Configure shortcuts...
-            </MenuItem>
+            </MoorhenMenuItem>
             <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} />
             <MoorhenGLFontMenuItem />
         </>

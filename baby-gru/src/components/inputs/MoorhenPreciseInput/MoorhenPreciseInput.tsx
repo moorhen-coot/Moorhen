@@ -137,10 +137,10 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 disabled={disabled}
                 value={displayValue}
                 style={{ width: inputWidth }}
-                className={`${"moorhen__input precise"} 
-                ${type === "numberForm" ? "moorhen__input number" : "moorhen__input compact"} 
-                ${isValidRef.current ? "moorhen__input valid" : "moorhen__input invalid"} 
-                ${disabled ? "moorhen__input disabled" : ""}`}
+                className={`moorhen__input ${"moorhen__input__precise"} 
+                ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
+                ${isValidRef.current ? "moorhen__input__valid" : "moorhen__input__invalid"} 
+                ${disabled ? "moorhen__input__disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}

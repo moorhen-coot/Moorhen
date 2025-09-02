@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
 import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem";
 import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem";
@@ -15,12 +15,10 @@ import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuI
 import { moorhen } from "../../types/moorhen";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
-import { convertViewtoPx } from "../../utils/utils";
 
 export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] }) => {
     const [, setPopoverIsShown] = useState(false);
 
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const devMode = useSelector((state: moorhen.State) => state.generalStates.devMode);
 
     const dispatch = useDispatch();
@@ -41,14 +39,14 @@ export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] 
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
             {devMode && (
-                <MenuItem
+                <MoorhenMenuItem
                     onClick={() => {
                         dispatch(showModal(modalKeys.ACEDRG));
                         document.body.click();
                     }}
                 >
                     Create covalent link between two atoms...
-                </MenuItem>
+                </MoorhenMenuItem>
             )}
             {props.extraEditMenuItems && props.extraEditMenuItems.map((menu) => menu)}
         </>

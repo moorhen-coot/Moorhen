@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
 import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
@@ -12,12 +12,10 @@ import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfac
 import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
-import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.ReactElement[] }) => {
     const [, setPopoverIsShown] = useState<boolean>(false);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const dispatch = useDispatch();
     const menuItemProps = { setPopoverIsShown };
     const allowScripting = useSelector((state: moorhen.State) => state.generalStates.allowScripting);
@@ -25,14 +23,14 @@ export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.Re
     return (
         <>
             <MoorhenAddWatersMenuItem {...menuItemProps} />
-            <MenuItem
+            <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal(modalKeys.SUPERPOSE_MODELS));
                     document.body.click();
                 }}
             >
                 Superpose structures...
-            </MenuItem>
+            </MoorhenMenuItem>
             {/* <MoorhenStepRefinementMenuItem key="step-refinement" {...menuItemProps}/>  this is causing huge memory leak*/}
             <MoorhenMultiplyBfactorMenuItem key="bfactor-multiply" {...menuItemProps} />
             <MoorhenShiftFieldBFactorRefinement key="bfactor-refinement" {...menuItemProps} />
@@ -40,18 +38,18 @@ export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.Re
             <MoorhenSelfRestraintsMenuItem key="add-self-restraints" setPopoverIsShown={setPopoverIsShown} />
             <MoorhenClearSelfRestraintsMenuItem key="clear-self-restraints" setPopoverIsShown={setPopoverIsShown} />
             <MoorhenRandomJiggleBlurMenuItem setPopoverIsShown={setPopoverIsShown} />
-            <MenuItem
+            <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal(modalKeys.SLICE_N_DICE));
                     document.body.click();
                 }}
             >
                 Slice-n-Dice...
-            </MenuItem>
+            </MoorhenMenuItem>
             {allowScripting && (
                 <>
                     <MoorhenLoadScriptMenuItem {...menuItemProps} />
-                    <MenuItem
+                    <MoorhenMenuItem
                         id="interactive-scripting-menu-item"
                         onClick={() => {
                             dispatch(showModal(modalKeys.SCRIPTING));
@@ -59,7 +57,7 @@ export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.Re
                         }}
                     >
                         Interactive scripting...
-                    </MenuItem>
+                    </MoorhenMenuItem>
                 </>
             )}
             {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map((menu) => menu)}

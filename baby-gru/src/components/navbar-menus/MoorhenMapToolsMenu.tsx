@@ -1,5 +1,5 @@
-import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
 import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem";
 import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from "../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem";
@@ -16,14 +16,14 @@ export const MoorhenMapToolsMenu = () => {
             <MoorhenMapMaskingMenuItem />
             <MoorhenFlipMapHandMenuItem />
             <MoorhenMakeMaskedMapsSplitByChainMenuItem />
-            <MenuItem
+            <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal(modalKeys.COLOR_MAP_BY_MAP));
                     document.body.click();
                 }}
             >
                 Color map by another map...
-            </MenuItem>
+            </MoorhenMenuItem>
         </>
     );
 };
