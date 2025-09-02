@@ -1029,3 +1029,9 @@ export const get_grid = (n,method="NEARSQUARE") => {
 
     return [the_shape[0],the_shape[1]]
 }
+
+export const getHexForCanvasColourName = (col: string): string => {
+    var ctx = new OffscreenCanvas(1,1).getContext('2d');
+    ctx.fillStyle = col;
+    return ctx.fillStyle;
+}

@@ -2,7 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, createRef, useCallback, useMemo, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table, FormSelect } from "react-bootstrap"
-import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
+import { convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -40,22 +40,23 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 //FIXME - The image edit path thing is probably not very useful.
 //TODO UI for fontPixelSize, fontFamily, drawStyle, gradientStops, gradientBoundary
 
-//TODO fontPixelSize, fontFamily
     const newOverlayObject = () => {
         const anOverlayObject = {
             drawMode: "text",
             path: "",
             src: "",
             text: "",
-            drawStyle: "stroke",
+            drawStyle: undefined,
             strokeStyle: "black",
             fillStyle: "black",
             gradientStops: [],
             gradientBoundary: [],
-            width: 0.0,
-            height: 0.0,
-            x: 0.0,
-            y: 0.0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            fontPixelSize: 0,
+            fontFamily: "serif",
             uniqueId: uuidv4(),
         }
         return anOverlayObject
@@ -69,7 +70,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
-    const [objectColour, setObjectColour] = useState({r:0,g:0,b:0})
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -114,8 +114,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             objectType = deleteCurrentObject()
         }
 //TODO All the other types, including new!
+        console.log(theOverlayObject,objectType)
         if(objectType==="text"){
-            dispatch(addTextOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,fontFamily:"serif",fontPixelSize:48,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
+        } else if(objectType==="latex"){
+            dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
         }
         setSelectedOption(theOverlayObject.uniqueId)
     }
@@ -133,7 +136,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     let existingObject = latexOverlays.find((element) => element.uniqueId===evt.target.value)
                     if(existingObject){
                         console.log("existingObject is a latex type")
-                        if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "text"
+                        if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "latex"
                     }
                     if(!existingObject){
                         existingObject = imageOverlays.find((element) => element.uniqueId===evt.target.value)
@@ -164,7 +167,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             console.log("Set type to",drawModeRef.current.value)
                         }
                     }
-                    updateObject(existingObject,drawModeRef.current.value)
+                    setOverlayObject(existingObject)
                     setSelectedOption(existingObject.uniqueId)
                 } catch(e) {
                 }
@@ -172,12 +175,12 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         }
     }
 
-    const handleColorChange = (color: { r: number; g: number; b: number }) => {
-        setObjectColour(color)
+    const handleColorChange = (color: string) => {
         updateObject({strokeStyle:color,fillStyle:color},drawModeRef.current.value)
     }
 
     const combinedArrays = latexOverlays.concat(imageOverlays,textOverlays,svgPathOverlays,fracPathOverlays)
+
     const headerContent =  <Row>
                                 <Col sm={2}>
                                 Object:
@@ -208,7 +211,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     }
                     <Button className='m-2' onClick={handleApply}>Apply</Button></>
 
-//TODO fontPixelSize, fontFamily
     const updateObject = ({
         drawMode=undefined,
         path=undefined,
@@ -223,16 +225,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         height=undefined,
         x=undefined,
         y=undefined,
+        fontPixelSize=undefined,
+        fontFamily=undefined,
         uniqueId=undefined,
     },objectType) => {
-        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        console.log("updateObject")
-        console.log("objectType",objectType)
-        console.trace()
-        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        //FIXME = objectType should determine which fields are filled.
         const newObject = {
             drawMode: (objectType !== undefined) ? objectType : theOverlayObject.drawMode,
             path: (path !== undefined) ? path : theOverlayObject.path,
@@ -247,10 +243,21 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             height: (height !== undefined) ? height : theOverlayObject.height,
             x: (x !== undefined) ? x : theOverlayObject.x,
             y: (y !== undefined) ? y : theOverlayObject.y,
+            fontPixelSize: (fontPixelSize !== undefined) ? fontPixelSize : theOverlayObject.fontPixelSize,
+            fontFamily: (fontFamily !== undefined) ? fontFamily : theOverlayObject.fontFamily,
             uniqueId: (uniqueId !== undefined) ? uniqueId : theOverlayObject.uniqueId,
         }
-        console.log(newObject)
         setOverlayObject(newObject)
+    }
+
+    const isDefaultNew = (!drawModeRef)||(drawModeRef !== null&&typeof drawModeRef !== 'function'&&drawModeRef.current===null)
+
+    let existingColour = null
+    if(theOverlayObject.fillStyle&&theOverlayObject.fillStyle!=="gradient"){
+        existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle))
+    }
+    if(theOverlayObject.strokeStyle&&theOverlayObject.strokeStyle!=="gradient"){
+        existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
     }
 
     const bodyContent = <>
@@ -270,10 +277,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <option value="svgpath">SVG path</option>
                                 <option value="fracpath">Fractional points path</option>
                                 <option value="image">Image</option>
+                                <option value="latex">Latex</option>
                                 </FormSelect>
                                 </Form.Group>
                             </Row>
-                            { drawModeRef.current && drawModeRef.current.value === "text" &&
+                            { (isDefaultNew||(drawModeRef.current && (drawModeRef.current.value === "text"||drawModeRef.current.value === "latex"))) &&
                             <>
                              <Row>
                                 <Col sm={2}>
@@ -307,14 +315,17 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                              </Row>
                              <Row>
                                 <Col sm={2}>
-                                Height:
+                                Size:
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
-                                <Form.Control type="text" value={theOverlayObject.height} onChange={(evt) => {
+                                <Form.Control type="text" value={(drawModeRef!==null && drawModeRef.current!==null && drawModeRef.current.value === "latex") ? theOverlayObject.height :  theOverlayObject.fontPixelSize} onChange={(evt) => {
                                 try {
                                     const h = parseFloat(evt.target.value)
-                                    updateObject({height:h},drawModeRef.current.value)
+                                    if(drawModeRef.current.value === "latex")
+                                        updateObject({height:h},drawModeRef.current.value)
+                                    else
+                                        updateObject({fontPixelSize:h},drawModeRef.current.value)
                                 } catch(e) {
                                 }
                                 }}/>
@@ -365,22 +376,23 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Form.Group>
                             </Row>
                             }
+                            { (drawModeRef.current && drawModeRef.current.value === "svgpath" || drawModeRef.current && drawModeRef.current.value === "fracpath" || drawModeRef.current && drawModeRef.current.value === "text") &&
                             <Row>
                                 <Col  sm={2}>
                                 Colour:
                             </Col>
                             <Col sm={10} className="mb-3">
                             <MoorhenColourPicker
-                                //colour={[theVector.objectColour.r, theVector.objectColour.g, theVector.objectColour.b]}
-                                colour={[1, 0, 0]}
+                                colour={existingColour!==null ? existingColour : [1, 0, 0]}
                                 setColour={(color => {
-                                   handleColorChange({ r: color[0], g: color[1], b: color[2] });
+                                   handleColorChange(rgbToHex(color[0], color[1], color[2]));
                                 })}
                                 position="bottom"
                                 tooltip="Change vector colour"
                             />
                             </Col>
                             </Row>
+                            }
                         </>
 
     return <MoorhenDraggableModalBase
