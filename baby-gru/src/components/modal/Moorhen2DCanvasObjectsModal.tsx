@@ -38,8 +38,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const pathRef = useRef<null | HTMLInputElement>(null)
 
 //FIXME - The image edit path thing is probably not very useful.
-//TODO lineWidth
-//TODO UI for fontPixelSize, fontFamily, drawStyle, gradientStops, gradientBoundary, lineWidth
+//TODO UI for fontFamily, drawStyle, gradientStops, gradientBoundary, alpha
 
     const newOverlayObject = () => {
         const anOverlayObject = {
@@ -143,7 +142,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             } catch(e) {
                 console.log("Not a valid array of number pairs for fractional path points.")
             }
-            dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+            if(theOverlayObject.drawStyle==="gradient")
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:theOverlayObject.gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
+            else
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         }
         setSelectedOption(theOverlayObject.uniqueId)
     }
@@ -198,8 +200,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     setPositionText("")
                     if(existingObject.path&&drawModeRef.current.value === "fracpath"){
                         setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
+                        if(existingObject.lineWidth===undefined)
+                             updateObject({lineWidth:1},drawModeRef.current.value)
                     }
-                    if(existingObject.text&&drawModeRef.current.value === "text"){
+                    if(existingObject.text&&(drawModeRef.current.value === "text"||drawModeRef.current.value === "latex")){
                         setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
                     }
                 } catch(e) {
@@ -295,6 +299,35 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
     }
 
+    const checkFracPathText = () => {
+        let isOk: boolean = false
+        try {
+            const arr = pathText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
+            if(arr.length>1&&(arr.flat().length%2)===0){
+                if(!arr.flat().includes(Number.NaN))
+                    isOk = true
+            }
+        } catch(e) {
+            console.log("Not a valid array of number pairs for fractional path points.")
+        }
+        return isOk
+    }
+
+    const checkPositionText = () => {
+        let isOk: boolean = false
+        try {
+                const [_new_x,_new_y] = positionText.split(",").map(a=>parseFloat(a))
+                if(!Number.isNaN(_new_x)&&!Number.isNaN(_new_y)&&!(_new_x===undefined)&&!(_new_y===undefined)){
+                    isOk = true
+                } else {
+                    console.log("Not a valid number pair in text position.",positionText)
+                }
+        } catch(e) {
+                console.log("Not a valid number pair in text position.")
+        }
+        return isOk
+    }
+
     const bodyContent = <>
                             {headerContent}
                              <Row>
@@ -339,6 +372,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <Form.Control type="text" value={positionText} onChange={(evt) => {
                                     setPositionText(evt.target.value)
                                 }}
+                                isInvalid={!checkPositionText()}
                                 />
                                 </Col>
                                 </Form.Group>
@@ -385,6 +419,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <Form.Control type="text" value={pathText} onChange={(evt) => {
                                     setPathText(evt.target.value)
                                 }}
+                                isInvalid={!checkFracPathText()}
                                 />
                                 </Form.Group>
                             </Row>
@@ -401,11 +436,23 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Form.Group>
                             </Row>
                             }
-                            { (drawModeRef.current && drawModeRef.current.value === "svgpath" || drawModeRef.current && drawModeRef.current.value === "fracpath" || drawModeRef.current && drawModeRef.current.value === "text") &&
+                            { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath")) &&
                             <Row>
                                 <Col  sm={2}>
-                                Colour:
-                            </Col>
+                                    Line width:
+                                </Col>
+                                <Col sm={10} className="mb-3">
+                                <Form.Control type="number" value={theOverlayObject.lineWidth} onChange={(evt) => {
+                                   updateObject({lineWidth:evt.target.value},drawModeRef.current.value)
+                                }} />
+                                </Col>
+                            </Row>
+                            }
+                            { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" || drawModeRef.current.value === "text")) &&
+                            <Row>
+                                <Col  sm={2}>
+                                    Colour:
+                                </Col>
                             <Col sm={10} className="mb-3">
                             <MoorhenColourPicker
                                 colour={existingColour!==null ? existingColour : [1, 0, 0]}
