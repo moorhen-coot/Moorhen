@@ -56,7 +56,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.35,y:0.75,width:100,height:100,uniqueId:uuidv4()}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30,uniqueId:uuidv4()}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100,uniqueId:uuidv4()}))
-            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"serif",fontPixelSize:108,fillStyle:"red",uniqueId:uuidv4()}))
+            dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"sans-serif",fontPixelSize:108,fillStyle:"red",uniqueId:uuidv4()}))
             dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48,uniqueId:uuidv4()}))
             dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue",uniqueId:uuidv4()}))
             dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta",uniqueId:uuidv4()}))

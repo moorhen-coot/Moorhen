@@ -13,6 +13,7 @@ import { addImageOverlay, addLatexOverlay, addTextOverlay, addSvgPathOverlay, ad
        } from "../../store/overlaysSlice"
 import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
 import MoorhenColourPicker from "../inputs/MoorhenColourPicker";
+import { allFontsSet } from '../../utils/enums';
 
 export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
@@ -27,6 +28,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
+    const availableFonts = useSelector((state: moorhen.State) => state.labelSettings.availableFonts)
 
     const dispatch = useDispatch()
 
@@ -38,7 +40,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const pathRef = useRef<null | HTMLInputElement>(null)
 
 //FIXME - The image edit path thing is probably not very useful.
-//TODO UI for fontFamily, drawStyle, gradientStops, gradientBoundary, alpha
+//TODO UI for drawStyle, gradientStops, gradientBoundary, alpha
 
     const newOverlayObject = () => {
         const anOverlayObject = {
@@ -71,6 +73,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
+    const [selectedFont, setSelectedFont] = useState<string>("serif")
     const [pathText, setPathText] = useState<string>("")
     const [positionText, setPositionText] = useState<string>("")
 
@@ -131,7 +134,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             } catch(e) {
                 console.log("Not a valid number pair in text position.")
             }
-            console.log(new_x,new_y)
             dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
@@ -151,7 +153,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     }
 
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        console.log(vectorSelectRef.current.value)
         if(vectorSelectRef !== null && typeof vectorSelectRef !== 'function') {
             vectorSelectRef.current.value = evt.target.value
             if(vectorSelectRef.current.value==="new"){
@@ -162,36 +163,30 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 try {
                     let existingObject = latexOverlays.find((element) => element.uniqueId===evt.target.value)
                     if(existingObject){
-                        console.log("existingObject is a latex type")
                         if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "latex"
                     }
                     if(!existingObject){
                         existingObject = imageOverlays.find((element) => element.uniqueId===evt.target.value)
                         if(existingObject){
-                            console.log("existingObject is am image type")
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "image"
                         }
                     }
                     if(!existingObject){
                         existingObject = textOverlays.find((element) => element.uniqueId===evt.target.value)
                         if(existingObject){
-                            console.log("existingObject is a plain text type")
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "text"
                         }
                     }
                     if(!existingObject){
                         existingObject = svgPathOverlays.find((element) => element.uniqueId===evt.target.value)
                         if(existingObject){
-                            console.log("existingObject is an SVG path type")
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "svgpath"
                         }
                     }
                     if(!existingObject){
                         existingObject = fracPathOverlays.find((element) => element.uniqueId===evt.target.value)
                         if(existingObject){
-                            console.log("existingObject is a path type")
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "fracpath"
-                            console.log("Set type to",drawModeRef.current.value)
                         }
                     }
                     setOverlayObject(existingObject)
@@ -205,6 +200,15 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     }
                     if(existingObject.text&&(drawModeRef.current.value === "text"||drawModeRef.current.value === "latex")){
                         setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
+                    }
+                    if(existingObject.fontFamily&&existingObject.text&&(drawModeRef.current.value === "text")){
+                        if(availableFonts.includes(existingObject.fontFamily)){
+                            setSelectedFont(existingObject.fontFamily)
+                        } else if(["serif","sans-serif","monospace","cursive","fantasy"].includes(existingObject.fontFamily)){
+                            setSelectedFont(existingObject.fontFamily)
+                        } else {
+                            setSelectedFont("serif")
+                        }
                     }
                 } catch(e) {
                 }
@@ -223,19 +227,19 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 Object:
                                 </Col>
                                 <Form.Group as={Col} className='mb-3'>
-                                <FormSelect ref={vectorSelectRef} size="sm" onChange={handleObjectChange}>
-                                <option selected={selectedOption==="new"} value="new">New</option>
+                                <FormSelect ref={vectorSelectRef} size="sm" onChange={handleObjectChange} value={selectedOption}>
+                                <option value="new">New</option>
                                 {combinedArrays.length>0 && combinedArrays.map((vec,i) => {
                                     if(vec.path && (typeof vec.path)==="string"){
-                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"SVG path: "+vec.path.substring(0,50)}</option>
+                                        return <option key={i} value={vec.uniqueId}>{"SVG path: "+vec.path.substring(0,50)}</option>
                                     } else if(vec.path && (typeof vec.path)!=="string"){
-                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Fractional points path: "+vec.path.flat().map(number=>number.toFixed(3)).toString().substring(0,50)}</option>
+                                        return <option key={i} value={vec.uniqueId}>{"Fractional points path: "+vec.path.flat().map(number=>number.toFixed(3)).toString().substring(0,50)}</option>
                                     } else if(vec.src){
-                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Image: "+vec.src.substring(0,50)}</option>
+                                        return <option key={i} value={vec.uniqueId}>{"Image: "+vec.src.substring(0,50)}</option>
                                     } else if(vec.text){
-                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{"Text: "+vec.text.substring(0,50)}</option>
+                                        return <option key={i} value={vec.uniqueId}>{"Text: "+vec.text.substring(0,50)}</option>
                                     } else {
-                                        return <option selected={selectedOption===vec.uniqueId} key={i} value={vec.uniqueId}>{vec.uniqueId}</option>
+                                        return <option key={i} value={vec.uniqueId}>{vec.uniqueId}</option>
                                     }
                                 })
                                 }
@@ -446,6 +450,29 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                    updateObject({lineWidth:evt.target.value},drawModeRef.current.value)
                                 }} />
                                 </Col>
+                            </Row>
+                            }
+                            { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
+                            <Row>
+                                <Col sm={2}>
+                                    Font:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textFontSelect">
+                                <FormSelect value={selectedFont} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                                    setSelectedFont(evt.target.value)
+                                    updateObject({fontFamily:evt.target.value},drawModeRef.current.value)
+                                    console.log(evt.target.value)
+                                }}>
+                                { availableFonts.map((item) => {
+                                    return <option key={item} value={item}>{item}</option>
+                                })}
+                                <option key="serif" value="serif">Serif</option>
+                                <option key="sans-serif" value="sans-serif">Sans serif</option>
+                                <option key="monospace" value="monospace">Monospace</option>
+                                <option key="cursive" value="cursive">Cursive</option>
+                                <option key="fantasy" value="fantasy">Fantasy</option>
+                                </FormSelect>
+                                </Form.Group>
                             </Row>
                             }
                             { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" || drawModeRef.current.value === "text")) &&
