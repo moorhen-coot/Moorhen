@@ -73,6 +73,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
     const [pathText, setPathText] = useState<string>("")
+    const [positionText, setPositionText] = useState<string>("")
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -119,7 +120,20 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 //TODO All the other types, including new!
         console.log(theOverlayObject,objectType)
         if(objectType==="text"){
-            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
+            let [new_x,new_y] = [0, 1]
+            try {
+                const [_new_x,_new_y] = positionText.split(",").map(a=>parseFloat(a))
+                if(!Number.isNaN(_new_x)&&!Number.isNaN(_new_y)){
+                    new_x = _new_x
+                    new_y = _new_y
+                } else {
+                    console.log("Not a valid number pair in text position.",positionText.split(","))
+                }
+            } catch(e) {
+                console.log("Not a valid number pair in text position.")
+            }
+            console.log(new_x,new_y)
+            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="fracpath"){
@@ -127,7 +141,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             try {
                 arr = pathText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
             } catch(e) {
-                console.log("Not a valid array?")
+                console.log("Not a valid array of number pairs for fractional path points.")
             }
             dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         }
@@ -181,9 +195,12 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     setOverlayObject(existingObject)
                     setSelectedOption(existingObject.uniqueId)
                     setPathText("")
+                    setPositionText("")
                     if(existingObject.path&&drawModeRef.current.value === "fracpath"){
-                        console.log("Set to ....")
                         setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
+                    }
+                    if(existingObject.text&&drawModeRef.current.value === "text"){
+                        setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
                     }
                 } catch(e) {
                 }
@@ -319,13 +336,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
-                                <Form.Control type="text" value={theOverlayObject.x.toFixed(3)+", "+theOverlayObject.y.toFixed(3)} onChange={(evt) => {
-                                try {
-                                    const [new_x,new_y] = evt.target.value.split(",").map(a=>parseFloat(a))
-                                    console.log("x,y",new_x,new_y)
-                                    updateObject({x:new_x,y:new_y},drawModeRef.current.value)
-                                } catch(e) {
-                                }
+                                <Form.Control type="text" value={positionText} onChange={(evt) => {
+                                    setPositionText(evt.target.value)
                                 }}
                                 />
                                 </Col>
