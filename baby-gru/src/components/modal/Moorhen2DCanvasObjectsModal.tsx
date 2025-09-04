@@ -139,7 +139,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="svgpath"){
-            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -150,7 +150,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             if(theOverlayObject.drawStyle==="gradient")
                 dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:theOverlayObject.gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
             else
-                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         }
         setSelectedOption(theOverlayObject.uniqueId)
     }
@@ -469,18 +469,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Form.Group>
                             </Row>
                             }
-                            { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath")) &&
-                            <Row>
-                                <Col  sm={2}>
-                                    Line width:
-                                </Col>
-                                <Col sm={10} className="mb-3">
-                                <Form.Control type="number" value={theOverlayObject.lineWidth} onChange={(evt) => {
-                                   updateObject({lineWidth:evt.target.value},drawModeRef.current.value)
-                                }} />
-                                </Col>
-                            </Row>
-                            }
                             { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
                             <Row>
                                 <Col sm={2}>
@@ -504,7 +492,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Form.Group>
                             </Row>
                             }
-                            { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
+                            { (drawModeRef.current && (drawModeRef.current.value === "text" ||drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath")) &&
                             <Row>
                                 <Col sm={2}>
                                     Draw style:
@@ -527,7 +515,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Form.Group>
                             </Row>
                             }
-                            { (drawModeRef.current && (drawModeRef.current.value === "text" && selectedDrawStyle==="stroke")) &&
+                            { (drawModeRef.current && selectedDrawStyle==="stroke" && (drawModeRef.current.value === "text" ||drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" )) &&
                             <Row>
                                 <Col  sm={2}>
                                     Line width:
