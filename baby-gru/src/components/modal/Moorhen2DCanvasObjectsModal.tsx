@@ -585,7 +585,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             theOverlayObject.gradientStops.map((s,istop) => {
                                 return <Row key={istop}>
                                 <Col sm={2}></Col>
-                                <Col sm={2}>
+                                <Col sm={1}>
                                 <MoorhenColourPicker
                                 colour={hexToRGB(getHexForCanvasColourName(s.colour))}
                                 setColour={(color => {
@@ -599,6 +599,9 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <Form.Control type="number" value={s.stop} onChange={(evt) => {
                                 }} />
                                 </Form.Group>
+                                <Col sm={3}>
+                                up/down/delete buttons
+                                </Col>
                                 </Row>
                             })}
                             </>
