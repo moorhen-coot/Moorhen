@@ -74,6 +74,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
     const [selectedFont, setSelectedFont] = useState<string>("serif")
+    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("fill")
     const [pathText, setPathText] = useState<string>("")
     const [positionText, setPositionText] = useState<string>("")
 
@@ -208,6 +209,13 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             setSelectedFont(existingObject.fontFamily)
                         } else {
                             setSelectedFont("serif")
+                        }
+                    }
+                    if(drawModeRef.current.value === "text"||drawModeRef.current.value === "svgpath"||drawModeRef.current.value === "fracpath"){
+                        if(existingObject.drawStyle) {
+                            setSelectedDrawStyle(existingObject.drawStyle)
+                        } else {
+                            setSelectedDrawStyle("fill")
                         }
                     }
                 } catch(e) {
@@ -471,6 +479,29 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <option key="monospace" value="monospace">Monospace</option>
                                 <option key="cursive" value="cursive">Cursive</option>
                                 <option key="fantasy" value="fantasy">Fantasy</option>
+                                </FormSelect>
+                                </Form.Group>
+                            </Row>
+                            }
+                            { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
+                            <Row>
+                                <Col sm={2}>
+                                    Draw style:
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="drawStyleSelect">
+                                <FormSelect value={selectedDrawStyle} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                                    setSelectedDrawStyle(evt.target.value)
+                                    if(!theOverlayObject.fillStyle&&theOverlayObject.strokeStyle&&evt.target.value==="fill"){
+                                        updateObject({drawStyle:evt.target.value,fillStyle:theOverlayObject.strokeStyle},drawModeRef.current.value)
+                                    } else if(!theOverlayObject.strokeStyle&&theOverlayObject.fillStyle&&evt.target.value==="stroke"){
+                                        updateObject({drawStyle:evt.target.value,strokeStyle:theOverlayObject.fillStyle},drawModeRef.current.value)
+                                    } else {
+                                        updateObject({drawStyle:evt.target.value},drawModeRef.current.value)
+                                    }
+                                }}>
+                                <option key="stroke" value="stroke">Outline</option>
+                                <option key="fill" value="fill">Filled</option>
+                                {/*<option key="gradient" value="gradient">Gradient</option>*/}
                                 </FormSelect>
                                 </Form.Group>
                             </Row>
