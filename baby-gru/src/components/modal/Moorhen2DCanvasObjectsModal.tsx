@@ -65,7 +65,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         return anOverlayObject
     }
 
-    interface RGBColour  {
+    interface RGBColour {
         r: number;
         g: number;
         b: number;
@@ -76,6 +76,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [selectedFont, setSelectedFont] = useState<string>("serif")
     const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("fill")
     const [pathText, setPathText] = useState<string>("")
+    const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
 
     const deleteCurrentObject = () => {
@@ -233,6 +234,12 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                         } else {
                             setSelectedDrawStyle("fill")
                         }
+                        if(existingObject.gradientBoundary) {
+                            if(drawModeRef.current.value === "svgpath")
+                                setGradientBoundaryText(existingObject.gradientBoundary.flat().toString())
+                            else
+                                setGradientBoundaryText(existingObject.gradientBoundary.flat().map(number=>number.toFixed(3)).toString())
+                        }
                     }
                 } catch(e) {
                 }
@@ -248,7 +255,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     const headerContent =  <Row>
                                 <Col sm={2}>
-                                Object:
+                                Object
                                 </Col>
                                 <Form.Group as={Col} className='mb-3'>
                                 <FormSelect ref={vectorSelectRef} size="sm" onChange={handleObjectChange} value={selectedOption}>
@@ -327,6 +334,20 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
     }
 
+    const checkGradientBoundaryText = () => {
+        let isOk: boolean = false
+        try {
+            const arr = gradientBoundaryText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
+            if(arr.length>1&&(arr.flat().length%2)===0){
+                if(!arr.flat().includes(Number.NaN))
+                    isOk = true
+            }
+        } catch(e) {
+            console.log("Not a valid array of number pairs for fractional path points.")
+        }
+        return isOk
+    }
+
     const checkFracPathText = () => {
         let isOk: boolean = false
         try {
@@ -356,11 +377,13 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         return isOk
     }
 
+    console.log(theOverlayObject)
+
     const bodyContent = <>
                             {headerContent}
                              <Row>
                                 <Col sm={2}>
-                                Type:
+                                Type
                                 </Col>
                                 <Form.Group as={Col} className='mb-3'>
                                 <FormSelect size="sm" ref={drawModeRef} defaultValue="text" onChange={(evt) => {
@@ -381,11 +404,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             <>
                              <Row>
                                 <Col sm={2}>
-                                Text:
+                                Text
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
-                                <Form.Control type="text" value={theOverlayObject.text}  onChange={(evt) => {
+                                <Form.Control type="text" value={theOverlayObject.text} onChange={(evt) => {
                                    updateObject({text:evt.target.value},drawModeRef.current.value)
                                 }} />
                                 </Col>
@@ -393,7 +416,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                              </Row>
                              <Row>
                                 <Col sm={2}>
-                                Position:
+                                Position
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
@@ -407,11 +430,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                              </Row>
                              <Row>
                                 <Col sm={2}>
-                                Size:
+                                Size
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
-                                <Form.Control type="number" value={(drawModeRef!==null && drawModeRef.current!==null && drawModeRef.current.value === "latex") ? theOverlayObject.height :  theOverlayObject.fontPixelSize} onChange={(evt) => {
+                                <Form.Control type="number" value={(drawModeRef!==null && drawModeRef.current!==null && drawModeRef.current.value === "latex") ? theOverlayObject.height : theOverlayObject.fontPixelSize} onChange={(evt) => {
                                 try {
                                     const h = parseFloat(evt.target.value)
                                     if(drawModeRef.current.value === "latex")
@@ -429,7 +452,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             { drawModeRef.current && drawModeRef.current.value === "svgpath" &&
                             <Row>
                                 <Col sm={2}>
-                                Path:
+                                Path
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="svgPathInput">
                                 <Form.Control type="text" value={theOverlayObject.path} onChange={(evt) => {
@@ -441,7 +464,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             { drawModeRef.current && drawModeRef.current.value === "fracpath" &&
                             <Row>
                                 <Col sm={2}>
-                                Path:
+                                Path
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="fracPathInput">
                                 <Form.Control type="text" value={pathText} onChange={(evt) => {
@@ -455,7 +478,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             { drawModeRef.current && drawModeRef.current.value === "image" &&
                             <Row>
                                 <Col sm={2}>
-                                Path:
+                                Path
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="imagePathInput">
                                 <Form.Control type="text" value={theOverlayObject.src} onChange={(evt) => {
@@ -467,7 +490,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
                             <Row>
                                 <Col sm={2}>
-                                    Font:
+                                    Font
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textFontSelect">
                                 <FormSelect value={selectedFont} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -490,7 +513,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             { (drawModeRef.current && (drawModeRef.current.value === "text" ||drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath")) &&
                             <Row>
                                 <Col sm={2}>
-                                    Draw style:
+                                    Draw style
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="drawStyleSelect">
                                 <FormSelect value={selectedDrawStyle} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -505,15 +528,15 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 }}>
                                 <option key="stroke" value="stroke">Outline</option>
                                 <option key="fill" value="fill">Filled</option>
-                                {/*<option key="gradient" value="gradient">Gradient</option>*/}
+                                <option key="gradient" value="gradient">Gradient</option>
                                 </FormSelect>
                                 </Form.Group>
                             </Row>
                             }
                             { (drawModeRef.current && selectedDrawStyle==="stroke" && (drawModeRef.current.value === "text" ||drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" )) &&
                             <Row>
-                                <Col  sm={2}>
-                                    Line width:
+                                <Col sm={2}>
+                                    Line width
                                 </Col>
                                 <Col sm={10} className="mb-3">
                                 <Form.Control type="number" value={theOverlayObject.lineWidth} onChange={(evt) => {
@@ -522,10 +545,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Col>
                             </Row>
                             }
-                            { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" || drawModeRef.current.value === "text")) &&
+                            { selectedDrawStyle!=="gradient" && (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" || drawModeRef.current.value === "text")) &&
                             <Row>
-                                <Col  sm={2}>
-                                    Colour:
+                                <Col sm={2}>
+                                    Colour
                                 </Col>
                             <Col sm={10} className="mb-3">
                             <MoorhenColourPicker
@@ -538,6 +561,47 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             />
                             </Col>
                             </Row>
+                            }
+                            { selectedDrawStyle==="gradient" &&
+                            <>
+                            <Row>
+                                <Col sm={2}>
+                                    Gradient boundaries
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="gradBoundaryInput">
+                                <Form.Control type="text" value={gradientBoundaryText} onChange={(evt) => {
+                                    setGradientBoundaryText(evt.target.value)
+                                }}
+                                isInvalid={!checkGradientBoundaryText()}
+                                />
+                                </Form.Group>
+                            </Row>
+                            <Row>
+                                <Col sm={2}>
+                                    Gradient stops
+                                </Col>
+                            </Row>
+                            {theOverlayObject.gradientStops &&
+                            theOverlayObject.gradientStops.map((s,istop) => {
+                                return <Row key={istop}>
+                                <Col sm={2}></Col>
+                                <Col sm={2}>
+                                <MoorhenColourPicker
+                                colour={hexToRGB(getHexForCanvasColourName(s.colour))}
+                                setColour={(color => {
+                                   //handleColorChange(rgbToHex(color[0], color[1], color[2]));
+                                })}
+                                position="bottom"
+                                tooltip="Change vector colour"
+                                />
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textInput">
+                                <Form.Control type="number" value={s.stop} onChange={(evt) => {
+                                }} />
+                                </Form.Group>
+                                </Row>
+                            })}
+                            </>
                             }
                         </>
 
