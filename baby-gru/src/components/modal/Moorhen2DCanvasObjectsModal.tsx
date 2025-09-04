@@ -135,9 +135,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             } catch(e) {
                 console.log("Not a valid number pair in text position.")
             }
-            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
+        } else if(objectType==="svgpath"){
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -190,17 +192,36 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "fracpath"
                         }
                     }
-                    setOverlayObject(existingObject)
                     setSelectedOption(existingObject.uniqueId)
                     setPathText("")
                     setPositionText("")
-                    if(existingObject.path&&drawModeRef.current.value === "fracpath"){
-                        setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
-                        if(existingObject.lineWidth===undefined)
-                             updateObject({lineWidth:1},drawModeRef.current.value)
-                    }
-                    if(existingObject.text&&(drawModeRef.current.value === "text"||drawModeRef.current.value === "latex")){
+                    if(drawModeRef.current.value === "fracpath"){
+                        if(existingObject.path){
+                            setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
+                        }
+                        if(existingObject.lineWidth===undefined){
+                            setOverlayObject(Object.assign({},existingObject,{lineWidth:1}))
+                        } else {
+                            setOverlayObject(existingObject)
+                        }
+                    } else if(drawModeRef.current.value === "svgpath"){
+                        if(existingObject.path){
+                            setPathText(existingObject.path)
+                        }
+                        if(existingObject.lineWidth===undefined){
+                            setOverlayObject(Object.assign({},existingObject,{lineWidth:1}))
+                        } else {
+                            setOverlayObject(existingObject)
+                        }
+                    } else if(drawModeRef.current.value === "text"||drawModeRef.current.value === "latex"){
                         setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
+                        if(existingObject.lineWidth===undefined){
+                            setOverlayObject(Object.assign({},existingObject,{lineWidth:1}))
+                        } else {
+                            setOverlayObject(existingObject)
+                        }
+                    } else {
+                        setOverlayObject(existingObject)
                     }
                     if(existingObject.fontFamily&&existingObject.text&&(drawModeRef.current.value === "text")){
                         if(availableFonts.includes(existingObject.fontFamily)){
@@ -395,7 +416,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Col sm={10}>
-                                <Form.Control type="text" value={(drawModeRef!==null && drawModeRef.current!==null && drawModeRef.current.value === "latex") ? theOverlayObject.height :  theOverlayObject.fontPixelSize} onChange={(evt) => {
+                                <Form.Control type="number" value={(drawModeRef!==null && drawModeRef.current!==null && drawModeRef.current.value === "latex") ? theOverlayObject.height :  theOverlayObject.fontPixelSize} onChange={(evt) => {
                                 try {
                                     const h = parseFloat(evt.target.value)
                                     if(drawModeRef.current.value === "latex")
@@ -504,6 +525,18 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 {/*<option key="gradient" value="gradient">Gradient</option>*/}
                                 </FormSelect>
                                 </Form.Group>
+                            </Row>
+                            }
+                            { (drawModeRef.current && (drawModeRef.current.value === "text" && selectedDrawStyle==="stroke")) &&
+                            <Row>
+                                <Col  sm={2}>
+                                    Line width:
+                                </Col>
+                                <Col sm={10} className="mb-3">
+                                <Form.Control type="number" value={theOverlayObject.lineWidth} onChange={(evt) => {
+                                   updateObject({lineWidth:evt.target.value},drawModeRef.current.value)
+                                }} />
+                                </Col>
                             </Row>
                             }
                             { (drawModeRef.current && (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath" || drawModeRef.current.value === "text")) &&
