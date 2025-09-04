@@ -40,7 +40,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const pathRef = useRef<null | HTMLInputElement>(null)
 
 //FIXME - The image edit path thing is probably not very useful.
-//TODO UI for drawStyle, gradientStops, gradientBoundary, alpha
+//TODO UI for gradientStops, gradientBoundary, alpha
 
     const newOverlayObject = () => {
         const anOverlayObject = {
@@ -83,31 +83,26 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         if(existingObject){
             dispatch(removeLatexOverlay(existingObject))
             setSelectedOption("new")
-            return "latex"
         }
         existingObject = imageOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeImageOverlay(existingObject))
             setSelectedOption("new")
-            return "image"
         }
         existingObject = textOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeTextOverlay(existingObject))
             setSelectedOption("new")
-            return "text"
         }
         existingObject = svgPathOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeSvgPathOverlay(existingObject))
             setSelectedOption("new")
-            return "svgpath"
         }
         existingObject = fracPathOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
         if(existingObject){
             dispatch(removeFracPathOverlay(existingObject))
             setSelectedOption("new")
-            return "fracpath"
         }
     }
 
@@ -116,11 +111,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     }
 
     const handleApply = (evt: React.MouseEvent<HTMLElement> ) => {
-        let objectType = null
+        const objectType = drawModeRef.current.value
         if(vectorSelectRef.current.value!=="new"){
-            objectType = deleteCurrentObject()
+            deleteCurrentObject()
         }
-//TODO All the other types, including new!
+//TODO image
         console.log(theOverlayObject,objectType)
         if(objectType==="text"){
             let [new_x,new_y] = [0, 1]
