@@ -5,7 +5,7 @@ import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
-import { showMap } from "../../moorhen";
+import { setContourLevel, setMapRadius, showMap } from "../../moorhen";
 import { MoorhenReduxStore } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
@@ -55,7 +55,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const mapRadiusItem = state.mapContourSettings.mapRadii.find((item) => item.molNo === mapMolNo);
-        return mapRadiusItem?.radius || map?.suggestedRadius || 15;
+        return mapRadiusItem?.radius;
     });
 
     const mapContourLevel = useSelector((state: moorhen.State) => {
@@ -121,8 +121,11 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     }
 
     useEffect(() => {
+        /* this should be moved to map initialisation in moorhen the instance*/
         if (map?.showOnLoad) {
             dispatch(showMap(map));
+            dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius || 15 }));
+            dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: map?.suggestedContourLevel || 0.8 }));
         }
     }, []);
 
