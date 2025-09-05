@@ -165,7 +165,7 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         //console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData);
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
-        doDownload([sessionBytes], "moorhen_session.pb");
+        doDownload([sessionBytes] as BlobPart[], "moorhen_session.pb");
     };
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
