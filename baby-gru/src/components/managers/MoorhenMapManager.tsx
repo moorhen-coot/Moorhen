@@ -83,8 +83,15 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     };
 
     const _drawMap = async (now: number) => {
+        const currentOrigin = MoorhenReduxStore.getState().glRef.origin;
         isWorkingRef.current = true;
-        await map.drawMapContour();
+        await map.doCootContour(
+            ...(currentOrigin.map((coord) => -coord) as [number, number, number]),
+            mapRadius,
+            mapContourLevel,
+            mapStyle
+        );
+        //await map.drawMapContour();
         _postDraw(now);
         lastTime.current = Date.now();
     };
@@ -131,9 +138,15 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         <>
             {mapIsVisible &&
                 !isOriginLocked &&
-                (!reContourMapOnlyOnMouseUp ? <MapOriginListener drawMap={drawMap} /> : <MapOriginListenerMouseUp drawMap={drawMap} />)}
+                (!reContourMapOnlyOnMouseUp ? (
+                    <MapOriginListener drawMap={drawMap} />
+                ) : (
+                    <MapOriginListenerMouseUp drawMap={drawMap} />
+                ))}
 
-            {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
+            {isMapActive && (
+                <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />
+            )}
 
             {mapIsVisible && <MapAlphaListener map={map} />}
         </>
