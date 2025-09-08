@@ -49,11 +49,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             path: "",
             src: "",
             text: "",
-            drawStyle: undefined,
+            drawStyle: "stroke",
             strokeStyle: "black",
             fillStyle: "black",
             gradientStops: [],
-            gradientBoundary: [],
+            gradientBoundary: [0,0,1,1],
             width: 0,
             height: 0,
             x: 0,
@@ -75,7 +75,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
     const [selectedFont, setSelectedFont] = useState<string>("serif")
-    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("fill")
+    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("stroke")
     const [pathText, setPathText] = useState<string>("")
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
@@ -120,6 +120,23 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         }
 //TODO image
         console.log(theOverlayObject,objectType)
+
+        let gradientBoundary = theOverlayObject.gradientBoundary
+        let gradientStop = theOverlayObject.gradientStop
+
+        if(selectedDrawStyle==="gradient"&&!gradientBoundary){
+            if(checkGradientBoundaryText){
+                const arr = gradientBoundaryText.split(",").map(a=>parseFloat(a))
+                gradientBoundary = arr
+            } else {
+                gradientBoundary = [0,0,1,1]
+            }
+        }
+
+        if(selectedDrawStyle==="gradient"&&!gradientStops){
+            gradientStop = [{stop:0.0,colour:"black"}]
+        }
+
         if(objectType==="text"){
             let [new_x,new_y] = [0, 1]
             try {
@@ -137,7 +154,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="svgpath"){
-            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:theOverlayObject.gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -146,9 +163,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 console.log("Not a valid array of number pairs for fractional path points.")
             }
             if(theOverlayObject.drawStyle==="gradient")
-                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:theOverlayObject.gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
-            else
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
+            else {
+                console.log("dispatch(addFracPathOverlay,",{path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId})
                 dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+            }
         }
         setSelectedOption(theOverlayObject.uniqueId)
     }
@@ -338,6 +357,21 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     if(theOverlayObject.strokeStyle&&theOverlayObject.strokeStyle!=="gradient"){
         existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
     }
+
+    useEffect(() => {
+        if(selectedDrawStyle==="gradient"&&!theOverlayObject.gradientBoundary){
+            if(checkGradientBoundaryText){
+                const arr = gradientBoundaryText.split(",").map(a=>parseFloat(a))
+                updateObject({gradientBoundary:arr.flat()},drawModeRef.current.value)
+            } else {
+                updateObject({gradientBoundary:[0,0,1,1]},drawModeRef.current.value)
+            }
+        }
+        if(selectedDrawStyle==="gradient"&&!theOverlayObject.gradientStops){
+            setGradientStops([{stop:0.0,colour:"black"}])
+            updateObject({gradientStops:[{stop:0.0,colour:"black"}]},drawModeRef.current.value)
+        }
+    }, [selectedDrawStyle])
 
     useEffect(() => {
         try {

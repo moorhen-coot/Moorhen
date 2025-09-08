@@ -1218,7 +1218,7 @@ export namespace moorhen {
         strokeStyle?: string
         drawStyle?: string
         gradientBoundary?: [number,number,number,number]
-        gradientStops?: [number,string][]
+        gradientStops?: {stop:number,colour:string}[]
         lineWidth?: number
         uniqueId: string;
     }
@@ -1229,7 +1229,7 @@ export namespace moorhen {
         strokeStyle?: string
         drawStyle?: string
         gradientBoundary?: [number,number,number,number]
-        gradientStops?: [number,string][]
+        gradientStops?: {stop:number,colour:string}[]
         lineWidth?: number
         uniqueId: string;
     }

@@ -274,7 +274,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 const grad_y1 = height*t.gradientBoundary[3]
                 const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1)
                 t.gradientStops.forEach(stop => {
-                    grad.addColorStop(stop.stop, stop.colour)
+                    grad.addColorStop(Math.max(Math.min(stop.stop,1.0),0.0), stop.colour)
                 })
                 canvas2D_ctx.fillStyle = grad
             } else {
