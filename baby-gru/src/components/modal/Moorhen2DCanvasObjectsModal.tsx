@@ -14,6 +14,7 @@ import { addImageOverlay, addLatexOverlay, addTextOverlay, addSvgPathOverlay, ad
 import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
 import MoorhenColourPicker from "../inputs/MoorhenColourPicker";
 import { allFontsSet } from '../../utils/enums';
+import { ArrowUpward, ArrowDownward, Delete } from '@mui/icons-material';
 
 export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
@@ -78,6 +79,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [pathText, setPathText] = useState<string>("")
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
+    const [gradientStops, setGradientStops] = useState<{stop:number,colour:string}[]>([])
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -135,7 +137,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="svgpath"){
-            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:theOverlayObject.gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -233,6 +235,9 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             setSelectedDrawStyle(existingObject.drawStyle)
                         } else {
                             setSelectedDrawStyle("fill")
+                        }
+                        if(existingObject.gradientStops) {
+                            setGradientStops(existingObject.gradientStops)
                         }
                         if(existingObject.gradientBoundary) {
                             if(drawModeRef.current.value === "svgpath")
@@ -334,6 +339,22 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
     }
 
+    useEffect(() => {
+        try {
+            const arr = gradientBoundaryText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
+            if(arr.length>1&&(arr.flat().length%2)===0){
+                if(!arr.flat().includes(Number.NaN))
+                    updateObject({gradientBoundary:arr.flat()},drawModeRef.current.value)
+            }
+        } catch(e) {
+            console.log("Not a valid array of number pairs for fractional path points.")
+        }
+    }, [gradientBoundaryText])
+
+    useEffect(() => {
+        updateObject({gradientStops:gradientStops},drawModeRef.current.value)
+    }, [gradientStops])
+
     const checkGradientBoundaryText = () => {
         let isOk: boolean = false
         try {
@@ -376,8 +397,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         }
         return isOk
     }
-
-    console.log(theOverlayObject)
 
     const bodyContent = <>
                             {headerContent}
@@ -496,7 +515,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <FormSelect value={selectedFont} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
                                     setSelectedFont(evt.target.value)
                                     updateObject({fontFamily:evt.target.value},drawModeRef.current.value)
-                                    console.log(evt.target.value)
                                 }}>
                                 { availableFonts.map((item) => {
                                     return <option key={item} value={item}>{item}</option>
@@ -581,15 +599,19 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                     Gradient stops
                                 </Col>
                             </Row>
-                            {theOverlayObject.gradientStops &&
-                            theOverlayObject.gradientStops.map((s,istop) => {
+                            {gradientStops &&
+                            gradientStops.map((s,istop) => {
                                 return <Row key={istop}>
                                 <Col sm={2}></Col>
                                 <Col sm={1}>
                                 <MoorhenColourPicker
                                 colour={hexToRGB(getHexForCanvasColourName(s.colour))}
                                 setColour={(color => {
-                                   //handleColorChange(rgbToHex(color[0], color[1], color[2]));
+                                   setGradientStops([
+                                     ...gradientStops.slice(0, istop),
+                                     {stop:s.stop,colour:rgbToHex(color[0], color[1], color[2])},
+                                     ...gradientStops.slice(istop+1)
+                                   ]);
                                 })}
                                 position="bottom"
                                 tooltip="Change vector colour"
@@ -597,13 +619,37 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Form.Control type="number" value={s.stop} onChange={(evt) => {
+                                   setGradientStops([
+                                     ...gradientStops.slice(0, istop),
+                                     {stop:parseFloat(evt.target.value),colour:s.colour},
+                                     ...gradientStops.slice(istop+1)])
                                 }} />
                                 </Form.Group>
-                                <Col sm={3}>
-                                up/down/delete buttons
+                                <Col sm={2}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {
+                                   setGradientStops([
+                                     ...gradientStops.slice(0, istop),
+                                     ...gradientStops.slice(istop+1)])
+                                }}>
+                                <Delete/>
+                                </Button>
                                 </Col>
                                 </Row>
                             })}
+                            <Row>
+                                <Col sm={9}>
+                                </Col>
+                                <Col sm={3}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {
+                                   setGradientStops([
+                                     ...gradientStops,
+                                     {stop:0.0,colour:"black"},
+                                     ])
+                                }}>
+                                Add new colour
+                                </Button>
+                                </Col>
+                            </Row>
                             </>
                             }
                         </>
