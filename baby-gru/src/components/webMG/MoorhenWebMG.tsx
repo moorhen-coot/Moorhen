@@ -46,7 +46,6 @@ const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettin
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, OldglRef) => {
 
     const glRef = OldglRef as React.Ref<MGWebGL>
-    const canvas2DRef = useRef<HTMLCanvasElement>(null)
 
     const dispatch = useDispatch()
 
@@ -735,7 +734,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
-                    <Moorhen2DOverlay canvasRef={canvas2DRef} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu

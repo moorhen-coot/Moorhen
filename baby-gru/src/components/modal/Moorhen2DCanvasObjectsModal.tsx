@@ -61,6 +61,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             fontPixelSize: 0,
             fontFamily: "serif",
             lineWidth: 0,
+            zIndex: 0,
             uniqueId: uuidv4(),
         }
         return anOverlayObject
@@ -75,6 +76,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject())
     const [selectedOption, setSelectedOption] = useState<string>("new")
     const [selectedFont, setSelectedFont] = useState<string>("serif")
+    const [selectedDepth, setSelectedDepth] = useState<number>(0)
     const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("stroke")
     const [pathText, setPathText] = useState<string>("")
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
@@ -150,11 +152,11 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             } catch(e) {
                 console.log("Not a valid number pair in text position.")
             }
-            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="latex"){
-            dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="svgpath"){
-            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -163,10 +165,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 console.log("Not a valid array of number pairs for fractional path points.")
             }
             if(theOverlayObject.drawStyle==="gradient")
-                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId}))
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
             else {
-                console.log("dispatch(addFracPathOverlay,",{path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId})
-                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId}))
+                console.log("dispatch(addFracPathOverlay,",{path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex})
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
             }
         }
         setSelectedOption(theOverlayObject.uniqueId)
@@ -265,6 +267,12 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 setGradientBoundaryText(existingObject.gradientBoundary.flat().map(number=>number.toFixed(3)).toString())
                         }
                     }
+                    if(existingObject.zIndex===undefined){
+                        setSelectedDepth(0)
+                        setOverlayObject(Object.assign({},existingObject,{zIndex:0}))
+                    } else {
+                        setSelectedDepth(existingObject.zIndex)
+                    }
                 } catch(e) {
                 }
             }
@@ -324,6 +332,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         fontPixelSize=undefined,
         fontFamily=undefined,
         lineWidth=undefined,
+        zIndex=undefined,
         uniqueId=undefined,
     },objectType) => {
         const newObject = {
@@ -343,6 +352,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             fontPixelSize: (fontPixelSize !== undefined) ? fontPixelSize : theOverlayObject.fontPixelSize,
             fontFamily: (fontFamily !== undefined) ? fontFamily : theOverlayObject.fontFamily,
             lineWidth: (lineWidth !== undefined) ? lineWidth : theOverlayObject.lineWidth,
+            zIndex: (zIndex !== undefined) ? zIndex : theOverlayObject.zIndex,
             uniqueId: (uniqueId !== undefined) ? uniqueId : theOverlayObject.uniqueId,
         }
         setOverlayObject(newObject)
@@ -652,7 +662,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 />
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
-                                <Form.Control type="number" value={s.stop} onChange={(evt) => {
+                                <Form.Control type="number" inputMode="decimal" min="0.0" max="1.0" step="0.01" value={s.stop} onChange={(evt) => {
                                    setGradientStops([
                                      ...gradientStops.slice(0, istop),
                                      {stop:parseFloat(evt.target.value),colour:s.colour},
@@ -686,6 +696,23 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             </Row>
                             </>
                             }
+                            <Row>
+                                <Col sm={2}>
+                                    Z-depth
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="zIndexSelect">
+                                <FormSelect value={selectedDepth} onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                                    setSelectedDepth(parseInt(evt.target.value))
+                                    updateObject({zIndex:parseInt(evt.target.value)},drawModeRef.current.value)
+                                }}>
+                                <option key="0" value="0">0</option>
+                                <option key="1" value="1">1</option>
+                                <option key="2" value="2">2</option>
+                                <option key="3" value="3">3</option>
+                                <option key="4" value="4">4</option>
+                                </FormSelect>
+                                </Form.Group>
+                            </Row>
                         </>
 
     return <MoorhenDraggableModalBase

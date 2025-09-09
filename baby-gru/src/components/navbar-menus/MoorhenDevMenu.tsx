@@ -57,7 +57,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/MoorhenLogo.png`,x:0.75,y:0.15,width:30,height:30,uniqueId:uuidv4()}))
             dispatch(addImageOverlay({src:`${props.urlPrefix}/pixmaps/axes_xyz.svg`,x:0.25,y:0.25,width:100,height:100,uniqueId:uuidv4()}))
             dispatch(addTextOverlay({text:"Red text",x:0.15,y:0.5,fontFamily:"sans-serif",fontPixelSize:108,fillStyle:"red",uniqueId:uuidv4()}))
-            dispatch(addTextOverlay({text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48,uniqueId:uuidv4()}))
+            dispatch(addTextOverlay({zIndex:1,text:"Text",x:0.15,y:0.75,fontFamily:"serif",fontPixelSize:48,uniqueId:uuidv4()}))
             dispatch(addTextOverlay({text:"Stroke text",x:0.65,y:0.75,fontFamily:"serif",fontPixelSize:48,drawStyle:"stroke",strokeStyle:"blue",uniqueId:uuidv4()}))
             dispatch(addSvgPathOverlay({path:"M10 10 h 80 v 80 h -80 Z",drawStyle:"stroke",strokeStyle:"magenta",uniqueId:uuidv4()}))
             dispatch(addSvgPathOverlay({path:"M100 10 h 80 v 80 h -80 Z",drawStyle:"fill",fillStyle:"orange",uniqueId:uuidv4()}))
@@ -78,7 +78,7 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
             dispatch(addCallback(exampleCallBack))
             const input = String.raw`{{\rm{\color{red}Some}\ colour}} {\color{pink}\int}_{\color{blue}-\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}`
             const input2 = String.raw`\displaystyle  \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}`
-            dispatch(addLatexOverlay({text:input,x:0.30,y:0.25,height:60,uniqueId:uuidv4()}))
+            dispatch(addLatexOverlay({zIndex:1,text:input,x:0.30,y:0.25,height:60,uniqueId:uuidv4()}))
             dispatch(addLatexOverlay({text:input2,x:0.40,y:0.65,height:80,uniqueId:uuidv4()}))
         }
     }

@@ -15,6 +15,7 @@ interface ImageFrac2D {
     width: number
     height: number
     img: HTMLImageElement
+    zIndex: number;
 }
 
 let stereoQuats = []
@@ -124,7 +125,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
     ctx.restore();
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number) => {
 
     if(!canvas2D_ctx) return
 
@@ -171,6 +172,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     })
 
     textOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
@@ -197,12 +199,14 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fillText(t.text,t.x*width,t.y*height)
         }
         canvas2D_ctx.restore()
+        }
     })
 
     canvas2D_ctx.lineWidth = 1.0
     canvas2D_ctx.scale(scale, scale);
 
     svgPathOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         let p = new Path2D(t.path)
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
@@ -239,18 +243,23 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fill(p)
         }
         canvas2D_ctx.restore()
+        }
     })
+
     canvas2D_ctx.scale(1.0/scale, 1.0/scale);
 
     images.forEach(img => {
+        if((!img.zIndex&&zIndex===0)||(img.zIndex===zIndex)){
         if(img.img){
            canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+        }
         }
     })
 
     canvas2D_ctx.lineWidth = scale
 
     fracPathOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
@@ -294,6 +303,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fill()
         }
         canvas2D_ctx.restore()
+        }
     })
 
     callbacks.forEach(f => {
@@ -302,7 +312,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     })
 
-    if(drawScaleBar) {
+    if(drawScaleBar&&zIndex===5) {
 
         canvas2D_ctx.save()
         if(bright_y<0.5) {
@@ -370,7 +380,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     }
 
-    if(drawCrosshairs){
+    if(drawCrosshairs&&zIndex===5){
         canvas2D_ctx.save()
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
@@ -508,7 +518,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     }
 
-    if(doDrawAxes){
+    if(doDrawAxes&&zIndex===5){
         canvas2D_ctx.save()
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
@@ -643,7 +653,11 @@ export const Moorhen2DOverlay = ((props) => {
 
     const helpText = useSelector((state: moorhen.State) => state.glRef.shortCutHelp)
 
-    const canvas2DRef = props.canvasRef
+    const canvas2DRef0 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef1 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef2 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef3 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef4 = useRef<HTMLCanvasElement>(null)
 
     const [images, setImages] = useState<ImageFrac2D[]>([])
 
@@ -664,7 +678,7 @@ export const Moorhen2DOverlay = ((props) => {
                     const blobUrl = URL.createObjectURL(blob)
                     img.src = blobUrl
                     img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height}
+                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexOverlays[ilo].zIndex}
                     new_images.push(img_frac)
                 }
             }
@@ -679,20 +693,20 @@ export const Moorhen2DOverlay = ((props) => {
                     const blobUrl = URL.createObjectURL(blob)
                     img.src = blobUrl
                     img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
                     new_images.push(img_frac)
                 } else if(imgSrc.src.startsWith("data:image")){
                     if(imgSrc.src.indexOf(";")>10){
                         const mimeType = imgSrc.src.substring(5,imgSrc.src.indexOf(";"))
                         img.src = imgSrc.src
                         img.crossOrigin = "Anonymous"
-                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
                         new_images.push(img_frac)
                     }
                 } else {
                     img.src = imgSrc.src
                     img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
                     new_images.push(img_frac)
                 }
             }
@@ -700,27 +714,37 @@ export const Moorhen2DOverlay = ((props) => {
         setImages(new_images)
     }, [latexOverlays,imageOverlays])
 
-    const getContext = useCallback(() => {
-        if(!canvas2DRef) return null
-        if(!canvas2DRef.current) return null
-        const context = canvas2DRef.current.getContext('2d', { alpha: true });
-        return context
-    }, [canvas2DRef])
+    const getContexts = useCallback(() => {
+        const contexts = []
+        const refs = [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4]
+        refs.forEach((ref) => {
+            if(ref&&ref.current){
+                contexts.push(ref.current.getContext('2d', { alpha: true }))
+            } else {
+                contexts.push(null)
+            }
+        })
+        return contexts
+    }, [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4])
 
     const draw2D = () => {
 
-        const canvas2D_ctx = getContext()
-        if(!canvas2D_ctx) return
+        const refs = [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4]
+        const contexts = getContexts()
 
-        canvas2DRef.current.width = width * ratio
-        canvas2DRef.current.height = height * ratio
-        canvas2DRef.current.style.width = `${width}px`
-        canvas2DRef.current.style.height = `${height}px`
-
-        canvas2D_ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        canvas2D_ctx.clearRect(0,0,width,height)
-
-        drawOn2DContext(canvas2D_ctx, width, height, 1.0, helpText, images, props.drawQuat)
+        contexts.forEach((ctx,i) => {
+            if(refs[i]&&refs[i].current){
+                refs[i].current.width = width * ratio
+                refs[i].current.height = height * ratio
+                refs[i].current.style.width = `${width}px`
+                refs[i].current.style.height = `${height}px`
+            }
+            if(ctx){
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.clearRect(0,0,width,height)
+                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i)
+            }
+        })
     }
 
     useEffect(() => {
@@ -728,7 +752,11 @@ export const Moorhen2DOverlay = ((props) => {
     }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,props.drawQuat])
 
     return  <>
-           <canvas style={{pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef} height={width} width={height} />
+           <canvas style={{zIndex:0, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef0} height={width} width={height} />
+           <canvas style={{zIndex:1, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef1} height={width} width={height} />
+           <canvas style={{zIndex:2, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef2} height={width} width={height} />
+           <canvas style={{zIndex:3, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef3} height={width} width={height} />
+           <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
             </>
 });
 

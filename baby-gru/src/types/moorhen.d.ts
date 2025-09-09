@@ -1221,6 +1221,7 @@ export namespace moorhen {
         gradientStops?: {stop:number,colour:string}[]
         lineWidth?: number
         uniqueId: string;
+        zIndex?: number;
     }
 
     interface MoorhenOverlay2DSvgPath {
@@ -1232,6 +1233,7 @@ export namespace moorhen {
         gradientStops?: {stop:number,colour:string}[]
         lineWidth?: number
         uniqueId: string;
+        zIndex?: number;
     }
 
     interface MoorhenOverlay2DTextFrac {
@@ -1245,6 +1247,7 @@ export namespace moorhen {
         drawStyle?: string
         lineWidth?: number
         uniqueId: string;
+        zIndex?: number;
     }
 
     interface MoorhenOverlay2DLatexSrcFrac {
@@ -1253,6 +1256,7 @@ export namespace moorhen {
         height: number
         text: string
         uniqueId: string;
+        zIndex?: number;
     }
 
     interface MoorhenOverlay2DImageSrcFrac {
@@ -1262,6 +1266,7 @@ export namespace moorhen {
         height: number
         src: string
         uniqueId: string;
+        zIndex?: number;
     }
 
     type VectorsCoordMode = 'atoms'|'points'|'atompoint';

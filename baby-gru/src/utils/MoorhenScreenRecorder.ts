@@ -153,18 +153,22 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         const imageOverlays = store.getState().overlays.imageOverlayList
         const promises = []
         imageOverlays.forEach(img => {
-            const p = this.loadImage(imageOverlays[0].src)
+            const p = this.loadImage(img.src)
             promises.push(p)
         })
 
         Promise.all(promises).then(images => {
             const imgFracs = []
             for(let i_img=0;i_img<images.length;i_img++){
-                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height}
+                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height,zIndex:imageOverlays[i_img].zIndex}
                 imgFracs.push(img_frac)
             }
 
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4)
 
             let link: any = document.getElementById('download_image_link');
             if (!link) {
