@@ -1387,7 +1387,29 @@ const doCootCommand = (messageData: {
 
 onmessage = function (e) {
 
-    if (e.data.message === 'CootInitialize') {
+    if (e.data.message === 'AddArgRotamerTables') {
+        console.log("AddArgRotamerTables")
+        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-arg.data", e.data.cootData, true, true);
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `AddArgRotamerTables return`,
+            message: e.data.message,
+            result: { message: "AddArgRotamerTables" }
+        })
+
+    } else if (e.data.message === 'AddLysRotamerTables') {
+        console.log("AddLysRotamerTables")
+        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-lys.data", e.data.cootData, true, true);
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `AddLysRotamerTables return`,
+            message: e.data.message,
+            result: { message: "AddLysRotamerTables" }
+        })
+    } else if (e.data.message === 'CootInitialize') {
+        console.log("CootInitializeCootInitializeCootInitializeCootInitializeCootInitializeCootInitializeCootInitializeCootInitialize")
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
@@ -1455,7 +1477,7 @@ onmessage = function (e) {
                 molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
                 molecules_container.set_refinement_is_verbose(false)
-                molecules_container.fill_rotamer_probability_tables()
+                //molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
                 molecules_container.set_max_number_of_threads(3)

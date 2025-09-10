@@ -74,6 +74,21 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
             this.onCootInitialized()
         }
     }
+
+    async loadArgAndLys() {
+        const argResponse = await fetch("baby-gru/rota500-arg.data.gz")
+        if(argResponse.ok===true){
+            const t = await argResponse.arrayBuffer()
+            await this.postMessage({ message: 'AddArgRotamerTables', data: {cootData: new Uint8Array(t)} })
+            console.log("posted arg message")
+        }
+        const lysResponse = await fetch("baby-gru/rota500-lys.data.gz")
+        if(lysResponse.ok===true){
+            const t = await lysResponse.arrayBuffer()
+            await this.postMessage({ message: 'AddLysRotamerTables', data: {cootData: new Uint8Array(t)} })
+            console.log("posted lys message")
+        }
+    }
     
     async close() {
         if (!this.isClosed) {

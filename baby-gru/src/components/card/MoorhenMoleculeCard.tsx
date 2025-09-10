@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { Card, Row, Col, Stack, Button, Spinner } from "react-bootstrap";
 import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, LinearProgress } from '@mui/material';
-import { convertRemToPx, convertViewtoPx, getCentreAtom } from '../../utils/utils';
+import { convertRemToPx, convertViewtoPx, getCentreAtom, checkAndLoadRotamerProbabilityTables } from '../../utils/utils';
 import { representationLabelMapping } from '../../utils/enums';
 import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
@@ -650,7 +650,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 >
                                     <FormGroup style={{ margin: "0px", padding: "0px", display: "flex", justifyContent: "center" }} row>
                                         {allRepresentations.map((key) => (
-                                            <RepresentationCheckbox key={key} style={key} glRef={props.glRef} molecule={props.molecule} isVisible={isVisible} />
+                                            <RepresentationCheckbox key={key} style={key} glRef={props.glRef} molecule={props.molecule} isVisible={isVisible} commandCentre={props.commandCentre} />
                                         ))}
                                     </FormGroup>
                                     <hr style={{ margin: "0.5rem" }}></hr>
@@ -842,6 +842,7 @@ const RepresentationCheckbox = (props: {
     isVisible: boolean;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>; 
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
     const [busyDrawingRepresentation, setBusyDrawingRepresentation] = useState<boolean>(false)
@@ -871,9 +872,14 @@ const RepresentationCheckbox = (props: {
         })
     }, [showState, isDark, isDisabled, props.molecule.defaultColourRules])
 
-    const handleClick = useCallback(() => {
+    const handleClick = useCallback(async() => {
         if (!isDisabled) {
             setBusyDrawingRepresentation(true)
+            if (props.style === 'rotamer') {
+                console.log("Now try loading the tables")
+                console.log("Now call check....")
+                await checkAndLoadRotamerProbabilityTables(props.commandCentre)
+            }
             if (props.style === 'adaptativeBonds') {
                 props.molecule.setDrawAdaptativeBonds(!showState).then(_ => {
                     dispatch( showState ? removeGeneralRepresentation(props.molecule.adaptativeBondsRepresentation) : addGeneralRepresentation(props.molecule.adaptativeBondsRepresentation) )
