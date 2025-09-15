@@ -2,7 +2,7 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { moorhen } from "../../types/moorhen"
 import { useEffect, useRef, createRef, useCallback, useMemo, useState } from "react"
 import { Form, Row, Col, Stack, Card, Container, ListGroup, Button, Table, FormSelect } from "react-bootstrap"
-import { convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from '../../utils/utils'
+import { convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex, componentToHex } from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -82,6 +82,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
     const [gradientStops, setGradientStops] = useState<{stop:number,colour:string}[]>([])
+    const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0)
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -273,6 +274,28 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                     } else {
                         setSelectedDepth(existingObject.zIndex)
                     }
+                    if(existingObject.fillStyle&&existingObject.fillStyle!=="gradient"){
+                        if(existingObject.fillStyle.startsWith("#")&&existingObject.fillStyle.length===9){
+                            try {
+                                setSelectedAlpha(parseInt(existingObject.fillStyle.substring(7),16)/255)
+                            } catch(e) {
+                                setSelectedAlpha(1.0)
+                            }
+                        } else {
+                            setSelectedAlpha(1.0)
+                        }
+                    }
+                    if(existingObject.strokeStyle&&existingObject.strokeStyle!=="gradient"){
+                        if(existingObject.strokeStyle.startsWith("#")&&existingObject.strokeStyle.length===9){
+                            try {
+                                setSelectedAlpha(parseInt(existingObject.strokeStyle.substring(7),16)/255)
+                            } catch(e) {
+                                setSelectedAlpha(1.0)
+                            }
+                        } else {
+                            setSelectedAlpha(1.0)
+                        }
+                    }
                 } catch(e) {
                 }
             }
@@ -362,10 +385,18 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
     let existingColour = null
     if(theOverlayObject.fillStyle&&theOverlayObject.fillStyle!=="gradient"){
-        existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle))
+        if(theOverlayObject.fillStyle.startsWith("#")&&theOverlayObject.fillStyle.length===9){
+            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle.substring(0,7)))
+        } else {
+            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle))
+        }
     }
     if(theOverlayObject.strokeStyle&&theOverlayObject.strokeStyle!=="gradient"){
-        existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
+        if(theOverlayObject.strokeStyle.startsWith("#")&&theOverlayObject.strokeStyle.length===9){
+            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle.substring(0,7)))
+        } else {
+            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle))
+        }
     }
 
     useEffect(() => {
@@ -612,16 +643,24 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 <Col sm={2}>
                                     Colour
                                 </Col>
-                            <Col sm={10} className="mb-3">
+                            <Col sm={2} className="mb-3">
                             <MoorhenColourPicker
                                 colour={existingColour!==null ? existingColour : [1, 0, 0]}
-                                setColour={(color => {
-                                   handleColorChange(rgbToHex(color[0], color[1], color[2]));
+                                setColourWithAlpha={(color => {
+                                   setSelectedAlpha(color[3])
+                                   handleColorChange(rgbToHex(color[0], color[1], color[2])+componentToHex(Math.floor(color[3]*255)));
                                 })}
+                                useAlpha={true}
+                                alpha={selectedAlpha}
                                 position="bottom"
                                 tooltip="Change vector colour"
                             />
                             </Col>
+                            {selectedAlpha < 0.99 &&
+                            <Col sm={8}>
+                            (Opacity {selectedAlpha.toFixed(2)})
+                            </Col>
+                            }
                             </Row>
                             }
                             { selectedDrawStyle==="gradient" &&
