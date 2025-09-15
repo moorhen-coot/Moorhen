@@ -417,6 +417,7 @@ export namespace moorhen {
         cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
         postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
+        loadArgAndLys: () => Promise<void>;
     }
 
     interface cootCommandKwargs {
