@@ -250,9 +250,13 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
     images.forEach(img => {
         if((!img.zIndex&&zIndex===0)||(img.zIndex===zIndex)){
-        if(img.img){
-           canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
-        }
+            if(img.img){
+                try {
+                    canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+                } catch(e) {
+                    console.log("Failed to draw image")
+                }
+            }
         }
     })
 

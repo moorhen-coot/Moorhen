@@ -14,7 +14,7 @@ import { addImageOverlay, addLatexOverlay, addTextOverlay, addSvgPathOverlay, ad
 import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
 import MoorhenColourPicker from "../inputs/MoorhenColourPicker";
 import { allFontsSet } from '../../utils/enums';
-import { ArrowUpward, ArrowDownward, Delete } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward, Delete, FileOpen } from '@mui/icons-material';
 
 export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
 
@@ -40,9 +40,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const drawModeRef = useRef<null | HTMLSelectElement>(null)
     const pathRef = useRef<null | HTMLInputElement>(null)
 
-//FIXME - The image edit path thing is probably not very useful.
-//TODO UI for gradientStops, gradientBoundary, alpha
-
     const newOverlayObject = () => {
         const anOverlayObject = {
             drawMode: "text",
@@ -54,13 +51,13 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             fillStyle: "black",
             gradientStops: [],
             gradientBoundary: [0,0,1,1],
-            width: 0,
-            height: 0,
+            width: 20,
+            height: 20,
             x: 0,
             y: 0,
-            fontPixelSize: 0,
+            fontPixelSize: 20,
             fontFamily: "serif",
-            lineWidth: 0,
+            lineWidth: 1,
             zIndex: 0,
             uniqueId: uuidv4(),
         }
@@ -82,6 +79,28 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0)
+    const inputFile = useRef(null)
+
+    const upLoadNewImage = async (fn:File) => {
+        const buf = await fn.arrayBuffer()
+        const ubuf = new Uint8Array(buf)
+        const base64String = btoa(
+          ubuf.reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        let imageFormat = ""
+        if(ubuf[0] === 137 && ubuf[1] === 80 && ubuf[2] === 78 && ubuf[3] === 71)
+            imageFormat = "png"
+        else if(ubuf[0] === 255 && ubuf[1] === 216 && ubuf[2] === 255)
+            imageFormat = "jpeg"
+        else if(ubuf[0] === 66 && ubuf[1] === 77)
+            imageFormat = "bmp"
+        console.log("Detected image format:",imageFormat)
+        if(imageFormat){
+            const base64Image = "data:image/"+imageFormat+";base64,   " + base64String
+            setPathText("[Image Data]")
+            updateObject({src:base64Image},drawModeRef.current.value)
+        }
+    }
 
     const deleteCurrentObject = () => {
         let existingObject = latexOverlays.find((element) => element.uniqueId===theOverlayObject.uniqueId)
@@ -120,8 +139,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         if(vectorSelectRef.current.value!=="new"){
             deleteCurrentObject()
         }
-//TODO image
-        console.log(theOverlayObject,objectType)
 
         let gradientBoundary = theOverlayObject.gradientBoundary
 
@@ -148,6 +165,20 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 console.log("Not a valid number pair in text position.")
             }
             dispatch(addTextOverlay({strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,text:theOverlayObject.text,x:new_x,y:new_y,fontFamily:theOverlayObject.fontFamily,fontPixelSize:theOverlayObject.fontPixelSize,drawStyle:theOverlayObject.drawStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
+        } else if(objectType==="image"){
+            let [new_x,new_y] = [0, 1]
+            try {
+                const [_new_x,_new_y] = positionText.split(",").map(a=>parseFloat(a))
+                if(!Number.isNaN(_new_x)&&!Number.isNaN(_new_y)){
+                    new_x = _new_x
+                    new_y = _new_y
+                } else {
+                    console.log("Not a valid number pair in text position.",positionText.split(","))
+                }
+            } catch(e) {
+                console.log("Not a valid number pair in text position.")
+            }
+            dispatch(addImageOverlay({src:theOverlayObject.src,x:new_x,y:new_y,width:theOverlayObject.width,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="svgpath"){
@@ -174,6 +205,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             vectorSelectRef.current.value = evt.target.value
             if(vectorSelectRef.current.value==="new"){
                 setSelectedOption("new")
+                setPathText("")
+                setPositionText("")
                 updateObject(newOverlayObject(),"text")
                 if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "text"
             } else {
@@ -206,10 +239,20 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "fracpath"
                         }
                     }
+
                     setSelectedOption(existingObject.uniqueId)
                     setPathText("")
                     setPositionText("")
-                    if(drawModeRef.current.value === "fracpath"){
+
+                    if(drawModeRef.current.value === "image"){
+                        if(existingObject.x&&existingObject.y)
+                            setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
+                        if(existingObject.src.startsWith("data:image")){
+                            setPathText("[Image Data]")
+                        } else if(existingObject.src.length>0){
+                            setPathText(existingObject.src)
+                        }
+                    } else if(drawModeRef.current.value === "fracpath"){
                         if(existingObject.path){
                             setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
                         }
@@ -391,6 +434,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     }
 
     useEffect(() => {
+        console.log("useEffect (selectedDrawStyle)")
         if(selectedDrawStyle==="gradient"&&!theOverlayObject.gradientBoundary){
             if(checkGradientBoundaryText){
                 const arr = gradientBoundaryText.split(",").map(a=>parseFloat(a))
@@ -405,6 +449,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     }, [selectedDrawStyle])
 
     useEffect(() => {
+        //console.log("useEffect (gradientBoundaryText)")
         try {
             const arr = gradientBoundaryText.split(",").reduce((rows, key, index) => (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length-1].push(parseFloat(key))) && rows, [])
             if(arr.length>1&&(arr.flat().length%2)===0){
@@ -556,16 +601,66 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             </Row>
                             }
                             { drawModeRef.current && drawModeRef.current.value === "image" &&
+                            <>
                             <Row>
+                                <input type='file' id='file' ref={inputFile} accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP" style={{display: 'none'}}
+                                onChange={(e) => {console.log("Change",e.target.files); upLoadNewImage(e.target.files[0])}}
+                                />
                                 <Col sm={2}>
                                 Path
                                 </Col>
                                 <Form.Group as={Col} className='mb-3' controlId="imagePathInput">
-                                <Form.Control type="text" value={theOverlayObject.src} onChange={(evt) => {
+                                <Form.Control disabled type="text" value={pathText} onChange={(evt) => {
                                    updateObject({src:evt.target.value},drawModeRef.current.value)
                                 }} />
                                 </Form.Group>
+                                <Col sm={2}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {inputFile.current.click()}}>
+                                <FileOpen/>
+                                </Button>
+                                </Col>
                             </Row>
+                             <Row>
+                                <Col sm={2}>
+                                Position
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="textInput">
+                                <Col sm={10}>
+                                <Form.Control type="text" value={positionText} onChange={(evt) => {
+                                    setPositionText(evt.target.value)
+                                }}
+                                isInvalid={!checkPositionText()}
+                                />
+                                </Col>
+                                </Form.Group>
+                             </Row>
+                             <Row>
+                                <Col sm={2}>
+                                Width
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="imageWidthInput">
+                                <Form.Control type="number" value={theOverlayObject.width} onChange={(evt) => {
+                                try {
+                                    const w = parseFloat(evt.target.value)
+                                    updateObject({width:w},drawModeRef.current.value)
+                                } catch(e) {
+                                }
+                                }}/>
+                                </Form.Group>
+                                <Col sm={2}>
+                                Height
+                                </Col>
+                                <Form.Group as={Col} className='mb-3' controlId="imageHeightInput">
+                                <Form.Control type="number" value={theOverlayObject.height} onChange={(evt) => {
+                                try {
+                                    const h = parseFloat(evt.target.value)
+                                    updateObject({height:h},drawModeRef.current.value)
+                                } catch(e) {
+                                }
+                                }}/>
+                                </Form.Group>
+                             </Row>
+                             </>
                             }
                             { (drawModeRef.current && (drawModeRef.current.value === "text")) &&
                             <Row>
@@ -649,7 +744,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             }
                             </Row>
                             }
-                            { selectedDrawStyle==="gradient" &&
+                            { (selectedDrawStyle==="gradient" && drawModeRef.current.value !== "image") &&
                             <>
                             <Row>
                                 <Col sm={2}>
