@@ -79,6 +79,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0)
+    const [imageString, setImageString] = useState<string>("")
     const inputFile = useRef(null)
 
     const upLoadNewImage = async (fn:File) => {
@@ -99,6 +100,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             const base64Image = "data:image/"+imageFormat+";base64,   " + base64String
             setPathText("[Image Data]")
             updateObject({src:base64Image},drawModeRef.current.value)
+            setImageString(base64Image)
         }
     }
 
@@ -207,6 +209,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 setSelectedOption("new")
                 setPathText("")
                 setPositionText("")
+                setImageString("")
                 updateObject(newOverlayObject(),"text")
                 if(drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = "text"
             } else {
@@ -249,9 +252,12 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             setPositionText(existingObject.x.toFixed(3)+", "+existingObject.y.toFixed(3))
                         if(existingObject.src.startsWith("data:image")){
                             setPathText("[Image Data]")
+                            setImageString(existingObject.src)
                         } else if(existingObject.src.length>0){
                             setPathText(existingObject.src)
+                            setImageString(existingObject.src)
                         }
+                        setOverlayObject(existingObject)
                     } else if(drawModeRef.current.value === "fracpath"){
                         if(existingObject.path){
                             setPathText(existingObject.path.flat().map(number=>number.toFixed(3)).toString())
@@ -331,6 +337,8 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                         }
                     }
                 } catch(e) {
+                    console.log("Some problem?")
+                    console.log(e)
                 }
             }
         }
@@ -614,6 +622,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                    updateObject({src:evt.target.value},drawModeRef.current.value)
                                 }} />
                                 </Form.Group>
+                                {imageString &&
+                                <Col sm={1}>
+                                <img style={{margin: '0.3rem'}} src={imageString} width="28" height="28"/>
+                                </Col>}
                                 <Col sm={2}>
                                 <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {inputFile.current.click()}}>
                                 <FileOpen/>
