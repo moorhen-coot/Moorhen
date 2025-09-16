@@ -81,7 +81,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
     const [pathText, setPathText] = useState<string>("")
     const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1")
     const [positionText, setPositionText] = useState<string>("")
-    const [gradientStops, setGradientStops] = useState<{stop:number,colour:string}[]>([])
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0)
 
     const deleteCurrentObject = () => {
@@ -125,7 +124,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         console.log(theOverlayObject,objectType)
 
         let gradientBoundary = theOverlayObject.gradientBoundary
-        let gradientStop = theOverlayObject.gradientStop
 
         if(selectedDrawStyle==="gradient"&&!gradientBoundary){
             if(checkGradientBoundaryText){
@@ -134,10 +132,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             } else {
                 gradientBoundary = [0,0,1,1]
             }
-        }
-
-        if(selectedDrawStyle==="gradient"&&!gradientStops){
-            gradientStop = [{stop:0.0,colour:"black"}]
         }
 
         if(objectType==="text"){
@@ -157,7 +151,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
         } else if(objectType==="latex"){
             dispatch(addLatexOverlay({text:theOverlayObject.text,x:theOverlayObject.x,y:theOverlayObject.y,height:theOverlayObject.height,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="svgpath"){
-            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
+            dispatch(addSvgPathOverlay({path:theOverlayObject.path,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
         } else if(objectType==="fracpath"){
             let arr: [number,number][] = [[0,0],[1,1]]
             try {
@@ -166,7 +160,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                 console.log("Not a valid array of number pairs for fractional path points.")
             }
             if(theOverlayObject.drawStyle==="gradient")
-                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
+                dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,lineWidth:theOverlayObject.lineWidth,gradientStops:theOverlayObject.gradientStops,gradientBoundary:gradientBoundary,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
             else {
                 console.log("dispatch(addFracPathOverlay,",{path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex})
                 dispatch(addFracPathOverlay({path:arr,drawStyle:theOverlayObject.drawStyle,strokeStyle:theOverlayObject.strokeStyle,fillStyle:theOverlayObject.fillStyle,lineWidth:theOverlayObject.lineWidth,uniqueId:theOverlayObject.uniqueId,zIndex:theOverlayObject.zIndex}))
@@ -257,9 +251,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                             setSelectedDrawStyle(existingObject.drawStyle)
                         } else {
                             setSelectedDrawStyle("fill")
-                        }
-                        if(existingObject.gradientStops) {
-                            setGradientStops(existingObject.gradientStops)
                         }
                         if(existingObject.gradientBoundary) {
                             if(drawModeRef.current.value === "svgpath")
@@ -409,7 +400,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             }
         }
         if(selectedDrawStyle==="gradient"&&!theOverlayObject.gradientStops){
-            setGradientStops([{stop:0.0,colour:"black"}])
             updateObject({gradientStops:[{stop:0.0,colour:"black"}]},drawModeRef.current.value)
         }
     }, [selectedDrawStyle])
@@ -425,10 +415,6 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
             console.log("Not a valid array of number pairs for fractional path points.")
         }
     }, [gradientBoundaryText])
-
-    useEffect(() => {
-        updateObject({gradientStops:gradientStops},drawModeRef.current.value)
-    }, [gradientStops])
 
     const checkGradientBoundaryText = () => {
         let isOk: boolean = false
@@ -653,7 +639,7 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 useAlpha={true}
                                 alpha={selectedAlpha}
                                 position="bottom"
-                                tooltip="Change vector colour"
+                                tooltip="Change colour"
                             />
                             </Col>
                             {selectedAlpha < 0.99 &&
@@ -682,37 +668,64 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                     Gradient stops
                                 </Col>
                             </Row>
-                            {gradientStops &&
-                            gradientStops.map((s,istop) => {
+                            {theOverlayObject.gradientStops &&
+                            theOverlayObject.gradientStops.map((s,istop) => {
+
+                                let col
+                                let alpha = 1.0
+                                if(s.colour.startsWith("#")&&s.colour.length===9){
+                                    col = hexToRGB(getHexForCanvasColourName(s.colour.substring(0,7)))
+                                    alpha = parseInt(s.colour.substring(7),16)/255
+                                } else {
+                                    col = hexToRGB(getHexForCanvasColourName(s.colour))
+                                }
                                 return <Row key={istop}>
                                 <Col sm={2}></Col>
                                 <Col sm={1}>
                                 <MoorhenColourPicker
-                                colour={hexToRGB(getHexForCanvasColourName(s.colour))}
-                                setColour={(color => {
+                                colour={col}
+                                setColourWithAlpha={(color => {
+                                   updateObject({gradientStops:[
+                                     ...theOverlayObject.gradientStops.slice(0, istop),
+                                     {stop:s.stop,colour:rgbToHex(color[0], color[1], color[2])+componentToHex(Math.floor(color[3]*255))},
+                                     ...theOverlayObject.gradientStops.slice(istop+1)
+                                   ]},drawModeRef.current.value)
+                                   /*
                                    setGradientStops([
                                      ...gradientStops.slice(0, istop),
-                                     {stop:s.stop,colour:rgbToHex(color[0], color[1], color[2])},
+                                     {stop:s.stop,colour:rgbToHex(color[0], color[1], color[2])+componentToHex(Math.floor(color[3]*255))},
                                      ...gradientStops.slice(istop+1)
                                    ]);
+                                   */
                                 })}
+                                useAlpha={true}
+                                alpha={alpha}
                                 position="bottom"
-                                tooltip="Change vector colour"
+                                tooltip="Change colour"
                                 />
                                 </Col>
+                                {alpha <0.99 &&
+                                <Col sm={3}>
+                                (Opacity {alpha.toFixed(2)})
+                                </Col>
+                                }
+                                {alpha >=0.99 &&
+                                <Col sm={3}>
+                                </Col>
+                                }
                                 <Form.Group as={Col} className='mb-3' controlId="textInput">
                                 <Form.Control type="number" inputMode="decimal" min="0.0" max="1.0" step="0.01" value={s.stop} onChange={(evt) => {
-                                   setGradientStops([
-                                     ...gradientStops.slice(0, istop),
+                                   updateObject({gradientStops:[
+                                     ...theOverlayObject.gradientStops.slice(0, istop),
                                      {stop:parseFloat(evt.target.value),colour:s.colour},
-                                     ...gradientStops.slice(istop+1)])
+                                     ...theOverlayObject.gradientStops.slice(istop+1)]},drawModeRef.current.value)
                                 }} />
                                 </Form.Group>
                                 <Col sm={2}>
                                 <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {
-                                   setGradientStops([
-                                     ...gradientStops.slice(0, istop),
-                                     ...gradientStops.slice(istop+1)])
+                                   updateObject({gradientStops:[
+                                     ...theOverlayObject.gradientStops.slice(0, istop),
+                                     ...theOverlayObject.gradientStops.slice(istop+1)]},drawModeRef.current.value)
                                 }}>
                                 <Delete/>
                                 </Button>
@@ -724,10 +737,10 @@ export const Moorhen2DCanvasObjectsModal = (props: moorhen.CollectedProps) => {
                                 </Col>
                                 <Col sm={3}>
                                 <Button size='sm' style={{margin: '0.1rem'}} variant={isDark ? "dark" : "light"} onClick={() => {
-                                   setGradientStops([
-                                     ...gradientStops,
+                                   updateObject({gradientStops:[
+                                     ...theOverlayObject.gradientStops,
                                      {stop:0.0,colour:"black"},
-                                     ])
+                                     ]},drawModeRef.current.value)
                                 }}>
                                 Add new colour
                                 </Button>
