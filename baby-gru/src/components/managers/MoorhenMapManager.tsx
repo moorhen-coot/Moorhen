@@ -5,7 +5,7 @@ import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapAlphaListener } from "./MapAlphaListener";
 import { useDispatch } from "react-redux";
-import { setContourLevel, setMapRadius, showMap } from "../../moorhen";
+import { setContourLevel, setMapRadius, setMapStyle, showMap } from "../../moorhen";
 import { MoorhenReduxStore } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
@@ -63,7 +63,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
     });
 
-    const mapStyle = useSelector((state: moorhen.State) => {
+    const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: moorhen.State) => {
         const style = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle =
@@ -72,7 +72,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
                 "lines";
             return defaultStyle;
         }
-        return style;
+        return style.style;
     });
 
     const _postDraw = (startTime: number) => {
@@ -126,6 +126,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             dispatch(showMap(map));
             dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius || 15 }));
             dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: map?.suggestedContourLevel || 0.8 }));
+            dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
         }
     }, []);
 
