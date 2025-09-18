@@ -19,7 +19,6 @@ import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
@@ -616,13 +615,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 enqueueSnackbar,
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
                 videoRecorderRef,
+                commandCentre: commandCentre,
                 ...props
             },
             JSON.parse(shortCuts as string),
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
+    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current])
 
 
     const getCanvasRef = (() => {

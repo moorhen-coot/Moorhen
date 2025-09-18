@@ -45,9 +45,10 @@ export const moorhenKeyPress = (
 ): boolean | Promise<boolean> => {
     
     const { 
-        hoveredAtom, commandCentre, activeMap, glRef, molecules, 
+        hoveredAtom, activeMap, commandCentre, glRef, molecules, 
         viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
     } = collectedProps;
+
 
     const originState = store.getState().glRef.origin
     const zoom = store.getState().glRef.zoom

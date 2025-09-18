@@ -501,7 +501,6 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
                         ref={glRef}
                         monomerLibraryPath={monomerLibraryPath}
                         timeCapsuleRef={timeCapsuleRef}
-                        commandCentre={commandCentre}
                         onAtomHovered={onAtomHovered}
                         urlPrefix={urlPrefix}
                         viewOnly={viewOnly}
