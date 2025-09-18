@@ -1,13 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 import { Col, Row, Form, Card, Button, Stack, InputGroup } from "react-bootstrap";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useDispatch, useSelector } from "react-redux";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useCommandCentre } from "../../InstanceManager";
 
-export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
+export const MoorhenWaterValidation = () => {
     const isDirty = useRef<boolean>(false);
     const busyFetching = useRef<boolean>(false);
     const ignorePartOccRef = useRef<HTMLInputElement>(null);
@@ -22,6 +23,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false);
 
     const dispatch = useDispatch();
+    const commandCentre = useCommandCentre();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const viewWater = useCallback(
@@ -80,7 +82,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 ],
             };
 
-            let response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<
+            let response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<
                 libcootApi.AtomSpecJS[]
             >;
             if (response.data.result.result) {

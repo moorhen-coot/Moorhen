@@ -1,15 +1,11 @@
 import { useRef, memo, useEffect, useMemo } from "react";
 import { useSelector, useDispatch, useStore } from "react-redux";
 import { moorhen } from "../../../types/moorhen";
-import { setMapRadius, showMap, setContourLevel } from "../../../moorhen";
+import { setMapRadius, showMap, setContourLevel, setMapStyle } from "../../../moorhen";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
-import { MapAlphaListener } from "./MapAlphaListener";
-import { useDispatch } from "react-redux";
-import { setContourLevel, setMapRadius, setMapStyle, showMap } from "../../moorhen";
-import { MoorhenReduxStore } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
