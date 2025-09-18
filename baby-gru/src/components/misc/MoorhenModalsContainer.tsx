@@ -9,6 +9,7 @@ import { MoorhenRamaPlotModal } from '../modal/MoorhenRamaPlotModal';
 import { MoorhenDiffMapPeaksModal } from '../modal/MoorhenDiffMapPeaksModal';
 import { MoorhenValidationPlotModal } from '../modal/MoorhenValidationPlotModal';
 import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
+import { MoorhenFourierShellCorrelationModal } from '../modal/MoorhenFourierShellCorrelationModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
 import { MoorhenJsonValidationModal } from '../modal/MoorhenJsonValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
@@ -53,6 +54,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showQScoreModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.QSCORE))
     const showJsonValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.JSON_VALIDATION))
     const showColorMapByMapModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.COLOR_MAP_BY_MAP))
+    const showFSCModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.FSC))
 
     return <>
         <MoorhenModelsModal {...props}/>
@@ -93,6 +95,10 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
 
         {showMmrrccModal &&
             <MoorhenMmrrccModal {...props} />
+        }
+
+        {showFSCModal &&
+            <MoorhenFourierShellCorrelationModal {...props} />
         }
 
         {showJsonValidationModal &&

@@ -61,6 +61,10 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
                 dispatch(showModal(modalKeys.JSON_VALIDATION))
                 document.body.click()
             }}>Interesting bits JSON validation...</MenuItem>}
+            <MenuItem onClick={() => {
+                dispatch(showModal(modalKeys.FSC))
+                document.body.click()
+            }}>Fourier Shell Correlation plot...</MenuItem>
     </div>
 }
 

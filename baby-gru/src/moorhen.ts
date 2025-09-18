@@ -23,6 +23,7 @@ import { MoorhenDifferenceMapPeaks } from './components/validation-tools/Moorhen
 import { MoorhenFillMissingAtoms } from './components/validation-tools/MoorhenFillMissingAtoms';
 import { MoorhenJsonValidation } from './components/validation-tools/MoorhenJsonValidation';
 import { MoorhenMMRRCCPlot } from './components/validation-tools/MoorhenMMRRCCPlot';
+import { MoorhenFourierShellCorrelationPlot } from './components/validation-tools/MoorhenFourierShellCorrelationPlot';
 import { MoorhenPepflipsDifferenceMap } from './components/validation-tools/MoorhenPepflipsDifferenceMap';
 import { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
 import { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
@@ -133,5 +134,6 @@ export {
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
-    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer,
+    MoorhenFourierShellCorrelationPlot
 };
