@@ -11,10 +11,12 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
 
     const mapRadius = useSelector((state: moorhen.State) => {
         const mapRadiusItem = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
-        return mapRadiusItem?.radius || 25;
+        return mapRadiusItem?.radius || props.map.suggestedRadius || 25;
     });
 
-    const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor);
+    const contourWheelSensitivityFactor = useSelector(
+        (state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor
+    );
     const { enqueueSnackbar } = useSnackbar();
 
     // Use the fast contour mode hook
@@ -44,6 +46,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         const now = Date.now();
         if (now - lastWheelTimeRef.current < debounceRepeatTime) {
             // Minimum 50ms between wheel events
+            console.log("Skipping wheel event to avoid flooding");
             return;
         }
         lastWheelTimeRef.current = now;
