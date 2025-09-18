@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
 import { modalKeys } from "../../utils/enums";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenLigandList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,6 +17,7 @@ export const MoorhenLigandList = (props: {
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const showModelsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MODELS));
+    const commandCentre = useCommandCentre();
 
     const [ligandList, setLigandList] = useState<LigandInfo[]>(null);
 
@@ -33,7 +35,7 @@ export const MoorhenLigandList = (props: {
         for (const ligand of props.molecule.ligands) {
             const [svg, chemCompInfo, smilesInfo, flev_svg] = await Promise.all([
                 props.molecule.getLigandSVG(ligand.resName, true),
-                props.commandCentre.current.cootCommand(
+                commandCentre.current.cootCommand(
                     {
                         returnType: "string_string_pair_vector",
                         command: "get_gphl_chem_comp_info",
@@ -41,7 +43,7 @@ export const MoorhenLigandList = (props: {
                     },
                     false
                 ) as Promise<moorhen.WorkerResponse<{ first: string; second: string }[]>>,
-                props.commandCentre.current.cootCommand(
+                commandCentre.current.cootCommand(
                     {
                         returnType: "string",
                         command: "get_SMILES_for_residue_type",

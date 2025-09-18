@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
 import { MoorhenContextMenu, ActionButtonSettings } from "../context-menu/MoorhenContextMenu"
-import { useMoorhenGlobalInstance } from '../../InstanceManager';
+import { useCommandCentre, useMoorhenGlobalInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
 import { ScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
@@ -132,6 +132,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
+    const commandCentre = useCommandCentre()
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
@@ -150,7 +152,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [glRef, resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
-        const response = await props.commandCentre.current.cootCommand({
+        const response = await commandCentre.current.cootCommand({
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
@@ -158,7 +160,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         const newOrigin = response.data.result.result;
         dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
-    }, [props.commandCentre, glRef])
+    }, [commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
         if (hoveredAtom?.molecule && hoveredAtom?.cid){
@@ -703,7 +705,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}
-                    commandCentre={props.commandCentre}
+                    commandCentre={commandCentre}
                     timeCapsuleRef={props.timeCapsuleRef}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}

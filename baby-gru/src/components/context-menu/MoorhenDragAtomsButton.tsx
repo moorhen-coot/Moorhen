@@ -5,12 +5,14 @@ import { moorhen } from "../../types/moorhen";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null);
     const fragmentCid = useRef<string[] | null>(null);
 
     const dispatch = useDispatch();
+    const commandCentre = useCommandCentre();
 
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection);
 
@@ -100,7 +102,7 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
                 variant: "acceptRejectDraggingAtoms",
                 persist: true,
                 monomerLibraryPath: props.monomerLibraryPath,
-                commandCentre: props.commandCentre,
+                commandCentre: commandCentre,
                 cidRef: fragmentCid,
                 moleculeRef: chosenMolecule,
             });

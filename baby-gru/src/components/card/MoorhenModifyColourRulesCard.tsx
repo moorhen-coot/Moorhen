@@ -11,6 +11,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard";
+import { useCommandCentre } from "../../InstanceManager";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -73,6 +74,7 @@ export const MoorhenModifyColourRulesCard = memo(
         anchorEl: React.RefObject<HTMLDivElement>;
     }) => {
         const cidFormRef = useRef<HTMLInputElement>(null);
+        const commandCentre = useCommandCentre();
 
         const [ruleType, setRuleType] = useState<string>("molecule");
         const [colourProperty, setColourProperty] = useState<string>("b-factor");
@@ -182,7 +184,7 @@ export const MoorhenModifyColourRulesCard = memo(
                         break;
                 }
                 if (cidLabel) {
-                    newRule = new ColourRule(ruleType, cidLabel, selectedColour, props.commandCentre, false);
+                    newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre, false);
                     newRule.setParentMolecule(props.molecule);
                     newRule.setArgs([cidLabel, selectedColour]);
                 } else {
@@ -190,7 +192,7 @@ export const MoorhenModifyColourRulesCard = memo(
                 }
             } else {
                 const ruleArgs = await getMultiColourRuleArgs(props.molecule, ruleType);
-                newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", props.commandCentre, true);
+                newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre, true);
                 newRule.setParentMolecule(props.molecule);
                 newRule.setArgs([ruleArgs]);
                 newRule.setLabel(

@@ -1,9 +1,11 @@
 import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
     const { enqueueSnackbar } = useSnackbar();
+    const commandCentre = useCommandCentre();
 
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
         props.setOpacity(1);
@@ -12,7 +14,7 @@ export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
         enqueueSnackbar("rotamer-change", {
             variant: "rotamerChange",
             persist: true,
-            commandCentre: props.commandCentre,
+            commandCentre: commandCentre,
             moleculeMolNo: molecule.molNo,
             chosenAtom: chosenAtom,
         });

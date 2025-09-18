@@ -2,9 +2,11 @@ import { useCallback } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenMutateButton = (props: ContextButtonProps) => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+    const commandCentre = useCommandCentre();
 
     const mutateModes = [
         "ALA",
@@ -40,7 +42,7 @@ export const MoorhenMutateButton = (props: ContextButtonProps) => {
                     chosenAtom.alt_conf,
                     activeMap.molNo,
                 ];
-                await props.commandCentre.current.cootCommand(
+                await commandCentre.current.cootCommand(
                     {
                         returnType: "status",
                         command: "auto_fit_rotamer",
@@ -51,7 +53,7 @@ export const MoorhenMutateButton = (props: ContextButtonProps) => {
                 );
             }
         },
-        [activeMap, props.commandCentre]
+        [activeMap, commandCentre]
     );
 
     const getCootCommandInput = (

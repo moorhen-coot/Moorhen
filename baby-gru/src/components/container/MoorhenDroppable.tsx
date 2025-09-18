@@ -1,7 +1,8 @@
-import { useSelector, useDispatch, useStore } from 'react-redux';
-import { useDropzone } from 'react-dropzone';
-import { autoOpenFiles } from "../../utils/MoorhenFileLoading"
-import { moorhen } from '../../types/moorhen';
+import { useSelector, useDispatch, useStore } from "react-redux";
+import { useDropzone } from "react-dropzone";
+import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { moorhen } from "../../types/moorhen";
+import { useCommandCentre } from "../../InstanceManager";
 
 interface MoorhenDroppablePropsInterface {
     monomerLibraryPath: string;
@@ -11,17 +12,17 @@ interface MoorhenDroppablePropsInterface {
 }
 
 export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
+    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
+    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
+    const dispatch = useDispatch();
+    const store = useStore();
+    const commandCentre = useCommandCentre();
 
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
-    const dispatch = useDispatch()
-    const store = useStore()
-
-    const {getRootProps} = useDropzone({
-        onDrop: async files => {
+    const { getRootProps } = useDropzone({
+        onDrop: async (files) => {
             autoOpenFiles(
                 files,
-                props.commandCentre,
+                commandCentre,
                 store,
                 props.monomerLibraryPath,
                 backgroundColor,
@@ -29,10 +30,8 @@ export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
                 props.timeCapsuleRef,
                 dispatch
             );
-        }
+        },
     });
 
-    return  <div {...getRootProps({className: 'dropzone'})}> 
-            {props.children}
-            </div>
-}
+    return <div {...getRootProps({ className: "dropzone" })}>{props.children}</div>;
+};

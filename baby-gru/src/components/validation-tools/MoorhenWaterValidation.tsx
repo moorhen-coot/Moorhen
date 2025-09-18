@@ -5,8 +5,8 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { useCommandCentre } from "../../InstanceManager";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const MoorhenWaterValidation = () => {
     const isDirty = useRef<boolean>(false);

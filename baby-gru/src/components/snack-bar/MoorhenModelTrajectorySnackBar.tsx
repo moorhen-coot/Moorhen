@@ -14,6 +14,7 @@ import { moorhen } from "../../types/moorhen";
 import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
 import { MoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenModelTrajectorySnackBar = forwardRef<
     HTMLDivElement,
@@ -46,6 +47,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     );
 
     const { closeSnackbar } = useSnackbar();
+    const commandCentre = useCommandCentre();
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
         const frames: moorhen.DisplayObject[][] = [];
@@ -105,7 +107,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
             representationRef.current = new MoleculeRepresentation(
                 props.representationStyle as moorhen.RepresentationStyles,
                 "/*/*/*/*",
-                props.commandCentre
+                commandCentre
             );
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current);
             setNFrames(framesRef.current.length);
