@@ -6,21 +6,10 @@ import { SelectorEffect } from "../../hookComponent/SelectorEffect";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
-
-/**
- * `MoorhenMapManager` is a React memoized component responsible for managing the rendering and state synchronization
- * of a specific map object within the Moorhen application. It listens to various Redux state slices to determine
- * map visibility, contour settings, style, and other properties, and triggers map drawing or hiding accordingly.
- *
- * The component debounces map drawing operations to optimize performance and avoid redundant renders. It also
- * attaches listeners for map origin changes and scroll wheel events when appropriate, and manages map alpha
- * updates via a selector effect.
- *
- * @param props - The component props.
- * @param props.mapMolNo - The unique molecule number identifying the map to manage.
- *
- * @returns A React fragment containing listeners and effects for the managed map, or null if the map is not found.
- */
+import { MapAlphaListener } from "./MapAlphaListener";
+import { useDispatch } from "react-redux";
+import { setContourLevel, setMapRadius, setMapStyle, showMap } from "../../moorhen";
+import { MoorhenReduxStore } from "../../moorhen";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
@@ -78,8 +67,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
     });
 
-    const mapStyle = useSelector((state: RootState) => {
-        const style = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo)?.style;
+    const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: moorhen.State) => {
+        const style = state.mapContourSettings.mapStyles.find((item) => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
                 ? "lit-lines"
@@ -88,7 +77,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
                 : "lines";
             return defaultStyle;
         }
-        return style;
+        return style.style;
     });
 
     const _postDraw = (startTime: number) => {
@@ -142,6 +131,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             dispatch(showMap(map));
             dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius || 15 }));
             dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: map?.suggestedContourLevel || 0.8 }));
+            dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
         }
     }, []);
 
