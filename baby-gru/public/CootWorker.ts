@@ -1389,7 +1389,7 @@ onmessage = function (e) {
 
     if (e.data.message === 'AddArgRotamerTables') {
         console.log("AddArgRotamerTables")
-        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-arg.data", e.data.cootData, true, true);
+        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-arg.data", e.data.data.cootData, true, true);
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
@@ -1400,7 +1400,7 @@ onmessage = function (e) {
 
     } else if (e.data.message === 'AddLysRotamerTables') {
         console.log("AddLysRotamerTables")
-        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-lys.data", e.data.cootData, true, true);
+        cootModule.FS_createDataFile("./data/coot/rama-data", "rota500-lys.data", e.data.data.cootData, true, true);
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,

@@ -529,6 +529,7 @@ export namespace libcootApi {
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string; }): string | Uint8Array;
             mkdir: (arg0: string) => void; 
+            stat(fileName: string): any;
         };
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
