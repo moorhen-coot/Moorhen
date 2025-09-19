@@ -14,6 +14,8 @@ import {
     setHeight,
     setIsDark,
     setWidth,
+    setGlViewportHeight,
+    setGlViewportWidth,
 } from "../../store/sceneSettingsSlice";
 import {
     setAllowAddNewFittedLigand,
@@ -56,6 +58,7 @@ import type { ExtraMenuProps } from "../navbar-menus/MoorhenMainMenu";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { ActivityIndicator } from "./ActivityIndicator";
+import { EdgePanelSequenceViewer } from "./SequenceEdgePanel";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -197,6 +200,8 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const GlViewportHeight = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight);
+    const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
@@ -259,13 +264,13 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
         if (setMoorhenDimensions) {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
-        if (width !== newWidth) {
-            dispatch(setWidth(newWidth));
-        }
-        if (height !== newHeight) {
-            dispatch(setHeight(newHeight));
-        }
-    }, [width, height]);
+        dispatch(setWidth(newWidth));
+        dispatch(setGlViewportWidth(newWidth - 300));
+        dispatch(setHeight(newHeight));
+        dispatch(setGlViewportHeight(newHeight - 76));
+    }, []);
+
+    useWindowEventListener("resize", setWindowDimensions);
 
     // Style append to header at initialization
     useLayoutEffect(() => {
@@ -276,8 +281,6 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
         style.type = "text/css";
         head.appendChild(style);
     }, []);
-
-    useWindowEventListener("resize", setWindowDimensions);
 
     useLayoutEffect(() => {
         const head = document.head;
@@ -419,9 +422,18 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
             cursor: cursorStyle,
             margin: 0,
             padding: 0,
-            height: Math.floor(height),
+
+            display: "flex" as const,
+            flexDirection: "column" as const,
         }),
         [backgroundColor, cursorStyle, height]
+    );
+    const viewportStyle = useMemo(
+        () => ({
+            height: Math.floor(GlViewportHeight),
+            width: Math.floor(GlViewportWidth),
+        }),
+        [GlViewportHeight, GlViewportWidth]
     );
 
     const snackbarComponents = {
@@ -465,48 +477,127 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
 
     // ========== Main Interface ==========
     return (
-        <div style={backgroundStyle}>
-            <SnackbarProvider
-                hideIconVariant={false}
-                autoHideDuration={4000}
-                maxSnack={20}
-                anchorOrigin={{ horizontal: "center", vertical: "top" }}
-                transitionDuration={{ enter: 500, exit: 300 }}
-                Components={snackbarComponents}
-                preventDuplicate={true}
-            >
-                <ActivityIndicator />
-                <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
-                {/* <MoorhenNavBar
-                    extraNavBarMenus={extraNavBarMenus}
-                    extraNavBarModals={extraNavBarModals}
-                    extraFileMenuItems={extraFileMenuItems}
-                    extraEditMenuItems={extraEditMenuItems}
-                    extraCalculateMenuItems={extraCalculateMenuItems}
-                    includeNavBarMenuNames={includeNavBarMenuNames}
-                /> */}
+        <>
+            <div style={backgroundStyle} className="moorhen__inner-container">
+                <div className="moorhen__stack__row">
+                    <div style={{ width: GlViewportWidth }} className="moorhen__stack__column">
+                        <div style={viewportStyle} className="moorhen__viewport-container">
+                            <SnackbarProvider
+                                hideIconVariant={false}
+                                autoHideDuration={4000}
+                                maxSnack={20}
+                                anchorOrigin={{ horizontal: "center", vertical: "top" }}
+                                transitionDuration={{ enter: 500, exit: 300 }}
+                                Components={snackbarComponents}
+                                preventDuplicate={true}
+                            >
+                                <ActivityIndicator />
+                                <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
+                                {/* <MoorhenNavBar
+                                extraNavBarMenus={extraNavBarMenus}
+                                extraNavBarModals={extraNavBarModals}
+                                extraFileMenuItems={extraFileMenuItems}
+                                extraEditMenuItems={extraEditMenuItems}
+                                extraCalculateMenuItems={extraCalculateMenuItems}
+                                includeNavBarMenuNames={includeNavBarMenuNames}
+                                /> */}
 
-                <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                <MoorhenSnackBarManager />
-                <MoorhenUpdatingMapsManager />
-                <MoorhenMapsHeadManager />
+                                <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                                <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                                <MoorhenSnackBarManager />
+                                <MoorhenUpdatingMapsManager />
+                                <MoorhenMapsHeadManager />
 
-                <MoorhenDroppable
-                    monomerLibraryPath={monomerLibraryPath}
-                    timeCapsuleRef={timeCapsuleRef}
-                    commandCentre={commandCentre}
-                >
-                    <MoorhenWebMG
-                        ref={glRef}
-                        monomerLibraryPath={monomerLibraryPath}
-                        timeCapsuleRef={timeCapsuleRef}
-                        onAtomHovered={onAtomHovered}
-                        urlPrefix={urlPrefix}
-                        viewOnly={viewOnly}
-                    />
-                </MoorhenDroppable>
-            </SnackbarProvider>
-        </div>
+                                <MoorhenDroppable
+                                    monomerLibraryPath={monomerLibraryPath}
+                                    timeCapsuleRef={timeCapsuleRef}
+                                    commandCentre={commandCentre}
+                                >
+                                    <MoorhenWebMG
+                                        ref={glRef}
+                                        monomerLibraryPath={monomerLibraryPath}
+                                        timeCapsuleRef={timeCapsuleRef}
+                                        onAtomHovered={onAtomHovered}
+                                        urlPrefix={urlPrefix}
+                                        viewOnly={viewOnly}
+                                    />
+                                </MoorhenDroppable>
+                            </SnackbarProvider>
+                        </div>
+                        <EdgePanelSequenceViewer />
+                    </div>
+
+                    <div style={{ width: "300px", height: height }} className="moorhen__todo-container">
+                        <div style={{ textAlign: "center", fontWeight: "bold", padding: "8px" }}>To-Do List</div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "0px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "8px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "8px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "8px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "8px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                        <div
+                            style={{
+                                border: "1px solid var(--moorhen-border)",
+                                padding: "8px",
+                                borderRadius: "4rem",
+                                width: "90%",
+                                margin: "8px",
+                            }}
+                        >
+                            Mock Todo Item
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };

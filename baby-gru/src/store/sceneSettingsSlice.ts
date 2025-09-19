@@ -39,6 +39,8 @@ const initialState: {
     backgroundColor: [number, number, number, number];
     height: number;
     width: number;
+    GlViewportHeight: number;
+    GlViewportWidth: number;
     isDark: boolean;
 } = {
     defaultBackgroundColor: null,
@@ -74,6 +76,8 @@ const initialState: {
     depthBlurDepth: null,
     height: 0,
     width: 0,
+    GlViewportHeight: 0,
+    GlViewportWidth: 0,
     isDark: false,
     backgroundColor: [1, 1, 1, 1],
     multiViewRows: 1,
@@ -203,6 +207,12 @@ export const sceneSettingsSlice = createSlice({
         setWidth: (state, action: { payload: number; type: string }) => {
             return { ...state, width: action.payload };
         },
+        setGlViewportHeight: (state, action: { payload: number; type: string }) => {
+            return { ...state, GlViewportHeight: action.payload };
+        },
+        setGlViewportWidth: (state, action: { payload: number; type: string }) => {
+            return { ...state, GlViewportWidth: action.payload };
+        },
         setIsDark: (state, action: { payload: boolean; type: string }) => {
             return { ...state, isDark: action.payload };
         },
@@ -235,6 +245,8 @@ export const {
     setDoPerspectiveProjection,
     setHeight,
     setWidth,
+    setGlViewportHeight,
+    setGlViewportWidth,
     setIsDark,
     setEdgeDetectDepthScale,
     setDoEdgeDetect,

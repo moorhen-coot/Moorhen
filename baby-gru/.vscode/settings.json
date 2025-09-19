@@ -5,10 +5,13 @@
         "Gemmi",
         "INDEXEDDB",
         "libcoot",
+        "molname",
+        "molno",
         "notistack",
         "Ramachandran",
         "rdkit",
         "registerables",
+        "resnum",
         "Rotamers",
         "Viewto"
     ],

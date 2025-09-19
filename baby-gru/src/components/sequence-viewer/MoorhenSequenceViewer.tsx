@@ -23,10 +23,19 @@ type MoorhenSequenceViewerPropsType = {
     selectIsActive?: boolean;
     reOrder?: boolean;
     fontSize?: number;
+    showTitleBar?: boolean;
+    className?: string;
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
-    const { nameColumnWidth = 2, columnWidth = 1, reOrder = true, fontSize = columnWidth } = props;
+    const {
+        nameColumnWidth = 2,
+        columnWidth = 1,
+        reOrder = true,
+        fontSize = columnWidth,
+        showTitleBar = true,
+        className,
+    } = props;
     const inputArray = Array.isArray(props.sequences) ? props.sequences : [props.sequences];
 
     if (inputArray.length === 0) {
@@ -427,13 +436,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     return (
         <>
             <div
-                data-height={72 + displayHeight * 26}
+                className={`moorhen__seqviewer-container ${className}`}
                 style={{
-                    padding: "0.5rem",
-                    border: "1px solid lightgrey",
-                    borderRadius: "4px",
-                    marginBottom: "0.5rem",
-                    height: 72 + displayHeight * 26 + "px",
+                    height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px",
                 }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
@@ -444,10 +449,12 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 }}
             >
                 <div>
-                    {hoveredResidue && (
+                    {showTitleBar && (
                         <div className="moorhen__seqviewer__hovered-residue-info">
                             <div>
-                                Chain: {hoveredResidue.chain} Res: {hoveredResidue.resNum} {hoveredResidue.resCode}
+                                {hoveredResidue
+                                    ? `Chain: ${hoveredResidue.chain} Res: ${hoveredResidue.resNum} ${hoveredResidue.resCode}`
+                                    : "Chain: - Res: -"}
                             </div>
                         </div>
                     )}
@@ -493,8 +500,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 </div>
                 <CustomHorizontalScrollbar
                     style={{
-                        height: "calc(100% - 1rem)",
-                        minHeight: "3rem",
                         width: seqLength > displayHeight ? "calc(100% - 16px)" : "100%",
                     }}
                     onDraggingChange={setIsScrolling}
