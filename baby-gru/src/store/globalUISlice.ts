@@ -4,10 +4,12 @@ const initialState: {
     busy: boolean;
     isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
+    sidePanelIsShown: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
+    sidePanelIsShown: false,
 };
 
 const globalUISlice = createSlice({
@@ -23,8 +25,11 @@ const globalUISlice = createSlice({
         setTimeCapsuleBusy: (state, action: PayloadAction<boolean>) => {
             state.isTimeCapsuleBusy = action.payload;
         },
+        setShowSidePanel: (state, action: PayloadAction<boolean>) => {
+            state.sidePanelIsShown = action.payload;
+        },
     },
 });
 
-export const { setBusy, setTimeCapsuleBusy, setGlobalInstanceReady } = globalUISlice.actions;
+export const { setBusy, setTimeCapsuleBusy, setGlobalInstanceReady, setShowSidePanel } = globalUISlice.actions;
 export default globalUISlice.reducer;

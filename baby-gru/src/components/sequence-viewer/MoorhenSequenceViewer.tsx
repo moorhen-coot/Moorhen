@@ -7,6 +7,7 @@ import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
 import { SequenceRow } from "./SequenceRow";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
+import { MoorhenButton } from "../inputs";
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];
@@ -433,6 +434,40 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         });
     }, [sequencesToDisplay, props.hoveredResidue]);
 
+    const leftButtonsBar =
+        seqLength > displayHeight ? (
+            <div className="moorhen__seqviewer-updown-buttons-bar">
+                {/* <button onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} style={{ cursor: "pointer" }}>
+                    <ExpandLessOutlined></ExpandLessOutlined>
+                </button> */}
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MUISymbolArrowUpward"
+                    onMouseDown={() => startScrollUp(-1)}
+                    onMouseUp={stopScroll}
+                />
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MUISymbolArrowDownward"
+                    onMouseDown={() => startScrollUp(+1)}
+                    onMouseUp={stopScroll}
+                />
+                {/* {seqLength > 1 ? (
+                <>
+                    <div onClick={() => handleChangeDisplaySize(1)}>
+                        <AddOutlined></AddOutlined>
+                    </div>
+                    <div onClick={() => handleChangeDisplaySize(-1)}>
+                        <RemoveOutlined></RemoveOutlined>
+                    </div>
+                </>
+            ) : null} */}
+                {/* <button onMouseDown={() => startScrollUp(+1)} onMouseUp={stopScroll} style={{ cursor: "pointer" }}>
+                    <ExpandMoreOutlined></ExpandMoreOutlined>
+                </button> */}
+            </div>
+        ) : null;
+
     return (
         <>
             <div
@@ -458,58 +493,20 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                             </div>
                         </div>
                     )}
-                    <Stack
-                        direction="column"
-                        style={{
-                            zIndex: 4,
-                            position: "absolute",
-                            right: 3,
-                            top: 50,
-                        }}
-                    >
-                        {seqLength > displayHeight ? (
-                            <div
-                                onMouseDown={() => startScrollUp(-1)}
-                                onMouseUp={stopScroll}
-                                style={{ cursor: "pointer" }}
-                            >
-                                <ExpandLessOutlined></ExpandLessOutlined>
-                            </div>
-                        ) : null}
-                        {seqLength > 1 ? (
-                            <>
-                                <div onClick={() => handleChangeDisplaySize(1)}>
-                                    <AddOutlined></AddOutlined>
-                                </div>
-                                <div onClick={() => handleChangeDisplaySize(-1)}>
-                                    <RemoveOutlined></RemoveOutlined>
-                                </div>
-                            </>
-                        ) : null}
-
-                        {seqLength > displayHeight ? (
-                            <div
-                                onMouseDown={() => startScrollUp(+1)}
-                                onMouseUp={stopScroll}
-                                style={{ cursor: "pointer" }}
-                            >
-                                <ExpandMoreOutlined></ExpandMoreOutlined>
-                            </div>
-                        ) : null}
-                    </Stack>
                 </div>
-                <CustomHorizontalScrollbar
-                    style={{
-                        width: seqLength > displayHeight ? "calc(100% - 16px)" : "100%",
-                    }}
-                    onDraggingChange={setIsScrolling}
-                >
-                    <div className="moorhen__seqviewer__sticky-tick-marks">
-                        <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>
-                        {tickMarks}
-                    </div>
-                    {listOfSeqs}
-                </CustomHorizontalScrollbar>
+                <div style={{ display: "flex", flexDirection: "row" }}>
+                    {leftButtonsBar}
+                    <CustomHorizontalScrollbar
+                        style={{ width: seqLength > displayHeight ? "calc(100% - 40px)" : "100%" }}
+                        onDraggingChange={setIsScrolling}
+                    >
+                        <div className="moorhen__seqviewer__sticky-tick-marks">
+                            <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>
+                            {tickMarks}
+                        </div>
+                        {listOfSeqs}
+                    </CustomHorizontalScrollbar>
+                </div>
             </div>
         </>
     );

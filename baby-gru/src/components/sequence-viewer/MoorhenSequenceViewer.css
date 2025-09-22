@@ -119,12 +119,21 @@
     left: 0;
     z-index: 1;
     margin-bottom: 2px;
+    margin-left: 0px;
     min-height: 1.5rem;
     max-height: 1.5rem;
 }
 
-.moorhen__seqviewer__scrollable-table {
-    z-index: 0;
-    padding-bottom: 10px;
-    padding-right: 10px;
+.moorhen__seqviewer-updown-buttons-bar {
+    position: relative;
+    top: 0px;
+    align-content: center;
+    margin: 0px;
+    padding: 0px;
+    display: flex;
+    gap: 0px;
+    flex-direction: column;
+    padding: 0rem;
+    height: 0;
+    width: 2;
 }

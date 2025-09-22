@@ -13,6 +13,8 @@
         "registerables",
         "resnum",
         "Rotamers",
+        "Seqs",
+        "seqviewer",
         "Viewto"
     ],
 
