@@ -431,6 +431,8 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
             cursor: cursorStyle,
             margin: 0,
             padding: 0,
+            height: height,
+            width: width,
 
             display: "flex" as const,
             flexDirection: "column" as const,
@@ -488,6 +490,7 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
     return (
         <>
             <div style={backgroundStyle} className="moorhen__inner-container">
+                <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
                 <div style={viewportStyle} className="moorhen__viewport-container">
                     <SnackbarProvider
                         hideIconVariant={false}
@@ -499,7 +502,6 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
                         preventDuplicate={true}
                     >
                         <ActivityIndicator />
-                        <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
                         {/* <MoorhenNavBar
                                 extraNavBarMenus={extraNavBarMenus}
                                 extraNavBarModals={extraNavBarModals}
@@ -531,9 +533,9 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </SnackbarProvider>
                 </div>
+                <EdgePanelSequenceViewer />
+                <MoorhenSidePanel width={300} />
             </div>
-            <EdgePanelSequenceViewer />
-            <MoorhenSidePanel width={300} />
         </>
     );
 };

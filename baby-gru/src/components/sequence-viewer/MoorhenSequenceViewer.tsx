@@ -237,22 +237,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         setSequencesSlices([sequencesSlice[0], sequencesSlice[0] + displayHeight]);
     }, [displayHeight]);
 
-    const maxVal =
-        Math.max(
-            ...sequencesArray.map((seqObj) => {
-                const sequence = seqObj.residues;
-                return sequence[sequence.length - 1].resNum;
-            })
-        ) + 1;
-
-    const minVal = Math.min(
-        ...sequencesArray.map((seqObj) => {
-            const sequence = seqObj.residues;
-            return sequence[0].resNum;
-        })
-    );
-
-    const sequencesToDisplay = useMemo(() => {
+    const [sequencesToDisplay, minVal, maxVal] = useMemo(() => {
         const sequenceElements: SeqElement[] = [];
         let orderedSequences: SeqElement[] = [];
         const orderedSelectionRange =
@@ -271,7 +256,24 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             orderedSequences = sequencesArray;
         }
 
-        orderedSequences.slice(sequencesSlice[0], sequencesSlice[1]).forEach((seqObj) => {
+        const slicedSequences = orderedSequences.slice(sequencesSlice[0], sequencesSlice[1]);
+
+        const maxVal =
+            Math.max(
+                ...slicedSequences.map((seqObj) => {
+                    const sequence = seqObj.residues;
+                    return sequence[sequence.length - 1].resNum;
+                })
+            ) + 1;
+
+        const minVal = Math.min(
+            ...slicedSequences.map((seqObj) => {
+                const sequence = seqObj.residues;
+                return sequence[0].resNum;
+            })
+        );
+
+        slicedSequences.forEach((seqObj) => {
             const sequence = seqObj.residues;
             const molNo = seqObj.molNo;
             const chain = seqObj.chain;
@@ -331,11 +333,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 residues: residues,
             });
         });
-        return sequenceElements;
+        return [sequenceElements, minVal, maxVal];
     }, [
         sequencesArray,
-        minVal,
-        maxVal,
         sequencesSlice,
         isGliding,
         glideSelectStartRes,
