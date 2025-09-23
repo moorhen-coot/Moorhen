@@ -316,7 +316,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     })
 
-    if(drawScaleBar&&zIndex===5) {
+    if(drawScaleBar&&zIndex===4) {
 
         canvas2D_ctx.save()
         if(bright_y<0.5) {
@@ -384,7 +384,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     }
 
-    if(drawCrosshairs&&zIndex===5){
+    if(drawCrosshairs&&zIndex===4){
         canvas2D_ctx.save()
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
@@ -522,7 +522,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.restore()
     }
 
-    if(doDrawAxes&&zIndex===5){
+    if(doDrawAxes&&zIndex===4){
         canvas2D_ctx.save()
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
