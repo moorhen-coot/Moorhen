@@ -111,6 +111,10 @@ export const getVectorsBuffers = async (): Promise<any>  => {
             let zTo = zToOrig
             let labelScale = 2.0
             let fnSize = 24
+            const lsq = (xToOrig - xFromOrig) * (xToOrig - xFromOrig)
+                      + (yToOrig - yFromOrig) * (yToOrig - yFromOrig)
+                      + (zToOrig - zFromOrig) * (zToOrig - zFromOrig)
+            const l = Math.sqrt(lsq)
             if(window.devicePixelRatio){
                 fnSize *= window.devicePixelRatio
                 labelScale *= window.devicePixelRatio
@@ -160,14 +164,14 @@ export const getVectorsBuffers = async (): Promise<any>  => {
                 }
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                xTo = xFrom + 0.8 * (xToOrig - xFromOrig)
-                yTo = yFrom + 0.8 * (yToOrig - yFromOrig)
-                zTo = zFrom + 0.8 * (zToOrig - zFromOrig)
+                xTo = xTo - 1.0 * (xToOrig - xFromOrig) / l
+                yTo = yTo - 1.0 * (yToOrig - yFromOrig) / l
+                zTo = zTo - 1.0 * (zToOrig - zFromOrig) / l
             }
             if(vec.arrowMode==="start"||vec.arrowMode==="both"){
-                xFrom = xFrom + 0.2 * (xToOrig - xFromOrig)
-                yFrom = yFrom + 0.2 * (yToOrig - yFromOrig)
-                zFrom = zFrom + 0.2 * (zToOrig - zFromOrig)
+                xFrom = xFrom + 1.0 * (xToOrig - xFromOrig) / l
+                yFrom = yFrom + 1.0 * (yToOrig - yFromOrig) / l
+                zFrom = zFrom + 1.0 * (zToOrig - zFromOrig) / l
             }
             const firstAtomInfo = {
                 pos: [xFrom, yFrom, zFrom],
@@ -192,9 +196,9 @@ export const getVectorsBuffers = async (): Promise<any>  => {
                 solidPairs.push(pair)
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                const xFrom = xFromOrig + 0.8 * (xToOrig - xFromOrig)
-                const yFrom = yFromOrig + 0.8 * (yToOrig - yFromOrig)
-                const zFrom = zFromOrig + 0.8 * (zToOrig - zFromOrig)
+                const xFrom = xToOrig - 1.0 * (xToOrig - xFromOrig) / l
+                const yFrom = yToOrig - 1.0 * (yToOrig - yFromOrig) / l
+                const zFrom = zToOrig - 1.0 * (zToOrig - zFromOrig) / l
                 const xTo = xToOrig
                 const yTo = yToOrig
                 const zTo = zToOrig
@@ -221,9 +225,9 @@ export const getVectorsBuffers = async (): Promise<any>  => {
                 const xTo = xFromOrig
                 const yTo = yFromOrig
                 const zTo = zFromOrig
-                const xFrom = xFromOrig + 0.2 * (xToOrig - xFromOrig)
-                const yFrom = yFromOrig + 0.2 * (yToOrig - yFromOrig)
-                const zFrom = zFromOrig + 0.2 * (zToOrig - zFromOrig)
+                const xFrom = xFromOrig + 1.0 * (xToOrig - xFromOrig) / l
+                const yFrom = yFromOrig + 1.0 * (yToOrig - yFromOrig) / l
+                const zFrom = zFromOrig + 1.0 * (zToOrig - zFromOrig) / l
                 const firstAtomInfo = {
                     pos: [xFrom, yFrom, zFrom],
                     x: xFrom,
