@@ -884,11 +884,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setDoRestrictDrawElements(elementsIndicesRestrict:boolean) {
-        if(this.WEBGL2&&!elementsIndicesRestrict){
-            this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
-        } else {
-            this.max_elements_indices = 65535;
-        }
+        //This setting is now effectively always on. We hardwire max_elements_indices
+        this.max_elements_indices = 65535;
     }
 
     setDoMultiView(doMultiView) {
@@ -1260,12 +1257,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
 
-        const elementsIndicesRestrict = store.getState().glRef.elementsIndicesRestrict
-        if(this.WEBGL2&&!elementsIndicesRestrict){
-            this.max_elements_indices = this.gl.getParameter(this.gl.MAX_ELEMENTS_INDICES)
-        } else {
-            this.max_elements_indices = 65535;
-        }
+        this.max_elements_indices = 65535;
 
         this.setupThreeWayTransformations()
         this.setupStereoTransformations()

@@ -96,13 +96,6 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     <InputGroup className='moorhen-input-group-check'>
                         <Form.Check
                             type="switch"
-                            checked={elementsIndicesRestrict}
-                            onChange={() => {dispatch( setElementsIndicesRestrict(!elementsIndicesRestrict) )}}
-                            label="Restrict number of primitives drawn at once"/>
-                    </InputGroup>
-                    <InputGroup className='moorhen-input-group-check'>
-                        <Form.Check
-                            type="switch"
                             checked={devMode}
                             onChange={() => {dispatch( setDevMode(!devMode) )}}
                             label="Developer mode"/>
