@@ -130,7 +130,6 @@
     "sass-loader": "^16.0.5",
     "style-loader": "^4.0.0",
     "styled-components": "^6.1.19",
-    "tailwindcss": "^4.1.11",
     "ts-jest": "^29.4.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
