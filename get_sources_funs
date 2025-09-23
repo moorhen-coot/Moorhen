@@ -143,8 +143,6 @@ getslicendice() {
     else
         echo "Checking out SliceNDice"
         git clone https://github.com/hlasimpk/slicendice_cpp.git
-        cd slicendice_cpp
-        patch -p0 < ../../patches/slicendice-igraph-100.patch
     fi
     echo
 }
