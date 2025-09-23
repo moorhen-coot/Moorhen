@@ -1,0 +1,19 @@
+diff --git prog/pae_igraph.cpp prog/pae_igraph.cpp
+index 05de7c6..58e3ba1 100644
+--- prog/pae_igraph.cpp
++++ prog/pae_igraph.cpp
+@@ -158,6 +158,7 @@ void PAE::fit(MatrixXd& X) {
+         &g, 
+         &igraph_weights, 
+         NULL, 
++        NULL, 
+         resolution, 
+         beta,
+         start,
+@@ -211,4 +212,4 @@ void PAE::fit(MatrixXd& X) {
+     }
+ 
+     return;
+-}
+\ No newline at end of file
++}
