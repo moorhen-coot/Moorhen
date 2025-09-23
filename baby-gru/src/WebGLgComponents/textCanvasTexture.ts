@@ -15,7 +15,8 @@ export class TextCanvasTexture {
     bigTextureTexOrigins: number[][];
     bigTextureTexOffsets: number[][];
     bigTextureScalings: number[][];
-    contextBig: CanvasRenderingContext2D;
+    canvasBig: OffscreenCanvas;
+    contextBig: OffscreenCanvasRenderingContext2D;
     bigTextureCurrentBaseLine: number;
     bigTextureCurrentWidth: number;
     maxCurrentColumnWidth: number;
@@ -40,14 +41,13 @@ export class TextCanvasTexture {
         this.bigTextureTexOrigins = []
         this.bigTextureTexOffsets = []
         this.bigTextureScalings   = []
-        this.contextBig = document.createElement("canvas").getContext("2d");
-        this.contextBig.canvas.width = width;
-        this.contextBig.canvas.height = Math.min(height,this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE));
+        this.canvasBig = new OffscreenCanvas(width,Math.min(height,this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE)))
+        this.contextBig = this.canvasBig.getContext("2d");
         this.bigTextureCurrentBaseLine = 0;
         this.bigTextureCurrentWidth = 0;
         this.maxCurrentColumnWidth = 0;
         this.contextBig.fillStyle = "#00000000";
-        this.contextBig.fillRect(0, 0, this.contextBig.canvas.width, this.contextBig.canvas.height);
+        this.contextBig.fillRect(0, 0, this.canvasBig.width, this.canvasBig.height);
         this.bigTextTex = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
@@ -95,7 +95,7 @@ export class TextCanvasTexture {
 
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.bigTextureTextIndexesBuffer);
 
-        this.gl.uniform1f(this.shader.pixelZoom,zoom*this.contextBig.canvas.height/canvasHeight);
+        this.gl.uniform1f(this.shader.pixelZoom,zoom*this.canvasBig.height/canvasHeight);
 
         if (isWebGL2) {
             this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 1);
@@ -147,38 +147,95 @@ export class TextCanvasTexture {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.contextBig.canvas);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
 
     }
 
-    addImageToBigTexture(t : string, textColour : string, font : string) : number[] {
+    addImageToBigTexture(t : string, textColour : string, font : string, imgData: ImageData) : number[] {
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
-        let textMetric = this.contextBig.measureText(t);
-        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+
         this.contextBig.fillStyle = textColour;
+
+        let actualHeight = imgData.height+1
+        let actualBoundingBoxRight = imgData.width
+        let width = imgData.width
+
         if(!(textColour in this.textureCache)){
             this.textureCache[textColour] = {};
         }
+
         if(!(font.toLowerCase() in this.textureCache[textColour])){
             this.textureCache[textColour][font.toLowerCase()] = {};
         }
+
         if(t in this.textureCache[textColour][font.toLowerCase()]){
             return this.textureCache[textColour][font.toLowerCase()][t];
         }
-        if(this.bigTextureCurrentBaseLine+actualHeight>this.contextBig.canvas.height){
+
+        if(this.bigTextureCurrentBaseLine+actualHeight>this.canvasBig.height){
             this.bigTextureCurrentBaseLine = 0;
             this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
             this.maxCurrentColumnWidth = 0;
         }
-        const x1 = this.bigTextureCurrentWidth / this.contextBig.canvas.width;
-        const y1 = (this.bigTextureCurrentBaseLine + 1)/ this.contextBig.canvas.height;
+        const x1 = this.bigTextureCurrentWidth / this.canvasBig.width;
+        const y1 = (this.bigTextureCurrentBaseLine)/ this.canvasBig.height;
         this.bigTextureCurrentBaseLine += actualHeight;
-        const x2 = x1 + textMetric.actualBoundingBoxRight / this.contextBig.canvas.width;
-        const y2 = this.bigTextureCurrentBaseLine / this.contextBig.canvas.height;
-        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-textMetric.actualBoundingBoxDescent, textMetric.width);
-        if(textMetric.width>this.maxCurrentColumnWidth){
-            this.maxCurrentColumnWidth = textMetric.width;
+        const x2 = x1 + actualBoundingBoxRight / this.canvasBig.width;
+        const y2 = this.bigTextureCurrentBaseLine / this.canvasBig.height;
+
+        this.contextBig.fillStyle = textColour;
+        this.contextBig.putImageData(imgData, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualHeight);
+
+        if(width>this.maxCurrentColumnWidth){
+            this.maxCurrentColumnWidth = width;
+        }
+        this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
+        return [x1,y1,x2,y2]
+    }
+
+    addTextToBigTexture(t : string, textColour : string, font : string) : number[] {
+
+        this.contextBig.textBaseline = "alphabetic";
+        this.contextBig.font = font;
+
+        this.contextBig.fillStyle = textColour;
+
+        let textMetric = this.contextBig.measureText(t);
+
+        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+        let actualBoundingBoxRight = textMetric.actualBoundingBoxRight
+        let actualBoundingBoxDescent = textMetric.actualBoundingBoxDescent
+        let width = textMetric.width
+
+        if(!(textColour in this.textureCache)){
+            this.textureCache[textColour] = {};
+        }
+
+        if(!(font.toLowerCase() in this.textureCache[textColour])){
+            this.textureCache[textColour][font.toLowerCase()] = {};
+        }
+
+        if(t in this.textureCache[textColour][font.toLowerCase()]){
+            return this.textureCache[textColour][font.toLowerCase()][t];
+        }
+
+        if(this.bigTextureCurrentBaseLine+actualHeight>this.canvasBig.height){
+            this.bigTextureCurrentBaseLine = 0;
+            this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
+            this.maxCurrentColumnWidth = 0;
+        }
+        const x1 = this.bigTextureCurrentWidth / this.canvasBig.width;
+        const y1 = (this.bigTextureCurrentBaseLine + 1)/ this.canvasBig.height;
+        this.bigTextureCurrentBaseLine += actualHeight;
+        const x2 = x1 + actualBoundingBoxRight / this.canvasBig.width;
+        const y2 = this.bigTextureCurrentBaseLine / this.canvasBig.height;
+
+        this.contextBig.fillStyle = textColour;
+        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualBoundingBoxDescent, width);
+
+        if(width>this.maxCurrentColumnWidth){
+            this.maxCurrentColumnWidth = width;
         }
         this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
         return [x1,y1,x2,y2]
@@ -186,9 +243,9 @@ export class TextCanvasTexture {
 
     clearBigTexture() {
         this.contextBig.fillStyle = "#00000000";
-        this.contextBig.clearRect(0, 0, this.contextBig.canvas.width, this.contextBig.canvas.height);
+        this.contextBig.clearRect(0, 0, this.canvasBig.width, this.canvasBig.height);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.contextBig.canvas);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
         this.nBigTextures = 0
         this.nBigTexturesInt = 0;
         this.refI = {};
@@ -240,8 +297,13 @@ export class TextCanvasTexture {
         else
             colour = "black";
 
-        const t = this.addImageToBigTexture(textObject.text,colour,textObject.font);
-        const s = [fontSize*this.contextBig.canvas.width / this.contextBig.canvas.height * (t[2]-t[0])/0.25, fontSize*(t[3]-t[1]) /0.25, 1.0];
+        let t;
+        if(textObject.imgData){
+            t = this.addImageToBigTexture(textObject.text,colour,textObject.font,textObject.imgData);
+        } else {
+            t = this.addTextToBigTexture(textObject.text,colour,textObject.font);
+        }
+        const s = [fontSize*this.canvasBig.width / this.canvasBig.height * (t[2]-t[0]), fontSize*(t[3]-t[1]), 1.0];
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);
         this.bigTextureScalings.push(s)

@@ -671,6 +671,8 @@ export namespace moorhen {
         viewData: viewDataSession;
         activeMapIndex: number;
         dataIsEmbedded: boolean;
+        vectorData?: MoorhenVector[];
+        overlay2dData?: Overlay2DSessionData;
     }
 
     interface TimeCapsule {
@@ -1177,6 +1179,7 @@ export namespace moorhen {
         overlays: {
             imageOverlayList: any[]
             textOverlayList: any[]
+            latexOverlayList: any[]
             svgPathOverlayList: any[]
             fracPathOverlayList: any[]
             callBacks: any[]
@@ -1187,6 +1190,9 @@ export namespace moorhen {
         atomInfoCards: {
             atomInfoIds: any[]
         }
+        vectors: {
+            vectorsList: MoorhenVector[]
+        }
     }
 
     type actionButtonSettings = {
@@ -1196,6 +1202,96 @@ export namespace moorhen {
         rotateTranslate: 'ATOM' | 'RESIDUE' | 'CHAIN' | 'MOLECULE';
         drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
         rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
+    }
+
+    interface Overlay2DSessionData {
+        fracPath2D: MoorhenOverlay2DFracPath[]
+        svgPath2D: MoorhenOverlay2DSvgPath[]
+        textFracPath2D: MoorhenOverlay2DTextFrac[]
+        latexFracPath2D: MoorhenOverlay2DLatexSrcFrac[]
+        imageFracPath2D: MoorhenOverlay2DImageSrcFrac[]
+    }
+
+    interface MoorhenOverlay2DFracPath {
+        path:[number,number][]
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        gradientBoundary?: [number,number,number,number]
+        gradientStops?: {stop:number,colour:string}[]
+        lineWidth?: number
+        uniqueId: string;
+        zIndex?: number;
+    }
+
+    interface MoorhenOverlay2DSvgPath {
+        path: string
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        gradientBoundary?: [number,number,number,number]
+        gradientStops?: {stop:number,colour:string}[]
+        lineWidth?: number
+        uniqueId: string;
+        zIndex?: number;
+    }
+
+    interface MoorhenOverlay2DTextFrac {
+        x: number
+        y: number
+        text: string
+        fontFamily: string
+        fontPixelSize: number
+        fillStyle?: string
+        strokeStyle?: string
+        drawStyle?: string
+        lineWidth?: number
+        uniqueId: string;
+        zIndex?: number;
+    }
+
+    interface MoorhenOverlay2DLatexSrcFrac {
+        x: number
+        y: number
+        height: number
+        text: string
+        uniqueId: string;
+        zIndex?: number;
+    }
+
+    interface MoorhenOverlay2DImageSrcFrac {
+        x: number
+        y: number
+        width: number
+        height: number
+        src: string
+        uniqueId: string;
+        zIndex?: number;
+    }
+
+    type VectorsCoordMode = 'atoms'|'points'|'atompoint';
+    type VectorsLabelMode = 'none'|'start'|'end'|'middle';
+    type VectorsDrawMode = 'cylinder'|'dashedcylinder';
+    type VectorsArrowMode = 'none'|'start'|'end'|'both';
+    interface MoorhenVector  {
+        coordsMode: VectorsCoordMode;
+        labelMode: VectorsLabelMode;
+        labelText: string;
+        drawMode: VectorsDrawMode;
+        arrowMode: VectorsArrowMode;
+        xFrom: number;
+        yFrom: number;
+        zFrom: number;
+        xTo: number;
+        yTo: number;
+        zTo: number;
+        cidFrom: string;
+        cidTo: string;
+        molNoFrom: number;
+        molNoTo: number;
+        uniqueId: string;
+        vectorColour: {r:number,g:number,b:number};
+        textColour: {r:number,g:number,b:number};
     }
 
 }

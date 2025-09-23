@@ -26,6 +26,8 @@ export const modalKeys = Object.freeze({
     MRBUMP: "mrbump",
     MRPARSE: "mrparse",
     COLOR_MAP_BY_MAP : "colour-map-by-map",
+    VECTORS : "vectors",
+    OVERLAYS2D : "overlays-2d",
 })
 
 export const representationLabelMapping = Object.freeze({

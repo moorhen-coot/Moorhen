@@ -7,7 +7,7 @@ import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay,
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
-
+import { getMathJaxSVG } from '../../utils/mathJaxUtils';
 
 interface ImageFrac2D {
     x: number
@@ -15,6 +15,7 @@ interface ImageFrac2D {
     width: number
     height: number
     img: HTMLImageElement
+    zIndex: number;
 }
 
 let stereoQuats = []
@@ -124,7 +125,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
     ctx.restore();
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number) => {
 
     if(!canvas2D_ctx) return
 
@@ -160,15 +161,19 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     canvas2D_ctx.lineWidth = scale
 
     helpText.toReversed().forEach(t => {
+        canvas2D_ctx.save()
         if(bright_y<0.5)
            canvas2D_ctx.fillStyle = "white"
         else
            canvas2D_ctx.fillStyle = "black"
         canvas2D_ctx.fillText(t,10,help_y)
         help_y += actualHeight
+        canvas2D_ctx.restore()
     })
 
     textOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
+        canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
         canvas2D_ctx.font = Math.floor(t.fontPixelSize*scale) +"px "+t.fontFamily
@@ -193,12 +198,15 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             }
             canvas2D_ctx.fillText(t.text,t.x*width,t.y*height)
         }
+        canvas2D_ctx.restore()
+        }
     })
 
     canvas2D_ctx.lineWidth = 1.0
     canvas2D_ctx.scale(scale, scale);
 
     svgPathOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         let p = new Path2D(t.path)
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
@@ -223,7 +231,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 const grad_y1 = t.gradientBoundary[3]
                 const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1)
                 t.gradientStops.forEach(stop => {
-                    grad.addColorStop(stop[0], stop[1])
+                    grad.addColorStop(stop.stop, stop.colour)
                 })
                 canvas2D_ctx.fillStyle = grad
             } else {
@@ -235,18 +243,28 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             canvas2D_ctx.fill(p)
         }
         canvas2D_ctx.restore()
+        }
     })
+
     canvas2D_ctx.scale(1.0/scale, 1.0/scale);
 
     images.forEach(img => {
-        if(img.img){
-           canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+        if((!img.zIndex&&zIndex===0)||(img.zIndex===zIndex)){
+            if(img.img){
+                try {
+                    canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+                } catch(e) {
+                    console.log("Failed to draw image")
+                }
+            }
         }
     })
 
     canvas2D_ctx.lineWidth = scale
 
     fracPathOverlays.forEach(t => {
+        if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
+        canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
         else canvas2D_ctx.lineWidth = scale
@@ -269,7 +287,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 const grad_y1 = height*t.gradientBoundary[3]
                 const grad=canvas2D_ctx.createLinearGradient(grad_x0,grad_y0,grad_x1,grad_y1)
                 t.gradientStops.forEach(stop => {
-                    grad.addColorStop(stop[0], stop[1])
+                    grad.addColorStop(Math.max(Math.min(stop.stop,1.0),0.0), stop.colour)
                 })
                 canvas2D_ctx.fillStyle = grad
             } else {
@@ -288,13 +306,19 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         } else {
             canvas2D_ctx.fill()
         }
+        canvas2D_ctx.restore()
+        }
     })
 
     callbacks.forEach(f => {
+        canvas2D_ctx.save()
         f(canvas2D_ctx,backgroundColor,width,height,scale)
+        canvas2D_ctx.restore()
     })
 
-    if(drawScaleBar||drawCrosshairs||doDrawAxes){
+    if(drawScaleBar&&zIndex===4) {
+
+        canvas2D_ctx.save()
         if(bright_y<0.5) {
             canvas2D_ctx.strokeStyle = "white"
             canvas2D_ctx.fillStyle = "white"
@@ -304,9 +328,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         }
 
         canvas2D_ctx.lineWidth = Math.floor(2*scale)
-    }
 
-    if(drawScaleBar) {
         let viewMult = 1.0
         if(doThreeWayView) viewMult = 2.0
 
@@ -343,12 +365,15 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
         const vpos = 30*scale
 
+        canvas2D_ctx.beginPath()
         canvas2D_ctx.moveTo(end,height-vpos)
         canvas2D_ctx.lineTo(end-l*scale_length_fac,height-vpos)
         canvas2D_ctx.stroke()
+        canvas2D_ctx.beginPath()
         canvas2D_ctx.moveTo(end,height-vpos-8*scale)
         canvas2D_ctx.lineTo(end,height-vpos+8*scale)
         canvas2D_ctx.stroke()
+        canvas2D_ctx.beginPath()
         canvas2D_ctx.moveTo(end-l*scale_length_fac,height-vpos-8*scale)
         canvas2D_ctx.lineTo(end-l*scale_length_fac,height-vpos+8*scale)
         canvas2D_ctx.stroke()
@@ -356,82 +381,112 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
         canvas2D_ctx.fillText(scale_pow+"Å",end+4*scale,height-vpos+8*scale)
 
+        canvas2D_ctx.restore()
     }
 
-    if(drawCrosshairs){
+    if(drawCrosshairs&&zIndex===4){
+        canvas2D_ctx.save()
+        if(bright_y<0.5) {
+            canvas2D_ctx.strokeStyle = "white"
+            canvas2D_ctx.fillStyle = "white"
+        } else {
+            canvas2D_ctx.strokeStyle = "black"
+            canvas2D_ctx.fillStyle = "black"
+        }
+
         canvas2D_ctx.lineWidth = 1
         if(!doThreeWayView&&!doCrossEyedStereo&&!doSideBySideStereo&&!doMultiView){
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.5-5,height*.5)
             canvas2D_ctx.lineTo(width*.5+5,height*.5)
             canvas2D_ctx.stroke()
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.5,height*.5-5)
             canvas2D_ctx.lineTo(width*.5,height*.5+5)
             canvas2D_ctx.stroke()
         }
         if(doCrossEyedStereo||doSideBySideStereo){
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.25-5,height*.5)
             canvas2D_ctx.lineTo(width*.25+5,height*.5)
             canvas2D_ctx.stroke()
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.25,height*.5-5)
             canvas2D_ctx.lineTo(width*.25,height*.5+5)
             canvas2D_ctx.stroke()
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.75-5,height*.5)
             canvas2D_ctx.lineTo(width*.75+5,height*.5)
             canvas2D_ctx.stroke()
+            canvas2D_ctx.beginPath()
             canvas2D_ctx.moveTo(width*.75,height*.5-5)
             canvas2D_ctx.lineTo(width*.75,height*.5+5)
             canvas2D_ctx.stroke()
         }
         if(doThreeWayView){
             if(threeWayViewOrder.length==0){
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.25-5,height*.25)
                 canvas2D_ctx.lineTo(width*.25+5,height*.25)
                 canvas2D_ctx.stroke()
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.25,height*.25-5)
                 canvas2D_ctx.lineTo(width*.25,height*.25+5)
                 canvas2D_ctx.stroke()
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.75-5,height*.25)
                 canvas2D_ctx.lineTo(width*.75+5,height*.25)
                 canvas2D_ctx.stroke()
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.75,height*.25-5)
                 canvas2D_ctx.lineTo(width*.75,height*.25+5)
                 canvas2D_ctx.stroke()
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.25-5,height*.75)
                 canvas2D_ctx.lineTo(width*.25+5,height*.75)
                 canvas2D_ctx.stroke()
+                canvas2D_ctx.beginPath()
                 canvas2D_ctx.moveTo(width*.25,height*.75-5)
                 canvas2D_ctx.lineTo(width*.25,height*.75+5)
                 canvas2D_ctx.stroke()
             }
             if(threeWayViewOrder.length===4){
                 if(threeWayViewOrder[0]!==" "){
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.25-5,height*.25)
                     canvas2D_ctx.lineTo(width*.25+5,height*.25)
                     canvas2D_ctx.stroke()
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.25,height*.25-5)
                     canvas2D_ctx.lineTo(width*.25,height*.25+5)
                     canvas2D_ctx.stroke()
                 }
                 if(threeWayViewOrder[1]!==" "){
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.75-5,height*.25)
                     canvas2D_ctx.lineTo(width*.75+5,height*.25)
                     canvas2D_ctx.stroke()
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.75,height*.25-5)
                     canvas2D_ctx.lineTo(width*.75,height*.25+5)
                     canvas2D_ctx.stroke()
                 }
                 if(threeWayViewOrder[2]!==" "){
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.25-5,height*.75)
                     canvas2D_ctx.lineTo(width*.25+5,height*.75)
                     canvas2D_ctx.stroke()
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.25,height*.75-5)
                     canvas2D_ctx.lineTo(width*.25,height*.75+5)
                     canvas2D_ctx.stroke()
                 }
                 if(threeWayViewOrder[3]!==" "){
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.75-5,height*.75)
                     canvas2D_ctx.lineTo(width*.75+5,height*.75)
                     canvas2D_ctx.stroke()
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*.75,height*.75-5)
                     canvas2D_ctx.lineTo(width*.75,height*.75+5)
                     canvas2D_ctx.stroke()
@@ -453,18 +508,31 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 const row_frac = irow/rows + 0.5/rows
                 for(let icol=0;icol<columns;icol++){
                     const col_frac = icol/columns + 0.5/columns
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*col_frac-5,height*row_frac)
                     canvas2D_ctx.lineTo(width*col_frac+5,height*row_frac)
                     canvas2D_ctx.stroke()
+                    canvas2D_ctx.beginPath()
                     canvas2D_ctx.moveTo(width*col_frac,height*row_frac-5)
                     canvas2D_ctx.lineTo(width*col_frac,height*row_frac+5)
                     canvas2D_ctx.stroke()
                 }
             }
         }
+        canvas2D_ctx.restore()
     }
 
-    if(doDrawAxes){
+    if(doDrawAxes&&zIndex===4){
+        canvas2D_ctx.save()
+        if(bright_y<0.5) {
+            canvas2D_ctx.strokeStyle = "white"
+            canvas2D_ctx.fillStyle = "white"
+        } else {
+            canvas2D_ctx.strokeStyle = "black"
+            canvas2D_ctx.fillStyle = "black"
+        }
+
+        canvas2D_ctx.lineWidth = Math.floor(2*scale)
         canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
         const drawAxes = (theQuat,base_x,base_y,multiScale) => {
             const theMatrix = quatToMat4(theQuat);
@@ -568,7 +636,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
             const base_y = height*.125
             drawAxes(quat,base_x,base_y,1.0)
         }
-
+        canvas2D_ctx.restore()
     }
 }
 
@@ -581,6 +649,7 @@ export const Moorhen2DOverlay = ((props) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
+    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList)
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
@@ -588,7 +657,11 @@ export const Moorhen2DOverlay = ((props) => {
 
     const helpText = useSelector((state: moorhen.State) => state.glRef.shortCutHelp)
 
-    const canvas2DRef = props.canvasRef
+    const canvas2DRef0 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef1 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef2 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef3 = useRef<HTMLCanvasElement>(null)
+    const canvas2DRef4 = useRef<HTMLCanvasElement>(null)
 
     const [images, setImages] = useState<ImageFrac2D[]>([])
 
@@ -597,37 +670,85 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         const new_images = []
+        const buildLatexImages = async() => {
+            for(let ilo=0;ilo<latexOverlays.length;ilo++){
+                const mathJaxInfo = await getMathJaxSVG(latexOverlays[ilo].text)
+                if(mathJaxInfo.whratio>0){
+                    const img = new window.Image()
+                    const wh_ratio = mathJaxInfo.whratio
+                    const svg_height = latexOverlays[ilo].height
+                    const svg = mathJaxInfo.svg
+                    const blob = new Blob([svg], {type: 'image/svg+xml'})
+                    const blobUrl = URL.createObjectURL(blob)
+                    img.src = blobUrl
+                    img.crossOrigin = "Anonymous"
+                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexOverlays[ilo].zIndex}
+                    new_images.push(img_frac)
+                }
+            }
+        }
+        buildLatexImages()
         imageOverlays.forEach(imgSrc => {
             const img = new window.Image()
-            img.src = imgSrc.src
-            img.crossOrigin = "Anonymous"
-            const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height}
-            new_images.push(img_frac)
+            if(imgSrc.src.length>0){
+                if(imgSrc.src.startsWith("<svg")){
+                    const svg = imgSrc.src
+                    const blob = new Blob([svg], {type: 'image/svg+xml'})
+                    const blobUrl = URL.createObjectURL(blob)
+                    img.src = blobUrl
+                    img.crossOrigin = "Anonymous"
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                    new_images.push(img_frac)
+                } else if(imgSrc.src.startsWith("data:image")){
+                    if(imgSrc.src.indexOf(";")>10){
+                        const mimeType = imgSrc.src.substring(5,imgSrc.src.indexOf(";"))
+                        img.src = imgSrc.src
+                        img.crossOrigin = "Anonymous"
+                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                        new_images.push(img_frac)
+                    }
+                } else {
+                    img.src = imgSrc.src
+                    img.crossOrigin = "Anonymous"
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                    new_images.push(img_frac)
+                }
+            }
         })
         setImages(new_images)
-    }, [imageOverlays])
+    }, [latexOverlays,imageOverlays])
 
-    const getContext = useCallback(() => {
-        if(!canvas2DRef) return null
-        if(!canvas2DRef.current) return null
-        const context = canvas2DRef.current.getContext('2d', { alpha: true });
-        return context
-    }, [canvas2DRef])
+    const getContexts = useCallback(() => {
+        const contexts = []
+        const refs = [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4]
+        refs.forEach((ref) => {
+            if(ref&&ref.current){
+                contexts.push(ref.current.getContext('2d', { alpha: true }))
+            } else {
+                contexts.push(null)
+            }
+        })
+        return contexts
+    }, [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4])
 
     const draw2D = () => {
 
-        const canvas2D_ctx = getContext()
-        if(!canvas2D_ctx) return
+        const refs = [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4]
+        const contexts = getContexts()
 
-        canvas2DRef.current.width = width * ratio
-        canvas2DRef.current.height = height * ratio
-        canvas2DRef.current.style.width = `${width}px`
-        canvas2DRef.current.style.height = `${height}px`
-
-        canvas2D_ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        canvas2D_ctx.clearRect(0,0,width,height)
-
-        drawOn2DContext(canvas2D_ctx, width, height, 1.0, helpText, images, props.drawQuat)
+        contexts.forEach((ctx,i) => {
+            if(refs[i]&&refs[i].current){
+                refs[i].current.width = width * ratio
+                refs[i].current.height = height * ratio
+                refs[i].current.style.width = `${width}px`
+                refs[i].current.style.height = `${height}px`
+            }
+            if(ctx){
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.clearRect(0,0,width,height)
+                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i)
+            }
+        })
     }
 
     useEffect(() => {
@@ -635,7 +756,11 @@ export const Moorhen2DOverlay = ((props) => {
     }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,props.drawQuat])
 
     return  <>
-           <canvas style={{pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef} height={width} width={height} />
+           <canvas style={{zIndex:0, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef0} height={width} width={height} />
+           <canvas style={{zIndex:1, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef1} height={width} width={height} />
+           <canvas style={{zIndex:2, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef2} height={width} width={height} />
+           <canvas style={{zIndex:3, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef3} height={width} width={height} />
+           <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
             </>
 });
 

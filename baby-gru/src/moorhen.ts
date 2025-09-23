@@ -69,6 +69,7 @@ import { setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
     setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict } from './store/glRefSlice';
+import { addVector, removeVector, emptyVectors } from './store/vectorsSlice';
 
 import moleculesReducer from './store/moleculesSlice';
 import mapsReducer from './store/mapsSlice';
@@ -91,6 +92,7 @@ import glRefSliceReducer from './store/glRefSlice';
 import menusReducer from './store/menusSlice';
 import atomInfoCardsReducer from './store/atomInfoCardsSlice';
 import MoorhenStore from './store/MoorhenReduxStore';
+import vectorsReducer from './store/vectorsSlice';
 import jsonValidationReducer from './store/jsonValidation'
 import mrParseSliceReducer from './store/mrParseSlice'
 
@@ -133,5 +135,6 @@ export {
     setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition,
     setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx,
     setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes,
-    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer
+    setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict, jsonValidationReducer, mrParseSliceReducer,
+    addVector, removeVector, emptyVectors, vectorsReducer
 };

@@ -5,6 +5,9 @@ declare module 'moorhen' {
     let MoorhenStore: any;
     module.exports = MoorhenStore
 
+    let vectorsReducer: any;
+    module.exports = vectorsReducer
+
     let setOrigin: any
     module.exports = setOrigin
 

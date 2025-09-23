@@ -1,47 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
-
-interface FracPath {
-    path:[number,number][]
-    fillStyle?: string
-    strokeStyle?: string
-    drawStyle?: string
-    gradientBoundary?: [number,number,number,number]
-    gradientStops?: [number,string][]
-    lineWidth?: number
-}
-
-interface SvgPath {
-    path: string
-    fillStyle?: string
-    strokeStyle?: string
-    drawStyle?: string
-    gradientBoundary?: [number,number,number,number]
-    gradientStops?: [number,string][]
-    lineWidth?: number
-}
-
-interface TextFrac {
-    x: number
-    y: number
-    text: string
-    fontFamily: string
-    fontPixelSize: number
-    fillStyle?: string
-    strokeStyle?: string
-    drawStyle?: string
-    lineWidth?: number
-}
-
-interface ImageSrcFrac {
-    x: number
-    y: number
-    width: number
-    height: number
-    src: string
-}
+import { moorhen } from '../types/moorhen'
 
 const initialState = {
     imageOverlayList: [],
+    latexOverlayList: [],
     textOverlayList: [],
     svgPathOverlayList: [],
     fracPathOverlayList: [],
@@ -52,20 +14,59 @@ export const overlaysSlice = createSlice({
   name: 'overlays',
   initialState: initialState,
   reducers: {
-    addImageOverlay: (state, action: {payload: ImageSrcFrac, type: string}) => {
+    addImageOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DImageSrcFrac, type: string}) => {
       state = { ...state, imageOverlayList: [...state.imageOverlayList, action.payload] }
       return state
     },
-    addTextOverlay: (state, action: {payload: TextFrac, type: string}) => {
+    removeImageOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DImageSrcFrac, type: string}) => {
+      state = {
+        ...state,
+        imageOverlayList: state.imageOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId)
+      }
+      return state
+    },
+    addLatexOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DLatexSrcFrac, type: string}) => {
+      state = { ...state, latexOverlayList: [...state.latexOverlayList, action.payload] }
+      return state
+    },
+    removeLatexOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DLatexSrcFrac, type: string}) => {
+      state = {
+        ...state,
+        latexOverlayList: state.latexOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId)
+      }
+      return state
+    },
+    addTextOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DTextFrac, type: string}) => {
       state = { ...state, textOverlayList: [...state.textOverlayList, action.payload] }
       return state
     },
-    addSvgPathOverlay: (state, action: {payload: SvgPath, type: string}) => {
+    removeTextOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DTextFrac, type: string}) => {
+      state = {
+        ...state,
+        textOverlayList: state.textOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId)
+      }
+      return state
+    },
+    addSvgPathOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DSvgPath, type: string}) => {
       state = { ...state, svgPathOverlayList: [...state.svgPathOverlayList, action.payload] }
       return state
     },
-    addFracPathOverlay: (state, action: {payload: FracPath, type: string}) => {
+    removeSvgPathOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DSvgPath, type: string}) => {
+      state = {
+        ...state,
+        svgPathOverlayList: state.svgPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId)
+      }
+      return state
+    },
+    addFracPathOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DFracPath, type: string}) => {
       state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, action.payload] }
+      return state
+    },
+    removeFracPathOverlay: (state, action: {payload: moorhen.MoorhenOverlay2DFracPath, type: string}) => {
+      state = {
+        ...state,
+        fracPathOverlayList: state.fracPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId)
+      }
       return state
     },
     addCallback: (state, action: {payload: Function, type: string}) => {
@@ -78,7 +79,8 @@ export const overlaysSlice = createSlice({
 }})
 
 export const {
-    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback
+    addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback, addLatexOverlay,
+    removeImageOverlay, removeLatexOverlay, removeTextOverlay, removeSvgPathOverlay, removeFracPathOverlay
 } = overlaysSlice.actions
 
 export default overlaysSlice.reducer

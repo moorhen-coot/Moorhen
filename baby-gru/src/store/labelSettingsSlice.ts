@@ -38,6 +38,6 @@ export const labelSettingsSlice = createSlice({
   }
 })
 
-export const { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } = labelSettingsSlice.actions
+export const { emptyAvailableFonts, addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } = labelSettingsSlice.actions
 
 export default labelSettingsSlice.reducer

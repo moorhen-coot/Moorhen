@@ -187,7 +187,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, moorhen.CollectedProps>((pr
             <img className='moorhen-navbar-menu-item-icon' src={`${props.urlPrefix}/pixmaps/MoorhenLogo.png`} alt='Moorhen' />
         </Fab>
         <ClickAwayListener onClickAway={() => { setNavBarActiveMenu('-1') }}>
-        <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
+        <Popper style={{zIndex:990}} open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
             <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
             <MenuList style={{height: height - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
                 {navBarMenuNames.filter(menuName => menuName in navBarMenus).map(menuName => {

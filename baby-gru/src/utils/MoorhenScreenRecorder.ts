@@ -6,6 +6,16 @@ import { moorhen } from '../types/moorhen.js';
 import store from '../store/MoorhenReduxStore'
 import { setOrigin } from "../store/glRefSlice"
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
+import { getMathJaxSVG } from '../utils/mathJaxUtils';
+
+interface ImageFrac2D {
+    x: number
+    y: number
+    width: number
+    height: number
+    img: HTMLImageElement
+    zIndex: number;
+}
 
 export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
@@ -38,12 +48,26 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         }
     }
 
+    loadLatexImage = async(latexObject) => {
+        const mathJaxInfo = await getMathJaxSVG(latexObject.text)
+        const wh_ratio = mathJaxInfo.whratio
+        const img = new Image()
+        const svg = mathJaxInfo.svg
+        const svg_height = latexObject.height
+        const blob = new Blob([svg], {type: 'image/svg+xml'})
+        const blobUrl = URL.createObjectURL(blob)
+        img.src = blobUrl
+        img.crossOrigin = "Anonymous"
+        const img_frac:ImageFrac2D = {x:latexObject.x,y:latexObject.y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexObject.zIndex}
+        return img_frac
+    }
+
     loadImage = (url) => new Promise((resolve, reject) => {
         const img = new Image();
         img.addEventListener('load', () => resolve(img));
         img.addEventListener('error', (err) => reject(err));
         img.src = url;
-    });
+    })
 
     isRecording = () => {
         return this._isRecording;
@@ -78,7 +102,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         link.click();
     }
 
-    takeScreenShot = (filename: string, doTransparentBackground: boolean = false) => {
+    takeScreenShot = async(filename: string, doTransparentBackground: boolean = false) => {
 
         let target_w: number;
         let target_h: number;
@@ -151,20 +175,35 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
         ctx.putImageData(imgData, 0,0);
         const imageOverlays = store.getState().overlays.imageOverlayList
+        const latexOverlays = store.getState().overlays.latexOverlayList
+
         const promises = []
+        const imgFracs = []
+
         imageOverlays.forEach(img => {
-            const p = this.loadImage(imageOverlays[0].src)
+            const p = this.loadImage(img.src)
             promises.push(p)
         })
 
+        const loadLatexThings = async() => {
+            for(let ilat=0;ilat<latexOverlays.length;ilat++){
+               const p = await this.loadLatexImage(latexOverlays[ilat])
+               imgFracs.push(p)
+            }
+        }
+        await loadLatexThings()
+
         Promise.all(promises).then(images => {
-            const imgFracs = []
             for(let i_img=0;i_img<images.length;i_img++){
-                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height}
+                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height,zIndex:imageOverlays[i_img].zIndex}
                 imgFracs.push(img_frac)
             }
 
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4)
 
             let link: any = document.getElementById('download_image_link');
             if (!link) {

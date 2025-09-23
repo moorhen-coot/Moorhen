@@ -2,9 +2,8 @@ import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { useSelector, useDispatch } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { addAvailableFontList, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice"
+import { setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice"
 import { useEffect } from "react"
-import { allFontsSet } from '../../utils/enums';
 
 export const MoorhenGLFontMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
@@ -16,20 +15,6 @@ export const MoorhenGLFontMenuItem = (props: {
     const availableFonts = useSelector((state: moorhen.State) => state.labelSettings.availableFonts)
     const fontSizes = [8, 9, 10, 11, 12, 13, 14, 18, 24, 30, 36, 48, 60, 72, 96]
     
-    useEffect(() => {
-        const fetchAvailableFonts = async () => {
-            await document.fonts.ready;
-            const fontAvailable: string[] = []
-            allFontsSet.forEach((font: string) => {
-                if (document.fonts.check(`12px "${font}"`)) {
-                    fontAvailable.push(font);
-                }    
-            })
-            dispatch( addAvailableFontList(fontAvailable) )
-        }
-        fetchAvailableFonts()
-    }, [])
-
     const panelContent = <div>
         <Form.Group key="WebGLFontFamily" style={{ width: '20rem', margin: '0.5rem' }} controlId="WebGLFontFamily" className="mb-3">
             <Form.Label>Graphics labels font</Form.Label>

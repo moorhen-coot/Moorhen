@@ -38,6 +38,8 @@ import { MoorhenAtomInfoSnackBar } from './snack-bar/MoorhenAtomInfoSnackBar';
 import { MoorhenDroppable } from './MoorhenDroppable';
 import { setRequestDrawScene } from "../store/glRefSlice"
 import {MoorhenMapsHeadManager} from './managers/MoorhenMapsHeadManager'
+import { allFontsSet } from '../utils/enums';
+import { addAvailableFontList, emptyAvailableFonts } from "../store/labelSettingsSlice"
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -531,6 +533,21 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             }
         }
     }, [activeMap]);
+
+    useEffect(() => {
+        const fetchAvailableFonts = async () => {
+            await document.fonts.ready;
+            dispatch(emptyAvailableFonts())
+            const fontAvailable: string[] = []
+            allFontsSet.forEach((font: string) => {
+                if (document.fonts.check(`12px "${font}"`)) {
+                    fontAvailable.push(font);
+                }
+            })
+            dispatch( addAvailableFontList(fontAvailable) )
+        }
+        fetchAvailableFonts()
+    }, [])
 
     return (
         <SnackbarProvider
