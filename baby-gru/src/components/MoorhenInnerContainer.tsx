@@ -53,6 +53,8 @@ import { MoorhenDroppable } from "./MoorhenDroppable";
 import { MoorhenMapsHeadManager } from "./managers/maps/MoorhenMapsHeadManager";
 import type { ExtraNavBarMenus, ExtraNavBarModals } from "./navbar-menus/MoorhenNavBar";
 import { cootAPIHelpers } from "./ContainerHelpers";
+import { allFontsSet } from "../utils/enums";
+import { addAvailableFontList, emptyAvailableFonts } from "../store/labelSettingsSlice";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -403,6 +405,21 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
             }
         }
     }, [activeMap]);
+
+    useEffect(() => {
+        const fetchAvailableFonts = async () => {
+            await document.fonts.ready;
+            dispatch(emptyAvailableFonts());
+            const fontAvailable: string[] = [];
+            allFontsSet.forEach((font: string) => {
+                if (document.fonts.check(`12px "${font}"`)) {
+                    fontAvailable.push(font);
+                }
+            });
+            dispatch(addAvailableFontList(fontAvailable));
+        };
+        fetchAvailableFonts();
+    }, []);
 
     const backgroundStyle = useMemo(
         () => ({

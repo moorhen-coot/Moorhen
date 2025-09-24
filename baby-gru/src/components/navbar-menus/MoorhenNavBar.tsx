@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback} from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Spinner, Form, Overlay, Popover, Stack } from "react-bootstrap";
 import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import {
@@ -35,9 +35,9 @@ import { MoorhenValidationMenu } from "./MoorhenValidationMenu";
 import { MoorhenCalculateMenu } from "./MoorhenCalculateMenu";
 
 export type ExtraNavBarMenus = {
-    name: string; 
-    ref: React.RefObject<any> ; 
-    icon: React.JSX.Element; 
+    name: string;
+    ref: React.RefObject<any>;
+    icon: React.JSX.Element;
     JSXElement: React.JSX.Element[];
 };
 
@@ -89,7 +89,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
-    const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly)
+    const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly);
 
     const moorhenGlobalInstance = useMoorhenGlobalInstance();
     const commandCentre = moorhenGlobalInstance.getCommandCentre();
@@ -100,8 +100,7 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
     useEffect(() => {
         if (commandCentre) {
             // eslint-disable-next-line react-hooks/react-compiler
-            commandCentre.onActiveMessagesChanged = (newActiveMessages) =>
-                setBusy(newActiveMessages.length !== 0);
+            commandCentre.onActiveMessagesChanged = (newActiveMessages) => setBusy(newActiveMessages.length !== 0);
         }
     }, [cootInitialized]);
 
@@ -320,42 +319,34 @@ export const MoorhenNavBar = (props: MoorhenNavBarProps) => {
                         <Popover className="moorhen-nav-popover" style={{ maxWidth: convertViewtoPx(35, width) }}>
                             <Popover.Body>
                                 {navBarActiveMenu === "File" && (
-                                    <MoorhenFileMenu dropdownId="File" 
-                                    videoRecorderRef={videoRecorderRef} 
-                                    extraFileMenuItems={props.extraFileMenuItems} 
-                                />
+                                    <MoorhenFileMenu
+                                        dropdownId="File"
+                                        videoRecorderRef={videoRecorderRef}
+                                        extraFileMenuItems={props.extraFileMenuItems}
+                                    />
                                 )}
-                        
+
                                 {navBarActiveMenu === "Edit" && (
                                     <MoorhenEditMenu dropdownId="Edit" extraEditMenuItems={props.extraEditMenuItems} />
                                 )}
                                 {navBarActiveMenu === "Calculate" && (
-                                    <MoorhenCalculateMenu dropdownId="Calculate" extraCalculateMenuItems={props.extraCalculateMenuItems} />
+                                    <MoorhenCalculateMenu
+                                        dropdownId="Calculate"
+                                        extraCalculateMenuItems={props.extraCalculateMenuItems}
+                                    />
                                 )}
-                                {navBarActiveMenu === "Ligand" && (
-                                    <MoorhenLigandMenu dropdownId="Ligand"/>
-                                )}
-                                {navBarActiveMenu === "Validation" && (
-                                    <MoorhenValidationMenu dropdownId="Validation" />
-                                )}
-                                {navBarActiveMenu === "View" && (
-                                    <MoorhenViewMenu dropdownId="View" />
-                                )}
+                                {navBarActiveMenu === "Ligand" && <MoorhenLigandMenu dropdownId="Ligand" />}
+                                {navBarActiveMenu === "Validation" && <MoorhenValidationMenu dropdownId="Validation" />}
+                                {navBarActiveMenu === "View" && <MoorhenViewMenu dropdownId="View" />}
                                 {navBarActiveMenu === "Preferences" && (
-                                    <MoorhenPreferencesMenu dropdownId="Preferences"  />
+                                    <MoorhenPreferencesMenu dropdownId="Preferences" />
                                 )}
-                                {navBarActiveMenu === "History" && (
-                                    <MoorhenHistoryMenu dropdownId="History"  />
-                                )}
-                                {navBarActiveMenu === "Map Tools" && (
-                                    <MoorhenMapToolsMenu dropdownId="Map Tools"  />
-                                )}
-                                {navBarActiveMenu === "Help" && (
-                                    <MoorhenHelpMenu dropdownId="Help"  />
-                                )}
-                                {navBarActiveMenu === "Dev" && <MoorhenDevMenu dropdownId="Dev"  />}
+                                {navBarActiveMenu === "History" && <MoorhenHistoryMenu dropdownId="History" />}
+                                {navBarActiveMenu === "Map Tools" && <MoorhenMapToolsMenu dropdownId="Map Tools" />}
+                                {navBarActiveMenu === "Help" && <MoorhenHelpMenu dropdownId="Help" />}
+                                {navBarActiveMenu === "Dev" && <MoorhenDevMenu dropdownId="Dev" />}
                                 {props.extraNavBarMenus &&
-                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement} 
+                                    props.extraNavBarMenus.find((menu) => navBarActiveMenu === menu.name)?.JSXElement}
                             </Popover.Body>
                         </Popover>
                     </Overlay>

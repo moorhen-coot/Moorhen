@@ -1,4 +1,4 @@
-name: Update node18 modules
+name: Update node22 modules
 
 on:
   schedule:
@@ -16,10 +16,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v1
 
-      - name: Install node.js v18
+      - name: Install node.js v22
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/

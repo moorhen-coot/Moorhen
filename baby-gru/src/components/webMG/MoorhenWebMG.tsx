@@ -1,20 +1,17 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSnackbar } from 'notistack';
-import * as quat4 from 'gl-matrix/quat';
-import { MoorhenContextMenu, ActionButtonSettings } from "../context-menu/MoorhenContextMenu"
-import { useMoorhenGlobalInstance } from '../../InstanceManager';
+import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { quat4 } from 'gl-matrix';
+import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec } from '../../utils/utils';
 import { ScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { setQuat, setOrigin, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition } from "../../store/glRefSlice"
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
-
-
+import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
@@ -42,7 +39,6 @@ const actionButtonSettingsReducer = (defaultSettings: ActionButtonSettings, chan
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, OldglRef) => {
 
     const glRef = OldglRef as React.Ref<MGWebGL>
-    const canvas2DRef = useRef<HTMLCanvasElement>(null)
 
     const dispatch = useDispatch()
 
@@ -132,10 +128,48 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
+    const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
+    const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+
+    useEffect(() => {
+        const dispatchVectorsBuffers = async() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+
+            let oldLabelBuffers = labelBuffers
+            vectorLabelBuffers.forEach((buffer) => {
+                oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            })
+
+            let oldBuffers = displayBuffers
+            vectorBuffers.forEach((buffer) => {
+                buffer.clearBuffers()
+                oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            })
+
+            const [objects,newLabelBuffers] = await getVectorsBuffers()
+
+            let newBuffers = []
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = appendOtherData(object, true);
+                newBuffers = [...newBuffers,...a]
+                buildBuffers(a)
+            })
+
+            setVectorBuffers(newBuffers)
+            setVectorLabelBuffers(newLabelBuffers)
+            dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
+            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
+        }
+        }
+        dispatchVectorsBuffers()
+    }, [vectorsList])
+
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
         const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') { 
+        if (glRef !== null && typeof glRef !== 'function') {
             dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
             dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
             dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
@@ -573,7 +607,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize)
+            let deviceScale = 1
+            if(window.devicePixelRatio) deviceScale = window.devicePixelRatio
+            glRef.current.setTextFont(GLLabelsFontFamily, GLLabelsFontSize*deviceScale)
             glRef.current.drawScene()
         }
     }, [GLLabelsFontSize, GLLabelsFontFamily])
@@ -695,7 +731,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
-                    <Moorhen2DOverlay canvasRef={canvas2DRef} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu

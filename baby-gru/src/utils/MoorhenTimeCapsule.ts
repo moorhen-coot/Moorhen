@@ -37,6 +37,15 @@ import {
     setSsaoRadius,
     setUseOffScreenBuffers,
 } from "../store/sceneSettingsSlice";
+import {
+    emptyOverlays,
+    addFracPathOverlay,
+    addSvgPathOverlay,
+    addTextOverlay,
+    addLatexOverlay,
+    addImageOverlay,
+} from "../store/overlaysSlice";
+import { emptyVectors, addVector, MoorhenVector } from "../store/vectorsSlice";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import {
     setOrigin,
@@ -545,6 +554,16 @@ export class MoorhenTimeCapsule {
             },
         };
 
+        const vectorData: MoorhenVector[] = this.store.getState().vectors.vectorsList;
+
+        const overlay2dData: Overlay2DSessionData = {
+            fracPath2D: this.store.getState().overlays.fracPathOverlayList,
+            svgPath2D: this.store.getState().overlays.svgPathOverlayList,
+            textFracPath2D: this.store.getState().overlays.textOverlayList,
+            latexFracPath2D: this.store.getState().overlays.latexOverlayList,
+            imageFracPath2D: this.store.getState().overlays.imageOverlayList,
+        };
+
         const session: backupSession = {
             includesAdditionalMapData: includeAdditionalMapData,
             moleculeData: moleculeData,
@@ -553,6 +572,8 @@ export class MoorhenTimeCapsule {
             activeMapIndex: this.mapsRef.current.findIndex((map) => map.molNo === this.activeMapRef.current?.molNo),
             version: this.version,
             dataIsEmbedded: embedData,
+            overlay2dData: overlay2dData,
+            vectorData: vectorData,
         };
 
         return session;
@@ -799,8 +820,6 @@ export class MoorhenTimeCapsule {
         const newMoleculePromises =
             sessionData.moleculeData?.map(async (storedMoleculeData) => {
                 const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
-                console.log(sessionData);
-                console.log(sessionData.dataIsEmbedded);
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
                 } else {
@@ -977,6 +996,62 @@ export class MoorhenTimeCapsule {
         // Set active map
         if (sessionData.activeMapIndex !== undefined && sessionData.activeMapIndex !== -1) {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
+        }
+
+        // Load vectors
+        dispatch(emptyVectors());
+        if (sessionData.vectorData) {
+            sessionData.vectorData.forEach((d) => {
+                dispatch(addVector(d));
+            });
+        }
+
+        // Load 2D canvas overlays
+        dispatch(emptyOverlays());
+        if (sessionData.overlay2dData) {
+            sessionData.overlay2dData.fracPath2D.forEach((d) => {
+                dispatch(addFracPathOverlay(d));
+            });
+            sessionData.overlay2dData.svgPath2D.forEach((d) => {
+                dispatch(addSvgPathOverlay(d));
+            });
+            sessionData.overlay2dData.textFracPath2D.forEach((d) => {
+                dispatch(addTextOverlay(d));
+            });
+            sessionData.overlay2dData.latexFracPath2D.forEach((d) => {
+                dispatch(addLatexOverlay(d));
+            });
+            sessionData.overlay2dData.imageFracPath2D.forEach((d) => {
+                dispatch(addImageOverlay(d));
+            });
+        }
+
+        // Load vectors
+        dispatch(emptyVectors());
+        if (sessionData.vectorData) {
+            sessionData.vectorData.forEach((d) => {
+                dispatch(addVector(d));
+            });
+        }
+
+        // Load 2D canvas overlays
+        dispatch(emptyOverlays());
+        if (sessionData.overlay2dData) {
+            sessionData.overlay2dData.fracPath2D.forEach((d) => {
+                dispatch(addFracPathOverlay(d));
+            });
+            sessionData.overlay2dData.svgPath2D.forEach((d) => {
+                dispatch(addSvgPathOverlay(d));
+            });
+            sessionData.overlay2dData.textFracPath2D.forEach((d) => {
+                dispatch(addTextOverlay(d));
+            });
+            sessionData.overlay2dData.latexFracPath2D.forEach((d) => {
+                dispatch(addLatexOverlay(d));
+            });
+            sessionData.overlay2dData.imageFracPath2D.forEach((d) => {
+                dispatch(addImageOverlay(d));
+            });
         }
 
         // Set camera details

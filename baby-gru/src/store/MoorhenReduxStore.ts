@@ -21,6 +21,7 @@ import glRefSliceReducer from "./glRefSlice";
 import overlaysSliceReducer from "./overlaysSlice";
 import menusReducer from "./menusSlice";
 import atomInfoCardsReducer from "./atomInfoCardsSlice";
+import vectorsReducer from "./vectorsSlice";
 import globalUISliceReducer from "./globalUISlice";
 
 export const MoorhenReduxStore = configureStore({
@@ -48,6 +49,7 @@ export const MoorhenReduxStore = configureStore({
         menus: menusReducer,
         atomInfoCards: atomInfoCardsReducer,
         globalUI: globalUISliceReducer,
+        vectors: vectorsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

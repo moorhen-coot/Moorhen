@@ -15,10 +15,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Install node.js v18
+    - name: Install node.js v22
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 22
         cache: 'npm'
         cache-dependency-path: baby-gru/package-lock.json
 
