@@ -88,7 +88,7 @@
         "@vitejs/plugin-react-swc": "^3.10.2",
         "babel-loader": "^10.0.0",
         "babel-preset-react-app": "^10.1.0",
-        "biojs-io-fasta": "^0.1.17",
+        "biojs-io-fasta": "^0.1.9",
         "bootstrap": "^5.3.7",
         "chart.js": "^4.5.0",
         "chartjs-plugin-annotation": "^3.1.0",

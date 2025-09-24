@@ -26,46 +26,24 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
     const customCid = useRef<string>('');
 
     const dispatch = useDispatch();
-
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
-    const doOutline = useSelector(
-        (state: moorhen.State) => state.sceneSettings.doOutline
-    );
-    const { enqueueSnackbar } = useSnackbar();
-
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
-    const useGemmi = useSelector(
-        (state: moorhen.State) => state.generalStates.useGemmi
-    );
 
     const urlPrefix = usePaths().urlPrefix;
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
 
-    const exampleCallBack = (
-        ctx,
-        backgroundColor,
-        cbWidth,
-        cbHeight,
-        scale
-    ) => {
-        const bright_y =
-            backgroundColor[0] * 0.299 +
-            backgroundColor[1] * 0.587 +
-            backgroundColor[2] * 0.114;
+    const exampleCallBack = (ctx, backgroundColor, cbWidth, cbHeight, scale) => {
+        const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
         if (bright_y < 0.5) {
             ctx.fillStyle = 'white';
         } else {
             ctx.fillStyle = 'black';
         }
         ctx.font = 20 * scale + 'px Arial';
-        ctx.fillText(
-            'I am written by a callback',
-            0.5 * cbWidth,
-            0.5 * cbHeight
-        );
+        ctx.fillText('I am written by a callback', 0.5 * cbWidth, 0.5 * cbHeight);
     };
 
     const loadExampleOverlays = async evt => {

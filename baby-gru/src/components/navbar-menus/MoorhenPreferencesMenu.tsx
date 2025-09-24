@@ -5,7 +5,6 @@ import { useTimeCapsule } from '../../InstanceManager';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { setMakeBackups } from '../../store/backupSettingsSlice';
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from '../../store/generalStatesSlice';
-import { setElementsIndicesRestrict } from '../../store/glRefSlice';
 import { setAtomLabelDepthMode } from '../../store/labelSettingsSlice';
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from '../../store/shortCutsSlice';
 import { MoorhenMenuItem } from '../menu-item/MenuItem';
@@ -22,7 +21,6 @@ import { MoorhenShortcutConfigModal } from '../modal/MoorhenShortcutConfigModal'
 export const MoorhenPreferencesMenu = () => {
     const dispatch = useDispatch();
     const devMode = useSelector((state: RootState) => state.generalStates.devMode);
-    const elementsIndicesRestrict = useSelector((state: RootState) => state.glRef.elementsIndicesRestrict);
     const enableTimeCapsule = useSelector((state: RootState) => state.backupSettings.enableTimeCapsule);
     const makeBackups = useSelector((state: RootState) => state.backupSettings.makeBackups);
     const maxBackupCount = useSelector((state: RootState) => state.backupSettings.maxBackupCount);
@@ -46,7 +44,7 @@ export const MoorhenPreferencesMenu = () => {
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule]);
 
     return (
-        <div style={{ maxHeight: convertViewtoPx(65, height), overflow: 'auto' }}>
+        <>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -125,11 +123,11 @@ export const MoorhenPreferencesMenu = () => {
             <MoorhenViewLayoutPreferencesMenuItem />
             <MapContourSettingsMenuItem />
             <MoorhenRefinementSettingsMenuItem />
-            <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{ marginTop: '0rem' }}>
+            <MoorhenMenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)}>
                 Configure shortcuts...
-            </MenuItem>
+            </MoorhenMenuItem>
             <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} />
             <MoorhenGLFontMenuItem />
-        </div>
+        </>
     );
 };
