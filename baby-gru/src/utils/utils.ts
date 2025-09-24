@@ -571,6 +571,42 @@ export const hexToRGB = (hex: string): [number, number, number] => {
 }
 
 
+export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
+
+    let thisPos = []
+    let thisNorm = []
+    let thisIdxs = []
+
+    let maxIdx = 0
+
+    for (let j = 0; j < 360; j += 360 / cylinder_accu) {
+        const theta1 = j * Math.PI / 180.0;
+        const theta2 = (j + 360 / cylinder_accu) * Math.PI / 180.0;
+            const x1 = Math.sin(theta1);
+            const y1 = Math.cos(theta1);
+            const x2 = Math.sin(theta2);
+            const y2 = Math.cos(theta2);
+            thisNorm.push(...[x1, y1, 0.5])
+            thisNorm.push(...[0, 0, 0.01])
+            thisNorm.push(...[x2, y2, 0.5])
+            thisPos.push(...[x1, y1, 0.0])
+            thisPos.push(...[0, 0, 1.0])
+            thisPos.push(...[x2, y2, 0.0])
+            thisIdxs.push(...[0 + maxIdx, 1 + maxIdx, 2 + maxIdx])
+            maxIdx += 3
+            thisPos.push(...[x1, y1, 0.0])
+            thisPos.push(...[x2, y2, 0.0])
+            thisPos.push(...[0.0, 0.0, 0.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisIdxs.push(...[0 + maxIdx, 2 + maxIdx, 1 + maxIdx])
+            maxIdx += 3
+    }
+
+    return [thisPos, thisNorm, thisIdxs]
+}
+
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
     const thisPos = []
     const thisNorm = []
@@ -631,7 +667,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     labelled: boolean = false,
     minDist: number = 1.9,
     maxDist: number = 4.0,
-    dashed: boolean = true
+    dashed: boolean = true,
+    style: "cylinder"|"cone" = "cylinder",
 ) => {
 
     const atomPairs = atoms;
@@ -646,7 +683,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     const totInstanceUseColours = []
     const totInstancePrimTypes = []
 
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(dashed ? 15 : 1, 16);
+    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? 15 : 1, 16) : getCone(16);
 
     const thisInstance_sizes = []
     const thisInstance_colours = []
@@ -980,4 +1017,10 @@ export const get_grid = (n,method="NEARSQUARE") => {
     })
 
     return [the_shape[0],the_shape[1]]
+}
+
+export const getHexForCanvasColourName = (col: string): string => {
+    var ctx = new OffscreenCanvas(1,1).getContext('2d');
+    ctx.fillStyle = col;
+    return ctx.fillStyle;
 }

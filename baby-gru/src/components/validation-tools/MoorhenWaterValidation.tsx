@@ -1,12 +1,12 @@
-import { useCallback, useRef, useState } from "react";
-import { Col, Row, Form, Card, Button, Stack, InputGroup } from "react-bootstrap";
-import { useDispatch, useSelector } from "react-redux";
-import { libcootApi } from "../../types/libcoot";
-import { moorhen } from "../../types/moorhen";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
-import { useCommandCentre } from "../../InstanceManager";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { Button, Card, Col, Form, InputGroup, Row, Stack } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
+import { useCallback, useRef, useState } from 'react';
+import { useCommandCentre } from '../../InstanceManager';
+import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
+import { libcootApi } from '../../types/libcoot';
+import { moorhen } from '../../types/moorhen';
+import { MoorhenPreciseInput } from '../inputs/MoorhenPreciseInput/MoorhenPreciseInput';
+import { MoorhenValidationListWidgetBase } from './MoorhenValidationListWidgetBase';
 
 export const MoorhenWaterValidation = () => {
     const isDirty = useRef<boolean>(false);
@@ -21,14 +21,14 @@ export const MoorhenWaterValidation = () => {
     const [maxDist, setMaxDist] = useState<number>(3.5);
     const [ignorePartOcc, setIgnorePartOcc] = useState<boolean>(false);
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false);
+    const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
-    const commandCentre = useCommandCentre();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const viewWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
                 await selectedMolecule.centreOn(cid, true, true);
@@ -39,7 +39,7 @@ export const MoorhenWaterValidation = () => {
 
     const deleteWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
                 await selectedMolecule.deleteCid(cid);
@@ -51,10 +51,10 @@ export const MoorhenWaterValidation = () => {
 
     const refineWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
-                await selectedMolecule.refineResiduesUsingAtomCid(cid, "SNGLE");
+                await selectedMolecule.refineResiduesUsingAtomCid(cid, 'SNGLE');
                 dispatch(triggerUpdate(selectedModel));
             }
         },
@@ -67,9 +67,9 @@ export const MoorhenWaterValidation = () => {
             let badWaters = [];
 
             const inputData: moorhen.cootCommandKwargs = {
-                message: "coot_command",
-                command: "find_water_baddies",
-                returnType: "atom_specs",
+                message: 'coot_command',
+                command: 'find_water_baddies',
+                returnType: 'atom_specs',
                 commandArgs: [
                     selectedModel,
                     selectedMap,
@@ -82,15 +82,13 @@ export const MoorhenWaterValidation = () => {
                 ],
             };
 
-            let response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<
-                libcootApi.AtomSpecJS[]
-            >;
+            let response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>;
             if (response.data.result.result) {
                 badWaters = response.data.result.result;
-            } else if (response.data.result.status === "Exception") {
+            } else if (response.data.result.status === 'Exception') {
                 console.warn(response.data.consoleMessage);
             } else {
-                console.warn("Moorhen was unable to get water validation...");
+                console.warn('Moorhen was unable to get water validation...');
             }
 
             busyFetching.current = false;
@@ -99,36 +97,29 @@ export const MoorhenWaterValidation = () => {
         [bFactorLim, sigmaLevel, minDist, maxDist]
     );
 
-    const getCards = (
-        selectedModel: number,
-        selectedMap: number,
-        badWaters: libcootApi.AtomSpecJS[]
-    ): React.JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): React.JSX.Element[] => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return (
                     <Card
                         key={`${index}/${selectedModel}/${water.model_number}/${water.chain_id}/${water.res_no}`}
-                        style={{ marginTop: "0.5rem" }}
+                        style={{ marginTop: '0.5rem' }}
                     >
-                        <Card.Body style={{ padding: "0.5rem" }}>
-                            <Row style={{ display: "flex", justifyContent: "between" }}>
+                        <Card.Body style={{ padding: '0.5rem' }}>
+                            <Row style={{ display: 'flex', justifyContent: 'between' }}>
                                 <Col
                                     style={{
-                                        alignItems: "center",
-                                        justifyContent: "left",
-                                        display: "flex",
-                                        whiteSpace: "pre",
+                                        alignItems: 'center',
+                                        justifyContent: 'left',
+                                        display: 'flex',
+                                        whiteSpace: 'pre',
                                     }}
                                 >
                                     {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
                                 </Col>
-                                <Col
-                                    className="col-3"
-                                    style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}
-                                >
+                                <Col className="col-3" style={{ margin: '0', padding: '0', justifyContent: 'right', display: 'flex' }}>
                                     <Button
-                                        style={{ marginRight: "0.5rem" }}
+                                        style={{ marginRight: '0.5rem' }}
                                         onClick={() => {
                                             viewWater(selectedModel, water);
                                         }}
@@ -136,7 +127,7 @@ export const MoorhenWaterValidation = () => {
                                         View
                                     </Button>
                                     <Button
-                                        style={{ marginRight: "0.5rem" }}
+                                        style={{ marginRight: '0.5rem' }}
                                         onClick={() => {
                                             refineWater(selectedModel, water);
                                         }}
@@ -144,7 +135,7 @@ export const MoorhenWaterValidation = () => {
                                         Refine
                                     </Button>
                                     <Button
-                                        style={{ marginRight: "0.5rem" }}
+                                        style={{ marginRight: '0.5rem' }}
                                         onClick={() => {
                                             deleteWater(selectedModel, water);
                                         }}
@@ -158,7 +149,7 @@ export const MoorhenWaterValidation = () => {
                 );
             });
         } else {
-            console.warn("Got undefined value for bad waters...");
+            console.warn('Got undefined value for bad waters...');
         }
     };
 
@@ -167,7 +158,7 @@ export const MoorhenWaterValidation = () => {
             if (isDirty.current) {
                 if (!busyFetching.current) {
                     isDirty.current = false;
-                    setTriggerDataFetch((prev) => !prev);
+                    setTriggerDataFetch(prev => !prev);
                 }
                 handleControlFormChange();
             }
@@ -177,9 +168,7 @@ export const MoorhenWaterValidation = () => {
     const extraControls = (
         <>
             <Row>
-                <Col
-                    style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}
-                >
+                <Col style={{ justifyContent: 'center', alignContent: 'center', alignItems: 'center', display: 'flex' }}>
                     <MoorhenPreciseInput
                         label="B-Factor"
                         labelPosition="top"
@@ -231,20 +220,17 @@ export const MoorhenWaterValidation = () => {
                 </Col>
             </Row>
             <Row>
-                <Stack direction="horizontal" gap={1} style={{ display: "flex" }}>
-                    <InputGroup
-                        className="moorhen-input-group-check"
-                        style={{ display: "flex", justifyContent: "center", width: "100%" }}
-                    >
+                <Stack direction="horizontal" gap={1} style={{ display: 'flex' }}>
+                    <InputGroup className="moorhen-input-group-check" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                         <Form.Check
                             label="Ignore part. occ."
                             ref={ignorePartOccRef}
                             type="switch"
-                            style={{ marginRight: "2rem" }}
+                            style={{ marginRight: '2rem' }}
                             checked={ignorePartOcc}
                             onChange={() => {
-                                setIgnorePartOcc((prev) => !prev);
-                                setTriggerDataFetch((prev) => !prev);
+                                setIgnorePartOcc(prev => !prev);
+                                setTriggerDataFetch(prev => !prev);
                             }}
                         />
                         <Form.Check
@@ -253,8 +239,8 @@ export const MoorhenWaterValidation = () => {
                             type="switch"
                             checked={ignoreZeroOcc}
                             onChange={() => {
-                                setIgnoreZeroOcc((prev) => !prev);
-                                setTriggerDataFetch((prev) => !prev);
+                                setIgnoreZeroOcc(prev => !prev);
+                                setTriggerDataFetch(prev => !prev);
                             }}
                         />
                     </InputGroup>
