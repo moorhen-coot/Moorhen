@@ -15,6 +15,9 @@ Planned features
 - [ ] Vectors UI. Drawing code should already be there, mostly.
 - [ ] Legends UI. Drawing code already in 2D overlay class.
 
+### For 0.22.2
+- [ ] Make ligand environment text labels much bigger.
+
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
