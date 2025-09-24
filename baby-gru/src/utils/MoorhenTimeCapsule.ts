@@ -796,21 +796,31 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         // Load 2D canvas overlays
         dispatch(emptyOverlays())
         if(sessionData.overlay2dData){
-            sessionData.overlay2dData.fracPath2D.forEach(d => {
-                dispatch(addFracPathOverlay(d))
-            })
-            sessionData.overlay2dData.svgPath2D.forEach(d => {
-                dispatch(addSvgPathOverlay(d))
-            })
-            sessionData.overlay2dData.textFracPath2D.forEach(d => {
-                dispatch(addTextOverlay(d))
-            })
-            sessionData.overlay2dData.latexFracPath2D.forEach(d => {
-                dispatch(addLatexOverlay(d))
-            })
-            sessionData.overlay2dData.imageFracPath2D.forEach(d => {
-                dispatch(addImageOverlay(d))
-            })
+            if(sessionData.overlay2dData.fracPath2D){
+                sessionData.overlay2dData.fracPath2D.forEach(d => {
+                    dispatch(addFracPathOverlay(d))
+                })
+            }
+            if(sessionData.overlay2dData.svgPath2D){
+                sessionData.overlay2dData.svgPath2D.forEach(d => {
+                    dispatch(addSvgPathOverlay(d))
+                })
+            }
+            if(sessionData.overlay2dData.textFracPath2D){
+                sessionData.overlay2dData.textFracPath2D.forEach(d => {
+                    dispatch(addTextOverlay(d))
+                })
+            }
+            if(sessionData.overlay2dData.latexFracPath2D){
+                sessionData.overlay2dData.latexFracPath2D.forEach(d => {
+                    dispatch(addLatexOverlay(d))
+                })
+            }
+            if(sessionData.overlay2dData.imageFracPath2D){
+                sessionData.overlay2dData.imageFracPath2D.forEach(d => {
+                    dispatch(addImageOverlay(d))
+                })
+            }
         }
 
         // Set camera details
