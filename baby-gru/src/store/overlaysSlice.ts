@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface Overlay2DFracPath {
+    type: "FracPath";
     path: [number, number][];
     fillStyle?: string;
     strokeStyle?: string;
@@ -12,6 +13,7 @@ export interface Overlay2DFracPath {
     zIndex?: number;
 }
 export interface Overlay2DSvgPath {
+    type: "SvgPath";
     path: string;
     fillStyle?: string;
     strokeStyle?: string;
@@ -24,6 +26,7 @@ export interface Overlay2DSvgPath {
 }
 
 export interface Overlay2DTextFrac {
+    type: "Text";
     x: number;
     y: number;
     text: string;
@@ -38,6 +41,7 @@ export interface Overlay2DTextFrac {
 }
 
 export interface Overlay2DImageSrcFrac {
+    type: "Image";
     x: number;
     y: number;
     width: number;
@@ -48,6 +52,7 @@ export interface Overlay2DImageSrcFrac {
 }
 
 export interface Overlay2DLatexSrcFrac {
+    type: "Latex";
     x: number;
     y: number;
     height: number;
@@ -76,8 +81,12 @@ export const overlaysSlice = createSlice({
     name: "overlays",
     initialState: initialState,
     reducers: {
-        addImageOverlay: (state, action: { payload: Overlay2DImageSrcFrac; type: string }) => {
-            state = { ...state, imageOverlayList: [...state.imageOverlayList, action.payload] };
+        addImageOverlay: (state, action: { payload: Omit<Overlay2DImageSrcFrac, "type">; type: string }) => {
+            const imageOverlay: Overlay2DImageSrcFrac = {
+                ...action.payload,
+                type: "Image",
+            };
+            state = { ...state, imageOverlayList: [...state.imageOverlayList, imageOverlay] };
             return state;
         },
         removeImageOverlay: (state, action: { payload: Overlay2DImageSrcFrac; type: string }) => {
@@ -87,8 +96,12 @@ export const overlaysSlice = createSlice({
             };
             return state;
         },
-        addLatexOverlay: (state, action: { payload: Overlay2DLatexSrcFrac; type: string }) => {
-            state = { ...state, latexOverlayList: [...state.latexOverlayList, action.payload] };
+        addLatexOverlay: (state, action: { payload: Omit<Overlay2DLatexSrcFrac, "type">; type: string }) => {
+            const latexOverlay: Overlay2DLatexSrcFrac = {
+                ...action.payload,
+                type: "Latex",
+            };
+            state = { ...state, latexOverlayList: [...state.latexOverlayList, latexOverlay] };
             return state;
         },
         removeLatexOverlay: (state, action: { payload: Overlay2DLatexSrcFrac; type: string }) => {
@@ -98,8 +111,12 @@ export const overlaysSlice = createSlice({
             };
             return state;
         },
-        addTextOverlay: (state, action: { payload: Overlay2DTextFrac; type: string }) => {
-            state = { ...state, textOverlayList: [...state.textOverlayList, action.payload] };
+        addTextOverlay: (state, action: { payload: Omit<Overlay2DTextFrac, "type">; type: string }) => {
+            const textOverlay: Overlay2DTextFrac = {
+                ...action.payload,
+                type: "Text",
+            };
+            state = { ...state, textOverlayList: [...state.textOverlayList, textOverlay] };
             return state;
         },
         removeTextOverlay: (state, action: { payload: Overlay2DTextFrac; type: string }) => {
@@ -109,8 +126,12 @@ export const overlaysSlice = createSlice({
             };
             return state;
         },
-        addSvgPathOverlay: (state, action: { payload: Overlay2DSvgPath; type: string }) => {
-            state = { ...state, svgPathOverlayList: [...state.svgPathOverlayList, action.payload] };
+        addSvgPathOverlay: (state, action: { payload: Omit<Overlay2DSvgPath, "type">; type: string }) => {
+            const svgPathOverlay: Overlay2DSvgPath = {
+                ...action.payload,
+                type: "SvgPath",
+            };
+            state = { ...state, svgPathOverlayList: [...state.svgPathOverlayList, svgPathOverlay] };
             return state;
         },
         removeSvgPathOverlay: (state, action: { payload: Overlay2DSvgPath; type: string }) => {
@@ -122,8 +143,12 @@ export const overlaysSlice = createSlice({
             };
             return state;
         },
-        addFracPathOverlay: (state, action: { payload: Overlay2DFracPath; type: string }) => {
-            state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, action.payload] };
+        addFracPathOverlay: (state, action: { payload: Omit<Overlay2DFracPath, "type">; type: string }) => {
+            const fracPathOverlay: Overlay2DFracPath = {
+                ...action.payload,
+                type: "FracPath",
+            };
+            state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, fracPathOverlay] };
             return state;
         },
         removeFracPathOverlay: (state, action: { payload: Overlay2DFracPath; type: string }) => {
