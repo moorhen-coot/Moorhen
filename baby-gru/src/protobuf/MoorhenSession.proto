@@ -117,6 +117,101 @@ message MapColour {
   int32 b = 3;
 }
 
+message PathElement {
+  repeated float v = 1;
+}
+
+message GradientStop {
+  float stop = 1;
+  string colour = 2;
+}
+
+message MoorhenOverlay2DFracPath {
+  repeated PathElement path = 1;
+  optional string fillStyle = 2;
+  optional string strokeStyle = 3;
+  optional string drawStyle = 4;
+  repeated float gradientBoundary = 5;
+  repeated GradientStop gradientStops = 6;
+  optional float lineWidth = 7;
+  string uniqueId = 8;
+}
+
+message MoorhenOverlay2DSvgPath {
+  string path = 1;
+  optional string fillStyle = 2;
+  optional string strokeStyle = 3;
+  optional string drawStyle = 4;
+  repeated float gradientBoundary = 5;
+  repeated GradientStop gradientStops = 6;
+  optional float lineWidth = 7;
+  string uniqueId = 8;
+}
+
+message MoorhenOverlay2DTextFrac {
+  float x = 1;
+  float y = 2;
+  string text = 3;
+  string fontFamily = 4;
+  string fontPixelSize = 5;
+  optional string fillStyle = 6;
+  optional string strokeStyle = 7;
+  optional string drawStyle = 8;
+  string uniqueId = 9;
+}
+
+message MoorhenOverlay2DLatexSrcFrac {
+  float x = 1;
+  float y = 2;
+  float height = 3;
+  string text = 4;
+  string uniqueId = 5;
+}
+
+message MoorhenOverlay2DImageSrcFrac {
+  float x = 1;
+  float y = 2;
+  float width = 3;
+  float height = 4;
+  string src = 5;
+  string uniqueId = 6;
+}
+
+message Overlay2DSessionData {
+  repeated MoorhenOverlay2DFracPath fracPath2D = 1;
+  repeated MoorhenOverlay2DSvgPath svgPath2D = 2;
+  repeated MoorhenOverlay2DTextFrac textFracPath2D = 3;
+  repeated MoorhenOverlay2DLatexSrcFrac latexFracPath2D = 4;
+  repeated MoorhenOverlay2DImageSrcFrac imageFracPath2D = 5;
+}
+
+message RGB {
+  float r = 1;
+  float g = 2;
+  float b = 3;
+}
+
+message MoorhenVector {
+  string coordsMode = 1;
+  string labelMode = 2;
+  string labelText = 3;
+  string drawMode = 4;
+  string arrowMode = 5;
+  float xFrom = 6;
+  float yFrom = 7;
+  float zFrom = 8;
+  float xTo = 9;
+  float yTo = 10;
+  float zTo = 11;
+  string cidFrom = 12;
+  string cidTo = 13;
+  float molNoFrom = 14;
+  float molNoTo = 15;
+  string uniqueId = 16;
+  RGB vectorColour = 17;
+  RGB textColour = 18;
+}
+
 message ViewDataSession {
   repeated float origin = 1;
   repeated float backgroundColor = 2;
@@ -167,4 +262,6 @@ message Session {
   ViewDataSession viewData = 5;
   int32 activeMapIndex = 6;
   bool dataIsEmbedded = 7;
+  optional Overlay2DSessionData overlay2dData = 8;
+  repeated MoorhenVector vectorData = 9;
 }

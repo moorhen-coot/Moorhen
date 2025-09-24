@@ -1,27 +1,23 @@
-import { useState, useEffect } from "react";
-import { Form, InputGroup } from "react-bootstrap";
-import { useSelector, useDispatch } from "react-redux";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
-import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal";
-import { MoorhenGLFontMenuItem } from "../menu-item/MoorhenGLFontMenuItem";
-import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem";
-import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem";
-import { MoorhenViewLayoutPreferencesMenuItem } from "../menu-item/MoorhenViewLayoutPreferencesMenuItem";
-import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem";
-import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem";
-import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem";
-import {
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setDevMode,
-} from "../../store/generalStatesSlice";
-import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
-import { setMakeBackups } from "../../store/backupSettingsSlice";
-import { setElementsIndicesRestrict } from "../../store/glRefSlice";
-import { useTimeCapsule } from "../../InstanceManager";
-import { RootState } from "../../store/MoorhenReduxStore";
+import { Form, InputGroup } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useTimeCapsule } from '../../InstanceManager';
+import { RootState } from '../../store/MoorhenReduxStore';
+import { setMakeBackups } from '../../store/backupSettingsSlice';
+import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from '../../store/generalStatesSlice';
+import { setElementsIndicesRestrict } from '../../store/glRefSlice';
+import { setAtomLabelDepthMode } from '../../store/labelSettingsSlice';
+import { setShortcutOnHoveredAtom, setShowShortcutToast } from '../../store/shortCutsSlice';
+import { MoorhenMenuItem } from '../menu-item/MenuItem';
+import { MoorhenBackupPreferencesMenuItem } from '../menu-item/MoorhenBackupPreferencesMenuItem';
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from '../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem';
+import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem';
+import { MapContourSettingsMenuItem } from '../menu-item/MoorhenMapContourSettingsMenuItem';
+import { MoorhenMouseSensitivitySettingsMenuItem } from '../menu-item/MoorhenMouseSensitivitySettingsMenuItem';
+import { MoorhenRefinementSettingsMenuItem } from '../menu-item/MoorhenRefinementSettingsMenuItem';
+import { MoorhenScoresToastPreferencesMenuItem } from '../menu-item/MoorhenScoresToastPreferencesMenuItem';
+import { MoorhenViewLayoutPreferencesMenuItem } from '../menu-item/MoorhenViewLayoutPreferencesMenuItem';
+import { MoorhenShortcutConfigModal } from '../modal/MoorhenShortcutConfigModal';
 
 export const MoorhenPreferencesMenu = () => {
     const dispatch = useDispatch();
@@ -30,16 +26,12 @@ export const MoorhenPreferencesMenu = () => {
     const enableTimeCapsule = useSelector((state: RootState) => state.backupSettings.enableTimeCapsule);
     const makeBackups = useSelector((state: RootState) => state.backupSettings.makeBackups);
     const maxBackupCount = useSelector((state: RootState) => state.backupSettings.maxBackupCount);
-    const modificationCountBackupThreshold = useSelector(
-        (state: RootState) => state.backupSettings.modificationCountBackupThreshold
-    );
+    const modificationCountBackupThreshold = useSelector((state: RootState) => state.backupSettings.modificationCountBackupThreshold);
     const showShortcutToast = useSelector((state: RootState) => state.shortcutSettings.showShortcutToast);
     const shortcutOnHoveredAtom = useSelector((state: RootState) => state.shortcutSettings.shortcutOnHoveredAtom);
     const atomLabelDepthMode = useSelector((state: RootState) => state.labelSettings.atomLabelDepthMode);
     const defaultExpandDisplayCards = useSelector((state: RootState) => state.generalStates.defaultExpandDisplayCards);
-    const transparentModalsOnMouseOut = useSelector(
-        (state: RootState) => state.generalStates.transparentModalsOnMouseOut
-    );
+    const transparentModalsOnMouseOut = useSelector((state: RootState) => state.generalStates.transparentModalsOnMouseOut);
 
     const [showModal, setShowModal] = useState<boolean | null>(null);
 
@@ -54,7 +46,7 @@ export const MoorhenPreferencesMenu = () => {
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule]);
 
     return (
-        <>
+        <div style={{ maxHeight: convertViewtoPx(65, height), overflow: 'auto' }}>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -118,16 +110,6 @@ export const MoorhenPreferencesMenu = () => {
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
-                    checked={elementsIndicesRestrict}
-                    onChange={() => {
-                        dispatch(setElementsIndicesRestrict(!elementsIndicesRestrict));
-                    }}
-                    label="Restrict number of primitives drawn at once"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="switch"
                     checked={devMode}
                     onChange={() => {
                         dispatch(setDevMode(!devMode));
@@ -143,11 +125,11 @@ export const MoorhenPreferencesMenu = () => {
             <MoorhenViewLayoutPreferencesMenuItem />
             <MapContourSettingsMenuItem />
             <MoorhenRefinementSettingsMenuItem />
-            <MoorhenMenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)}>
+            <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{ marginTop: '0rem' }}>
                 Configure shortcuts...
-            </MoorhenMenuItem>
+            </MenuItem>
             <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} />
             <MoorhenGLFontMenuItem />
-        </>
+        </div>
     );
 };

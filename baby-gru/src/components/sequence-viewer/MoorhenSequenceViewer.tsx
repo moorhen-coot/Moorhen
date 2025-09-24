@@ -1,12 +1,12 @@
-import { useRef, useMemo, useState, memo, useCallback } from "react";
-import Stack from "@mui/material/Stack";
-import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import "./MoorhenSequenceViewer.css";
-import { useStateWithRef } from "../../hooks/useStateWithRef";
-import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
+import Stack from "@mui/material/Stack";
 import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from "@mui/icons-material";
-import { SequenceRow } from "./SequenceRow";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useStateWithRef } from "../../hooks/useStateWithRef";
+import { clickedResidueType } from "../card/MoorhenMoleculeCard";
+import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
+import { SequenceRow } from "./SequenceRow";
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];

@@ -6,3 +6,5 @@ MoorhenScreenRecorder.ts
 MoorhenScriptAPI.ts
 utils.ts
 MoorhenContextMenu.tsx
+MoorhenVectorsModal.tsx
+eslint.config.mjs

@@ -44,6 +44,7 @@ export const labelSettingsSlice = createSlice({
 });
 
 export const {
+    emptyAvailableFonts,
     addAvailableFontList,
     setAtomLabelDepthMode,
     setGLLabelsFontFamily,
