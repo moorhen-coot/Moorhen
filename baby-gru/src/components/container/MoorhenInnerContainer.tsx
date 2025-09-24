@@ -444,7 +444,7 @@ export const InnerMoorhenContainer = (props: ContainerProps) => {
             display: 'flex' as const,
             flexDirection: 'column' as const,
         }),
-        [backgroundColor, cursorStyle, height]
+        [backgroundColor, cursorStyle, height, width]
     );
     const viewportStyle = useMemo(
         () => ({

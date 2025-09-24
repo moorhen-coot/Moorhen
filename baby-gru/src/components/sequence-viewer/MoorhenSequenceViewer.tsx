@@ -1,5 +1,3 @@
-import { AddOutlined, ExpandLessOutlined, ExpandMoreOutlined, RemoveOutlined } from '@mui/icons-material';
-import Stack from '@mui/material/Stack';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useStateWithRef } from '../../hooks/useStateWithRef';
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
@@ -7,6 +5,7 @@ import { MoorhenButton } from '../inputs';
 import { CustomHorizontalScrollbar } from './CustomHorizontalScrollbar';
 import type { ResiduesSelection, SeqElement } from './MoorhenSeqViewTypes';
 import './MoorhenSequenceViewer.css';
+import { SequenceRow } from './SequenceRow';
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];
@@ -30,13 +29,8 @@ type MoorhenSequenceViewerPropsType = {
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
     const { nameColumnWidth = 2, columnWidth = 1, reOrder = true, fontSize = columnWidth, showTitleBar = true, className } = props;
     const inputArray = Array.isArray(props.sequences) ? props.sequences : [props.sequences];
-
-    if (inputArray.length === 0) {
-        return <div>No sequences available</div>;
-    }
-    if (inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0)) {
-        return <div>Some sequences are empty or invalid</div>;
-    }
+    const noSequence: boolean = inputArray.length === 0;
+    const invalidSequences: boolean = inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0);
 
     // Create a new array with updated residue numbers, preserving immutability and only modifying resNum
     const applyOffset = (seqArray: SeqElement[]) =>
@@ -135,27 +129,27 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     };
 
     const handleShiftSelect = (molNo, chain, resNum) => {
-        const curentSelection = internalSelectedResiduesRef.current;
+        const currentSelection = internalSelectedResiduesRef.current;
 
-        let newSelection: ResiduesSelection = curentSelection
+        let newSelection: ResiduesSelection = currentSelection
             ? {
-                  molNo: curentSelection.molNo,
-                  chain: curentSelection.chain,
-                  range: [...curentSelection.range],
+                  molNo: currentSelection.molNo,
+                  chain: currentSelection.chain,
+                  range: [...currentSelection.range],
               }
             : null;
 
-        if (!curentSelection) {
+        if (!currentSelection) {
             newSelection = {
                 molNo: molNo,
                 chain: chain,
                 range: [resNum, resNum],
             };
-        } else if (curentSelection && molNo === curentSelection.molNo && chain === curentSelection.chain) {
+        } else if (currentSelection && molNo === currentSelection.molNo && chain === currentSelection.chain) {
             const orderedSelectionRange =
-                curentSelection.range[0] < curentSelection.range[1]
-                    ? curentSelection.range
-                    : [curentSelection.range[1], curentSelection.range[0]];
+                currentSelection.range[0] < currentSelection.range[1]
+                    ? currentSelection.range
+                    : [currentSelection.range[1], currentSelection.range[0]];
             if (resNum < orderedSelectionRange[0]) {
                 newSelection = {
                     molNo: molNo,
@@ -171,7 +165,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             }
         }
 
-        if (newSelection !== curentSelection) {
+        if (newSelection !== currentSelection) {
             setInternalSelectedResidues(newSelection);
             if (props.onResiduesSelect) {
                 props.onResiduesSelect(newSelection);
@@ -184,7 +178,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         if (props.onResidueClick) props.onResidueClick(0, molName, chain, resNum);
     };
 
-    /** this part is the scroll down functionallity */
+    /** this part is the scroll down functionality */
     const holdInterval = useRef<NodeJS.Timeout | null>(null);
     const startScrollUp = val => {
         if (holdInterval.current) return;
@@ -228,6 +222,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     }, [displayHeight]);
 
     const [sequencesToDisplay, minVal, maxVal] = useMemo(() => {
+        if (noSequence || invalidSequences) {
+            return null;
+        }
         const sequenceElements: SeqElement[] = [];
         let orderedSequences: SeqElement[] = [];
         const orderedSelectionRange =
@@ -323,6 +320,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     }, [sequencesArray, sequencesSlice, isGliding, glideSelectStartRes, props.selectedResidues, internalSelectedResidues]);
 
     const tickMarks = useMemo(() => {
+        if (noSequence || invalidSequences) {
+            return null;
+        }
         const ticks = [];
         let startVal = minVal;
         const mod = minVal % 5;
@@ -390,6 +390,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     }
 
     const listOfSeqs: React.JSX.Element[] = useMemo(() => {
+        if (noSequence || invalidSequences) {
+            return null;
+        }
         return sequencesToDisplay?.map(seqObj => {
             const hoveredResidue = hoveredRef
                 ? seqObj.molNo === hoveredRef.molno && seqObj.chain === hoveredRef.chain
@@ -416,9 +419,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     const leftButtonsBar =
         seqLength > displayHeight ? (
             <div className="moorhen__seqviewer-updown-buttons-bar">
-                {/* <button onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} style={{ cursor: "pointer" }}>
-                    <ExpandLessOutlined></ExpandLessOutlined>
-                </button> */}
                 <MoorhenButton type="icon-only" icon="MUISymbolArrowUpward" onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} />
                 <MoorhenButton
                     type="icon-only"
@@ -436,11 +436,16 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     </div>
                 </>
             ) : null} */}
-                {/* <button onMouseDown={() => startScrollUp(+1)} onMouseUp={stopScroll} style={{ cursor: "pointer" }}>
-                    <ExpandMoreOutlined></ExpandMoreOutlined>
-                </button> */}
             </div>
         ) : null;
+
+    if (noSequence) {
+        return <div>No sequences available</div>;
+    }
+
+    if (invalidSequences) {
+        return <div>Some sequences are empty or invalid</div>;
+    }
 
     return (
         <>
