@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Popover } from "@mui/material";
+import { Popover, Stack } from "@mui/material";
 import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
 import { hexToRGB, rgbToHex } from "../../../utils/utils";
-import { Stack } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 
 type MoorhenColourPickerBase = {
@@ -65,7 +64,7 @@ type MoorhenColourPickerType = MoorhenColourPickerSingle | MoorhenColourPickerDu
  * @function
  */
 
-export default function MoorhenColourPicker(props: MoorhenColourPickerType) {
+export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
     const {
         colour,
         setColour = null,
@@ -206,6 +205,6 @@ export default function MoorhenColourPicker(props: MoorhenColourPickerType) {
             </Popover>
         </>
     );
-}
+};
 
 MoorhenColourPicker.displayName = "MoorhenColourPicker";

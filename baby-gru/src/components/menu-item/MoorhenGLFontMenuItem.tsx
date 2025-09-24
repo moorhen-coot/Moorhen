@@ -1,9 +1,8 @@
 import { Form } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
 import { moorhen } from "../../types/moorhen";
 import { setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
-import { useEffect } from "react";
+import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenGLFontMenuItem = () => {
     const dispatch = useDispatch();

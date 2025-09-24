@@ -158,10 +158,10 @@ export const MoorhenModalsContainer = (props: { extraDraggableModals: ExtraDragg
 
             {showQScoreModal && <MoorhenQScoreModal />}
             {showColorMapByMapModal && <MoorhenColourMapByOtherMapModal />}
-            {showVectorsModal && <MoorhenVectorsModal {...props} />}
-            {showOverlays2DModal && <Moorhen2DCanvasObjectsModal {...props} />}
-            {showVectorsModal && <MoorhenVectorsModal {...props} />}
-            {showOverlays2DModal && <Moorhen2DCanvasObjectsModal {...props} />}
+            {showVectorsModal && <MoorhenVectorsModal />}
+            {showOverlays2DModal && <Moorhen2DCanvasObjectsModal />}
+            {showVectorsModal && <MoorhenVectorsModal />}
+            {showOverlays2DModal && <Moorhen2DCanvasObjectsModal />}
 
             {props.extraDraggableModals && props.extraDraggableModals.map((modal) => modal)}
         </>
