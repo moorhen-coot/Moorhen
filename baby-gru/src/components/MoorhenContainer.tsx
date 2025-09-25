@@ -475,7 +475,9 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 false
             );
         }
-        set_max_number_of_simple_mesh_vertices();
+        if (commandCentre.current !== null && cootInitialized) {
+            set_max_number_of_simple_mesh_vertices();
+        }
     }, [cootInitialized]);
 
     useEffect(() => {
