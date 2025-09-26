@@ -8,6 +8,55 @@ import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { Shortcut } from "../components/managers/preferences";
 import type { ResidueInfo } from "./MoorhenMolecule";
 
+export const resizeImageData = async(imageData, width, height) => {
+    const resizeWidth = width
+    const resizeHeight = height
+    const ibm = await window.createImageBitmap(imageData, 0, 0, imageData.width, imageData.height, {
+      resizeWidth:resizeWidth, resizeHeight:resizeHeight
+    })
+    const canvas = new OffscreenCanvas(resizeWidth,resizeHeight)
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(ibm, 0, 0, resizeWidth, resizeHeight)
+    return ctx.getImageData(0, 0, resizeWidth, resizeHeight)
+}
+
+export const paeToImageData = async(pae: moorhen.PAE, width: number, height: number) : Promise<ImageData> => {
+    //This just grabs the fist element of PAE. I am not sure if there are
+    //ever more than 1 elements.
+
+    const pae0 = pae.predicted_aligned_error
+    const nRes = pae0.length
+    const canvas = new OffscreenCanvas(nRes,nRes)
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.createImageData(nRes, nRes)
+
+    let max_val = 0
+    for(let j=0;j<nRes;j++){
+       for(let i=0;i<nRes;i++){
+           max_val = Math.max(pae0[j][i],max_val)
+       }
+    }
+
+    let idx = 0
+    for(let j=0;j<nRes;j++){
+       for(let i=0;i<nRes;i++){
+           let rb_col = pae0[j][i]/max_val * 255
+           let g_col = pae0[j][i]/max_val * 150 + 105
+           rb_col = Math.min(255,rb_col)
+           g_col = Math.min(255,g_col)
+           imgData.data[4*idx + 0] = rb_col
+           imgData.data[4*idx + 1] = g_col
+           imgData.data[4*idx + 2] = rb_col
+           imgData.data[4*idx + 3] = 255
+           idx++
+       }
+    }
+
+    const resizeImgData = await resizeImageData(imgData,width,height)
+    return resizeImgData
+
+}
+
 export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`
 }
@@ -32,7 +81,7 @@ export const getCentreAtom = async (molecules: moorhen.Molecule[], commandCentre
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
-    
+
     const parser = new DOMParser()
     let theText = svg
     const doc = parser.parseFromString(theText, "image/svg+xml")
@@ -40,7 +89,7 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
     let ymin = 999
     let xmax = -999
     let ymax = -999
-    
+
     const lines = doc.getElementsByTagName("line")
     for (const l of lines) {
         const x1 = parseFloat(l.getAttribute("x1"))
@@ -56,7 +105,7 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
         if(y2>ymax) ymax = y2
         if(y2<ymin) ymin = y2
     }
-    
+
     const texts = doc.getElementsByTagName("text");
     for (const t of texts) {
         const x = parseFloat(t.getAttribute("x"))
@@ -66,7 +115,7 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
         if(y>ymax) ymax = y
         if(y<ymin) ymin = y
     }
-    
+
     const polygons = doc.getElementsByTagName("polygon");
     for (const poly of polygons) {
         const points = poly.getAttribute("points").trim().split(" ")
@@ -93,8 +142,8 @@ export const formatLigandSVG = (svg: string, edit_VB: boolean): string => {
         item.setAttribute("height" , "100%")
         theText = item.outerHTML
     }
-    
-    return theText 
+
+    return theText
 }
 
 export const rgbToHsv = (r: number, g:number, b:number): [number, number, number] => {
@@ -242,7 +291,7 @@ export const readDataFile = (source: File): Promise<ArrayBuffer> => {
 
 const downloadFile = (file: File, fileName: string) => {
     const url = window.URL.createObjectURL(file);
-    
+
     const link = document.createElement('a');
     link.download = fileName;
     link.href = url;
@@ -295,10 +344,10 @@ export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, 
 }
 
 export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
-    return { 
+    return {
         mol_no: atom.mol_name,
         chain_id: atom.chain_id,
-        res_no: parseInt(atom.res_no), 
+        res_no: parseInt(atom.res_no),
         res_name: atom.res_name,
         atom_name: atom.name,
         // FIXME: Atom info does not contain a ins_code field ?? Or is it atom.serial ?
@@ -426,7 +475,7 @@ const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; normali
         }
         return rgbToHex(r, g, b)
     }
-    
+
     const bFactorAttr = normaliseBFactors ? 'normalised_bFactor' : 'bFactor'
     return bFactors.map(item => `${item.cid}^${getColour(item[bFactorAttr])}`).join('|')
 }
@@ -475,7 +524,7 @@ const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.Res
     const alphaHelix = '#d13d62'
     const betaStrand = '#4b57bd'
     const turn = '#d1c03d'
-    
+
     secondaryStructureInfo.forEach(residue => {
         if (!(residue.chainId in chainSS2Info)) {
             chainSS2Info[residue.chainId] = { 1: [], 2: [], 3: [] }
@@ -483,7 +532,7 @@ const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.Res
         const ss2Type = residue.intUserData === 6 ? 1 : [1, 2].includes(residue.intUserData) ? 2 : 3
         chainSS2Info[residue.chainId][ss2Type].push(residue.resNum)
     })
-    
+
     for (const chainId in chainSS2Info) {
         for (const ss2Info in chainSS2Info[chainId]) {
             if (chainSS2Info[chainId][ss2Info].length > 0) {
@@ -934,7 +983,7 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{ x: number, y: number,
     const lines: [{ x: number, y: number, z: number, serial: string }, { x: number, y: number, z: number, serial: string }][] = [];
     edges.forEach(edge => {
         const [v1Index, v2Index] = edge
-        
+
         const [v1_x, v1_y, v1_z] = orthogonalize(...vertices[v1Index])
         const v1 = {
             x: v1_x,
@@ -942,7 +991,7 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{ x: number, y: number,
             z: v1_z,
             serial: 'unit_cell'
         };
-        
+
         const [v2_x, v2_y, v2_z] = orthogonalize(...vertices[v2Index])
         const v2 = {
             x: v2_x,
@@ -960,7 +1009,7 @@ export const countResiduesInSelection = (gemmiStructure: gemmi.Structure, cidSel
     const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : '/*/*/*')
     const count = window.CCP4Module.count_residues_in_selection(gemmiStructure, selection)
     selection.delete()
-    return count    
+    return count
 }
 
 export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {

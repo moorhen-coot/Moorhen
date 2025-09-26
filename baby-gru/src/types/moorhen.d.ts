@@ -61,6 +61,10 @@ export namespace moorhen {
 
     //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 
+    type PAE = {
+        "predicted_aligned_error":number[][]
+    };
+
     type ResidueSpec = {
         mol_name: string;
         mol_no: string;
