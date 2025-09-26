@@ -28,6 +28,7 @@ export const modalKeys = Object.freeze({
     COLOR_MAP_BY_MAP : "colour-map-by-map",
     VECTORS : "vectors",
     OVERLAYS2D : "overlays-2d",
+    PAEPLOT : "pae-plot",
 })
 
 export const representationLabelMapping = Object.freeze({

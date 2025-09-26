@@ -20,7 +20,7 @@ export const resizeImageData = async(imageData, width, height) => {
     return ctx.getImageData(0, 0, resizeWidth, resizeHeight)
 }
 
-export const paeToImageData = async(pae: moorhen.PAE, width: number, height: number) : Promise<ImageData> => {
+export const paeToImageData = async(pae: moorhen.PAE) : Promise<ImageData> => {
     //This just grabs the fist element of PAE. I am not sure if there are
     //ever more than 1 elements.
 
@@ -52,8 +52,7 @@ export const paeToImageData = async(pae: moorhen.PAE, width: number, height: num
        }
     }
 
-    const resizeImgData = await resizeImageData(imgData,width,height)
-    return resizeImgData
+    return imgData
 
 }
 

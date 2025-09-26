@@ -26,6 +26,7 @@ export { MoorhenDifferenceMapPeaks } from "./components/validation-tools/Moorhen
 export { MoorhenFillMissingAtoms } from "./components/validation-tools/MoorhenFillMissingAtoms";
 export { MoorhenJsonValidation } from "./components/validation-tools/MoorhenJsonValidation";
 export { MoorhenMMRRCCPlot } from "./components/validation-tools/MoorhenMMRRCCPlot";
+export { MoorhenPAEPlot } from "./components/validation-tools/MoorhenPAEPlot";
 export { MoorhenPepflipsDifferenceMap } from "./components/validation-tools/MoorhenPepflipsDifferenceMap";
 export { MoorhenQScore } from "./components/validation-tools/MoorhenQScore";
 export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnmodelledBlobs";

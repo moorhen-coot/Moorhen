@@ -15,6 +15,7 @@ import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
 import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
+import { MoorhenPAEModal } from '../modal/MoorhenPAEModal';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenMrBumpModal } from '../modal/MoorhenMrBumpModal';
 import { MoorhenMrParseModal } from '../modal/MoorhenMrParseModal';
@@ -43,6 +44,7 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
     const showDiffMapPeaksModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.DIFF_MAP_PEAKS));
     const showValidationPlotModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.VALIDATION_PLOT));
     const showMmrrccModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MMRRCC));
+    const shoPAEModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PAEPLOT));
     const showWaterValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.WATER_VALIDATION));
     const showLigandValidationModal = useSelector((state: moorhen.State) =>
         state.modals.activeModals.includes(modalKeys.LIGAND_VALIDATION)
@@ -91,6 +93,8 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
             {showValidationPlotModal && <MoorhenValidationPlotModal />}
 
             {showMmrrccModal && <MoorhenMmrrccModal />}
+
+            {shoPAEModal && <MoorhenPAEModal />}
 
             {showJsonValidationModal && <MoorhenJsonValidationModal />}
 
