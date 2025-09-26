@@ -1678,6 +1678,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("get_overlap_dots",&molecules_container_t::get_overlap_dots)
+    .function("set_max_number_of_simple_mesh_vertices",&molecules_container_t::set_max_number_of_simple_mesh_vertices)
+    .function("get_max_number_of_simple_mesh_vertices",&molecules_container_t::get_max_number_of_simple_mesh_vertices)
     .function("set_colour_map_for_map_coloured_by_other_map",&molecules_container_t::set_colour_map_for_map_coloured_by_other_map)
     .function("get_mutation_info",&molecules_container_t::get_mutation_info)
     .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)

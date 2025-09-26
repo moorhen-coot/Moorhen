@@ -583,6 +583,8 @@ export namespace libcootApi {
     interface MoleculesContainerJS {
         [key: string]: any;
         delete(): void;
+        set_max_number_of_simple_mesh_vertices(maxVertex: number);
+        get_max_number_of_simple_mesh_vertices(): numbers;
         get_overlap_dots(imol: number): void;
         set_colour_map_for_map_coloured_by_other_map(arg0: any): void;
         set_refinement_is_verbose(arg0: boolean): void;
