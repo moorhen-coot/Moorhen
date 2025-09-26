@@ -1,7 +1,41 @@
-import { v4 as uuidv4 } from "uuid";
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { History } from "./MoorhenHistory";
+import { v4 as uuidv4 } from 'uuid';
+import { webGL } from '../../types/mgWebGL';
+import { moorhen } from '../../types/moorhen';
+import { History } from '../../utils/MoorhenHistory';
+
+export type WorkerResponse<T = any> = {
+    data: WorkerResult<T>;
+};
+
+export type WorkerResult<T = any> = {
+    result: {
+        status: string;
+        result: T;
+        [key: string]: any;
+    };
+    command: string;
+    messageId: string;
+    myTimeStamp: string;
+    message: string;
+    consoleMessage: string;
+};
+
+export interface cootCommandKwargs {
+    message?: string;
+    data?: unknown;
+    returnType?: string;
+    command?: string;
+    commandArgs?: any[];
+    changesMolecules?: number[];
+    [key: string]: any;
+}
+
+export type WorkerMessage = {
+    consoleMessage?: string;
+    messageId: string;
+    handler: (reply: WorkerResponse) => void;
+    kwargs: cootCommandKwargs;
+};
 
 /**
  * A command centre used to communicate between Moorhen and a web worker running an instance of the
@@ -39,33 +73,28 @@ import { History } from "./MoorhenHistory";
 export class CommandCentre {
     urlPrefix: string;
     cootWorker: Worker;
-    activeMessages: moorhen.WorkerMessage[];
+    activeMessages: WorkerMessage[];
     history: History;
     isClosed: boolean;
     onCootInitialized: null | (() => void);
     onConsoleChanged: null | ((msg: string) => void);
     onCommandStart: null | ((kwargs: any) => void);
     onCommandExit: null | ((kwargs: any) => void);
-    onActiveMessagesChanged: null | ((activeMessages: moorhen.WorkerMessage[]) => void);
+    onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
 
-    constructor(
-        urlPrefix: string,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        timeCapsule: React.RefObject<moorhen.TimeCapsule>,
-        props: { [x: string]: any }
-    ) {
+    constructor(urlPrefix: string, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: { [x: string]: any }) {
         this.activeMessages = [];
         this.urlPrefix = urlPrefix;
         this.isClosed = false;
-        this.history = new History(glRef, timeCapsule);
-        this.history.setCommandCentre(this);
+        this.history = new History(timeCapsule);
+        //this.history.setCommandCentre(this);
 
         this.onConsoleChanged = null;
         this.onCommandStart = null;
         this.onCommandExit = null;
         this.onActiveMessagesChanged = null;
 
-        Object.keys(props).forEach((key) => (this[key] = props[key]));
+        Object.keys(props).forEach(key => (this[key] = props[key]));
     }
 
     async init() {
@@ -74,7 +103,7 @@ export class CommandCentre {
         this.cootWorker.onmessage = this.handleMessage.bind(this);
         const fileResponse = await fetch(`${this.urlPrefix}/../baby-gru/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
-        await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
+        await this.postMessage({ message: 'CootInitialize', data: { cootData: new Uint8Array(fileData) } });
         if (this.onCootInitialized) {
             this.onCootInitialized();
         }
@@ -83,35 +112,35 @@ export class CommandCentre {
     async close() {
         if (!this.isClosed) {
             this.isClosed = true;
-            await this.postMessage({ message: "close", data: {} });
-            this.cootWorker.removeEventListener("message", this.handleMessage);
+            await this.postMessage({ message: 'close', data: {} });
+            this.cootWorker.removeEventListener('message', this.handleMessage);
             this.cootWorker.terminate();
         } else {
-            console.warn("Command centre already closed, doing nothing...");
+            console.warn('Command centre already closed, doing nothing...');
         }
     }
 
-    handleMessage(reply: moorhen.WorkerResponse) {
+    handleMessage(reply: WorkerResponse) {
         this.activeMessages
-            .filter((message) => message.messageId && message.messageId === reply.data.messageId)
-            .forEach((message) => {
+            .filter(message => message.messageId && message.messageId === reply.data.messageId)
+            .forEach(message => {
                 message.handler(reply);
             });
-        this.activeMessages = this.activeMessages.filter((message) => message.messageId !== reply.data.messageId);
+        this.activeMessages = this.activeMessages.filter(message => message.messageId !== reply.data.messageId);
         if (this.onActiveMessagesChanged) {
             this.onActiveMessagesChanged(this.activeMessages);
         }
     }
 
     makeHandler(resolve) {
-        return (reply) => {
+        return reply => {
             resolve(reply);
         };
     }
 
-    async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
-        const message = "coot_command";
-        console.log("In cootCommand", kwargs.command);
+    async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
+        const message = 'coot_command';
+        console.log('In cootCommand', kwargs.command);
         if (this.onCommandStart) {
             this.onCommandStart({ ...kwargs, doJournal });
         }
@@ -125,26 +154,23 @@ export class CommandCentre {
         return result;
     }
 
-    async cootCommandList(
-        commandList: moorhen.cootCommandKwargs[],
-        doJournal: boolean = true
-    ): Promise<moorhen.WorkerResponse> {
-        const message = "coot_command_list";
-        console.log("In cootCommandList", commandList);
+    async cootCommandList(commandList: cootCommandKwargs[], doJournal: boolean = true): Promise<WorkerResponse> {
+        const message = 'coot_command_list';
+        console.log('In cootCommandList', commandList);
         if (this.onCommandStart) {
-            commandList.forEach((commandKwargs) => this.onCommandStart(commandKwargs));
+            commandList.forEach(commandKwargs => this.onCommandStart(commandKwargs));
         }
         if (doJournal) {
-            await Promise.all(commandList.map((commandKwargs) => this.history.addEntry(commandKwargs)));
+            await Promise.all(commandList.map(commandKwargs => this.history.addEntry(commandKwargs)));
         }
         const result = await this.postMessage({ message, commandList });
         if (this.onCommandExit) {
-            commandList.forEach((commandKwargs) => this.onCommandExit(commandKwargs));
+            commandList.forEach(commandKwargs => this.onCommandExit(commandKwargs));
         }
         return result;
     }
 
-    postMessage(kwargs: moorhen.cootCommandKwargs): Promise<moorhen.WorkerResponse> {
+    postMessage(kwargs: cootCommandKwargs): Promise<WorkerResponse> {
         const $this = this;
         const messageId = uuidv4();
         return new Promise((resolve, reject) => {

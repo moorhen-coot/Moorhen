@@ -4,8 +4,9 @@ import { SnackbarProvider } from 'notistack';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { Store } from 'redux';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useCommandAndCapsule, useMoorhenGlobalInstance } from '../../InstanceManager';
-import { MoorhenGlobalInstanceProvider } from '../../InstanceManager';
+import { useCommandAndCapsule, useMoorhenInstance } from '../../InstanceManager';
+import { MoorhenInstanceProvider } from '../../InstanceManager';
+import { CommandCentre } from '../../InstanceManager/CommandCentre';
 import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { useWindowEventListener } from '../../hooks/useWindowEventListener';
 import {
@@ -122,7 +123,7 @@ declare module 'notistack' {
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;
     timeCapsuleRef?: React.RefObject<null | moorhen.TimeCapsule>;
-    commandCentre?: React.RefObject<moorhen.CommandCentre>;
+    commandCentre?: React.RefObject<CommandCentre>;
     videoRecorderRef?: React.RefObject<null | moorhen.ScreenRecorder>;
     moleculesRef?: React.RefObject<null | moorhen.Molecule[]>;
     mapsRef?: React.RefObject<null | moorhen.Map[]>;
@@ -214,7 +215,7 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     const dispatch = useDispatch();
     const store: Store = useStore();
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const moorhenGlobalInstance = useMoorhenInstance();
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
     const onUserPreferencesChange = useCallback(
@@ -327,13 +328,21 @@ const MoorhenContainer = (props: ContainerProps) => {
             if (!userPreferencesMounted) {
                 return;
             }
-            moorhenGlobalInstance.setMoleculesAndMapsRefs(timeCapsuleMoleculeRef, timeCapsuleMapRef);
+            //moorhenGlobalInstance.setMoleculesAndMapsRefs(timeCapsuleMoleculeRef, timeCapsuleMapRef);
             moorhenGlobalInstance.setPaths(urlPrefix, monomerLibraryPath);
-            moorhenGlobalInstance.startInstance(dispatch, store, props.commandCentre, props.timeCapsuleRef, {
-                providedBackupStorageInstance: props.backupStorageInstance,
-                maxBackupCount: maxBackupCount,
-                modificationCountBackupThreshold: modificationCountBackupThreshold,
-            });
+            moorhenGlobalInstance.startInstance(
+                dispatch,
+                timeCapsuleMoleculeRef,
+                timeCapsuleMapRef,
+                store,
+                props.commandCentre,
+                props.timeCapsuleRef,
+                {
+                    providedBackupStorageInstance: props.backupStorageInstance,
+                    maxBackupCount: maxBackupCount,
+                    modificationCountBackupThreshold: modificationCountBackupThreshold,
+                }
+            );
 
             if (aceDRGInstance) {
                 moorhenGlobalInstance.setAceDRGInstance(aceDRGInstance);
@@ -511,9 +520,9 @@ const MoorhenContainer = (props: ContainerProps) => {
 
 const MoorhenContainerWrapper = (props: ContainerProps) => {
     return (
-        <MoorhenGlobalInstanceProvider>
+        <MoorhenInstanceProvider>
             <MoorhenContainer {...props} />
-        </MoorhenGlobalInstanceProvider>
+        </MoorhenInstanceProvider>
     );
 };
 

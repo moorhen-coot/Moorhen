@@ -1,70 +1,71 @@
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { guid } from "./utils";
+import type { cootCommandKwargs } from '../InstanceManager/CommandCentre';
+import { webGL } from '../types/mgWebGL';
+import { moorhen } from '../types/moorhen';
+import { guid } from './utils';
 
 const formatCommandString = (command: string) => {
-    if (command === "fill_partial_residue") {
-        return "Auto-fit Rotamer";
-    } else if (command === "flipPeptide_cid") {
-        return "Flip Peptide CID";
+    if (command === 'fill_partial_residue') {
+        return 'Auto-fit Rotamer';
+    } else if (command === 'flipPeptide_cid') {
+        return 'Flip Peptide CID';
     }
-    const stringWithSpaces = command.replaceAll("_", " ").replaceAll("shim", "");
-    const words = stringWithSpaces.split(" ");
-    const formattedWords = words.map((word) => {
+    const stringWithSpaces = command.replaceAll('_', ' ').replaceAll('shim', '');
+    const words = stringWithSpaces.split(' ');
+    const formattedWords = words.map(word => {
         if (word.length > 0) {
             return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
         }
-        return "";
+        return '';
     });
-    const formattedString = formattedWords.join(" ");
+    const formattedString = formattedWords.join(' ');
     return formattedString;
 };
 
 const formatCommandArgsString = (command: string, commandArgs: (number | string)[]) => {
-    let formattedString: string = "";
+    let formattedString: string = '';
 
     // TODO: Maybe do this in such way that we simply show all command args as list by default
     switch (command) {
-        case "add_hydrogen_atoms":
-        case "delete_hydrogen_atoms":
-        case "get_monomer_and_position_at":
-        case "add_waters":
-        case "flip_hand":
-        case "set_imol_refinement_map":
-        case "redo":
-        case "undo":
-        case "shim_replace_map_by_mtz_from_file":
-        case "replace_molecule_by_model_from_string":
-        case "close_molecule":
+        case 'add_hydrogen_atoms':
+        case 'delete_hydrogen_atoms':
+        case 'get_monomer_and_position_at':
+        case 'add_waters':
+        case 'flip_hand':
+        case 'set_imol_refinement_map':
+        case 'redo':
+        case 'undo':
+        case 'shim_replace_map_by_mtz_from_file':
+        case 'replace_molecule_by_model_from_string':
+        case 'close_molecule':
             formattedString = `${commandArgs[0]}`;
             break;
-        case "fill_partial_residue":
-        case "auto_fit_rotamer":
+        case 'fill_partial_residue':
+        case 'auto_fit_rotamer':
             formattedString = `/1/${commandArgs[1]}/${commandArgs[2]}/*`;
             break;
-        case "replace_fragment":
-        case "fit_ligand_right_here":
-        case "fit_ligand":
+        case 'replace_fragment':
+        case 'fit_ligand_right_here':
+        case 'fit_ligand':
             formattedString = `${commandArgs[0]},  ${commandArgs[1]},  ${commandArgs[2]}`;
             break;
-        case "mutate":
-        case "refine_residues_using_atom_cid":
-        case "rename_chain":
+        case 'mutate':
+        case 'refine_residues_using_atom_cid':
+        case 'rename_chain':
             formattedString = `${commandArgs[1]},  ${commandArgs[2]}`;
             break;
-        case "shim_new_positions_for_residue_atoms":
-        case "shim_auto_read_mtz":
-        case "pop_back":
-            formattedString = "";
+        case 'shim_new_positions_for_residue_atoms':
+        case 'shim_auto_read_mtz':
+        case 'pop_back':
+            formattedString = '';
             break;
-        case "refine_residue_range":
+        case 'refine_residue_range':
             formattedString = `/1/${commandArgs[1]}/${commandArgs[2]}-${commandArgs[3]}/*`;
             break;
-        case "SSM_superpose":
+        case 'SSM_superpose':
             formattedString = `${commandArgs[0]},  ${commandArgs[1]},  ${commandArgs[2]},  ${commandArgs[3]}`;
             break;
-        case "sharpen_blur_map":
-        case "merge_molecules_return":
+        case 'sharpen_blur_map':
+        case 'merge_molecules_return':
             formattedString = `${commandArgs[0]},  ${commandArgs[1]}`;
             break;
         default:
@@ -85,22 +86,19 @@ const getCommandLabel = (command: string, commandArgs: (string | number)[]) => {
     }
 };
 
-export interface HistoryEntry extends moorhen.cootCommandKwargs {
+export interface HistoryEntry extends cootCommandKwargs {
     uniqueId: string;
     associatedBackupKey: string;
     label: string;
 }
 export class History {
-    commandCentre: moorhen.CommandCentre;
-    glRef: React.RefObject<webGL.MGWebGL>;
     timeCapsule: React.RefObject<moorhen.TimeCapsule>;
     entries: HistoryEntry[];
     headId: string;
     headIsDetached: boolean;
     skipTracking: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>) {
-        this.glRef = glRef;
+    constructor(timeCapsule: React.RefObject<moorhen.TimeCapsule>) {
         this.timeCapsule = timeCapsule;
         this.reset();
     }
@@ -131,14 +129,6 @@ export class History {
     }
 
     /**
-     * A setter for the commandCentre attribute
-     * @param {moorhen.CommandCentre} commandCentre
-     */
-    setCommandCentre(commandCentre: moorhen.CommandCentre) {
-        this.commandCentre = commandCentre;
-    }
-
-    /**
      * Set the current head to a given history entry
      * @param {string} id - The ID of the history entry to be used as current head
      * @param {string} detach - Wether the history should enter a detached state
@@ -152,7 +142,7 @@ export class History {
      * Add an entry to the history
      * @param {moorhen.cootCommandKwargs} newEntry - The new entry that will be added
      */
-    async addEntry(newEntry: moorhen.cootCommandKwargs) {
+    async addEntry(newEntry: cootCommandKwargs) {
         if (this.skipTracking) {
             return;
         }
@@ -182,8 +172,8 @@ export class History {
      * @param {number} molNo - The molecule number of interest
      * @returns {moorhen.cootCommandKwargs[]} - A list of history entries related to the molecule
      */
-    getEntriesForMolNo(molNo: number): moorhen.cootCommandKwargs[] {
-        return this.entries.filter((entry) => entry.changesMolecules?.includes(molNo));
+    getEntriesForMolNo(molNo: number): cootCommandKwargs[] {
+        return this.entries.filter(entry => entry.changesMolecules?.includes(molNo));
     }
 
     /**
@@ -193,9 +183,9 @@ export class History {
     getModifiedMolNo(): number[] {
         const modifiedMolNo = [];
 
-        this.entries.forEach((entry) => {
+        this.entries.forEach(entry => {
             if (entry.changesMolecules?.length > 0) {
-                entry.changesMolecules.forEach((molNo) => modifiedMolNo.push(molNo));
+                entry.changesMolecules.forEach(molNo => modifiedMolNo.push(molNo));
             }
         });
 
@@ -208,12 +198,12 @@ export class History {
      * @returns {number} - The imol of the molecule that was last modified
      */
     lastModifiedMolNo(): number {
-        const modifications = this.entries.filter((item) => item.changesMolecules?.length > 0);
+        const modifications = this.entries.filter(item => item.changesMolecules?.length > 0);
         if (modifications.length > 0) {
             const lastAction = modifications[modifications.length - 1];
             return lastAction.changesMolecules[0];
         } else {
-            console.warn("Could not find the last modified imol in moorhen history");
+            console.warn('Could not find the last modified imol in moorhen history');
             return -1;
         }
     }
@@ -223,13 +213,13 @@ export class History {
      * @param {string} id - Unique ID for the entry used to rebase history
      */
     rebase(id: string) {
-        const newBaseIndex = this.entries.findIndex((entry) => entry.uniqueId === id);
+        const newBaseIndex = this.entries.findIndex(entry => entry.uniqueId === id);
         if (newBaseIndex !== -1) {
             const newHead = this.entries[newBaseIndex];
             this.headId = newHead.uniqueId;
             this.entries = this.entries.slice(0, newBaseIndex + 1);
         } else {
-            console.warn("Could not find the new base index to rebase moorhen history");
+            console.warn('Could not find the new base index to rebase moorhen history');
         }
     }
 }
