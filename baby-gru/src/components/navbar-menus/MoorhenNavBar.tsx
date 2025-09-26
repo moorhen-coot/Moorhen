@@ -21,7 +21,7 @@
 // import { moorhen } from "../../types/moorhen";
 // import { showModal } from "../../store/modalsSlice";
 // import { modalKeys } from "../../utils/enums";
-// import { useMoorhenGlobalInstance } from "../../InstanceManager";
+// import { useMoorhenInstance } from "../../InstanceManager";
 // import { MoorhenFileMenu } from "./MoorhenFileMenu";
 // import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
 // import { MoorhenHelpMenu } from "./MoorhenHelpMenu";
@@ -86,7 +86,7 @@
 //     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 //     const viewOnly = useSelector((state: moorhen.State) => state.generalStates.viewOnly)
 
-//     const moorhenGlobalInstance = useMoorhenGlobalInstance();
+//     const moorhenGlobalInstance = useMoorhenInstance();
 //     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
 //     const urlPrefix = moorhenGlobalInstance.paths.urlPrefix;
 
