@@ -3,6 +3,7 @@ import { Dispatch, Store, UnknownAction } from 'redux';
 import React from 'react';
 import { Preferences } from '../components/managers/preferences/MoorhenPreferences';
 import { MoorhenMap, MoorhenMolecule } from '../moorhen';
+import { sliceModules } from '../store/MoorhenReduxStore';
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setBusy, setGlobalInstanceReady } from '../store/globalUISlice';
 import { moorhen } from '../types/moorhen';
@@ -12,15 +13,9 @@ import { CommandCentre } from './CommandCentre';
 
 //import { CommandCentre } from './CommandCentre/MoorhenCommandCentre';
 
-/**
- * MoorhenInstance is a singleton class that manages global instances
- * of CommandCentre, TimeCapsule, and ScreenRecorder.
- * It provides methods to set and get these instances, as well as cleanup functionality.
- *
- */
-
 export class MoorhenInstance {
     public dispatch!: Dispatch<UnknownAction>;
+    public readonly actions: Record<string, (...args: any[]) => void> = {};
 
     private commandCentre!: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -43,6 +38,7 @@ export class MoorhenInstance {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this.initializeActions();
     }
 
     public paths: {
@@ -52,6 +48,29 @@ export class MoorhenInstance {
         urlPrefix: '',
         monomerLibraryPath: '',
     };
+
+    private initializeActions(): void {
+        sliceModules.forEach(sliceModule => {
+            Object.keys(sliceModule).forEach(key => {
+                if (typeof sliceModule[key] === 'function' && key !== 'default') {
+                    // Handle potential naming conflicts by prefixing or warning
+                    if (this.actions[key]) {
+                        console.warn(`Action name conflict: ${key} already exists. Overwriting.`);
+                    }
+
+                    this.actions[key] = (...args: any[]) => {
+                        if (this.dispatch) {
+                            this.dispatch(sliceModule[key](...args));
+                        } else {
+                            console.warn('MoorhenInstance dispatch not initialized. Call startInstance() first.');
+                        }
+                    };
+                }
+            });
+        });
+    }
+
+    // ...existing code...
 
     public setCommandCentre(commandCentre: CommandCentre): void {
         this.commandCentre = commandCentre;
