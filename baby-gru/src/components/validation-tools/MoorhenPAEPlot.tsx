@@ -32,10 +32,12 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 
 export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasLegendRef = useRef<HTMLCanvasElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [plotData, setPlotData] = useState<null | ImageData>(null)
+    const [maxPAE, setMaxPAE] = useState<number>(100)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<null | string>(null)
 
@@ -68,6 +70,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const fetchData = async () => {
 
         const imgData = await paeToImageData(paeTest[0])
+        if(paeTest[0].max_predicted_aligned_error) setMaxPAE(paeTest[0].max_predicted_aligned_error)
         setPlotData(imgData)
 
     }
@@ -149,6 +152,69 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     }, [canvasRef, handleMouseMove])
 
     useEffect(() => {
+        const plotTheLegend = async () => {
+           if(!canvasLegendRef||!canvasLegendRef.current)
+               return
+            const canvas = canvasLegendRef.current
+            const ctx = canvas.getContext("2d")
+            if(!ctx||!plotData) return
+
+            ctx.save()
+            ctx.clearRect(0,0,canvas.width,canvas.height)
+            const grad=ctx.createLinearGradient(axesSpace,0, canvas.width,0);
+            grad.addColorStop(0, "#006900");
+            grad.addColorStop(0.5, "#80b480");
+            grad.addColorStop(1, "white");
+            
+            if(bright_y>0.5){
+                ctx.strokeStyle = "black"
+                ctx.fillStyle = grad
+            } else {
+                ctx.strokeStyle = "white"
+                ctx.fillStyle = grad
+            }
+
+            const tm = ctx.measureText("30")
+            const tHeight = tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent
+
+            ctx.beginPath()
+            ctx.moveTo(axesSpace,0)
+            ctx.lineTo(axesSpace,canvas.height-2.5*tHeight)
+            ctx.lineTo(canvas.width,canvas.height-2.5*tHeight)
+            ctx.lineTo(canvas.width,0)
+            ctx.lineTo(axesSpace,0)
+            ctx.fill()
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.moveTo(axesSpace,0)
+            ctx.lineTo(axesSpace,canvas.height-2.5*tHeight)
+            ctx.lineTo(canvas.width,canvas.height-2.5*tHeight)
+            ctx.lineTo(canvas.width,0)
+            ctx.lineTo(axesSpace,0)
+            ctx.stroke()
+
+            if(bright_y>0.5){
+                ctx.fillStyle = "black"
+            } else {
+                ctx.fillStyle = "white"
+            }
+
+            ctx.font = "16px arial"
+            for(let ival=0;ival<maxPAE;ival+=5){
+                const tm = ctx.measureText(""+Math.floor(ival).toFixed(0))
+                const tWidth = tm.width
+                const tHeight = tm.actualBoundingBoxDescent+tm.actualBoundingBoxAscent
+                const frac = ival / maxPAE
+                const yval = frac*(canvas.width-axesSpace) + axesSpace - tWidth/2
+                ctx.fillText(""+Math.floor(ival).toFixed(0),yval,canvas.height)
+            }
+
+            ctx.restore()
+        }
+        plotTheLegend()
+     }, [plotData, backgroundColor, isDark, height, width, props.size ])
+
+    useEffect(() => {
         const plotTheData = async () => {
            if(!canvasRef||!canvasRef.current)
                return
@@ -159,8 +225,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             const resizeImgData = await resizeImageData(plotData,Math.min(canvas.width,canvas.height-axesSpace),Math.min(canvas.width,canvas.height-axesSpace))
             ctx.save()
             ctx.lineWidth = 2
-            ctx.fillStyle = "red"
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if(bright_y>0.5){
                 ctx.strokeStyle = "black"
@@ -178,7 +242,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.lineTo(axesSpace,0)
             ctx.stroke()
 
-            console.log(mouseHeldDown)
             if(mouseHeldDown) {
                console.log(moveX.toFixed(2),moveY.toFixed(2))
                console.log(clickX.toFixed(2),clickY.toFixed(2))
@@ -228,8 +291,8 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         plotTheData()
      }, [plotData, backgroundColor, isDark, height, width, props.size, clickX, clickY, moveX, moveY ])
 
-    const plotHeight = (props.size.height) - convertRemToPx(12)
-    const plotWidth = (props.size.width) - convertRemToPx(12)
+    const plotHeight = (props.size.height) - convertRemToPx(18)
+    const plotWidth = (props.size.width) - convertRemToPx(18)
     const plotSize = Math.min(plotWidth,plotHeight)
 
     return  <Fragment>
@@ -250,9 +313,20 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div id="ramaPlotDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
+                <Row>
+                <Col>
+                <div id="paePlotDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
                 <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
                 </div>
+                </Col>
+                </Row>
+                <Row>
+                <Col>
+                <div id="paeLegendDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
+                <canvas height={50} width={plotSize} ref={canvasLegendRef}></canvas>
+                </div>
+                </Col>
+                </Row>
             </Fragment>
 
 }
