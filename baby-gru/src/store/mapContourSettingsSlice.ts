@@ -1,12 +1,13 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { moorhen } from "../types/moorhen";
+import { createSlice } from '@reduxjs/toolkit';
+import { moorhen } from '../types/moorhen';
 
 const initialState: {
     visibleMaps: number[];
     contourLevels: { molNo: number; contourLevel: number }[];
     mapRadii: { molNo: number; radius: number }[];
+    mapFastRadii: { molNo: number; radius: number | null }[];
     mapAlpha: { molNo: number; alpha: number }[];
-    mapStyles: { molNo: number; style: "solid" | "lit-lines" | "lines" }[];
+    mapStyles: { molNo: number; style: 'solid' | 'lit-lines' | 'lines' }[];
     defaultMapSamplingRate: number;
     defaultMapLitLines: boolean;
     mapLineWidth: number;
@@ -19,6 +20,7 @@ const initialState: {
     visibleMaps: [],
     contourLevels: [],
     mapRadii: [],
+    mapFastRadii: [],
     mapStyles: [],
     mapAlpha: [],
     mapColours: [],
@@ -32,7 +34,7 @@ const initialState: {
 };
 
 export const mapContourSettingsSlice = createSlice({
-    name: "mapContourSettings",
+    name: 'mapContourSettings',
     initialState: initialState,
     reducers: {
         resetMapContourSettings: () => {
@@ -48,60 +50,62 @@ export const mapContourSettingsSlice = createSlice({
             return state;
         },
         hideMap: (state, action: { payload: moorhen.Map; type: string }) => {
-            state = { ...state, visibleMaps: state.visibleMaps.filter((item) => item !== action.payload.molNo) };
+            state = { ...state, visibleMaps: state.visibleMaps.filter(item => item !== action.payload.molNo) };
             return state;
         },
         setContourLevel: (state, action: { payload: { molNo: number; contourLevel: number }; type: string }) => {
             state = {
                 ...state,
-                contourLevels: [
-                    ...state.contourLevels.filter((item) => item.molNo !== action.payload.molNo),
-                    action.payload,
-                ],
+                contourLevels: [...state.contourLevels.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
         setMapRadius: (state, action: { payload: { molNo: number; radius: number }; type: string }) => {
             state = {
                 ...state,
-                mapRadii: [...state.mapRadii.filter((item) => item.molNo !== action.payload.molNo), action.payload],
+                mapRadii: [...state.mapRadii.filter(item => item.molNo !== action.payload.molNo), action.payload],
+            };
+            return state;
+        },
+        setMapFastRadius: (state, action: { payload: { molNo: number; radius: number | null }; type: string }) => {
+            state = {
+                ...state,
+                mapFastRadii: [...state.mapFastRadii.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
         setMapAlpha: (state, action: { payload: { molNo: number; alpha: number }; type: string }) => {
             state = {
                 ...state,
-                mapAlpha: [...state.mapAlpha.filter((item) => item.molNo !== action.payload.molNo), action.payload],
+                mapAlpha: [...state.mapAlpha.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
-        setMapStyle: (
-            state,
-            action: { payload: { molNo: number; style: "solid" | "lit-lines" | "lines" }; type: string }
-        ) => {
+        setMapStyle: (state, action: { payload: { molNo: number; style: 'solid' | 'lit-lines' | 'lines' }; type: string }) => {
             state = {
                 ...state,
-                mapStyles: [...state.mapStyles.filter((item) => item.molNo !== action.payload.molNo), action.payload],
+                mapStyles: [...state.mapStyles.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
+
         changeContourLevel: (state, action: { payload: { molNo: number; factor: number }; type: string }) => {
-            const map = state.contourLevels.find((item) => item.molNo === action.payload.molNo);
+            const map = state.contourLevels.find(item => item.molNo === action.payload.molNo);
             state = {
                 ...state,
                 contourLevels: [
-                    ...state.contourLevels.filter((item) => item.molNo !== action.payload.molNo),
+                    ...state.contourLevels.filter(item => item.molNo !== action.payload.molNo),
                     { molNo: action.payload.molNo, contourLevel: map.contourLevel + action.payload.factor },
                 ],
             };
             return state;
         },
         changeMapRadius: (state, action: { payload: { molNo: number; factor: number }; type: string }) => {
-            const map = state.mapRadii.find((item) => item.molNo === action.payload.molNo);
+            const map = state.mapRadii.find(item => item.molNo === action.payload.molNo);
             state = {
                 ...state,
                 mapRadii: [
-                    ...state.mapRadii.filter((item) => item.molNo !== action.payload.molNo),
+                    ...state.mapRadii.filter(item => item.molNo !== action.payload.molNo),
                     { molNo: action.payload.molNo, radius: map.radius + action.payload.factor },
                 ],
             };
@@ -119,39 +123,24 @@ export const mapContourSettingsSlice = createSlice({
         setDefaultMapSurface: (state, action: { payload: boolean; type: string }) => {
             return { ...state, defaultMapSurface: action.payload };
         },
-        setMapColours: (
-            state,
-            action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }
-        ) => {
+        setMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,
-                mapColours: [...state.mapColours.filter((item) => item.molNo !== action.payload.molNo), action.payload],
+                mapColours: [...state.mapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
-        setNegativeMapColours: (
-            state,
-            action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }
-        ) => {
+        setNegativeMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,
-                negativeMapColours: [
-                    ...state.negativeMapColours.filter((item) => item.molNo !== action.payload.molNo),
-                    action.payload,
-                ],
+                negativeMapColours: [...state.negativeMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
-        setPositiveMapColours: (
-            state,
-            action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }
-        ) => {
+        setPositiveMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,
-                positiveMapColours: [
-                    ...state.positiveMapColours.filter((item) => item.molNo !== action.payload.molNo),
-                    action.payload,
-                ],
+                positiveMapColours: [...state.positiveMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
             };
             return state;
         },
@@ -163,6 +152,7 @@ export const {
     hideMap,
     setContourLevel,
     setMapRadius,
+    setMapFastRadius,
     setMapAlpha,
     setMapStyle,
     changeMapRadius,
