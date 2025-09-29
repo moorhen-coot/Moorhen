@@ -329,7 +329,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     return  <>
                 <Row style={{textAlign:'left', marginBottom:"1.5rem" }}>
-                    <Col sm={1}>UniProt</Col>
+                    <Col sm={2}>UniProt</Col>
                     <Form.Group as={Col} className="mb-3" >
                         <Form.Control
                              type="text"
