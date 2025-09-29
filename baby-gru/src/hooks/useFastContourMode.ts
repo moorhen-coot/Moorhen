@@ -120,7 +120,10 @@ export const useFastContourMode = ({
             // Force exit fast mode if component unmounts during fast mode
             if (isInFastMode && originalParameters) {
                 map.toggleOriginLock(originalParameters.originLocked);
-                dispatch(setMapFastRadius({ molNo: map.molNo, radius: -1 }));
+                setTimeout(() => {
+                    //timer to be sure that this is the last dispatched action
+                    dispatch(setMapFastRadius({ molNo: map.molNo, radius: -1 }));
+                }, 10);
             }
         };
     }, []);

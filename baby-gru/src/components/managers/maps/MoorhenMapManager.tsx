@@ -20,8 +20,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             style: 'solid' | 'lit-lines' | 'lines';
         }[]
     >([]);
-
-    const debounceTime = useRef<number>(150);
     const isWorkingRef = useRef<boolean>(false);
     const mapMolNo = props.mapMolNo;
     const store = useStore<RootState>();
@@ -126,7 +124,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         const now = Date.now();
         isWorkingRef.current = false;
         const timing = now - startTime;
-        debounceTime.current = timing;
+        console.debug(`Map redraw took ${timing} ms`);
     };
 
     function drawMap() {
@@ -145,7 +143,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         /* this should be moved to map initialisation in moorhen the instance*/
         if (map?.showOnLoad) {
             dispatch(showMap(map));
-            dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius || 15 }));
+            dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius * 1.2 || 15 }));
             dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
             dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: map?.suggestedContourLevel || 0.8 }));
             dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
@@ -159,7 +157,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     useEffect(() => {
         const intervalId = setInterval(() => {
             processDrawQueue();
-        }, 50);
+        }, 30);
 
         return () => clearInterval(intervalId);
     }, []);
