@@ -1,8 +1,6 @@
-import { Fragment, useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Col, Row, Form, Button } from 'react-bootstrap'
 import { useSelector } from "react-redux"
-import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
-import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils"
 
@@ -29,13 +27,9 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasLegendRef = useRef<HTMLCanvasElement>(null)
-    const chainSelectRef = useRef<null | HTMLSelectElement>(null)
-    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const [plotData, setPlotData] = useState<null | ImageData>(null)
     const [maxPAE, setMaxPAE] = useState<number>(100)
-    const [selectedModel, setSelectedModel] = useState<null | number>(null)
-    const [selectedChain, setSelectedChain] = useState<null | string>(null)
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
@@ -43,6 +37,8 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [moveY, setMoveY] = useState<number>(-1)
     const [releaseX, setReleaseX] = useState<number>(-1)
     const [releaseY, setReleaseY] = useState<number>(-1)
+
+    const [queryText, setQueryText] = useState<string>("Q12XU1")
 
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
 
@@ -52,22 +48,11 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-
     const axesSpace = 75
-
-    const handleModelChange = (evt) => {
-        setSelectedModel(parseInt(evt.target.value))
-        setSelectedChain(chainSelectRef.current.value)
-    }
-
-    const handleChainChange = (evt) => {
-        setSelectedChain(evt.target.value)
-    }
 
     const fetchData = async () => {
 
-        const uniprotID = "Q12XU1"
+        const uniprotID = queryText
         const paeUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-predicted_aligned_error_v4.json`
         const paeResponse = await fetch(paeUrl)
         if(paeResponse.ok) {
@@ -344,13 +329,21 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     return  <>
                 <Row style={{textAlign:'left', marginBottom:"1.5rem" }}>
-                <Form>
-                    <Form.Group as={Col}>
-                                <Button variant="secondary" size='lg' onClick={fetchData} >
-                                    Plot
-                                </Button>
+                    <Col sm={1}>UniProt</Col>
+                    <Form.Group as={Col} className="mb-3" >
+                        <Form.Control
+                             type="text"
+                             value={queryText}
+                             onChange={evt => {
+                                 setQueryText(evt.target.value);
+                             }}
+                         />
                     </Form.Group>
-                </Form>
+                    <Col sm={6}>
+                        <Button variant="secondary" size='lg' onClick={fetchData} >
+                            Plot
+                        </Button>
+                    </Col>
                 </Row>
                 <Row>
                 <Col>
