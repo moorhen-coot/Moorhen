@@ -1,30 +1,34 @@
-import { useRef } from "react";
-import { useSelector } from "react-redux";
-import { useSnackbar } from "notistack";
-import { moorhen } from "../../../types/moorhen";
-import { useFastContourMode } from "../../../hooks/useFastContourMode";
-import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
+import { useSnackbar } from 'notistack';
+import { useSelector, useStore } from 'react-redux';
+import { useRef } from 'react';
+import { useDocumentEventListener } from '../../../hooks/useDocumentEventListener';
+import { useFastContourMode } from '../../../hooks/useFastContourMode';
+import { RootState } from '../../../store/MoorhenReduxStore';
+import { moorhen } from '../../../types/moorhen';
 
 export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map }) => {
     const mapContourLevelRef = useRef<number>(1);
     mapContourLevelRef.current = props.mapContourLevel;
+    const store = useStore<RootState>().getState();
 
-    const mapRadius = useSelector((state: moorhen.State) => {
-        const mapRadiusItem = state.mapContourSettings.mapRadii.find((item) => item.molNo === props.map.molNo);
+    const mapRadius = useSelector((state: RootState) => {
+        const mapRadiusItem = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
         return mapRadiusItem?.radius || props.map.suggestedRadius || 25;
     });
 
-    const contourWheelSensitivityFactor = useSelector(
-        (state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor
-    );
+    const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);
     const { enqueueSnackbar } = useSnackbar();
+    const zoomLevel = useSelector((state: RootState) => state.glRef.zoom);
+    const aspectRatio = store.sceneSettings.width / store.sceneSettings.height;
+    const seamlessRadius = 22 * zoomLevel * aspectRatio;
+    //const outOfMap: boolean = (store.glRef.origin)
 
     // Use the fast contour mode hook
     const { fastMapContourLevel } = useFastContourMode({
         map: props.map,
         mapRadius,
         radiusThreshold: 25,
-        fastRadius: 20,
+        fastRadius: seamlessRadius,
         timeoutDelay: 1000,
     });
 
@@ -38,7 +42,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         evt.preventDefault();
 
         if (!props.mapIsVisible) {
-            enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning" });
+            enqueueSnackbar('Active map not displayed, cannot change contour lvl.', { variant: 'warning' });
             return;
         }
 
@@ -46,7 +50,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         const now = Date.now();
         if (now - lastWheelTimeRef.current < debounceRepeatTime) {
             // Minimum 50ms between wheel events
-            console.log("Skipping wheel event to avoid flooding");
+            console.log('Skipping wheel event to avoid flooding');
             return;
         }
         lastWheelTimeRef.current = now;
@@ -69,7 +73,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
             if (newMapContourLevel) {
                 fastMapContourLevel(newMapContourLevel);
                 enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
-                    variant: "mapContourLevel",
+                    variant: 'mapContourLevel',
                     persist: true,
                     mapMolNo: props.map.molNo,
                     mapPrecision: props.map.levelRange[0],
@@ -79,7 +83,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         }, debounceDelayMs);
     };
 
-    useDocumentEventListener<moorhen.WheelContourLevelEvent>("wheelContourLevelChanged", handleWheelContourLevel);
+    useDocumentEventListener<moorhen.WheelContourLevelEvent>('wheelContourLevelChanged', handleWheelContourLevel);
 
     return null;
 };
