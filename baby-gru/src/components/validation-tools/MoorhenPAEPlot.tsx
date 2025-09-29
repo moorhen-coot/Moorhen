@@ -131,9 +131,13 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
            const yFrac = y/resizedSize
            setReleaseX(xFrac)
            setReleaseY(yFrac)
+           if(Math.abs((clickX-xFrac)*plotData.width)>1&&Math.abs((clickY-yFrac)*plotData.height)){
+               console.log(Math.round(clickX*plotData.width),Math.round(clickY*plotData.height))
+               console.log(Math.round(xFrac*plotData.width),Math.round(yFrac*plotData.height))
+           }
         }
 
-    },[plotData,clickX,clickY,props.size])
+    },[plotData,clickX,clickY,props.size,plotData])
 
     const handleMouseDown = useCallback((evt) => {
 
@@ -167,7 +171,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             }
         }
 
-    }, [canvasRef, handleMouseMove])
+    }, [canvasRef, handleMouseMove,handleMouseUp,handleMouseDown])
 
     useEffect(() => {
         const plotTheLegend = async () => {
@@ -295,8 +299,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                ctx.lineTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.fill()
                ctx.restore()
-               console.log(Math.round(clickX*resizeImgData.width),Math.round(clickY*resizeImgData.height))
-               console.log(Math.round(releaseX*resizeImgData.width),Math.round(releaseY*resizeImgData.height))
             }
 
             ctx.font = "16px arial"
@@ -336,42 +338,34 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         plotTheData()
      }, [plotData, backgroundColor, isDark, height, width, props.size, clickX, clickY, moveX, moveY, releaseX, releaseY ])
 
-    const plotHeight = (props.size.height) - convertRemToPx(18)
-    const plotWidth = (props.size.width) - convertRemToPx(18)
+    const plotHeight = (props.size.height) - convertRemToPx(15)
+    const plotWidth = (props.size.width) - convertRemToPx(3)
     const plotSize = Math.min(plotWidth,plotHeight)
 
-    return  <Fragment>
-                <Form style={{ padding:'0', margin: '0' }}>
-                    <Form.Group>
-                        <Row style={{ padding:'0', margin: '0' }}>
-                            <Col>
-                                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
-                            </Col>
-                            <Col>
-                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
-                            </Col>
-                            <Col style={{ display:'flex', alignItems: 'center', alignContent: 'center', verticalAlign: 'center'}}>
-                                <Button variant="secondary" size='lg' onClick={fetchData} style={{width: '80%', marginTop:'10%'}}>
+    return  <>
+                <Row style={{textAlign:'left', marginBottom:"1.5rem" }}>
+                <Form>
+                    <Form.Group as={Col}>
+                                <Button variant="secondary" size='lg' onClick={fetchData} >
                                     Plot
                                 </Button>
-                            </Col>
-                        </Row>
                     </Form.Group>
                 </Form>
+                </Row>
                 <Row>
                 <Col>
-                <div id="paePlotDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
+                <div>
                 <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
                 </div>
                 </Col>
                 </Row>
                 <Row>
                 <Col>
-                <div id="paeLegendDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
+                <div>
                 <canvas height={50} width={plotSize} ref={canvasLegendRef}></canvas>
                 </div>
                 </Col>
                 </Row>
-            </Fragment>
+            </>
 
 }
