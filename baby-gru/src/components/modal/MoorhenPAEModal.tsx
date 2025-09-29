@@ -32,7 +32,7 @@ export const MoorhenPAEModal = () => {
                 enforceMaxBodyDimensions={false}
                 overflowY='hidden'
                 overflowX='auto'
-                headerTitle='Alphafold PAE Plot (example data)'
+                headerTitle='Alphafold PAE Plot'
                 footer={null}
                 onResize={(evt, ref, direction, delta, size) => {
                    setModalSize(size)
