@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState, useCallback } from "react"
 import { Col, Row, Form, Button } from 'react-bootstrap'
 import { useSelector } from "react-redux"
 import { useCommandCentre } from "../../InstanceManager"
@@ -15,6 +15,21 @@ interface MoorhenPAEProps {
     size?: { width: number; height: number; };
 }
 
+const getOffsetRect = (elem: HTMLCanvasElement) => {
+    const box = elem.getBoundingClientRect();
+    const body = document.body;
+    const docElem = document.documentElement;
+
+    const scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
+    const scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
+    const clientTop = docElem.clientTop || body.clientTop || 0;
+    const clientLeft = docElem.clientLeft || body.clientLeft || 0;
+    const top  = box.top +  scrollTop - clientTop;
+    const left = box.left + scrollLeft - clientLeft;
+
+    return { top: Math.round(top), left: Math.round(left) };
+}
+
 export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -24,13 +39,22 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<null | string>(null)
 
+    const [clickX, setClickX] = useState<number>(-1)
+    const [clickY, setClickY] = useState<number>(-1)
+    const [moveX, setMoveX] = useState<number>(-1)
+    const [moveY, setMoveY] = useState<number>(-1)
+
+    const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
-    
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+
+    const axesSpace = 75
 
     const handleModelChange = (evt) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -48,6 +72,82 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     }
 
+    const getXY = (evt) => {
+        if(!canvasRef||!canvasRef.current) return
+
+        const canvas = canvasRef.current
+        const offset = getOffsetRect(canvas)
+        let x: number
+        let y: number
+
+        if (evt.pageX || evt.pageY) {
+            x = evt.pageX
+            y = evt.pageY
+        } else {
+            x = evt.clientX
+            y = evt.clientY
+        }
+        x -= offset.left
+        y -= offset.top
+
+        return [x,y]
+    }
+
+    const handleMouseMove = useCallback((evt) => {
+        if(!canvasRef||!canvasRef.current) return
+
+        const canvas = canvasRef.current
+
+        const [x,y] = getXY(evt)
+
+        if(x>axesSpace&&y<canvas.height-axesSpace){
+           const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
+           const xFrac = (x-axesSpace)/resizedSize
+           const yFrac = y/resizedSize
+           setMoveX(xFrac)
+           setMoveY(yFrac)
+        }
+
+    },[plotData])
+
+    const handleMouseUp = useCallback((evt) => {
+        setMouseHeldDown(false)
+    },[plotData])
+
+    const handleMouseDown = useCallback((evt) => {
+        if(!canvasRef||!canvasRef.current) return
+
+        const canvas = canvasRef.current
+
+        const [x,y] = getXY(evt)
+
+        if(x>axesSpace&&y<canvas.height-axesSpace){
+           const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
+           const xFrac = (x-axesSpace)/resizedSize
+           const yFrac = y/resizedSize
+           setClickX(xFrac)
+           setClickY(yFrac)
+           setMouseHeldDown(true)
+        }
+
+    },[plotData])
+
+    useEffect(() => {
+
+        canvasRef.current.addEventListener("mousemove", handleMouseMove , false);
+        canvasRef.current.addEventListener("mousedown", handleMouseDown , false);
+        canvasRef.current.addEventListener("mouseup", handleMouseUp , false);
+
+        return () => {
+            if (canvasRef.current !== null) {
+                canvasRef.current.removeEventListener("mousemove", handleMouseMove);
+                canvasRef.current.removeEventListener("mousedown", handleMouseDown);
+                canvasRef.current.removeEventListener("mouseup", handleMouseUp);
+            }
+        }
+
+    }, [canvasRef, handleMouseMove])
+
     useEffect(() => {
         const plotTheData = async () => {
            if(!canvasRef||!canvasRef.current)
@@ -55,8 +155,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             const canvas = canvasRef.current
             const ctx = canvas.getContext("2d")
             if(!ctx||!plotData) return
-
-            const axesSpace = 75
 
             const resizeImgData = await resizeImageData(plotData,Math.min(canvas.width,canvas.height-axesSpace),Math.min(canvas.width,canvas.height-axesSpace))
             ctx.save()
@@ -79,6 +177,19 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.lineTo(canvas.width,0)
             ctx.lineTo(axesSpace,0)
             ctx.stroke()
+
+            console.log(mouseHeldDown)
+            if(mouseHeldDown) {
+               console.log(moveX.toFixed(2),moveY.toFixed(2))
+               console.log(clickX.toFixed(2),clickY.toFixed(2))
+               ctx.beginPath()
+               ctx.moveTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
+               ctx.lineTo(axesSpace+clickX*resizeImgData.width,moveY*resizeImgData.height)
+               ctx.lineTo(axesSpace+moveX*resizeImgData.width,moveY*resizeImgData.height)
+               ctx.lineTo(axesSpace+moveX*resizeImgData.width,clickY*resizeImgData.height)
+               ctx.lineTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
+               ctx.stroke()
+            }
 
             ctx.font = "16px arial"
             for(let ires=0;ires<plotData.height;ires+=100){
@@ -115,8 +226,8 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.restore()
         }
         plotTheData()
-     }, [plotData, backgroundColor, isDark, height, width, props.size ])
- 
+     }, [plotData, backgroundColor, isDark, height, width, props.size, clickX, clickY, moveX, moveY ])
+
     const plotHeight = (props.size.height) - convertRemToPx(12)
     const plotWidth = (props.size.width) - convertRemToPx(12)
     const plotSize = Math.min(plotWidth,plotHeight)
