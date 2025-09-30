@@ -456,7 +456,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 {paeModeButtonState==="molecule" &&
                 <Row>
                     <Col sm={6}>
-                    <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
+                    <MoorhenMoleculeSelect width="" defaultValue={selectedModel} onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
                     </Col>
                     <Col sm={6}>
                         <Button variant="secondary" size='lg' onClick={fetchDataForLoadedMolecule} >
