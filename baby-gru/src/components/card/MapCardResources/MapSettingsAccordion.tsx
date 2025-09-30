@@ -2,7 +2,7 @@ import { ExpandMoreOutlined, LockOpen, LockOutline } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { Form, Stack, ToggleButton } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { setMapAlpha, setMapRadius, setMapStyle } from '../../../store/mapContourSettingsSlice';
 import { moorhen } from '../../../types/moorhen';
 import { MoorhenSlider } from '../../inputs';
@@ -24,9 +24,19 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     });
 
     const handleOriginLockClick = () => {
-        const currentStatus = props.map.isOriginLocked;
-        props.map.toggleOriginLock(!currentStatus);
-        //setIsOriginLocked(!currentStatus);
+        const isOriginLocked = props.map.isOriginLocked;
+        if (isOriginLocked) {
+            lockedRadius.current = props.mapRadius;
+        } else {
+            unLockedRadius.current = props.mapRadius;
+        }
+        dispatch(
+            setMapRadius({
+                molNo: props.map.molNo,
+                radius: isOriginLocked ? unLockedRadius.current : lockedRadius.current,
+            })
+        );
+        props.map.toggleOriginLock(!isOriginLocked);
         props.map.drawMapContour();
     };
 
@@ -46,6 +56,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const [meshAlpha, setMeshAlpha] = useState<number>(props.mapOpacity);
     const [surfaceAlpha, setSurfaceAlpha] = useState<number>(props.mapOpacity);
     const [litAlpha, setLitAlpha] = useState<number>(props.mapOpacity);
+    const unLockedRadius = useRef<number>(20);
+    const lockedRadius = useRef<number>(20);
 
     const opacitySlider = (
         <MoorhenSlider
