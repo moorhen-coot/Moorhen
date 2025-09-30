@@ -23,7 +23,7 @@
         "interactive model building"
     ],
     "scripts": {
-        "transpile-graphql-codegen": "node -e \"if (process.env.NO_GRAPHQL_CODEGEN !== '1'){process.exit(1)} \" || npx graphql-codegen",
+        "transpile-graphql-codegen": "if ! test -r src/utils/__graphql__/gql.ts; then  npx graphql-codegen; fi",
         "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
         "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak '/export {}/d' public/CootWorker.js && rm public/CootWorker.js.bak",
@@ -37,7 +37,7 @@
         "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",
         "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map && npm run dts-bundle && ./fix_old_namespace.sh",
         "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map --no-optimization-minimize --no-optimization-concatenate-modules && npm run dts-bundle && ./fix_old_namespace.sh",
-        "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md",
+        "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
         "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
         "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
     },
@@ -61,8 +61,8 @@
     },
     "dependencies": {
         "@apollo/client": "^3.13.8",
-        "@babel/core": "^7.28.0",
-        "@babel/preset-env": "^7.28.0",
+        "@babel/core": "^7.28.4",
+        "@babel/preset-env": "^7.28.3",
         "@babel/preset-react": "^7.27.1",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
@@ -155,7 +155,8 @@
         "yjs": "^13.6.27"
     },
     "devDependencies": {
-        "@babel/plugin-transform-object-rest-spread": "^7.20.7",
+        "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+        "@babel/plugin-transform-object-rest-spread": "^7.28.4",
         "@eslint/css": "^0.9.0",
         "@eslint/js": "^9.30.1",
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",

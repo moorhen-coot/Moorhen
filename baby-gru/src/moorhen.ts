@@ -1,38 +1,38 @@
 /* Main entry point */
 // @ts-strict
-import "./app.css";
+import './app.css';
 
-export { ErrorBoundary } from "./ErrorBoundary";
-export { MoorhenApp } from "./components/MoorhenApp";
-export { MoorhenContainer } from "./components/container/MoorhenContainer";
-export { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
-export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
-export { ColourRule } from "./utils/MoorhenColourRule";
-export { MoleculeRepresentation } from "./utils/MoorhenMoleculeRepresentation";
-export { MoorhenMolecule } from "./utils/MoorhenMolecule";
-export { MoorhenMap } from "./utils/MoorhenMap";
-export { getMultiColourRuleArgs } from "./utils/utils";
-export { CommandCentre } from "./utils/MoorhenCommandCentre";
-export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
-export { Preferences } from "./components/managers/preferences/MoorhenPreferences";
-export { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
-export { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
-export { MoorhenSlider } from "./components/inputs";
-export { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-export { MoorhenRamachandran } from "./components/validation-tools/MoorhenRamachandran";
-export { MoorhenLigandValidation } from "./components/validation-tools/MoorhenLigandValidation";
-export { MoorhenCarbohydrateValidation } from "./components/validation-tools/MoorhenCarbohydrateValidation";
-export { MoorhenDifferenceMapPeaks } from "./components/validation-tools/MoorhenDifferenceMapPeaks";
-export { MoorhenFillMissingAtoms } from "./components/validation-tools/MoorhenFillMissingAtoms";
-export { MoorhenJsonValidation } from "./components/validation-tools/MoorhenJsonValidation";
-export { MoorhenMMRRCCPlot } from "./components/validation-tools/MoorhenMMRRCCPlot";
-export { MoorhenPepflipsDifferenceMap } from "./components/validation-tools/MoorhenPepflipsDifferenceMap";
-export { MoorhenQScore } from "./components/validation-tools/MoorhenQScore";
-export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnmodelledBlobs";
-export { MoorhenValidation } from "./components/validation-tools/MoorhenValidation";
-export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
-export { autoOpenFiles } from "./utils/MoorhenFileLoading";
-export { MoorhenReduxStore } from "./store/MoorhenReduxStore";
+export { ErrorBoundary } from './ErrorBoundary';
+export { MoorhenApp } from './components/MoorhenApp';
+export { MoorhenContainer } from './components/container/MoorhenContainer';
+export { MoorhenDraggableModalBase } from './components/modal/MoorhenDraggableModalBase';
+export { MoorhenQuerySequenceModal } from './components/modal/MoorhenQuerySequenceModal';
+export { ColourRule } from './utils/MoorhenColourRule';
+export { MoleculeRepresentation } from './utils/MoorhenMoleculeRepresentation';
+export { MoorhenMolecule } from './utils/MoorhenMolecule';
+export { MoorhenMap } from './utils/MoorhenMap';
+export { getMultiColourRuleArgs } from './utils/utils';
+export { CommandCentre } from './InstanceManager/CommandCentre/MoorhenCommandCentre';
+export { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
+export { Preferences } from './components/managers/preferences/MoorhenPreferences';
+export { MoorhenMoleculeSelect } from './components/select/MoorhenMoleculeSelect';
+export { MoorhenMapSelect } from './components/select/MoorhenMapSelect';
+export { MoorhenSlider } from './components/inputs';
+export { MoorhenFetchOnlineSourcesForm } from './components/form/MoorhenFetchOnlineSourcesForm';
+export { MoorhenRamachandran } from './components/validation-tools/MoorhenRamachandran';
+export { MoorhenLigandValidation } from './components/validation-tools/MoorhenLigandValidation';
+export { MoorhenCarbohydrateValidation } from './components/validation-tools/MoorhenCarbohydrateValidation';
+export { MoorhenDifferenceMapPeaks } from './components/validation-tools/MoorhenDifferenceMapPeaks';
+export { MoorhenFillMissingAtoms } from './components/validation-tools/MoorhenFillMissingAtoms';
+export { MoorhenJsonValidation } from './components/validation-tools/MoorhenJsonValidation';
+export { MoorhenMMRRCCPlot } from './components/validation-tools/MoorhenMMRRCCPlot';
+export { MoorhenPepflipsDifferenceMap } from './components/validation-tools/MoorhenPepflipsDifferenceMap';
+export { MoorhenQScore } from './components/validation-tools/MoorhenQScore';
+export { MoorhenUnmodelledBlobs } from './components/validation-tools/MoorhenUnmodelledBlobs';
+export { MoorhenValidation } from './components/validation-tools/MoorhenValidation';
+export { MoorhenWaterValidation } from './components/validation-tools/MoorhenWaterValidation';
+export { autoOpenFiles } from './utils/MoorhenFileLoading';
+export { MoorhenReduxStore } from './store/MoorhenReduxStore';
 export {
     default as sceneSettingsReducer,
     setDefaultBackgroundColor,
@@ -74,7 +74,7 @@ export {
     setMultiViewRows,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
-} from "./store/sceneSettingsSlice";
+} from './store/sceneSettingsSlice';
 export {
     default as backupSettingsReducer,
     setEnableTimeCapsule,
@@ -82,7 +82,7 @@ export {
     setMaxBackupCount,
     setModificationCountBackupThreshold,
     resetBackupSettings,
-} from "./store/backupSettingsSlice";
+} from './store/backupSettingsSlice';
 export {
     default as generalStatesReducer,
     setActiveMap,
@@ -97,15 +97,15 @@ export {
     resetGeneralStates,
     setUseGemmi,
     setShowHoverInfo,
-} from "./store/generalStatesSlice";
-export { default as mapsReducer, addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
+} from './store/generalStatesSlice';
+export { default as mapsReducer, addMap, addMapList, removeMap, emptyMaps } from './store/mapsSlice';
 export {
     default as hoveringStatesReducer,
     setCursorStyle,
     setEnableAtomHovering,
     setHoveredAtom,
     resetHoveringStates,
-} from "./store/hoveringStatesSlice";
+} from './store/hoveringStatesSlice';
 export {
     default as labelSettingsReducer,
     addAvailableFontList,
@@ -113,7 +113,7 @@ export {
     setGLLabelsFontFamily,
     setGLLabelsFontSize,
     resetLabelSettings,
-} from "./store/labelSettingsSlice";
+} from './store/labelSettingsSlice';
 export {
     default as mapContourSettingsReducer,
     showMap,
@@ -130,7 +130,7 @@ export {
     setDefaultMapSurface,
     setContourLevel,
     resetMapContourSettings,
-} from "./store/mapContourSettingsSlice";
+} from './store/mapContourSettingsSlice';
 export {
     default as sliceNDiceReducer,
     setBFactorThreshold,
@@ -144,7 +144,7 @@ export {
     setSlicingResults,
     setThresholdType,
     setPAEFileContents,
-} from "./store/sliceNDiceSlice";
+} from './store/sliceNDiceSlice';
 export {
     default as refinementSettingsReducer,
     setEnableRefineAfterMod,
@@ -152,7 +152,7 @@ export {
     setuseTorsionRefinementRestraints,
     setAnimateRefine,
     resetRefinementSettings,
-} from "./store/refinementSettingsSlice";
+} from './store/refinementSettingsSlice';
 export {
     default as moleculesReducer,
     addMolecule,
@@ -165,21 +165,21 @@ export {
     removeCustomRepresentation,
     addGeneralRepresentation,
     removeGeneralRepresentation,
-} from "./store/moleculesSlice";
+} from './store/moleculesSlice';
 export {
     default as mouseSettingsReducer,
     setContourWheelSensitivityFactor,
     setZoomWheelSensitivityFactor,
     setMouseSensitivity,
     resetDefaultMouseSettings,
-} from "./store/mouseSettings";
+} from './store/mouseSettings';
 export {
     default as shortcutSettingsReducer,
     setShowShortcutToast,
     setShortcutOnHoveredAtom,
     setShortCuts,
     resetShortcutSettings,
-} from "./store/shortCutsSlice";
+} from './store/shortCutsSlice';
 export {
     default as moleculeMapUpdateReducer,
     setShowScoresToast,
@@ -187,16 +187,16 @@ export {
     removeMapUpdatingScore,
     overwriteMapUpdatingScores,
     resetMoleculeMapUpdates,
-} from "./store/moleculeMapUpdateSlice";
+} from './store/moleculeMapUpdateSlice';
 export {
     default as lhasaReducer,
     resetLhasaSettings,
     addRdkitMoleculePickle,
     removeRdkitMoleculePickle,
     emptyRdkitMoleculePickleList,
-} from "./store/lhasaSlice";
-export { default as modalsReducer, resetActiveModals, focusOnModal, unFocusModal } from "./store/modalsSlice";
-export { default as sharedSessionReducer, resetSharedSession } from "./store/sharedSessionSlice";
+} from './store/lhasaSlice';
+export { default as modalsReducer, resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
+export { default as sharedSessionReducer, resetSharedSession } from './store/sharedSessionSlice';
 export {
     default as glRefSliceReducer,
     setOrigin,
@@ -228,11 +228,11 @@ export {
     setRttFramebufferSize,
     setCanvasSize,
     setElementsIndicesRestrict,
-} from "./store/glRefSlice";
-export { default as overlaysReducer } from "./store/overlaysSlice";
-export { default as menusReducer } from "./store/menusSlice";
-export { default as atomInfoCardsReducer } from "./store/atomInfoCardsSlice";
-export { setBusy } from "./store/globalUISlice";
-export { default as jsonValidationReducer } from "./store/jsonValidation";
-export { default as mrParseSliceReducer } from "./store/mrParseSlice";
-export { MoorhenGlobalInstanceProvider } from "./InstanceManager";
+} from './store/glRefSlice';
+export { default as overlaysReducer } from './store/overlaysSlice';
+export { default as menusReducer } from './store/menusSlice';
+export { default as atomInfoCardsReducer } from './store/atomInfoCardsSlice';
+export { setBusy } from './store/globalUISlice';
+export { default as jsonValidationReducer } from './store/jsonValidation';
+export { default as mrParseSliceReducer } from './store/mrParseSlice';
+export { MoorhenInstanceProvider } from './InstanceManager';

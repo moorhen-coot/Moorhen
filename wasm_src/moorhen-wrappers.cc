@@ -1387,6 +1387,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    value_object<coot::atom_overlap_t>("atom_overlap_t")
+    .field("overlap_volume", &coot::atom_overlap_t::overlap_volume)
+    .field("r_1", &coot::atom_overlap_t::r_1)
+    .field("r_2", &coot::atom_overlap_t::r_2)
+    .field("is_h_bond", &coot::atom_overlap_t::is_h_bond)
+    .field("ligand_atom_index", &coot::atom_overlap_t::ligand_atom_index)
+    ;
+    register_vector<coot::atom_overlap_t>("vector_overlap");
     class_<clipper::Spgr_descr>("Spgr_descr")
     .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
     .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
@@ -1669,6 +1677,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_overlap_dots",&molecules_container_t::get_overlap_dots)
+    .function("set_max_number_of_simple_mesh_vertices",&molecules_container_t::set_max_number_of_simple_mesh_vertices)
+    .function("get_max_number_of_simple_mesh_vertices",&molecules_container_t::get_max_number_of_simple_mesh_vertices)
     .function("set_colour_map_for_map_coloured_by_other_map",&molecules_container_t::set_colour_map_for_map_coloured_by_other_map)
     .function("get_mutation_info",&molecules_container_t::get_mutation_info)
     .function("get_ligand_validation_vs_dictionary",&molecules_container_t::get_ligand_validation_vs_dictionary)
