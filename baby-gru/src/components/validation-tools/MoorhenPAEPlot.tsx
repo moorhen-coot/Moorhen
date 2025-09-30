@@ -48,6 +48,8 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot")
     const [dataName, setDataName] = useState<string>("")
     const [currentSnackId, setCurrentSnackId] = useState<SnackbarKey|null>(null)
+    const [cursorMode, setCursorMode] = useState<string>("drag")
+    const [panXY, setPanXY] = useState<{x:number,y:number}>({x:-1,y:-1})
 
     const inputFile = useRef(null)
 
@@ -155,23 +157,60 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
         const [x,y] = getXY(evt)
 
-        if(x>axesSpace&&y<canvas.height-axesSpace){
-           const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
-           const xFrac = (x-axesSpace)/resizedSize
-           const yFrac = y/resizedSize
-           setMoveX(xFrac)
-           setMoveY(yFrac)
+        console.log(mouseHeldDown)
+        if(cursorMode==="pan"&&mouseHeldDown){
+            console.log(x-panXY.x,y-panXY.y)
+            setPanXY({x,y})
+            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
+            const xFracDiff = (x-panXY.x)/resizedSize
+            const yFracDiff = (y-panXY.y)/resizedSize
+            console.log(clickX,clickY,releaseX,releaseY)
+            console.log(xFracDiff,yFracDiff)
+            setClickX(clickX+xFracDiff)
+            setClickY(clickY+yFracDiff)
+            setReleaseX(releaseX+xFracDiff)
+            setReleaseY(releaseY+yFracDiff)
+            return
         }
 
-    },[plotData])
+        if(x>axesSpace&&y<canvas.height-axesSpace){
+
+            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
+
+            const xFrac = (x-axesSpace)/resizedSize
+            const yFrac = y/resizedSize
+
+            /*
+            //Uncomment this to enable the unfinished drag mode
+            if(currentSnackId
+                && ((xFrac>clickX&&xFrac<releaseX)||(xFrac<clickX&&xFrac>releaseX))
+                && ((yFrac>clickY&&yFrac<releaseY)||(yFrac<clickY&&yFrac>releaseY))
+                ){
+                canvas.style.cursor = "grab"
+                setCursorMode("pan")
+            } else {
+                console.log("Not in it!")
+                canvas.style.cursor = "auto"
+                setCursorMode("drag")
+            }
+            */
+
+            setMoveX(xFrac)
+            setMoveY(yFrac)
+        }
+
+    },[plotData,currentSnackId,cursorMode,panXY,mouseHeldDown,clickX,clickY,releaseX,releaseY])
 
     const handleMouseUp = useCallback(async(evt) => {
+
+        setMouseHeldDown(false)
+
+        if(cursorMode==="pan") return
 
         if(!canvasRef||!canvasRef.current) return
         const canvas = canvasRef.current
 
         const [x,y] = getXY(evt)
-        setMouseHeldDown(false)
 
         if(x>axesSpace&&y<canvas.height-axesSpace){
            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
@@ -204,11 +243,12 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                    dispatch(clearResidueSelection())
                    await closeSnackbar(currentSnackId)
                    dispatch(setRequestDrawScene(true))
+                   setCurrentSnackId(null)
                }
            }
         }
 
-    },[plotData,clickX,clickY,props.size,plotData,molecules])
+    },[plotData,clickX,clickY,props.size,plotData,molecules,cursorMode])
 
     const handleMouseDown = useCallback((evt) => {
 
@@ -216,6 +256,12 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         const canvas = canvasRef.current
 
         const [x,y] = getXY(evt)
+
+        if(cursorMode==="pan"){
+            setPanXY({x,y})
+            setMouseHeldDown(true)
+            return
+        }
 
         if(x>axesSpace&&y<canvas.height-axesSpace){
            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
@@ -226,7 +272,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
            setMouseHeldDown(true)
         }
 
-    },[plotData])
+    },[plotData,cursorMode])
 
     useEffect(() => {
 
@@ -334,7 +380,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.lineTo(axesSpace,0)
             ctx.stroke()
 
-            if(mouseHeldDown) {
+            if(mouseHeldDown&&(!(cursorMode==="pan"))) {
                ctx.beginPath()
                ctx.moveTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.lineTo(axesSpace+clickX*resizeImgData.width,moveY*resizeImgData.height)
@@ -352,7 +398,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                ctx.fill()
                ctx.restore()
             }
-            if(!mouseHeldDown&&Math.abs((releaseX-clickX)*resizeImgData.width)>1&&Math.abs((releaseY-clickY)*resizeImgData.height)>1) {
+            if((!mouseHeldDown||cursorMode==="pan")&&Math.abs((releaseX-clickX)*resizeImgData.width)>1&&Math.abs((releaseY-clickY)*resizeImgData.height)>1) {
                ctx.beginPath()
                ctx.moveTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.lineTo(axesSpace+clickX*resizeImgData.width,releaseY*resizeImgData.height)
@@ -369,6 +415,25 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                ctx.lineTo(axesSpace+releaseX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.lineTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.fill()
+               ctx.restore()
+               const maxX = Math.max(axesSpace+clickX*resizeImgData.width,axesSpace+releaseX*resizeImgData.width)
+               const minY = Math.min(clickY*resizeImgData.height,releaseY*resizeImgData.height)
+               ctx.save()
+               ctx.fillStyle = "#ffffff"
+               ctx.beginPath()
+               ctx.arc(maxX, minY, 10, 0, 2 * Math.PI);
+               ctx.fill()
+               ctx.restore()
+               ctx.save()
+               ctx.strokeStyle = "black"
+               ctx.beginPath()
+               ctx.moveTo(maxX-5,minY-5)
+               ctx.lineTo(maxX+5,minY+5)
+               ctx.stroke()
+               ctx.beginPath()
+               ctx.moveTo(maxX-5,minY+5)
+               ctx.lineTo(maxX+5,minY-5)
+               ctx.stroke()
                ctx.restore()
             }
 
