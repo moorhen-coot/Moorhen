@@ -190,11 +190,10 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                   console.log(minRes,maxRes,dataName)
                }
                if(molecules.length>0){
-                   const matchMol = molecules.filter((mol) => {return mol.name===dataName})
-                   if(matchMol.length>0){
-                       console.log(matchMol)
+                   const matchMols = molecules.filter((mol) => {return mol.name===dataName})
+                   if(matchMols.length>0){
                        const newSelection: moorhen.ResidueSelection = {
-                           molecule: matchMol[0],
+                           molecule: matchMols[0],
                            first: "/1/A/" + minRes + "/CA",
                            second: "/1/A/" + maxRes + "/CA",
                            cid: "/*/A/" + minRes + "-" + maxRes + "/*",
@@ -202,7 +201,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                            label: "/*/A/" + minRes + "-" + maxRes + "/*",
                        };
                        dispatch(setResidueSelection(newSelection));
-                       molecules[0].drawResidueSelection(newSelection.cid as string);
+                       matchMols[0].drawResidueSelection(newSelection.cid as string);
                        enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
                    }
                }
