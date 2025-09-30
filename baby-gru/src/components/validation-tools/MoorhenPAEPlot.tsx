@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Col, Row, Form, Button, InputGroup } from 'react-bootstrap'
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { useSnackbar } from "notistack";
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils"
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
+import { setResidueSelection } from "../../store/generalStatesSlice";
 
 interface MoorhenPAEProps {
     resizeTrigger?: boolean
@@ -27,6 +28,7 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 }
 
 export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
+    const dispatch = useDispatch();
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasLegendRef = useRef<HTMLCanvasElement>(null)
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -49,6 +51,8 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot")
 
+    const [dataName, setDataName] = useState<string>("")
+
     const inputFile = useRef(null);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
@@ -62,7 +66,16 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     const axesSpace = 75
 
+    const clearRubberBand = () => {
+        setClickX(-1)
+        setClickY(-1)
+        setMoveX(-1)
+        setMoveY(-1)
+        setReleaseX(-1)
+        setReleaseY(-1)
+    }
     const upLoadPaeFile = async (fn: File) => {
+        if(!fn) return
         const text = await fn.text()
         if(!text) return
         try {
@@ -70,7 +83,13 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             if(pae){
                 const imgData = await paeToImageData(pae[0])
                 if(pae[0].max_predicted_aligned_error) setMaxPAE(pae[0].max_predicted_aligned_error)
+                clearRubberBand()
                 setPlotData(imgData)
+                let uniprotID = ""
+                if(fn.name.startsWith("AF-")&&fn.name.indexOf("-F1-")>-1){
+                    uniprotID = fn.name.substring(3,fn.name.indexOf("-F1"))
+                }
+                setDataName(uniprotID)
             }
         } catch(e) {
             console.log(e)
@@ -86,7 +105,9 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             const data = await paeResponse.json()
             const imgData = await paeToImageData(data[0])
             if(data[0].max_predicted_aligned_error) setMaxPAE(data[0].max_predicted_aligned_error)
+            clearRubberBand()
             setPlotData(imgData)
+            setDataName(uniprotID)
         } else {
             console.log(paeResponse)
             enqueueSnackbar("Failed to fetch PAE file for name: "+uniprotID, { variant: "error" });
@@ -163,12 +184,32 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
            setReleaseX(xFrac)
            setReleaseY(yFrac)
            if(Math.abs((clickX-xFrac)*plotData.width)>1&&Math.abs((clickY-yFrac)*plotData.height)){
-               console.log(Math.round(clickX*plotData.width),Math.round(clickY*plotData.height))
-               console.log(Math.round(xFrac*plotData.width),Math.round(yFrac*plotData.height))
+               const minRes = Math.round(Math.min(clickX*plotData.width,clickY*plotData.height,xFrac*plotData.width,yFrac*plotData.height))
+               const maxRes = Math.round(Math.max(clickX*plotData.width,clickY*plotData.height,xFrac*plotData.width,yFrac*plotData.height))
+               if(dataName!==""){
+                  console.log(minRes,maxRes,dataName)
+               }
+               if(molecules.length>0){
+                   const matchMol = molecules.filter((mol) => {return mol.name===dataName})
+                   if(matchMol.length>0){
+                       console.log(matchMol)
+                       const newSelection: moorhen.ResidueSelection = {
+                           molecule: matchMol[0],
+                           first: "/1/A/" + minRes + "/CA",
+                           second: "/1/A/" + maxRes + "/CA",
+                           cid: "/*/A/" + minRes + "-" + maxRes + "/*",
+                           isMultiCid: false,
+                           label: "/*/A/" + minRes + "-" + maxRes + "/*",
+                       };
+                       dispatch(setResidueSelection(newSelection));
+                       molecules[0].drawResidueSelection(newSelection.cid as string);
+                       enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+                   }
+               }
            }
         }
 
-    },[plotData,clickX,clickY,props.size,plotData])
+    },[plotData,clickX,clickY,props.size,plotData,molecules])
 
     const handleMouseDown = useCallback((evt) => {
 
