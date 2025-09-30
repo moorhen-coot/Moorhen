@@ -209,6 +209,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 showMinMaxVal={false}
                                 showButtons={true}
                                 logScale={false}
+                                stepButtons={1}
                                 sliderTitle="Radius:"
                                 isDisabled={!props.mapIsVisible}
                                 externalValue={props.mapRadius}
