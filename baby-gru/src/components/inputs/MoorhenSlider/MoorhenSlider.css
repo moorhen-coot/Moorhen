@@ -1,4 +1,4 @@
-@import "../../../colors.css";
+@import '../../../colors.css';
 
 .moorhen__slider__container {
     display: grid;
@@ -17,15 +17,19 @@
 .moorhen__slider__leftPanel {
     grid-column: 1;
     grid-row: 2;
-    justify-self: center;
-    align-self: top;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
 }
 
 .moorhen__slider__rightPanel {
     grid-column: 3;
     grid-row: 2;
-    justify-self: center;
-    align-self: top;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
 }
 
 .moorhen__slider__sliderCont {
