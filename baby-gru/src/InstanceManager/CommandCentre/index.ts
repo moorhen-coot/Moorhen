@@ -1,2 +1,3 @@
-export { CootCommandWrapper as CommandCentre } from './CootCommandWrapper';
+export { CommandCentre } from './MoorhenCommandCentre';
+export { CootCommandWrapper } from './CootCommandWrapper';
 export type { WorkerResponse, cootCommandKwargs } from './MoorhenCommandCentre';

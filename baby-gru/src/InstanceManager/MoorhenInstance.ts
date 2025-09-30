@@ -3,33 +3,32 @@ import { Dispatch, Store, UnknownAction } from 'redux';
 import React from 'react';
 import { Preferences } from '../components/managers/preferences/MoorhenPreferences';
 import { MoorhenMap, MoorhenMolecule } from '../moorhen';
-import { sliceModules } from '../store/MoorhenReduxStore';
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
 import { setBusy, setGlobalInstanceReady } from '../store/globalUISlice';
 import { moorhen } from '../types/moorhen';
 import { ScreenRecorder } from '../utils/MoorhenScreenRecorder';
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { CommandCentre } from './CommandCentre';
+import { CootCommandWrapper } from './CommandCentre/CootCommandWrapper';
 
 //import { CommandCentre } from './CommandCentre/MoorhenCommandCentre';
 
 export class MoorhenInstance {
-    public dispatch!: Dispatch<UnknownAction>;
-    public readonly actions: Record<string, (...args: any[]) => void> = {};
-
-    private commandCentre!: CommandCentre;
+    public dispatch: Dispatch<UnknownAction>;
+    private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
-    private timeCapsule!: MoorhenTimeCapsule;
+    private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
-    private videoRecorder!: ScreenRecorder;
+    private videoRecorder: ScreenRecorder;
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
-    private store!: Store;
+    private store: Store;
     private preferences: Preferences;
     private maps: MoorhenMap[] = [];
     private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
+    public cootCommand: CootCommandWrapper | null = null;
 
     constructor() {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -38,7 +37,6 @@ export class MoorhenInstance {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
-        this.initializeActions();
     }
 
     public paths: {
@@ -49,33 +47,10 @@ export class MoorhenInstance {
         monomerLibraryPath: '',
     };
 
-    private initializeActions(): void {
-        sliceModules.forEach(sliceModule => {
-            Object.keys(sliceModule).forEach(key => {
-                if (typeof sliceModule[key] === 'function' && key !== 'default') {
-                    // Handle potential naming conflicts by prefixing or warning
-                    if (this.actions[key]) {
-                        console.warn(`Action name conflict: ${key} already exists. Overwriting.`);
-                    }
-
-                    this.actions[key] = (...args: any[]) => {
-                        if (this.dispatch) {
-                            this.dispatch(sliceModule[key](...args));
-                        } else {
-                            console.warn('MoorhenInstance dispatch not initialized. Call startInstance() first.');
-                        }
-                    };
-                }
-            });
-        });
-    }
-
-    // ...existing code...
-
     public setCommandCentre(commandCentre: CommandCentre): void {
         this.commandCentre = commandCentre;
-        //this.commandCentreRef = React.createRef<CommandCentre>();
         this.commandCentreRef.current = commandCentre;
+        this.cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
 
     public getCommandCentre(): CommandCentre {
@@ -198,7 +173,7 @@ export class MoorhenInstance {
         }
 
         await newCommandCentre.init();
-        this.commandCentre.set_max_number_of_simple_mesh_vertices(10000000);
+        this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
     }
 

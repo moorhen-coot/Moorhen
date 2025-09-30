@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback, useRef } from 'react';
-import { useCommandCentre } from '../../InstanceManager';
+import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
 import { triggerUpdate } from '../../store/moleculeMapUpdateSlice';
 import { moorhen } from '../../types/moorhen';
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect';
@@ -15,6 +15,7 @@ export const MoorhenAddWatersMenuItem = (props: { setPopoverIsShown: React.Dispa
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const panelContent = (
         <>
@@ -31,7 +32,7 @@ export const MoorhenAddWatersMenuItem = (props: { setPopoverIsShown: React.Dispa
         const moleculeMolNo = parseInt(moleculeSelectRef.current.value);
         const mapMolNo = parseInt(mapSelectRef.current.value);
 
-        await commandCentre.current.add_water(moleculeMolNo, mapMolNo);
+        await moorhenInstance.cootCommand.add_water(moleculeMolNo, mapMolNo);
 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === moleculeMolNo);
         selectedMolecule.setAtomsDirty(true);

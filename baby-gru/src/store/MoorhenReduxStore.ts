@@ -1,28 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
-import atomInfoCardsReducer, * as atomInfoCardsSlice from './atomInfoCardsSlice';
-import backupSettingsReducer, * as backupSettingsSlice from './backupSettingsSlice';
-import generalStatesReducer, * as generalStatesSlice from './generalStatesSlice';
-import glRefSliceReducer, * as glRefSlice from './glRefSlice';
-import globalUISliceReducer, * as globalUISlice from './globalUISlice';
-import hoveringStatesReducer, * as hoveringStatesSlice from './hoveringStatesSlice';
-import jsonValidationReducer, * as jsonValidationSlice from './jsonValidation';
-import labelSettingsReducer, * as labelSettingsSlice from './labelSettingsSlice';
-import lhasaReducer, * as lhasaSlice from './lhasaSlice';
-import mapContourSettingsReducer, * as mapContourSettingsSlice from './mapContourSettingsSlice';
-import mapsReducer, * as mapsSlice from './mapsSlice';
-import menusReducer, * as menusSlice from './menusSlice';
-import modalsReducer, * as modalsSlice from './modalsSlice';
-import moleculeMapUpdateReducer, * as moleculeMapUpdateSlice from './moleculeMapUpdateSlice';
-import moleculesReducer, * as moleculesSlice from './moleculesSlice';
-import mouseSettingsReducer, * as mouseSettingsSlice from './mouseSettings';
-import mrParseSliceReducer, * as mrParseSlice from './mrParseSlice';
-import overlaysSliceReducer, * as overlaysSlice from './overlaysSlice';
-import refinementSettingsReducer, * as refinementSettingsSlice from './refinementSettingsSlice';
-import sceneSettingsReducer, * as sceneSettingsSlice from './sceneSettingsSlice';
-import sharedSessionReducer, * as sharedSessionSlice from './sharedSessionSlice';
-import shortcutSettingsReducer, * as shortcutSettingsSlice from './shortCutsSlice';
-import sliceNDiceReducer, * as sliceNDiceSlice from './sliceNDiceSlice';
-import vectorsReducer, * as vectorsSlice from './vectorsSlice';
+import atomInfoCardsReducer from './atomInfoCardsSlice';
+import backupSettingsReducer from './backupSettingsSlice';
+import generalStatesReducer from './generalStatesSlice';
+import glRefSliceReducer from './glRefSlice';
+import globalUISliceReducer from './globalUISlice';
+import hoveringStatesReducer from './hoveringStatesSlice';
+import jsonValidationReducer from './jsonValidation';
+import labelSettingsReducer from './labelSettingsSlice';
+import lhasaReducer from './lhasaSlice';
+import mapContourSettingsReducer from './mapContourSettingsSlice';
+import mapsReducer from './mapsSlice';
+import menusReducer from './menusSlice';
+import modalsReducer from './modalsSlice';
+import moleculeMapUpdateReducer from './moleculeMapUpdateSlice';
+import moleculesReducer from './moleculesSlice';
+import mouseSettingsReducer from './mouseSettings';
+import mrParseSliceReducer from './mrParseSlice';
+import overlaysSliceReducer from './overlaysSlice';
+import refinementSettingsReducer from './refinementSettingsSlice';
+import sceneSettingsReducer from './sceneSettingsSlice';
+import sharedSessionReducer from './sharedSessionSlice';
+import shortcutSettingsReducer from './shortCutsSlice';
+import sliceNDiceReducer from './sliceNDiceSlice';
+import vectorsReducer from './vectorsSlice';
 
 export const reducers = {
     molecules: moleculesReducer,
@@ -50,34 +50,6 @@ export const reducers = {
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
 };
-
-// Export slice modules for dynamic access to action creators
-export const sliceModules = [
-    atomInfoCardsSlice,
-    backupSettingsSlice,
-    generalStatesSlice,
-    glRefSlice,
-    globalUISlice,
-    hoveringStatesSlice,
-    jsonValidationSlice,
-    labelSettingsSlice,
-    lhasaSlice,
-    mapContourSettingsSlice,
-    mapsSlice,
-    menusSlice,
-    modalsSlice,
-    moleculeMapUpdateSlice,
-    moleculesSlice,
-    mouseSettingsSlice,
-    mrParseSlice,
-    overlaysSlice,
-    refinementSettingsSlice,
-    sceneSettingsSlice,
-    sharedSessionSlice,
-    shortcutSettingsSlice,
-    sliceNDiceSlice,
-    vectorsSlice,
-];
 
 export const MoorhenReduxStore = configureStore({
     reducer: reducers,

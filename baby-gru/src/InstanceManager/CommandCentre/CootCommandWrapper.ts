@@ -1,6 +1,10 @@
-import { CommandCentre as CommandCentreCore, WorkerResponse } from './MoorhenCommandCentre';
+import { WorkerResponse, cootCommandKwargs } from './MoorhenCommandCentre';
 
-export class CootCommandWrapper extends CommandCentreCore {
+export class CootCommandWrapper {
+    private cootCommand: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>;
+    constructor(cootCommand: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>) {
+        this.cootCommand = cootCommand;
+    }
     /**
      * Sets the maximum number of vertices allowed for simple mesh rendering in Coot.
      * This parameter controls the complexity of meshes that can be displayed, affecting
@@ -9,16 +13,6 @@ export class CootCommandWrapper extends CommandCentreCore {
      * @param maxVertices - The maximum number of vertices allowed for simple meshes.
      *                     Default is 1,000,000,000. Higher values allow more detailed
      *                     meshes but may impact performance.
-     * @returns Promise that resolves to a WorkerResponse containing the command result
-     *
-     * @example
-     * ```typescript
-     * // Set a lower vertex limit for better performance
-     * await commandCentre.set_max_number_of_simple_mesh_vertices(500000);
-     *
-     * // Use default value (1 billion vertices)
-     * await commandCentre.set_max_number_of_simple_mesh_vertices();
-     * ```
      */
     async set_max_number_of_simple_mesh_vertices(maxVertices: number = 1000000000): Promise<WorkerResponse> {
         return await this.cootCommand(
