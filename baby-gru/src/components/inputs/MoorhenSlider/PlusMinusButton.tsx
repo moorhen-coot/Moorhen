@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { clampValue } from "../../misc/helpers";
-import { MoorhenButton } from "..";
+import { useRef } from 'react';
+import { MoorhenButton } from '..';
+import { clampValue } from '../../misc/helpers';
 
 type PlusMinusButtonProps = {
     step: number;
@@ -16,6 +16,7 @@ type PlusMinusButtonProps = {
 export function PlusMinusButton(props: PlusMinusButtonProps) {
     const { step, minVal, maxVal, isDisabled, logScale = false } = props;
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const currentValueRef = useRef<number>(props.externalValue);
     currentValueRef.current = logScale ? Math.log10(props.externalValue) : props.externalValue;
 
@@ -33,16 +34,17 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
         buttonEffect();
         props.setButtonIsDown(true);
 
-        intervalRef.current = setInterval(() => {
-            buttonEffect();
-        }, 100);
+        timeoutRef.current = setTimeout(() => {
+            intervalRef.current = setInterval(() => {
+                buttonEffect();
+            }, 100);
+        }, 500);
     };
 
     const handleMouseUp = () => {
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
+        clearInterval(intervalRef.current);
+        clearTimeout(timeoutRef.current);
+        intervalRef.current = null;
         props.setButtonIsDown(false);
     };
 
@@ -51,7 +53,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            icon={step > 0 ? "plus" : "minus"}
+            icon={step > 0 ? 'plus' : 'minus'}
             type="icon-only"
             size="small"
             disabled={isDisabled}
