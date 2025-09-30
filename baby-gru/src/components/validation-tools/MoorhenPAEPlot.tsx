@@ -422,7 +422,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 </Row>
 
                 {paeModeButtonState==="uniprot" &&
-                <Row style={{textAlign:'left', marginBottom:"1.5rem" }}>
+                <Row style={{textAlign:'left', marginBottom:"0.2rem" }} className="align-items-centre">
                     <Col sm={2}>UniProt</Col>
                     <Form.Group as={Col} className="mb-3" >
                         <Form.Control
@@ -434,14 +434,14 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                          />
                     </Form.Group>
                     <Col sm={6}>
-                        <Button variant="secondary" size='lg' onClick={fetchData} >
-                            Fetch data and plot
+                        <Button variant="secondary" size='sm' onClick={fetchData} >
+                            Fetch and plot
                         </Button>
                     </Col>
                 </Row>
                 }
                 {paeModeButtonState==="paefile" &&
-                <Row>
+                <Row style={{marginBottom:"1.5rem" }} >
                         <input
                             type="file"
                             id="file"
@@ -455,12 +455,15 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 }
                 {paeModeButtonState==="molecule" &&
                 <Row>
-                    <Col sm={6}>
-                    <MoorhenMoleculeSelect width="" defaultValue={selectedModel} onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
+                    <Col sm={3}>
+                    Molecule
                     </Col>
-                    <Col sm={6}>
-                        <Button variant="secondary" size='lg' onClick={fetchDataForLoadedMolecule} >
-                            Fetch data and plot
+                    <Col sm={4}>
+                    <MoorhenMoleculeSelect label={null} width="" defaultValue={selectedModel} onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} height="3rem" margin="0rem"/>
+                    </Col>
+                    <Col sm={3}>
+                        <Button variant="secondary" size='sm' onClick={fetchDataForLoadedMolecule} >
+                            Fetch and plot
                         </Button>
                     </Col>
                 </Row>
