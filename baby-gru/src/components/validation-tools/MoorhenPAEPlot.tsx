@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Col, Row, Form, Button, InputGroup } from 'react-bootstrap'
 import { useSelector, useDispatch } from "react-redux"
-import { useSnackbar } from "notistack";
+import { SnackbarKey, useSnackbar } from "notistack"
 import { moorhen } from "../../types/moorhen"
 import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils"
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { setResidueSelection } from "../../store/generalStatesSlice";
+import { setResidueSelection, clearResidueSelection } from "../../store/generalStatesSlice"
+import { setRequestDrawScene } from "../../store/glRefSlice"
 
 interface MoorhenPAEProps {
     resizeTrigger?: boolean
@@ -28,32 +29,27 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 }
 
 export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch()
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasLegendRef = useRef<HTMLCanvasElement>(null)
-    const moleculeSelectRef = useRef<HTMLSelectElement>(null);
+    const moleculeSelectRef = useRef<HTMLSelectElement>(null)
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
-
     const [plotData, setPlotData] = useState<null | ImageData>(null)
     const [maxPAE, setMaxPAE] = useState<number>(100)
-
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
     const [moveX, setMoveX] = useState<number>(-1)
     const [moveY, setMoveY] = useState<number>(-1)
     const [releaseX, setReleaseX] = useState<number>(-1)
     const [releaseY, setReleaseY] = useState<number>(-1)
-
     const [queryText, setQueryText] = useState<string>("Q12XU1")
-
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
-
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot")
-
     const [dataName, setDataName] = useState<string>("")
+    const [currentSnackId, setCurrentSnackId] = useState<SnackbarKey|null>(null)
 
-    const inputFile = useRef(null);
+    const inputFile = useRef(null)
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
@@ -62,7 +58,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
 
-    const { enqueueSnackbar } = useSnackbar();
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar()
 
     const axesSpace = 75
 
@@ -93,7 +89,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             }
         } catch(e) {
             console.log(e)
-            enqueueSnackbar("Failed to parse file "+fn.name+" as PAE", { variant: "error" });
+            enqueueSnackbar("Failed to parse file "+fn.name+" as PAE", { variant: "error" })
         }
     }
 
@@ -110,7 +106,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             setDataName(uniprotID)
         } else {
             console.log(paeResponse)
-            enqueueSnackbar("Failed to fetch PAE file for name: "+uniprotID, { variant: "error" });
+            enqueueSnackbar("Failed to fetch PAE file for name: "+uniprotID, { variant: "error" })
         }
     }
 
@@ -169,7 +165,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     },[plotData])
 
-    const handleMouseUp = useCallback((evt) => {
+    const handleMouseUp = useCallback(async(evt) => {
 
         if(!canvasRef||!canvasRef.current) return
         const canvas = canvasRef.current
@@ -186,10 +182,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
            if(Math.abs((clickX-xFrac)*plotData.width)>1&&Math.abs((clickY-yFrac)*plotData.height)){
                const minRes = Math.round(Math.min(clickX*plotData.width,clickY*plotData.height,xFrac*plotData.width,yFrac*plotData.height))
                const maxRes = Math.round(Math.max(clickX*plotData.width,clickY*plotData.height,xFrac*plotData.width,yFrac*plotData.height))
-               if(dataName!==""){
-                  console.log(minRes,maxRes,dataName)
-               }
-               if(molecules.length>0){
+               if(molecules.length>0&&dataName!==""){
                    const matchMols = molecules.filter((mol) => {return mol.name===dataName})
                    if(matchMols.length>0){
                        const newSelection: moorhen.ResidueSelection = {
@@ -199,11 +192,18 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                            cid: "/*/A/" + minRes + "-" + maxRes + "/*",
                            isMultiCid: false,
                            label: "/*/A/" + minRes + "-" + maxRes + "/*",
-                       };
-                       dispatch(setResidueSelection(newSelection));
-                       matchMols[0].drawResidueSelection(newSelection.cid as string);
-                       enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+                       }
+                       dispatch(setResidueSelection(newSelection))
+                       matchMols[0].drawResidueSelection(newSelection.cid as string)
+                       const snackId = await enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true })
+                       setCurrentSnackId(snackId)
                    }
+               }
+           } else {
+               if(currentSnackId){
+                   dispatch(clearResidueSelection())
+                   await closeSnackbar(currentSnackId)
+                   dispatch(setRequestDrawScene(true))
                }
            }
         }
@@ -469,7 +469,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                              type="text"
                              value={queryText}
                              onChange={evt => {
-                                 setQueryText(evt.target.value);
+                                 setQueryText(evt.target.value)
                              }}
                          />
                     </Form.Group>
@@ -488,7 +488,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                             ref={inputFile}
                             accept=".json,.JSON,.pae,.PAE"
                             onChange={e => {
-                                upLoadPaeFile(e.target.files[0]);
+                                upLoadPaeFile(e.target.files[0])
                             }}
                         />
                 </Row>
