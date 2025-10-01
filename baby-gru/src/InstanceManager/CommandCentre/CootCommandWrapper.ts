@@ -43,4 +43,23 @@ export class CootCommandWrapper {
             true
         );
     }
+
+    /**
+     * Removes dust artifacts from the specified map.
+     *
+     * This method sends a 'dedust_map' command to the Coot backend, which processes the map
+     * identified by the given `imol` parameter to eliminate dust or noise artifacts.
+     *
+     * @param imol - The identifier of the map to be dedusted.
+     */
+    async dedust_map(imol): Promise<WorkerResponse> {
+        return await this.cootCommand(
+            {
+                command: 'dedust_map',
+                commandArgs: [imol],
+                returnType: 'number',
+            },
+            true
+        );
+    }
 }

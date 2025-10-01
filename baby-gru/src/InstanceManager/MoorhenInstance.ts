@@ -15,7 +15,7 @@ import { CootCommandWrapper } from './CommandCentre/CootCommandWrapper';
 
 export class MoorhenInstance {
     public dispatch: Dispatch<UnknownAction>;
-    private commandCentre: CommandCentre;
+    private commandCentre!: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
@@ -28,7 +28,7 @@ export class MoorhenInstance {
     private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    public cootCommand: CootCommandWrapper | null = null;
+    public cootCommand!: CootCommandWrapper;
 
     constructor() {
         this.commandCentreRef = React.createRef<CommandCentre>();

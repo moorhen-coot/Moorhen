@@ -1677,6 +1677,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("dedust_map",&molecules_container_t::dedust_map)
     .function("get_overlap_dots",&molecules_container_t::get_overlap_dots)
     .function("set_max_number_of_simple_mesh_vertices",&molecules_container_t::set_max_number_of_simple_mesh_vertices)
     .function("get_max_number_of_simple_mesh_vertices",&molecules_container_t::get_max_number_of_simple_mesh_vertices)
