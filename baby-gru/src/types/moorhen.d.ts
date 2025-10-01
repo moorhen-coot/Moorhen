@@ -60,6 +60,7 @@ export namespace moorhen {
     type LocalStorageInstance = import('../components/managers/preferences/MoorhenPreferences').LocalStorageInstance;
     type WorkerResponse<T = any> = import('../InstanceManager/CommandCentre').WorkerResponse;
     type cootCommandKwargs = import('../InstanceManager/CommandCentre').cootCommandKwargs;
+    type ResidueSelection = import('../store/generalStatesSlice').ResidueSelection;
 
     //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 
@@ -199,15 +200,6 @@ export namespace moorhen {
         | 'StickBases'
         | 'residue_environment'
         | 'transformation';
-
-    type ResidueSelection = {
-        molecule: null | Molecule;
-        first: null | string;
-        second: null | string;
-        cid: null | string | string[];
-        isMultiCid: boolean;
-        label: string;
-    };
 
     type History = import('../utils/MoorhenHistory').History;
 

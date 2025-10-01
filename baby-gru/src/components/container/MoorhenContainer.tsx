@@ -4,11 +4,11 @@ import { SnackbarProvider } from 'notistack';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { Store } from 'redux';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useCommandAndCapsule, useMoorhenInstance } from '../../InstanceManager';
-import { MoorhenInstanceProvider } from '../../InstanceManager';
+import { MoorhenInstanceProvider, useCommandAndCapsule, useMoorhenInstance } from '../../InstanceManager';
 import { CommandCentre } from '../../InstanceManager/CommandCentre';
 import { isDarkBackground } from '../../WebGLgComponents/webGLUtils';
 import { useWindowEventListener } from '../../hooks/useWindowEventListener';
+import { RootState } from '../../store/MoorhenReduxStore';
 import {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,
@@ -21,7 +21,15 @@ import { setRequestDrawScene } from '../../store/glRefSlice';
 import { setEnableAtomHovering, setHoveredAtom } from '../../store/hoveringStatesSlice';
 import { addAvailableFontList, emptyAvailableFonts } from '../../store/labelSettingsSlice';
 import { setRefinementSelection } from '../../store/refinementSettingsSlice';
-import { setBackgroundColor, setDefaultBackgroundColor, setHeight, setIsDark, setWidth } from '../../store/sceneSettingsSlice';
+import {
+    setBackgroundColor,
+    setDefaultBackgroundColor,
+    setGlViewportHeight,
+    setGlViewportWidth,
+    setHeight,
+    setIsDark,
+    setWidth,
+} from '../../store/sceneSettingsSlice';
 import { webGL } from '../../types/mgWebGL';
 import { moorhen } from '../../types/moorhen';
 import { allFontsSet } from '../../utils/enums';
@@ -33,6 +41,8 @@ import { MoorhenModalsContainer } from '../misc/MoorhenModalsContainer';
 import { MoorhenMainMenu } from '../navbar-menus/MoorhenMainMenu';
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from '../navbar-menus/MoorhenMainMenu';
+import { EdgePanelSequenceViewer } from '../side-panels/SequenceEdgePanel';
+import { MoorhenSidePanel } from '../side-panels/SidePanel';
 import { MoorhenAcceptRejectDragAtomsSnackBar } from '../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from '../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from '../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
@@ -192,6 +202,8 @@ const MoorhenContainer = (props: ContainerProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const GlViewportHeight = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight);
+    const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
@@ -201,6 +213,8 @@ const MoorhenContainer = (props: ContainerProps) => {
     const makeBackups = useSelector((state: moorhen.State) => state.backupSettings.makeBackups);
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount);
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
+
+    const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
 
     if (props.moleculesRef) {
         // eslint-disable-next-line
@@ -250,13 +264,12 @@ const MoorhenContainer = (props: ContainerProps) => {
         if (setMoorhenDimensions) {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
-        if (width !== newWidth) {
-            dispatch(setWidth(newWidth));
-        }
-        if (height !== newHeight) {
-            dispatch(setHeight(newHeight));
-        }
-    }, [width, height]);
+        const GLviewWidth = newWidth - (sidePanelIsShown ? 300 : 0);
+        dispatch(setWidth(newWidth));
+        dispatch(setGlViewportWidth(GLviewWidth));
+        dispatch(setHeight(newHeight));
+        dispatch(setGlViewportHeight(newHeight - 76));
+    }, [sidePanelIsShown]);
 
     // Style append to header at initialization
     useLayoutEffect(() => {
@@ -430,9 +443,20 @@ const MoorhenContainer = (props: ContainerProps) => {
             cursor: cursorStyle,
             margin: 0,
             padding: 0,
-            height: Math.floor(height),
+            height: height,
+            width: width,
+
+            display: 'flex' as const,
+            flexDirection: 'column' as const,
         }),
-        [backgroundColor, cursorStyle, height]
+        [backgroundColor, cursorStyle, height, width]
+    );
+    const viewportStyle = useMemo(
+        () => ({
+            height: Math.floor(GlViewportHeight),
+            width: Math.floor(GlViewportWidth),
+        }),
+        [GlViewportHeight, GlViewportWidth]
     );
 
     const snackbarComponents = {
@@ -476,45 +500,55 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     // ========== Main Interface ==========
     return (
-        <div style={backgroundStyle}>
-            <SnackbarProvider
-                hideIconVariant={false}
-                autoHideDuration={4000}
-                maxSnack={20}
-                anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-                transitionDuration={{ enter: 500, exit: 300 }}
-                Components={snackbarComponents}
-                preventDuplicate={true}
-            >
-                <ActivityIndicator />
+        <>
+            <div style={backgroundStyle} className="moorhen__inner-container">
                 <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
-                {/* <MoorhenNavBar
-                    extraNavBarMenus={extraNavBarMenus}
-                    extraNavBarModals={extraNavBarModals}
-                    extraFileMenuItems={extraFileMenuItems}
-                    extraEditMenuItems={extraEditMenuItems}
-                    extraCalculateMenuItems={extraCalculateMenuItems}
-                    includeNavBarMenuNames={includeNavBarMenuNames}
-                /> */}
+                <div style={viewportStyle} className="moorhen__viewport-container">
+                    <SnackbarProvider
+                        hideIconVariant={false}
+                        autoHideDuration={4000}
+                        maxSnack={20}
+                        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+                        transitionDuration={{ enter: 500, exit: 300 }}
+                        Components={snackbarComponents}
+                        preventDuplicate={true}
+                    >
+                        <ActivityIndicator />
+                        {/* <MoorhenNavBar
+                                extraNavBarMenus={extraNavBarMenus}
+                                extraNavBarModals={extraNavBarModals}
+                                extraFileMenuItems={extraFileMenuItems}
+                                extraEditMenuItems={extraEditMenuItems}
+                                extraCalculateMenuItems={extraCalculateMenuItems}
+                                includeNavBarMenuNames={includeNavBarMenuNames}
+                                /> */}
 
-                <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                <MoorhenSnackBarManager />
-                <MoorhenUpdatingMapsManager />
-                <MoorhenMapsHeadManager />
+                        <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                        <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                        <MoorhenSnackBarManager />
+                        <MoorhenUpdatingMapsManager />
+                        <MoorhenMapsHeadManager />
 
-                <MoorhenDroppable monomerLibraryPath={monomerLibraryPath} timeCapsuleRef={timeCapsuleRef} commandCentre={commandCentre}>
-                    <MoorhenWebMG
-                        ref={glRef}
-                        monomerLibraryPath={monomerLibraryPath}
-                        timeCapsuleRef={timeCapsuleRef}
-                        onAtomHovered={onAtomHovered}
-                        urlPrefix={urlPrefix}
-                        viewOnly={viewOnly}
-                    />
-                </MoorhenDroppable>
-            </SnackbarProvider>
-        </div>
+                        <MoorhenDroppable
+                            monomerLibraryPath={monomerLibraryPath}
+                            timeCapsuleRef={timeCapsuleRef}
+                            commandCentre={commandCentre}
+                        >
+                            <MoorhenWebMG
+                                ref={glRef}
+                                monomerLibraryPath={monomerLibraryPath}
+                                timeCapsuleRef={timeCapsuleRef}
+                                onAtomHovered={onAtomHovered}
+                                urlPrefix={urlPrefix}
+                                viewOnly={viewOnly}
+                            />
+                        </MoorhenDroppable>
+                    </SnackbarProvider>
+                </div>
+                <EdgePanelSequenceViewer />
+                <MoorhenSidePanel width={300} />
+            </div>
+        </>
     );
 };
 
@@ -525,5 +559,4 @@ const MoorhenContainerWrapper = (props: ContainerProps) => {
         </MoorhenInstanceProvider>
     );
 };
-
 export { MoorhenContainerWrapper as MoorhenContainer };

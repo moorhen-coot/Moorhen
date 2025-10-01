@@ -142,7 +142,7 @@ export default [
       // React Hooks rules
       ...pluginReactHooks.configs.recommended.rules,
       "react-hooks/react-compiler": "error",
-      "react-hooks/exhaustive-deps": "off", // Disable exhaustive-deps rule, it is the limit of how much I can accept the React way of life.
+      "react-hooks/exhaustive-deps": "warn",
       
       // React Hooks Extra rules
       "react-hooks-extra/no-direct-set-state-in-use-effect": "warn",
