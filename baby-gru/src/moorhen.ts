@@ -12,7 +12,7 @@ export { MoleculeRepresentation } from './utils/MoorhenMoleculeRepresentation';
 export { MoorhenMolecule } from './utils/MoorhenMolecule';
 export { MoorhenMap } from './utils/MoorhenMap';
 export { getMultiColourRuleArgs } from './utils/utils';
-export { CommandCentre } from './InstanceManager/CommandCentre/MoorhenCommandCentre';
+export { CommandCentre } from './InstanceManager/CommandCentre';
 export { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 export { Preferences } from './components/managers/preferences/MoorhenPreferences';
 export { MoorhenMoleculeSelect } from './components/select/MoorhenMoleculeSelect';
