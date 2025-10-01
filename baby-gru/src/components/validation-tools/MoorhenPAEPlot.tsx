@@ -43,7 +43,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [moveY, setMoveY] = useState<number>(-1)
     const [releaseX, setReleaseX] = useState<number>(-1)
     const [releaseY, setReleaseY] = useState<number>(-1)
-    const [queryText, setQueryText] = useState<string>("Q12XU1")
+    const [queryText, setQueryText] = useState<string>("")
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot")
     const [dataName, setDataName] = useState<string>("")
@@ -533,13 +533,14 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                         <Form.Control
                              type="text"
                              value={queryText}
+                             placeholder="e.g. Q12XU1"
                              onChange={evt => {
                                  setQueryText(evt.target.value)
                              }}
                          />
                     </Form.Group>
                     <Col sm={6}>
-                        <Button variant="secondary" size='sm' onClick={fetchData} >
+                        <Button variant="secondary" disabled={queryText.length===0} size='sm' onClick={fetchData} >
                             Fetch and plot
                         </Button>
                     </Col>
@@ -567,7 +568,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                     <MoorhenMoleculeSelect label={null} width="" defaultValue={selectedModel} onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} height="3rem" margin="0rem"/>
                     </Col>
                     <Col sm={3}>
-                        <Button variant="secondary" size='sm' onClick={fetchDataForLoadedMolecule} >
+                        <Button variant="secondary" size='sm' disabled={selectedModel===null||molecules.length===0||selectedModel<0} onClick={fetchDataForLoadedMolecule} >
                             Fetch and plot
                         </Button>
                     </Col>
