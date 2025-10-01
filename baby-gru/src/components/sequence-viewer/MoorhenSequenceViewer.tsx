@@ -24,6 +24,7 @@ type MoorhenSequenceViewerPropsType = {
     fontSize?: number;
     showTitleBar?: boolean;
     className?: string;
+    forceRedrawScrollBarKey?: string | number;
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -39,7 +40,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
     const invalidSequences: boolean = inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0);
-    console.log({ noSequence, invalidSequences });
 
     const applyOffset = (seqArray: SeqElement[]) =>
         seqArray.map(seq => ({
@@ -57,7 +57,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     const seqLength = sequencesArray.length;
     const [, setIsScrolling, isScrollingRef] = useStateWithRef<boolean>(false);
-    const [displayHeight, setDisplayHeight] = useState<number>(props.maxDisplayHeight < seqLength ? props.maxDisplayHeight : seqLength);
+    const _displayHeight = props.maxDisplayHeight < seqLength ? props.maxDisplayHeight : seqLength;
+    const [displayHeight, setDisplayHeight] = useState<number>(_displayHeight > 0 ? _displayHeight : 1);
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHeight]);
     const [mouseIsHovering, setMouseIsHovering, mouseIsHoveringRef] = useStateWithRef<boolean>(false);
     const [internalSelectedResidues, setInternalSelectedResidues, internalSelectedResiduesRef] = useStateWithRef<ResiduesSelection>(
@@ -230,7 +231,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     useMemo(() => {
         if (noSequence || invalidSequences) return [];
-        setSequencesSlices([sequencesSlice[0], sequencesSlice[0] + displayHeight]);
+        setSequencesSlices(current => [current[0], current[0] + displayHeight]);
     }, [inputArray, displayHeight, noSequence, invalidSequences]);
 
     const [sequencesToDisplay, minVal, maxVal] = useMemo(() => {
@@ -476,6 +477,10 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             </div>
         ) : null;
 
+    const scrollbarKey = useMemo(() => {
+        return `${sequencesToDisplay?.length}-${minVal}-${maxVal}-${displayHeight}`;
+    }, [sequencesToDisplay?.length, minVal, maxVal, displayHeight]);
+
     if (noSequence) {
         return <div>No sequences available</div>;
     }
@@ -513,8 +518,10 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {leftButtonsBar}
                     <CustomHorizontalScrollbar
+                        key={scrollbarKey}
                         style={{ width: seqLength > displayHeight ? 'calc(100% - 40px)' : '100%' }}
                         onDraggingChange={setIsScrolling}
+                        forceRedrawScrollBarKey={props.forceRedrawScrollBarKey}
                     >
                         <div className="moorhen__seqviewer__sticky-tick-marks">
                             <div style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}></div>

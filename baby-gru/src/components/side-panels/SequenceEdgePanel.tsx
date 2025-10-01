@@ -1,6 +1,6 @@
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../sequence-viewer';
 import {
@@ -15,7 +15,9 @@ export const EdgePanelSequenceViewer = () => {
     const { enqueueSnackbar } = useSnackbar();
     const molecule = useSelector((state: RootState) => state.molecules.moleculeList[0]);
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
+    const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
+    const panelKeyRef = useRef<number>(0);
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
@@ -36,6 +38,10 @@ export const EdgePanelSequenceViewer = () => {
         handleResiduesSelection(molecule, dispatch, enqueueSnackbar);
     }, [molecule, dispatch, enqueueSnackbar]);
 
+    useMemo(() => {
+        panelKeyRef.current += 1;
+    }, [GlViewportWidth]);
+
     return (
         <MoorhenSequenceViewer
             sequences={sequenceList}
@@ -48,6 +54,7 @@ export const EdgePanelSequenceViewer = () => {
             className={`moorhen__edge-panel-sequence-viewer ${
                 sidePanelIsShown ? 'moorhen__edge-panel-sequence-viewer--side-panel-visible' : ''
             }`}
+            forceRedrawScrollBarKey={panelKeyRef.current}
         />
     );
 };

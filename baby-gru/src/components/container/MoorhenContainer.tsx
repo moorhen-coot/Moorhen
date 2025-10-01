@@ -271,6 +271,12 @@ const MoorhenContainer = (props: ContainerProps) => {
         dispatch(setGlViewportHeight(newHeight - 76));
     }, [sidePanelIsShown]);
 
+    useLayoutEffect(() => {
+        setWindowDimensions();
+    }, [setWindowDimensions]);
+
+    useWindowEventListener('resize', setWindowDimensions);
+
     // Style append to header at initialization
     useLayoutEffect(() => {
         const head = document.head;
@@ -280,8 +286,6 @@ const MoorhenContainer = (props: ContainerProps) => {
         style.type = 'text/css';
         head.appendChild(style);
     }, []);
-
-    useWindowEventListener('resize', setWindowDimensions);
 
     useLayoutEffect(() => {
         const head = document.head;
