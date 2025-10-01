@@ -111,7 +111,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         if (isWorkingRef.current) {
             return;
         }
-        console.log('Processing draw queue');
         const now = Date.now();
         isWorkingRef.current = true;
         const { x, y, z, radius, contourLevel, style } = drawQueue.current[drawQueue.current.length - 1];
@@ -137,7 +136,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
         appendDrawQueue();
     }
-    console.log(drawQueue.current.length);
 
     useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/
