@@ -51,8 +51,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [cursorMode, setCursorMode] = useState<string>("drag")
     const [panXY, setPanXY] = useState<{x:number,y:number}>({x:-1,y:-1})
 
-    const inputFile = useRef(null)
-
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
@@ -114,8 +112,11 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     const fetchDataForLoadedMolecule = async () => {
         if(selectedModel!==null&&selectedModel>-1&&molecules.length>0){
-            const uniprotID = molecules[selectedModel].name
-            fetchDataFromEBI(uniprotID)
+            const matchMols = molecules.filter((mol) => {return mol.molNo===selectedModel})
+            if(matchMols.length>0){
+                const uniprotID = matchMols[0].name
+                fetchDataFromEBI(uniprotID)
+            }
         }
     }
 
