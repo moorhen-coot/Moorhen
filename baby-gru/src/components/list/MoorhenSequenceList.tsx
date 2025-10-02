@@ -53,9 +53,12 @@ export const MoorhenSequenceList = (props: {
         [props.setClickedResidue]
     );
 
-    const residueSelectionCallback = useCallback(() => {
-        handleResiduesSelection(props.molecule, dispatch, enqueueSnackbar);
-    }, [props.molecule, dispatch, enqueueSnackbar]);
+    const residueSelectionCallback = useCallback(
+        selection => {
+            handleResiduesSelection(selection, props.molecule, dispatch, enqueueSnackbar);
+        },
+        [props.molecule, dispatch, enqueueSnackbar]
+    );
 
     const handleHoverResidue = useCallback(
         (molName, chain, resNum, resCode, resCID) => {

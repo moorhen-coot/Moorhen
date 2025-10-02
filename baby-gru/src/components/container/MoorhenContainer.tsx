@@ -41,8 +41,8 @@ import { MoorhenModalsContainer } from '../misc/MoorhenModalsContainer';
 import { MoorhenMainMenu } from '../navbar-menus/MoorhenMainMenu';
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from '../navbar-menus/MoorhenMainMenu';
-import { EdgePanelSequenceViewer } from '../side-panels/SequenceEdgePanel';
-import { MoorhenSidePanel } from '../side-panels/SidePanel';
+import { EdgePanelSequenceViewer } from '../panels/SequenceViewerPanel';
+import { MoorhenSidePanel } from '../panels/SidePanel';
 import { MoorhenAcceptRejectDragAtomsSnackBar } from '../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from '../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from '../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar';
@@ -506,17 +506,17 @@ const MoorhenContainer = (props: ContainerProps) => {
     return (
         <>
             <div style={backgroundStyle} className="moorhen__inner-container">
-                <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
-                <div style={viewportStyle} className="moorhen__viewport-container">
-                    <SnackbarProvider
-                        hideIconVariant={false}
-                        autoHideDuration={4000}
-                        maxSnack={20}
-                        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-                        transitionDuration={{ enter: 500, exit: 300 }}
-                        Components={snackbarComponents}
-                        preventDuplicate={true}
-                    >
+                <SnackbarProvider
+                    hideIconVariant={false}
+                    autoHideDuration={4000}
+                    maxSnack={20}
+                    anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+                    transitionDuration={{ enter: 500, exit: 300 }}
+                    Components={snackbarComponents}
+                    preventDuplicate={true}
+                >
+                    <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
+                    <div style={viewportStyle} className="moorhen__viewport-container">
                         <ActivityIndicator />
                         {/* <MoorhenNavBar
                                 extraNavBarMenus={extraNavBarMenus}
@@ -547,10 +547,10 @@ const MoorhenContainer = (props: ContainerProps) => {
                                 viewOnly={viewOnly}
                             />
                         </MoorhenDroppable>
-                    </SnackbarProvider>
-                </div>
-                <EdgePanelSequenceViewer />
-                <MoorhenSidePanel width={300} />
+                    </div>
+                    <EdgePanelSequenceViewer />
+                    <MoorhenSidePanel width={300} />
+                </SnackbarProvider>
             </div>
         </>
     );

@@ -85,23 +85,22 @@ export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection):
     return selection;
 };
 
-export const handleResiduesSelection =
-    (molecule: MoorhenMolecule, dispatch: any, enqueueSnackbar: any) => (selection: ResiduesSelection) => {
-        if (selection.molNo !== molecule.molNo) return;
-        const first = Math.min(selection.range[0], selection.range[1]);
-        const second = Math.max(selection.range[0], selection.range[1]);
-        const newSelection: ResidueSelection = {
-            molecule: molecule,
-            first: '/1/' + selection.chain + '/' + first + '/CA',
-            second: '/1/' + selection.chain + '/' + second + '/CA',
-            cid: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
-            isMultiCid: false,
-            label: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
-        };
-        dispatch(setResidueSelection(newSelection));
-        molecule.drawResidueSelection(newSelection.cid as string);
-        enqueueSnackbar('residue-selection', { variant: 'residueSelection', persist: true });
+export const handleResiduesSelection = (selection: ResiduesSelection, molecule: MoorhenMolecule, dispatch: any, enqueueSnackbar: any) => {
+    if (selection.molNo !== molecule.molNo) return;
+    const first = Math.min(selection.range[0], selection.range[1]);
+    const second = Math.max(selection.range[0], selection.range[1]);
+    const newSelection: ResidueSelection = {
+        molecule: molecule,
+        first: '/1/' + selection.chain + '/' + first + '/CA',
+        second: '/1/' + selection.chain + '/' + second + '/CA',
+        cid: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+        isMultiCid: false,
+        label: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
     };
+    dispatch(setResidueSelection(newSelection));
+    molecule.drawResidueSelection(newSelection.cid as string);
+    enqueueSnackbar('residue-selection', { variant: 'residueSelection', persist: true });
+};
 
 export const useHoveredResidue = (): {
     molNo: number;

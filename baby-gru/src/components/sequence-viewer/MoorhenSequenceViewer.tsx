@@ -25,6 +25,7 @@ type MoorhenSequenceViewerPropsType = {
     showTitleBar?: boolean;
     className?: string;
     forceRedrawScrollBarKey?: string | number;
+    style?: React.CSSProperties;
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -493,9 +494,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         <>
             <div
                 className={`moorhen__seqviewer-container ${className}`}
-                style={{
-                    height: (showTitleBar ? 72 : 50) + displayHeight * 26 + 'px',
-                }}
+                style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + 'px' }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
                     setMouseIsHovering(true);

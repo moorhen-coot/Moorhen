@@ -2,7 +2,6 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import type { RootState } from '../../../store/MoorhenReduxStore';
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from '../../../store/mapContourSettingsSlice';
-import { moorhen } from '../../../types/moorhen';
 import { SelectorEffect } from '../../hookComponent/SelectorEffect';
 import { MapOriginListener, MapOriginListenerMouseUp } from './MapOriginListener';
 import { MapScrollWheelListener } from './MapScrollWheelListener';
@@ -76,7 +75,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
     });
 
-    const mapStyle: 'solid' | 'lit-lines' | 'lines' = useSelector((state: moorhen.State) => {
+    const mapStyle: 'solid' | 'lit-lines' | 'lines' = useSelector((state: RootState) => {
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
@@ -165,7 +164,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const alphaListener = useMemo(() => {
         return (
             <SelectorEffect
-                selector={(state: moorhen.State) => state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)}
+                selector={(state: RootState) => state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)}
                 effect={() => {
                     map.fetchMapAlphaAndRedraw();
                 }}

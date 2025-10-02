@@ -7,7 +7,6 @@ export const MoorhenSidePanel = (props: { width: number }) => {
     const dispatch = useDispatch();
     const height = useSelector((state: RootState) => state.sceneSettings.height);
     const isShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
-    console.log('test');
 
     const toggle = (
         <button
