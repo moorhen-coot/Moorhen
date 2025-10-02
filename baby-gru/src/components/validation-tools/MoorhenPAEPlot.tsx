@@ -171,30 +171,30 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 setReleaseY(releaseY+yFracDiff)
             } else if(dragMode==="left"||dragMode==="top-left"||dragMode==="bottom-left") {
                 if(clickX<releaseX){
-                    setClickX(clickX+xFracDiff)
+                    if(Math.abs(clickX+xFracDiff-releaseX)>0.02) setClickX(clickX+xFracDiff)
                 } else {
-                    setReleaseX(releaseX+xFracDiff)
+                    if(Math.abs(releaseX+xFracDiff-clickX)>0.02) setReleaseX(releaseX+xFracDiff)
                 }
             }
             if(dragMode==="right"||dragMode==="bottom-right") {
                 if(clickX>releaseX){
-                    setClickX(clickX+xFracDiff)
+                    if(Math.abs(clickX+xFracDiff-releaseX)>0.02) setClickX(clickX+xFracDiff)
                 } else {
-                    setReleaseX(releaseX+xFracDiff)
+                    if(Math.abs(releaseX+xFracDiff-clickX)>0.02) setReleaseX(releaseX+xFracDiff)
                 }
             }
             if(dragMode==="top"||dragMode==="top-left") {
                 if(clickY<releaseY){
-                    setClickY(clickY+yFracDiff)
+                    if(Math.abs(clickY+yFracDiff-releaseY)>0.02) setClickY(clickY+yFracDiff)
                 } else {
-                    setReleaseY(releaseY+yFracDiff)
+                    if(Math.abs(releaseY+yFracDiff-clickY)>0.02) setReleaseY(releaseY+yFracDiff)
                 }
             }
             if(dragMode==="bottom"||dragMode==="bottom-left"||dragMode==="bottom-right") {
                 if(clickY>releaseY){
-                    setClickY(clickY+yFracDiff)
+                    if(Math.abs(clickY+yFracDiff-releaseY)>0.02) setClickY(clickY+yFracDiff)
                 } else {
-                    setReleaseY(releaseY+yFracDiff)
+                    if(Math.abs(releaseY+yFracDiff-clickY)>0.02) setReleaseY(releaseY+yFracDiff)
                 }
             }
             return
