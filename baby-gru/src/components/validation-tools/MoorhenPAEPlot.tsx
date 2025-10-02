@@ -43,6 +43,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [moveY, setMoveY] = useState<number>(-1)
     const [releaseX, setReleaseX] = useState<number>(-1)
     const [releaseY, setReleaseY] = useState<number>(-1)
+    const [dragMode, setDragMode] = useState<string|null>(null)
     const [queryText, setQueryText] = useState<string>("")
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot")
@@ -158,18 +159,44 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
         const [x,y] = getXY(evt)
 
-        if(cursorMode==="pan"&&mouseHeldDown){
-            console.log(x-panXY.x,y-panXY.y)
+        if((cursorMode==="pan")&&mouseHeldDown){
             setPanXY({x,y})
             const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
             const xFracDiff = (x-panXY.x)/resizedSize
             const yFracDiff = (y-panXY.y)/resizedSize
-            console.log(clickX,clickY,releaseX,releaseY)
-            console.log(xFracDiff,yFracDiff)
-            setClickX(clickX+xFracDiff)
-            setClickY(clickY+yFracDiff)
-            setReleaseX(releaseX+xFracDiff)
-            setReleaseY(releaseY+yFracDiff)
+            if(dragMode==="normal") {
+                setClickX(clickX+xFracDiff)
+                setClickY(clickY+yFracDiff)
+                setReleaseX(releaseX+xFracDiff)
+                setReleaseY(releaseY+yFracDiff)
+            } else if(dragMode==="left"||dragMode==="top-left"||dragMode==="bottom-left") {
+                if(clickX<releaseX){
+                    setClickX(clickX+xFracDiff)
+                } else {
+                    setReleaseX(releaseX+xFracDiff)
+                }
+            }
+            if(dragMode==="right"||dragMode==="bottom-right") {
+                if(clickX>releaseX){
+                    setClickX(clickX+xFracDiff)
+                } else {
+                    setReleaseX(releaseX+xFracDiff)
+                }
+            }
+            if(dragMode==="top"||dragMode==="top-left") {
+                if(clickY<releaseY){
+                    setClickY(clickY+yFracDiff)
+                } else {
+                    setReleaseY(releaseY+yFracDiff)
+                }
+            }
+            if(dragMode==="bottom"||dragMode==="bottom-left"||dragMode==="bottom-right") {
+                if(clickY>releaseY){
+                    setClickY(clickY+yFracDiff)
+                } else {
+                    setReleaseY(releaseY+yFracDiff)
+                }
+            }
             return
         }
 
@@ -180,32 +207,68 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             const xFrac = (x-axesSpace)/resizedSize
             const yFrac = y/resizedSize
 
-            /*
-            //Uncomment this to enable the unfinished drag mode
             if(currentSnackId
                 && ((xFrac>clickX&&xFrac<releaseX)||(xFrac<clickX&&xFrac>releaseX))
                 && ((yFrac>clickY&&yFrac<releaseY)||(yFrac<clickY&&yFrac>releaseY))
                 ){
-                canvas.style.cursor = "grab"
-                setCursorMode("pan")
+                if(Math.abs(xFrac-clickX)<0.04||Math.abs(xFrac-releaseX)<0.04){
+                    if(Math.abs(yFrac-clickY)<0.04||Math.abs(yFrac-releaseY)<0.04) {
+                        const minX = Math.min(clickX,releaseX)
+                        const minY = Math.min(clickY,releaseY)
+                        let left = false
+                        let top = false
+                        if(Math.abs(minX-xFrac)<0.04){
+                            left = true
+                        }
+                        if(Math.abs(minY-yFrac)<0.04){
+                            top = true
+                        }
+                        if(left&&top) {
+                            canvas.style.cursor = "nwse-resize"
+                            setDragMode("top-left")
+                        } else if(left&&!top) {
+                            canvas.style.cursor = "nesw-resize"
+                            setDragMode("bottom-left")
+                        } else if(!left&&!top) {
+                            canvas.style.cursor = "nwse-resize"
+                            setDragMode("bottom-right")
+                        } else {
+                            canvas.style.cursor = "auto"
+                        }
+                    } else {
+                        const minX = Math.min(clickX,releaseX)
+                        canvas.style.cursor = "ew-resize"
+                        if(Math.abs(minX-xFrac)<0.04){
+                            setDragMode("left")
+                        } else {
+                            setDragMode("right")
+                        }
+                    }
+                } else if(Math.abs(yFrac-clickY)<0.04||Math.abs(yFrac-releaseY)<0.04){
+                     const minY = Math.min(clickY,releaseY)
+                     canvas.style.cursor = "ns-resize"
+                      if(Math.abs(minY-yFrac)<0.04){
+                          setDragMode("top")
+                      } else {
+                          setDragMode("bottom")
+                      }
+                } else {
+                    canvas.style.cursor = "grab"
+                    setDragMode("normal")
+                }
             } else {
-                console.log("Not in it!")
                 canvas.style.cursor = "auto"
-                setCursorMode("drag")
             }
-            */
 
             setMoveX(xFrac)
             setMoveY(yFrac)
         }
 
-    },[plotData,currentSnackId,cursorMode,panXY,mouseHeldDown,clickX,clickY,releaseX,releaseY])
+    },[plotData,currentSnackId,cursorMode,panXY,mouseHeldDown,clickX,clickY,releaseX,releaseY,dragMode])
 
     const handleMouseUp = useCallback(async(evt) => {
 
         setMouseHeldDown(false)
-
-        if(cursorMode==="pan") return
 
         if(!canvasRef||!canvasRef.current) return
         const canvas = canvasRef.current
@@ -214,8 +277,12 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
         if(x>axesSpace&&y<canvas.height-axesSpace){
            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
-           const xFrac = (x-axesSpace)/resizedSize
-           const yFrac = y/resizedSize
+           let xFrac = (x-axesSpace)/resizedSize
+           let yFrac = y/resizedSize
+           if(cursorMode==="pan") {
+               xFrac = releaseX
+               yFrac = releaseY
+           }
            setReleaseX(xFrac)
            setReleaseY(yFrac)
            if(Math.abs((clickX-xFrac)*plotData.width)>1&&Math.abs((clickY-yFrac)*plotData.height)){
@@ -248,7 +315,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
            }
         }
 
-    },[plotData,clickX,clickY,props.size,plotData,molecules,cursorMode])
+    },[plotData,clickX,clickY,props.size,plotData,molecules,cursorMode,releaseX,releaseY])
 
     const handleMouseDown = useCallback((evt) => {
 
@@ -257,11 +324,13 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
         const [x,y] = getXY(evt)
 
-        if(cursorMode==="pan"){
+        if(canvas.style.cursor ==="grab"||canvas.style.cursor ==="ew-resize"||canvas.style.cursor ==="ns-resize"||canvas.style.cursor ==="nwse-resize"||canvas.style.cursor ==="nesw-resize"){
+            setCursorMode("pan")
             setPanXY({x,y})
             setMouseHeldDown(true)
             return
         }
+        setCursorMode("drag")
 
         if(x>axesSpace&&y<canvas.height-axesSpace){
            const resizedSize = Math.min(canvas.width,canvas.height-axesSpace)
@@ -416,25 +485,27 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                ctx.lineTo(axesSpace+clickX*resizeImgData.width,clickY*resizeImgData.height)
                ctx.fill()
                ctx.restore()
-               const maxX = Math.max(axesSpace+clickX*resizeImgData.width,axesSpace+releaseX*resizeImgData.width)
-               const minY = Math.min(clickY*resizeImgData.height,releaseY*resizeImgData.height)
-               ctx.save()
-               ctx.fillStyle = "#ffffff"
-               ctx.beginPath()
-               ctx.arc(maxX, minY, 10, 0, 2 * Math.PI);
-               ctx.fill()
-               ctx.restore()
-               ctx.save()
-               ctx.strokeStyle = "black"
-               ctx.beginPath()
-               ctx.moveTo(maxX-5,minY-5)
-               ctx.lineTo(maxX+5,minY+5)
-               ctx.stroke()
-               ctx.beginPath()
-               ctx.moveTo(maxX-5,minY+5)
-               ctx.lineTo(maxX+5,minY-5)
-               ctx.stroke()
-               ctx.restore()
+               if(!mouseHeldDown){
+                   const maxX = Math.max(axesSpace+clickX*resizeImgData.width,axesSpace+releaseX*resizeImgData.width)
+                   const minY = Math.min(clickY*resizeImgData.height,releaseY*resizeImgData.height)
+                   ctx.save()
+                   ctx.fillStyle = "#ffffff"
+                   ctx.beginPath()
+                   ctx.arc(maxX, minY, 10, 0, 2 * Math.PI);
+                   ctx.fill()
+                   ctx.restore()
+                   ctx.save()
+                   ctx.strokeStyle = "black"
+                   ctx.beginPath()
+                   ctx.moveTo(maxX-5,minY-5)
+                   ctx.lineTo(maxX+5,minY+5)
+                   ctx.stroke()
+                   ctx.beginPath()
+                   ctx.moveTo(maxX-5,minY+5)
+                   ctx.lineTo(maxX+5,minY-5)
+                   ctx.stroke()
+                   ctx.restore()
+               }
             }
 
             ctx.font = "16px arial"
