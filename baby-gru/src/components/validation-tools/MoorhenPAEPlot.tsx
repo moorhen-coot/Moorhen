@@ -157,7 +157,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
         const [x,y] = getXY(evt)
 
-        console.log(mouseHeldDown)
         if(cursorMode==="pan"&&mouseHeldDown){
             console.log(x-panXY.x,y-panXY.y)
             setPanXY({x,y})
@@ -489,7 +488,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         setSelectedModel(parseInt(evt.target.value))
     }
 
-    const plotHeight = (props.size.height) - convertRemToPx(15)
+    const plotHeight = (props.size.height) - convertRemToPx(18)
     const plotWidth = (props.size.width) - convertRemToPx(3)
     const plotSize = Math.min(plotWidth,plotHeight)
 
@@ -540,7 +539,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                         }}/>
                         </Col>
                         <Col sm={4}>
-                        <Button variant="secondary" type="submit" disabled={queryText.length===0} size='sm' onClick={fetchData}>
+                        <Button variant="secondary" disabled={queryText.length===0} size='sm' onClick={fetchData}>
                         Fetch and plot
                         </Button>
                         </Col>
@@ -549,16 +548,18 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 </Row>
                 }
                 {paeModeButtonState==="paefile" &&
-                <Row style={{marginBottom:"1.5rem" }} >
-                        <input
-                            type="file"
-                            id="file"
-                            ref={inputFile}
-                            accept=".json,.JSON,.pae,.PAE"
-                            onChange={e => {
+                <Row style={{marginBottom:"0.1rem" }} >
+                    <Form.Group
+                        style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }}
+                        controlId="uploadPAE"
+                        className="mb-3"
+                    >
+                    <Form.Control type="file" multiple={false} accept=".json,.JSON,.pae,.PAE"
+                            onChange={(e : React.ChangeEvent<HTMLInputElement>) => {
                                 upLoadPaeFile(e.target.files[0])
                             }}
-                        />
+                    />
+                    </Form.Group>
                 </Row>
                 }
                 {paeModeButtonState==="molecule" &&
@@ -569,7 +570,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                     <Col sm={4}>
                     <MoorhenMoleculeSelect label={null} width="" defaultValue={selectedModel} onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} height="3rem" margin="0rem"/>
                     </Col>
-                    <Col sm={3}>
+                    <Col sm={4}>
                         <Button variant="secondary" size='sm' disabled={selectedModel===null||molecules.length===0||selectedModel<0} onClick={fetchDataForLoadedMolecule} >
                             Fetch and plot
                         </Button>

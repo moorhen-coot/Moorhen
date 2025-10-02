@@ -17,8 +17,8 @@ export const MoorhenPAEModal = () => {
     const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
         menu,
         'modalSize',{
-        width: convertRemToPx(40),
-        height: convertRemToPx(32)
+        width: convertRemToPx(20),
+        height: convertRemToPx(42)
     })
 
     return <MoorhenDraggableModalBase
@@ -28,7 +28,7 @@ export const MoorhenPAEModal = () => {
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
                 maxHeight={convertViewtoPx(90, height)}
-                maxWidth={convertViewtoPx(80, width)}
+                maxWidth={convertViewtoPx(50, width)}
                 enforceMaxBodyDimensions={false}
                 overflowY='hidden'
                 overflowX='auto'
