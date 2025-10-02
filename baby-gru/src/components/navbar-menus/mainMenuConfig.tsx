@@ -69,23 +69,23 @@ export const MAIN_MENU_CONFIG: MenuMap = {
         align: 8,
     },
     7: {
-        label: 'Map Tools',
-        icon: <MoorhenIcon name={`MUISymbolConstruction`} className="moorhen__icon__menu" alt="Map Tools" />,
-        component: MoorhenMapToolsMenu,
-        props: { dropdownId: 'map-tools-menu' },
-        align: 12,
-    },
-    8: {
         label: 'Models',
         icon: <MoorhenIcon name={`menu-models`} className="moorhen__icon__menu" alt="Models" />,
         component: modalKeys.MODELS,
         props: { dropdownId: 'models-menu' },
     },
-    9: {
+    8: {
         label: 'Maps',
         icon: <MoorhenIcon name={`menu-maps`} className="moorhen__icon__menu" alt="Maps" />,
         component: modalKeys.MAPS,
         props: { dropdownId: 'maps-menu' },
+    },
+    9: {
+        label: 'Map Tools',
+        icon: <MoorhenIcon name={`MUISymbolConstruction`} className="moorhen__icon__menu" alt="Map Tools" />,
+        component: MoorhenMapToolsMenu,
+        props: { dropdownId: 'map-tools-menu' },
+        align: 12,
     },
     10: {
         label: 'History',

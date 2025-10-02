@@ -1,11 +1,12 @@
-import { useDispatch } from "react-redux";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
-import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
-import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem";
-import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from "../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem";
-import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuItem";
-import { showModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
+import { useDispatch } from 'react-redux';
+import { showModal } from '../../store/modalsSlice';
+import { modalKeys } from '../../utils/enums';
+import { MoorhenDedustMapMenuItem } from '../menu-item/DeDustMap';
+import { MoorhenMenuItem } from '../menu-item/MenuItem';
+import { MoorhenFlipMapHandMenuItem } from '../menu-item/MoorhenFlipMapHandMenuItem';
+import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from '../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem';
+import { MoorhenMapMaskingMenuItem } from '../menu-item/MoorhenMapMaskingMenuItem';
+import { MoorhenSharpenBlurMapMenuItem } from '../menu-item/MoorhenSharpenBlurMapMenuItem';
 
 export const MoorhenMapToolsMenu = () => {
     const dispatch = useDispatch();
@@ -24,6 +25,7 @@ export const MoorhenMapToolsMenu = () => {
             >
                 Color map by another map...
             </MoorhenMenuItem>
+            <MoorhenDedustMapMenuItem />
         </>
     );
 };

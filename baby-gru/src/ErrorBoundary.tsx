@@ -1,10 +1,10 @@
-import React, { ErrorInfo } from "react";
-import { Modal, Button } from "react-bootstrap";
-import { doDownload } from "./utils/utils";
-import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
-import { MoorhenMolecule } from "./utils/MoorhenMolecule";
-import { moorhen } from "./types/moorhen";
-import { MoorhenGlobalInstance } from "./InstanceManager";
+import { Button, Modal } from 'react-bootstrap';
+import React, { ErrorInfo } from 'react';
+import { MoorhenInstance } from './InstanceManager';
+import { moorhen } from './types/moorhen';
+import { MoorhenMolecule } from './utils/MoorhenMolecule';
+import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
+import { doDownload } from './utils/utils';
 
 type ErrorBoundaryPropsType = {
     urlPrefix: string;
@@ -24,7 +24,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
 
     static getDerivedStateFromError(error: Error) {
         // Update state so the next render will show the fallback UI.
-        console.log("Error boundary triggered ");
+        console.log('Error boundary triggered ');
         return { hasError: true };
     }
 
@@ -42,11 +42,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
 
     async handleBackupDownload() {
         const timeCapsule = new MoorhenTimeCapsule(null, null, null, null);
-        timeCapsule.storageInstance = MoorhenGlobalInstance.createLocalStorageInstance("Moorhen-TimeCapsule");
+        timeCapsule.storageInstance = MoorhenInstance.createLocalStorageInstance('Moorhen-TimeCapsule');
         await timeCapsule.init();
         const backup = (await timeCapsule.retrieveLastBackup()) as string;
         const sessionData: moorhen.backupSession = JSON.parse(backup);
-        const promises = sessionData.moleculeData.map((molData) => {
+        const promises = sessionData.moleculeData.map(molData => {
             const format = MoorhenMolecule.guessCoordFormat(molData.coordString);
             return this.doAsyncDownload([molData.coordString], `${molData.name}.${format}`);
         });
@@ -57,11 +57,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
         // If there is an error render custom fallback UI otherwise render children
         if (this.state.hasError) {
             const head = document.head;
-            const style: any = document.createElement("link");
+            const style: any = document.createElement('link');
             style.href = `${this.props.urlPrefix}/flatly.css`;
-            style.rel = "stylesheet";
+            style.rel = 'stylesheet';
             style.async = true;
-            style.type = "text/css";
+            style.type = 'text/css';
             head.appendChild(style);
 
             return (
@@ -69,9 +69,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
                     <Modal.Header>
                         <Modal.Title>Something went wrong...</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
-                        An error has occurred in Moorhen. You will need to refresh the page to re-start the app.
-                    </Modal.Body>
+                    <Modal.Body>An error has occurred in Moorhen. You will need to refresh the page to re-start the app.</Modal.Body>
                     <Modal.Footer>
                         <Button variant="primary" onClick={this.handleBackupDownload.bind(this)}>
                             Download last molecule backup
@@ -85,4 +83,4 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     }
 }
 
-ErrorBoundary.defaultProps = { urlPrefix: "." };
+ErrorBoundary.defaultProps = { urlPrefix: '.' };

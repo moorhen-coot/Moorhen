@@ -1,12 +1,12 @@
-import { useMoorhenGlobalInstance } from "./useMoorhenGlobalInstance";
+import { useMoorhenInstance } from './useMoorhenInstance';
 
 export const useTimeCapsule = () => {
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const moorhenGlobalInstance = useMoorhenInstance();
     return moorhenGlobalInstance.getTimeCapsuleRef();
 };
 
 export const useCommandCentre = () => {
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const moorhenGlobalInstance = useMoorhenInstance();
     return moorhenGlobalInstance.getCommandCentreRef();
 };
 
@@ -17,6 +17,6 @@ export const useCommandAndCapsule = () => {
 };
 
 export const usePaths = () => {
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const moorhenGlobalInstance = useMoorhenInstance();
     return moorhenGlobalInstance.paths;
 };

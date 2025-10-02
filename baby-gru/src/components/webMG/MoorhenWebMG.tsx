@@ -8,7 +8,7 @@ import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuff
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
-import { useCommandCentre, useMoorhenGlobalInstance } from '../../InstanceManager';
+import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -52,7 +52,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
-    const moorhenGlobalInstance = useMoorhenGlobalInstance();
+    const moorhenGlobalInstance = useMoorhenInstance();
     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)

@@ -1,7 +1,6 @@
-
-import { emscriptem } from "./emscriptem";
-import { gemmi } from "./gemmi"
-import { privateer } from "./privateer";
+import { emscriptem } from './emscriptem';
+import { gemmi } from './gemmi';
+import { privateer } from './privateer';
 
 // Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
 
@@ -15,7 +14,7 @@ export namespace libcootApi {
     type CCP4ModuleType = {
         get_non_selected_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_multi_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
-        parse_ligand_dict_info(fileContent: string): emscriptem.vector<{ comp_id: string; dict_contents: string; }>;
+        parse_ligand_dict_info(fileContent: string): emscriptem.vector<{ comp_id: string; dict_contents: string }>;
         get_ligand_info_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
             resName: string;
             chainName: string;
@@ -30,7 +29,7 @@ export namespace libcootApi {
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
         remove_non_selected_atoms(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
-        check_polymer_type(polymerConst: emscriptem.instance<number>): {value: number};
+        check_polymer_type(polymerConst: emscriptem.instance<number>): { value: number };
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
         has_hydrogen(model: gemmi.Model): number;
@@ -38,7 +37,7 @@ export namespace libcootApi {
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
         remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
-        read_string(coordData: string) : gemmi.cifDocument;
+        read_string(coordData: string): gemmi.cifDocument;
         is_small_structure(coordData: string): boolean;
         copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
@@ -46,44 +45,44 @@ export namespace libcootApi {
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
         cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
-        get_pdb_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
-        get_mmcif_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
+        get_pdb_string_from_gemmi_struct: (arg0: gemmi.Structure) => string;
+        get_mmcif_string_from_gemmi_struct: (arg0: gemmi.Structure) => string;
         validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
-        Selection: { new(cid: string): gemmi.Selection };
-        NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
-        Position: { new(x: number, y: number, z: number): gemmi.Position };
-        Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
-        cifDocument: { new(): gemmi.cifDocument };
-    }
+        Selection: { new (cid: string): gemmi.Selection };
+        NeighborSearch: { new (model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
+        Position: { new (x: number, y: number, z: number): gemmi.Position };
+        Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
+        cifDocument: { new (): gemmi.cifDocument };
+    };
     type headerInfoGemmi = {
         title: string;
-        journal: emscriptem.map<emscriptem.vector<string>,string>;
-        author:  emscriptem.map<emscriptem.vector<string>,string>;
+        journal: emscriptem.map<emscriptem.vector<string>, string>;
+        author: emscriptem.map<emscriptem.vector<string>, string>;
         compound: string;
         software: string;
-    }
+    };
     type AuthorJournal = {
         journal: string[];
-        author:  string[];
-        id:  string;
-    }
+        author: string[];
+        id: string;
+    };
     type headerInfoGemmiJS = {
         title: string;
         author_journal: AuthorJournal[];
         compound: string;
         software: string;
-    }
+    };
     type headerInfo = {
         title: string;
         journal_lines: emscriptem.vector<string>;
         author_lines: emscriptem.vector<string>;
         compound_lines: emscriptem.vector<string>;
-    }
+    };
     type headerInfoJS = {
         title: string;
         author_journal: AuthorJournal[];
         compound_lines: string[];
-    }
+    };
     type mapCell = {
         a: () => number;
         b: () => number;
@@ -91,7 +90,7 @@ export namespace libcootApi {
         alpha: () => number;
         beta: () => number;
         gamma: () => number;
-    }
+    };
     type mapCellJS = {
         a: number;
         b: number;
@@ -99,19 +98,18 @@ export namespace libcootApi {
         alpha: number;
         beta: number;
         gamma: number;
-    }
+    };
     type SequenceResInfo = {
         resNum: number;
         resCode: string;
         cid: string;
-    }
+    };
     type SequenceEntry = {
         type: number;
         name: string;
         chain: string;
         sequence: emscriptem.vector<SequenceResInfo>;
-    
-    }
+    };
     // We need to define AtomInfo here because we cannot import moorhen namespace otherwise worker code breaks during transpilation
     type AtomInfo = {
         x: number;
@@ -129,7 +127,7 @@ export namespace libcootApi {
         chain_id: string;
         res_no: string;
         res_name: string;
-    }
+    };
     interface AutoReadMtzInfo {
         idx: number;
         F: string;
@@ -187,7 +185,7 @@ export namespace libcootApi {
         residue_name: string;
         altLoc: number | string;
     }
-    interface AcedrgTypesForBond extends emscriptem.instance<AcedrgTypesForBond>{
+    interface AcedrgTypesForBond extends emscriptem.instance<AcedrgTypesForBond> {
         atom_id_1: string;
         atom_id_2: string;
         atom_type_1: string;
@@ -224,7 +222,7 @@ export namespace libcootApi {
         base: number;
         bin_width: number;
         counts: number[];
-    }
+    };
     type AutoReadMtzInfoJS = {
         idx: number;
         F: string;
@@ -234,7 +232,7 @@ export namespace libcootApi {
         sigF_obs: string;
         Rfree: string;
         weights_used: boolean;
-    }
+    };
     type HBondJS = {
         hb_hydrogen: libcootApi.HBondAtom;
         donor: libcootApi.HBondAtom;
@@ -247,11 +245,11 @@ export namespace libcootApi {
         dist: number;
         ligand_atom_is_donor: boolean;
         hydrogen_is_ligand_atom: boolean;
-        bond_has_hydrogen_flag: boolean;     
-    }
+        bond_has_hydrogen_flag: boolean;
+    };
     interface MMRCCStatsJS {
-        "All atoms": DensityCorrelationStatsInfoJS[];
-        "Side-chains": DensityCorrelationStatsInfoJS[];
+        'All atoms': DensityCorrelationStatsInfoJS[];
+        'Side-chains': DensityCorrelationStatsInfoJS[];
     }
     interface DensityCorrelationStatsInfoJS {
         resNum: number;
@@ -288,17 +286,17 @@ export namespace libcootApi {
         start: { x: number; y: number; z: number };
         end: { x: number; y: number; z: number };
         dist: number;
-    }
+    };
     type DiffDiffMapPeaksJS = {
-        value: number; 
+        value: number;
         coord: { x: number; y: number; z: number };
-    }[]
+    }[];
     type RotamerInfoJS = {
         name: string;
         rank: number;
         status: string;
         richardson_probability: number;
-    }
+    };
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
@@ -306,11 +304,11 @@ export namespace libcootApi {
     interface SimpleMeshJS {
         prim_types: [[string]];
         useIndices?: [[boolean]];
-        idx_tri: [[number[]|Uint32Array]];
-        vert_tri: [[number[]|Float32Array]];
-        additional_norm_tri?: [[number[]|Float32Array]];
-        norm_tri: [[number[]|Float32Array]];
-        col_tri: [[number[]|Float32Array]];
+        idx_tri: [[number[] | Uint32Array]];
+        vert_tri: [[number[] | Float32Array]];
+        additional_norm_tri?: [[number[] | Float32Array]];
+        norm_tri: [[number[] | Float32Array]];
+        col_tri: [[number[] | Float32Array]];
     }
     interface SymmetryData {
         cell: CellTranslation;
@@ -333,7 +331,7 @@ export namespace libcootApi {
     type PairType<T1, T2> = {
         first: T1;
         second: T2;
-    }
+    };
     interface ClipperCoordOrth extends emscriptem.instance<ClipperCoordOrth> {
         x: () => number;
         y: () => number;
@@ -351,7 +349,7 @@ export namespace libcootApi {
         updated_centre: [number, number, number];
         suggested_contour_level: number;
         suggested_radius: number;
-    }
+    };
     interface ResidueSpecT {
         model_number: number;
         chain_id: string;
@@ -410,7 +408,7 @@ export namespace libcootApi {
         restype: string;
         value: number;
         label?: string;
-    }
+    };
     interface SuperposeResultsT extends emscriptem.instance<SuperposeResultsT> {
         superpose_info: string;
         alignment: PairType<string, string>;
@@ -418,17 +416,22 @@ export namespace libcootApi {
         aligned_pairs: emscriptem.vector<PairType<ResidueValidationInformationT, ResidueValidationInformationT>>;
     }
     type SuperposeResultsJS = {
-        referenceSequence: string,
-        movingSequence: string,
-        supperposeInfo: string,
-        alignedPairsData: {reference: ValidationInformationJS, moving: ValidationInformationJS}[],
-    }
+        referenceSequence: string;
+        movingSequence: string;
+        supperposeInfo: string;
+        alignedPairsData: { reference: ValidationInformationJS; moving: ValidationInformationJS }[];
+    };
     type InstancedDataType = {
         position: [number, number, number];
         size: [number, number, number];
         colour: [number, number, number, number];
-        orientation: [[number, number, number, number], [number, number, number, number], [number, number, number, number], [number, number, number, number]];
-    }
+        orientation: [
+            [number, number, number, number],
+            [number, number, number, number],
+            [number, number, number, number],
+            [number, number, number, number],
+        ];
+    };
     interface gTriangle {
         point_id: [number, number, number];
     }
@@ -452,13 +455,13 @@ export namespace libcootApi {
         prim_types: any;
         idx_tri: any;
         vert_tri: any;
-        norm_tri: any
+        norm_tri: any;
         col_tri: any;
         instance_use_colors: any;
         instance_sizes: any;
         instance_origins: any;
         instance_orientations: any;
-    }
+    };
     interface MovedAtomT extends emscriptem.instance<MovedAtomT> {
         atom_name: string;
         alt_conf: string;
@@ -472,7 +475,7 @@ export namespace libcootApi {
         chain_id: string;
         res_no: number;
         ins_code: string;
-        moved_atoms: emscriptem.vector<MovedAtomT>
+        moved_atoms: emscriptem.vector<MovedAtomT>;
     }
     interface RamaData extends emscriptem.instance<RamaData> {
         chainId: string;
@@ -493,14 +496,14 @@ export namespace libcootApi {
         phi: number;
         psi: number;
         is_pre_pro: boolean;
-    }
+    };
     type textureAsFloats = {
         width: number;
         height: number;
         x_size: number;
         y_size: number;
         z_position: number;
-    }
+    };
     type textureAsFloatsJS = {
         width: number;
         height: number;
@@ -508,78 +511,114 @@ export namespace libcootApi {
         y_size: number;
         z_position: number;
         image_data: Float32Array;
-    }
+    };
     type fitLigandInfo = {
         imol: number;
         cluster_idx: number;
         ligand_idx: number;
-    }
+    };
     type compoundInfo = {
         name: string;
         three_letter_code: string;
-    }
+    };
     type CootModule = {
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
-        get_mmcif_string_from_gemmi_struct(arg0:gemmi.Structure): string;
+        get_mmcif_string_from_gemmi_struct(arg0: gemmi.Structure): string;
         read_structure_from_string(coordData: string | ArrayBuffer, molName: string): gemmi.Structure;
-        read_string(coordData: string) : gemmi.cifDocument;
-        MolTextToPDB(mol_text_cpp:string, TLC: string, nconf: number, maxIters: number, keep_orig_coords: boolean, minimize: boolean): PairType<string, string>;
+        read_string(coordData: string): gemmi.cifDocument;
+        MolTextToPDB(
+            mol_text_cpp: string,
+            TLC: string,
+            nconf: number,
+            maxIters: number,
+            keep_orig_coords: boolean,
+            minimize: boolean
+        ): PairType<string, string>;
 
         FS: {
-            readFile(tempFilename: string, arg1: { encoding: string; }): string | Uint8Array;
-            mkdir: (arg0: string) => void; 
+            readFile(tempFilename: string, arg1: { encoding: string }): string | Uint8Array;
+            mkdir: (arg0: string) => void;
         };
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;
-        testFloat32Array( arg0: any ): Float32Array;
+        testFloat32Array(arg0: any): Float32Array;
         copy_to_assembly_to_new_structure(gemmiStructure: gemmi.Structure, assembly_name: string): gemmi.Structure;
-        getPositionsFromSimpleMesh( arg0: any ): Float32Array;
-        getNormalsFromSimpleMesh( arg0: any ): Float32Array;
-        getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
-        getColoursFromSimpleMesh( arg0: any ): Float32Array;
-        getTextureArray( arg0: any, arg1: any ): void;
-        getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
-        getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
-        getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
-        getReversedNormalsFromSimpleMesh3( arg0: any, arg1: any ): void;
-        getColoursFromSimpleMesh2( arg0: any, arg1: any ): void;
-        getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
-        getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
-        getTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
-        getLineIndicesFromSimpleMesh2( arg0: any, arg1: any  ): void;
-        getPermutedTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
-        getTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getPositionsFromSimpleMesh(arg0: any): Float32Array;
+        getNormalsFromSimpleMesh(arg0: any): Float32Array;
+        getReversedNormalsFromSimpleMesh(arg0: any): Float32Array;
+        getColoursFromSimpleMesh(arg0: any): Float32Array;
+        getTextureArray(arg0: any, arg1: any): void;
+        getPositionsFromSimpleMesh2(arg0: any, arg1: any): void;
+        getNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
+        getReversedNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
+        getReversedNormalsFromSimpleMesh3(arg0: any, arg1: any): void;
+        getColoursFromSimpleMesh2(arg0: any, arg1: any): void;
+        getLineIndicesFromSimpleMesh(arg0: any): Uint32Array;
+        getPermutedTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
+        getTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
+        getLineIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
+        getPermutedTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
+        getTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
         get_coord_header_info(docString: string, path: string): headerInfoGemmi;
-        molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
-        Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
-        moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
-        moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};
-        MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
-        MapIntFloat4: { new(): emscriptem.map<[number, number, number, number], number>};
-        VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
-        vector_pair_double_vector_double: { new(): emscriptem.vector<{ first: double, second: emscriptem.vector<double> }>};
-        VectorDouble: { new(): emscriptem.vector<double>};
+        molecules_container_js: { new (verbose: boolean): MoleculesContainerJS };
+        Vectormoved_residue_t: { new (): emscriptem.vector<MovedResidueT> };
+        moved_residue_t: { new (arg0: string, arg1: number, arg2: string): MovedResidueT };
+        moved_atom_t: { new (arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT };
+        MapIntFloat3: { new (): emscriptem.map<[number, number, number], number> };
+        MapIntFloat4: { new (): emscriptem.map<[number, number, number, number], number> };
+        VectorStringUInt_pair: { new (): emscriptem.vector<{ first: string; second: number }> };
+        vector_pair_double_vector_double: { new (): emscriptem.vector<{ first: double; second: emscriptem.vector<double> }> };
+        VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
-    }
+    };
     interface DoublePairDoubleJS {
-      first: number;
-      second: any;
+        first: number;
+        second: any;
     }
     interface MoleculesContainerJS {
         [key: string]: any;
         delete(): void;
+        set_max_number_of_simple_mesh_vertices(maxVertex: number);
+        get_max_number_of_simple_mesh_vertices(): numbers;
+        get_overlap_dots(imol: number): void;
         set_colour_map_for_map_coloured_by_other_map(arg0: any): void;
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
-        export_molecular_representation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, useSecondaryStructureScheme: number, fileName: string): void;
-        export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
-        export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
+        export_molecular_representation_as_gltf(
+            imol: number,
+            cid: string,
+            colourScheme: string,
+            style: string,
+            useSecondaryStructureScheme: number,
+            fileName: string
+        ): void;
+        export_model_molecule_as_gltf(
+            imol: number,
+            cid: string,
+            mode: string,
+            isDark: boolean,
+            bondWidth: number,
+            atomRadius: number,
+            bondSmoothness: number,
+            drawHydrogens: boolean,
+            drawMissingResidues: boolean,
+            fileName: string
+        ): void;
+        export_map_molecule_as_gltf(
+            imol: number,
+            x: number,
+            y: number,
+            z: number,
+            radius: number,
+            contourLevel: number,
+            fileName: string
+        ): void;
         set_max_number_of_threads(arg0: number): void;
         set_map_is_contoured_with_thread_pool(arg0: boolean): void;
         close_molecule(molNo: number): number;
@@ -589,8 +628,12 @@ export namespace libcootApi {
         writePDBASCII(molNo: number, tempFilename: string): void;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
-        read_coords_string(pdb_string: string, molecule_name:string): PairType<number, string>;
-        set_user_defined_atom_colour_by_selection(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>, nonCarbon: boolean): void;
+        read_coords_string(pdb_string: string, molecule_name: string): PairType<number, string>;
+        set_user_defined_atom_colour_by_selection(
+            imol: number,
+            indexedResiduesVec: emscriptem.vector<{ first: string; second: number }>,
+            nonCarbon: boolean
+        ): void;
         set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number, number], number>): void;
         read_ccp4_map(arg0: string, arg2: boolean): number;
         associate_data_mtz_file_with_map(arg0: number, arg1: string, arg2: string, arg3: string, arg5: string): void;
@@ -604,5 +647,5 @@ export namespace libcootApi {
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
         get_map_spacegroup(arg0: number): string;
         get_map_data_resolution(arg0: number): number;
-    }       
+    }
 }

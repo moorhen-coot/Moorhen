@@ -1,43 +1,41 @@
-import React from "react";
-import localforage from "localforage";
-import { Dispatch, Store, UnknownAction } from "redux";
-import { moorhen } from "../types/moorhen";
-import { setGlobalInstanceReady, setBusy } from "../store/globalUISlice";
-import { CommandCentre } from "../utils/MoorhenCommandCentre";
-import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
-import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
-import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
-import { ScreenRecorder } from "../utils/MoorhenScreenRecorder";
-import { MoorhenMap, MoorhenMolecule } from "../moorhen";
+import localforage from 'localforage';
+import { Dispatch, Store, UnknownAction } from 'redux';
+import React from 'react';
+import { Preferences } from '../components/managers/preferences/MoorhenPreferences';
+import { MoorhenMap, MoorhenMolecule } from '../moorhen';
+import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
+import { setBusy, setGlobalInstanceReady } from '../store/globalUISlice';
+import { moorhen } from '../types/moorhen';
+import { ScreenRecorder } from '../utils/MoorhenScreenRecorder';
+import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
+import { CommandCentre } from './CommandCentre';
+import { CootCommandWrapper } from './CommandCentre/CootCommandWrapper';
 
-/**
- * MoorhenGlobalInstance is a singleton class that manages global instances
- * of CommandCentre, TimeCapsule, and ScreenRecorder.
- * It provides methods to set and get these instances, as well as cleanup functionality.
- *
- */
+//import { CommandCentre } from './CommandCentre/MoorhenCommandCentre';
 
-export class MoorhenGlobalInstance {
+export class MoorhenInstance {
     public dispatch: Dispatch<UnknownAction>;
-
-    private commandCentre: CommandCentre;
-    private commandCentreRef: React.RefObject<CommandCentre>;
+    private commandCentre!: CommandCentre;
+    private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
-    private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule>;
+    private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
     private videoRecorder: ScreenRecorder;
-    private videoRecorderRef: React.RefObject<ScreenRecorder>;
+    private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private store: Store;
     private preferences: Preferences;
-    private maps: MoorhenMap[];
-    private molecules: MoorhenMolecule[];
+    private maps: MoorhenMap[] = [];
+    private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
+    public cootCommand!: CootCommandWrapper;
 
     constructor() {
-        this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.commandCentreRef = React.createRef<CommandCentre>();
+        this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
+        this.moleculesRef = React.createRef<MoorhenMolecule[]>();
+        this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
     }
 
@@ -45,21 +43,21 @@ export class MoorhenGlobalInstance {
         urlPrefix: string;
         monomerLibraryPath: string;
     } = {
-        urlPrefix: "",
-        monomerLibraryPath: "",
+        urlPrefix: '',
+        monomerLibraryPath: '',
     };
 
     public setCommandCentre(commandCentre: CommandCentre): void {
         this.commandCentre = commandCentre;
-        this.commandCentreRef = React.createRef<CommandCentre>();
         this.commandCentreRef.current = commandCentre;
+        this.cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
 
     public getCommandCentre(): CommandCentre {
         return this.commandCentre;
     }
 
-    public getCommandCentreRef(): React.RefObject<CommandCentre> {
+    public getCommandCentreRef(): React.RefObject<CommandCentre | null> {
         return this.commandCentreRef;
     }
 
@@ -72,7 +70,7 @@ export class MoorhenGlobalInstance {
         return this.timeCapsule;
     }
 
-    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule> {
+    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule | null> {
         return this.timeCapsuleRef;
     }
 
@@ -85,7 +83,7 @@ export class MoorhenGlobalInstance {
         return this.videoRecorder;
     }
 
-    public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
+    public getVideoRecorderRef(): React.RefObject<ScreenRecorder | null> {
         return this.videoRecorderRef;
     }
 
@@ -106,14 +104,6 @@ export class MoorhenGlobalInstance {
         return this.aceDRGInstance;
     }
 
-    public setMoleculesAndMapsRefs(
-        moleculesRef: React.RefObject<moorhen.Molecule[] | null>,
-        mapsRef: React.RefObject<moorhen.Map[] | null>
-    ): void {
-        this.moleculesRef = moleculesRef;
-        this.mapsRef = mapsRef;
-    }
-
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -128,6 +118,8 @@ export class MoorhenGlobalInstance {
 
     public async startInstance(
         dispatch: Dispatch<UnknownAction>,
+        moleculesRef: React.RefObject<moorhen.Molecule[]>,
+        mapsRef: React.RefObject<moorhen.Map[]>,
         store: Store,
         externalCommandCentreRef?: React.RefObject<CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>,
@@ -139,16 +131,23 @@ export class MoorhenGlobalInstance {
     ): Promise<void> {
         this.dispatch = dispatch;
         this.store = store;
+        this.moleculesRef = moleculesRef;
+        this.mapsRef = mapsRef;
 
         // == Init Time capsule ==
-        const activeMapRef = React.createRef<moorhen.Map | null>();
+        const activeMapRef = React.createRef<moorhen.Map>();
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
         const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
             ? timeCapsuleConfig.providedBackupStorageInstance
-            : MoorhenGlobalInstance.createLocalStorageInstance("Moorhen-TimeCapsule");
+            : MoorhenInstance.createLocalStorageInstance('Moorhen-TimeCapsule');
         newTimeCapsule.storageInstance = backupStorageInstance;
-        newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount;
-        newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
+        if (timeCapsuleConfig?.maxBackupCount) {
+            newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount;
+        }
+
+        if (timeCapsuleConfig?.modificationCountBackupThreshold) {
+            newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
+        }
         await newTimeCapsule.init();
         this.setTimeCapsule(newTimeCapsule);
         if (externalTimeCapsuleRef) {
@@ -156,7 +155,7 @@ export class MoorhenGlobalInstance {
         }
 
         // == Init Command Centre ==
-        const newCommandCentre = new CommandCentre(this.paths.urlPrefix, null, this.timeCapsuleRef, {
+        const newCommandCentre = new CommandCentre(this.paths.urlPrefix, this.timeCapsuleRef, {
             onCootInitialized: () => {
                 this.dispatch(setCootInitialized(true));
             },
@@ -167,16 +166,14 @@ export class MoorhenGlobalInstance {
                 this.dispatch(toggleCootCommandStart());
             },
         });
-        newCommandCentre.onActiveMessagesChanged = (newActiveMessages) =>
-            this.dispatch(setBusy(newActiveMessages.length !== 0));
+        newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
         this.setCommandCentre(newCommandCentre);
         if (externalCommandCentreRef) {
             externalCommandCentreRef.current = this.commandCentre;
         }
 
         await newCommandCentre.init();
-
-        console.log("Global instance is ready CommandCentre:", this.getCommandCentreRef().current);
+        this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
     }
 
@@ -184,6 +181,3 @@ export class MoorhenGlobalInstance {
         this.commandCentre.close();
     }
 }
-
-// Export a singleton instance
-export const moorhenGlobalInstance = new MoorhenGlobalInstance();
