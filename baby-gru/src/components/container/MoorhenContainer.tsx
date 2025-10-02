@@ -41,7 +41,7 @@ import { MoorhenModalsContainer } from '../misc/MoorhenModalsContainer';
 import { MoorhenMainMenu } from '../navbar-menus/MoorhenMainMenu';
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from '../navbar-menus/MoorhenMainMenu';
-import { EdgePanelSequenceViewer } from '../panels/SequenceViewerPanel';
+import { BottomPanelContainer } from '../panels/BottomPanel';
 import { MoorhenSidePanel } from '../panels/SidePanel';
 import { MoorhenAcceptRejectDragAtomsSnackBar } from '../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar';
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from '../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar';
@@ -215,6 +215,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
 
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
+    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
     if (props.moleculesRef) {
         // eslint-disable-next-line
@@ -265,11 +266,12 @@ const MoorhenContainer = (props: ContainerProps) => {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
         const GLviewWidth = newWidth - (sidePanelIsShown ? 300 : 0);
+        const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
-        dispatch(setGlViewportHeight(newHeight - 76));
-    }, [sidePanelIsShown]);
+        dispatch(setGlViewportHeight(GLviewHeigth));
+    }, [sidePanelIsShown, bottomPanelIsShown]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
@@ -548,7 +550,7 @@ const MoorhenContainer = (props: ContainerProps) => {
                             />
                         </MoorhenDroppable>
                     </div>
-                    <EdgePanelSequenceViewer />
+                    <BottomPanelContainer />
                     <MoorhenSidePanel width={300} />
                 </SnackbarProvider>
             </div>

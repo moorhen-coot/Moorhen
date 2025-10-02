@@ -24,6 +24,7 @@ type MoorhenSequenceViewerPropsType = {
     fontSize?: number;
     showTitleBar?: boolean;
     className?: string;
+    displayHeight?: number;
     forceRedrawScrollBarKey?: string | number;
     style?: React.CSSProperties;
 };
@@ -58,8 +59,13 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     const seqLength = sequencesArray.length;
     const [, setIsScrolling, isScrollingRef] = useStateWithRef<boolean>(false);
-    const _displayHeight = props.maxDisplayHeight < seqLength ? props.maxDisplayHeight : seqLength;
-    const [displayHeight, setDisplayHeight] = useState<number>(_displayHeight > 0 ? _displayHeight : 1);
+    const displayHeight = props.displayHeight
+        ? props.displayHeight
+        : props.maxDisplayHeight < seqLength
+          ? props.maxDisplayHeight
+          : seqLength;
+
+    //const [displayHeight, setDisplayHeight] = useState<number>(_displayHeight > 0 ? _displayHeight : 1);
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHeight]);
     const [mouseIsHovering, setMouseIsHovering, mouseIsHoveringRef] = useStateWithRef<boolean>(false);
     const [internalSelectedResidues, setInternalSelectedResidues, internalSelectedResiduesRef] = useStateWithRef<ResiduesSelection>(
@@ -222,13 +228,13 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         }
     };
 
-    const handleChangeDisplaySize = val => {
-        if (val > 0 && displayHeight < sequencesArray.length) {
-            setDisplayHeight(prev => Math.min(prev + 1, props.maxDisplayHeight));
-        } else if (val < 0) {
-            setDisplayHeight(prev => Math.max(prev - 1, 1));
-        }
-    };
+    // const handleChangeDisplaySize = val => {
+    //     if (val > 0 && displayHeight < sequencesArray.length) {
+    //         setDisplayHeight(prev => Math.min(prev + 1, props.maxDisplayHeight));
+    //     } else if (val < 0) {
+    //         setDisplayHeight(prev => Math.max(prev - 1, 1));
+    //     }
+    // };
 
     useMemo(() => {
         if (noSequence || invalidSequences) return [];

@@ -1,4 +1,4 @@
-@import "../../colors.css";
+@import '../../colors.css';
 .moorhen__icon__small {
     filter: invert(1) brightness(var(--moorhen-icon-brightness));
     width: 22px;

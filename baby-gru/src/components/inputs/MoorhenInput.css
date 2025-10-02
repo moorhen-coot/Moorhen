@@ -1,4 +1,4 @@
-@import "../../colors.css";
+@import '../../colors.css';
 /* General styles for the inputs */
 .moorhen__input,
 .moorhen__input-files-upload {
@@ -13,7 +13,9 @@
     background-color: var(--moorhen-input-background);
     border: 1px solid var(--moorhen-border);
     border-radius: 0.375rem;
-    transition: border-color 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+    transition:
+        border-color 0.25s ease-in-out,
+        box-shadow 0.25s ease-in-out;
     box-sizing: border-box;
     margin-left: 0;
 }
@@ -78,4 +80,29 @@
     background-color: var(--moorhen-disabled);
     border-color: var(--moorhen-disabled);
     color: var(--moorhen-disabled);
+}
+
+.moorhen__tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+.moorhen__tooltip-text {
+    visibility: hidden; /* Hidden by default */
+    width: 130px;
+    background-color: black;
+    color: #ffffff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1; /* Ensure tooltip is displayed above content */
+}
+
+/* Show the tooltip text on hover */
+.moorhen__tooltip:hover .moorhen__tooltip-text {
+    visibility: visible;
 }

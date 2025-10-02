@@ -1,19 +1,21 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialState: {
     busy: boolean;
     isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
     sidePanelIsShown: boolean;
+    bottomPanelIsShown: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
     sidePanelIsShown: false,
+    bottomPanelIsShown: true,
 };
 
 const globalUISlice = createSlice({
-    name: "globalUI",
+    name: 'globalUI',
     initialState,
     reducers: {
         setBusy: (state, action: PayloadAction<boolean>) => {
@@ -28,8 +30,11 @@ const globalUISlice = createSlice({
         setShowSidePanel: (state, action: PayloadAction<boolean>) => {
             state.sidePanelIsShown = action.payload;
         },
+        setShowBottomPanel: (state, action: PayloadAction<boolean>) => {
+            state.bottomPanelIsShown = action.payload;
+        },
     },
 });
 
-export const { setBusy, setTimeCapsuleBusy, setGlobalInstanceReady, setShowSidePanel } = globalUISlice.actions;
+export const { setBusy, setTimeCapsuleBusy, setGlobalInstanceReady, setShowSidePanel, setShowBottomPanel } = globalUISlice.actions;
 export default globalUISlice.reducer;
