@@ -528,22 +528,24 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
                 {paeModeButtonState==="uniprot" &&
                 <Row style={{textAlign:'left', marginBottom:"0.2rem" }} className="align-items-centre">
-                    <Col sm={2}>UniProt</Col>
-                    <Form.Group as={Col} className="mb-3" >
-                        <Form.Control
-                             type="text"
-                             value={queryText}
-                             placeholder="e.g. Q12XU1"
+                    <Form>
+                      <Form.Group as={Row} className="mb-3" controlId="formAFUniProt">
+                        <Col sm={3}>
+                        <Form.Label>UniProt</Form.Label>
+                        </Col>
+                        <Col sm={4}>
+                        <Form.Control type="text" placeholder="e.g. Q12XU1" value={queryText}
                              onChange={evt => {
                                  setQueryText(evt.target.value)
-                             }}
-                         />
-                    </Form.Group>
-                    <Col sm={6}>
-                        <Button variant="secondary" disabled={queryText.length===0} size='sm' onClick={fetchData} >
-                            Fetch and plot
+                        }}/>
+                        </Col>
+                        <Col sm={4}>
+                        <Button variant="secondary" type="submit" disabled={queryText.length===0} size='sm' onClick={fetchData}>
+                        Fetch and plot
                         </Button>
-                    </Col>
+                        </Col>
+                        </Form.Group>
+                    </Form>
                 </Row>
                 }
                 {paeModeButtonState==="paefile" &&
