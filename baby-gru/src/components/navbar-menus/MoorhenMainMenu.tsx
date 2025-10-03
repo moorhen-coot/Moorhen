@@ -1,11 +1,11 @@
-import "./main-menu.css";
-import { memo, useMemo, useState } from "react";
-import { ClickAwayListener } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
-import { showModal } from "../../store/modalsSlice";
-import { RootState } from "../../store/MoorhenReduxStore";
-import { MoorhenIcon } from "../icons";
-import { MAIN_MENU_CONFIG } from "./mainMenuConfig";
+import { ClickAwayListener } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { memo, useMemo, useState } from 'react';
+import { RootState } from '../../store/MoorhenReduxStore';
+import { showModal } from '../../store/modalsSlice';
+import { MoorhenIcon } from '../icons';
+import './main-menu.css';
+import { MAIN_MENU_CONFIG } from './mainMenuConfig';
 
 export type ExtraNavBarMenus = {
     icon: React.JSX.Element;
@@ -29,11 +29,12 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         if (isOpen) {
             setActiveMenu(null);
         }
-        setIsOpen((prev) => !prev);
+
+        setIsOpen(prev => !prev);
     };
-    const handleClickAway = (event) => {
-        console.log("click away from menu: ", event);
-        if ((event.target as HTMLElement).closest(".moorhen__main-menu-buttons-container")) return;
+    const handleClickAway = event => {
+        console.log('click away from menu: ', event);
+        if ((event.target as HTMLElement).closest('.moorhen__main-menu-buttons-container')) return;
 
         setActiveMenu(null);
     };
@@ -41,7 +42,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     const subMenu = useMemo(() => {
         if (!activeMenu || !isOpen) return null;
 
-        const menuEntry = Object.values(MAIN_MENU_CONFIG).find((m) => m.label === activeMenu);
+        const menuEntry = Object.values(MAIN_MENU_CONFIG).find(m => m.label === activeMenu);
 
         if (menuEntry) {
             const style = menuEntry.align ? { top: `${menuEntry.align * 1.5}rem` } : {};
@@ -51,9 +52,9 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
                 </div>
             );
         } else {
-            const extraMenu = props.extraNavBarMenus.find((m) => m.name === activeMenu);
+            const extraMenu = props.extraNavBarMenus.find(m => m.name === activeMenu);
             if (extraMenu) {
-                const style = extraMenu.align ? { top: `${extraMenu.align * 1.5}rem` } : { top: "5rem" };
+                const style = extraMenu.align ? { top: `${extraMenu.align * 1.5}rem` } : { top: '5rem' };
                 return (
                     <div key={extraMenu.name} className="moorhen__sub-menu-container" ref={extraMenu.ref} style={style}>
                         {extraMenu.JSXElement}
@@ -69,14 +70,14 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         if (!isOpen || !props.extraNavBarMenus) return null;
         return (
             <div className="moorhen__main-menu-buttons-container">
-                {props.extraNavBarMenus.map((menu) => (
+                {props.extraNavBarMenus.map(menu => (
                     <MainMenuButton
                         key={menu.name}
                         icon={menu.icon}
                         label={menu.name}
                         onClick={() => {
                             setActiveMenu(menu.name);
-                            menu.ref.current?.scrollIntoView({ behavior: "smooth" });
+                            menu.ref.current?.scrollIntoView({ behavior: 'smooth' });
                         }}
                     />
                 ))}
@@ -87,11 +88,11 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     const menu = useMemo(() => {
         if (!isOpen) return null;
         const handleClick = (label: string) => {
-            setActiveMenu((current) => (current === label ? null : label));
+            setActiveMenu(current => (current === label ? null : label));
         };
 
         const buttonsList = Object.entries(MAIN_MENU_CONFIG).map(([key, menu]) => {
-            if (menu.label === "Dev tools" && !isDevMode) {
+            if (menu.label === 'Dev tools' && !isDevMode) {
                 return null;
             }
             return (
@@ -100,7 +101,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
                     icon={menu.icon}
                     label={menu.label}
                     onClick={
-                        typeof menu.component === "function"
+                        typeof menu.component === 'function'
                             ? () => handleClick(menu.label)
                             : () => {
                                   setActiveMenu(null);
@@ -119,8 +120,11 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         );
     }, [isOpen, props.extraNavBarMenus, isDevMode]);
 
+    const containerHeight = isOpen ? '95%' : '5rem';
+    const containerWidth = activeMenu === null ? '12rem' : '40rem';
+
     return (
-        <div className="moorhen__main-menu">
+        <div className="moorhen__main-menu" style={{ width: containerWidth, height: containerHeight }}>
             <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                 {isOpen ? (
                     <MoorhenIcon name={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
@@ -132,14 +136,12 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
             </button>
             <div className="moorhen__main-menu-container">
                 {menu}
-                {subMenu ? (
-                    <ClickAwayListener onClickAway={(event) => handleClickAway(event)}>{subMenu}</ClickAwayListener>
-                ) : null}
+                {subMenu ? <ClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</ClickAwayListener> : null}
             </div>
         </div>
     );
 });
-MoorhenMainMenu.displayName = "MoorhenMainMenu";
+MoorhenMainMenu.displayName = 'MoorhenMainMenu';
 
 const MainMenuButton = (props: { icon: React.JSX.Element; label: string; onClick: () => void }) => {
     return (

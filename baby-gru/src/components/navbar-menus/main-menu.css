@@ -1,8 +1,10 @@
-@import "../../colors.css";
+@import '../../colors.css';
 
 .moorhen__main-menu {
     position: absolute;
+    overflow-y: auto;
     z-index: 999;
+    width: 11rem;
 }
 
 .moorhen__main-menu-container {
@@ -79,7 +81,7 @@
 
 .moorhen__main-menu-button,
 .moorhen__main-menu-toggle {
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     position: relative;
     top: 1rem;
     border-radius: 2rem;
