@@ -5,6 +5,7 @@ import './selectors.css';
 
 type MoorhenMoleculeSelectType = {
     onSelect: (arg0: number) => void;
+    selected?: number;
     moleculeList?: MoorhenMolecule[];
     disabled?: boolean;
 };
@@ -31,6 +32,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             <label htmlFor="MoleculeSelector">Select Molecule:</label>
             <select
                 disabled={disabled}
+                defaultValue={props.selected ? props.selected : 0}
                 name="MoleculeSelector"
                 id="MoleculeSelector"
                 className="moorhen__selector"

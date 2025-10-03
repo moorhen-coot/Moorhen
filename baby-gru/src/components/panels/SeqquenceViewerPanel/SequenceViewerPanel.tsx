@@ -46,7 +46,7 @@ export const SequenceViewerPanel = () => {
 
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         return MoleculeToSeqViewerSequences(molecule);
-    }, [molecule]);
+    }, [molecule, selectedMolecule]);
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
@@ -71,24 +71,22 @@ export const SequenceViewerPanel = () => {
         [dispatch, molecule]
     );
 
-    const configPanel = useMemo(() => {
-        return (
-            <div>
-                <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} />
-                <p></p>
-                <MoorhenPreciseInput
-                    label="Max lines"
-                    labelPosition="left"
-                    minMax={[1, 10]}
-                    type="numberForm"
-                    decimalDigits={0}
-                    value={numberOfLines}
-                    setValue={val => setNumberOfLines(parseInt(val))}
-                    width="4rem"
-                />
-            </div>
-        );
-    }, [moleculeList]);
+    const configPanel = (
+        <div>
+            <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />
+            <p></p>
+            <MoorhenPreciseInput
+                label="Max lines"
+                labelPosition="left"
+                minMax={[1, 10]}
+                type="numberForm"
+                decimalDigits={0}
+                value={numberOfLines}
+                setValue={val => setNumberOfLines(parseInt(val))}
+                width="4rem"
+            />
+        </div>
+    );
 
     useEffect(() => {
         const animation = () => {
@@ -144,6 +142,7 @@ export const SequenceViewerPanel = () => {
                 style={expand ? { height: expand ? `${displaySize}px` : '76px' } : {}}
             >
                 <MoorhenSequenceViewer
+                    key={molecule.molNo}
                     sequences={sequenceList}
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
