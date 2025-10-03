@@ -106,7 +106,7 @@ export const MAIN_MENU_CONFIG: MenuMap = {
         icon: <MoorhenIcon name={`MUISymbolHelp`} className="moorhen__icon__menu" alt="Help" />,
         component: MoorhenHelpMenu,
         props: { dropdownId: 'help-menu' },
-        align: 18,
+        align: 17,
     },
     13: {
         label: 'Dev tools',

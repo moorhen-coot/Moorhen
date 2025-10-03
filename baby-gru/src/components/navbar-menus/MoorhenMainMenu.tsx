@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { memo, useMemo, useState } from 'react';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { showModal } from '../../store/modalsSlice';
+import { convertRemToPx } from '../../utils/utils';
 import { MoorhenIcon } from '../icons';
 import './main-menu.css';
 import { MAIN_MENU_CONFIG } from './mainMenuConfig';
@@ -23,6 +24,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const isDevMode = useSelector((state: RootState) => state.generalStates.devMode);
+    const GLViewportHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const dispatch = useDispatch();
 
     const handleMainMenuToggle = () => {
@@ -120,7 +122,10 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         );
     }, [isOpen, props.extraNavBarMenus, isDevMode]);
 
-    const containerHeight = isOpen ? '95%' : '5rem';
+    const menuLength =
+        Object.keys(MAIN_MENU_CONFIG).length - (!isDevMode ? 1 : 0) + (props.extraNavBarMenus ? props.extraNavBarMenus.length : 0);
+    console.log(menuLength);
+    const containerHeight = isOpen ? `${Math.min(convertRemToPx(4.5 + menuLength * 3.3), GLViewportHeight - 10)}px` : '4.5rem';
     const containerWidth = activeMenu === null ? '12rem' : '40rem';
 
     return (

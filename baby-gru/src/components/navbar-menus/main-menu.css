@@ -3,7 +3,7 @@
 .moorhen__main-menu {
     position: absolute;
     overflow-y: auto;
-    z-index: 999;
+    z-index: 100;
     width: 11rem;
 }
 
@@ -19,20 +19,21 @@
 }
 
 .moorhen__sub-menu-container {
-    position: relative;
+    position: absolute;
+    left: 10rem;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     margin-top: 1.5rem;
     padding: 0.5rem;
     background-color: var(--moorhen-background);
-    z-index: 999;
+    z-index: 100;
     border: 1px solid var(--moorhen-border);
     border-radius: 0.5rem;
     min-width: 16rem;
     width: max-content;
     min-height: 2.5rem;
-    max-height: 46rem;
+    max-height: 42rem;
     box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
     animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
