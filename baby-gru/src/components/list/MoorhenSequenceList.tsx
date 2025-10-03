@@ -1,16 +1,16 @@
-import React, { useMemo, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useSnackbar } from "notistack";
+import { useSnackbar } from 'notistack';
+import { useDispatch, useSelector } from 'react-redux';
+import React, { useCallback, useMemo } from 'react';
+import { RootState } from '../../store/MoorhenReduxStore';
+import { setHoveredAtom } from '../../store/hoveringStatesSlice';
+import { moorhen } from '../../types/moorhen';
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../sequence-viewer';
 import {
-    MoorhenSequenceViewer,
-    moorhenSequenceToSeqViewer,
-    MoorhenSequenceViewerSequence,
-    MoorhenSequenceViewerResiduesSelection,
-} from "../sequence-viewer";
-import { cidToSpec, sequenceIsValid } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { setResidueSelection } from "../../store/generalStatesSlice";
+    MoleculeToSeqViewerSequences,
+    MoorhenSelectionToSeqViewer,
+    handleResiduesSelection,
+    useHoveredResidue,
+} from '../sequence-viewer/utils';
 
 export const MoorhenSequenceList = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -34,43 +34,15 @@ export const MoorhenSequenceList = (props: {
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
 
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
+    const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
     const sequenceSelection = useMemo(() => {
-        const selection: MoorhenSequenceViewerResiduesSelection | null = residueSelection.molecule
-            ? {
-                  molNo: residueSelection.molecule.molNo,
-                  chain: residueSelection.first.split("/")[2],
-                  range: [
-                      parseInt(residueSelection.first.split("/")[3]),
-                      residueSelection.second
-                          ? parseInt(residueSelection.second.split("/")[3])
-                          : parseInt(residueSelection.first.split("/")[3]),
-                  ],
-              }
-            : null;
-        return selection;
+        return MoorhenSelectionToSeqViewer(residueSelection);
     }, [residueSelection]);
 
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
-        const newSequenceList = props.molecule.sequences.map((sequence) => {
-            if (!sequenceIsValid(sequence.sequence)) {
-                return null;
-            }
-            const newSeq = moorhenSequenceToSeqViewer(sequence, props.molecule.name, props.molecule.molNo);
-            newSeq.residues = newSeq.residues.map((res) => ({
-                ...res,
-                colour: null,
-            }));
-            const seqColour = props.molecule.representations[0].colourRules.find(
-                (rule) => rule.cid === "//" + newSeq.chain
-            )?.color;
-            newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null;
-            return newSeq;
-        });
-        return newSequenceList;
-    }, [props.molecule.sequences]);
+        return MoleculeToSeqViewerSequences(props.molecule);
+    }, [props.molecule]);
 
     const display = sequenceList && sequenceList.length > 0 ? true : false;
 
@@ -81,22 +53,9 @@ export const MoorhenSequenceList = (props: {
         [props.setClickedResidue]
     );
 
-    const handleResiduesSelection = useCallback(
-        (selection: MoorhenSequenceViewerResiduesSelection) => {
-            if (selection.molNo !== props.molecule.molNo) return;
-            const first = Math.min(selection.range[0], selection.range[1]);
-            const second = Math.max(selection.range[0], selection.range[1]);
-            const newSelection: moorhen.ResidueSelection = {
-                molecule: props.molecule,
-                first: "/1/" + selection.chain + "/" + first + "/CA",
-                second: "/1/" + selection.chain + "/" + second + "/CA",
-                cid: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
-                isMultiCid: false,
-                label: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
-            };
-            dispatch(setResidueSelection(newSelection));
-            props.molecule.drawResidueSelection(newSelection.cid as string);
-            enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+    const residueSelectionCallback = useCallback(
+        selection => {
+            handleResiduesSelection(selection, props.molecule, dispatch, enqueueSnackbar);
         },
         [props.molecule, dispatch, enqueueSnackbar]
     );
@@ -108,14 +67,7 @@ export const MoorhenSequenceList = (props: {
         [dispatch, props.molecule]
     );
 
-    const hoveredResidue = useMemo(() => {
-        if (hoveredAtom.cid) {
-            const resInfo = cidToSpec(hoveredAtom.cid);
-            return { molNo: hoveredAtom.molecule.molNo, chain: resInfo.chain_id, resNum: resInfo.res_no };
-        } else {
-            return null;
-        }
-    }, [hoveredAtom]);
+    const hoveredResidue = useHoveredResidue();
 
     return !display ? (
         <div>
@@ -126,7 +78,7 @@ export const MoorhenSequenceList = (props: {
             sequences={sequenceList}
             selectedResidues={sequenceSelection}
             onResidueClick={handleClickResidue}
-            onResiduesSelect={handleResiduesSelection}
+            onResiduesSelect={residueSelectionCallback}
             onHoverResidue={handleHoverResidue}
             hoveredResidue={hoveredResidue}
             maxDisplayHeight={8}

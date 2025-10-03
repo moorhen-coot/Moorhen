@@ -3,12 +3,13 @@
 .moorhen__scrollbar {
     width: 12px;
     background-color: var(--moorhen-background);
+    margin: 0px;
 }
 
 .moorhen__custom__scrollbar-track {
     position: absolute;
     left: 0;
-    bottom: 2px;
+    bottom: -14px;
     width: 100%;
     height: 12px;
     background: var(--moorhen-middle);
@@ -16,17 +17,18 @@
     cursor: pointer;
     border-radius: 6px;
     border: 1px solid var(--moorhen-border);
+    margin: 2px;
 }
 
 .moorhen__custom__scrollbar-thumb {
-    position: absolute;
-    top: 0;
+    position: relative;
+    top: -1px;
     height: 12px;
     background: var(--moorhen-focus);
     border: 1px solid var(--moorhen-accent);
     border-radius: 6px;
     cursor: grab;
-    
+    margin: 0px;
 }
 
 .moorhen__custom__scrollbar-thumb:hover {

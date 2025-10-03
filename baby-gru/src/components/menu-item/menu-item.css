@@ -1,9 +1,9 @@
-@import "../../colors.css";
+@import '../../colors.css';
 
 .moorhen__menu-item,
 .moorhen__menu-item-disabled {
     all: unset;
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     min-height: 2.4rem;
     height: fit-content;
     text-align: left;
@@ -38,7 +38,7 @@
 }
 
 .moorhen__menu-item-popover::after {
-    content: "";
+    content: '';
     position: absolute;
     top: 50%;
     left: -0.7rem;
@@ -50,7 +50,7 @@
 }
 
 .moorhen__menu-item-popover::before {
-    content: "";
+    content: '';
     position: absolute;
     top: 50%;
     left: -0.6rem;
@@ -72,4 +72,42 @@
     right: -0.6rem;
     border-width: 0.6rem 0 0.6rem 0.6rem;
     border-color: transparent transparent transparent var(--moorhen-background);
+}
+
+.moorhen__menu-item-popover.top-arrow::after {
+    left: 50%;
+    top: -0.7rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0 0.7rem 0.7rem 0.7rem;
+    border-color: transparent transparent var(--moorhen-border) transparent;
+}
+
+.moorhen__menu-item-popover.top-arrow::before {
+    left: 50%;
+    top: -0.6rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0 0.6rem 0.6rem 0.6rem;
+    border-color: transparent transparent var(--moorhen-background) transparent;
+}
+
+.moorhen__menu-item-popover.bottom-arrow::after {
+    left: 50%;
+    top: auto;
+    bottom: -0.7rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0.7rem 0.7rem 0 0.7rem;
+    border-color: var(--moorhen-border) transparent transparent transparent;
+}
+
+.moorhen__menu-item-popover.bottom-arrow::before {
+    left: 50%;
+    top: auto;
+    bottom: -0.6rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0.6rem 0.6rem 0 0.6rem;
+    border-color: var(--moorhen-background) transparent transparent transparent;
 }

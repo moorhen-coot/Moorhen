@@ -1,7 +1,16 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { MoorhenMap } from "../utils/MoorhenMap";
-import { MoorhenMolecule } from "../utils/MoorhenMolecule";
-import { moorhen } from "../types/moorhen";
+import { createSlice } from '@reduxjs/toolkit';
+import { moorhen } from '../types/moorhen';
+import { MoorhenMap } from '../utils/MoorhenMap';
+import { MoorhenMolecule } from '../utils/MoorhenMolecule';
+
+export type ResidueSelection = {
+    molecule: null | MoorhenMolecule;
+    first: null | string;
+    second: null | string;
+    cid: null | string | string[];
+    isMultiCid: boolean;
+    label: string;
+};
 
 const initialState: {
     devMode: boolean;
@@ -11,7 +20,7 @@ const initialState: {
     cootInitialized: boolean;
     activeMap: MoorhenMap;
     theme: string;
-    residueSelection: moorhen.ResidueSelection;
+    residueSelection: ResidueSelection;
     isShowingTomograms: boolean;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
@@ -34,10 +43,10 @@ const initialState: {
     devMode: null,
     useGemmi: null,
     userPreferencesMounted: false,
-    appTitle: "Moorhen",
+    appTitle: 'Moorhen',
     cootInitialized: false,
     activeMap: null,
-    theme: "flatly",
+    theme: 'flatly',
 
     showHoverInfo: true,
     residueSelection: {
@@ -68,7 +77,7 @@ const initialState: {
 };
 
 export const generalStatesSlice = createSlice({
-    name: "generalStates",
+    name: 'generalStates',
     initialState: initialState,
     reducers: {
         resetGeneralStates: () => {
@@ -83,10 +92,10 @@ export const generalStatesSlice = createSlice({
         setShowResidueSelection: (state, action: { payload: boolean; type: string }) => {
             return { ...state, showResidueSelection: action.payload };
         },
-        toggleCootCommandStart: (state) => {
+        toggleCootCommandStart: state => {
             return { ...state, newCootCommandStart: !state.newCootCommandStart };
         },
-        toggleCootCommandExit: (state) => {
+        toggleCootCommandExit: state => {
             return { ...state, newCootCommandExit: !state.newCootCommandExit };
         },
         setIsChangingRotamers: (state, action: { payload: boolean; type: string }) => {
@@ -125,7 +134,7 @@ export const generalStatesSlice = createSlice({
         setUseGemmi: (state, action: { payload: boolean; type: string }) => {
             return { ...state, useGemmi: action.payload };
         },
-        clearResidueSelection: (state) => {
+        clearResidueSelection: state => {
             return {
                 ...state,
                 residueSelection: {

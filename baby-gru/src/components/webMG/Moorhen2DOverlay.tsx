@@ -644,8 +644,8 @@ export const Moorhen2DOverlay = ((props) => {
 
     const dispatch = useDispatch()
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)

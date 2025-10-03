@@ -101,8 +101,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -720,7 +720,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [zoom,quat,originState])
 
     return  <>
-                <figure style={{position: "relative"}}>
+                <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}

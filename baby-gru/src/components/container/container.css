@@ -3,7 +3,7 @@
     position: absolute;
     z-index: 1000;
     top: 0.1rem;
-    right: 0.1rem;
+    right: 10px;
     border-radius: 2rem;
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
@@ -19,4 +19,19 @@
     transition: box-shadow 0.2s;
     padding: 0 1rem; /* Add horizontal padding for extra space */
     box-sizing: border-box;
+}
+
+.moorhen__inner-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.moorhen__viewport-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    overflow: hidden;
 }
