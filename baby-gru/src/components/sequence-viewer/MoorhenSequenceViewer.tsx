@@ -199,14 +199,18 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     /** this part is the scroll down functionality */
     const holdInterval = useRef<NodeJS.Timeout | null>(null);
+    const timeoutScroll = useRef<NodeJS.Timeout | null>(null);
     const startScrollUp = val => {
-        if (holdInterval.current) return;
-        holdInterval.current = setInterval(() => {
-            scrollUp(val);
-        }, 50);
+        scroll(val);
+
+        timeoutScroll.current = setTimeout(() => {
+            holdInterval.current = setInterval(() => {
+                scroll(val);
+            }, 200);
+        }, 500);
     };
 
-    const scrollUp = val => {
+    const scroll = val => {
         if (sequencesSlice[0] === 0 && val < 0) {
             return;
         }
@@ -222,10 +226,10 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     };
 
     const stopScroll = () => {
-        if (holdInterval.current) {
-            clearInterval(holdInterval.current);
-            holdInterval.current = null;
-        }
+        clearTimeout(timeoutScroll.current);
+        clearInterval(holdInterval.current);
+        holdInterval.current = null;
+        timeoutScroll.current = null;
     };
 
     // const handleChangeDisplaySize = val => {
