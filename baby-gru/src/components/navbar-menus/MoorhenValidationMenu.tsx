@@ -101,6 +101,16 @@ export const MoorhenValidationMenu = () => {
             {devMode && (
                 <MoorhenMenuItem
                     onClick={() => {
+                        dispatch(showModal(modalKeys.PAEPLOT));
+                        document.body.click();
+                    }}
+                >
+                    Alphafold PAE Plot...
+                </MoorhenMenuItem>
+            )}
+            {devMode && (
+                <MoorhenMenuItem
+                    onClick={() => {
                         dispatch(showModal(modalKeys.JSON_VALIDATION));
                         document.body.click();
                     }}
