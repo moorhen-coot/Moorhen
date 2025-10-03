@@ -1,31 +1,33 @@
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RootState } from '../../store/MoorhenReduxStore';
-import { setShowBottomPanel } from '../../store/globalUISlice';
-import { setHoveredAtom } from '../../store/hoveringStatesSlice';
-import { MoorhenButton } from '../inputs';
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../sequence-viewer';
+import { RootState } from '../../../store/MoorhenReduxStore';
+import { setShowBottomPanel } from '../../../store/globalUISlice';
+import { setHoveredAtom } from '../../../store/hoveringStatesSlice';
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from '../../inputs';
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../../sequence-viewer';
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
     handleResiduesSelection,
     useHoveredResidue,
-} from '../sequence-viewer/utils';
-import './side-panels.css';
+} from '../../sequence-viewer/utils';
+import './sequence-viewer-panel.css';
 
 export const SequenceViewerPanel = () => {
     const dispatch = useDispatch();
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
-
     const [expand, setExpand] = useState<boolean>(false);
     const { enqueueSnackbar } = useSnackbar();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const molecule = moleculeList[0];
+    const [selectedMolecule, setSelectedMolecule] = useState<number>(0);
+    const [numberOfLines, setNumberOfLines] = useState<number>(4);
+    const molecule = moleculeList?.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList?.[0];
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
+
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
     const toggleBottomPanel = () => {
@@ -69,6 +71,25 @@ export const SequenceViewerPanel = () => {
         [dispatch, molecule]
     );
 
+    const configPanel = useMemo(() => {
+        return (
+            <div>
+                <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} />
+                <p></p>
+                <MoorhenPreciseInput
+                    label="Max lines"
+                    labelPosition="left"
+                    minMax={[1, 10]}
+                    type="numberForm"
+                    decimalDigits={0}
+                    value={numberOfLines}
+                    setValue={val => setNumberOfLines(parseInt(val))}
+                    width="4rem"
+                />
+            </div>
+        );
+    }, [moleculeList]);
+
     useEffect(() => {
         const animation = () => {
             for (let i = 0; i < 600 / 10; i++) {
@@ -83,7 +104,7 @@ export const SequenceViewerPanel = () => {
         animation();
     }, [sidePanelIsShown]);
 
-    const expandLength = sequenceList.length < 5 ? sequenceList.length : 4;
+    const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
     const displaySize = (expandLength - 1) * 26 + 76;
 
     if (!molecule) {
@@ -102,18 +123,21 @@ export const SequenceViewerPanel = () => {
                 }`}
                 style={{ left: `${GlViewportWidth / 2}px`, bottom: expand ? `${displaySize - 1}px` : '76px' }}
             >
-                {bottomPanelIsShown && <MoorhenButton type="icon-only" icon="MUISymbolSettings" size="small" onClick={handleExpand} />}
+                {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
                 <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
-                    &nbsp;Sequences&nbsp;{' '}
+                    &nbsp;&nbsp;Sequences&nbsp;&nbsp;
                 </button>
-                {bottomPanelIsShown && sequenceList.length > 1 && (
-                    <MoorhenButton
-                        type="icon-only"
-                        icon={expand ? 'MUISymbolDoubleArrowDown' : 'MUISymbolDoubleArrowUp'}
-                        size="small"
-                        onClick={handleExpand}
-                    />
-                )}
+                {bottomPanelIsShown &&
+                    (sequenceList.length > 1 ? (
+                        <MoorhenButton
+                            type="icon-only"
+                            icon={expand ? 'MUISymbolDoubleArrowDown' : 'MUISymbolDoubleArrowUp'}
+                            size="small"
+                            onClick={handleExpand}
+                        />
+                    ) : (
+                        <span>&nbsp;&nbsp;</span>
+                    ))}
             </div>
             <div
                 className={`moorhen__bottom-panel-container ${bottomPanelIsShown ? '' : 'moorhen__bottom-panel-tab-panel-is-hidden'}`}
@@ -124,7 +148,7 @@ export const SequenceViewerPanel = () => {
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
                     maxDisplayHeight={4}
-                    displayHeight={expand ? 4 : 1}
+                    displayHeight={expand ? numberOfLines : 1}
                     showTitleBar={false}
                     onResidueClick={handleClick}
                     onResiduesSelect={residueSelectionCallback}

@@ -23,11 +23,10 @@
 
     /* Icon brightness */
     --moorhen-icon-brightness: 0.15;
-
     --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
     /* Moorhen specific colors for dark theme */
     --moorhen-primary: #f8f9fa;
     --moorhen-background: #2c2e30;
