@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RootState } from '../../../store/MoorhenReduxStore';
 import { setShowBottomPanel } from '../../../store/globalUISlice';
 import { setHoveredAtom } from '../../../store/hoveringStatesSlice';
+import { convertRemToPx } from '../../../utils/utils';
 import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from '../../inputs';
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../../sequence-viewer';
 import {
@@ -105,9 +106,9 @@ export const SequenceViewerPanel = () => {
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
     const displaySize = (expandLength - 1) * 26 + 76;
 
-    if (!molecule) {
-        return <div> No Molecule loaded</div>;
-    }
+    // if (!molecule) {
+    //     return <div> No Molecule loaded</div>;
+    // }
 
     return (
         <>
@@ -119,7 +120,7 @@ export const SequenceViewerPanel = () => {
                             : ''
                         : 'moorhen__bottom-panel-tab-panel-is-hidden'
                 }`}
-                style={{ left: `${GlViewportWidth / 2}px`, bottom: expand ? `${displaySize - 1}px` : '76px' }}
+                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : '76px' }}
             >
                 {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
                 <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
@@ -142,7 +143,7 @@ export const SequenceViewerPanel = () => {
                 style={expand ? { height: expand ? `${displaySize}px` : '76px' } : {}}
             >
                 <MoorhenSequenceViewer
-                    key={molecule.molNo}
+                    key={molecule?.molNo ? molecule.molNo : `no-molecule`}
                     sequences={sequenceList}
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
