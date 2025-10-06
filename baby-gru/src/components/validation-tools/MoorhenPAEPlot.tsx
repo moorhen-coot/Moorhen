@@ -599,7 +599,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
                 {paeModeButtonState==="uniprot" &&
                 <Row style={{textAlign:'left', marginBottom:"0.2rem" }} className="align-items-centre">
-                    <Form>
+                    <Form onSubmit={evt => {evt.preventDefault(); fetchData()}}>
                       <Form.Group as={Row} className="mb-3" controlId="formAFUniProt">
                         <Col sm={3}>
                         <Form.Label>UniProt</Form.Label>
