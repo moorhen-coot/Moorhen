@@ -980,7 +980,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             NormalizeVec3(sample);
             vec3.scale(sample,sample,Math.random());
-            let scale = i / 16.0;
+            let scale = i / 64.0;
 
             // scale samples s.t. they're more aligned to center of kernel
             scale = this.lerp(0.1, 1.0, scale * scale);
