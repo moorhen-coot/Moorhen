@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RootState } from '../../../store/MoorhenReduxStore';
 import { setShowBottomPanel } from '../../../store/globalUISlice';
 import { setHoveredAtom } from '../../../store/hoveringStatesSlice';
+import type { MoorhenMolecule } from '../../../utils/MoorhenMolecule';
 import { convertRemToPx } from '../../../utils/utils';
 import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from '../../inputs';
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../../sequence-viewer';
@@ -22,9 +23,12 @@ export const SequenceViewerPanel = () => {
     const [expand, setExpand] = useState<boolean>(false);
     const { enqueueSnackbar } = useSnackbar();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const [selectedMolecule, setSelectedMolecule] = useState<number>(0);
+    const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
-    const molecule = moleculeList?.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList?.[0];
+    const molecule: MoorhenMolecule | null = useMemo(() => {
+        return moleculeList.length > 0 ? (moleculeList.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList[0]) : null;
+    }, [moleculeList, selectedMolecule]);
+
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
@@ -106,9 +110,9 @@ export const SequenceViewerPanel = () => {
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
     const displaySize = (expandLength - 1) * 26 + 76;
 
-    // if (!molecule) {
-    //     return <div> No Molecule loaded</div>;
-    // }
+    const seqViewerKey = useMemo(() => {
+        return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
+    }, [molecule?.molNo, selectedMolecule, moleculeList]);
 
     return (
         <>
@@ -143,7 +147,7 @@ export const SequenceViewerPanel = () => {
                 style={expand ? { height: expand ? `${displaySize}px` : '76px' } : {}}
             >
                 <MoorhenSequenceViewer
-                    key={molecule?.molNo ? molecule.molNo : `no-molecule`}
+                    key={seqViewerKey}
                     sequences={sequenceList}
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
