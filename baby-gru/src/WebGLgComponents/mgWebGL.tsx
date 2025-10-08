@@ -6544,7 +6544,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 self.measureHit = point;
                 return true;
             }
-            i++;
         })
 
         if(!is_close&&!evt.altKey)
