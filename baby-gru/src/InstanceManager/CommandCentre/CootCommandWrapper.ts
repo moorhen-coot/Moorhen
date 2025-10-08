@@ -37,8 +37,19 @@ export class CootCommandWrapper {
             {
                 command: 'add_waters',
                 commandArgs: [moleculeMolNo, mapMolNo],
-                returnType: 'status',
+                returnType: 'number',
                 changesMolecules: [moleculeMolNo],
+            },
+            true
+        );
+    }
+
+    async set_add_waters_sigma_cutoff(sigma: number): Promise<WorkerResponse> {
+        return await this.cootCommand(
+            {
+                command: 'set_add_waters_sigma_cutoff',
+                commandArgs: [sigma],
+                returnType: 'void',
             },
             true
         );
