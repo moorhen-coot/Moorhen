@@ -55,7 +55,6 @@ import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-gbuffer-vertex-shader.js';
 import { triangle_texture_vertex_shader_source as triangle_texture_vertex_shader_source } from './webgl-2/triangle-texture-vertex-shader.js';
 import { triangle_texture_fragment_shader_source as triangle_texture_fragment_shader_source } from './webgl-2/triangle-texture-fragment-shader.js';
-
 //WebGL1 shaders
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl1 } from './webgl-1/depth-peel-accum-vertex-shader.js';
 import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_shader_source_webgl1 } from './webgl-1/depth-peel-accum-fragment-shader.js';
@@ -98,16 +97,12 @@ import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_g
 import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 import { gaussianBlurs } from './gaussianBlurs'
-import { getEncodedData } from './encodedData'
-import { handleTextureLoaded, initStringTextures, initTextures } from './textureUtils'
-import { TexturedShape } from './texturedShape'
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
-import { createWebGLBuffers } from './createWebGLBuffers'
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
-import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShadowShaders, initPointSpheresShaders } from './mgWebGLShaders'
+import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 
 function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -154,21 +149,6 @@ function initGL(canvas) {
         console.log("MAX_VERTEX_ATTRIBS:",gl.getParameter(gl.MAX_VERTEX_ATTRIBS))
     }
     return {gl:gl,WEBGL2:WEBGL2};
-}
-
-function sortIndicesByProj(a, b) {
-    if (a.proj > b.proj)
-        return -1;
-    if (a.proj < b.proj)
-        return 1;
-    return 0;
-}
-
-function SortThing(proj, id1, id2, id3) {
-    this.proj = proj;
-    this.id1 = id1;
-    this.id2 = id2;
-    this.id3 = id3;
 }
 
 export class MGWebGL extends React.Component implements webGL.MGWebGL {
@@ -456,7 +436,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const yaxis = vec3.create();
         vec3.set(yaxis, 0.0, -1.0, 0.0)
 
-        const angle = 3./180.*Math.PI;
+        const angle = 3/180*Math.PI;
 
         const dval3_p = Math.cos(angle / 2.0);
         const dval0_y_p = yaxis[0] * Math.sin(angle / 2.0);
@@ -677,7 +657,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         super(props);
 
         this.props = props;
-        const self = this;
         this.glTextFont = "18px Helvetica";
         this.showFPS = false;
         this.nFrames = 0;
@@ -697,11 +676,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
 
         setInterval(() => {
-            if(!self.gl) return;
+            if(!this.gl) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
-            self.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
+            this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -1188,7 +1167,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.screenshotBuffersReady = false;
 
         this.edgeDetectFramebufferSize = 2048;
-        this.gBuffersFramebufferSize = 1024;
+        this.gBuffersFramebufferSize = 2048;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
@@ -1227,12 +1206,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl_nClipPlanes = 0;
         this.gl_fog_start = this.fogClipOffset;
-        this.gl_fog_end = 1000.+this.fogClipOffset;
+        this.gl_fog_end = 1000+this.fogClipOffset;
 
-        self.origin = [0.0, 0.0, 0.0];
+        this.origin = [0.0, 0.0, 0.0];
 
-        self.mouseDown = false;
-        self.mouseDownButton = -1;
+        this.mouseDown = false;
+        this.mouseDownButton = -1;
 
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
@@ -1338,9 +1317,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const touchobj = e.changedTouches[0];
                     const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     //alert(e.changedTouches.length)
-                    if (e.changedTouches.length === 1) {
-                    }
-                    else if (e.changedTouches.length === 2) {
+                    if (e.changedTouches.length === 2) {
                         evt.shiftKey = true;
                         evt.altKey = true;
                     }
@@ -1360,9 +1337,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 function (e) {
                     const touchobj = e.touches[0]; // reference first touch point for this event
                     const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
-                    if (e.touches.length === 1) {
-                    }
-                    else if (e.touches.length === 2) {
+                    if (e.touches.length === 2) {
                         evt.shiftKey = true;
                         evt.altKey = true;
                     }
@@ -1375,9 +1350,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 function (e) {
                     const touchobj = e.changedTouches[0]; // reference first touch point for this event
                     const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                    if (e.changedTouches.length === 1) {
-                    }
-                    else if (e.changedTouches.length === 2) {
+                    if (e.changedTouches.length === 2) {
                         evt.shiftKey = true;
                         evt.altKey = true;
                     }
@@ -1392,11 +1365,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.doneEvents = true;
 
-        self.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
-        self.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
-        self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
-        self.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
-        self.specularPower = 64.0;
+        this.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
+        this.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
+        this.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
+        this.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
+        this.specularPower = 64.0;
 
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
         if (this.WEBGL2) {
@@ -1452,7 +1425,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.textLegends = [];
         this.newTextLabels = [];
 
-        this.textHeightScaling = 800.;
+        this.textHeightScaling = 800;
         if(this.doShadow) this.initTextureFramebuffer(); //This is testing only
 
         if (!this.frag_depth_ext) {
@@ -1470,7 +1443,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.gl_nClipPlanes = 0;
         this.gl_fog_start = this.fogClipOffset;
-        this.gl_fog_end = 1000.+this.fogClipOffset;
+        this.gl_fog_end = 1000+this.fogClipOffset;
         //this.gl.lineWidth(2.0);
         this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
         this.gl.enable(this.gl.BLEND);
@@ -1479,26 +1452,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.ssaoBias = 1.0;
         if(this.WEBGL2) this.initializeSSAOBuffers();
 
-        self.buildBuffers();
+        this.buildBuffers();
 
         this.measureText2DCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,768,2048);
         this.measureTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
         this.labelsTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
         this.texturedShapes = [];
 
-        self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
-        self.gl.enable(self.gl.DEPTH_TEST);
+        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        self.origin = [0.0, 0.0, 0.0];
-        //const shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
+        this.origin = [0.0, 0.0, 0.0];
+        //const shader_version = this.gl.getParameter(this.gl.SHADING_LANGUAGE_VERSION);
 
-        self.mouseDown = false;
-        self.mouseDownButton = -1;
+        this.mouseDown = false;
+        this.mouseDownButton = -1;
 
-        self.setBlurSize(self.blurSize);
-        self.drawScene();
-        self.ready = true;
+        this.setBlurSize(this.blurSize);
+        this.drawScene();
+        this.ready = true;
 
         this.multiWayViewports = []
 
@@ -1733,17 +1706,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setFog(fog) {
-        const self = this;
-        self.gl_fog_start = this.fogClipOffset + fog[0];
-        self.gl_fog_end = this.fogClipOffset + fog[1];
-        self.drawScene();
+        this.gl_fog_start = this.fogClipOffset + fog[0];
+        this.gl_fog_end = this.fogClipOffset + fog[1];
+        this.drawScene();
     }
 
     setSlab(slab) {
-        const self = this;
-        self.gl_clipPlane0[3] = -this.fogClipOffset + slab[0] * 0.5 + slab[1];
-        self.gl_clipPlane1[3] = this.fogClipOffset + slab[0] * 0.5 - slab[1];
-        self.drawScene();
+        this.gl_clipPlane0[3] = -this.fogClipOffset + slab[0] * 0.5 + slab[1];
+        this.gl_clipPlane1[3] = this.fogClipOffset + slab[0] * 0.5 - slab[1];
+        this.drawScene();
     }
 
     setQuat(q: quat4) : void {
@@ -2554,7 +2525,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             ztot /= displayBuffers[idx].atoms.length;
 
             const new_origin = [-xtot, -ytot, -ztot];
-            const old_origin = [self.origin[0], self.origin[1], self.origin[2]];
+            const old_origin = [this.origin[0], this.origin[1], this.origin[2]];
 
             const myVar = setInterval(function () { myTimer() }, 10);
             let frac = 0;
@@ -2642,7 +2613,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform4fv(program.clipPlane6, this.gl_clipPlane6);
         this.gl.uniform4fv(program.clipPlane7, this.gl_clipPlane7);
         this.gl.uniform4fv(program.fogColour, new Float32Array(this.background_colour));
-        if (program.hasOwnProperty("cursorPos")) {
+        if(Object.prototype.hasOwnProperty.call(program,"cursorPos")) {
             this.gl.uniform2fv(program.cursorPos, this.gl_cursorPos);
         }
     }
@@ -3180,7 +3151,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(!this.silhouetteBufferReady)
                 this.recreateSilhouetteBuffers();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
-            const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         } else if(this.doDepthPeelPass&&this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)) {
             if(!this.screenshotBuffersReady)
@@ -3241,14 +3211,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             } else {
                 this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
             }
-            const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             if(this.useOffScreenBuffers&&this.WEBGL2){
                 if(!this.offScreenReady)
                     this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-                const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             }
             this.gl.viewport(this.currentViewport[0], this.currentViewport[1], this.currentViewport[2], this.currentViewport[3]);
         }
@@ -3342,7 +3310,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 //FIXME - drawingGBuffers stanza?
                 if(this.doPerspectiveProjection){
                     //FIXME - with  multiviews
-                    mat4.perspective(this.pMatrix, 1.0, 1.0, 100., 1270.0);
+                    mat4.perspective(this.pMatrix, 1.0, 1.0, 100, 1270.0);
                 } else {
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
@@ -3360,7 +3328,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             } else {
                 if(this.doPerspectiveProjection){
-                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100., 1270.0);
+                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100, 1270.0);
                 } else {
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
                     const f = this.gl_clipPlane0[3]+this.fogClipOffset;
@@ -3600,7 +3568,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         if(!this.offScreenReady)
                             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
                         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-                        const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
                     }
                     this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.gl.viewportWidth );
@@ -3823,7 +3790,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.gl.uniform1f(this.shaderProgramSSAO.depthBufferSize,b+f);
             if(this.doPerspectiveProjection){
-                this.gl.uniform1f(this.shaderProgramSSAO.depthFactor,1.0/80.);
+                this.gl.uniform1f(this.shaderProgramSSAO.depthFactor,1.0/80.0);
                 this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius*2.0);
             } else {
                 this.gl.uniform1f(this.shaderProgramSSAO.depthFactor,1.0);
@@ -4295,13 +4262,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
         let b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
         if(this.doPerspectiveProjection){
-            f = 100.
-            b = 270.
+            f = 100
+            b = 270
         }
         //console.log("In blur",f,b,this.blurDepth)
-        const absDepth = this.blurDepth * (1000. - -1000.) - 1000.;
+        const absDepth = this.blurDepth * (1000 - -1000) - 1000;
         let fracDepth = (absDepth-f)/(b - f);
-        fracDepth = this.blurDepth * 1000. / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
+        fracDepth = this.blurDepth * 1000 / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
         console.log(fracDepth);
         //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
         if(fracDepth > 1.0) fracDepth = 1.0;
@@ -4591,8 +4558,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = store.getState().glRef.displayBuffers
         const hoverSize = store.getState().glRef.hoverSize
 
-        const symmetries = [];
-        const symms = [];
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
         if(this.doShadow&&!calculatingShadowMap&&!this.drawingGBuffers){
@@ -4714,7 +4679,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 for(let i = 0; i<16; i++)
                     this.gl.disableVertexAttribArray(i);
 
-                if(typeof(theShader.vertexNormalAttribute!=="undefined") && theShader.vertexNormalAttribute!==null&&theShader.vertexNormalAttribute>-1){
+                if(typeof(theShader.vertexNormalAttribute)!=="undefined" && theShader.vertexNormalAttribute!==null&&theShader.vertexNormalAttribute>-1){
                     if(!calculatingShadowMap){
 
                         this.gl.enableVertexAttribArray(theShader.vertexNormalAttribute);
@@ -5490,19 +5455,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     getFrontAndBackPos(event: KeyboardEvent) : [number[], number[], number, number]  {
-        const self = this;
         const x = this.gl_cursorPos[0];
         const y = this.canvas.height - this.gl_cursorPos[1];
         const invQuat = quat4.create();
-        quat4Inverse(self.myQuat, invQuat);
+        quat4Inverse(this.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
-        const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-        const minX = (-24. * ratio * self.zoom);
-        const maxX = (24. * ratio * self.zoom);
-        const minY = (-24. * self.zoom);
-        const maxY = (24. * self.zoom);
-        const fracX = 1.0 * x / self.gl.viewportWidth;
-        const fracY = 1.0 * (y) / self.gl.viewportHeight;
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        const minX = (-24. * ratio * this.zoom);
+        const maxX = (24. * ratio * this.zoom);
+        const minY = (-24. * this.zoom);
+        const maxY = (24. * this.zoom);
+        const fracX = 1.0 * x / this.gl.viewportWidth;
+        const fracY = 1.0 * (y) / this.gl.viewportHeight;
         const theX = minX + fracX * (maxX - minX);
         const theY = maxY - fracY * (maxY - minY);
         //let frontPos = vec3Create([theX,theY,-1000.0]);
@@ -5512,8 +5476,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
-        vec3.subtract(frontPos, frontPos, self.origin);
-        vec3.subtract(backPos, backPos, self.origin);
+        vec3.subtract(frontPos, frontPos, this.origin);
+        vec3.subtract(backPos, backPos, this.origin);
         return [frontPos, backPos, x, y];
     }
 
@@ -5590,9 +5554,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = store.getState().glRef.displayBuffers
         let newBuffers = []
         const self = this;
-        self.clearMeasureCylinderBuffers()
+        this.clearMeasureCylinderBuffers()
         const atomPairs = []
-        self.measuredAtoms.forEach(bump => {
+        this.measuredAtoms.forEach(bump => {
             if(bump.length>1){
                 for(let ib=1;ib<bump.length;ib++){
                     const first = bump[ib];
@@ -5625,7 +5589,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mid[0] *= 0.5;
                     mid[1] *= 0.5;
                     mid[2] *= 0.5;
-                    self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:linesize,x:mid[0],y:mid[1],z:mid[2]})
+                    this.measureTextCanvasTexture.addBigTextureTextImage({font:this.glTextFont,text:linesize,x:mid[0],y:mid[1],z:mid[2]})
                     if(bump.length>2&&ib>1){
                         const third = bump[ib-2];
                         const v3 = vec3Create([third.x, third.y, third.z]);
@@ -5644,7 +5608,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         v12plusv23[2] *= -.5
 
                         const angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
-                        self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
+                        this.measureTextCanvasTexture.addBigTextureTextImage({font:this.glTextFont,text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
 
                         if(bump.length>3&&ib>2){
                             const fourth = bump[ib-3];
@@ -5663,7 +5627,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             mid23[0] *= 0.5;
                             mid23[1] *= 0.5;
                             mid23[2] *= 0.5;
-                            self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
+                            this.measureTextCanvasTexture.addBigTextureTextImage({font:this.glTextFont,text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
                         }
                     }
 
@@ -5674,7 +5638,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const colour = [1.0,0.0,0.0,1.0]
         atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
         const objects = [
-            gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
+            gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.0)
         ]
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
             const a = appendOtherData(object, true);
@@ -5700,7 +5664,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             })
         })
 
-        self.measureTextCanvasTexture.recreateBigTextureBuffers();
+        this.measureTextCanvasTexture.recreateBigTextureBuffers();
         store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
     }
 
@@ -5815,10 +5779,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 
-        let mindist = 100000.;
-        let minx = 100000.;
-        let miny = 100000.;
-        let minz = 100000.;
+        let mindist = 100000.0;
+        let minx = 100000.0;
+        let miny = 100000.0;
+        let minz = 100000.0;
         let minidx = -1;
         let minj = -1;
         //FIXME - This needs to depend on whether spheres, surface are drawn
@@ -5907,15 +5871,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doWheel(event) {
-        const self = this
         let factor;
         if (event.deltaY > 0) {
-            factor = 1. + 1 / (50.0 - self.props.zoomWheelSensitivityFactor * 5);
+            factor = 1. + 1 / (50.0 - this.props.zoomWheelSensitivityFactor * 5);
         } else {
-            factor = 1. - 1 / (50.0 - self.props.zoomWheelSensitivityFactor * 5);
+            factor = 1. - 1 / (50.0 - this.props.zoomWheelSensitivityFactor * 5);
         }
 
-        if (self.keysDown['set_map_contour']) {
+        if (this.keysDown['set_map_contour']) {
             this.setWheelContour(factor, true)
         } else {
             let newZoom = this.zoom * factor;
@@ -5942,8 +5905,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const pMatrix = mat4.create();
         const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
-        const mat_width = 48;
-        const mat_height = 48;
         if(this.renderToTexture){
             if(this.gl.viewportWidth > this.gl.viewportHeight){
                 const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
@@ -6501,7 +6462,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         l2.x /= dist2 / this.zoom;
                         l2.y /= dist2 / this.zoom;
                         const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
-                        const angle = Math.acos(l1_dot_l2) / Math.PI * 180.;
+                        const angle = Math.acos(l1_dot_l2) / Math.PI * 180.0;
                         const angle_t = angle.toFixed(1)+"º";
                         drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, fnSizePx+" helvetica", false);
                     }
@@ -6577,7 +6538,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(dist_du_sq>2&&!self.measureHit)
             return;
 
-        let i =0;
         const is_close = self.measurePointsArray.some(point => {
             const dist_sq = (point.x-xy.x) * (point.x-xy.x) + (point.y-xy.y) * (point.y-xy.y)
             if(dist_sq<measure_click_tol){
@@ -6612,15 +6572,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const measure_click_tol = 1.0;
 
         const xy = self.getMouseXYGL(evt,self.canvas);
-        let i = 0;
         self.measureHit = null;
-        const is_close = self.measurePointsArray.some(point => {
+        self.measurePointsArray.some(point => {
             const dist_sq = (point.x-xy.x) * (point.x-xy.x) + (point.y-xy.y) * (point.y-xy.y);
             if(dist_sq<measure_click_tol){
                 self.measureHit = point;
                 return true;
             }
-            i++;
         })
 
         self.measureButton = evt.button;
@@ -6812,7 +6770,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
-        const moveFactor = getDeviceScale() * 400. / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
+        const moveFactor = getDeviceScale() * 400.0 / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
 
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
             const invQuat = quat4.create();
@@ -6856,7 +6814,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (event.altKey) {
-            const factor = 1. - self.dy / 50.;
+            const factor = 1. - self.dy / 50.0;
             let newZoom = self.zoom * factor;
             if (newZoom < .01) {
                 newZoom = 0.01;
