@@ -363,7 +363,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "edgeDetectDepthThreshold",
         valueSetter: setEdgeDetectDepthThreshold,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold,
-        defaultValue: 1.4,
+        defaultValue: 1.3,
     },
     46: {
         label: "edgeDetectNormalThreshold",
@@ -375,13 +375,13 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "edgeDetectDepthScale",
         valueSetter: setEdgeDetectDepthScale,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale,
-        defaultValue: 2.0,
+        defaultValue: 4.0,
     },
     48: {
         label: "edgeDetectNormalScale",
         valueSetter: setEdgeDetectNormalScale,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale,
-        defaultValue: 1.0,
+        defaultValue: 0.0,
     },
     49: {
         label: "reContourMapOnlyOnMouseUp",

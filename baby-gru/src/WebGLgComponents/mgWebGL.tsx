@@ -3733,8 +3733,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth/ratio);
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
             }
-            this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 1.0/this.edgeDetectFramebuffer.width/this.zoom/ratio);
-            this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 1.0/this.edgeDetectFramebuffer.height/this.zoom/ratio);
+            console.log(this.edgeDetectFramebuffer.width,this.zoom)
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 2.0/this.edgeDetectFramebuffer.width/ratio);
+            this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 2.0/this.edgeDetectFramebuffer.height/ratio);
             if(this.doPerspectiveProjection){
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.depthFactor, 1.0/80.0);
             } else {
@@ -4149,7 +4150,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.renderToTexture) {
             this.edgeDetectFramebufferSize = 2048;
-            this.gBuffersFramebufferSize = 1024;
+            this.gBuffersFramebufferSize = 2048;
             if(this.edgeDetectFramebuffer){
                 this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
                 this.edgeDetectFramebuffer = null;
