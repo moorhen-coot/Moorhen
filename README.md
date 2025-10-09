@@ -29,7 +29,7 @@ The following libraries/programs are compiled to Web Assembly:
 * RDKit 2025\_09\_1
 * graphene 1.10.8
 * libsigc++ 3.6.0
-* Freetype 2.13.3
+* Freetype 2.14.1
 * Jsoncpp 1.9.6
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
