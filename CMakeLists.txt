@@ -7,7 +7,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -I${CMAKE_INSTALL_PREFIX}/include -pthread")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 include_directories(${CMAKE_INSTALL_PREFIX}/include/rdkit)
