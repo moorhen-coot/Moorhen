@@ -1,6 +1,9 @@
 /* Main entry point */
 // @ts-strict
+import { MoorhenLoader } from "./Wrappers/MoorhenLoader";
 import "./app.css";
+
+customElements.define("moorhen-loader", MoorhenLoader);
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
