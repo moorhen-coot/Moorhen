@@ -1,7 +1,7 @@
-import { useRef, useState, useMemo, useEffect, useLayoutEffect } from "react";
-import ReactDOM from "react-dom";
-import { Button } from "react-bootstrap";
 import { ClickAwayListener } from "@mui/material";
+import { Button } from "react-bootstrap";
+import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenMenuItem } from "./MenuItem";
 
 type MoorhenBaseMenuItemProps = {
@@ -48,11 +48,11 @@ export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
             new Promise((resolve, reject) => {
                 resolveOrRejectRef.current = { resolve, reject };
             })
-                .then((_result) => {
+                .then(_result => {
                     onCompleted();
                     document.body.click();
                 })
-                .catch((err) => console.log(err));
+                .catch(err => console.log(err));
         }
     }, [isShown]);
 
@@ -76,7 +76,7 @@ export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
     const popover = useMemo(() => {
         return (
             <>
-                {ReactDOM.createPortal(
+                {createPortal(
                     <ClickAwayListener onClickAway={() => setIsShown(false)}>
                         <div
                             className={`moorhen__menu-item-popover ${popoverPlacement === "left" ? `right-arrow` : ``}`}
