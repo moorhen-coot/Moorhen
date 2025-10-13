@@ -54,19 +54,30 @@ void main() {
     diff = diff > depthThreshold ? 1.0 : 0.0;
     diff = 1.0 - diff;
 
-    /*
-    float ntl  = normalize(texture(gNormal, out_TexCoord0 - vec2(xPixelOffset,   yPixelOffset))).xyz;
-    float nbr  = normalize(texture(gNormal, out_TexCoord0 + vec2(xPixelOffset,   yPixelOffset))).xyz;
-    float ntr  = normalize(texture(gNormal, out_TexCoord0 + vec2( xPixelOffset, -yPixelOffset))).xyz;
-    float nbl  = normalize(texture(gNormal, out_TexCoord0 + vec2(-xPixelOffset,  yPixelOffset))).xyz;
-    float nt   = normalize(texture(gNormal, out_TexCoord0 - vec2(0 , yPixelOffset))).xyz;
-    float nb   = normalize(texture(gNormal, out_TexCoord0 + vec2(0 , yPixelOffset))).xyz;
-    float nl   = normalize(texture(gNormal, out_TexCoord0 - vec2(xPixelOffset , 0))).xyz;
-    float nr   = normalize(texture(gNormal, out_TexCoord0 + vec2(xPixelOffset , 0))).xyz;
-    float npix = normalize(texture(gNormal, out_TexCoord0)).xyz;
-    */
+    // But normals are vec3 xyz's not floats ...
+    vec3 ntl  = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(xPixelOffset,   yPixelOffset))).xyz;
+    vec3 nbr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(xPixelOffset,   yPixelOffset))).xyz;
+    vec3 ntr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2( xPixelOffset, -yPixelOffset))).xyz;
+    vec3 nbl  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(-xPixelOffset,  yPixelOffset))).xyz;
+    vec3 nt   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(0 , yPixelOffset))).xyz;
+    vec3 nb   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(0 , yPixelOffset))).xyz;
+    vec3 nl   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(xPixelOffset , 0))).xyz;
+    vec3 nr   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(xPixelOffset , 0))).xyz;
+    vec3 npix = normalize(texture(gNormal, out_TexCoord0)).xyz;
 
-    float edgeVal = diff;
+    float Gx_n = Sx[0][0] * dot(npix,ntl) + Sx[0][1] *  dot(npix, nt) + Sx[0][2] * dot(npix,ntr) +
+                 Sx[1][0] *  dot(npix,nl) + Sx[1][1] +                  Sx[1][2] *  dot(npix,nr) +
+                 Sx[2][0] * dot(npix,nbl) + Sx[2][1] *   dot(npix,nb) + Sx[2][2] * dot(npix,nbr);
+    float Gy_n = Sy[0][0] * dot(npix,ntl) + Sy[0][1] *   dot(npix,nt) + Sy[0][2] * dot(npix,ntr) +
+                 Sy[1][0] *  dot(npix,nl) + Sy[1][1] +                  Sy[1][2] *  dot(npix,nr) +
+                 Sy[2][0] * dot(npix,nbl) + Sy[2][1] *   dot(npix,nb) + Sy[2][2] * dot(npix,nbr);
+
+    float ndiff = depthFactor*sqrt(Gx_n*Gx_n + Gy_n*Gy_n);
+
+    ndiff = ndiff > normalThreshold ? 1.0 : 0.0;
+    ndiff = 1.0 - ndiff;
+
+    float edgeVal = min(diff,ndiff);
 
     fragColor = vec4(edgeVal,edgeVal,edgeVal,1.0);
 
