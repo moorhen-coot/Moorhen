@@ -1,13 +1,15 @@
-import { Stack } from "react-bootstrap";
+import { CheckOutlined, CloseOutlined, Store } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack";
+import { Stack } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { useStore } from "react-redux";
 import { forwardRef, useCallback, useRef, useState } from "react";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { useCommandCentre } from "../../InstanceManager";
+import { RootState } from "../../store/MoorhenReduxStore";
 import { moorhen } from "../../types/moorhen";
 import { getCentreAtom } from "../../utils/utils";
-import { useCommandCentre } from "../../InstanceManager";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 
 export const MoorhenGoToResidueSnackbar = forwardRef<
     HTMLDivElement,
@@ -16,6 +18,7 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
         id: string;
     }
 >((props, ref) => {
+    const store = useStore<RootState>();
     const cidFormRef = useRef<null | HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
 
@@ -31,7 +34,7 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
             return;
         }
 
-        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre);
+        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre, store);
         if (!chosenMolecule) {
             return;
         }
@@ -47,16 +50,8 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
     }, [molecules]);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white" }}
-        >
-            <Stack
-                gap={2}
-                direction="horizontal"
-                style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
-            >
+        <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? "grey" : "white" }}>
+            <Stack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <MoorhenCidInputForm
                     ref={cidFormRef}
                     invalidCid={invalidCid}

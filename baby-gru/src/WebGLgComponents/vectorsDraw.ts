@@ -1,11 +1,11 @@
 import { gemmiAtomPairsToCylindersInfo,  guid} from '../utils/utils'
 import { getMathJaxSVG }  from '../utils/mathJaxUtils'
-import { MoorhenReduxStore } from '../store/MoorhenReduxStore'
+import { MoorhenReduxStoreType } from '../store/MoorhenReduxStore'
 
-export const getVectorsBuffers = async (): Promise<any>  => {
+export const getVectorsBuffers = async (store: MoorhenReduxStoreType): Promise<any>  => {
 
-    const vectorsList = MoorhenReduxStore.getState().vectors.vectorsList
-    const molecules = MoorhenReduxStore.getState().molecules.moleculeList
+    const vectorsList = store.getState().vectors.vectorsList
+    const molecules = store.getState().molecules.moleculeList
 
     const dashPairs = []
     const solidPairs = []

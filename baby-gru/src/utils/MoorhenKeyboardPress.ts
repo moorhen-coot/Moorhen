@@ -14,8 +14,8 @@ import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
-import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { cidToSpec, getCentreAtom } from "./utils"
+import { MoorhenReduxStoreType } from '../store/MoorhenReduxStore';
 
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
@@ -31,6 +31,7 @@ export const moorhenKeyPress = (
     collectedProps: {
         dispatch: Dispatch<AnyAction>;
         enqueueSnackbar: EnqueueSnackbar;
+        store: MoorhenReduxStoreType
         hoveredAtom: moorhen.HoveredAtom;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         activeMap: moorhen.Map;
@@ -46,7 +47,7 @@ export const moorhenKeyPress = (
     
     const { 
         hoveredAtom, activeMap, commandCentre, glRef, molecules, 
-        viewOnly, videoRecorderRef, enqueueSnackbar, dispatch
+        viewOnly, videoRecorderRef, enqueueSnackbar, dispatch, store
     } = collectedProps;
 
 
@@ -116,7 +117,7 @@ export const moorhenKeyPress = (
         let residueCid: string
         
         if (!shortcutOnHoveredAtom) {
-            [chosenMolecule, residueCid] = await getCentreAtom(molecules, commandCentre)
+            [chosenMolecule, residueCid] = await getCentreAtom(molecules, commandCentre, store)
             if (typeof chosenMolecule === 'undefined' || !residueCid) {
                 console.log('Cannot find atom in the centre of the view...')
                 return true
@@ -386,7 +387,7 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        getCentreAtom(molecules, commandCentre)
+        getCentreAtom(molecules, commandCentre, store)
         .then(result => {
             if (!result) {
                 return

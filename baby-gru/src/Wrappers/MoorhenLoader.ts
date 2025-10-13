@@ -17,25 +17,6 @@ export class MoorhenLoader extends HTMLElement {
     }
 
     public async connectedCallback() {
-        // Load MathJax script
-        await loadScript("/mathjax/tex-svg.js");
-
-        window.MathJax = MathJax;
-
-        //This is a dummy render with MathJax which seems to be necessary to make sure that \color works
-        //properly with loaded sessions.
-        const input = String.raw`{\displaystyle \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}{\color{blue}Hello}}`;
-        const output = document.getElementById("mathjaxout");
-        output.innerHTML = "";
-        output.style.width = "0";
-        output.style.height = "0";
-        output.style.display = "none";
-        let options = MathJax.getMetricsFor(output);
-        options.display = false;
-        const node = await MathJax.tex2svgPromise(input, options);
-        if (node) {
-            const svg = node.getElementsByTagName("svg");
-        }
         const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]));
         const isChromeLinux = navigator.appVersion.indexOf("Linux") != -1 && navigator.appVersion.indexOf("Chrome") != -1;
 

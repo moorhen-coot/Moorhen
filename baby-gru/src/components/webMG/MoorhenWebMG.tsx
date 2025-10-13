@@ -1,5 +1,5 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
@@ -17,6 +17,7 @@ import { setQuat, setOrigin, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { RootState } from '../../store/MoorhenReduxStore';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -46,6 +47,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const glRef = OldglRef as React.Ref<MGWebGL>
 
     const dispatch = useDispatch()
+    const store = useStore<RootState>()
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -153,13 +155,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
 
-            const [objects,newLabelBuffers] = await getVectorsBuffers()
+            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
 
             let newBuffers = []
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, true);
+                const a = appendOtherData(object, store, true);
                 newBuffers = [...newBuffers,...a]
-                buildBuffers(a)
+                buildBuffers(a, store)
             })
 
             setVectorBuffers(newBuffers)
@@ -658,6 +660,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
                 videoRecorderRef,
                 commandCentre: commandCentre,
+                store: store,
                 ...props
             },
             JSON.parse(shortCuts as string),
@@ -738,7 +741,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
+                    store={store}
+                    dispatch={dispatch} />
                     <Moorhen2DOverlay drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&

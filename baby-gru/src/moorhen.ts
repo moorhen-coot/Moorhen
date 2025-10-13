@@ -35,7 +35,6 @@ export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnm
 export { MoorhenValidation } from "./components/validation-tools/MoorhenValidation";
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
 export { autoOpenFiles } from "./utils/MoorhenFileLoading";
-export { MoorhenReduxStore } from "./store/MoorhenReduxStore";
 export {
     default as sceneSettingsReducer,
     setDefaultBackgroundColor,
@@ -232,6 +231,7 @@ export {
     setCanvasSize,
     setElementsIndicesRestrict,
 } from "./store/glRefSlice";
+export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
 export { default as overlaysReducer } from "./store/overlaysSlice";
 export { default as menusReducer } from "./store/menusSlice";
 export { default as atomInfoCardsReducer } from "./store/atomInfoCardsSlice";

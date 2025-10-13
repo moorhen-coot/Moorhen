@@ -1,7 +1,8 @@
-import { Provider } from "react-redux";
 import { LogoutOutlined } from "@mui/icons-material";
+import { configureStore } from "@reduxjs/toolkit";
+import { Provider } from "react-redux";
 import { useEffect, useRef } from "react";
-import { MoorhenReduxStore } from "../store/MoorhenReduxStore";
+import { reducers } from "../store/MoorhenReduxStore";
 import { MoorhenContainer } from "./container/MoorhenContainer";
 import { ExtraNavBarMenus } from "./navbar-menus/MoorhenMainMenu";
 
@@ -24,6 +25,14 @@ export const MoorhenApp = () => {
             JSXElement: <MoorhenExitMenu key={"exit"} exitCallback={() => console.log("Exit clicked")} />,
         },
     ];
+
+    const MoorhenReduxStore = configureStore({
+        reducer: reducers,
+        middleware: getDefaultMiddleware =>
+            getDefaultMiddleware({
+                serializableCheck: false,
+            }),
+    });
 
     return (
         <Provider store={MoorhenReduxStore}>
