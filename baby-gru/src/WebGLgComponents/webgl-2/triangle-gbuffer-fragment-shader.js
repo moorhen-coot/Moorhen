@@ -26,13 +26,8 @@ var triangle_gbuffer_fragment_shader_source = `#version 300 es\n
         if(dot(eyePos, clipPlane1)<0.0){
             discard;
         }
-        if(gl_FrontFacing!=true){
-            fragData0 = vec4(v.x,v.y,0.0,v.a);
-            fragData1 = vec4(0.0,0.0,0.0,1.0);
-        } else {
-            fragData0 = v;
-            fragData1 = vec4(vNormal,1.0);
-        }
+        fragData0 = v;
+        fragData1 = vec4(vNormal,1.0);
     }
 `;
 
