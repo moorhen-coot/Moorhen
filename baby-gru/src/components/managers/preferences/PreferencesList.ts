@@ -375,7 +375,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "edgeDetectDepthScale",
         valueSetter: setEdgeDetectDepthScale,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale,
-        defaultValue: 4.0,
+        defaultValue: 2.0,
     },
     48: {
         label: "edgeDetectNormalScale",

@@ -32,14 +32,14 @@ void main() {
     Sy[1].xyz = vec3(  0,  0,  0);
     Sy[2].xyz = vec3(  1,  2,  1);
 
-    float tl  = texture(gPosition, out_TexCoord0 - vec2(xPixelOffset,   yPixelOffset)).z;
-    float br  = texture(gPosition, out_TexCoord0 + vec2(xPixelOffset,   yPixelOffset)).z;
-    float tr  = texture(gPosition, out_TexCoord0 + vec2( xPixelOffset, -yPixelOffset)).z;
-    float bl  = texture(gPosition, out_TexCoord0 + vec2(-xPixelOffset,  yPixelOffset)).z;
-    float t   = texture(gPosition, out_TexCoord0 - vec2(0 , yPixelOffset)).z;
-    float b   = texture(gPosition, out_TexCoord0 + vec2(0 , yPixelOffset)).z;
-    float l   = texture(gPosition, out_TexCoord0 - vec2(xPixelOffset , 0)).z;
-    float r   = texture(gPosition, out_TexCoord0 + vec2(xPixelOffset , 0)).z;
+    float tl  = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(xPixelOffset,   yPixelOffset)).z;
+    float br  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(xPixelOffset,   yPixelOffset)).z;
+    float tr  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2( xPixelOffset, -yPixelOffset)).z;
+    float bl  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(-xPixelOffset,  yPixelOffset)).z;
+    float t   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(0 , yPixelOffset)).z;
+    float b   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(0 , yPixelOffset)).z;
+    float l   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(xPixelOffset , 0)).z;
+    float r   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(xPixelOffset , 0)).z;
     float pix = texture(gPosition, out_TexCoord0).z;
 
     float Gx = Sx[0][0] * tl + Sx[0][1] *   t + Sx[0][2] * tr +
