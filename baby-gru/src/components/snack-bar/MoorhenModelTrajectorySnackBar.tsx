@@ -84,7 +84,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
 
             while (iFrameRef.current < framesRef.current.length) {
                 representationRef.current.deleteBuffers();
-                await representationRef.current.buildBuffers(framesRef.current[iFrameRef.current], store);
+                await representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]);
                 setCurrentFrameIndex(prev => prev + singleStepPercent);
                 await sleep(5);
                 iFrameRef.current += 1;
