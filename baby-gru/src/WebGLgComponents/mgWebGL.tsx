@@ -3476,7 +3476,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            this.drawDistancesAndLabels(up, right);
+            if(this.atomLabelDepthMode) this.drawDistancesAndLabels();
             this.drawTextLabels(up, right);
             if(this.WEBGL2){
                 this.drawTexturedShapes(theMatrix);
@@ -4058,6 +4058,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+                if(this.renderToTexture)
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                if(!this.atomLabelDepthMode) this.drawDistancesAndLabels();
                 this.drawLineMeasures(invMat);
                 this.drawTextOverlays(invMat);
             }
@@ -4414,6 +4417,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
         }
 
+        if(!this.atomLabelDepthMode) this.drawDistancesAndLabels();
         this.drawLineMeasures(invMat);
         this.drawTextOverlays(invMat);
 
@@ -5426,7 +5430,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return this.WEBGL2;
     }
 
-    drawDistancesAndLabels(up, right) {
+    drawDistancesAndLabels() {
 
         // Labels, angles, etc. instanced by texture coords, positions using contextBig
 

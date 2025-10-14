@@ -13,11 +13,13 @@ Planned features
 - [x] Improve edge detect.
 - [x] Vectors UI. Drawing code should already be there, mostly.
 - [x] Legends UI. Drawing code already in 2D overlay class.
+- [ ] Fix text labels being ugly when there is a transparent object.
+  - [x] Non-depth-cued labels.
+  - [ ] Depth-cued labels.
 - [ ] Fix multiview with depth blur.
 - [ ] Fix multiview with SSAO.
 - [ ] Fix multiview with edge detect.
 - [ ] Fix multiview with shadows.
-- [ ] Fix text labels being ugly when there is a transparent object.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
