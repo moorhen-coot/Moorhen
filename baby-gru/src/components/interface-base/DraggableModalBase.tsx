@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
-import { focusOnModal, hideModal, unFocusModal } from "../../store/modalsSlice";
+import { ModalKey, focusOnModal, hideModal, unFocusModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import "./draggable-modal-base.css";
@@ -186,7 +186,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: left, y: top });
 
     const cachedEnableAtomHovering = useRef<boolean>(false);
-    const modalIdRef = useRef<string>(props.modalId);
+    const modalIdRef = useRef<ModalKey>(props.modalId as ModalKey);
 
     useEffect(() => {
         const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current);

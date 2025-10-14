@@ -1,19 +1,18 @@
-import { useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Button } from "react-bootstrap";
 import { Stack } from "@mui/material";
 import { Chart, registerables } from "chart.js";
-import { moorhen } from "../../types/moorhen";
+import { Button } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
-import { usePersistent, usePersistentState, dispatchPersistentStates } from "../../store/menusSlice";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenGradientPicker } from "../inputs";
+import { dispatchPersistentStates, usePersistent, usePersistentState } from "../../store/menusSlice";
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenGradientPicker } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
 Chart.register(...registerables);
 
@@ -24,7 +23,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const chartRef = useRef<Chart | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const commandCentre  = useCommandCentre();
+    const commandCentre = useCommandCentre();
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
@@ -45,11 +44,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
 
-    const handleDefaultColour = (_evt) => {
+    const handleDefaultColour = _evt => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
             return;
         }
-        const referenceMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const referenceMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
 
         if (!referenceMap) {
             return;
@@ -70,8 +69,8 @@ export const MoorhenColourMapByOtherMapModal = () => {
             return;
         }
 
-        const referenceMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const referenceMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
 
         if (!referenceMap || !colouringMap) {
             return;
@@ -100,11 +99,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
         if (!mapSelectRef_2 || !mapSelectRef_1.current) {
             return;
         }
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
         if (!colouringMap) {
             return;
         }
-        const colouredMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouredMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
         const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value));
         const min = Number(histogram.base.toPrecision(3));
         const max = Number((histogram.base + histogram.bin_width * histogram.counts.length).toPrecision(3));
@@ -129,11 +128,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
         if (!mapSelectRef_2 || !mapSelectRef_1.current) {
             return;
         }
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
         if (!colouringMap) {
             return;
         }
-        const colouredMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouredMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
         const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value), 500);
         function movingAverage(data: number[], windowSize: number): number[] {
             const result = [];
@@ -224,7 +223,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
                     value={minMaxValue[0]}
                     decimalDigits={2}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         setMinMaxValue([+newVal, minMaxValue[1]]);
                     }}
                 />
@@ -242,7 +241,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
                     minMax={[-10.0, 10.0]}
                     decimalDigits={2}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         setMinMaxValue([minMaxValue[0], +newVal]);
                     }}
                 />

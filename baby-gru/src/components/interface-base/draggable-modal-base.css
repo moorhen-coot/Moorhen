@@ -58,6 +58,7 @@
 
 .moorhen__modal-footer {
     position: absolute;
+    bottom: 6px;
     display: flex;
     justify-content: flex-end;
     align-items: center;

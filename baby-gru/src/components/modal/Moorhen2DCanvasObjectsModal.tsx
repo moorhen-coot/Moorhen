@@ -1,8 +1,8 @@
-import { Delete, FileOpen } from '@mui/icons-material';
-import { Button, Col, Form, FormSelect, Row } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { v4 as uuidv4 } from 'uuid';
-import { useEffect, useRef, useState } from 'react';
+import { Delete, FileOpen } from "@mui/icons-material";
+import { Button, Col, Form, FormSelect, Row } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import { useEffect, useRef, useState } from "react";
 import {
     addFracPathOverlay,
     addImageOverlay,
@@ -14,19 +14,19 @@ import {
     removeLatexOverlay,
     removeSvgPathOverlay,
     removeTextOverlay,
-} from '../../store/overlaysSlice';
+} from "../../store/overlaysSlice";
 import type {
     Overlay2DFracPath,
     Overlay2DImageSrcFrac,
     Overlay2DLatexSrcFrac,
     Overlay2DSvgPath,
     Overlay2DTextFrac,
-} from '../../store/overlaysSlice';
-import { moorhen } from '../../types/moorhen';
-import { modalKeys } from '../../utils/enums';
-import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from '../../utils/utils';
-import { MoorhenColourPicker } from '../inputs';
-import { MoorhenDraggableModalBase } from './MoorhenDraggableModalBase';
+} from "../../store/overlaysSlice";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
+import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
+import { MoorhenColourPicker } from "../inputs";
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const Moorhen2DCanvasObjectsModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
@@ -53,13 +53,13 @@ export const Moorhen2DCanvasObjectsModal = () => {
 
     const newOverlayObject = () => {
         const anOverlayObject = {
-            drawMode: 'text',
-            path: '',
-            src: '',
-            text: '',
-            drawStyle: 'stroke',
-            strokeStyle: 'black',
-            fillStyle: 'black',
+            drawMode: "text",
+            path: "",
+            src: "",
+            text: "",
+            drawStyle: "stroke",
+            strokeStyle: "black",
+            fillStyle: "black",
             gradientStops: [],
             gradientBoundary: [0, 0, 1, 1],
             width: 20,
@@ -67,7 +67,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
             x: 0,
             y: 0,
             fontPixelSize: 20,
-            fontFamily: 'serif',
+            fontFamily: "serif",
             lineWidth: 1,
             zIndex: 0,
             uniqueId: uuidv4(),
@@ -82,29 +82,29 @@ export const Moorhen2DCanvasObjectsModal = () => {
     }
 
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject());
-    const [selectedOption, setSelectedOption] = useState<string>('new');
-    const [selectedFont, setSelectedFont] = useState<string>('serif');
+    const [selectedOption, setSelectedOption] = useState<string>("new");
+    const [selectedFont, setSelectedFont] = useState<string>("serif");
     const [selectedDepth, setSelectedDepth] = useState<number>(0);
-    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>('stroke');
-    const [pathText, setPathText] = useState<string>('');
-    const [gradientBoundaryText, setGradientBoundaryText] = useState<string>('0,0,1,1');
-    const [positionText, setPositionText] = useState<string>('');
+    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("stroke");
+    const [pathText, setPathText] = useState<string>("");
+    const [gradientBoundaryText, setGradientBoundaryText] = useState<string>("0,0,1,1");
+    const [positionText, setPositionText] = useState<string>("");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
-    const [imageString, setImageString] = useState<string>('');
+    const [imageString, setImageString] = useState<string>("");
     const inputFile = useRef(null);
 
     const upLoadNewImage = async (fn: File) => {
         const buf = await fn.arrayBuffer();
         const ubuf = new Uint8Array(buf);
-        const base64String = btoa(ubuf.reduce((data, byte) => data + String.fromCharCode(byte), ''));
-        let imageFormat = '';
-        if (ubuf[0] === 137 && ubuf[1] === 80 && ubuf[2] === 78 && ubuf[3] === 71) imageFormat = 'png';
-        else if (ubuf[0] === 255 && ubuf[1] === 216 && ubuf[2] === 255) imageFormat = 'jpeg';
-        else if (ubuf[0] === 66 && ubuf[1] === 77) imageFormat = 'bmp';
-        console.log('Detected image format:', imageFormat);
+        const base64String = btoa(ubuf.reduce((data, byte) => data + String.fromCharCode(byte), ""));
+        let imageFormat = "";
+        if (ubuf[0] === 137 && ubuf[1] === 80 && ubuf[2] === 78 && ubuf[3] === 71) imageFormat = "png";
+        else if (ubuf[0] === 255 && ubuf[1] === 216 && ubuf[2] === 255) imageFormat = "jpeg";
+        else if (ubuf[0] === 66 && ubuf[1] === 77) imageFormat = "bmp";
+        console.log("Detected image format:", imageFormat);
         if (imageFormat) {
-            const base64Image = 'data:image/' + imageFormat + ';base64,   ' + base64String;
-            setPathText('[Image Data]');
+            const base64Image = "data:image/" + imageFormat + ";base64,   " + base64String;
+            setPathText("[Image Data]");
             updateObject({ src: base64Image }, drawModeRef.current.value);
             setImageString(base64Image);
         }
@@ -115,27 +115,27 @@ export const Moorhen2DCanvasObjectsModal = () => {
         existingObject = latexOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeLatexOverlay(existingObject));
-            setSelectedOption('new');
+            setSelectedOption("new");
         }
         existingObject = imageOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeImageOverlay(existingObject));
-            setSelectedOption('new');
+            setSelectedOption("new");
         }
         existingObject = textOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeTextOverlay(existingObject));
-            setSelectedOption('new');
+            setSelectedOption("new");
         }
         existingObject = svgPathOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeSvgPathOverlay(existingObject));
-            setSelectedOption('new');
+            setSelectedOption("new");
         }
         existingObject = fracPathOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeFracPathOverlay(existingObject));
-            setSelectedOption('new');
+            setSelectedOption("new");
         }
     };
 
@@ -145,33 +145,33 @@ export const Moorhen2DCanvasObjectsModal = () => {
 
     const handleApply = (evt: React.MouseEvent<HTMLElement>) => {
         const objectType = drawModeRef.current.value;
-        if (vectorSelectRef.current.value !== 'new') {
+        if (vectorSelectRef.current.value !== "new") {
             deleteCurrentObject();
         }
 
         let gradientBoundary = theOverlayObject.gradientBoundary;
 
-        if (selectedDrawStyle === 'gradient' && !gradientBoundary) {
+        if (selectedDrawStyle === "gradient" && !gradientBoundary) {
             if (checkGradientBoundaryText) {
-                const arr = gradientBoundaryText.split(',').map(a => parseFloat(a));
+                const arr = gradientBoundaryText.split(",").map(a => parseFloat(a));
                 gradientBoundary = arr;
             } else {
                 gradientBoundary = [0, 0, 1, 1];
             }
         }
 
-        if (objectType === 'text') {
+        if (objectType === "text") {
             let [new_x, new_y] = [0, 1];
             try {
-                const [_new_x, _new_y] = positionText.split(',').map(a => parseFloat(a));
+                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
                 if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
                     new_x = _new_x;
                     new_y = _new_y;
                 } else {
-                    console.log('Not a valid number pair in text position.', positionText.split(','));
+                    console.log("Not a valid number pair in text position.", positionText.split(","));
                 }
             } catch (e) {
-                console.log('Not a valid number pair in text position.');
+                console.log("Not a valid number pair in text position.");
             }
             dispatch(
                 addTextOverlay({
@@ -188,18 +188,18 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     zIndex: theOverlayObject.zIndex,
                 })
             );
-        } else if (objectType === 'image') {
+        } else if (objectType === "image") {
             let [new_x, new_y] = [0, 1];
             try {
-                const [_new_x, _new_y] = positionText.split(',').map(a => parseFloat(a));
+                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
                 if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
                     new_x = _new_x;
                     new_y = _new_y;
                 } else {
-                    console.log('Not a valid number pair in text position.', positionText.split(','));
+                    console.log("Not a valid number pair in text position.", positionText.split(","));
                 }
             } catch (e) {
-                console.log('Not a valid number pair in text position.');
+                console.log("Not a valid number pair in text position.");
             }
             dispatch(
                 addImageOverlay({
@@ -212,7 +212,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     zIndex: theOverlayObject.zIndex,
                 })
             );
-        } else if (objectType === 'latex') {
+        } else if (objectType === "latex") {
             dispatch(
                 addLatexOverlay({
                     text: theOverlayObject.text,
@@ -223,7 +223,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     zIndex: theOverlayObject.zIndex,
                 })
             );
-        } else if (objectType === 'svgpath') {
+        } else if (objectType === "svgpath") {
             dispatch(
                 addSvgPathOverlay({
                     path: theOverlayObject.path,
@@ -237,23 +237,23 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     zIndex: theOverlayObject.zIndex,
                 })
             );
-        } else if (objectType === 'fracpath') {
+        } else if (objectType === "fracpath") {
             let arr: [number, number][] = [
                 [0, 0],
                 [1, 1],
             ];
             try {
                 arr = pathText
-                    .split(',')
+                    .split(",")
                     .reduce(
                         (rows, key, index) =>
                             (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length - 1].push(parseFloat(key))) && rows,
                         []
                     );
             } catch (e) {
-                console.log('Not a valid array of number pairs for fractional path points.');
+                console.log("Not a valid array of number pairs for fractional path points.");
             }
-            if (theOverlayObject.drawStyle === 'gradient')
+            if (theOverlayObject.drawStyle === "gradient")
                 dispatch(
                     addFracPathOverlay({
                         path: arr,
@@ -267,7 +267,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     })
                 );
             else {
-                console.log('dispatch(addFracPathOverlay,', {
+                console.log("dispatch(addFracPathOverlay,", {
                     path: arr,
                     drawStyle: theOverlayObject.drawStyle,
                     strokeStyle: theOverlayObject.strokeStyle,
@@ -293,15 +293,15 @@ export const Moorhen2DCanvasObjectsModal = () => {
     };
 
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        if (vectorSelectRef !== null && typeof vectorSelectRef !== 'function') {
+        if (vectorSelectRef !== null && typeof vectorSelectRef !== "function") {
             vectorSelectRef.current.value = evt.target.value;
-            if (vectorSelectRef.current.value === 'new') {
-                setSelectedOption('new');
-                setPathText('');
-                setPositionText('');
-                setImageString('');
-                updateObject(newOverlayObject(), 'text');
-                if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'text';
+            if (vectorSelectRef.current.value === "new") {
+                setSelectedOption("new");
+                setPathText("");
+                setPositionText("");
+                setImageString("");
+                updateObject(newOverlayObject(), "text");
+                if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "text";
             } else {
                 try {
                     let existingObject:
@@ -312,50 +312,50 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         | Overlay2DFracPath = null;
                     existingObject = latexOverlays.find(element => element.uniqueId === evt.target.value);
                     if (existingObject) {
-                        if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'latex';
+                        if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "latex";
                     }
                     if (!existingObject) {
                         existingObject = imageOverlays.find(element => element.uniqueId === evt.target.value);
                         if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'image';
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "image";
                         }
                     }
                     if (!existingObject) {
                         existingObject = textOverlays.find(element => element.uniqueId === evt.target.value);
                         if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'text';
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "text";
                         }
                     }
                     if (!existingObject) {
                         existingObject = svgPathOverlays.find(element => element.uniqueId === evt.target.value);
                         if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'svgpath';
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "svgpath";
                         }
                     }
                     if (!existingObject) {
                         existingObject = fracPathOverlays.find(element => element.uniqueId === evt.target.value);
                         if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== 'function') drawModeRef.current.value = 'fracpath';
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "fracpath";
                         }
                     }
 
                     setSelectedOption(existingObject.uniqueId);
-                    setPathText('');
-                    setPositionText('');
+                    setPathText("");
+                    setPositionText("");
 
-                    if (drawModeRef.current.value === 'image') {
+                    if (drawModeRef.current.value === "image") {
                         existingObject = existingObject as Overlay2DImageSrcFrac;
                         if (existingObject.x && existingObject.y)
-                            setPositionText(existingObject.x.toFixed(3) + ', ' + existingObject.y.toFixed(3));
-                        if (existingObject.src.startsWith('data:image')) {
-                            setPathText('[Image Data]');
+                            setPositionText(existingObject.x.toFixed(3) + ", " + existingObject.y.toFixed(3));
+                        if (existingObject.src.startsWith("data:image")) {
+                            setPathText("[Image Data]");
                             setImageString(existingObject.src);
                         } else if (existingObject.src.length > 0) {
                             setPathText(existingObject.src);
                             setImageString(existingObject.src);
                         }
                         setOverlayObject(existingObject);
-                    } else if (drawModeRef.current.value === 'fracpath') {
+                    } else if (drawModeRef.current.value === "fracpath") {
                         existingObject = existingObject as Overlay2DFracPath;
                         if (existingObject.path) {
                             setPathText(
@@ -374,7 +374,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         } else {
                             setOverlayObject(existingObject);
                         }
-                    } else if (drawModeRef.current.value === 'svgpath') {
+                    } else if (drawModeRef.current.value === "svgpath") {
                         existingObject = existingObject as Overlay2DSvgPath;
                         if (existingObject.path) {
                             setPathText(existingObject.path);
@@ -388,9 +388,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         } else {
                             setOverlayObject(existingObject);
                         }
-                    } else if (drawModeRef.current.value === 'text') {
+                    } else if (drawModeRef.current.value === "text") {
                         existingObject = existingObject as Overlay2DTextFrac;
-                        setPositionText(existingObject.x.toFixed(3) + ', ' + existingObject.y.toFixed(3));
+                        setPositionText(existingObject.x.toFixed(3) + ", " + existingObject.y.toFixed(3));
                         if (existingObject.lineWidth === undefined) {
                             setOverlayObject(
                                 Object.assign({}, existingObject, {
@@ -400,40 +400,40 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         } else {
                             setOverlayObject(existingObject);
                         }
-                    } else if (drawModeRef.current.value === 'latex') {
+                    } else if (drawModeRef.current.value === "latex") {
                         existingObject = existingObject as Overlay2DLatexSrcFrac;
-                        setPositionText(existingObject.x.toFixed(3) + ', ' + existingObject.y.toFixed(3));
+                        setPositionText(existingObject.x.toFixed(3) + ", " + existingObject.y.toFixed(3));
                         setOverlayObject(existingObject);
                     } else {
                         setOverlayObject(existingObject);
                     }
-                    if (drawModeRef.current.value === 'text') {
+                    if (drawModeRef.current.value === "text") {
                         existingObject = existingObject as Overlay2DTextFrac;
                         if (existingObject.fontFamily && existingObject.text) {
                             if (availableFonts.includes(existingObject.fontFamily)) {
                                 setSelectedFont(existingObject.fontFamily);
-                            } else if (['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'].includes(existingObject.fontFamily)) {
+                            } else if (["serif", "sans-serif", "monospace", "cursive", "fantasy"].includes(existingObject.fontFamily)) {
                                 setSelectedFont(existingObject.fontFamily);
                             } else {
-                                setSelectedFont('serif');
+                                setSelectedFont("serif");
                             }
                         }
                     }
                     if (
-                        drawModeRef.current.value === 'text' ||
-                        drawModeRef.current.value === 'svgpath' ||
-                        drawModeRef.current.value === 'fracpath'
+                        drawModeRef.current.value === "text" ||
+                        drawModeRef.current.value === "svgpath" ||
+                        drawModeRef.current.value === "fracpath"
                     ) {
                         existingObject = existingObject as Overlay2DTextFrac | Overlay2DSvgPath | Overlay2DFracPath;
                         if (existingObject.drawStyle) {
                             setSelectedDrawStyle(existingObject.drawStyle);
                         } else {
-                            setSelectedDrawStyle('fill');
+                            setSelectedDrawStyle("fill");
                         }
-                        if (drawModeRef.current.value !== 'text') {
+                        if (drawModeRef.current.value !== "text") {
                             existingObject = existingObject as Overlay2DSvgPath | Overlay2DFracPath;
                             if (existingObject.gradientBoundary) {
-                                if (drawModeRef.current.value === 'svgpath')
+                                if (drawModeRef.current.value === "svgpath")
                                     setGradientBoundaryText(existingObject.gradientBoundary.flat().toString());
                                 else
                                     setGradientBoundaryText(
@@ -451,10 +451,10 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     } else {
                         setSelectedDepth(existingObject.zIndex);
                     }
-                    if (drawModeRef.current.value !== 'latex') {
+                    if (drawModeRef.current.value !== "latex") {
                         existingObject = existingObject as Overlay2DTextFrac | Overlay2DSvgPath | Overlay2DFracPath;
-                        if (existingObject.fillStyle && existingObject.fillStyle !== 'gradient') {
-                            if (existingObject.fillStyle.startsWith('#') && existingObject.fillStyle.length === 9) {
+                        if (existingObject.fillStyle && existingObject.fillStyle !== "gradient") {
+                            if (existingObject.fillStyle.startsWith("#") && existingObject.fillStyle.length === 9) {
                                 try {
                                     setSelectedAlpha(parseInt(existingObject.fillStyle.substring(7), 16) / 255);
                                 } catch (e) {
@@ -465,8 +465,8 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             }
                         }
 
-                        if (existingObject.strokeStyle && existingObject.strokeStyle !== 'gradient') {
-                            if (existingObject.strokeStyle.startsWith('#') && existingObject.strokeStyle.length === 9) {
+                        if (existingObject.strokeStyle && existingObject.strokeStyle !== "gradient") {
+                            if (existingObject.strokeStyle.startsWith("#") && existingObject.strokeStyle.length === 9) {
                                 try {
                                     setSelectedAlpha(parseInt(existingObject.strokeStyle.substring(7), 16) / 255);
                                 } catch (e) {
@@ -478,7 +478,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         }
                     }
                 } catch (e) {
-                    console.log('Some problem?');
+                    console.log("Some problem?");
                     console.log(e);
                 }
             }
@@ -499,16 +499,16 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     <option value="new">New</option>
                     {combinedArrays.length > 0 &&
                         combinedArrays.map((vec, i) => {
-                            if (vec.type === 'SvgPath') {
+                            if (vec.type === "SvgPath") {
                                 return (
                                     <option key={i} value={vec.uniqueId}>
-                                        {'SVG path: ' + vec.path.substring(0, 50)}
+                                        {"SVG path: " + vec.path.substring(0, 50)}
                                     </option>
                                 );
-                            } else if (vec.type === 'FracPath') {
+                            } else if (vec.type === "FracPath") {
                                 return (
                                     <option key={i} value={vec.uniqueId}>
-                                        {'Fractional points path: ' +
+                                        {"Fractional points path: " +
                                             vec.path
                                                 .flat()
                                                 .map(number => number.toFixed(3))
@@ -516,16 +516,16 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                                 .substring(0, 50)}
                                     </option>
                                 );
-                            } else if (vec.type === 'Image') {
+                            } else if (vec.type === "Image") {
                                 return (
                                     <option key={i} value={vec.uniqueId}>
-                                        {'Image: ' + vec.src.substring(0, 50)}
+                                        {"Image: " + vec.src.substring(0, 50)}
                                     </option>
                                 );
                             } else if (vec.text) {
                                 return (
                                     <option key={i} value={vec.uniqueId}>
-                                        {'Text: ' + vec.text.substring(0, 50)}
+                                        {"Text: " + vec.text.substring(0, 50)}
                                     </option>
                                 );
                             } else {
@@ -543,7 +543,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
 
     const footer = (
         <>
-            {vectorSelectRef.current && selectedOption !== 'new' && (
+            {vectorSelectRef.current && selectedOption !== "new" && (
                 <Button className="m-2" variant="danger" onClick={handleDelete}>
                     Delete
                 </Button>
@@ -600,18 +600,18 @@ export const Moorhen2DCanvasObjectsModal = () => {
         setOverlayObject(newObject);
     };
 
-    const isDefaultNew = !drawModeRef || (drawModeRef !== null && typeof drawModeRef !== 'function' && drawModeRef.current === null);
+    const isDefaultNew = !drawModeRef || (drawModeRef !== null && typeof drawModeRef !== "function" && drawModeRef.current === null);
 
     let existingColour = null;
-    if (theOverlayObject.fillStyle && theOverlayObject.fillStyle !== 'gradient') {
-        if (theOverlayObject.fillStyle.startsWith('#') && theOverlayObject.fillStyle.length === 9) {
+    if (theOverlayObject.fillStyle && theOverlayObject.fillStyle !== "gradient") {
+        if (theOverlayObject.fillStyle.startsWith("#") && theOverlayObject.fillStyle.length === 9) {
             existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle.substring(0, 7)));
         } else {
             existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle));
         }
     }
-    if (theOverlayObject.strokeStyle && theOverlayObject.strokeStyle !== 'gradient') {
-        if (theOverlayObject.strokeStyle.startsWith('#') && theOverlayObject.strokeStyle.length === 9) {
+    if (theOverlayObject.strokeStyle && theOverlayObject.strokeStyle !== "gradient") {
+        if (theOverlayObject.strokeStyle.startsWith("#") && theOverlayObject.strokeStyle.length === 9) {
             existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle.substring(0, 7)));
         } else {
             existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle));
@@ -619,17 +619,17 @@ export const Moorhen2DCanvasObjectsModal = () => {
     }
 
     useEffect(() => {
-        console.log('useEffect (selectedDrawStyle)');
-        if (selectedDrawStyle === 'gradient' && !theOverlayObject.gradientBoundary) {
+        console.log("useEffect (selectedDrawStyle)");
+        if (selectedDrawStyle === "gradient" && !theOverlayObject.gradientBoundary) {
             if (checkGradientBoundaryText) {
-                const arr = gradientBoundaryText.split(',').map(a => parseFloat(a));
+                const arr = gradientBoundaryText.split(",").map(a => parseFloat(a));
                 updateObject({ gradientBoundary: arr.flat() }, drawModeRef.current.value);
             } else {
                 updateObject({ gradientBoundary: [0, 0, 1, 1] }, drawModeRef.current.value);
             }
         }
-        if (selectedDrawStyle === 'gradient' && !theOverlayObject.gradientStops) {
-            updateObject({ gradientStops: [{ stop: 0.0, colour: 'black' }] }, drawModeRef.current.value);
+        if (selectedDrawStyle === "gradient" && !theOverlayObject.gradientStops) {
+            updateObject({ gradientStops: [{ stop: 0.0, colour: "black" }] }, drawModeRef.current.value);
         }
     }, [selectedDrawStyle]);
 
@@ -637,7 +637,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
         //console.log("useEffect (gradientBoundaryText)")
         try {
             const arr = gradientBoundaryText
-                .split(',')
+                .split(",")
                 .reduce(
                     (rows, key, index) =>
                         (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length - 1].push(parseFloat(key))) && rows,
@@ -647,7 +647,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                 if (!arr.flat().includes(Number.NaN)) updateObject({ gradientBoundary: arr.flat() }, drawModeRef.current.value);
             }
         } catch (e) {
-            console.log('Not a valid array of number pairs for fractional path points.');
+            console.log("Not a valid array of number pairs for fractional path points.");
         }
     }, [gradientBoundaryText]);
 
@@ -655,7 +655,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
         let isOk: boolean = false;
         try {
             const arr = gradientBoundaryText
-                .split(',')
+                .split(",")
                 .reduce(
                     (rows, key, index) =>
                         (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length - 1].push(parseFloat(key))) && rows,
@@ -665,7 +665,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                 if (!arr.flat().includes(Number.NaN)) isOk = true;
             }
         } catch (e) {
-            console.log('Not a valid array of number pairs for fractional path points.');
+            console.log("Not a valid array of number pairs for fractional path points.");
         }
         return isOk;
     };
@@ -674,7 +674,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
         let isOk: boolean = false;
         try {
             const arr = pathText
-                .split(',')
+                .split(",")
                 .reduce(
                     (rows, key, index) =>
                         (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length - 1].push(parseFloat(key))) && rows,
@@ -684,7 +684,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                 if (!arr.flat().includes(Number.NaN)) isOk = true;
             }
         } catch (e) {
-            console.log('Not a valid array of number pairs for fractional path points.');
+            console.log("Not a valid array of number pairs for fractional path points.");
         }
         return isOk;
     };
@@ -692,14 +692,14 @@ export const Moorhen2DCanvasObjectsModal = () => {
     const checkPositionText = () => {
         let isOk: boolean = false;
         try {
-            const [_new_x, _new_y] = positionText.split(',').map(a => parseFloat(a));
+            const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
             if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !(_new_x === undefined) && !(_new_y === undefined)) {
                 isOk = true;
             } else {
-                console.log('Not a valid number pair in text position.', positionText);
+                console.log("Not a valid number pair in text position.", positionText);
             }
         } catch (e) {
-            console.log('Not a valid number pair in text position.');
+            console.log("Not a valid number pair in text position.");
         }
         return isOk;
     };
@@ -715,7 +715,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         ref={drawModeRef}
                         defaultValue="text"
                         onChange={evt => {
-                            if (drawModeRef !== null && typeof drawModeRef !== 'function') {
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") {
                                 drawModeRef.current.value = evt.target.value;
                                 updateObject({ drawMode: evt.target.value }, evt.target.value);
                             }
@@ -729,7 +729,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </FormSelect>
                 </Form.Group>
             </Row>
-            {(isDefaultNew || (drawModeRef.current && (drawModeRef.current.value === 'text' || drawModeRef.current.value === 'latex'))) && (
+            {(isDefaultNew || (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
                 <>
                     <Row>
                         <Col sm={2}>Text</Col>
@@ -767,14 +767,14 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 <Form.Control
                                     type="number"
                                     value={
-                                        drawModeRef !== null && drawModeRef.current !== null && drawModeRef.current.value === 'latex'
+                                        drawModeRef !== null && drawModeRef.current !== null && drawModeRef.current.value === "latex"
                                             ? theOverlayObject.height
                                             : theOverlayObject.fontPixelSize
                                     }
                                     onChange={evt => {
                                         try {
                                             const h = parseFloat(evt.target.value);
-                                            if (drawModeRef.current.value === 'latex')
+                                            if (drawModeRef.current.value === "latex")
                                                 updateObject({ height: h }, drawModeRef.current.value);
                                             else updateObject({ fontPixelSize: h }, drawModeRef.current.value);
                                         } catch (e) {}
@@ -785,7 +785,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </Row>
                 </>
             )}
-            {drawModeRef.current && drawModeRef.current.value === 'svgpath' && (
+            {drawModeRef.current && drawModeRef.current.value === "svgpath" && (
                 <Row>
                     <Col sm={2}>Path</Col>
                     <Form.Group as={Col} className="mb-3" controlId="svgPathInput">
@@ -799,7 +799,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </Form.Group>
                 </Row>
             )}
-            {drawModeRef.current && drawModeRef.current.value === 'fracpath' && (
+            {drawModeRef.current && drawModeRef.current.value === "fracpath" && (
                 <Row>
                     <Col sm={2}>Path</Col>
                     <Form.Group as={Col} className="mb-3" controlId="fracPathInput">
@@ -814,7 +814,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </Form.Group>
                 </Row>
             )}
-            {drawModeRef.current && drawModeRef.current.value === 'image' && (
+            {drawModeRef.current && drawModeRef.current.value === "image" && (
                 <>
                     <Row>
                         <input
@@ -822,9 +822,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             id="file"
                             ref={inputFile}
                             accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP"
-                            style={{ display: 'none' }}
+                            style={{ display: "none" }}
                             onChange={e => {
-                                console.log('Change', e.target.files);
+                                console.log("Change", e.target.files);
                                 upLoadNewImage(e.target.files[0]);
                             }}
                         />
@@ -841,14 +841,14 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         </Form.Group>
                         {imageString && (
                             <Col sm={1}>
-                                <img style={{ margin: '0.3rem' }} src={imageString} width="28" height="28" />
+                                <img style={{ margin: "0.3rem" }} src={imageString} width="28" height="28" />
                             </Col>
                         )}
                         <Col sm={2}>
                             <Button
                                 size="sm"
-                                style={{ margin: '0.1rem' }}
-                                variant={isDark ? 'dark' : 'light'}
+                                style={{ margin: "0.1rem" }}
+                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     inputFile.current.click();
                                 }}
@@ -902,7 +902,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </Row>
                 </>
             )}
-            {drawModeRef.current && drawModeRef.current.value === 'text' && (
+            {drawModeRef.current && drawModeRef.current.value === "text" && (
                 <Row>
                     <Col sm={2}>Font</Col>
                     <Form.Group as={Col} className="mb-3" controlId="textFontSelect">
@@ -940,9 +940,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                 </Row>
             )}
             {drawModeRef.current &&
-                (drawModeRef.current.value === 'text' ||
-                    drawModeRef.current.value === 'svgpath' ||
-                    drawModeRef.current.value === 'fracpath') && (
+                (drawModeRef.current.value === "text" ||
+                    drawModeRef.current.value === "svgpath" ||
+                    drawModeRef.current.value === "fracpath") && (
                     <Row>
                         <Col sm={2}>Draw style</Col>
                         <Form.Group as={Col} className="mb-3" controlId="drawStyleSelect">
@@ -950,7 +950,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 value={selectedDrawStyle}
                                 onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
                                     setSelectedDrawStyle(evt.target.value);
-                                    if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === 'fill') {
+                                    if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === "fill") {
                                         updateObject(
                                             {
                                                 drawStyle: evt.target.value,
@@ -961,7 +961,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     } else if (
                                         !theOverlayObject.strokeStyle &&
                                         theOverlayObject.fillStyle &&
-                                        evt.target.value === 'stroke'
+                                        evt.target.value === "stroke"
                                     ) {
                                         updateObject(
                                             {
@@ -989,10 +989,10 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     </Row>
                 )}
             {drawModeRef.current &&
-                selectedDrawStyle === 'stroke' &&
-                (drawModeRef.current.value === 'text' ||
-                    drawModeRef.current.value === 'svgpath' ||
-                    drawModeRef.current.value === 'fracpath') && (
+                selectedDrawStyle === "stroke" &&
+                (drawModeRef.current.value === "text" ||
+                    drawModeRef.current.value === "svgpath" ||
+                    drawModeRef.current.value === "fracpath") && (
                     <Row>
                         <Col sm={2}>Line width</Col>
                         <Col sm={10} className="mb-3">
@@ -1006,11 +1006,11 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         </Col>
                     </Row>
                 )}
-            {selectedDrawStyle !== 'gradient' &&
+            {selectedDrawStyle !== "gradient" &&
                 drawModeRef.current &&
-                (drawModeRef.current.value === 'svgpath' ||
-                    drawModeRef.current.value === 'fracpath' ||
-                    drawModeRef.current.value === 'text') && (
+                (drawModeRef.current.value === "svgpath" ||
+                    drawModeRef.current.value === "fracpath" ||
+                    drawModeRef.current.value === "text") && (
                     <Row>
                         <Col sm={2}>Colour</Col>
                         <Col sm={2} className="mb-3">
@@ -1029,7 +1029,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         {selectedAlpha < 0.99 && <Col sm={8}>(Opacity {selectedAlpha.toFixed(2)})</Col>}
                     </Row>
                 )}
-            {selectedDrawStyle === 'gradient' && drawModeRef.current.value !== 'image' && (
+            {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
                 <>
                     <Row>
                         <Col sm={2}>Gradient boundaries</Col>
@@ -1051,7 +1051,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         theOverlayObject.gradientStops.map((s, istop) => {
                             let col;
                             let alpha = 1.0;
-                            if (s.colour.startsWith('#') && s.colour.length === 9) {
+                            if (s.colour.startsWith("#") && s.colour.length === 9) {
                                 col = hexToRGB(getHexForCanvasColourName(s.colour.substring(0, 7)));
                                 alpha = parseInt(s.colour.substring(7), 16) / 255;
                             } else {
@@ -1123,8 +1123,8 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     <Col sm={2}>
                                         <Button
                                             size="sm"
-                                            style={{ margin: '0.1rem' }}
-                                            variant={isDark ? 'dark' : 'light'}
+                                            style={{ margin: "0.1rem" }}
+                                            variant={isDark ? "dark" : "light"}
                                             onClick={() => {
                                                 updateObject(
                                                     {
@@ -1148,8 +1148,8 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         <Col sm={3}>
                             <Button
                                 size="sm"
-                                style={{ margin: '0.1rem' }}
-                                variant={isDark ? 'dark' : 'light'}
+                                style={{ margin: "0.1rem" }}
+                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     updateObject(
                                         {
@@ -1157,7 +1157,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                                 ...theOverlayObject.gradientStops,
                                                 {
                                                     stop: 0.0,
-                                                    colour: 'black',
+                                                    colour: "black",
                                                 },
                                             ],
                                         },

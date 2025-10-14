@@ -1,13 +1,13 @@
-import { Backdrop, TextField } from '@mui/material';
-import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { useMoorhenInstance, usePaths } from '../../InstanceManager';
-import { hideModal } from '../../store/modalsSlice';
-import { moorhen } from '../../types/moorhen';
-import { modalKeys } from '../../utils/enums';
-import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from '../../utils/utils';
-import { MoorhenDraggableModalBase } from './MoorhenDraggableModalBase';
+import { Backdrop, TextField } from "@mui/material";
+import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { hideModal } from "../../store/modalsSlice";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
+import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -82,7 +82,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         }
 
         if (!fileContent) {
-            console.log('Unable to get bonds for chosen atom...');
+            console.log("Unable to get bonds for chosen atom...");
             return [];
         }
 
@@ -100,10 +100,10 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         }[] = [];
         for (let i = 0; i < blocksSize; i++) {
             const block = blocks.get(i);
-            if (block.name !== 'comp_list') {
-                const atom_id_1 = block.find_loop('_chem_comp_bond.atom_id_1');
-                const atom_id_2 = block.find_loop('_chem_comp_bond.atom_id_2');
-                const bond_type = block.find_loop('_chem_comp_bond.type');
+            if (block.name !== "comp_list") {
+                const atom_id_1 = block.find_loop("_chem_comp_bond.atom_id_1");
+                const atom_id_2 = block.find_loop("_chem_comp_bond.atom_id_2");
+                const bond_type = block.find_loop("_chem_comp_bond.type");
                 const loopSize = atom_id_1.length();
                 for (let j = 0; j < loopSize; j++) {
                     bonds.push({
@@ -143,12 +143,12 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 
     useEffect(() => {
         if (props.awaitAtomClick === props.id) {
-            document.addEventListener('atomClicked', setAtomPickerEventListener, { once: true });
+            document.addEventListener("atomClicked", setAtomPickerEventListener, { once: true });
         }
 
         return () => {
             if (props.awaitAtomClick === props.id) {
-                document.removeEventListener('atomClicked', setAtomPickerEventListener);
+                document.removeEventListener("atomClicked", setAtomPickerEventListener);
             }
         };
     }, [props.awaitAtomClick]);
@@ -156,29 +156,29 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     return (
         <Card
             style={{
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
                 margin: 0,
-                padding: '0.5rem',
-                borderColor: 'grey',
+                padding: "0.5rem",
+                borderColor: "grey",
                 borderWidth: 3,
-                overflowX: 'hidden',
-                overflowY: 'auto',
+                overflowX: "hidden",
+                overflowY: "auto",
             }}
         >
-            <Stack direction="vertical" gap={2} style={{ justifyContent: 'space-between' }}>
+            <Stack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
                 <InputGroup>
                     <Button variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                         Set Atom {props.id}
                     </Button>
-                    <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : 'No atom selected'} />
+                    <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : "No atom selected"} />
                 </InputGroup>
                 <div>
-                    <Form.Label style={{ marginTop: '0.2rem', marginBottom: 0, display: 'flex', justifyContent: 'left' }}>
+                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...
                     </Form.Label>
                     <InputGroup>
-                        <SplitButton title={deleteAtom ? 'Yes' : 'No'}>
+                        <SplitButton title={deleteAtom ? "Yes" : "No"}>
                             {/* @ts-ignore */}
                             <Dropdown.Item
                                 key="Yes"
@@ -212,11 +212,11 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     </InputGroup>
                 </div>
                 <div>
-                    <Form.Label style={{ marginTop: '0.2rem', marginBottom: 0, display: 'flex', justifyContent: 'left' }}>
+                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Change order of bond...
                     </Form.Label>
                     <InputGroup>
-                        <SplitButton title={changeOrderBond ? 'Yes' : 'No'}>
+                        <SplitButton title={changeOrderBond ? "Yes" : "No"}>
                             {/* @ts-ignore */}
                             <Dropdown.Item
                                 key="Yes"
@@ -245,26 +245,26 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                             ))}
                         </Form.Select>
                     </InputGroup>
-                    <Row style={{ justifyContent: 'center', display: changeOrderBond ? 'flex' : 'none' }}>
-                        <Form.Select style={{ width: '50%' }} ref={newBondOrderValueRef}>
-                            <option key={'SINGLE'} value={'SINGLE'}>
+                    <Row style={{ justifyContent: "center", display: changeOrderBond ? "flex" : "none" }}>
+                        <Form.Select style={{ width: "50%" }} ref={newBondOrderValueRef}>
+                            <option key={"SINGLE"} value={"SINGLE"}>
                                 SINGLE
                             </option>
-                            <option key={'DOUBLE'} value={'DOUBLE'}>
+                            <option key={"DOUBLE"} value={"DOUBLE"}>
                                 DOUBLE
                             </option>
-                            <option key={'TRIPLE'} value={'TRIPLE'}>
+                            <option key={"TRIPLE"} value={"TRIPLE"}>
                                 TRIPLE
                             </option>
                         </Form.Select>
                     </Row>
                 </div>
                 <div>
-                    <Form.Label style={{ marginTop: '0.2rem', marginBottom: 0, display: 'flex', justifyContent: 'left' }}>
+                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Change formal charge of an atom...
                     </Form.Label>
                     <InputGroup>
-                        <SplitButton title={changeAtomCharge ? 'Yes' : 'No'}>
+                        <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
                             {/* @ts-ignore */}
                             <Dropdown.Item
                                 key="Yes"
@@ -296,9 +296,9 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                             })}
                         </Form.Select>
                     </InputGroup>
-                    <Row style={{ justifyContent: 'center', display: changeAtomCharge ? 'flex' : 'none' }}>
+                    <Row style={{ justifyContent: "center", display: changeAtomCharge ? "flex" : "none" }}>
                         <TextField
-                            style={{ margin: '0.5rem', width: '50%' }}
+                            style={{ margin: "0.5rem", width: "50%" }}
                             label="New charge"
                             type="number"
                             variant="standard"
@@ -316,9 +316,9 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     );
 });
 
-AceDRGtomPicker.displayName = 'AceDRGtomPicker';
+AceDRGtomPicker.displayName = "AceDRGtomPicker";
 
-export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
+export const MoorhenCreateAcedrgLinkModal = () => {
     const atomPickerOneRef = useRef(null);
     const atomPickerTwoRef = useRef(null);
 
@@ -326,7 +326,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
     const aceDRGInstance = moorhenGlobalInstance.getAceDRGInstance();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
-    const [errorMessage, setErrorMessage] = useState<string>('');
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -338,7 +338,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
     };
 
     const handleSubmitToAcedrg = async () => {
-        setErrorMessage('');
+        setErrorMessage("");
         const atomOneFormData = atomPickerOneRef.current.getFormData() as moorhen.createCovLinkAtomInput;
         const atomTwoFormData = atomPickerTwoRef.current.getFormData() as moorhen.createCovLinkAtomInput;
         console.log(atomOneFormData);
@@ -348,7 +348,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
                 await aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData);
                 dispatch(hideModal(modalKeys.ACEDRG));
             } catch (err) {
-                console.log('Something went wrong while trying to run aceDRG...');
+                console.log("Something went wrong while trying to run aceDRG...");
                 console.log(err);
                 setErrorMessage(`ERROR: ${err}`);
             }
@@ -366,9 +366,9 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
             maxHeight={convertViewtoPx(90, height)}
             maxWidth={convertRemToPx(55)}
             additionalChildren={
-                <Backdrop sx={{ color: '#fff', zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
-                    <Stack gap={2} direction="vertical" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                        <Spinner animation="border" style={{ marginRight: '0.5rem' }} />
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                    <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                         <span>Click on an atom...</span>
                         <Button variant="danger" onClick={() => setAwaitAtomClick(-1)}>
                             Cancel
@@ -380,7 +380,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
                 <Stack
                     direction="horizontal"
                     gap={2}
-                    style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: '100%' }}
+                    style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", height: "100%" }}
                 >
                     <AceDRGtomPicker
                         id={1}
@@ -399,15 +399,15 @@ export const MoorhenCreateAcedrgLinkModal = (props: { width: number }) => {
                 </Stack>
             }
             footer={
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', width: '50%' }}>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "left", width: "50%" }}>
                         <Form.Control type="text" readOnly={true} value={errorMessage} />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'right' }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "right" }}>
                         <Button variant="primary" onClick={handleSubmitToAcedrg}>
                             Run AceDRG
                         </Button>
-                        <Button variant="danger" onClick={handleCancel} style={{ marginLeft: '0.1rem' }}>
+                        <Button variant="danger" onClick={handleCancel} style={{ marginLeft: "0.1rem" }}>
                             Cancel
                         </Button>
                     </div>

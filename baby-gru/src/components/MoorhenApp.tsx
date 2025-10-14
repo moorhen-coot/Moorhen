@@ -3,7 +3,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { Provider } from "react-redux";
 import { useEffect, useRef } from "react";
 import { reducers } from "../store/MoorhenReduxStore";
-import { MoorhenContainer } from "./container/MoorhenContainer";
+import { MoorhenContainer } from "./container/MainContainer";
 import { ExtraNavBarMenus } from "./navbar-menus/MoorhenMainMenu";
 
 export const MoorhenExitMenu = (props: { exitCallback: () => void }) => {

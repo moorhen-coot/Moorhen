@@ -1,12 +1,12 @@
-import { ClickAwayListener } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { memo, useMemo, useState } from 'react';
-import { RootState } from '../../store/MoorhenReduxStore';
-import { showModal } from '../../store/modalsSlice';
-import { convertRemToPx } from '../../utils/utils';
-import { MoorhenIcon } from '../icons';
-import './main-menu.css';
-import { MAIN_MENU_CONFIG } from './mainMenuConfig';
+import { ClickAwayListener } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { memo, useMemo, useState } from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { ModalKey, showModal } from "../../store/modalsSlice";
+import { convertRemToPx } from "../../utils/utils";
+import { MoorhenIcon } from "../icons";
+import "./main-menu.css";
+import { MAIN_MENU_CONFIG } from "./mainMenuConfig";
 
 export type ExtraNavBarMenus = {
     icon: React.JSX.Element;
@@ -35,8 +35,8 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         setIsOpen(prev => !prev);
     };
     const handleClickAway = event => {
-        console.log('click away from menu: ', event);
-        if ((event.target as HTMLElement).closest('.moorhen__main-menu-buttons-container')) return;
+        console.log("click away from menu: ", event);
+        if ((event.target as HTMLElement).closest(".moorhen__main-menu-buttons-container")) return;
 
         setActiveMenu(null);
     };
@@ -56,7 +56,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         } else {
             const extraMenu = props.extraNavBarMenus.find(m => m.name === activeMenu);
             if (extraMenu) {
-                const style = extraMenu.align ? { top: `${extraMenu.align * 1.5}rem` } : { top: '5rem' };
+                const style = extraMenu.align ? { top: `${extraMenu.align * 1.5}rem` } : { top: "5rem" };
                 return (
                     <div key={extraMenu.name} className="moorhen__sub-menu-container" ref={extraMenu.ref} style={style}>
                         {extraMenu.JSXElement}
@@ -79,7 +79,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
                         label={menu.name}
                         onClick={() => {
                             setActiveMenu(menu.name);
-                            menu.ref.current?.scrollIntoView({ behavior: 'smooth' });
+                            menu.ref.current?.scrollIntoView({ behavior: "smooth" });
                         }}
                     />
                 ))}
@@ -94,7 +94,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         };
 
         const buttonsList = Object.entries(MAIN_MENU_CONFIG).map(([key, menu]) => {
-            if (menu.label === 'Dev tools' && !isDevMode) {
+            if (menu.label === "Dev tools" && !isDevMode) {
                 return null;
             }
             return (
@@ -103,11 +103,11 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
                     icon={menu.icon}
                     label={menu.label}
                     onClick={
-                        typeof menu.component === 'function'
+                        typeof menu.component === "function"
                             ? () => handleClick(menu.label)
                             : () => {
                                   setActiveMenu(null);
-                                  dispatch(showModal(menu.component as string));
+                                  dispatch(showModal(menu.component as ModalKey));
                               }
                     }
                 />
@@ -125,8 +125,8 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     const menuLength =
         Object.keys(MAIN_MENU_CONFIG).length - (!isDevMode ? 1 : 0) + (props.extraNavBarMenus ? props.extraNavBarMenus.length : 0);
     console.log(menuLength);
-    const containerHeight = isOpen ? `${Math.min(convertRemToPx(4.5 + menuLength * 3.3), GLViewportHeight - 10)}px` : '4.5rem';
-    const containerWidth = activeMenu === null ? '12rem' : '40rem';
+    const containerHeight = isOpen ? `${Math.min(convertRemToPx(4.5 + menuLength * 3.3), GLViewportHeight - 10)}px` : "4.5rem";
+    const containerWidth = activeMenu === null ? "12rem" : "40rem";
 
     return (
         <div className="moorhen__main-menu" style={{ width: containerWidth, height: containerHeight }}>
@@ -146,7 +146,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         </div>
     );
 });
-MoorhenMainMenu.displayName = 'MoorhenMainMenu';
+MoorhenMainMenu.displayName = "MoorhenMainMenu";
 
 const MainMenuButton = (props: { icon: React.JSX.Element; label: string; onClick: () => void }) => {
     return (

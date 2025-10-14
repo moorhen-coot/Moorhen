@@ -36,8 +36,6 @@ import { allFontsSet } from "../../utils/enums";
 import { parseAtomInfoLabel } from "../../utils/utils";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
-//import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
-import { MoorhenModalsContainer } from "../misc/MoorhenModalsContainer";
 import { MoorhenMainMenu } from "../navbar-menus/MoorhenMainMenu";
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from "../navbar-menus/MoorhenMainMenu";
@@ -63,6 +61,8 @@ import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snac
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
+//import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
+import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 
 declare module "notistack" {

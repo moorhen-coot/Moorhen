@@ -1,4 +1,4 @@
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { moorhen } from "../../types/moorhen"
 import { useRef, useCallback, useState } from "react"
 import { Form, Row, Col, Card, Button,  FormSelect, InputGroup } from "react-bootstrap"

@@ -7,8 +7,8 @@ customElements.define("moorhen-loader", MoorhenLoader);
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
-export { MoorhenContainer } from "./components/container/MoorhenContainer";
-export { MoorhenDraggableModalBase } from "./components/modal/MoorhenDraggableModalBase";
+export { MoorhenContainer } from "./components/container/MainContainer";
+export { MoorhenDraggableModalBase } from "./components/interface-base/DraggableModalBase";
 export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 export { ColourRule } from "./utils/MoorhenColourRule";
 export { MoleculeRepresentation } from "./utils/MoorhenMoleculeRepresentation";

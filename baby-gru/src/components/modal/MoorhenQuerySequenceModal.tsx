@@ -1,21 +1,21 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Backdrop } from "@mui/material";
+import { ApolloClient, ApolloProvider, InMemoryCache, useLazyQuery } from "@apollo/client";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
-import { Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
-import { useSelector } from 'react-redux';
+import { Backdrop } from "@mui/material";
 import { Store } from "@reduxjs/toolkit";
-import { ApolloClient, InMemoryCache, ApolloProvider, useLazyQuery } from "@apollo/client";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase";
-import { MoorhenSlider } from "../inputs";
+import { Button, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { webGL } from "../../types/mgWebGL";
-import { modalKeys } from "../../utils/enums";
+import { moorhen } from "../../types/moorhen";
 import { gql } from "../../utils/__graphql__/gql";
-import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
 import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
+import { modalKeys } from "../../utils/enums";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
+import { MoorhenSlider } from "../inputs";
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const GET_POLYMER_INFO = gql(`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
@@ -50,7 +50,7 @@ export const MoorhenQuerySequenceModal = () => {
 
     return (
         <ApolloProvider client={client.current}>
-            <MoorhenQuerySequence/>
+            <MoorhenQuerySequence />
         </ApolloProvider>
     );
 };
@@ -70,11 +70,11 @@ const MoorhenQuerySequence = () => {
     const cachedEValCutoff = useRef<number | null>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
     const chainSelectRef = useRef<HTMLSelectElement>(null);
-    const sourceSelectRef =  useRef<HTMLSelectElement>(null);
-   
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const sourceSelectRef = useRef<HTMLSelectElement>(null);
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
 
     const [getPolimerInfo, { loading, error, data }] = useLazyQuery(GET_POLYMER_INFO);
 
@@ -134,9 +134,12 @@ const MoorhenQuerySequence = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         try {
-            const reponse = await fetch(`https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`, {
-                signal: controller.signal,
-            });
+            const reponse = await fetch(
+                `https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`,
+                {
+                    signal: controller.signal,
+                }
+            );
             const result = await reponse.json();
             return result;
         } catch (err) {
@@ -152,7 +155,7 @@ const MoorhenQuerySequence = () => {
             setSelectedModel(null);
         } else if (selectedModel === null) {
             setSelectedModel(molecules[0].molNo);
-        } else if (!molecules.map((molecule) => molecule.molNo).includes(selectedModel)) {
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
             setSelectedModel(molecules[0].molNo);
         }
     }, [molecules.length]);
@@ -168,12 +171,12 @@ const MoorhenQuerySequence = () => {
             }
 
             setBusy(true);
-            const molecule = molecules.find((molecule) => molecule.molNo === parseInt(moleculeSelectRef.current.value));
-            const sequence = molecule.sequences.find((sequence) => sequence.chain === chainSelectRef.current.value);
+            const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
+            const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value);
             let results: { result_set: { [id: number]: { identifier: string; score: number } }; total_count: number };
 
             results = await doPDBQuery(
-                sequence.sequence.map((residue) => residue.resCode).join(""),
+                sequence.sequence.map(residue => residue.resCode).join(""),
                 resultsPageNumber * 10,
                 seqIdCutoff / 100,
                 eValCutoff,
@@ -188,15 +191,15 @@ const MoorhenQuerySequence = () => {
             let queryInput: GetPolimerInfoQueryVariables;
             if (sourceSelectRef.current.value === "AFDB") {
                 queryInput = {
-                    entryIds: Object.keys(results.result_set).map((key) =>
+                    entryIds: Object.keys(results.result_set).map(key =>
                         results.result_set[key].identifier.slice(0, results.result_set[key].identifier.length - 2)
                     ),
-                    entityIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier),
+                    entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier),
                 };
             } else {
                 queryInput = {
-                    entryIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier.slice(0, 4)),
-                    entityIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier),
+                    entryIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier.slice(0, 4)),
+                    entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier),
                 };
             }
 
@@ -226,7 +229,7 @@ const MoorhenQuerySequence = () => {
             maxHeight={convertViewtoPx(50, height)}
             maxWidth={convertViewtoPx(50, width)}
             additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy || loading}>
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
                     <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                     <span>Fetching...</span>
                 </Backdrop>
@@ -272,7 +275,7 @@ const MoorhenQuerySequence = () => {
                                     sliderTitle="E-Val cutoff"
                                     decimalPlaces={1}
                                     externalValue={eValCutoff}
-                                    setExternalValue={(value) => setEValCutoff(value)}
+                                    setExternalValue={value => setEValCutoff(value)}
                                 />
                             </Form.Group>
                         </Col>
@@ -285,7 +288,7 @@ const MoorhenQuerySequence = () => {
                                     sliderTitle="Seq. Id. cutoff"
                                     externalValue={seqIdCutoff}
                                     decimalPlaces={0}
-                                    setExternalValue={(value) => setSeqIdCutoff(value)}
+                                    setExternalValue={value => setSeqIdCutoff(value)}
                                 />
                             </Form.Group>
                         </Col>
@@ -330,7 +333,10 @@ const MoorhenQuerySequence = () => {
                                 Page {currentResultsPage + 1} of {Math.ceil(totalNumberOfHits / 10)}
                             </span>
                         ) : null}
-                        <Button variant="primary" onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}>
+                        <Button
+                            variant="primary"
+                            onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}
+                        >
                             <FirstPageOutlined />
                         </Button>
                         <Button
