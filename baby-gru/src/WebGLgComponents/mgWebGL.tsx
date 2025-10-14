@@ -3820,7 +3820,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
             //FIXME - Size
-            //this.gl.viewport(0, 0, this.canvas.width,this.canvas.height);
             this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
 
             const paintMvMatrix = mat4.create();
@@ -3839,14 +3838,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
             this.bindSSAOBuffers()
 
-            //this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             if (this.ext) {
                 this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
             } else {
                 this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
             }
-
-            //return
 
             // Now blur ....
 
@@ -4584,8 +4580,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
         }
 
-        let drawnBigRedTriangle = false
-
         for (let idx = 0; idx < displayBuffers.length; idx++) {
 
             if (!displayBuffers[idx].visible) {
@@ -4696,37 +4690,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         }
                     }
                 }
-
-        if(false&&!drawnBigRedTriangle&&!this.drawingGBuffers){
-            console.log("Draw a big triangle ...")
-            const theShader = this.shaderProgram;
-            this.gl.useProgram(theShader);
-            for(let i = 0; i<16; i++)
-               this.gl.disableVertexAttribArray(i);
-            this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
-            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.0, 0.0, 1.0)
-            this.gl.vertexAttrib3f(theShader.vertexNormalAttribute, 0.0, 0.0, 1.0)
-
-            console.log(this.origin,this.zoom)
-            const vertices = [
-            -24*this.zoom-this.origin[0],-24*this.zoom-this.origin[1], -610.0-this.origin[2],
-            -24*this.zoom-this.origin[0], 24*this.zoom-this.origin[1], -610.0-this.origin[2],
-             24*this.zoom-this.origin[0],-24*this.zoom-this.origin[1], -610.0-this.origin[2],
-             24*this.zoom-this.origin[0], 24*this.zoom-this.origin[1], -610.0-this.origin[2]
-            ];
-            const indices = [0,1,2,1,3,2];
-
-            const vertex_buffer = this.gl.createBuffer()
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertex_buffer);
-            this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
-
-            const Index_Buffer = this.gl.createBuffer()
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, indices.length, this.gl.UNSIGNED_SHORT,0);
-            drawnBigRedTriangle = true
-        }
 
                 for(let i = 0; i<16; i++)
                     this.gl.disableVertexAttribArray(i);
