@@ -3780,6 +3780,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (this.doSSAO&&this.WEBGL2) {
+            if(this.renderToTexture){
+                this.ssaoFramebufferSize = 4096;
+                if(this.ssaoFramebuffer){
+                    this.gl.deleteFramebuffer(this.ssaoFramebuffer);
+                    this.ssaoFramebuffer = null;
+                }
+            }
+
             if(!this.ssaoFramebuffer) this.createSSAOFramebufferBuffer();
             if(!this.offScreenFramebufferSimpleBlurX) this.createSimpleBlurOffScreeenBuffers();
 
@@ -4156,6 +4164,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.renderToTexture) {
             this.edgeDetectFramebufferSize = 2048;
             this.gBuffersFramebufferSize = 2048;
+            this.ssaoFramebufferSize = 1024;
             if(this.edgeDetectFramebuffer){
                 this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
                 this.edgeDetectFramebuffer = null;
@@ -4163,6 +4172,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.gFramebuffer){
                 this.gl.deleteFramebuffer(this.gFramebuffer);
                 this.gFramebuffer = null;
+            }
+            if(this.ssaoFramebuffer){
+                this.gl.deleteFramebuffer(this.ssaoFramebuffer);
+                this.ssaoFramebuffer = null;
             }
         }
     }
