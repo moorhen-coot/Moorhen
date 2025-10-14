@@ -239,6 +239,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
+        ssaoFramebufferSize : number;
         gBuffersFramebufferSize : number;
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
@@ -1168,6 +1169,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.edgeDetectFramebufferSize = 2048;
         this.gBuffersFramebufferSize = 2048;
+        this.ssaoFramebufferSize = 1024;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
@@ -2180,13 +2182,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //FIXME - Sizes?
             const ssaoRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
-            this.ssaoFramebuffer.width = 1024;
-            this.ssaoFramebuffer.height = 1024;
+            this.ssaoFramebuffer.width = this.ssaoFramebufferSize;
+            this.ssaoFramebuffer.height = this.ssaoFramebufferSize;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, ssaoRenderbuffer);
 
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.ssaoTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -3794,7 +3796,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius*2.0);
             } else {
                 this.gl.uniform1f(this.shaderProgramSSAO.depthFactor,1.0);
-                this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius);
+                this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius/this.zoom);
             }
 
             this.gl.uniform1f(this.shaderProgramSSAO.bias,this.ssaoBias);
@@ -3811,7 +3813,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
             //FIXME - Size
             //this.gl.viewport(0, 0, this.canvas.width,this.canvas.height);
-            this.gl.viewport(0, 0, 1024, 1024);
+            this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
 
             const paintMvMatrix = mat4.create();
             const paintPMatrix = mat4.create();

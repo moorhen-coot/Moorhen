@@ -19,7 +19,6 @@ uniform float bias;// = 1.0;
 uniform float depthFactor;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
-const vec2 noiseScale = vec2(4096.0/4.0, 4096.0/4.0);
 
 in mediump mat4 pMatrix;
 
@@ -43,7 +42,7 @@ void main() {
         vec3 normal = normalize(normal_all.rgb);
 
         fragPos = depthFactor*texture(gPosition, out_TexCoord0).xyz;
-        vec3 randomVec = texture(texNoise, out_TexCoord0 * noiseScale).xyz;
+        vec3 randomVec = texture(texNoise, gl_FragCoord.xy / vec2(4.0)).xyz;
         // create TBN change-of-basis matrix: from tangent-space to view-space
         tangent = normalize(randomVec - normal * dot(randomVec, normal));
         bitangent = cross(normal, tangent);
