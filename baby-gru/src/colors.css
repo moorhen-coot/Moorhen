@@ -3,7 +3,7 @@
     --moorhen-primary: #212529;
     --moorhen-secondary: #ffffff;
     --moorhen-background: #f7f7f7;
-    --moorhen-background-secondary: #8097ac;
+    --moorhen-background-header: #f0f0ed;
     --moorhen-border: #898f96;
     --moorhen-input-background: rgb(255, 255, 255);
     --moorhen-accent: #0d6efd;
@@ -26,11 +26,11 @@
     --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
     /* Moorhen specific colors for dark theme */
     --moorhen-primary: #f8f9fa;
     --moorhen-background: #2c2e30;
-    --moorhen-background-secondary: #606060;
+    --moorhen-background-header: #606060;
     --moorhen-border: #c6cfd8;
     --moorhen-input-background: rgba(255, 255, 255, 0.1);
     --moorhen-error: #dc3545;

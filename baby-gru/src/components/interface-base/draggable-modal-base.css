@@ -1,0 +1,67 @@
+@import "../../colors.css";
+
+.moorhen__modal-base-container {
+    user-select: none;
+    position: absolute;
+    border: 1px solid var(--moorhen-border);
+    background-color: var(--moorhen-background);
+    border-radius: 0.5rem;
+    top: 0;
+    left: 0;
+    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
+}
+.moorhen__modal-header {
+    justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-width: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    align-items: center;
+    user-select: none;
+    -webkit-user-select: none;
+    background-color: var(--moorhen-background-header);
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: 0.5rem;
+    height: 2.5rem;
+}
+
+.moorhen__modal-draggable-button {
+    all: unset;
+    padding: 0px;
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    padding-left: 0.5rem;
+    cursor: move !important;
+    text-align: left;
+}
+
+.moorhen__modal-header-buttons {
+    display: flex;
+    margin-right: 0.6rem;
+    flex-direction: row;
+    align-items: center;
+}
+
+.moorhen__modal-body {
+    margin: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    overflow-y: scroll;
+    height: calc(100% - 2.5rem - 48px);
+    width: calc(100%-1rem);
+}
+
+.moorhen__modal-footer {
+    position: absolute;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    height: 1.5rem;
+    padding-right: 0.3rem;
+}

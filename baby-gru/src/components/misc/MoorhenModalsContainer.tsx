@@ -1,36 +1,36 @@
-import { useSelector } from 'react-redux';
-import { memo } from 'react';
-import { moorhen } from '../../types/moorhen';
-import { modalKeys } from '../../utils/enums';
-import { Moorhen2DCanvasObjectsModal } from '../modal/Moorhen2DCanvasObjectsModal';
-import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
-import { MoorhenColourMapByOtherMapModal } from '../modal/MoorhenColourMapByOtherMapModal';
-import { MoorhenControlsModal } from '../modal/MoorhenControlsModal';
-import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
-import { MoorhenDiffMapPeaksModal } from '../modal/MoorhenDiffMapPeaksModal';
-import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResiduesModal';
-import { MoorheFindLigandModal } from '../modal/MoorhenFindLigandModal';
-import { MoorhenJsonValidationModal } from '../modal/MoorhenJsonValidationModal';
-import { MoorhenLhasaModal } from '../modal/MoorhenLhasaModal';
-import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
-import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
-import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
-import { MoorhenPAEModal } from '../modal/MoorhenPAEModal';
-import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
-import { MoorhenMrBumpModal } from '../modal/MoorhenMrBumpModal';
-import { MoorhenMrParseModal } from '../modal/MoorhenMrParseModal';
-import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
-import { MoorhenQScoreModal } from '../modal/MoorhenQScoreModal';
-import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
-import { MoorhenRamaPlotModal } from '../modal/MoorhenRamaPlotModal';
-import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
-import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
-import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
-import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
-import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
-import { MoorhenValidationPlotModal } from '../modal/MoorhenValidationPlotModal';
-import { MoorhenVectorsModal } from '../modal/MoorhenVectorsModal';
-import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
+import { useSelector } from "react-redux";
+import { memo } from "react";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
+import { Moorhen2DCanvasObjectsModal } from "../modal/Moorhen2DCanvasObjectsModal";
+import { MoorhenCarbohydrateValidationModal } from "../modal/MoorhenCarbohydrateValidationModal";
+import { MoorhenColourMapByOtherMapModal } from "../modal/MoorhenColourMapByOtherMapModal";
+import { MoorhenControlsModal } from "../modal/MoorhenControlsModal";
+import { MoorhenCreateAcedrgLinkModal } from "../modal/MoorhenCreateAcedrgLinkModal";
+import { MoorhenDiffMapPeaksModal } from "../modal/MoorhenDiffMapPeaksModal";
+import { MoorhenFillPartialResiduesModal } from "../modal/MoorhenFillPartialResiduesModal";
+import { MoorheFindLigandModal } from "../modal/MoorhenFindLigandModal";
+import { MoorhenJsonValidationModal } from "../modal/MoorhenJsonValidationModal";
+import { MoorhenLhasaModal } from "../modal/MoorhenLhasaModal";
+import { MoorhenLigandValidationModal } from "../modal/MoorhenLigandValidationModal";
+import { MoorhenMapsModal } from "../modal/MoorhenMapsModal";
+import { MoorhenMmrrccModal } from "../modal/MoorhenMmrrccModal";
+import { MoorhenModelsModal } from "../modal/MoorhenModelsModal";
+import { MoorhenMrBumpModal } from "../modal/MoorhenMrBumpModal";
+import { MoorhenMrParseModal } from "../modal/MoorhenMrParseModal";
+import { MoorhenPAEModal } from "../modal/MoorhenPAEModal";
+import { MoorhenPepFlipsModal } from "../modal/MoorhenPepFlipsModal";
+import { MoorhenQScoreModal } from "../modal/MoorhenQScoreModal";
+import { MoorhenQuerySequenceModal } from "../modal/MoorhenQuerySequenceModal";
+import { MoorhenRamaPlotModal } from "../modal/MoorhenRamaPlotModal";
+import { MoorhenSceneSettingsModal } from "../modal/MoorhenSceneSettingsModal";
+import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
+import { MoorhenSliceNDiceModal } from "../modal/MoorhenSliceNDiceModal";
+import { MoorheSuperposeStructuresModal } from "../modal/MoorhenSuperposeStructuresModal";
+import { MoorhenUnmodelledBlobsModal } from "../modal/MoorhenUnmodelledBlobsModal";
+import { MoorhenValidationPlotModal } from "../modal/MoorhenValidationPlotModal";
+import { MoorhenVectorsModal } from "../modal/MoorhenVectorsModal";
+import { MoorhenWaterValidationModal } from "../modal/MoorhenWaterValidationModal";
 
 export type ExtraDraggableModals = React.JSX.Element[];
 
@@ -69,12 +69,13 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
 
     const showVectorsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.VECTORS));
     const showOverlays2DModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.OVERLAYS2D));
+    const showMapsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MAPS));
 
     return (
         <>
             <MoorhenModelsModal />
 
-            <MoorhenMapsModal />
+            {showMapsModal && <MoorhenMapsModal />}
 
             {showCreateAcedrgLinkModal && <MoorhenCreateAcedrgLinkModal width={45} />}
 
@@ -130,3 +131,5 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
         </>
     );
 });
+
+MoorhenModalsContainer.displayName = "MoorhenModalsContainer";

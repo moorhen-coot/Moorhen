@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
-import { Button, Card, Stack } from "react-bootstrap";
-import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { useDispatch, useSelector } from "react-redux";
-import { ResizableBox } from "react-resizable";
-import { moorhen } from "../../types/moorhen";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
-import { hideModal, focusOnModal, unFocusModal } from "../../store/modalsSlice";
-import { usePaths } from "../../InstanceManager";
+import { focusOnModal, hideModal, unFocusModal } from "../../store/modalsSlice";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import "./MoorhenDraggableModalBase.css";
+import "./draggable-modal-base.css";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
@@ -116,7 +113,16 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         handleClassName = "handle",
         additionalHeaderButtons = null,
         additionalChildren = null,
-        enableResize = { top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false },
+        enableResize = {
+            top: false,
+            right: true,
+            bottom: true,
+            left: false,
+            topRight: false,
+            bottomRight: true,
+            bottomLeft: true,
+            topLeft: false,
+        },
         top = 100,
         left = 500,
         overflowY = "auto",
@@ -130,8 +136,6 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         minWidth = 100,
         enforceMaxBodyDimensions = true,
     } = { ...props };
-
-    const urlPrefix = usePaths().urlPrefix;
 
     // Measure the body size to set the initial size of the modal
     const bodyRef = useRef<HTMLDivElement>(null);
@@ -157,12 +161,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         } else if (measured) {
             return {
                 width: bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth,
-                height:
-                    bodySize.height > minHeight
-                        ? bodySize.height < maxHeight
-                            ? bodySize.height
-                            : maxHeight
-                        : minHeight,
+                height: bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight,
             };
         } else {
             return {
@@ -173,27 +172,24 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     };
     const resizableSize = getResizableSize();
 
+    const [size, setSize] = useState<{ width: number; height: number }>(resizableSize);
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const transparentModalsOnMouseOut = useSelector(
-        (state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut
-    );
+    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut);
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);
-    const show = useSelector((state: moorhen.State) => state.modals.activeModals.includes(props.modalId));
 
     const [currentZIndex, setCurrentZIndex] = useState<number>(999);
     const [opacity, setOpacity] = useState<number>(1.0);
     const [collapse, setCollapse] = useState<boolean>(false);
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: left, y: top });
 
-    const draggableNodeRef = useRef<HTMLDivElement>(null);
     const cachedEnableAtomHovering = useRef<boolean>(false);
     const modalIdRef = useRef<string>(props.modalId);
 
     useEffect(() => {
-        const focusIndex = focusHierarchy.findIndex((item) => item === modalIdRef.current);
+        const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current);
         setCurrentZIndex(999 - focusIndex);
     }, [focusHierarchy]);
 
@@ -203,40 +199,53 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         };
     }, []);
 
-    useEffect(() => {
-        if (show) {
-            dispatch(focusOnModal(modalIdRef.current));
-        } else {
-            dispatch(unFocusModal(modalIdRef.current));
-        }
-    }, [show]);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const lastMousePos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-    useEffect(() => {
-        setPosition({
-            x: left,
-            y: top,
-        });
-    }, [windowWidth, windowHeight]);
-
-    const handleDrag = (evt: DraggableEvent, data: DraggableData) => {
-        setPosition((prev) => {
-            return { x: prev.x + data.deltaX, y: prev.y + data.deltaY };
-        });
-    };
-
-    const handleStart = useCallback(() => {
+    //** Draggable logic */
+    const handleDragStart = evt => {
         if (enableAtomHovering) {
             dispatch(setEnableAtomHovering(false));
             cachedEnableAtomHovering.current = true;
         } else {
             cachedEnableAtomHovering.current = false;
         }
-    }, [enableAtomHovering]);
+        evt.preventDefault();
+        evt.stopPropagation();
 
-    const handleDragStop = useCallback(() => {
-        setPosition((prev) => {
-            let x = prev.x;
-            let y = prev.y;
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+        lastMousePos.current = { x: evt.pageX, y: evt.pageY };
+        /// pointer move vs mousemove is what make it work smoothly !
+        window.addEventListener("pointermove", dragWindow, {
+            signal: abortControllerRef.current.signal,
+            passive: false,
+        });
+        window.addEventListener("pointerup", handleDragStop, {
+            signal: abortControllerRef.current.signal,
+            passive: false,
+        });
+    };
+
+    const handleDragStop = () => {
+        abortControllerRef.current?.abort();
+        if (cachedEnableAtomHovering.current) {
+            dispatch(setEnableAtomHovering(true));
+        }
+    };
+
+    const dragWindow = evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        const deltaX = evt.pageX - lastMousePos.current.x;
+        const deltaY = evt.pageY - lastMousePos.current.y;
+        lastMousePos.current = { x: evt.pageX, y: evt.pageY };
+
+        setPosition(prev => {
+            let x = prev.x + deltaX;
+            let y = prev.y + deltaY;
             if (x < 0) {
                 x = 0;
             } else if (x > windowWidth - 100) {
@@ -247,23 +256,67 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             } else if (y > windowHeight - 100) {
                 y = windowHeight - 100;
             }
+            console.log("Setting position XY", x, y);
             return { x, y };
         });
-        if (cachedEnableAtomHovering.current) {
-            dispatch(setEnableAtomHovering(true));
-        }
-    }, [windowWidth, windowHeight]);
+    };
 
-    const handleResizeStop = (
-        evt: MouseEvent | TouchEvent,
-        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
-        ref: HTMLDivElement,
-        delta: { width: number; height: number }
-    ) => {
+    //** Resizable logic */
+    const handleResizeStart = (evt: React.MouseEvent<HTMLElement, MouseEvent>): void => {
+        if (enableAtomHovering) {
+            dispatch(setEnableAtomHovering(false));
+            cachedEnableAtomHovering.current = true;
+        } else {
+            cachedEnableAtomHovering.current = false;
+        }
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+        lastMousePos.current = { x: evt.pageX, y: evt.pageY };
+        /// pointer move vs mousemove is what make it work smoothly !
+        window.addEventListener("pointermove", resizeModal, {
+            signal: abortControllerRef.current.signal,
+            passive: false,
+        });
+        window.addEventListener("pointerup", handleResizeStop, {
+            signal: abortControllerRef.current.signal,
+            passive: false,
+        });
+    };
+
+    const handleResizeStop = () => {
+        abortControllerRef.current?.abort();
         if (cachedEnableAtomHovering.current) {
             dispatch(setEnableAtomHovering(true));
         }
-        props.onResizeStop?.(evt, direction, ref, delta);
+    };
+
+    const resizeModal = evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        const deltaX = evt.pageX - lastMousePos.current.x;
+        const deltaY = evt.pageY - lastMousePos.current.y;
+        lastMousePos.current = { x: evt.pageX, y: evt.pageY };
+
+        setSize(prev => {
+            let width = prev.width + deltaX;
+            let height = prev.height + deltaY;
+            if (width < minWidth) {
+                width = minWidth;
+            } else if (width > maxWidth) {
+                width = maxWidth;
+            }
+            if (height < minHeight) {
+                height = minHeight;
+            } else if (height > maxHeight) {
+                height = maxHeight;
+            }
+            return { width, height };
+        });
     };
 
     const handleClose = useCallback(async () => {
@@ -271,19 +324,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         dispatch(hideModal(props.modalId));
     }, [props.onClose]);
 
-    const handleResize = (
-        evt: MouseEvent | TouchEvent,
-        direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
-        ref: HTMLDivElement,
-        delta: { width: number; height: number }
-    ) => {
-        if (props.onResize) {
-            const width = draggableNodeRef.current?.clientWidth;
-            const height = draggableNodeRef.current?.clientHeight;
-            props.onResize(evt, direction, ref, delta, { width, height });
-        }
-    };
-
+    //** Measure of the modal before displaying */
     if (!measured) {
         return (
             // Render a hidden div to measure the body size
@@ -305,137 +346,71 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         );
     } else {
         return (
-            <Draggable
-                nodeRef={draggableNodeRef}
-                handle={`.${handleClassName}`}
-                position={position}
-                onDrag={handleDrag}
-                onStop={handleDragStop}
-                onStart={handleStart}
+            /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+            /* eslint-disable jsx-a11y/click-events-have-key-events */
+            <div
+                id={modalIdRef.current}
+                role="dialog"
+                aria-modal="true"
+                onClick={() => dispatch(focusOnModal(modalIdRef.current))}
+                className="moorhen__modal-base-container"
+                style={{
+                    opacity: opacity,
+                    zIndex: currentZIndex,
+                    transform: `translate(${position.x}px, ${position.y}px)`,
+                    height: size.height + 48 + 40,
+                    width: size.width,
+                    minWidth: minWidth,
+                    minHeight: minHeight + 48 + 40,
+                    maxWidth: maxWidth,
+                    maxHeight: collapse ? 32 + 48 : maxHeight + 48 + 40,
+                }}
+                onMouseOver={() => setOpacity(1.0)}
+                onFocus={() => setOpacity(1.0)}
+                onMouseOut={() => {
+                    if (transparentModalsOnMouseOut) setOpacity(0.5);
+                }}
+                onBlur={() => {
+                    if (transparentModalsOnMouseOut) setOpacity(0.5);
+                }}
             >
-                <Card
-                    id={modalIdRef.current}
-                    onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-                    className={`moorhen-draggable-card${focusHierarchy[0] === modalIdRef.current ? "-focused" : ""}`}
-                    ref={draggableNodeRef}
+                <div className="moorhen__modal-header">
+                    <button className="moorhen__modal-draggable-button" onMouseDown={handleDragStart}>
+                        {props.headerTitle}
+                    </button>
+                    <div className={`moorhen__modal-header-buttons`}>
+                        {collapse ? null : additionalHeaderButtons?.map(button => button)}
+                        <MoorhenButton
+                            type="icon-only"
+                            icon={collapse ? "MUISymbolAdd" : "MUISymbolRemove"}
+                            size="medium"
+                            onClick={() => setCollapse(!collapse)}
+                        />
+                        {showCloseButton && <MoorhenButton type="icon-only" icon="MUISymbolClose" size="medium" onClick={handleClose} />}
+                    </div>
+                </div>
+                <div
+                    className="moorhen__modal-body"
                     style={{
-                        display: show ? "block" : "none",
-                        position: "absolute",
-                        opacity: opacity,
-                        zIndex: currentZIndex,
-                    }}
-                    onMouseOver={() => setOpacity(1.0)}
-                    onMouseOut={() => {
-                        if (transparentModalsOnMouseOut) setOpacity(0.5);
+                        maxHeight: maxHeight,
+                        maxWidth: maxWidth,
                     }}
                 >
-                    <Card.Header
-                        className={handleClassName}
-                        style={{
-                            minWidth: minWidth,
-                            justifyContent: "space-between",
-                            display: "flex",
-                            cursor: "move",
-                            alignItems: "center",
-                        }}
-                    >
-                        {props.headerTitle}
-                        <Stack gap={2} direction="horizontal">
-                            {collapse ? null : additionalHeaderButtons?.map((button) => button)}
-                            <MoorhenButton type="icon-only" icon={collapse ? 'plus' : 'minus'} size='medium' onClick={() => setCollapse(!collapse)}/>
-                            {showCloseButton && (
-                                <MoorhenButton type="icon-only" icon='MUISymbolClose' size='medium' onClick={handleClose}/>
-                            )}
-                        </Stack>
-                    </Card.Header>
-                    <Card.Body
-                        style={{
-                            display: collapse ? "none" : "flex",
-                            justifyContent: "center",
-                            flexDirection: "column",
-                        }}
-                    >
-                        <ResizableBox
-                            width={resizableSize.width}
-                            height={resizableSize.height}
-                            minConstraints={[minWidth, minHeight]}
-                            maxConstraints={[maxWidth, maxHeight]}
-                            lockAspectRatio={lockAspectRatio}
-                            ref={props.resizeNodeRef ? props.resizeNodeRef : null}
-                            resizeHandles={["se"]}
-                            onResizeStop={(e, data) => {
-                                handleResizeStop(
-                                    e as unknown as MouseEvent | TouchEvent,
-                                    data.handle as any,
-                                    data.node as HTMLDivElement,
-                                    {
-                                        width: data.size.width,
-                                        height: data.size.height,
-                                    }
-                                );
-                            }}
-                            onResizeStart={(e) => handleStart()}
-                            onResize={(e, data) => {
-                                handleResize(
-                                    e as unknown as MouseEvent | TouchEvent,
-                                    data.handle as any,
-                                    data.node as HTMLDivElement,
-                                    {
-                                        width: data.size.width,
-                                        height: data.size.height,
-                                    }
-                                );
-                            }}
-                            handle={
-                                enableResize && typeof enableResize === "object" && enableResize.bottomRight ? (
-                                    <img
-                                        src={`${urlPrefix}/pixmaps/moorhen_icons/resizable.svg`}
-                                        draggable="false"
-                                        alt="resize"
-                                        className="moorhen__modal__base__icon"
-                                    />
-                                ) : undefined
-                            }
-                        >
-                            <div
-                                style={{
-                                    overflowY: overflowY as "visible" | "hidden" | "clip" | "scroll" | "auto",
-                                    overflowX: overflowX as "visible" | "hidden" | "clip" | "scroll" | "auto",
-                                    height: "100%",
-                                    width: "100%",
-                                    display: "block",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                {enforceMaxBodyDimensions ? (
-                                    <div
-                                        style={
-                                            enforceMaxBodyDimensions ? { maxHeight: maxHeight, maxWidth: maxWidth } : {}
-                                        }
-                                    >
-                                        {props.body}
-                                    </div>
-                                ) : (
-                                    props.body
-                                )}
-                            </div>
-                        </ResizableBox>
-                    </Card.Body>
-                    {props.footer && (
-                        <Card.Footer
-                            style={{
-                                display: collapse ? "none" : "flex",
-                                alignItems: "center",
-                                justifyContent: "right",
-                            }}
-                        >
-                            {props.footer}
-                        </Card.Footer>
-                    )}
-                    {additionalChildren}
-                </Card>
-            </Draggable>
+                    {props.body}
+                </div>
+                <div className="moorhen__modal-footer">
+                    {props.footer}
+                    <MoorhenButton
+                        type="icon-only"
+                        icon="resizable"
+                        size="medium"
+                        style={{ cursor: "nwse-resize" }}
+                        // @ts-expect-error
+                        onMouseDown={handleResizeStart}
+                    />
+                </div>
+                {additionalChildren}
+            </div>
         );
     }
 };

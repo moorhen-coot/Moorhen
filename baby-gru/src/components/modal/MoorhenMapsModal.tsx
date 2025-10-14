@@ -1,12 +1,12 @@
-import { useState, useMemo} from "react";
 import { UnfoldLessOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import { MoorhenMapCard } from "../card/MoorhenMapCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { useMemo, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenMapCard } from "../card/MoorhenMapCard";
+import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const MoorhenMapsModal = () => {
     const [collapseAll, setCollapseAll] = useState<boolean>(false);
@@ -21,15 +21,15 @@ export const MoorhenMapsModal = () => {
             setCollapsedCards([]);
         } else {
             setCollapseAll(true);
-            const allCards = maps.map((map) => map.molNo);
+            const allCards = maps.map(map => map.molNo);
             setCollapsedCards(allCards);
         }
     };
 
-    const handleCollapseToggle = (key) => {
+    const handleCollapseToggle = key => {
         if (collapsedCards.includes(key)) {
             setCollapseAll(false);
-            setCollapsedCards(collapsedCards.filter((card) => card !== key));
+            setCollapsedCards(collapsedCards.filter(card => card !== key));
         } else {
             if (collapsedCards.length === 1) {
                 setCollapseAll(true);
@@ -48,7 +48,7 @@ export const MoorhenMapsModal = () => {
                 initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
                 initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
                 isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
-                onCollapseToggle={(key) => handleCollapseToggle(key)}
+                onCollapseToggle={key => handleCollapseToggle(key)}
                 modalWidth={modalWidth}
             />
         ));
