@@ -13,7 +13,7 @@ Planned features
 - [x] Improve edge detect.
 - [x] Vectors UI. Drawing code should already be there, mostly.
 - [x] Legends UI. Drawing code already in 2D overlay class.
-- [ ] Fix depth blur with transparent objects. Hard?
+- [ ] Fix screenshots with depth blur and transparent objects.
 - [ ] Fix text labels being ugly when there is a transparent object.
   - [x] Non-depth-cued labels.
   - [ ] Depth-cued labels.
