@@ -4051,8 +4051,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
-                if(this.renderToTexture)
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                if(this.renderToTexture){
+                    if(this.doPeel){
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+                    } else {
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    }
+                }
                 if(!this.atomLabelDepthMode) this.drawDistancesAndLabels();
                 this.drawLineMeasures(invMat);
                 this.drawTextOverlays(invMat);
