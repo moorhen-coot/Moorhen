@@ -3561,7 +3561,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(!this.screenshotBuffersReady)
                         this.initTextureFramebuffer();
                     console.log("Binding rttFramebuffer in depth peel accumulate",this.rttFramebuffer);
-                    if(this.offScreenFramebuffer.width!=this.rttFramebuffer.width){
+                    if(!(this.offScreenFramebuffer)||(this.offScreenFramebuffer.width!=this.rttFramebuffer.width)){
                         this.offScreenReady = false
                         this.recreateOffScreeenBuffers(this.rttFramebuffer.width,this.rttFramebuffer.height);
                     }
@@ -4126,13 +4126,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             if (this.WEBGL2) {
-                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
-                this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
-                this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
-                this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
-
+                if(this.doPeel){
+                     this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.offScreenFramebuffer);
+                     this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                     this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                     this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
+                             0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+                } else {
+                     this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
+                     this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                     this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                     this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+                }
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             }
             const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
