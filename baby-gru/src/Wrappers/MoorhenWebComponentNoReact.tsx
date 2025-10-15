@@ -1,8 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
-import React from "react";
-// import { createRoot } from "react-dom/client";
-//import { Provider } from "react-redux";
-// import React, { createContext } from "react";
+import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
+import React, { createContext } from "react";
 import {
     MoorhenContainer,
     MoorhenInstance,
@@ -14,15 +13,7 @@ import {
 } from "../moorhen";
 import { MoorhenReduxStoreType, reducers } from "../store/MoorhenReduxStore";
 
-declare global {
-    interface Window {
-        React: any;
-        ReactDOM: any;
-        ReactRedux: any;
-    }
-}
-
-export class MoorhenWebComponent extends HTMLElement {
+export class MoorhenWebComponentNoReact extends HTMLElement {
     public moorhenInstanceRef: React.RefObject<null | MoorhenInstance>;
     public setMoorhenDimensions: null | (() => [number, number]);
     public width: number | string;
@@ -33,22 +24,13 @@ export class MoorhenWebComponent extends HTMLElement {
     }
     constructor() {
         super();
+        this.moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
         this.width = this.getAttribute("width") || 800;
         this.height = this.getAttribute("height") || this.width;
         this.setMoorhenDimensions = () => [+this.width, +this.height];
     }
 
     public connectedCallback() {
-        const React = window.React;
-        const ReactDOM = window.ReactDOM;
-        const { Provider } = window.ReactRedux;
-        this.moorhenInstanceRef = window.React.createRef();
-
-        if (!React || !ReactDOM) {
-            console.error("React and ReactDOM must be available globally");
-            return;
-        }
-
         // shadow context
         const shadow = this.attachShadow({ mode: "open" });
         const rootElement = document.createElement("div");
@@ -88,22 +70,15 @@ export class MoorhenWebComponent extends HTMLElement {
                 }),
         });
 
-        const root = ReactDOM.createRoot(rootElement);
+        const root = createRoot(rootElement);
         root.render(
-            React.createElement(
-                "div",
-                {},
-                React.createElement(
-                    Provider,
-                    { store: MoorhenReduxStore },
-                    React.createElement(MoorhenContainer, {
-                        moorhenInstanceRef: this.moorhenInstanceRef,
-                        setMoorhenDimensions: this.setMoorhenDimensions,
-                    })
-                )
-            )
+            <div>
+                <Provider store={MoorhenReduxStore}>
+                    <MoorhenContainer moorhenInstanceRef={this.moorhenInstanceRef} setMoorhenDimensions={this.setMoorhenDimensions} />
+                </Provider>
+            </div>
         );
     }
 }
 
-// customElements.define("moorhen-web-component", MoorhenWebComponent);
+customElements.define("moorhen-web-component", MoorhenWebComponentNoReact);
