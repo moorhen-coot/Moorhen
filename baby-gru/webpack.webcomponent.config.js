@@ -185,10 +185,5 @@ module.exports = (env, argv) => {
             },
             extensions: [".ts", ".tsx", ".js", ".jsx"],
         },
-        externals: {
-            react: "react",
-            "react-dom": "react-dom",
-            "react-redux": "react-redux",
-        },
     };
 };

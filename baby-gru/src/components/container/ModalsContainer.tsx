@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
-import { memo, useMemo } from "react";
+import React, { memo, useMemo } from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
 import { ModalKey } from "../../store/modalsSlice";
-import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { Moorhen2DCanvasObjectsModal } from "../modal/Moorhen2DCanvasObjectsModal";
 import { MoorhenCarbohydrateValidationModal } from "../modal/MoorhenCarbohydrateValidationModal";
@@ -33,41 +33,43 @@ import { MoorhenValidationPlotModal } from "../modal/MoorhenValidationPlotModal"
 import { MoorhenVectorsModal } from "../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../modal/MoorhenWaterValidationModal";
 
-const modalsMap = {
-    [modalKeys.ACEDRG]: MoorhenCreateAcedrgLinkModal,
-    [modalKeys.SEQ_QUERY]: MoorhenQuerySequenceModal,
-    [modalKeys.SCRIPTING]: MoorhenScriptModal,
-    [modalKeys.SHOW_CONTROLS]: MoorhenControlsModal,
-    [modalKeys.FIT_LIGAND]: MoorheFindLigandModal,
-    [modalKeys.RAMA_PLOT]: MoorhenRamaPlotModal,
-    [modalKeys.DIFF_MAP_PEAKS]: MoorhenDiffMapPeaksModal,
-    [modalKeys.VALIDATION_PLOT]: MoorhenValidationPlotModal,
-    [modalKeys.MMRRCC]: MoorhenMmrrccModal,
-    [modalKeys.PAEPLOT]: MoorhenPAEModal,
-    [modalKeys.JSON_VALIDATION]: MoorhenJsonValidationModal,
-    [modalKeys.WATER_VALIDATION]: MoorhenWaterValidationModal,
-    [modalKeys.LIGAND_VALIDATION]: MoorhenLigandValidationModal,
-    [modalKeys.MRBUMP]: MoorhenMrBumpModal,
-    [modalKeys.MRPARSE]: MoorhenMrParseModal,
-    [modalKeys.CARB_VALIDATION]: MoorhenCarbohydrateValidationModal,
-    [modalKeys.PEPTIDE_FLIPS]: MoorhenPepFlipsModal,
-    [modalKeys.UNMODELLED_BLOBS]: MoorhenUnmodelledBlobsModal,
-    [modalKeys.FILL_PART_RES]: MoorhenFillPartialResiduesModal,
-    [modalKeys.SCENE_SETTINGS]: MoorhenSceneSettingsModal,
-    [modalKeys.SLICE_N_DICE]: MoorhenSliceNDiceModal,
-    [modalKeys.SUPERPOSE_MODELS]: MoorheSuperposeStructuresModal,
-    [modalKeys.LHASA]: MoorhenLhasaModal,
-    [modalKeys.QSCORE]: MoorhenQScoreModal,
-    [modalKeys.COLOR_MAP_BY_MAP]: MoorhenColourMapByOtherMapModal,
-    [modalKeys.VECTORS]: MoorhenVectorsModal,
-    [modalKeys.OVERLAYS2D]: Moorhen2DCanvasObjectsModal,
-    [modalKeys.MAPS]: MoorhenMapsModal,
-    [modalKeys.MODELS]: MoorhenModelsModal,
+const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
+    acedrg: MoorhenCreateAcedrgLinkModal,
+    "query-seq": MoorhenQuerySequenceModal,
+    scripting: MoorhenScriptModal,
+    "show-controls": MoorhenControlsModal,
+    "fit-ligand": MoorheFindLigandModal,
+    "rama-plot": MoorhenRamaPlotModal,
+    "diff-map-peaks": MoorhenDiffMapPeaksModal,
+    "validation-plot": MoorhenValidationPlotModal,
+    mmrrcc: MoorhenMmrrccModal,
+    "pae-plot": MoorhenPAEModal,
+    "json-validation": MoorhenJsonValidationModal,
+    "water-validation": MoorhenWaterValidationModal,
+    "lig-validation": MoorhenLigandValidationModal,
+    mrbump: MoorhenMrBumpModal,
+    mrparse: MoorhenMrParseModal,
+    "carb-validation": MoorhenCarbohydrateValidationModal,
+    pepflips: MoorhenPepFlipsModal,
+    "unmodelled-blobs": MoorhenUnmodelledBlobsModal,
+    "fill-partial-residues": MoorhenFillPartialResiduesModal,
+    "scene-settings": MoorhenSceneSettingsModal,
+    "slice-n-dice": MoorhenSliceNDiceModal,
+    superpose: MoorheSuperposeStructuresModal,
+    lhasa: MoorhenLhasaModal,
+    qscore: MoorhenQScoreModal,
+    "colour-map-by-map": MoorhenColourMapByOtherMapModal,
+    vectors: MoorhenVectorsModal,
+    "overlays-2d": Moorhen2DCanvasObjectsModal,
+    maps: MoorhenMapsModal,
+    models: MoorhenModelsModal,
 };
+// ...existing code...
 export type ExtraDraggableModals = React.JSX.Element[];
 
 export const MoorhenModalsContainer = memo((props: { extraDraggableModals: ExtraDraggableModals }) => {
-    const activeModals = useSelector((state: moorhen.State) => state.modals.activeModals);
+    const activeModals = useSelector((state: RootState) => state.modals.activeModals);
+    const showModelsModal = useSelector((state: RootState) => state.modals.activeModals.includes("models"));
 
     const displayModals = activeModals.map(modalKey => {
         const ModalComponent = modalsMap[modalKey];
@@ -76,7 +78,6 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
 
     return (
         <>
-            <MoorhenModelsModal />
             {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
             {displayModals}
         </>

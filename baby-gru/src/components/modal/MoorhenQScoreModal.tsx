@@ -7,7 +7,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenQScore } from "../validation-tools/MoorhenQScore";
 
-export const MoorhenQScoreModal = props => {
+export const MoorhenQScoreModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
