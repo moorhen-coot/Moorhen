@@ -3561,7 +3561,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(!this.screenshotBuffersReady)
                         this.initTextureFramebuffer();
                     console.log("Binding rttFramebuffer in depth peel accumulate",this.rttFramebuffer);
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    if(this.offScreenFramebuffer.width!=this.rttFramebuffer.width){
+                        this.offScreenReady = false
+                        this.recreateOffScreeenBuffers(this.rttFramebuffer.width,this.rttFramebuffer.height);
+                    }
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
                     this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
                     this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
@@ -3603,17 +3607,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            if(this.renderToTexture) {
-                console.log("Delete screenshot peel buffers")
-                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
-                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
-                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
-                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
-                }
-                this.depthPeelFramebuffers = [];
-            }
         return invMat
     }
 
@@ -4198,7 +4191,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let srcHeight;
         let dstWidth;
         let dstHeight;
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.recreateOffScreeenBuffers(this.rttFramebuffer.width,this.rttFramebuffer.height);
             // FIXME - This cannnot work with current framebuffers, textures, etc.
             console.log("Need to combine depthBlur and screenshot ...");
@@ -4255,7 +4248,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
@@ -4373,18 +4366,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.depthTexture,2);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
         }
 
+
         this.gl.activeTexture(this.gl.TEXTURE1);
-        if(this.renderToTexture) {
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-        } else {
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-        }
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
 
         this.gl.activeTexture(this.gl.TEXTURE2);
         if(this.doPeel){
@@ -4435,6 +4425,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
 
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
+                this.depthPeelFramebuffers = [];
+                this.offScreenReady = false
             }
             this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
