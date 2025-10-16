@@ -1,7 +1,7 @@
 import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../hooks/useFastContourMode";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setContourLevel } from "../../store/mapContourSettingsSlice";
@@ -117,9 +117,20 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         return [labelSpace, actionButtonSpace];
     };
     const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
+    {
+        getNameLabel(props.map, labelSpace);
+    }
 
+    const cardTitle = useMemo(() => {
+        return (
+            <div style={{ display: "flex" }}>
+                #{props.map.molNo}&nbsp;
+                <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
+            </div>
+        );
+    }, [props.map]);
     return (
-        <MoorhenAccordion title="Map" type="card">
+        <MoorhenAccordion title={cardTitle} type="card">
             <Stack direction="vertical" gap={1}>
                 <Stack direction="horizontal" gap={4}>
                     <ToggleButton

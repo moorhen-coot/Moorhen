@@ -3,7 +3,7 @@ import { MoorhenButton } from "../inputs";
 import "./accordion.css";
 
 export type MoorhenAccordionType = {
-    title: string;
+    title: string | React.JSX.Element;
     children: React.ReactNode;
     disabled?: boolean;
     defaultOpen?: boolean;

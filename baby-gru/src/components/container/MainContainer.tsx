@@ -40,7 +40,7 @@ import { MoorhenMainMenu } from "../navbar-menus/MoorhenMainMenu";
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from "../navbar-menus/MoorhenMainMenu";
 import { BottomPanelContainer } from "../panels/BottomPanel";
-// import { MoorhenSidePanel } from '../panels/SidePanel';
+import { MoorhenSidePanel } from "../panels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from "../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar";
@@ -557,7 +557,7 @@ const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
-                    {/* <MoorhenSidePanel width={300} /> */}
+                    <MoorhenSidePanel width={300} />
                 </SnackbarProvider>
             </div>
         </>

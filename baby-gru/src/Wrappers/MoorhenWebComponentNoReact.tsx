@@ -18,9 +18,10 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
     public setMoorhenDimensions: null | (() => [number, number]);
     public width: number | string;
     public height: number | string;
+    public urlPrefix: string;
 
     static get observedAttributes() {
-        return ["width", "height", "pdb-id"];
+        return ["width", "height", "url-prefix"];
     }
     constructor() {
         super();
@@ -28,6 +29,7 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
         this.width = this.getAttribute("width") || 800;
         this.height = this.getAttribute("height") || this.width;
         this.setMoorhenDimensions = () => [+this.width, +this.height];
+        this.urlPrefix = this.getAttribute("url-prefix") || "";
     }
 
     public connectedCallback() {
@@ -38,8 +40,8 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
 
         const loadStylesheets = async () => {
             const [moorhenRes, flatlyRes] = await Promise.all([
-                fetch(new URL("baby-gru/moorhen.css", window.location.href).href),
-                fetch(new URL("baby-gru/flatly.css", window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/baby-gru/moorhen.css`, window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/baby-gru/flatly.css`, window.location.href).href),
             ]);
 
             const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);
@@ -73,7 +75,11 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
         root.render(
             <div>
                 <Provider store={MoorhenReduxStore}>
-                    <MoorhenContainer moorhenInstanceRef={this.moorhenInstanceRef} setMoorhenDimensions={this.setMoorhenDimensions} />
+                    <MoorhenContainer
+                        moorhenInstanceRef={this.moorhenInstanceRef}
+                        setMoorhenDimensions={this.setMoorhenDimensions}
+                        urlPrefix={this.urlPrefix}
+                    />
                 </Provider>
             </div>
         );
