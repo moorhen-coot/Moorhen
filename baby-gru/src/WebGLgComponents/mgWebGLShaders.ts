@@ -583,6 +583,11 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramTextInstanced.pixelZoom = gl.getUniformLocation(shaderProgramTextInstanced, "pixelZoom");
 
+    shaderProgramTextInstanced.xSSAOScaling = gl.getUniformLocation(shaderProgramTextInstanced, "xSSAOScaling");
+    shaderProgramTextInstanced.ySSAOScaling = gl.getUniformLocation(shaderProgramTextInstanced, "ySSAOScaling");
+    shaderProgramTextInstanced.peelNumber = gl.getUniformLocation(shaderProgramTextInstanced, "peelNumber");
+    shaderProgramTextInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramTextInstanced, "depthPeelSamplers");
+
     return shaderProgramTextInstanced
 
 }

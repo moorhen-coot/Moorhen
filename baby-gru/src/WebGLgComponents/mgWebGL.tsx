@@ -3639,7 +3639,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.shaderProgram,
             this.shaderProgramInstanced,
             this.shaderProgramThickLinesNormal,
-            this.shaderProgramPerfectSpheres
+            this.shaderProgramPerfectSpheres,
+            this.shaderProgramTextInstanced
         ];
 
         theShaders.forEach(shader => {

@@ -6,7 +6,7 @@ Planned features
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
 - [ ] simplify File menu to have far fewer entries.
-- [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view- per-molecule
+- [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
 
 ### For 0.23.0
 - [x] Fix SSAO.
@@ -14,9 +14,7 @@ Planned features
 - [x] Vectors UI. Drawing code should already be there, mostly.
 - [x] Legends UI. Drawing code already in 2D overlay class.
 - [x] Fix screenshots with depth blur and transparent objects.
-- [ ] Fix text labels being ugly when there is a transparent object.
-  - [x] Non-depth-cued labels.
-  - [ ] Depth-cued labels.
+- [x] Fix text labels being ugly when there is a transparent object.
 - [ ] Fix multiview with depth blur.
 - [ ] Fix multiview with SSAO.
 - [ ] Fix multiview with edge detect.
