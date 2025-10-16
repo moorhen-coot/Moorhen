@@ -1,7 +1,7 @@
 project(coot)
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
@@ -674,3 +674,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
+
+install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/src/LhasaReact/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/pixmaps/lhasa_icons)
