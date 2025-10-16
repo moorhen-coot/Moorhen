@@ -1,14 +1,15 @@
-import { useRef, useEffect, useState } from "react";
+import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
+import { Checkbox, IconButton } from "@mui/material";
 import { Chart, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { Stack, Spinner } from "react-bootstrap";
-import { IconButton , Checkbox, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { ZoomInOutlined, ZoomOutOutlined, ExpandMoreOutlined } from "@mui/icons-material";
-import { useSelector, useDispatch } from "react-redux";
-import { convertViewtoPx } from "../../../utils/utils";
+import { Spinner, Stack } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
+import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
-import { setContourLevel } from "../../../store/mapContourSettingsSlice";
+import { convertViewtoPx } from "../../../utils/utils";
+import { MoorhenAccordion } from "../../interface-base/Accordion";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -34,7 +35,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const parseHistogramData = (histogramData: libcootApi.HistogramInfoJS) => {
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
 
-        const handleClick = (evt) => {
+        const handleClick = evt => {
             if (chartRef !== null && typeof chartRef !== "function") {
                 const points = chartRef.current.getElementsAtEventForMode(evt, "nearest", { intersect: true }, true);
                 if (points.length === 0) {
@@ -42,12 +43,17 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 }
                 const peakIndex = points[0].index;
 
-                dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1) }));
+                dispatch(
+                    setContourLevel({
+                        molNo: props.map.molNo,
+                        contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1),
+                    })
+                );
             }
         };
 
         const highestCount = Math.max(...histogramData.counts);
-        const secondHighestCount = Math.max(...histogramData.counts.filter((count) => count !== highestCount));
+        const secondHighestCount = Math.max(...histogramData.counts.filter(count => count !== highestCount));
         const line_postion = Math.round((props.currentContourLevel - histogramData.base) / histogramData.bin_width) - 1;
 
         return {
@@ -184,85 +190,60 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     }, [isDark, showHistogram, width, height, zoomFactor, exponential]);
 
     return (
-        <Accordion
-            className="moorhen-accordion"
-            disableGutters={true}
-            elevation={0}
-            TransitionProps={{ unmountOnExit: true }}
-            expanded={showHistogram}
-            onChange={(event, isExpanded) => setShowHistogram(isExpanded)}
-        >
-            <AccordionSummary
-                sx={{
-                    backgroundColor: isDark ? "#adb5bd" : "#ecf0f1",
-                    minHeight: "30px", // Set the minimum height
-                    "&.Mui-expanded": {
-                        minHeight: "30px", // Ensure height remains consistent when expanded
-                    },
-                    ".MuiAccordionSummary-content": {
-                        margin: 0, // Adjust content margin
-                    },
-                }}
-                expandIcon={histogramBusy ? <Spinner animation="border" /> : <ExpandMoreOutlined />}
-            >
-                Histogram
-            </AccordionSummary>
-            <AccordionDetails
-                style={{
-                    padding: "0.2rem",
-                    backgroundColor: isDark ? "#b4b4b4ff" : "white",
-                }}
-            >
-                <Stack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
-                    <div className="histogram-plot-div" style={{ width: "95%" }}>
-                        <canvas id={`${props.map.molNo}-histogram`}></canvas>
-                    </div>
-                    <Stack
-                        style={{
-                            display: "flex",
-                            width: "1.5rem",
-                            justifyContent: "center",
-                            alignContent: "center",
-                            alignItems: "center",
-                            verticalAlign: "center",
-                        }}
-                        gap={1}
-                        direction="vertical"
+        <MoorhenAccordion title="Histogram" onChange={isExpanded => setShowHistogram(isExpanded)}>
+            <Stack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
+                <div className="histogram-plot-div" style={{ width: "95%" }}>
+                    <canvas id={`${props.map.molNo}-histogram`}></canvas>
+                </div>
+                <Stack
+                    style={{
+                        display: "flex",
+                        width: "1.5rem",
+                        justifyContent: "center",
+                        alignContent: "center",
+                        alignItems: "center",
+                        verticalAlign: "center",
+                    }}
+                    gap={1}
+                    direction="vertical"
+                >
+                    <IconButton
+                        onClick={() =>
+                            setZoomFactor(prev => {
+                                if (prev + 2 > 20) {
+                                    return 20;
+                                }
+                                return prev + 2;
+                            })
+                        }
                     >
-                        <IconButton
-                            onClick={() =>
-                                setZoomFactor((prev) => {
-                                    if (prev + 2 > 20) {
-                                        return 20;
-                                    }
-                                    return prev + 2;
-                                })
-                            }
-                        >
-                            <ZoomInOutlined />
-                        </IconButton>
-                        x{zoomFactor}
-                        <IconButton
-                            onClick={() =>
-                                setZoomFactor((prev) => {
-                                    if (prev - 2 < 1) {
-                                        return 1;
-                                    }
-                                    return prev - 2;
-                                })
-                            }
-                        >
-                            <ZoomOutOutlined />
-                        </IconButton>
-                    </Stack>
+                        <ZoomInOutlined />
+                    </IconButton>
+                    x{zoomFactor}
+                    <IconButton
+                        onClick={() =>
+                            setZoomFactor(prev => {
+                                if (prev - 2 < 1) {
+                                    return 1;
+                                }
+                                return prev - 2;
+                            })
+                        }
+                    >
+                        <ZoomOutOutlined />
+                    </IconButton>
                 </Stack>
-                <Stack style={{ display: "flex", margin: 0, padding: 0, height: 0, position: "relative", top: -15 }} gap={1} direction="horizontal">
-                    <Checkbox checked={exponential} onChange={(evt) => setExponential(evt.target.checked)} size="small" />
-                    <span style={{ margin: "0.0rem", fontSize: "0.8rem" }}>
-                        Log<sub>10</sub>(Y)
-                    </span>
-                </Stack>
-            </AccordionDetails>
-        </Accordion>
+            </Stack>
+            <Stack
+                style={{ display: "flex", margin: 0, padding: 0, height: 0, position: "relative", top: -15 }}
+                gap={1}
+                direction="horizontal"
+            >
+                <Checkbox checked={exponential} onChange={evt => setExponential(evt.target.checked)} size="small" />
+                <span style={{ margin: "0.0rem", fontSize: "0.8rem" }}>
+                    Log<sub>10</sub>(Y)
+                </span>
+            </Stack>
+        </MoorhenAccordion>
     );
 };

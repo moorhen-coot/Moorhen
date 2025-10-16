@@ -1,0 +1,77 @@
+@import "../../colors.css";
+
+.moorhen__accordion-container {
+    margin: 0.2rem;
+    border-top: 1px solid var(--moorhen-border);
+    margin-bottom: 0.5rem;
+}
+
+.moorhen__accordion-container-card {
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+}
+
+.moorhen__accordion-header {
+    background-color: var(--moorhen-background-header-secondary);
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.moorhen__accordion-header-card {
+    background-color: var(--moorhen-background-header);
+    border-radius: 0.5rem 0.5rem 0 0;
+    height: 2.5rem;
+}
+
+.moorhen__accordion-title {
+    text-align: left;
+    flex: 1;
+    padding: 2rem;
+}
+
+.moorhen__accordion-control-panel {
+    display: flex;
+    align-items: right;
+    justify-content: flex-end;
+}
+
+.moorhen__accordion-toggle-open {
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.moorhen__accordion-toggle-close {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg);
+}
+
+.moorhen__accordion-content-shown {
+    transform: translateY(0);
+    opacity: 1;
+    transition: all 0.3s ease-out;
+    overflow: hidden;
+    padding: 0 0.4rem 0.4rem 0.5rem;
+}
+
+.moorhen__accordion-content-hidden {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+        max-height 0.3s ease-out,
+        opacity 0.3s ease-out;
+}
+
+.moorhen__accordion-content-shown {
+    max-height: 500px; /* Adjust as needed for content */
+    opacity: 1;
+    overflow: hidden;
+    transition:
+        max-height 0.3s ease-out,
+        opacity 0.3s ease-out;
+}

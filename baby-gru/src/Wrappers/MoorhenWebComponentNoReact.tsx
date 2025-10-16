@@ -61,7 +61,6 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
         };
         loadStylesheets();
 
-        // Load both stylesheets concurrently and ensure they coexist
         const MoorhenReduxStore = configureStore({
             reducer: reducers,
             middleware: getDefaultMiddleware =>

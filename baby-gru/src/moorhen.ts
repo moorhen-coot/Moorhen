@@ -1,9 +1,9 @@
 /* Main entry point */
 // @ts-strict
-import { MoorhenLoader } from "./Wrappers/MoorhenLoader";
+import { MoorhenHelper } from "./Wrappers/MoorhenHelper";
 import "./app.css";
 
-customElements.define("moorhen-loader", MoorhenLoader);
+customElements.define("moorhen-helper", MoorhenHelper);
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
@@ -241,4 +241,4 @@ export { default as mrParseSliceReducer } from "./store/mrParseSlice";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
 export { MoorhenWebComponent } from "./Wrappers/MoorhenWebComponent";
 export { MoorhenWebComponentNoReact } from "./Wrappers/MoorhenWebComponentNoReact";
-export { MoorhenLoader } from "./Wrappers/MoorhenLoader";
+export { MoorhenHelper } from "./Wrappers/MoorhenHelper";

@@ -9,11 +9,14 @@ function loadScript(src: string): Promise<string> {
     });
 }
 
-let MathJax = null;
-
-export class MoorhenLoader extends HTMLElement {
+export class MoorhenHelper extends HTMLElement {
+    public src: string;
+    static get observedAttributes() {
+        return ["src"];
+    }
     constructor() {
         super();
+        this.src = this.getAttribute("src") || ".";
     }
 
     public async connectedCallback() {
@@ -21,14 +24,14 @@ export class MoorhenLoader extends HTMLElement {
         const isChromeLinux = navigator.appVersion.indexOf("Linux") != -1 && navigator.appVersion.indexOf("Chrome") != -1;
 
         if (memory64 && !isChromeLinux) {
-            loadScript("/moorhen64.js")
+            loadScript(`${this.src}/moorhen64.js`)
                 .then(src => {
-                    console.log(src + " loaded 64-bit successfully.");
+                    console.debug(src + " loaded 64-bit successfully.");
                     /* eslint-disable no-undef */
                     createCoot64Module({
                         /* eslint-enable no-undef */
                         print(t) {
-                            console.log(["output", t]);
+                            console.debug(["output", t]);
                         },
                         printErr(t) {
                             console.error(["output", t]);
@@ -41,23 +44,23 @@ export class MoorhenLoader extends HTMLElement {
                             document.dispatchEvent(cootModuleAttachedEvent);
                         })
                         .catch(e => {
-                            console.log(e);
-                            console.log("There was a problem creating Coot64Module...");
+                            console.debug(e);
+                            console.debug("There was a problem creating Coot64Module...");
                         });
                 })
                 .catch(error => {
                     console.error(error.message);
-                    console.log("Trying 32-bit fallback");
-                    loadScript("/moorhen.js").then(src => {
-                        console.log(src + " loaded 32-bit successfully (fallback).");
+                    console.debug("Trying 32-bit fallback");
+                    loadScript(`${this.src}/moorhen.js`).then(src => {
+                        console.debug(src + " loaded 32-bit successfully (fallback).");
                         /* eslint-disable no-undef */
                         createCootModule({
                             /* eslint-enable no-undef */
                             print(t) {
-                                console.log(["output", t]);
+                                console.debug(["output", t]);
                             },
                             printErr(t) {
-                                console.log(["output", t]);
+                                console.debug(["output", t]);
                             },
                         })
                             .then(returnedModule => {
@@ -67,20 +70,20 @@ export class MoorhenLoader extends HTMLElement {
                                 document.dispatchEvent(cootModuleAttachedEvent);
                             })
                             .catch(e => {
-                                console.log(e);
+                                console.debug(e);
                             });
                     });
                 });
         } else {
-            loadScript("/moorhen.js").then(src => {
-                console.log(src + " loaded 32-bit successfully.");
+            loadScript(`${this.src}/moorhen.js`).then(src => {
+                console.debug(src + " loaded 32-bit successfully.");
                 /* eslint-disable no-undef */
                 createCootModule({
                     print(t) {
-                        console.log(["output", t]);
+                        console.debug(["output", t]);
                     },
                     printErr(t) {
-                        console.log(["output", t]);
+                        console.debug(["output", t]);
                     },
                 })
                     .then(returnedModule => {
@@ -90,7 +93,7 @@ export class MoorhenLoader extends HTMLElement {
                         document.dispatchEvent(cootModuleAttachedEvent);
                     })
                     .catch(e => {
-                        console.log(e);
+                        console.debug(e);
                     });
             });
         }

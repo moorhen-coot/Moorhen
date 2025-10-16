@@ -1,18 +1,19 @@
-import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from '@mui/icons-material';
-import { Card, Col, Stack, ToggleButton } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { useState } from 'react';
-import { useFastContourMode } from '../../hooks/useFastContourMode';
-import { setActiveMap } from '../../store/generalStatesSlice';
-import { setContourLevel } from '../../store/mapContourSettingsSlice';
-import { moorhen } from '../../types/moorhen';
-import { convertPxToRem, convertRemToPx } from '../../utils/utils';
-import { MoorhenPreciseInput, MoorhenSlider } from '../inputs';
-import { MapCardActionButtons } from './MapCardResources/MapCardActionButtons';
-import { MapColourSelector } from './MapCardResources/MapColourSelector';
-import { MapHistogramAccordion } from './MapCardResources/MapHistogramAccordion';
-import { MapSettingsAccordion } from './MapCardResources/MapSettingsAccordion';
-import { getNameLabel } from './cardUtils';
+import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
+import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
+import { useFastContourMode } from "../../hooks/useFastContourMode";
+import { setActiveMap } from "../../store/generalStatesSlice";
+import { setContourLevel } from "../../store/mapContourSettingsSlice";
+import { moorhen } from "../../types/moorhen";
+import { convertPxToRem, convertRemToPx } from "../../utils/utils";
+import { MoorhenPreciseInput, MoorhenSlider } from "../inputs";
+import { MoorhenAccordion } from "../interface-base";
+import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
+import { MapColourSelector } from "./MapCardResources/MapColourSelector";
+import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
+import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
+import { getNameLabel } from "./cardUtils";
 
 interface MoorhenMapCardPropsInterface {
     map: moorhen.Map;
@@ -49,10 +50,10 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             return map.style;
         } else {
             return state.mapContourSettings.defaultMapSurface
-                ? 'solid'
+                ? "solid"
                 : state.mapContourSettings.defaultMapLitLines
-                  ? 'lit-lines'
-                  : 'lines';
+                  ? "lit-lines"
+                  : "lines";
         }
     });
 
@@ -82,7 +83,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         map: props.map,
         mapRadius,
         radiusThreshold: 25,
-        fastRadius: 'auto',
+        fastRadius: "auto",
         timeoutDelay: 1000,
     });
 
@@ -118,123 +119,80 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
 
     return (
-        <>
-            <Card
-                className="px-0"
-                style={{
-                    display: 'flex',
-                    minWidth: convertRemToPx(28),
-                    marginBottom: '0.5rem',
-                    padding: '0',
-                }}
-                key={props.map.molNo}
-            >
-                <Card.Header style={{ padding: '0.1rem' }}>
-                    <Stack gap={2} direction="horizontal">
-                        <Col
-                            className="align-items-center"
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'left',
-                                color: isDark ? 'white' : 'black',
-                            }}
-                        >
-                            {getNameLabel(props.map, labelSpace)}
-                            <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
-                        </Col>
-                        <Col style={{ display: 'flex', justifyContent: 'right' }}>
-                            <MapCardActionButtons
-                                map={props.map}
-                                mapIsVisible={mapIsVisible}
-                                isCollapsed={props.isCollapsed}
-                                onCollapseToggle={handleCollapseToggle}
-                                setCurrentName={setCurrentName}
-                                maxWidth={actionButtonSpace}
-                            />
-                        </Col>
-                    </Stack>
-                </Card.Header>
-                <Card.Body
-                    style={{
-                        display: props.isCollapsed ? 'none' : '',
-                        padding: '0.5rem',
-                    }}
-                >
-                    <Stack direction="vertical" gap={1}>
-                        <Stack direction="horizontal" gap={4}>
-                            <ToggleButton
-                                id={`active-map-toggle-${props.map.molNo}`}
-                                type="checkbox"
-                                variant={isDark ? 'outline-light' : 'outline-primary'}
-                                checked={props.map === activeMap}
-                                style={{
-                                    marginLeft: '0.1rem',
-                                    marginRight: '0.5rem',
-                                    justifyContent: 'space-betweeen',
-                                    display: 'flex',
-                                    width: '8rem',
+        <MoorhenAccordion title="Map" type="card">
+            <Stack direction="vertical" gap={1}>
+                <Stack direction="horizontal" gap={4}>
+                    <ToggleButton
+                        id={`active-map-toggle-${props.map.molNo}`}
+                        type="checkbox"
+                        variant={isDark ? "outline-light" : "outline-primary"}
+                        checked={props.map === activeMap}
+                        style={{
+                            marginLeft: "0.1rem",
+                            marginRight: "0.5rem",
+                            justifyContent: "space-betweeen",
+                            display: "flex",
+                            width: "8rem",
+                        }}
+                        onClick={() => dispatch(setActiveMap(props.map))}
+                        value={""}
+                    >
+                        {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
+                        <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
+                    </ToggleButton>
+                    <Stack direction="vertical" style={{ justifyContent: "center" }}>
+                        <div className="moorhen__stack__row">
+                            <MoorhenPreciseInput
+                                value={mapContourLevel}
+                                setValue={newVal => {
+                                    handleContourLevelChange(+newVal);
                                 }}
-                                onClick={() => dispatch(setActiveMap(props.map))}
-                                value={''}
-                            >
-                                {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
-                                <span style={{ marginLeft: '0.5rem' }}>{props.map === activeMap ? 'Active' : 'Inactive'}</span>
-                            </ToggleButton>
-                            <Stack direction="vertical" style={{ justifyContent: 'center' }}>
-                                <div className="moorhen__stack__row">
-                                    <MoorhenPreciseInput
-                                        value={mapContourLevel}
-                                        setValue={newVal => {
-                                            handleContourLevelChange(+newVal);
-                                        }}
-                                        label={'Level:'}
-                                        decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
-                                        allowNegativeValues={true}
-                                        disabled={!mapIsVisible}
-                                        waitReturn={true}
-                                    />
-                                    &nbsp;
-                                    {props.map.mapRmsd && (
-                                        <MoorhenPreciseInput
-                                            allowNegativeValues={true}
-                                            value={mapContourLevel / props.map.mapRmsd}
-                                            setValue={newVal => {
-                                                handleContourLevelChange(+newVal * props.map.mapRmsd);
-                                            }}
-                                            label={'RMSD:'}
-                                            decimalDigits={2}
-                                            disabled={!mapIsVisible}
-                                            waitReturn={true}
-                                        />
-                                    )}
-                                </div>
-                                <MoorhenSlider
-                                    minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
-                                    maxVal={props.map.levelRange[1]}
-                                    showMinMaxVal={false}
-                                    decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
-                                    showButtons={true}
-                                    logScale={true}
-                                    isDisabled={!mapIsVisible}
-                                    externalValue={mapContourLevel}
-                                    setExternalValue={newVal => {
-                                        handleContourLevelChange(newVal);
+                                label={"Level:"}
+                                decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
+                                allowNegativeValues={true}
+                                disabled={!mapIsVisible}
+                                waitReturn={true}
+                            />
+                            &nbsp;
+                            {props.map.mapRmsd && (
+                                <MoorhenPreciseInput
+                                    allowNegativeValues={true}
+                                    value={mapContourLevel / props.map.mapRmsd}
+                                    setValue={newVal => {
+                                        handleContourLevelChange(+newVal * props.map.mapRmsd);
                                     }}
-                                    piWaitReturn={true}
+                                    label={"RMSD:"}
+                                    decimalDigits={2}
+                                    disabled={!mapIsVisible}
+                                    waitReturn={true}
                                 />
-                            </Stack>
-                        </Stack>
-                        <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
-                        <MapSettingsAccordion
-                            map={props.map}
-                            mapIsVisible={mapIsVisible}
-                            mapStyle={mapStyle}
-                            mapRadius={mapRadius}
-                            mapOpacity={mapOpacity}
+                            )}
+                        </div>
+                        <MoorhenSlider
+                            minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
+                            maxVal={props.map.levelRange[1]}
+                            showMinMaxVal={false}
+                            decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
+                            showButtons={true}
+                            logScale={true}
+                            isDisabled={!mapIsVisible}
+                            externalValue={mapContourLevel}
+                            setExternalValue={newVal => {
+                                handleContourLevelChange(newVal);
+                            }}
+                            piWaitReturn={true}
                         />
                     </Stack>
-                </Card.Body>
-            </Card>{' '}
-        </>
+                </Stack>
+                <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
+                <MapSettingsAccordion
+                    map={props.map}
+                    mapIsVisible={mapIsVisible}
+                    mapStyle={mapStyle}
+                    mapRadius={mapRadius}
+                    mapOpacity={mapOpacity}
+                />
+            </Stack>
+        </MoorhenAccordion>
     );
 };
