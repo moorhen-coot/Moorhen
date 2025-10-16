@@ -15,9 +15,12 @@ Planned features
 - [x] Legends UI. Drawing code already in 2D overlay class.
 - [x] Fix screenshots with depth blur and transparent objects.
 - [x] Fix text labels being ugly when there is a transparent object.
-- [ ] Fix multiview with depth blur.
-- [ ] Fix multiview with SSAO.
+- [x] Fix multiview with depth blur.
 - [ ] Fix multiview with edge detect.
+   - [x] Normal primitives.
+   - [x] Screenhots.
+   - [ ] Impostor spheres.
+- [ ] Fix multiview with SSAO.
 - [ ] Fix multiview with shadows.
 
 ### For 0.22.0

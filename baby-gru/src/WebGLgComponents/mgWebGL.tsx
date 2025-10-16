@@ -3148,7 +3148,32 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const width_ratio = this.gl.viewportWidth / this.gFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.gFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            if(this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)){
+                console.log("Drawing G buffers for screenshot in complicated case")
+                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
+                let viewport_start_x = Math.trunc(this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportWidth)
+                let viewport_start_y = Math.trunc(this.currentViewport[1] * this.gFramebuffer.height / this.gl.viewportHeight)
+                let viewport_width =   Math.trunc(this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportWidth)
+                let viewport_height =  Math.trunc(this.currentViewport[3] * this.gFramebuffer.height / this.gl.viewportHeight)
+                if(this.gl.viewportWidth>this.gl.viewportHeight){
+                    const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.gFramebuffer.width
+                    const b = 0.5*(this.gFramebuffer.height - hp)
+                    const vh = this.currentViewport[3] * this.gFramebuffer.width  / this.gl.viewportWidth
+                    const bp = this.currentViewport[1] * this.gFramebuffer.width  / this.gl.viewportWidth
+                    viewport_height = vh
+                    viewport_start_y = bp + b
+                } else {
+                    const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.gFramebuffer.height
+                    const b = 0.5*(this.gFramebuffer.width - wp)
+                    const vw = this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportHeight
+                    const bp = this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportHeight
+                    viewport_width = vw
+                    viewport_start_x =  bp + b
+                }
+                this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            } else {
+                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
+            }
         } else if(this.renderSilhouettesToTexture) {
             if(!this.silhouetteBufferReady)
                 this.recreateSilhouetteBuffers();
@@ -3610,6 +3635,58 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return invMat
     }
 
+    getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult} {
+
+        const displayBuffers = store.getState().glRef.displayBuffers
+
+        const multiViewOrigins = []
+        let multiViewGroupsKeys = []
+
+        let quats
+        let viewports
+        let ratioMult = 1.0
+
+        if(this.doThreeWayView){
+            quats = this.threeWayQuats
+            viewports = this.threeWayViewports
+        } else if(this.doMultiView) {
+
+            const multiViewGroups = {}
+            for (let idx = 0; idx < displayBuffers.length; idx++) {
+                if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                    //console.log(idx,displayBuffers[idx].multiViewGroup)
+                    if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
+                        if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                            multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
+                            multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
+                        }
+                    }
+                }
+            }
+            //console.log(multiViewGroups)
+            this.multiViewOrigins = multiViewOrigins
+            multiViewGroupsKeys = Object.keys(multiViewGroups)
+            if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+            }
+
+            quats = this.multiWayQuats
+            viewports = this.multiWayViewports
+            ratioMult = this.multiWayRatio
+        } else if(this.doSideBySideStereo) {
+            quats = this.stereoQuats
+            viewports = this.stereoViewports
+            ratioMult = 0.5
+        } else {
+            quats = this.stereoQuats.toReversed()
+            viewports = this.stereoViewports
+            ratioMult = 0.5
+        }
+
+        return {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult}
+
+    }
+
     drawScene() : void {
 
         if(this.renderToTexture&&(!this.screenshotBuffersReady))
@@ -3651,6 +3728,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         const oldMouseDown = this.mouseDown;
 
+        const origQuat = quat4.clone(this.myQuat);
+        const origOrigin = this.origin
+        const multiViewInfo = this.getMultiViewInfo()
+        const multiViewOrigins = multiViewInfo.multiViewOrigins
+        const multiViewGroupsKeys = multiViewInfo.multiViewGroupsKeys
+        const quats = multiViewInfo.quats
+        const viewports = multiViewInfo.viewports
+        const ratioMult = multiViewInfo.ratioMult
+
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             if(this.renderToTexture) {
                 this.gBuffersFramebufferSize = 4096;
@@ -3668,7 +3754,37 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             // Need triangle and perfect sphere gBuffer shaders
             this.drawingGBuffers = true;
             this.gl.enable(this.gl.DEPTH_TEST);
-            this.GLrender(false);
+
+            if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                for(let i=0;i<viewports.length;i++){
+                    if(this.doMultiView){
+                        if(multiViewGroupsKeys.length>0){
+                            this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                            if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
+                                this.origin = multiViewOrigins[i]
+                        } else {
+                            continue
+                        }
+                    }
+
+                    const newXQuat = quat4.clone(origQuat);
+                    quat4.multiply(newXQuat, newXQuat, quats[i]);
+                    this.myQuat = newXQuat
+                    this.currentViewport = viewports[i]
+
+                    const doClear = i===0 ? true : false
+                    this.GLrender(false,doClear,ratioMult);
+                }
+                this.myQuat = origQuat
+                if(this.doMultiView&&multiViewGroupsKeys.length===0){
+                    this.GLrender(false);
+                }
+                this.origin = origOrigin
+            } else {
+                this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                this.GLrender(false);
+            }
+
             this.drawingGBuffers = false;
 
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
@@ -3925,51 +4041,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enable(this.gl.DEPTH_TEST);
                 if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
-                    let multiViewGroupsKeys = []
                     const origQuat = quat4.clone(this.myQuat);
                     const origOrigin = this.origin
-                    const multiViewOrigins = []
 
-                    let quats
-                    let viewports
-                    let ratioMult = 1.0
-
-                    if(this.doThreeWayView){
-                        quats = this.threeWayQuats
-                        viewports = this.threeWayViewports
-                    } else if(this.doMultiView) {
-
-                        const multiViewGroups = {}
-                        for (let idx = 0; idx < displayBuffers.length; idx++) {
-                            if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
-                                //console.log(idx,displayBuffers[idx].multiViewGroup)
-                                if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
-                                    if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
-                                        multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
-                                        multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
-                                    }
-                                }
-                            }
-                        }
-                        //console.log(multiViewGroups)
-                        this.multiViewOrigins = multiViewOrigins
-                        multiViewGroupsKeys = Object.keys(multiViewGroups)
-                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
-                            this.setupMultiWayTransformations(multiViewGroupsKeys.length)
-                        }
-
-                        quats = this.multiWayQuats
-                        viewports = this.multiWayViewports
-                        ratioMult = this.multiWayRatio
-                    } else if(this.doSideBySideStereo) {
-                        quats = this.stereoQuats
-                        viewports = this.stereoViewports
-                        ratioMult = 0.5
-                    } else {
-                        quats = this.stereoQuats.toReversed()
-                        viewports = this.stereoViewports
-                        ratioMult = 0.5
-                    }
 
                     //console.log(multiViewOrigins)
                     //console.log(viewports)
