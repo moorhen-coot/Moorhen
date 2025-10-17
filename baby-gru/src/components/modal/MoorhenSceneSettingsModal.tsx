@@ -93,7 +93,7 @@ const EdgeDetectPanel = () => {
             <MoorhenSlider
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
-                maxVal={4.0}
+                maxVal={10.0}
                 logScale={false}
                 sliderTitle="Depth threshold"
                 externalValue={edgeDetectDepthThreshold}
