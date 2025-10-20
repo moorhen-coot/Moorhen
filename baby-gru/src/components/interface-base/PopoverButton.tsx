@@ -1,13 +1,14 @@
-import { useRef, useState } from 'react';
-import { MoorhenButton } from '../inputs';
-import { MoorhenPopover } from './Popover';
+import { Propane } from "@mui/icons-material";
+import { useRef, useState } from "react";
+import { MoorhenButton } from "../inputs";
+import { MoorhenPopover } from "./Popover";
 
 type MoorhenPopoverButtonType = {
     popoverContent?: React.JSX.Element;
     disabled?: boolean;
-    size?: 'small' | 'medium' | 'large';
-    icon?: 'string';
-    popoverPlacement?: 'left' | 'right' | 'top' | 'bottom';
+    size?: "small" | "medium" | "large" | "accordion";
+    icon?: "string";
+    popoverPlacement?: "left" | "right" | "top" | "bottom";
     children?: React.ReactNode;
 };
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
@@ -16,7 +17,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     const popOverLink = (
         <MoorhenButton
             type="icon-only"
-            icon={props.icon ? props.icon : 'MUISymbolSettings'}
+            icon={props.icon ? props.icon : "MUISymbolSettings"}
             size={props.size}
             ref={buttonRef}
             onClick={() => setPopOverIsShown(!popoverIsShown)}
@@ -30,6 +31,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
                 linkRef={buttonRef}
                 isShown={popoverIsShown}
                 popoverContent={props.children}
+                popoverPlacement={props.popoverPlacement}
                 setIsShown={setPopOverIsShown}
             />
         </>

@@ -1,18 +1,28 @@
 import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
-import { Card, Col, Stack, ToggleButton } from "react-bootstrap";
+import { Stack, ToggleButton } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFastContourMode } from "../../hooks/useFastContourMode";
 import { setActiveMap } from "../../store/generalStatesSlice";
+import { setRequestDrawScene } from "../../store/glRefSlice";
+import { hideMap, showMap } from "../../store/mapContourSettingsSlice";
 import { setContourLevel } from "../../store/mapContourSettingsSlice";
+import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertPxToRem, convertRemToPx } from "../../utils/utils";
-import { MoorhenPreciseInput, MoorhenSlider } from "../inputs";
+import { doDownload } from "../../utils/utils";
+import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../inputs";
+import { MoorhenButton } from "../inputs";
 import { MoorhenAccordion } from "../interface-base";
-import { MapCardActionButtons } from "./MapCardResources/MapCardActionButtons";
+import { MoorhenMenuItem } from "../menu-item/MenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
+import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
+import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap";
+import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
+import { MoorhenMapInfoCard } from "./MapCardResources/MoorhenMapInfoCard";
 import { getNameLabel } from "./cardUtils";
 
 interface MoorhenMapCardPropsInterface {
@@ -124,13 +134,61 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const cardTitle = useMemo(() => {
         return (
             <div style={{ display: "flex" }}>
-                #{props.map.molNo}&nbsp;
+                #{props.map.molNo}
                 <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
+                &nbsp;&nbsp;{getNameLabel(props.map, labelSpace)}
             </div>
         );
     }, [props.map]);
+
+    const handleDownload = async () => {
+        const response = await props.map.getMap();
+        doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
+    };
+
+    const handleVisibility = () => {
+        dispatch(mapIsVisible ? hideMap(props.map) : showMap(props.map));
+        dispatch(setRequestDrawScene()); //this is annoying idk why the map manager doesn't redraw here
+    };
+
+    const handleCopyMap = async () => {
+        const newMap = await props.map.copyMap();
+        dispatch(addMap(newMap));
+    };
+    const dropDownMenu: React.JSX.Element = (
+        <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
+            <MoorhenMenuItem onClick={handleCopyMap}>Copy Map</MoorhenMenuItem>
+            <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
+            <MoorhenSetMapWeight key="set-map-weight" disabled={!mapIsVisible} map={props.map} />
+            <MoorhenDeleteDisplayObjectMenuItem key="delete-map" item={props.map} />
+        </div>
+    );
+
+    const extraControls: React.JSX.Element[] = [
+        <MoorhenButton
+            key="visibility"
+            icon={`${mapIsVisible ? "MUISymbolVisibility" : "MUISymbolVisibilityOff"}`}
+            onClick={handleVisibility}
+            type="icon-only"
+            size="accordion"
+        />,
+        <MoorhenButton
+            key="centre on map"
+            type="icon-only"
+            icon={`MUISymbolTiltShiftFilter`}
+            onClick={() => {
+                props.map.centreOnMap();
+            }}
+            size="accordion"
+        />,
+        <MoorhenButton key="download" type="icon-only" icon={`MUISymbolDownload`} onClick={handleDownload} size="accordion" />,
+        <MoorhenPopoverButton size="accordion" popoverPlacement="left">
+            {dropDownMenu}
+        </MoorhenPopoverButton>,
+    ];
+
     return (
-        <MoorhenAccordion title={cardTitle} type="card">
+        <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
             <Stack direction="vertical" gap={1}>
                 <Stack direction="horizontal" gap={4}>
                     <ToggleButton

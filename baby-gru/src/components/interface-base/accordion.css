@@ -38,6 +38,7 @@
     display: flex;
     align-items: right;
     justify-content: flex-end;
+    gap: 0.3rem;
 }
 
 .moorhen__accordion-toggle-open {
@@ -59,19 +60,24 @@
 }
 
 .moorhen__accordion-content-hidden {
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr;
     opacity: 0;
-    overflow: hidden;
     transition:
-        max-height 0.3s ease-out,
-        opacity 0.3s ease-out;
+        grid-template-rows 0.2s ease-out,
+        opacity 0.2s ease-out;
 }
 
 .moorhen__accordion-content-shown {
-    max-height: 500px; /* Adjust as needed for content */
+    display: grid;
+    grid-template-rows: 1fr;
     opacity: 1;
-    overflow: hidden;
     transition:
-        max-height 0.3s ease-out,
-        opacity 0.3s ease-out;
+        grid-template-rows 0.2s ease-out,
+        opacity 0.2s ease-out;
+}
+
+.moorhen__accordion-content-hidden > *,
+.moorhen__accordion-content-shown > * {
+    overflow: hidden;
 }

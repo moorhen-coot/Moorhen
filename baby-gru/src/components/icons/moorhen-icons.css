@@ -1,4 +1,4 @@
-@import '../../colors.css';
+@import "../../colors.css";
 .moorhen__icon__small {
     filter: invert(1) brightness(var(--moorhen-icon-brightness));
     width: 22px;
@@ -15,6 +15,12 @@
     filter: invert(1) brightness(var(--moorhen-icon-brightness));
     width: 64px;
     height: 64px;
+}
+
+.moorhen__icon__accordion {
+    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+    width: 28px;
+    height: 28px;
 }
 
 .moorhen__icon__active {

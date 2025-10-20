@@ -9,7 +9,7 @@ type MoorhenButtonPropsType = {
     onMouseUp?: () => void;
     onMouseLeave?: () => void;
     disabled?: boolean;
-    size?: "small" | "medium" | "large";
+    size?: "small" | "medium" | "large" | "accordion";
     icon?: string; // Optional icon name
     ref?: React.Ref<HTMLButtonElement>;
     style?: React.CSSProperties;
