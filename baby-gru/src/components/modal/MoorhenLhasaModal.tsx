@@ -120,7 +120,7 @@ const LhasaWrapper = (props: {
                     data_path_prefix={`${props.urlPrefix}/`}
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
-                    // dark_mode={isDark}
+                    dark_mode={isDark}
                 /> : null
 }
 
