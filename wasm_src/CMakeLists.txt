@@ -619,6 +619,8 @@ target_link_libraries(moorhen
     RDKit::FileParsers
     RDKit::RDGeometryLib
     RDKit::GraphMol
+    RDKit::RDInchiLib
+    RDKit::Inchi
     RDKit::DetermineBonds
     RDKit::ShapeHelpers
     RDKit::Fingerprints
@@ -675,3 +677,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
+install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
