@@ -22,6 +22,7 @@ const LhasaWrapper = (props: {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const originState = useSelector((state: moorhen.State) => state.glRef.origin)
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined)
@@ -119,6 +120,7 @@ const LhasaWrapper = (props: {
                     data_path_prefix={`${props.urlPrefix}/`}
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
+                    dark_mode={isDark}
                 /> : null
 }
 

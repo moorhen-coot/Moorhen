@@ -619,6 +619,8 @@ target_link_libraries(moorhen
     RDKit::FileParsers
     RDKit::RDGeometryLib
     RDKit::GraphMol
+    RDKit::RDInchiLib
+    RDKit::Inchi
     RDKit::DetermineBonds
     RDKit::ShapeHelpers
     RDKit::Fingerprints
