@@ -3771,6 +3771,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     quat4.multiply(newXQuat, newXQuat, quats[i]);
                     this.myQuat = newXQuat
                     this.currentViewport = viewports[i]
+                    const invQuat = quat4.create();
+                    quat4Inverse(this.myQuat, invQuat);
+                    const invMat = quatToMat4(invQuat);
+
+                    const imageVertices = [];
+                    if(typeof (this.imageVertices) !== "undefined") {
+                        for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
+                            const vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
+                            const vnew = vec3.create();
+                            vec3.transformMat4(vnew, vold, invMat);
+                            imageVertices[iv] = vnew[0];
+                            imageVertices[iv + 1] = vnew[1];
+                            imageVertices[iv + 2] = vnew[2];
+                        }
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
+                    }
 
                     const doClear = i===0 ? true : false
                     this.GLrender(false,doClear,ratioMult);
@@ -4891,7 +4908,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(this.stencilPass){
                     program = this.shaderProgramPerfectSpheresOutline;
                 }
-
                 mat4.set(invsymt,
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,

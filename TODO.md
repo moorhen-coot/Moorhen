@@ -16,10 +16,7 @@ Planned features
 - [x] Fix screenshots with depth blur and transparent objects.
 - [x] Fix text labels being ugly when there is a transparent object.
 - [x] Fix multiview with depth blur.
-- [ ] Fix multiview with edge detect.
-   - [x] Normal primitives.
-   - [x] Screenhots.
-   - [ ] Impostor spheres.
+- [x] Fix multiview with edge detect.
 - [ ] Fix multiview with SSAO.
 - [ ] Fix multiview with shadows.
 
