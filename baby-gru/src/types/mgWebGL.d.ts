@@ -251,6 +251,8 @@ export namespace webGL {
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
         depthFactor: WebGLUniformLocation | null;
+        nTiles_x: WebGLUniformLocation | null;
+        nTiles_y: WebGLUniformLocation | null;
     }
 
     interface ShaderEdgeDetect extends MGWebGLShader {

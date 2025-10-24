@@ -253,6 +253,8 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
     shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "bias");
     shaderProgramSSAO.depthFactor = gl.getUniformLocation(shaderProgramSSAO, "depthFactor");
     shaderProgramSSAO.depthBufferSize = gl.getUniformLocation(shaderProgramSSAO, "depthBufferSize");
+    shaderProgramSSAO.nTiles_x = gl.getUniformLocation(shaderProgramSSAO, "nTiles_x");
+    shaderProgramSSAO.nTiles_y = gl.getUniformLocation(shaderProgramSSAO, "nTiles_y");
 
     return shaderProgramSSAO
 

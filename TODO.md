@@ -18,6 +18,8 @@ Planned features
 - [x] Fix multiview with depth blur.
 - [x] Fix multiview with edge detect.
 - [ ] Fix multiview with SSAO.
+   - [x] Live view
+   - [ ] Screenshots
 - [ ] Fix multiview with shadows.
 
 ### For 0.22.0

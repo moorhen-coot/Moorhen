@@ -486,7 +486,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return pixels
     }
 
-    setupMultiWayTransformations(nmols:number) : void {
+    setupMultiWayTransformations(nmols:number) : {rows:number,cols:number} {
 
         let wh : number[] = get_grid(nmols)
         if(this.specifyMultiViewRowsColumns){
@@ -510,6 +510,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.multiWayRatio = wh[0]/wh[1]
         this.currentMultiViewGroup = 0
+
+        return {rows:wh[1],cols:wh[0]}
 
     }
 
@@ -3635,7 +3637,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return invMat
     }
 
-    getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult} {
+    getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
 
         const displayBuffers = store.getState().glRef.displayBuffers
 
@@ -3645,6 +3647,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let quats
         let viewports
         let ratioMult = 1.0
+        let multi_rows_cols = {rows:0,cols:0}
 
         if(this.doThreeWayView){
             quats = this.threeWayQuats
@@ -3667,7 +3670,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.multiViewOrigins = multiViewOrigins
             multiViewGroupsKeys = Object.keys(multiViewGroups)
             if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
-                this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+                multi_rows_cols = this.setupMultiWayTransformations(multiViewGroupsKeys.length)
             }
 
             quats = this.multiWayQuats
@@ -3683,7 +3686,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             ratioMult = 0.5
         }
 
-        return {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult}
+        return {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols}
 
     }
 
@@ -3736,6 +3739,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const quats = multiViewInfo.quats
         const viewports = multiViewInfo.viewports
         const ratioMult = multiViewInfo.ratioMult
+        const multi_rows_cols = multiViewInfo.multi_rows_cols
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             if(this.renderToTexture) {
@@ -3946,7 +3950,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(i);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
-            //FIXME - Size
+
+            if(this.doThreeWayView) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,2);
+            } else if(this.doSideBySideStereo||this.doCrossEyedStereo) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+            } else if(this.doMultiView&&multi_rows_cols.rows>0&&multi_rows_cols.cols>0) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,multi_rows_cols.cols);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,multi_rows_cols.rows);
+            } else {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,1);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+            }
+
             this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
 
             const paintMvMatrix = mat4.create();
