@@ -144,6 +144,10 @@ export namespace webGL {
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
+        xSSAOScaling: WebGLUniformLocation;
+        ySSAOScaling: WebGLUniformLocation;
+        peelNumber: WebGLUniformLocation;
+        depthPeelSamplers: WebGLUniformLocation;
     }
 
     interface ShaderTextBackground extends MGWebGLShader {
@@ -247,6 +251,8 @@ export namespace webGL {
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
         depthFactor: WebGLUniformLocation | null;
+        nTiles_x: WebGLUniformLocation | null;
+        nTiles_y: WebGLUniformLocation | null;
     }
 
     interface ShaderEdgeDetect extends MGWebGLShader {

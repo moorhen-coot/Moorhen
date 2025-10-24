@@ -253,6 +253,8 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
     shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "bias");
     shaderProgramSSAO.depthFactor = gl.getUniformLocation(shaderProgramSSAO, "depthFactor");
     shaderProgramSSAO.depthBufferSize = gl.getUniformLocation(shaderProgramSSAO, "depthBufferSize");
+    shaderProgramSSAO.nTiles_x = gl.getUniformLocation(shaderProgramSSAO, "nTiles_x");
+    shaderProgramSSAO.nTiles_y = gl.getUniformLocation(shaderProgramSSAO, "nTiles_y");
 
     return shaderProgramSSAO
 
@@ -582,6 +584,11 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
     shaderProgramTextInstanced.nClipPlanes = gl.getUniformLocation(shaderProgramTextInstanced, "nClipPlanes");
 
     shaderProgramTextInstanced.pixelZoom = gl.getUniformLocation(shaderProgramTextInstanced, "pixelZoom");
+
+    shaderProgramTextInstanced.xSSAOScaling = gl.getUniformLocation(shaderProgramTextInstanced, "xSSAOScaling");
+    shaderProgramTextInstanced.ySSAOScaling = gl.getUniformLocation(shaderProgramTextInstanced, "ySSAOScaling");
+    shaderProgramTextInstanced.peelNumber = gl.getUniformLocation(shaderProgramTextInstanced, "peelNumber");
+    shaderProgramTextInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramTextInstanced, "depthPeelSamplers");
 
     return shaderProgramTextInstanced
 

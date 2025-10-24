@@ -239,6 +239,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
+        ssaoFramebufferSize : number;
         gBuffersFramebufferSize : number;
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
@@ -485,7 +486,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return pixels
     }
 
-    setupMultiWayTransformations(nmols:number) : void {
+    setupMultiWayTransformations(nmols:number) : {rows:number,cols:number} {
 
         let wh : number[] = get_grid(nmols)
         if(this.specifyMultiViewRowsColumns){
@@ -509,6 +510,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.multiWayRatio = wh[0]/wh[1]
         this.currentMultiViewGroup = 0
+
+        return {rows:wh[1],cols:wh[0]}
 
     }
 
@@ -1168,6 +1171,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.edgeDetectFramebufferSize = 2048;
         this.gBuffersFramebufferSize = 2048;
+        this.ssaoFramebufferSize = 1024;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
@@ -2180,13 +2184,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //FIXME - Sizes?
             const ssaoRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
-            this.ssaoFramebuffer.width = 1024;
-            this.ssaoFramebuffer.height = 1024;
+            this.ssaoFramebuffer.width = this.ssaoFramebufferSize;
+            this.ssaoFramebuffer.height = this.ssaoFramebufferSize;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, ssaoRenderbuffer);
 
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.ssaoTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -3146,7 +3150,32 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const width_ratio = this.gl.viewportWidth / this.gFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.gFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            if(this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)){
+                console.log("Drawing G buffers for screenshot in complicated case")
+                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
+                let viewport_start_x = Math.trunc(this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportWidth)
+                let viewport_start_y = Math.trunc(this.currentViewport[1] * this.gFramebuffer.height / this.gl.viewportHeight)
+                let viewport_width =   Math.trunc(this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportWidth)
+                let viewport_height =  Math.trunc(this.currentViewport[3] * this.gFramebuffer.height / this.gl.viewportHeight)
+                if(this.gl.viewportWidth>this.gl.viewportHeight){
+                    const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.gFramebuffer.width
+                    const b = 0.5*(this.gFramebuffer.height - hp)
+                    const vh = this.currentViewport[3] * this.gFramebuffer.width  / this.gl.viewportWidth
+                    const bp = this.currentViewport[1] * this.gFramebuffer.width  / this.gl.viewportWidth
+                    viewport_height = vh
+                    viewport_start_y = bp + b
+                } else {
+                    const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.gFramebuffer.height
+                    const b = 0.5*(this.gFramebuffer.width - wp)
+                    const vw = this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportHeight
+                    const bp = this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportHeight
+                    viewport_width = vw
+                    viewport_start_x =  bp + b
+                }
+                this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            } else {
+                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
+            }
         } else if(this.renderSilhouettesToTexture) {
             if(!this.silhouetteBufferReady)
                 this.recreateSilhouetteBuffers();
@@ -3474,7 +3503,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
-            this.drawDistancesAndLabels(up, right);
+            if(this.atomLabelDepthMode) this.drawDistancesAndLabels();
             this.drawTextLabels(up, right);
             if(this.WEBGL2){
                 this.drawTexturedShapes(theMatrix);
@@ -3559,7 +3588,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if(!this.screenshotBuffersReady)
                         this.initTextureFramebuffer();
                     console.log("Binding rttFramebuffer in depth peel accumulate",this.rttFramebuffer);
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    if(!(this.offScreenFramebuffer)||(this.offScreenFramebuffer.width!=this.rttFramebuffer.width)){
+                        this.offScreenReady = false
+                        this.recreateOffScreeenBuffers(this.rttFramebuffer.width,this.rttFramebuffer.height);
+                    }
+                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
                     this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
                     this.gl.uniform1f(theShader.xSSAOScaling, 1.0/this.rttFramebuffer.width );
                     this.gl.uniform1f(theShader.ySSAOScaling, 1.0/this.rttFramebuffer.height );
@@ -3601,18 +3634,60 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            if(this.renderToTexture) {
-                console.log("Delete screenshot peel buffers")
-                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
-                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
-                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
-                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
-                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
-                }
-                this.depthPeelFramebuffers = [];
-            }
         return invMat
+    }
+
+    getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
+
+        const displayBuffers = store.getState().glRef.displayBuffers
+
+        const multiViewOrigins = []
+        let multiViewGroupsKeys = []
+
+        let quats
+        let viewports
+        let ratioMult = 1.0
+        let multi_rows_cols = {rows:0,cols:0}
+
+        if(this.doThreeWayView){
+            quats = this.threeWayQuats
+            viewports = this.threeWayViewports
+        } else if(this.doMultiView) {
+
+            const multiViewGroups = {}
+            for (let idx = 0; idx < displayBuffers.length; idx++) {
+                if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                    //console.log(idx,displayBuffers[idx].multiViewGroup)
+                    if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
+                        if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                            multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
+                            multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
+                        }
+                    }
+                }
+            }
+            //console.log(multiViewGroups)
+            this.multiViewOrigins = multiViewOrigins
+            multiViewGroupsKeys = Object.keys(multiViewGroups)
+            if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                multi_rows_cols = this.setupMultiWayTransformations(multiViewGroupsKeys.length)
+            }
+
+            quats = this.multiWayQuats
+            viewports = this.multiWayViewports
+            ratioMult = this.multiWayRatio
+        } else if(this.doSideBySideStereo) {
+            quats = this.stereoQuats
+            viewports = this.stereoViewports
+            ratioMult = 0.5
+        } else {
+            quats = this.stereoQuats.toReversed()
+            viewports = this.stereoViewports
+            ratioMult = 0.5
+        }
+
+        return {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols}
+
     }
 
     drawScene() : void {
@@ -3644,7 +3719,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.shaderProgram,
             this.shaderProgramInstanced,
             this.shaderProgramThickLinesNormal,
-            this.shaderProgramPerfectSpheres
+            this.shaderProgramPerfectSpheres,
+            this.shaderProgramTextInstanced
         ];
 
         theShaders.forEach(shader => {
@@ -3654,6 +3730,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
         const oldMouseDown = this.mouseDown;
+
+        const origQuat = quat4.clone(this.myQuat);
+        const origOrigin = this.origin
+        const multiViewInfo = this.getMultiViewInfo()
+        const multiViewOrigins = multiViewInfo.multiViewOrigins
+        const multiViewGroupsKeys = multiViewInfo.multiViewGroupsKeys
+        const quats = multiViewInfo.quats
+        const viewports = multiViewInfo.viewports
+        const ratioMult = multiViewInfo.ratioMult
+        const multi_rows_cols = multiViewInfo.multi_rows_cols
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             if(this.renderToTexture) {
@@ -3672,7 +3758,54 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             // Need triangle and perfect sphere gBuffer shaders
             this.drawingGBuffers = true;
             this.gl.enable(this.gl.DEPTH_TEST);
-            this.GLrender(false);
+
+            if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                for(let i=0;i<viewports.length;i++){
+                    if(this.doMultiView){
+                        if(multiViewGroupsKeys.length>0){
+                            this.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
+                            if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
+                                this.origin = multiViewOrigins[i]
+                        } else {
+                            continue
+                        }
+                    }
+
+                    const newXQuat = quat4.clone(origQuat);
+                    quat4.multiply(newXQuat, newXQuat, quats[i]);
+                    this.myQuat = newXQuat
+                    this.currentViewport = viewports[i]
+                    const invQuat = quat4.create();
+                    quat4Inverse(this.myQuat, invQuat);
+                    const invMat = quatToMat4(invQuat);
+
+                    const imageVertices = [];
+                    if(typeof (this.imageVertices) !== "undefined") {
+                        for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
+                            const vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
+                            const vnew = vec3.create();
+                            vec3.transformMat4(vnew, vold, invMat);
+                            imageVertices[iv] = vnew[0];
+                            imageVertices[iv + 1] = vnew[1];
+                            imageVertices[iv + 2] = vnew[2];
+                        }
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
+                    }
+
+                    const doClear = i===0 ? true : false
+                    this.GLrender(false,doClear,ratioMult);
+                }
+                this.myQuat = origQuat
+                if(this.doMultiView&&multiViewGroupsKeys.length===0){
+                    this.GLrender(false);
+                }
+                this.origin = origOrigin
+            } else {
+                this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
+                this.GLrender(false);
+            }
+
             this.drawingGBuffers = false;
 
             this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
@@ -3733,7 +3866,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleDepth,this.scaleDepth/ratio);
                 this.gl.uniform1f(this.shaderProgramEdgeDetect.scaleNormal,this.scaleNormal);
             }
-            console.log(this.edgeDetectFramebuffer.width,this.zoom)
             this.gl.uniform1f(this.shaderProgramEdgeDetect.xPixelOffset, 2.0/this.edgeDetectFramebuffer.width/ratio);
             this.gl.uniform1f(this.shaderProgramEdgeDetect.yPixelOffset, 2.0/this.edgeDetectFramebuffer.height/ratio);
             if(this.doPerspectiveProjection){
@@ -3779,6 +3911,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if (this.doSSAO&&this.WEBGL2) {
+            if(this.renderToTexture){
+                this.ssaoFramebufferSize = 4096;
+                if(this.ssaoFramebuffer){
+                    this.gl.deleteFramebuffer(this.ssaoFramebuffer);
+                    this.ssaoFramebuffer = null;
+                }
+            }
+
             if(!this.ssaoFramebuffer) this.createSSAOFramebufferBuffer();
             if(!this.offScreenFramebufferSimpleBlurX) this.createSimpleBlurOffScreeenBuffers();
 
@@ -3795,7 +3935,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius*2.0);
             } else {
                 this.gl.uniform1f(this.shaderProgramSSAO.depthFactor,1.0);
-                this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius);
+                this.gl.uniform1f(this.shaderProgramSSAO.radius,this.ssaoRadius/this.zoom);
             }
 
             this.gl.uniform1f(this.shaderProgramSSAO.bias,this.ssaoBias);
@@ -3810,8 +3950,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(i);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
-            //FIXME - Size
-            this.gl.viewport(0, 0, 1024, 1024);
+
+            if(this.doThreeWayView) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,2);
+            } else if(this.doSideBySideStereo||this.doCrossEyedStereo) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+            } else if(this.doMultiView&&multi_rows_cols.rows>0&&multi_rows_cols.cols>0) {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,multi_rows_cols.cols);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,multi_rows_cols.rows);
+            } else {
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,1);
+                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+            }
+
+            this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
 
             const paintMvMatrix = mat4.create();
             const paintPMatrix = mat4.create();
@@ -3922,51 +4076,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enable(this.gl.DEPTH_TEST);
                 if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
 
-                    let multiViewGroupsKeys = []
                     const origQuat = quat4.clone(this.myQuat);
                     const origOrigin = this.origin
-                    const multiViewOrigins = []
 
-                    let quats
-                    let viewports
-                    let ratioMult = 1.0
-
-                    if(this.doThreeWayView){
-                        quats = this.threeWayQuats
-                        viewports = this.threeWayViewports
-                    } else if(this.doMultiView) {
-
-                        const multiViewGroups = {}
-                        for (let idx = 0; idx < displayBuffers.length; idx++) {
-                            if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
-                                //console.log(idx,displayBuffers[idx].multiViewGroup)
-                                if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
-                                    if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
-                                        multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
-                                        multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
-                                    }
-                                }
-                            }
-                        }
-                        //console.log(multiViewGroups)
-                        this.multiViewOrigins = multiViewOrigins
-                        multiViewGroupsKeys = Object.keys(multiViewGroups)
-                        if(this.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
-                            this.setupMultiWayTransformations(multiViewGroupsKeys.length)
-                        }
-
-                        quats = this.multiWayQuats
-                        viewports = this.multiWayViewports
-                        ratioMult = this.multiWayRatio
-                    } else if(this.doSideBySideStereo) {
-                        quats = this.stereoQuats
-                        viewports = this.stereoViewports
-                        ratioMult = 0.5
-                    } else {
-                        quats = this.stereoQuats.toReversed()
-                        viewports = this.stereoViewports
-                        ratioMult = 0.5
-                    }
 
                     //console.log(multiViewOrigins)
                     //console.log(viewports)
@@ -4049,6 +4161,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             if(!(this.useOffScreenBuffers&&this.offScreenReady)){
+                if(this.renderToTexture){
+                    if(this.doPeel){
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+                    } else {
+                        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+                    }
+                }
+                if(!this.atomLabelDepthMode) this.drawDistancesAndLabels();
                 this.drawLineMeasures(invMat);
                 this.drawTextOverlays(invMat);
             }
@@ -4121,13 +4241,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             if (this.WEBGL2) {
-                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
-                this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
-                this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
-                this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
-
+                if(this.doPeel){
+                     this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.offScreenFramebuffer);
+                     this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                     this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                     this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
+                             0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+                } else {
+                     this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
+                     this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                     this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                     this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                             this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+                }
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             }
             const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
@@ -4151,6 +4279,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.renderToTexture) {
             this.edgeDetectFramebufferSize = 2048;
             this.gBuffersFramebufferSize = 2048;
+            this.ssaoFramebufferSize = 1024;
             if(this.edgeDetectFramebuffer){
                 this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
                 this.edgeDetectFramebuffer = null;
@@ -4158,6 +4287,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             if(this.gFramebuffer){
                 this.gl.deleteFramebuffer(this.gFramebuffer);
                 this.gFramebuffer = null;
+            }
+            if(this.ssaoFramebuffer){
+                this.gl.deleteFramebuffer(this.ssaoFramebuffer);
+                this.ssaoFramebuffer = null;
             }
         }
     }
@@ -4181,7 +4314,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let srcHeight;
         let dstWidth;
         let dstHeight;
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.recreateOffScreeenBuffers(this.rttFramebuffer.width,this.rttFramebuffer.height);
             // FIXME - This cannnot work with current framebuffers, textures, etc.
             console.log("Need to combine depthBlur and screenshot ...");
@@ -4238,7 +4371,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
@@ -4356,18 +4489,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.depthTexture,2);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
-        if(this.renderToTexture) {
+        if(this.renderToTexture&&!this.doPeel) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
         } else {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
         }
 
+
         this.gl.activeTexture(this.gl.TEXTURE1);
-        if(this.renderToTexture) {
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-        } else {
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-        }
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
 
         this.gl.activeTexture(this.gl.TEXTURE2);
         if(this.doPeel){
@@ -4400,6 +4530,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
         }
 
+        if(!this.atomLabelDepthMode) this.drawDistancesAndLabels();
         this.drawLineMeasures(invMat);
         this.drawTextOverlays(invMat);
 
@@ -4417,6 +4548,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
 
                 this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
+                for(let i=0;i<this.depthPeelFramebuffers.length;i++){
+                    this.gl.deleteFramebuffer(this.depthPeelFramebuffers[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferDepth[i]);
+                    this.gl.deleteRenderbuffer(this.depthPeelRenderbufferColor[i]);
+                    this.gl.deleteTexture(this.depthPeelColorTextures[i]);
+                    this.gl.deleteTexture(this.depthPeelDepthTextures[i]);
+                }
+                this.depthPeelFramebuffers = [];
+                this.offScreenReady = false
             }
             this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
             const pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
@@ -4786,7 +4926,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if(this.stencilPass){
                     program = this.shaderProgramPerfectSpheresOutline;
                 }
-
                 mat4.set(invsymt,
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,
@@ -5412,7 +5551,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return this.WEBGL2;
     }
 
-    drawDistancesAndLabels(up, right) {
+    drawDistancesAndLabels() {
 
         // Labels, angles, etc. instanced by texture coords, positions using contextBig
 

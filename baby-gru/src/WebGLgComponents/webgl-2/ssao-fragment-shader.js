@@ -9,6 +9,10 @@ uniform sampler2D texNoise;
 uniform float zoom;
 uniform float depthBufferSize;
 
+// For multiview, the x,y scaling.
+uniform int nTiles_x;
+uniform int nTiles_y;
+
 in vec2 out_TexCoord0;
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
@@ -19,7 +23,6 @@ uniform float bias;// = 1.0;
 uniform float depthFactor;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
-const vec2 noiseScale = vec2(4096.0/4.0, 4096.0/4.0);
 
 in mediump mat4 pMatrix;
 
@@ -36,6 +39,9 @@ void main() {
     vec3 bitangent;
     float occlusion;
 
+    float tileScale_x = 1.0 / float(nTiles_x);
+    float tileScale_y = 1.0 / float(nTiles_y);
+
     vec3 fragPos;
 
     float diffMult = 0.5 * depthBufferSize;
@@ -43,7 +49,7 @@ void main() {
         vec3 normal = normalize(normal_all.rgb);
 
         fragPos = depthFactor*texture(gPosition, out_TexCoord0).xyz;
-        vec3 randomVec = texture(texNoise, out_TexCoord0 * noiseScale).xyz;
+        vec3 randomVec = texture(texNoise, gl_FragCoord.xy / vec2(4.0)).xyz;
         // create TBN change-of-basis matrix: from tangent-space to view-space
         tangent = normalize(randomVec - normal * dot(randomVec, normal));
         bitangent = cross(normal, tangent);
@@ -62,9 +68,12 @@ void main() {
             offset.xyz /= offset.w; // perspective divide
             offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
 
-            // get sample depth
-            float sampleDepth = depthFactor*texture(gPosition, offset.xy).z; // get depth value of kernel sample
-
+            // Work out base of our current multiview tile.
+            float tileOffset_x = tileScale_x*floor(out_TexCoord0.x*float(nTiles_x));
+            float tileOffset_y = tileScale_y*floor(out_TexCoord0.y*float(nTiles_y));
+            vec2 tileOffset = vec2(tileOffset_x,tileOffset_y);
+            // get depth value of kernel sample
+            float sampleDepth = depthFactor*texture(gPosition, vec2(tileScale_x*offset.x,tileScale_y*offset.y)+tileOffset).z;
             float   dz = max ( fragPos.z - sampleDepth, 0.0 ) * diffMult;
             occlusion += 1.0 / ( 1.0 + dz*dz );
 
