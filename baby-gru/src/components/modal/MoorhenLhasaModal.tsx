@@ -133,8 +133,8 @@ export const MoorhenLhasaModal = () => {
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const lhasaMaxWidth = convertViewtoPx(80, width);
-    const lhasaMaxHeight = convertViewtoPx(90, height);
+    const [lhasaMaxWidth, setLhasaMaxWidth] = useState<number>(convertRemToPx(37));
+    const [lhasaMaxHeight, setLhasaMaxHeight] = useState<number>(convertViewtoPx(30, height));
 
     const urlPrefix = usePaths().urlPrefix;    
 
@@ -152,14 +152,18 @@ export const MoorhenLhasaModal = () => {
                 top={height / 3}
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
-                maxHeight={lhasaMaxHeight}
-                maxWidth={lhasaMaxWidth}
+                maxHeight={convertViewtoPx(90, height)}
+                maxWidth={convertViewtoPx(80, width)}
                 enforceMaxBodyDimensions={true}
                 overflowY='auto'
                 overflowX='auto'
                 headerTitle='Lhasa'
                 resizeNodeRef={resizeNodeRef}
                 onClose={handleClose}
+                onResize={(_evt, _direction, _div, _delta, size) => {
+                    setLhasaMaxWidth(size.width);
+                    setLhasaMaxHeight(size.height);
+                }}
                 body={ 
                     <LhasaWrapper
                         urlPrefix={urlPrefix}
