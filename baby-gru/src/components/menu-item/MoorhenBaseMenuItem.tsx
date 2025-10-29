@@ -2,6 +2,7 @@ import { ClickAwayListener } from "@mui/material";
 import { Button } from "react-bootstrap";
 import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { MoorhenPopover } from "../interface-base";
 import { MoorhenMenuItem } from "./MenuItem";
 
 type MoorhenBaseMenuItemProps = {
@@ -75,30 +76,25 @@ export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
 
     const popover = useMemo(() => {
         return (
-            <>
-                {createPortal(
-                    <ClickAwayListener onClickAway={() => setIsShown(false)}>
-                        <div
-                            className={`moorhen__menu-item-popover ${popoverPlacement === "left" ? `right-arrow` : ``}`}
-                            style={popoverStyle}
-                            ref={popoverRef}
-                        >
-                            {popoverContent}
-                            {showOkButton ? (
-                                <Button
-                                    variant={buttonVariant}
-                                    onClick={() => {
-                                        resolveOrRejectRef.current.resolve();
-                                    }}
-                                >
-                                    {buttonText}
-                                </Button>
-                            ) : null}
-                        </div>
-                    </ClickAwayListener>,
-                    document.body
-                )}
-            </>
+            <MoorhenPopover
+                popoverPlacement={popoverPlacement}
+                isShown={isShown}
+                setIsShown={setIsShown}
+                link={<div ref={popoverRef}>{menuItemText}</div>}
+                linkRef={menuItemRef}
+            >
+                {popoverContent}
+                {showOkButton ? (
+                    <Button
+                        variant={buttonVariant}
+                        onClick={() => {
+                            resolveOrRejectRef.current.resolve();
+                        }}
+                    >
+                        {buttonText}
+                    </Button>
+                ) : null}
+            </MoorhenPopover>
         );
     }, [props.popoverContent, popoverStyle]);
 

@@ -25,6 +25,8 @@
     /* Icon brightness */
     --moorhen-icon-brightness: 0.15;
     --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+
+    --moorhen-font-family: Inter, sans-serif;
 }
 
 [data-theme="dark"] {

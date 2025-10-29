@@ -1,9 +1,13 @@
 import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
+import { useSelector } from "react-redux";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
+import "./popover.css";
 
 type MoorhenPopoverType = {
     popoverContent?: React.JSX.Element | React.ReactNode;
+    children?: React.JSX.Element | React.ReactNode;
     disabled?: boolean;
     popoverPlacement?: "left" | "right" | "top" | "bottom";
     link: React.JSX.Element;
@@ -16,10 +20,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverStyle, setPopoverStyle] = useState({});
-    // const [isShown, setIsShown] = useState(false);
-    // const handleClick = () => {
-    //     if (!disabled) setIsShown(!isShown);
-    // };
+    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
 
     useLayoutEffect(() => {
         if (isShown && props.linkRef.current && popoverRef.current) {
@@ -66,8 +67,13 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             <>
                 {createPortal(
                     <ClickAwayListener onClickAway={() => props.setIsShown(false)}>
-                        <div className={`moorhen__menu-item-popover ${arrow}`} style={popoverStyle} ref={popoverRef}>
-                            {popoverContent}
+                        <div
+                            className={`moorhen__menu-item-popover ${arrow}`}
+                            style={popoverStyle}
+                            ref={popoverRef}
+                            data-theme={isDark ? "dark" : "light"}
+                        >
+                            {popoverContent || props.children}
                         </div>
                     </ClickAwayListener>,
                     document.body

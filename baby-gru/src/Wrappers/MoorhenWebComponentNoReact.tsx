@@ -40,8 +40,8 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
 
         const loadStylesheets = async () => {
             const [moorhenRes, flatlyRes] = await Promise.all([
-                fetch(new URL(`${this.urlPrefix}/baby-gru/moorhen.css`, window.location.href).href),
-                fetch(new URL(`${this.urlPrefix}/baby-gru/flatly.css`, window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/flatly.css`, window.location.href).href),
             ]);
 
             const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);

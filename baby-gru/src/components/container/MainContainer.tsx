@@ -218,6 +218,8 @@ const MoorhenContainer = (props: ContainerProps) => {
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
     if (props.moleculesRef) {
         // eslint-disable-next-line
         props.moleculesRef.current = molecules;
@@ -301,10 +303,8 @@ const MoorhenContainer = (props: ContainerProps) => {
 
         if (isDark) {
             style.href = `${urlPrefix}/darkly.css`;
-            document.body.setAttribute("data-theme", "dark");
         } else {
             style.href = `${urlPrefix}/flatly.css`;
-            document.body.setAttribute("data-theme", "light");
         }
 
         style.rel = "stylesheet";
@@ -315,7 +315,7 @@ const MoorhenContainer = (props: ContainerProps) => {
         return () => {
             head.removeChild(style);
         };
-    }, [isDark]);
+    }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
@@ -457,11 +457,8 @@ const MoorhenContainer = (props: ContainerProps) => {
             padding: 0,
             height: height,
             width: width,
-
-            display: "flex" as const,
-            flexDirection: "column" as const,
         }),
-        [backgroundColor, cursorStyle, height, width]
+        [backgroundColor, cursorStyle, height, width, isDark]
     );
     const viewportStyle = useMemo(
         () => ({
@@ -513,7 +510,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     // ========== Main Interface ==========
     return (
         <>
-            <div style={backgroundStyle} className="moorhen__inner-container">
+            <div style={backgroundStyle} className="moorhen__inner-container" ref={containerRef} data-theme={isDark ? "dark" : "light"}>
                 <SnackbarProvider
                     hideIconVariant={false}
                     autoHideDuration={4000}
