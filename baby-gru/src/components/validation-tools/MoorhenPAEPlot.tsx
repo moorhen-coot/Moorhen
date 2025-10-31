@@ -96,18 +96,40 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
 
     const fetchDataFromEBI = async (uniprotID: string) => {
 
-        const paeUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-predicted_aligned_error_v4.json`
-        const paeResponse = await fetch(paeUrl)
-        if(paeResponse.ok) {
-            const data = await paeResponse.json()
-            const imgData = await paeToImageData(data[0])
-            if(data[0].max_predicted_aligned_error) setMaxPAE(data[0].max_predicted_aligned_error)
-            clearRubberBand()
-            setPlotData(imgData)
-            setDataName(uniprotID)
-        } else {
-            console.log(paeResponse)
-            enqueueSnackbar("Failed to fetch PAE file for name: "+uniprotID, { variant: "error" })
+        const infoUrl = `https://alphafold.ebi.ac.uk/api/prediction/${uniprotID}`
+
+        try {
+            const infoResponse = await fetch(infoUrl)
+            if (infoResponse.ok) {
+                const infoJson = await infoResponse.json()
+                let bestEntry: number = -1
+                if(infoJson.length>0){
+                    bestEntry = 0
+                    for(const modelEntry of infoJson){
+                        if(modelEntry.entryId===`AF-${uniprotID}-F1`){
+                            break
+                        }
+                        bestEntry++
+                    }
+                    if(bestEntry>infoJson.length) bestEntry = 0
+                    const paeDocUrl = infoJson[bestEntry].paeDocUrl
+                    const paeResponse = await fetch(paeDocUrl)
+                    if(paeResponse.ok) {
+                        const data = await paeResponse.json()
+                        const imgData = await paeToImageData(data[0])
+                        if(data[0].max_predicted_aligned_error) setMaxPAE(data[0].max_predicted_aligned_error)
+                        clearRubberBand()
+                        setPlotData(imgData)
+                        setDataName(uniprotID)
+                    } else {
+                        console.log(paeResponse)
+                        enqueueSnackbar("Failed to fetch PAE file for name: "+uniprotID, { variant: "error" })
+                    }
+                }
+            }
+        } catch (e) {
+            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, {variant: "error"})
+            console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`)
         }
     }
 
