@@ -17,6 +17,7 @@ Planned features
 - [x] Fix text labels being ugly when there is a transparent object.
 - [x] Fix multiview with depth blur.
 - [x] Fix multiview with edge detect.
+- [ ] Sensible blur radius (3) for SSAO.
 - [ ] Fix multiview with SSAO.
    - [x] Live view
    - [ ] Screenshots
