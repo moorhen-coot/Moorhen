@@ -18,7 +18,7 @@ Planned features
 - [x] Fix multiview with depth blur.
 - [x] Fix multiview with edge detect.
 - [x] Fix multiview with SSAO.
-- [ ] Sensible blur radius (3) for SSAO.
+- [x] Sensible blur radius (3) for SSAO.
 - [ ] Fix multiview with shadows.
 - [ ] Fix multiview with transparency and edge detect/SSAO.
 

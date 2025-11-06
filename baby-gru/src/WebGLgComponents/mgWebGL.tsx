@@ -736,8 +736,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setBlurSize(blurSize) {
-        this.blurSize = blurSize;
+        this.blurSize = blurSize
+        this.makeBlurBuffers(blurSize)
+    }
 
+    makeBlurBuffers(blurSize) {
         if(this.WEBGL2){
             const blockSize = this.gl.getActiveUniformBlockParameter( this.shaderProgramBlurX, this.shaderProgramBlurX.blurCoeffs, this.gl.UNIFORM_BLOCK_DATA_SIZE);
             //console.log("blur blockSize",blockSize);
@@ -778,11 +781,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             // This might have to be done every frame if we ever have multiple UBOs.
             this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
             const bigBlurArray = new Array(36).fill(0);
-            for(let iblur=0;iblur<gaussianBlurs[this.blurSize];iblur++){
-                bigBlurArray[iblur] = gaussianBlurs[this.blurSize][iblur];
+            for(let iblur=0;iblur<gaussianBlurs[blurSize];iblur++){
+                bigBlurArray[iblur] = gaussianBlurs[blurSize][iblur];
             }
 
-            const bigFloatArray = new Float32Array(gaussianBlurs[this.blurSize]);
+            const bigFloatArray = new Float32Array(gaussianBlurs[blurSize]);
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row0"].offset, bigFloatArray.subarray( 0, 4), 0);
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row1"].offset, bigFloatArray.subarray( 4, 8), 0);
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row2"].offset, bigFloatArray.subarray( 8,12), 0);
@@ -792,7 +795,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row6"].offset, bigFloatArray.subarray(24,28), 0);
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row7"].offset, bigFloatArray.subarray(28,32), 0);
             this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row8"].offset, bigFloatArray.subarray(32,36), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["nsteps"].offset, new Int32Array([this.blurSize]), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["nsteps"].offset, new Int32Array([blurSize]), 0);
             this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null)
         }
 
@@ -4344,8 +4347,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             blurSizeY *= this.gl.viewportHeight/dstHeight;
 
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-        //FIXME - UG!
-        this.setBlurSize(this.blurSize);
+        this.makeBlurBuffers(this.blurSize);
         this.gl.useProgram(this.shaderProgramBlurX);
 
         for(let i = 0; i<16; i++)
@@ -4413,8 +4415,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-        //FIXME - UG!
-        this.setBlurSize(this.blurSize);
+        this.makeBlurBuffers(this.blurSize);
         this.gl.useProgram(this.shaderProgramBlurY);
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
@@ -4572,12 +4573,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mat4.identity(paintMvMatrix);
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
-        const blurSizeX = this.blurSize/width;
-        const blurSizeY = this.blurSize/height;
+        const blurSize = 3
+
+        const blurSizeX = blurSize/width;
+        const blurSizeY = blurSize/height;
 
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-        //FIXME - UG!
-        this.setBlurSize(this.blurSize);
+        this.makeBlurBuffers(blurSize);
         this.gl.useProgram(this.shaderProgramSimpleBlurX);
 
         for(let i = 0; i<16; i++)
@@ -4607,8 +4609,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-        //FIXME - UG!
-        this.setBlurSize(this.blurSize);
+        this.makeBlurBuffers(blurSize);
         this.gl.useProgram(this.shaderProgramSimpleBlurY);
         for(let i = 0; i<16; i++)
             this.gl.disableVertexAttribArray(i);
