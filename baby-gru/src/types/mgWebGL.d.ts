@@ -195,6 +195,7 @@ export namespace webGL {
         clipCap: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
+        ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
     }
 
     interface ShaderTriangles extends MGWebGLShader {
@@ -218,6 +219,7 @@ export namespace webGL {
         doPerspective: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
         screenZ: WebGLUniformLocation;
+        ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}
@@ -251,8 +253,10 @@ export namespace webGL {
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
         depthFactor: WebGLUniformLocation | null;
-        nTiles_x: WebGLUniformLocation | null;
-        nTiles_y: WebGLUniformLocation | null;
+        tileScale_x: WebGLUniformLocation | null;
+        tileScale_y: WebGLUniformLocation | null;
+        tileScaleBase_x: WebGLUniformLocation | null;
+        tileScaleBase_y: WebGLUniformLocation | null;
     }
 
     interface ShaderEdgeDetect extends MGWebGLShader {

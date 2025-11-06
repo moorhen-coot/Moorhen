@@ -46,6 +46,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform bool doEdgeDetect;
     uniform bool doPerspective;
     uniform int shadowQuality;
+    uniform float ssaoMultiviewWidthHeightRatio;
 
     uniform bool clipCap;
 
@@ -127,11 +128,17 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       }
 
       float occ = 1.0;
+      float theRatio = ssaoMultiviewWidthHeightRatio;
       if(doSSAO){
           if(doPerspective){
               occ = texture(SSAOMap, vec2(0.35*gl_FragCoord.x*xSSAOScaling+0.325,0.35*gl_FragCoord.y*ySSAOScaling+0.325) ).z;
           } else {
-              occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).z;
+              if(theRatio>1.0){
+                  occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,theRatio*gl_FragCoord.y*ySSAOScaling-(theRatio-1.0)/2.0) ).z;
+              } else {
+                  float diff = ((1.0 - theRatio)/2.) / (theRatio);
+                  occ = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling/theRatio-diff,gl_FragCoord.y*ySSAOScaling) ).z;
+              }
           }
       }
 
@@ -177,7 +184,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           vec2 resolution;
           resolution.x = 1.0/xSSAOScaling;
           resolution.y = 1.0/ySSAOScaling;
-          float edge = fxaa(edgeDetectMap, gl_FragCoord.xy, resolution).x;
+          float theRatio = ssaoMultiviewWidthHeightRatio;
+          float edge;
+          if(theRatio>1.0){
+             edge = fxaa(edgeDetectMap, vec2(gl_FragCoord.x,gl_FragCoord.y*theRatio-((theRatio-1.0)/2.0)*resolution.y), resolution).x;
+          } else {
+             float diff = ((1.0 - theRatio)/2.0) / (theRatio) * resolution.y;
+             edge = fxaa(edgeDetectMap, vec2(gl_FragCoord.x/theRatio-diff,gl_FragCoord.y), resolution).x;
+          }
 
           color *= edge;
       }

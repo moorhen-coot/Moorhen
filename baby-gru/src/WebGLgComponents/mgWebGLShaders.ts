@@ -253,8 +253,10 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
     shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "bias");
     shaderProgramSSAO.depthFactor = gl.getUniformLocation(shaderProgramSSAO, "depthFactor");
     shaderProgramSSAO.depthBufferSize = gl.getUniformLocation(shaderProgramSSAO, "depthBufferSize");
-    shaderProgramSSAO.nTiles_x = gl.getUniformLocation(shaderProgramSSAO, "nTiles_x");
-    shaderProgramSSAO.nTiles_y = gl.getUniformLocation(shaderProgramSSAO, "nTiles_y");
+    shaderProgramSSAO.tileScale_x = gl.getUniformLocation(shaderProgramSSAO, "tileScale_x");
+    shaderProgramSSAO.tileScale_y = gl.getUniformLocation(shaderProgramSSAO, "tileScale_y");
+    shaderProgramSSAO.tileScaleBase_x = gl.getUniformLocation(shaderProgramSSAO, "tileScaleBase_x");
+    shaderProgramSSAO.tileScaleBase_y = gl.getUniformLocation(shaderProgramSSAO, "tileScaleBase_y");
 
     return shaderProgramSSAO
 
@@ -1005,6 +1007,8 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.peelNumber = gl.getUniformLocation(shaderProgram, "peelNumber");
     shaderProgram.depthPeelSamplers = gl.getUniformLocation(shaderProgram, "depthPeelSamplers");
 
+    shaderProgram.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgram, "ssaoMultiviewWidthHeightRatio");
+
     return shaderProgram
 
 }
@@ -1534,6 +1538,8 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramPerfectSpheres.peelNumber = gl.getUniformLocation(shaderProgramPerfectSpheres, "peelNumber");
     shaderProgramPerfectSpheres.depthPeelSamplers = gl.getUniformLocation(shaderProgramPerfectSpheres, "depthPeelSamplers");
+
+    shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramPerfectSpheres, "ssaoMultiviewWidthHeightRatio");
 
     return shaderProgramPerfectSpheres
 

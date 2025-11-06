@@ -3137,6 +3137,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         let fb_scale = 1.0
 
+        this.gl.useProgram(this.shaderProgram);
+        this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0);
+        this.gl.useProgram(this.shaderProgramPerfectSpheres);
+        this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0);
+
         if (calculatingShadowMap) {
             if(!this.offScreenReady)
                 this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
@@ -3150,32 +3155,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const width_ratio = this.gl.viewportWidth / this.gFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.gFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            if(this.renderToTexture&&(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo)){
-                console.log("Drawing G buffers for screenshot in complicated case")
-                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
-                let viewport_start_x = Math.trunc(this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportWidth)
-                let viewport_start_y = Math.trunc(this.currentViewport[1] * this.gFramebuffer.height / this.gl.viewportHeight)
-                let viewport_width =   Math.trunc(this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportWidth)
-                let viewport_height =  Math.trunc(this.currentViewport[3] * this.gFramebuffer.height / this.gl.viewportHeight)
-                if(this.gl.viewportWidth>this.gl.viewportHeight){
-                    const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.gFramebuffer.width
-                    const b = 0.5*(this.gFramebuffer.height - hp)
-                    const vh = this.currentViewport[3] * this.gFramebuffer.width  / this.gl.viewportWidth
-                    const bp = this.currentViewport[1] * this.gFramebuffer.width  / this.gl.viewportWidth
-                    viewport_height = vh
-                    viewport_start_y = bp + b
-                } else {
-                    const wp = this.gl.viewportWidth/this.gl.viewportHeight * this.gFramebuffer.height
-                    const b = 0.5*(this.gFramebuffer.width - wp)
-                    const vw = this.currentViewport[2] * this.gFramebuffer.width  / this.gl.viewportHeight
-                    const bp = this.currentViewport[0] * this.gFramebuffer.width  / this.gl.viewportHeight
-                    viewport_width = vw
-                    viewport_start_x =  bp + b
-                }
-                this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
-            } else {
-                this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
-            }
+            this.gl.viewport(this.currentViewport[0]/ width_ratio, this.currentViewport[1]/ height_ratio, this.currentViewport[2]/ width_ratio, this.currentViewport[3]/ height_ratio);
         } else if(this.renderSilhouettesToTexture) {
             if(!this.silhouetteBufferReady)
                 this.recreateSilhouetteBuffers();
@@ -3221,6 +3201,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let viewport_height =  Math.trunc(this.currentViewport[3] * this.rttFramebuffer.height / this.gl.viewportHeight)
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
             if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
+                this.gl.useProgram(this.shaderProgram);
+                this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
+                this.gl.useProgram(this.shaderProgramPerfectSpheres);
+                this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
                 if(this.gl.viewportWidth>this.gl.viewportHeight){
                     const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
                     const b = 0.5*(this.rttFramebuffer.height - hp)
@@ -3951,18 +3935,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
 
+            //These things probably need tweaking in the SSAO multiview case
+            this.gl.uniform1f(this.shaderProgramSSAO.tileScaleBase_x,0.0);
+            this.gl.uniform1f(this.shaderProgramSSAO.tileScaleBase_y,0.0);
+
             if(this.doThreeWayView) {
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,2);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_x,0.5);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_y,0.5);
             } else if(this.doSideBySideStereo||this.doCrossEyedStereo) {
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,2);
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_x,0.5);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_y,1.0);
             } else if(this.doMultiView&&multi_rows_cols.rows>0&&multi_rows_cols.cols>0) {
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,multi_rows_cols.cols);
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,multi_rows_cols.rows);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_x,1.0/multi_rows_cols.cols);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_y,1.0/multi_rows_cols.rows);
             } else {
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_x,1);
-                this.gl.uniform1i(this.shaderProgramSSAO.nTiles_y,1);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_x,1.0);
+                this.gl.uniform1f(this.shaderProgramSSAO.tileScale_y,1.0);
             }
 
             this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
