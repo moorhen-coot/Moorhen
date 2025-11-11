@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
@@ -91,7 +91,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("refineResiduesUsingAtomCidAnimated", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h-nitrobenzene.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenStore, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif')

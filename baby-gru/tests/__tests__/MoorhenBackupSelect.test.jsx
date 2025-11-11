@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { createRef } from 'react';
 import { moorhenGlobalInstance } from '../../src/InstanceManager/MoorhenInstance';
 import { MoorhenBackupSelect } from '../../src/components/select/MoorhenBackupSelect';
-import MoorhenStore from '../../src/store/MoorhenReduxStore';
+import { MoorhenReduxStore } from '../../src/store/MoorhenReduxStore';
 import { MockTimeCapsule } from '../__mocks__/mockTimeCapsule';
 
 describe('Testing MoorhenBackupSelect', () => {
@@ -17,7 +17,7 @@ describe('Testing MoorhenBackupSelect', () => {
         moorhenGlobalInstance.setTimeCapsule(timeCapsule);
 
         render(
-            <Provider store={MoorhenStore}>
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenBackupSelect ref={selectRef} label="Test Label" />
             </Provider>
         );
@@ -38,7 +38,7 @@ describe('Testing MoorhenBackupSelect', () => {
 
         await act(async () => {
             render(
-                <Provider store={MoorhenStore}>
+                <Provider store={MoorhenReduxStore}>
                     <MoorhenBackupSelect ref={selectRef} timeCapsuleRef={timeCapsuleRef} />
                 </Provider>
             );

@@ -4,17 +4,17 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { MoorhenChainSelect }  from '../../src/components/select/MoorhenChainSelect'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenChainSelect', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenChainSelect label', () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenChainSelect molecules={[ ]} selectedCoordMolNo={null} label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -52,9 +52,9 @@ describe('Testing MoorhenChainSelect', () => {
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenChainSelect molecules={molecules} selectedCoordMolNo={0}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -103,9 +103,9 @@ describe('Testing MoorhenChainSelect', () => {
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenChainSelect molecules={molecules} selectedCoordMolNo={0} allowedTypes={[1, 3]}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -147,13 +147,13 @@ describe('Testing MoorhenChainSelect', () => {
         molecule_3.name = 'mol-3'
 
         const molecules = [molecule_1, molecule_2, molecule_3]
-        
+
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenChainSelect molecules={molecules} selectedCoordMolNo={0} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')

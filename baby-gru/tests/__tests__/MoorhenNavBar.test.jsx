@@ -5,7 +5,7 @@ import { render, screen, cleanup, within }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { createRef } from 'react'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { MoorhenNavBar }  from '../../src/components/navbar-menus/MoorhenNavBar'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
@@ -60,24 +60,24 @@ describe('Testing MoorhenNavBar', () => {
             aceDRGInstance: null,
         }
 
-        MoorhenStore.dispatch(setHoveredAtom({
+        MoorhenReduxStore.dispatch(setHoveredAtom({
             molecule: null,
             cid: null,
         }))
-        MoorhenStore.dispatch( setDevMode(false) )    
-        MoorhenStore.dispatch( setIsDark(false) )    
-        MoorhenStore.dispatch( setWidth(1600) )    
-        MoorhenStore.dispatch( setHeight(900) )    
-        MoorhenStore.dispatch( setCootInitialized(true) )
+        MoorhenReduxStore.dispatch( setDevMode(false) )
+        MoorhenReduxStore.dispatch( setIsDark(false) )
+        MoorhenReduxStore.dispatch( setWidth(1600) )
+        MoorhenReduxStore.dispatch( setHeight(900) )
+        MoorhenReduxStore.dispatch( setCootInitialized(true) )
     })
-    
+
     afterEach(cleanup)
 
     test('MoorhenNavBar render', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const button = screen.getByRole('button', { name: /moorhen/i })
@@ -138,9 +138,9 @@ describe('Testing MoorhenNavBar', () => {
         }]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const button = screen.getByRole('button', { name: /moorhen/i })
@@ -167,16 +167,16 @@ describe('Testing MoorhenNavBar', () => {
         collectedProps.includeNavBarMenuNames = ['History' , 'Ligand', 'File', 'Calculate']
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const button = screen.getByRole('button', { name: /moorhen/i })
 
         const user = userEvent.setup()
         await user.click(button)
-        
+
         const file = screen.queryByRole('menuitem', { name: /file/i })
         const edit = screen.queryByRole('menuitem', { name: /edit/i })
         const calculate = screen.queryByRole('menuitem', { name: /calculate/i })
@@ -211,10 +211,10 @@ describe('Testing MoorhenNavBar', () => {
     test('MoorhenNavBar click interactions', async () => {
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNavBar ref={navBarRef} {...collectedProps}/>
                 <button>Dummy button</button>
-            </Provider> 
+            </Provider>
         )
 
         const button = screen.getByRole('button', { name: /moorhen/i })
@@ -242,7 +242,7 @@ describe('Testing MoorhenNavBar', () => {
         expect(tutorialDataMenuItem).toBeVisible()
 
         await user.click(editButton)
-        
+
         const mergeMoleculesMenuItem = screen.getByRole('menuitem', { name: /merge molecules\.\.\./i })
         expect(tutorialDataMenuItem).not.toBeInTheDocument()
         expect(mergeMoleculesMenuItem).toBeInTheDocument()

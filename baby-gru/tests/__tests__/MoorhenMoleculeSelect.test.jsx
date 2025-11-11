@@ -4,17 +4,17 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { MoorhenMoleculeSelect }  from '../../src/components/select/MoorhenMoleculeSelect'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenMoleculeSelect', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenMoleculeSelect label', () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMoleculeSelect label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -38,9 +38,9 @@ describe('Testing MoorhenMoleculeSelect', () => {
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMoleculeSelect molecules={molecules} allowAny={true}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -73,7 +73,7 @@ describe('Testing MoorhenMoleculeSelect', () => {
         const molecule_3 = new MoorhenMolecule(null, null, '')
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
-        
+
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         const filterFunction = (molecule) => {
@@ -81,9 +81,9 @@ describe('Testing MoorhenMoleculeSelect', () => {
         }
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMoleculeSelect molecules={molecules} allowAny={false} filterFunction={filterFunction}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -111,19 +111,19 @@ describe('Testing MoorhenMoleculeSelect', () => {
         const molecule_3 = new MoorhenMolecule(null, null, '')
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
-        
+
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMoleculeSelect molecules={molecules} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
-        
+
         const user = userEvent.setup()
         await user.selectOptions(selectNode, ['1'])
         expect(onChange).toHaveBeenCalled()

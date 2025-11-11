@@ -3,18 +3,18 @@ import { render, screen, cleanup, waitFor }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { createRef } from 'react'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 
 describe('Testing MoorhenNumberForm', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenNumberForm label', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm defaultValue={10} label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -23,9 +23,9 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm disabled', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm defaultValue={10} disabled={true}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -35,11 +35,11 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm change values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -55,13 +55,13 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm onChange', async () => {
         const numberFormRef = createRef(null)
-        
+
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -73,11 +73,11 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm allowNegativeValues', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10} allowNegativeValues={true}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -92,11 +92,11 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm invalid negative values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -111,11 +111,11 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm invalid letter values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -130,11 +130,11 @@ describe('Testing MoorhenNumberForm', () => {
 
     test('MoorhenNumberForm valid float values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')

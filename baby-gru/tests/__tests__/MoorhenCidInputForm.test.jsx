@@ -4,18 +4,18 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { createRef } from 'react'
 import { MoorhenCidInputForm }  from '../../src/components/inputs/MoorhenCidInputForm'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { setResidueSelection, setShowResidueSelection } from '../../src/store/generalStatesSlice'
 
 describe('Testing MoorhenCidIputForm', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenCidInputForm label', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenCidInputForm label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -26,9 +26,9 @@ describe('Testing MoorhenCidIputForm', () => {
 
     test('MoorhenCidInputForm default value', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenCidInputForm defaultValue="//A"/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('textbox')
@@ -38,9 +38,9 @@ describe('Testing MoorhenCidIputForm', () => {
 
     test('MoorhenCidInputForm input', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenCidInputForm/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('textbox')
@@ -52,16 +52,16 @@ describe('Testing MoorhenCidIputForm', () => {
 
     test('MoorhenCidInputForm residue selection', async () => {
         const cidRef = createRef(null)
-        
+
         const dom = render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenCidInputForm ref={cidRef} allowUseCurrentSelection={true}/>
-            </Provider> 
+            </Provider>
         )
 
         act(() => {
-            
-            MoorhenStore.dispatch(setResidueSelection({
+
+            MoorhenReduxStore.dispatch(setResidueSelection({
                 molecule: null,
                 first: '//A',
                 second: '//A',
@@ -69,17 +69,17 @@ describe('Testing MoorhenCidIputForm', () => {
                 isMultiCid: false,
                 label: '//A'
             }))
-            
-            MoorhenStore.dispatch( setShowResidueSelection(true) )    
+
+            MoorhenReduxStore.dispatch( setShowResidueSelection(true) )
         })
-        
+
         const formNode = screen.getByRole('textbox')
         const checkBoxNode = screen.getByRole('checkbox')
-        
+
         expect(formNode).toBeVisible()
         expect(checkBoxNode).toBeVisible()
         expect(checkBoxNode).not.toBeChecked()
-        
+
         const user = userEvent.setup()
         await user.click(checkBoxNode)
 

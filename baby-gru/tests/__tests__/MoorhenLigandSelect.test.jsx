@@ -4,17 +4,17 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { MoorhenLigandSelect }  from '../../src/components/select/MoorhenLigandSelect'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenLigandSelect', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenLigandSelect label', () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={[ ]} selectedCoordMolNo={null} label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -49,9 +49,9 @@ describe('Testing MoorhenLigandSelect', () => {
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={0}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -95,13 +95,13 @@ describe('Testing MoorhenLigandSelect', () => {
         molecule_3.name = 'mol-3'
 
         const molecules = [molecule_1, molecule_2, molecule_3]
-        
+
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={0} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')

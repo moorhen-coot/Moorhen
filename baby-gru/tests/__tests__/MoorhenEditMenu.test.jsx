@@ -15,7 +15,7 @@ import { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
@@ -58,8 +58,8 @@ let mockMonomerLibraryPath = null
 const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
 
 describeIfWasmExists('Testing MoorhenEditMenu', () => {
-    
-    beforeAll(() => {   
+
+    beforeAll(() => {
         const createCootModule = require('../../public/moorhen')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
@@ -82,7 +82,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
                                 const fileContents = fs.readFileSync(`./public/baby-gru/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
-                            }    
+                            }
                         }
                     }
                 })
@@ -98,7 +98,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
             return Promise.resolve()
         })
     })
-    
+
     beforeEach(() => {
         molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
@@ -137,26 +137,26 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
         commandCentre.current = new MockMoorhenCommandCentre(molecules_container, cootModule)
 
         collectedProps = {
-            commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+            commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance,
             urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
             extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-            videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
+            videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals,
             includeNavBarMenuNames, onAtomHovered: () => {}, onKeyPress: () => {}
         }
 
         act(() => {
-            MoorhenStore.dispatch(setHoveredAtom({
+            MoorhenReduxStore.dispatch(setHoveredAtom({
                 molecule: null,
                 cid: null,
             }))
-            MoorhenStore.dispatch( setDevMode(false) )    
-            MoorhenStore.dispatch( setIsDark(false) )    
-            MoorhenStore.dispatch( setWidth(1600) )    
-            MoorhenStore.dispatch( setHeight(900) )    
-            MoorhenStore.dispatch( setCootInitialized(true) )
-            MoorhenStore.dispatch( setDefaultBondSmoothness(1) )
-            MoorhenStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
-            MoorhenStore.dispatch( setShowScoresToast(true) )
+            MoorhenReduxStore.dispatch( setDevMode(false) )
+            MoorhenReduxStore.dispatch( setIsDark(false) )
+            MoorhenReduxStore.dispatch( setWidth(1600) )
+            MoorhenReduxStore.dispatch( setHeight(900) )
+            MoorhenReduxStore.dispatch( setCootInitialized(true) )
+            MoorhenReduxStore.dispatch( setDefaultBondSmoothness(1) )
+            MoorhenReduxStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
+            MoorhenReduxStore.dispatch( setShowScoresToast(true) )
         })
     })
 
@@ -164,10 +164,10 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
 
     test("MoorhenEditMenu merge molecules" , async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNavBar {...collectedProps}/>
                 <MoorhenModalsContainer {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const user = userEvent.setup()
@@ -184,7 +184,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
         await user.selectOptions( screen.getByRole('combobox'), ['Tutorial 2'] )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const visibleMolecules_1 = MoorhenStore.getState().molecules.visibleMolecules
+        const visibleMolecules_1 = MoorhenReduxStore.getState().molecules.visibleMolecules
         expect(visibleMolecules_1).toEqual([0, 3])
 
         await user.click( screen.getByRole('menuitem', { name: /edit/i }) )
@@ -192,7 +192,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
         await user.selectOptions( screen.getAllByRole('combobox')[0], ['3: mol-2'] )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const visibleMolecules_2 = MoorhenStore.getState().molecules.visibleMolecules
+        const visibleMolecules_2 = MoorhenReduxStore.getState().molecules.visibleMolecules
         expect(visibleMolecules_2).toEqual([0])
     })
 })
