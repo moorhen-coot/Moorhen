@@ -247,7 +247,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
 
     return (
         <>
-            <label htmlFor="fetch-online-sources" className="moorhen__input__label-menu">
+            <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
                 Fetch from online services
             </label>
             <InputGroup>
@@ -269,8 +269,8 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 <Form.Control
                     type="text"
                     style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
-                    name="fetch-online-sources"
-                    id="fetch-online-sources"
+                    name="fetch-pdbe-form"
+                    id="fetch-pdbe-form"
                     ref={pdbCodeFetchInputRef}
                     onKeyDown={(e) => {
                         setIsValidPdbId(true);
