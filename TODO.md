@@ -1,19 +1,26 @@
 # Moorhen TODO
 Planned features
 
-### For 0.23.0
-- [ ] Fix SSAO.
+### For 0.23.1
 - [ ] Load dictionary without creating molecule.
-- [ ] Fix multiview with depth blur.
-- [ ] Fix multiview with SSAO.
-- [ ] Fix multiview with edge detect.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
-- [ ] Fix text labels being ugly when there is a transparent object.
 - [ ] simplify File menu to have far fewer entries.
-- [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view- per-molecule
-- [ ] Vectors UI. Drawing code should already be there, mostly.
-- [ ] Legends UI. Drawing code already in 2D overlay class.
+- [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
+- [ ] Fix multiview with shadows.
+- [ ] Fix multiview with transparency and edge detect/SSAO.
+
+### For 0.23.0
+- [x] Fix SSAO.
+- [x] Improve edge detect.
+- [x] Vectors UI. Drawing code should already be there, mostly.
+- [x] Legends UI. Drawing code already in 2D overlay class.
+- [x] Fix screenshots with depth blur and transparent objects.
+- [x] Fix text labels being ugly when there is a transparent object.
+- [x] Fix multiview with depth blur.
+- [x] Fix multiview with edge detect.
+- [x] Fix multiview with SSAO.
+- [x] Sensible blur radius (3) for SSAO.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.

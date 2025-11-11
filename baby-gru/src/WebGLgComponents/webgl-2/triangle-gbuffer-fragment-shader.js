@@ -20,16 +20,14 @@ var triangle_gbuffer_fragment_shader_source = `#version 300 es\n
     layout(location = 1) out vec4 fragData1;
 
     void main(void) {
-      if(dot(eyePos, clipPlane0)<0.0){
-       discard;
-      }
-      if(dot(eyePos, clipPlane1)<0.0){
-       discard;
-      }
-
-      fragData0 = v;
-      fragData1 = vec4(vNormal,1.0);
-
+        if(dot(eyePos, clipPlane0)<0.0){
+            discard;
+        }
+        if(dot(eyePos, clipPlane1)<0.0){
+            discard;
+        }
+        fragData0 = v;
+        fragData1 = vec4(vNormal,1.0);
     }
 `;
 
