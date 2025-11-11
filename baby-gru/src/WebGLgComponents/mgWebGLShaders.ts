@@ -1104,6 +1104,7 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.peelNumber = gl.getUniformLocation(shaderProgramInstanced, "peelNumber");
     shaderProgramInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramInstanced, "depthPeelSamplers");
 
+    shaderProgramInstanced.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramInstanced, "ssaoMultiviewWidthHeightRatio");
     shaderProgramInstanced.zoom = gl.getUniformLocation(shaderProgramInstanced, "zoom");
 
     return shaderProgramInstanced

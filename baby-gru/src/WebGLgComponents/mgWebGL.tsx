@@ -3145,6 +3145,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0);
             this.gl.uniform1f(this.shaderProgram.zoom,this.zoom);
             this.gl.useProgram(this.shaderProgramInstanced);
+            this.gl.uniform1f(this.shaderProgramInstanced.ssaoMultiviewWidthHeightRatio,1.0);
             this.gl.uniform1f(this.shaderProgramInstanced.zoom,this.zoom);
             this.gl.useProgram(this.shaderProgramPerfectSpheres);
             this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0);
