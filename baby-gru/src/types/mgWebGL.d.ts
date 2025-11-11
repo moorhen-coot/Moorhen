@@ -196,6 +196,7 @@ export namespace webGL {
         specularPower: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
+        zoom: WebGLUniformLocation;
     }
 
     interface ShaderTriangles extends MGWebGLShader {
@@ -220,6 +221,7 @@ export namespace webGL {
         textureMatrixUniform: WebGLUniformLocation;
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
+        zoom: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}

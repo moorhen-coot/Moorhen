@@ -53,16 +53,18 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform int peelNumber;
     uniform sampler2D depthPeelSamplers;
 
+    uniform float zoom;
+
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
       vec2 resolution;
-      resolution.x = 1.0/xSSAOScaling;
-      resolution.y = 1.0/ySSAOScaling;
+      resolution.x = xSSAOScaling/zoom/10.;
+      resolution.y = ySSAOScaling/zoom/10.;
       float shad = 1.0;
       float bias = 0.005;
-      if(fxaa(ShadowMap, ShadowCoord.xy*resolution, resolution ).x < ShadowCoord.z-bias)
-          shad = 0.2;
+      if(texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x < ShadowCoord.z-bias)
+          shad = texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x - (ShadowCoord.z-bias);
       return shad;
     }
 

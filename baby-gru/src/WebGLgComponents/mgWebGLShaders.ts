@@ -1008,6 +1008,7 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.depthPeelSamplers = gl.getUniformLocation(shaderProgram, "depthPeelSamplers");
 
     shaderProgram.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgram, "ssaoMultiviewWidthHeightRatio");
+    shaderProgram.zoom = gl.getUniformLocation(shaderProgram, "zoom");
 
     return shaderProgram
 
@@ -1102,6 +1103,8 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
 
     shaderProgramInstanced.peelNumber = gl.getUniformLocation(shaderProgramInstanced, "peelNumber");
     shaderProgramInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramInstanced, "depthPeelSamplers");
+
+    shaderProgramInstanced.zoom = gl.getUniformLocation(shaderProgramInstanced, "zoom");
 
     return shaderProgramInstanced
 
@@ -1540,6 +1543,7 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
     shaderProgramPerfectSpheres.depthPeelSamplers = gl.getUniformLocation(shaderProgramPerfectSpheres, "depthPeelSamplers");
 
     shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramPerfectSpheres, "ssaoMultiviewWidthHeightRatio");
+    shaderProgramPerfectSpheres.zoom = gl.getUniformLocation(shaderProgramPerfectSpheres, "zoom");
 
     return shaderProgramPerfectSpheres
 

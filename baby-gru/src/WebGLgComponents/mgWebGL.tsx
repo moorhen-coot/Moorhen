@@ -3140,10 +3140,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         let fb_scale = 1.0
 
-        this.gl.useProgram(this.shaderProgram);
-        this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0);
-        this.gl.useProgram(this.shaderProgramPerfectSpheres);
-        this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0);
+        if(this.WEBGL2){
+            this.gl.useProgram(this.shaderProgram);
+            this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0);
+            this.gl.uniform1f(this.shaderProgram.zoom,this.zoom);
+            this.gl.useProgram(this.shaderProgramInstanced);
+            this.gl.uniform1f(this.shaderProgramInstanced.zoom,this.zoom);
+            this.gl.useProgram(this.shaderProgramPerfectSpheres);
+            this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0);
+            this.gl.uniform1f(this.shaderProgramPerfectSpheres.zoom,this.zoom);
+        }
 
         if (calculatingShadowMap) {
             if(!this.offScreenReady)
@@ -3205,9 +3211,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
             if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
                 this.gl.useProgram(this.shaderProgram);
-                this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
+                if(this.WEBGL2) this.gl.uniform1f(this.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
+                this.gl.useProgram(this.shaderProgramInstanced);
+                if(this.WEBGL2) this.gl.uniform1f(this.shaderProgramInstanced.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
                 this.gl.useProgram(this.shaderProgramPerfectSpheres);
-                this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
+                if(this.WEBGL2) this.gl.uniform1f(this.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0*this.canvas.width/this.canvas.height);
                 if(this.gl.viewportWidth>this.gl.viewportHeight){
                     const hp = this.gl.viewportHeight/this.gl.viewportWidth * this.rttFramebuffer.width
                     const b = 0.5*(this.rttFramebuffer.height - hp)
@@ -3313,6 +3321,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 excess += 150; // ?? It works.
             }
             d += excess;
+
+            d /= 2.0
+            d = Math.max(d,60.)
 
             mat4.ortho(this.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.);
             mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
