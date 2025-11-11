@@ -269,6 +269,8 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 <Form.Control
                     type="text"
                     style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
+                    name="fetch-online-sources"
+                    id="fetch-online-sources"
                     ref={pdbCodeFetchInputRef}
                     onKeyDown={(e) => {
                         setIsValidPdbId(true);
