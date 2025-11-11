@@ -7,6 +7,8 @@ Planned features
 - [ ] Remove glRef from all component props and class constructor args.
 - [ ] simplify File menu to have far fewer entries.
 - [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
+- [ ] Fix multiview with shadows.
+- [ ] Fix multiview with transparency and edge detect/SSAO.
 
 ### For 0.23.0
 - [x] Fix SSAO.
@@ -19,8 +21,6 @@ Planned features
 - [x] Fix multiview with edge detect.
 - [x] Fix multiview with SSAO.
 - [x] Sensible blur radius (3) for SSAO.
-- [ ] Fix multiview with shadows.
-- [ ] Fix multiview with transparency and edge detect/SSAO.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
