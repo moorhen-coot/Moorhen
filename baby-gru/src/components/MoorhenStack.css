@@ -7,6 +7,11 @@
 .moorhen__stack__row {
     flex-direction: row;
 }
+
 .moorhen__stack__column {
     flex-direction: column;
+}
+
+.moorhen__stack__centered {
+    justify-content: center;
 }

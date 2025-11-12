@@ -122,10 +122,8 @@ const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<bool
             show_top_panel={false}
             rdkit_molecule_pickle_list={rdkitMoleculePickleList}
             icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
-            data_path_prefix={`${props.urlPrefix}/`}
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
-            dark_mode={isDark}
         />
     ) : null;
 };

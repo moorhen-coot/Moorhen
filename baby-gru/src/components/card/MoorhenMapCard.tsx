@@ -14,6 +14,7 @@ import { doDownload } from "../../utils/utils";
 import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenAccordion } from "../interface-base";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenMenuItem } from "../menu-item/MenuItem";
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
@@ -210,7 +211,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
                     </ToggleButton>
                     <Stack direction="vertical" style={{ justifyContent: "center" }}>
-                        <div className="moorhen__stack__row">
+                        <MoorhenStack direction="row" gap={3}>
                             <MoorhenPreciseInput
                                 value={mapContourLevel}
                                 setValue={newVal => {
@@ -236,7 +237,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                     waitReturn={true}
                                 />
                             )}
-                        </div>
+                        </MoorhenStack>
                         <MoorhenSlider
                             minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
                             maxVal={props.map.levelRange[1]}

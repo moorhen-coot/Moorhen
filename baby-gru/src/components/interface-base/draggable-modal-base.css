@@ -5,7 +5,7 @@
     position: absolute;
     border: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
-    border-radius: 0.5rem;
+    border-radius: 0.4rem;
     top: 0;
     left: 0;
     box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
@@ -16,7 +16,7 @@
     flex-direction: row;
     width: 100%;
     min-width: none;
-    border-radius: 0.5rem 0.5rem 0 0;
+    border-radius: 0.4em 0.4rem 0 0;
     align-items: center;
     user-select: none;
     -webkit-user-select: none;
@@ -51,7 +51,7 @@
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
-    overflow-y: scroll;
+    overflow-y: auto;
     height: calc(100% - 2.5rem - 48px);
     width: calc(100%-1rem);
 }

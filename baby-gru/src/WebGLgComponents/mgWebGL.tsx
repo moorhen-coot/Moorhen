@@ -3646,7 +3646,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
 
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
 
         const multiViewOrigins = []
         let multiViewGroupsKeys = []

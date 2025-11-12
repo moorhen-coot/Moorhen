@@ -19,8 +19,8 @@
 
 .moorhen__icon__accordion {
     filter: invert(1) brightness(var(--moorhen-icon-brightness));
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
 }
 
 .moorhen__icon__active {
