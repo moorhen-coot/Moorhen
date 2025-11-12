@@ -1,6 +1,4 @@
-import { ClickAwayListener } from "@mui/material";
 import { Button } from "react-bootstrap";
-import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenPopover } from "../interface-base";
 import { MoorhenMenuItem } from "./MenuItem";
@@ -37,9 +35,7 @@ export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
     });
 
     const menuItemRef = useRef<HTMLButtonElement>(null);
-    const popoverRef = useRef<HTMLDivElement>(null);
     const [isShown, setIsShown] = useState(false);
-    const [popoverStyle, setPopoverStyle] = useState({});
     const handleClick = () => {
         if (!disabled) setIsShown(!isShown);
     };
@@ -57,53 +53,25 @@ export const MoorhenBaseMenuItem = (props: MoorhenBaseMenuItemProps) => {
         }
     }, [isShown]);
 
-    useLayoutEffect(() => {
-        if (isShown && menuItemRef.current) {
-            const menuRect = menuItemRef.current.getBoundingClientRect();
-            const popoverRect = popoverRef.current.getBoundingClientRect();
-            const leftRight =
-                popoverPlacement === "left"
-                    ? menuRect.left + window.scrollX - popoverRect.width + 10
-                    : menuRect.right + window.scrollX - 15;
-            setPopoverStyle({
-                position: "absolute",
-                top: menuRect.top + window.scrollY + menuRect.height / 2 - popoverRect.height / 2,
-                left: leftRight, // or rect.left for left alignment
-                zIndex: 9999,
-            });
-        }
-    }, [isShown]);
-
-    const popover = useMemo(() => {
-        return (
-            <MoorhenPopover
-                popoverPlacement={popoverPlacement}
-                isShown={isShown}
-                setIsShown={setIsShown}
-                link={<div ref={popoverRef}>{menuItemText}</div>}
-                linkRef={menuItemRef}
-            >
-                {popoverContent}
-                {showOkButton ? (
-                    <Button
-                        variant={buttonVariant}
-                        onClick={() => {
-                            resolveOrRejectRef.current.resolve();
-                        }}
-                    >
-                        {buttonText}
-                    </Button>
-                ) : null}
-            </MoorhenPopover>
-        );
-    }, [props.popoverContent, popoverStyle]);
+    const menuItem = (
+        <MoorhenMenuItem onClick={handleClick} ref={menuItemRef} selected={isShown}>
+            {menuItemText}
+        </MoorhenMenuItem>
+    );
 
     return (
-        <>
-            {isShown && popover}
-            <MoorhenMenuItem onClick={handleClick} ref={menuItemRef} selected={isShown}>
-                {menuItemText}
-            </MoorhenMenuItem>
-        </>
+        <MoorhenPopover popoverPlacement={popoverPlacement} isShown={isShown} setIsShown={setIsShown} link={menuItem} linkRef={menuItemRef}>
+            {popoverContent}
+            {showOkButton ? (
+                <Button
+                    variant={buttonVariant}
+                    onClick={() => {
+                        resolveOrRejectRef.current.resolve();
+                    }}
+                >
+                    {buttonText}
+                </Button>
+            ) : null}
+        </MoorhenPopover>
     );
 };
