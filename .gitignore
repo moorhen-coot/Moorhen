@@ -41,6 +41,7 @@
 /include
 /install_manifest.txt
 /lib
+/node_modules
 /privateer/privateer.js
 /share
 /web_example/chart.js
@@ -583,6 +584,7 @@ baby-gru/moorhen-0.1.0.tgz
 baby-gru/copyForDist.sh
 baby-gru/public/baby-gru/data.tar.gz
 baby-gru/public/baby-gru/CootWorker.js
+baby-gru/public/baby-gru/Components-inchikey.ich
 baby-gru/docs/
 baby-gru/src/version.js
 react-app/public/wasm/web_example.js
@@ -592,6 +594,7 @@ baby-gru/public/baby-gru/moorhen.data
 baby-gru/public/baby-gru/moorhen.worker.js
 baby-gru/public/baby-gru/web_example.js
 baby-gru/public/baby-gru/moorhen.js
+baby-gru/public/baby-gru/pixmaps/lhasa_icons/
 baby-gru/public/CootWorker.js
 baby-gru/public/moorhen.data
 baby-gru/public/moorhen.js

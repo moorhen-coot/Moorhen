@@ -92,11 +92,43 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         }
     };
 
-    const fetchFilesFromAFDB = () => {
+    const fetchFilesFromAFDB = async() => {
         const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase();
-        const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`;
-        if (uniprotID) {
-            fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true);
+
+        if(!uniprotID) return
+
+        const infoUrl = `https://alphafold.ebi.ac.uk/api/prediction/${uniprotID}`
+
+        try {
+            const infoResponse = await fetch(infoUrl)
+            if (infoResponse.ok) {
+                const infoJson = await infoResponse.json()
+                //A search might get more than 1 hit.
+                //By default we just pick the first and then look for exact match in loop below.
+                let bestEntry: number = -1
+                if(infoJson.length>0){
+                    bestEntry = 0
+                    for(const modelEntry of infoJson){
+                        if(modelEntry.entryId===`AF-${uniprotID}-F1`){
+                            break
+                        }
+                        bestEntry++
+                    }
+                    if(bestEntry>infoJson.length) bestEntry = 0
+                    const coordUrl = infoJson[bestEntry].pdbUrl
+                    fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true)
+                }
+            } else {
+                enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, {variant: "error"})
+                console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`)
+                setIsValidPdbId(false)
+                dispatch(setBusy(false));
+            }
+        } catch(e) {
+            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, {variant: "error"})
+            console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`)
+            setIsValidPdbId(false)
+            dispatch(setBusy(false));
         }
     };
 
@@ -215,7 +247,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
 
     return (
         <>
-            <label htmlFor="fetch-online-sources" className="moorhen__input__label-menu">
+            <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
                 Fetch from online services
             </label>
             <InputGroup>
@@ -237,6 +269,8 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 <Form.Control
                     type="text"
                     style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
+                    name="fetch-pdbe-form"
+                    id="fetch-pdbe-form"
                     ref={pdbCodeFetchInputRef}
                     onKeyDown={(e) => {
                         setIsValidPdbId(true);

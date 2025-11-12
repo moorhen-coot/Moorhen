@@ -4,17 +4,17 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { MoorhenMapSelect }  from '../../src/components/select/MoorhenMapSelect'
 import { MoorhenMap } from '../../src/utils/MoorhenMap'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenMapSelect', () => {
-    
+
     afterEach(cleanup)
 
     test('MoorhenMapSelect label', () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMapSelect label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -34,13 +34,13 @@ describe('Testing MoorhenMapSelect', () => {
         const map_3 = new MoorhenMap(null, null)
         map_3.molNo = 2
         map_3.name = 'map-3'
-        
+
         const maps = [map_1, map_2, map_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMapSelect maps={maps}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -70,7 +70,7 @@ describe('Testing MoorhenMapSelect', () => {
         const map_3 = new MoorhenMap(null, null)
         map_3.molNo = 2
         map_3.name = 'map-3'
-        
+
         const maps = [map_1, map_2, map_3]
 
         const filterFunction = (molecule) => {
@@ -78,9 +78,9 @@ describe('Testing MoorhenMapSelect', () => {
         }
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMapSelect maps={maps} filterFunction={filterFunction}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -106,15 +106,15 @@ describe('Testing MoorhenMapSelect', () => {
         const map_3 = new MoorhenMap(null, null)
         map_3.molNo = 2
         map_3.name = 'map-3'
-        
+
         const maps = [map_1, map_2, map_3]
 
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenMapSelect maps={maps} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')

@@ -18,6 +18,7 @@ const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<bool
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const originState = useSelector((state: moorhen.State) => state.glRef.origin);
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
@@ -120,9 +121,11 @@ const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<bool
             show_footer={false}
             show_top_panel={false}
             rdkit_molecule_pickle_list={rdkitMoleculePickleList}
-            icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons`}
+            icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
+            data_path_prefix={`${props.urlPrefix}/`}
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
+            dark_mode={isDark}
         />
     ) : null;
 };

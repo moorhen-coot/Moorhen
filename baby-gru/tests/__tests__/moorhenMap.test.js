@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 
 
@@ -34,14 +34,14 @@ global.fetch = (url) => {
                         const fileContents = fs.readFileSync(url)
                         const buff = fileContents.buffer
                         return buff
-                    }    
+                    }
                 }
             }
         })
     }
 }
 
-beforeAll(() => {   
+beforeAll(() => {
     return createCootModule({
         print(t) { () => console.log(["output", t]) },
         printErr(t) { () => console.log(["output", t]); }
@@ -73,7 +73,7 @@ describe("Testing MoorhenMap", () => {
 
     test("loadToCootFromMtzURL", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
         const isValid = molecules_container.is_valid_map_molecule(map.molNo)
@@ -82,7 +82,7 @@ describe("Testing MoorhenMap", () => {
 
     test("loadToCootFromMtzURL --isDifference", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
         expect(map.isDifference).toBeTruthy()
@@ -92,13 +92,13 @@ describe("Testing MoorhenMap", () => {
 
     test("loadToCootFromMapData", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map_1 = new MoorhenMap(commandCentre, MoorhenStore)
+        const map_1 = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map_1.molNo).toBe(0)
         molecules_container.writeCCP4Map(map_1.molNo, 'test-file-name.map')
         const mapData = cootModule.FS.readFile('test-file-name.map', { encoding: 'binary' });
 
-        const map_2 = new MoorhenMap(commandCentre, MoorhenStore)
+        const map_2 = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map_2.loadToCootFromMapData(mapData, 'map-test')
         expect(map_2.molNo).toBe(1)
         const isValid = molecules_container.is_valid_map_molecule(map_2.molNo)
@@ -108,7 +108,7 @@ describe("Testing MoorhenMap", () => {
 
     test("delete", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
         await map.delete()
@@ -118,7 +118,7 @@ describe("Testing MoorhenMap", () => {
 
     test("fetchIsDifferenceMap 1", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
         const isDifference = await map.fetchIsDifferenceMap()
@@ -127,7 +127,7 @@ describe("Testing MoorhenMap", () => {
 
     test("fetchIsDifferenceMap 2", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map.molNo).toBe(0)
         const isDifference = await map.fetchIsDifferenceMap()
@@ -136,7 +136,7 @@ describe("Testing MoorhenMap", () => {
 
     test("getSuggestedSettings", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
 
         const f_1 = jest.spyOn(map, 'getSuggestedSettings')
         const f_2 = jest.spyOn(map, 'fetchMapRmsd')
@@ -144,9 +144,9 @@ describe("Testing MoorhenMap", () => {
         const f_4 = jest.spyOn(map, 'setDefaultColour')
         const f_5 = jest.spyOn(map, 'fetchSuggestedLevel')
         const f_6 = jest.spyOn(map, 'estimateMapWeight')
-        
+
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
-        
+
         expect(map.molNo).toBe(0)
         expect(f_1).toHaveBeenCalledTimes(1)
         expect(f_2).toHaveBeenCalledTimes(1)
@@ -154,7 +154,7 @@ describe("Testing MoorhenMap", () => {
         expect(f_4).toHaveBeenCalledTimes(1)
         expect(f_5).toHaveBeenCalledTimes(1)
         expect(f_6).toHaveBeenCalledTimes(1)
-                
+
         expect(map.isEM).toBeFalsy()
         expect(map.mapRmsd).toBeCloseTo(0.35, 1)
         expect(map.mapCentre[0]).toBeCloseTo(1.09, 1)
@@ -168,19 +168,19 @@ describe("Testing MoorhenMap", () => {
 
     test("setDefaultColour", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        
-        const map_1 = new MoorhenMap(commandCentre, MoorhenStore)
+
+        const map_1 = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map_1.molNo).toBe(0)
         expect(map_1.defaultMapColour.r).toBeCloseTo(0.30, 1)
         expect(map_1.defaultMapColour.g).toBeCloseTo(0.30, 1)
         expect(map_1.defaultMapColour.b).toBeCloseTo(0.69, 1)
 
-        const map_diff = new MoorhenMap(commandCentre, MoorhenStore)
+        const map_diff = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map_diff.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: true, useWeight: false, calcStructFact: false })
         expect(map_diff.molNo).toBe(1)
 
-        const map_2 = new MoorhenMap(commandCentre, MoorhenStore)
+        const map_2 = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map_2.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         expect(map_2.molNo).toBe(2)
         expect(map_2.defaultMapColour.r).toBeCloseTo(0.36, 1)
@@ -190,7 +190,7 @@ describe("Testing MoorhenMap", () => {
 
     test("fetchMapRmsd", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const rmsd = await map.fetchMapRmsd()
         expect(rmsd).toBeCloseTo(0.35, 1)
@@ -198,7 +198,7 @@ describe("Testing MoorhenMap", () => {
 
     test("fetchMapMean", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mean = await map.fetchMapMean()
         expect(mean).toBeCloseTo(2.18e-10, 8)
@@ -206,7 +206,7 @@ describe("Testing MoorhenMap", () => {
 
     test("getMapWeight", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mapWeight = await map.getMapWeight()
         expect(mapWeight).toBe(50)
@@ -214,7 +214,7 @@ describe("Testing MoorhenMap", () => {
 
     test("setMapWeight", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mapWeight_1 = map.suggestedMapWeight
         await map.setMapWeight()
@@ -224,7 +224,7 @@ describe("Testing MoorhenMap", () => {
 
     test("setActive", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const f_1 = jest.spyOn(map, 'setMapWeight')
         await map.setActive()
@@ -233,7 +233,7 @@ describe("Testing MoorhenMap", () => {
 
     test("getHistogram", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const histogramData = await map.getHistogram()
         expect(histogramData.base).toBeCloseTo(-1.01, 1)
@@ -243,7 +243,7 @@ describe("Testing MoorhenMap", () => {
 
     test.skip("doCootContour", async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, MoorhenStore)
+        const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const f_1 = jest.spyOn(glRef.current, 'buildBuffers')
         const f_2 = jest.spyOn(glRef.current, 'drawScene')
