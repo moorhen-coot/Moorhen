@@ -36,7 +36,20 @@ describe("Testing gemmi", () => {
     })
 
     test("small molecule to mmcif", async () => {
-        const response = await fetch("https://www.crystallography.net/cod/1100231.cif")
+        let response = null
+        try {
+            response = await fetch("https://www.crystallography.net/cod/1100231.cif", { signal: AbortSignal.timeout(5000) })
+        } catch (err) {
+            response = null
+            console.warn("Timeout: It took more than 5 seconds to get data from www.crystallography.net .");
+            console.warn("Possibly server or other network problem.");
+            console.warn(err)
+        }
+
+        if(!response){
+            return
+        }
+
         expect(response.ok).toBeTruthy()
         const fileContents = await response.text()
         const result = cootModule.SmallMoleculeCifToMMCif(fileContents)

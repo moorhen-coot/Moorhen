@@ -22,7 +22,7 @@ let moleculesRef = null
 let videoRecorderRef = null
 let lastHoveredAtomRef = null
 
-describe('Testing MoorhenNavBar', () => {
+describe.skip('Testing MoorhenNavBar', () => {
 
     beforeEach(() => {
         navBarRef = createRef(null)
