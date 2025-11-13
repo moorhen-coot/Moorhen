@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const ClearSelfRestraints = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const ClearSelfRestraints = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

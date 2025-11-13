@@ -3,7 +3,7 @@ import { ClickAwayListener, FormGroup, List, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { Popover, Overlay } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem";
+import { BackgroundColor} from "../menu-item";
 import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
@@ -23,6 +23,8 @@ import { MoorhenRotamerChangeButton } from "./MoorhenRotamerChangeButton";
 import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneButton";
 import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
+import { MoorhenMenuItemPopover } from "../interface-base";
 
 export type ActionButtonSettings = {
     mutate:"ALA"| "CYS" | "ASP"| "GLU" | "PHE" | "GLY"| "HIS"| "ILE" | "LYS" | "LEU" | "MET" | "ASN" | "PRO" | "GLN" | "ARG" | "SER" | "THR" | "VAL" | "TRP" | "TYR";
@@ -153,7 +155,8 @@ export const MoorhenContextMenu = (props: {
                     <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
                         <List>
                             {props.viewOnly ? (
-                                <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => {}} />
+                                <MoorhenMenuItemPopover menuItemText="Background Color..."><BackgroundColor /></MoorhenMenuItemPopover>
+                                
                             ) : (
                                 selectedMolecule &&
                                 chosenAtom && (

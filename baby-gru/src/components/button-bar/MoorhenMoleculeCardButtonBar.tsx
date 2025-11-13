@@ -18,9 +18,8 @@ import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
-import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
-import { MoorhenGenerateAssemblyMenuItem } from "../menu-item/MoorhenGenerateAssemblyMenuItem";
-import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
+import { MoorhenMenuItemPopover } from "../interface-base";
+import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../menu-item";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
     handleCentering: () => void;
@@ -190,7 +189,11 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         7: {
             label: "Rename molecule",
             compressed: () => {
-                return <MoorhenRenameDisplayObjectMenuItem key={7} setCurrentName={setCurrentName} item={props.molecule} />;
+                return (
+                    <MoorhenMenuItemPopover menuItemText="Rename Molecule">
+                        <RenameDisplayObject key={7} setCurrentName={setCurrentName} item={props.molecule} />
+                    </MoorhenMenuItemPopover>
+                );
             },
             expanded: null,
         },
@@ -203,12 +206,14 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             label: "Generate assembly",
             compressed: () => {
                 return (
-                    <MoorhenGenerateAssemblyMenuItem
-                        key={8}
-                        setPopoverIsShown={setPopoverIsShown}
-                        setCurrentName={setCurrentName}
-                        item={props.molecule}
-                    />
+                    <MoorhenMenuItemPopover menuItemText="Generate Assembly">
+                        <GenerateAssembly
+                            key={8}
+                            setPopoverIsShown={setPopoverIsShown}
+                            setCurrentName={setCurrentName}
+                            item={props.molecule}
+                        />
+                    </MoorhenMenuItemPopover>
                 );
             },
             expanded: null,
@@ -280,7 +285,11 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         });
     }
 
-    compressedButtons.push(<MoorhenDeleteDisplayObjectMenuItem key="deleteDisplayObjectMenuItem" item={props.molecule} />);
+    compressedButtons.push(
+        <MoorhenMenuItemPopover menuItemText="Delete Molecule">
+            <DeleteDisplayObject key="deleteDisplayObjectMenuItem" item={props.molecule} />
+        </MoorhenMenuItemPopover>
+    );
 
     return (
         <Fragment>

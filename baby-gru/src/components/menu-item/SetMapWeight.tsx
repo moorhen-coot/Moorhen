@@ -4,11 +4,7 @@ import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 
-export const SetMapWeight = (props: {
-    map: moorhen.Map;
-    disabled: boolean;
-    setPopoverIsShown?: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const SetMapWeight = (props: { map: moorhen.Map }) => {
     const mapWeightRef = useRef<null | string>(null);
     const [mapWeight, setMapWeight] = useState<string>(null);
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);

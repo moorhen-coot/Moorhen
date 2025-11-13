@@ -21,7 +21,7 @@ export { Preferences } from "./components/managers/preferences/MoorhenPreference
 export { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 export { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 export { MoorhenSlider } from "./components/inputs";
-export { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
+export { FetchOnlineSources } from "./components/menu-item";
 export { MoorhenRamachandran } from "./components/validation-tools/MoorhenRamachandran";
 export { MoorhenLigandValidation } from "./components/validation-tools/MoorhenLigandValidation";
 export { MoorhenCarbohydrateValidation } from "./components/validation-tools/MoorhenCarbohydrateValidation";

@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { useEffect, useRef } from "react";
 import { reducers } from "../store/MoorhenReduxStore";
 import { MoorhenContainer } from "./container/MainContainer";
-import { ExtraNavBarMenus } from "./navbar-menus/MoorhenMainMenu";
+import { ExtraNavBarMenus } from "./main-menu/MainMenu";
 
 export const MoorhenExitMenu = (props: { exitCallback: () => void }) => {
     useEffect(() => {

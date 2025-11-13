@@ -1,12 +1,12 @@
-import { MenuItem } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import { Form, InputGroup } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { v4 as uuidv4 } from 'uuid';
-import { useRef, useState } from 'react';
-import { usePaths } from '../../InstanceManager';
-import { setUseGemmi } from '../../store/generalStatesSlice';
-import { showModal } from '../../store/modalsSlice';
+import { MenuItem } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { Form, InputGroup } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import { useRef, useState } from "react";
+import { usePaths } from "../../InstanceManager";
+import { setUseGemmi } from "../../store/generalStatesSlice";
+import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
     addFracPathOverlay,
@@ -15,15 +15,15 @@ import {
     addSvgPathOverlay,
     addTextOverlay,
     emptyOverlays,
-} from '../../store/overlaysSlice';
-import { setDoOutline } from '../../store/sceneSettingsSlice';
-import { moorhen } from '../../types/moorhen';
-import { modalKeys } from '../../utils/enums';
+} from "../../store/overlaysSlice";
+import { setDoOutline } from "../../store/sceneSettingsSlice";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenDevMenu = (props: { dropdownId: string }) => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
 
-    const customCid = useRef<string>('');
+    const customCid = useRef<string>("");
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -38,12 +38,12 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
     const exampleCallBack = (ctx, backgroundColor, cbWidth, cbHeight, scale) => {
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
         if (bright_y < 0.5) {
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = "white";
         } else {
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = "black";
         }
-        ctx.font = 20 * scale + 'px Arial';
-        ctx.fillText('I am written by a callback', 0.5 * cbWidth, 0.5 * cbHeight);
+        ctx.font = 20 * scale + "px Arial";
+        ctx.fillText("I am written by a callback", 0.5 * cbWidth, 0.5 * cbHeight);
     };
 
     const loadExampleOverlays = async evt => {
@@ -51,7 +51,7 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
         setOverlaysOn(evt.target.checked);
         if (evt.target.checked) {
             const base64Image =
-                'data:image/png;base64,   iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==   ';
+                "data:image/png;base64,   iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==   ";
             dispatch(
                 addImageOverlay({
                     src: base64Image,
@@ -94,59 +94,59 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
             );
             dispatch(
                 addTextOverlay({
-                    text: 'Red text',
+                    text: "Red text",
                     x: 0.15,
                     y: 0.5,
-                    fontFamily: 'sans-serif',
+                    fontFamily: "sans-serif",
                     fontPixelSize: 108,
-                    fillStyle: '#ff000044',
+                    fillStyle: "#ff000044",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addTextOverlay({
                     zIndex: 1,
-                    text: 'Text',
+                    text: "Text",
                     x: 0.15,
                     y: 0.75,
-                    fontFamily: 'serif',
+                    fontFamily: "serif",
                     fontPixelSize: 48,
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addTextOverlay({
-                    text: 'Stroke text',
+                    text: "Stroke text",
                     x: 0.65,
                     y: 0.75,
-                    fontFamily: 'serif',
+                    fontFamily: "serif",
                     fontPixelSize: 48,
-                    drawStyle: 'stroke',
-                    strokeStyle: 'blue',
+                    drawStyle: "stroke",
+                    strokeStyle: "blue",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addSvgPathOverlay({
-                    path: 'M10 10 h 80 v 80 h -80 Z',
-                    drawStyle: 'stroke',
-                    strokeStyle: 'magenta',
+                    path: "M10 10 h 80 v 80 h -80 Z",
+                    drawStyle: "stroke",
+                    strokeStyle: "magenta",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addSvgPathOverlay({
-                    path: 'M100 10 h 80 v 80 h -80 Z',
-                    drawStyle: 'fill',
-                    fillStyle: 'orange',
+                    path: "M100 10 h 80 v 80 h -80 Z",
+                    drawStyle: "fill",
+                    fillStyle: "orange",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addSvgPathOverlay({
-                    path: 'M610 300 h 80 v 80 h -80 Z',
-                    drawStyle: 'stroke',
-                    strokeStyle: 'green',
+                    path: "M610 300 h 80 v 80 h -80 Z",
+                    drawStyle: "stroke",
+                    strokeStyle: "green",
                     lineWidth: 6,
                     uniqueId: uuidv4(),
                 })
@@ -159,33 +159,33 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
                         [0.6, 0.7],
                         [0.7, 0.5],
                     ],
-                    drawStyle: 'fill',
-                    fillStyle: '#00ffff77',
+                    drawStyle: "fill",
+                    fillStyle: "#00ffff77",
                     uniqueId: uuidv4(),
                 })
             );
             const gradientStops = [];
-            gradientStops.push({ stop: 0, colour: 'red' });
-            gradientStops.push({ stop: 0.35, colour: 'yellow' });
-            gradientStops.push({ stop: 0.5, colour: 'green' });
-            gradientStops.push({ stop: 0.65, colour: 'cyan' });
-            gradientStops.push({ stop: 0.8, colour: 'blue' });
-            gradientStops.push({ stop: 1.0, colour: 'purple' });
+            gradientStops.push({ stop: 0, colour: "red" });
+            gradientStops.push({ stop: 0.35, colour: "yellow" });
+            gradientStops.push({ stop: 0.5, colour: "green" });
+            gradientStops.push({ stop: 0.65, colour: "cyan" });
+            gradientStops.push({ stop: 0.8, colour: "blue" });
+            gradientStops.push({ stop: 1.0, colour: "purple" });
             dispatch(
                 addSvgPathOverlay({
-                    path: 'M190 10 h 480 v 80 h -480 Z',
+                    path: "M190 10 h 480 v 80 h -480 Z",
                     gradientStops,
                     gradientBoundary: [190, 0, 670, 0],
-                    drawStyle: 'gradient',
+                    drawStyle: "gradient",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addSvgPathOverlay({
-                    path: 'M10 100 v 480 h 80 v -480 Z',
+                    path: "M10 100 v 480 h 80 v -480 Z",
                     gradientStops,
                     gradientBoundary: [0, 100, 0, 580],
-                    drawStyle: 'gradient',
+                    drawStyle: "gradient",
                     uniqueId: uuidv4(),
                 })
             );
@@ -195,7 +195,7 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
                         [0.0, 0.0],
                         [1.0, 1.0],
                     ],
-                    drawStyle: 'stroke',
+                    drawStyle: "stroke",
                     uniqueId: uuidv4(),
                 })
             );
@@ -205,8 +205,8 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
                         [0.4, 0.2],
                         [0.8, 0.6],
                     ],
-                    drawStyle: 'stroke',
-                    strokeStyle: 'red',
+                    drawStyle: "stroke",
+                    strokeStyle: "red",
                     lineWidth: 8,
                     uniqueId: uuidv4(),
                 })
@@ -221,7 +221,7 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
                     ],
                     gradientStops,
                     gradientBoundary: [0.1, 0, 0.3, 0],
-                    drawStyle: 'gradient',
+                    drawStyle: "gradient",
                     uniqueId: uuidv4(),
                 })
             );
@@ -251,11 +251,11 @@ export const MoorhenDevMenu = (props: { dropdownId: string }) => {
     };
 
     const tomogramTest = () => {
-        enqueueSnackbar('tomogram', {
-            variant: 'tomogram',
+        enqueueSnackbar("tomogram", {
+            variant: "tomogram",
             persist: true,
             mapMolNo: 0,
-            anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+            anchorOrigin: { vertical: "bottom", horizontal: "center" },
         });
     };
 

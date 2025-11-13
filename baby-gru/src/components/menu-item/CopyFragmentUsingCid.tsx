@@ -11,7 +11,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const menuItemText = "Copy fragment...";
 
-export const CopyFragmentUsingCid = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const CopyFragmentUsingCid = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidFormRef = useRef<null | HTMLInputElement>(null);
 
@@ -43,7 +43,6 @@ export const CopyFragmentUsingCid = (props: { setPopoverIsShown: React.Dispatch<
             setInvalidCid(false);
             const newMolecule = await molecule.copyFragmentUsingCid(selectedCid, true);
             dispatch(addMolecule(newMolecule));
-            props.setPopoverIsShown(false);
             document.body.click();
             if (selectedCid === residueSelection.cid) {
                 dispatch(clearResidueSelection());

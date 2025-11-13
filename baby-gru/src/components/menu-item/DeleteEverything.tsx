@@ -5,12 +5,10 @@ import { emptyMolecules } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 
-export const DeleteEverything = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const DeleteEverything = () => {
     const dispatch = useDispatch();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
-
-    const menuItemText = "Delete everything";
 
     const onCompleted = () => {
         maps.forEach(map => {

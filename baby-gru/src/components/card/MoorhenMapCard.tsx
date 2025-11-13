@@ -13,13 +13,10 @@ import { convertPxToRem, convertRemToPx } from "../../utils/utils";
 import { doDownload } from "../../utils/utils";
 import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
-import { MoorhenAccordion } from "../interface-base";
+import { MoorhenAccordion, MoorhenMenuItemPopover } from "../interface-base";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenMenuItem } from "../interface-base/MenuItem";
-import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
-import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
-import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap";
-import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight";
+import { DeleteDisplayObject, RenameDisplayObject, ScaleMap, SetMapWeight } from "../menu-item";
 import { MapColourSelector } from "./MapCardResources/MapColourSelector";
 import { MapHistogramAccordion } from "./MapCardResources/MapHistogramAccordion";
 import { MapSettingsAccordion } from "./MapCardResources/MapSettingsAccordion";
@@ -160,8 +157,12 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
             <MoorhenMenuItem onClick={handleCopyMap}>Copy Map</MoorhenMenuItem>
             <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
-            <MoorhenSetMapWeight key="set-map-weight" disabled={!mapIsVisible} map={props.map} />
-            <MoorhenDeleteDisplayObjectMenuItem key="delete-map" item={props.map} />
+            <MoorhenMenuItemPopover disabled={!mapIsVisible} menuItemText="Set Map Weight">
+                <SetMapWeight key="set-map-weight" map={props.map} />
+            </MoorhenMenuItemPopover>
+            <MoorhenMenuItemPopover menuItemText="Delete Map">
+                <DeleteDisplayObject key="delete-map" item={props.map} />
+            </MoorhenMenuItemPopover>
         </div>
     );
 

@@ -27,8 +27,6 @@ const MoorhenDeleteVectorMenuItem = (props: {
         </Form.Group>
     </>
 
-    const onCompleted = useCallback(() => {
-    }, [vectorsList])
 
     return <MoorhenMenuItemPopover
         textClassName="text-danger"
@@ -37,7 +35,6 @@ const MoorhenDeleteVectorMenuItem = (props: {
         popoverPlacement='left'
         popoverContent={panelContent}
         menuItemText={"Delete vector"}
-        onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

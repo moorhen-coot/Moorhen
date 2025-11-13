@@ -8,7 +8,7 @@ import { cidToSpec } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const GoTo = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const GoTo = () => {
     const cidRef = useRef<null | HTMLInputElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 

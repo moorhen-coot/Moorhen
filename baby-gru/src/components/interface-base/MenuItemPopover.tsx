@@ -5,10 +5,11 @@ import { MoorhenMenuItem } from "./MenuItem";
 
 type MoorhenMenuItemPopoverProps = {
     popoverContent?: React.JSX.Element;
+    children?: React.JSX.Element;
     popoverPlacement?: "left" | "right";
     setPopoverIsShown?: React.Dispatch<React.SetStateAction<boolean>>;
     menuItemTitle?: string;
-    showOkButton?: boolean;
+    // showOkButton?: boolean;
     buttonVariant?: string;
     buttonText?: string;
     textClassName?: string;
@@ -16,15 +17,17 @@ type MoorhenMenuItemPopoverProps = {
     menuItemText: string;
     disabled?: boolean;
 };
+
 export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
     const {
         popoverContent = null,
         popoverPlacement = "right",
-        showOkButton = true,
+        //showOkButton = true,
         buttonVariant = "primary",
         buttonText = "OK",
         menuItemText = "...",
         disabled = false,
+        children,
     } = props;
 
     const menuItemRef = useRef<HTMLButtonElement>(null);
@@ -41,12 +44,12 @@ export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
 
     return (
         <MoorhenPopover popoverPlacement={popoverPlacement} isShown={isShown} setIsShown={setIsShown} link={menuItem} linkRef={menuItemRef}>
-            {popoverContent}
-            {showOkButton ? (
+            {children ? children : popoverContent}
+            {/* {showOkButton ? (
                 <Button variant={buttonVariant} onClick={() => {}}>
                     {buttonText}
                 </Button>
-            ) : null}
+            ) : null} */}
         </MoorhenPopover>
     );
 };

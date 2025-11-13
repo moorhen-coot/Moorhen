@@ -50,7 +50,7 @@ export const DedustMap = () => {
     return (
         <>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Apply</MoorhenButton>
         </>
     );
 };

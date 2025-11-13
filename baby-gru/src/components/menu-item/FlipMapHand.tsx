@@ -8,7 +8,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
-export const MoorhenFlipMapHand = () => {
+export const FlipMapHand = () => {
     const dispatch = useDispatch();
 
     const maps = useSelector((state: moorhen.State) => state.maps);

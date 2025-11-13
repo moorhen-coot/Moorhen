@@ -9,10 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 
-export const AutoOpenMtz = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const AutoOpenMtz = () => {
     const filesRef = useRef<null | HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
 

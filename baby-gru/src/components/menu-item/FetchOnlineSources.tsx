@@ -1,19 +1,19 @@
-import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
-import { useState, useRef } from "react";
-import { useSelector, useDispatch, useStore } from "react-redux";
 import { useSnackbar } from "notistack";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenMap } from "../../utils/MoorhenMap";
-import { getMultiColourRuleArgs } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { setActiveMap } from "../../store/generalStatesSlice";
-import { addMolecule } from "../../store/moleculesSlice";
-import { addMap } from "../../store/mapsSlice";
-import { ColourRule } from "../../utils/MoorhenColourRule";
-import { setBusy } from "../../store/globalUISlice";
+import { Button, Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { setActiveMap } from "../../store/generalStatesSlice";
+import { setBusy } from "../../store/globalUISlice";
+import { addMap } from "../../store/mapsSlice";
+import { addMolecule } from "../../store/moleculesSlice";
+import { moorhen } from "../../types/moorhen";
+import { ColourRule } from "../../utils/MoorhenColourRule";
+import { MoorhenMap } from "../../utils/MoorhenMap";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { getMultiColourRuleArgs } from "../../utils/utils";
 
-export const MoorhenFetchOnlineSourcesForm = (props: {
+export const FetchOnlineSources = (props: {
     sources?: string[];
     downloadMaps?: boolean;
     onMoleculeLoad?: (newMolecule: moorhen.Molecule) => any;
@@ -67,7 +67,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             let level: number;
             if (mapInfoResponse.ok) {
                 const data = await mapInfoResponse.json();
-                level = data.map.contour_list.contour.find((item) => item.primary)?.level as number;
+                level = data.map.contour_list.contour.find(item => item.primary)?.level as number;
             }
             const newMap = await fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false, level);
             newMap.centreOnMap();
@@ -92,42 +92,42 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         }
     };
 
-    const fetchFilesFromAFDB = async() => {
+    const fetchFilesFromAFDB = async () => {
         const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase();
 
-        if(!uniprotID) return
+        if (!uniprotID) return;
 
-        const infoUrl = `https://alphafold.ebi.ac.uk/api/prediction/${uniprotID}`
+        const infoUrl = `https://alphafold.ebi.ac.uk/api/prediction/${uniprotID}`;
 
         try {
-            const infoResponse = await fetch(infoUrl)
+            const infoResponse = await fetch(infoUrl);
             if (infoResponse.ok) {
-                const infoJson = await infoResponse.json()
+                const infoJson = await infoResponse.json();
                 //A search might get more than 1 hit.
                 //By default we just pick the first and then look for exact match in loop below.
-                let bestEntry: number = -1
-                if(infoJson.length>0){
-                    bestEntry = 0
-                    for(const modelEntry of infoJson){
-                        if(modelEntry.entryId===`AF-${uniprotID}-F1`){
-                            break
+                let bestEntry: number = -1;
+                if (infoJson.length > 0) {
+                    bestEntry = 0;
+                    for (const modelEntry of infoJson) {
+                        if (modelEntry.entryId === `AF-${uniprotID}-F1`) {
+                            break;
                         }
-                        bestEntry++
+                        bestEntry++;
                     }
-                    if(bestEntry>infoJson.length) bestEntry = 0
-                    const coordUrl = infoJson[bestEntry].pdbUrl
-                    fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true)
+                    if (bestEntry > infoJson.length) bestEntry = 0;
+                    const coordUrl = infoJson[bestEntry].pdbUrl;
+                    fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true);
                 }
             } else {
-                enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, {variant: "error"})
-                console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`)
-                setIsValidPdbId(false)
+                enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+                console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
+                setIsValidPdbId(false);
                 dispatch(setBusy(false));
             }
-        } catch(e) {
-            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, {variant: "error"})
-            console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`)
-            setIsValidPdbId(false)
+        } catch (e) {
+            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+            console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
+            setIsValidPdbId(false);
             dispatch(setBusy(false));
         }
     };
@@ -161,11 +161,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
         }
     };
 
-    const fetchMoleculeFromURL = async (
-        url: RequestInfo | URL,
-        molName: string,
-        isAF2?: boolean
-    ): Promise<moorhen.Molecule> => {
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
@@ -252,7 +248,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             </label>
             <InputGroup>
                 <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                    {sources.map((source) => {
+                    {sources.map(source => {
                         return (
                             <Dropdown.Item
                                 key={source}
@@ -272,7 +268,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                     name="fetch-pdbe-form"
                     id="fetch-pdbe-form"
                     ref={pdbCodeFetchInputRef}
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                         setIsValidPdbId(true);
                         if (e.code === "Enter") {
                             fetchFiles();
@@ -283,9 +279,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                     Fetch
                 </Button>
             </InputGroup>
-            <Form.Label
-                style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}
-            >
+            <Form.Label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching
             </Form.Label>
             {downloadMaps && (

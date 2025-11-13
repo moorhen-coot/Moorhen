@@ -1,5 +1,4 @@
-import { Backdrop, Popover, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import { Spinner } from "react-bootstrap";
+import { Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../../types/moorhen";
@@ -79,13 +78,5 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
         </TableContainer>
     );
 
-    return (
-        <MoorhenMenuItemPopover
-            popoverPlacement="left"
-            popoverContent={panelContent}
-            menuItemText="Map Information..."
-            showOkButton={false}
-            onCompleted={() => {}}
-        />
-    );
+    return <MoorhenMenuItemPopover popoverPlacement="left" popoverContent={panelContent} menuItemText="Map Information..." />;
 };

@@ -30,8 +30,6 @@ export const RandomJiggleBlur = () => {
     const [scaleFactor, setScaleFactor] = useState<number>(3);
     const [cid, setCid] = useState<string>("");
 
-    const menuItemText = "Jiggle Fit with Fourier Filtering...";
-
     useEffect(() => {
         if (molecules.length === 0) {
             setSelectedMolNo(null);

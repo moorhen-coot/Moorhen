@@ -10,7 +10,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const animationRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres"];
 
-export const CalculateTrajectory = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const CalculateTrajectory = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const styleSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -63,4 +63,3 @@ export const CalculateTrajectory = (props: { setPopoverIsShown: React.Dispatch<R
         </>
     );
 };
-("Animate multi-model trajectory...");

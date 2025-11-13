@@ -32,8 +32,6 @@ export const MultiplyBfactor = props => {
 
     const commandCentre = useCommandCentre();
 
-    const menuItemText = "Multiply molecule B-factors...";
-
     const handleModelChange = useCallback(
         (evt: React.ChangeEvent<HTMLSelectElement>) => {
             setSelectedModel(parseInt(evt.target.value));

@@ -16,11 +16,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const ImportFSigF = (props: {
-    selectedMolNo?: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const ImportFSigF = (props: { selectedMolNo?: number }) => {
     const commandCentre = useCommandCentre();
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null);

@@ -2,9 +2,8 @@ import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
 
-export const MoorhenGLFont = () => {
+export const GLFont = () => {
     const dispatch = useDispatch();
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily);
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize);

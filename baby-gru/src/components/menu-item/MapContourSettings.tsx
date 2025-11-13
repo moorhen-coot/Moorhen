@@ -12,7 +12,6 @@ import {
 } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../inputs";
-import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = [];

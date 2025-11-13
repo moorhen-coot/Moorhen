@@ -5,12 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const MergeMolecules = (props: {
-    fromMolNo?: null | number;
-    popoverPlacement?: "left" | "right";
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    menuItemText?: string;
-}) => {
+export const MergeMolecules = (props: { fromMolNo?: null | number; popoverPlacement?: "left" | "right"; menuItemText?: string }) => {
     const toRef = useRef<null | HTMLSelectElement>(null);
     const fromRef = useRef<null | HTMLSelectElement>(null);
 
@@ -28,7 +23,6 @@ export const MergeMolecules = (props: {
             return;
         }
         await toMolecule.mergeMolecules(otherMolecules, true);
-        props.setPopoverIsShown(false);
         dispatch(triggerUpdate(toMolecule.molNo));
     }, [toRef.current, fromRef.current, molecules, props.fromMolNo]);
 

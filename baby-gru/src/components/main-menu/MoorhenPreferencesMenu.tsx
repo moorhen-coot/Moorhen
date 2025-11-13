@@ -8,14 +8,14 @@ import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOu
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import { MoorhenMenuItem } from "../interface-base/MenuItem";
-import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem";
-import { MoorhenGLFontMenuItem } from "../menu-item/MoorhenGLFontMenuItem";
-import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem";
-import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem";
-import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem";
-import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem";
-import { MoorhenViewLayoutPreferencesMenuItem } from "../menu-item/MoorhenViewLayoutPreferencesMenuItem";
+// import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem";
+// import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem";
+// import { MoorhenGLFontMenuItem } from "../menu-item/MoorhenGLFontMenuItem";
+// import { MapContourSettingsMenuItem } from "../menu-item/MoorhenMapContourSettingsMenuItem";
+// import { MoorhenMouseSensitivitySettingsMenuItem } from "../menu-item/MoorhenMouseSensitivitySettingsMenuItem";
+// import { MoorhenRefinementSettingsMenuItem } from "../menu-item/MoorhenRefinementSettingsMenuItem";
+// import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem";
+// import { MoorhenViewLayoutPreferencesMenuItem } from "../menu-item/MoorhenViewLayoutPreferencesMenuItem";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal";
 
 export const MoorhenPreferencesMenu = () => {

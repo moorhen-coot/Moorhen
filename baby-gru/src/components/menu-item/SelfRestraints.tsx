@@ -12,10 +12,7 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const SelfRestraints = (props: {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    popoverPlacement?: "left" | "right";
-}) => {
+export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
@@ -30,8 +27,6 @@ export const SelfRestraints = (props: {
     const [selectedChain, setSelectedChain] = useState<string>("");
     const [maxDist, setMaxDist] = useState<number>(4.5);
     const [cid, setCid] = useState<string>("");
-
-    const menuItemText = "Generate self-restraints...";
 
     const dispatch = useDispatch();
 

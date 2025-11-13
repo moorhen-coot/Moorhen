@@ -7,10 +7,7 @@ import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
-export const AssociateReflectionsToMap = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+export const AssociateReflectionsToMap = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
 
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);

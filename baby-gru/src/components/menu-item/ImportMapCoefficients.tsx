@@ -10,10 +10,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
 import { MoorhenButton } from "../inputs";
 
-export const ImportMapCoefficients = (props: {
-    commandCentre: RefObject<moorhen.CommandCentre>;
-    setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
-}) => {
+export const ImportMapCoefficients = () => {
     const dispatch = useDispatch();
     const store = useStore();
     const commandCentre = useCommandCentre();

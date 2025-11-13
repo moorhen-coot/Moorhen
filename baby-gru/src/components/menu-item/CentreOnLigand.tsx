@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 
-export const MoorhenCentreOnLigand = () => {
+export const CentreOnLigand = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 

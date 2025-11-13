@@ -9,7 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 
-export const ImportMap = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const ImportMap = () => {
     const dispatch = useDispatch();
     const store = useStore();
     const commandCentre = useCommandCentre();
@@ -66,7 +66,6 @@ export const ImportMap = (props: { setPopoverIsShown: React.Dispatch<React.SetSt
                 enqueueSnackbar("Error reading map files", { variant: "error" });
                 console.log(`Cannot read files`);
             } finally {
-                props.setPopoverIsShown(false);
                 document.body.click();
             }
         }

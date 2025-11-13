@@ -216,7 +216,7 @@ const ImportLigandDictionary = (props: {
     );
 };
 
-export const MoorhenSMILESToLigand = () => {
+export const SMILESToLigand = () => {
     const commandCentre = useCommandCentre();
     const [smile, setSmile] = useState<string>("");
     const [tlc, setTlc] = useState<string>("");
@@ -396,7 +396,7 @@ export const MoorhenSMILESToLigand = () => {
     );
 
     return (
-        <MoorhenImportLigandDictionary
+        <ImportLigandDictionary
             id="smiles-to-ligand-menu-item"
             menuItemText="From SMILES..."
             panelContent={panelContent}
@@ -406,7 +406,7 @@ export const MoorhenSMILESToLigand = () => {
     );
 };
 
-export const MoorhenImportDictionary = () => {
+export const ImportDictionary = () => {
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([]);
     const filesRef = useRef<null | HTMLInputElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -516,7 +516,7 @@ export const MoorhenImportDictionary = () => {
     };
 
     return (
-        <MoorhenImportLigandDictionary
+        <ImportLigandDictionary
             id="import-dict-menu-item"
             menuItemText="Import dictionary..."
             panelContent={panelContent}

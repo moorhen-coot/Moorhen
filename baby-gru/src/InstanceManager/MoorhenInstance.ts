@@ -1,6 +1,7 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
+import { SubMenuMap, createSubMenuMap } from "../components/main-menu/SubMenuMap";
 import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
 import { MoorhenMap, MoorhenMolecule } from "../moorhen";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
@@ -30,6 +31,7 @@ export class MoorhenInstance {
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand!: CootCommandWrapper;
+    public subMenuMap: SubMenuMap;
 
     constructor() {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -38,6 +40,7 @@ export class MoorhenInstance {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this.subMenuMap = createSubMenuMap();
     }
 
     public paths: {

@@ -9,7 +9,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const DeleteUsingCid = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const DeleteUsingCid = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidFormRef = useRef<null | HTMLInputElement>(null);
 
@@ -49,7 +49,6 @@ export const DeleteUsingCid = (props: { setPopoverIsShown: React.Dispatch<React.
             } else {
                 dispatch(triggerUpdate(molecule.molNo));
             }
-            props.setPopoverIsShown(false);
             document.body.click();
             if (selectedCid === residueSelection.cid) {
                 dispatch(clearResidueSelection());

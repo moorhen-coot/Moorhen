@@ -4,10 +4,8 @@ import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
 import { readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 
-export const LoadScript = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const LoadScript = () => {
     const filesRef = useRef<null | HTMLInputElement>(null);
-
-    const menuItemText = "Load and execute script...";
 
     const onCompleted = async () => {
         for (const file of filesRef.current.files) {

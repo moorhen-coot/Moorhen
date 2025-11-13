@@ -2,15 +2,9 @@ import { useSnackbar } from "notistack";
 import { Button, Row, Stack } from "react-bootstrap";
 import { useCallback, useRef } from "react";
 import { useCommandAndCapsule } from "../../InstanceManager";
-import { moorhen } from "../../types/moorhen";
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect";
 
-export const Backups = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    disabled: boolean;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    loadSession: (sessionDataString: string) => Promise<void>;
-}) => {
+export const Backups = (props: { disabled: boolean; loadSession: (sessionDataString: string) => Promise<void> }) => {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null);
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -30,7 +24,7 @@ export const Backups = (props: {
         }
 
         document.body.click();
-    }, [props.setPopoverIsShown, props.loadSession, timeCapsuleRef]);
+    }, [props.loadSession, timeCapsuleRef]);
 
     return (
         <>
