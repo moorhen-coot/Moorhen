@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
-import { MoorhenBaseMenuItem } from "../../menu-item/MoorhenBaseMenuItem";
+import { MoorhenMenuItemPopover } from "../../interface-base/MenuItemPopover";
 
 export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean }) => {
     const [cell, setCell] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
     );
 
     return (
-        <MoorhenBaseMenuItem
+        <MoorhenMenuItemPopover
             popoverPlacement="left"
             popoverContent={panelContent}
             menuItemText="Map Information..."

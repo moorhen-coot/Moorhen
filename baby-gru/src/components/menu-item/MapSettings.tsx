@@ -1,0 +1,53 @@
+import { Form } from "react-bootstrap";
+import { useDispatch } from "react-redux";
+import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenSlider } from "../inputs";
+
+export const MapSettings = (props: {
+    map: moorhen.Map;
+    mapStyle: "solid" | "lit-lines" | "lines";
+    mapOpacity: number;
+    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+    disabled: boolean;
+}) => {
+    const dispatch = useDispatch();
+
+    const menuItemText = "Draw settings";
+
+    return (
+        <>
+            {props.mapStyle !== "lit-lines" && (
+                <Form.Check
+                    type="switch"
+                    checked={props.mapStyle === "solid"}
+                    onChange={() => {
+                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "solid" ? "lines" : "solid" }));
+                    }}
+                    label="Draw as a surface"
+                />
+            )}
+            {props.mapStyle !== "solid" && (
+                <Form.Check
+                    type="switch"
+                    checked={props.mapStyle === "lit-lines"}
+                    onChange={() => {
+                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" }));
+                    }}
+                    label="Activate lit lines"
+                />
+            )}
+            <Form.Group style={{ width: "100%", margin: "0.1rem" }} controlId="MoorhenMapOpacitySlider">
+                <MoorhenSlider
+                    minVal={0.0}
+                    maxVal={1.0}
+                    decimalPlaces={2}
+                    logScale={false}
+                    sliderTitle="Opacity"
+                    externalValue={props.mapOpacity}
+                    setExternalValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
+                />
+            </Form.Group>
+        </>
+    );
+};

@@ -2,7 +2,7 @@ import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import "./moorhen-button.css";
 
 type MoorhenButtonPropsType = {
-    type?: "icon-only";
+    type?: "icon-only" | "default";
     label?: string;
     onClick?: () => void;
     onMouseDown?: () => void | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
@@ -14,10 +14,11 @@ type MoorhenButtonPropsType = {
     ref?: React.Ref<HTMLButtonElement>;
     style?: React.CSSProperties;
     className?: string;
+    children?: React.ReactNode;
 };
 export const MoorhenButton = (props: MoorhenButtonPropsType) => {
     const {
-        type = "icon-only",
+        type = "default",
         label,
         onClick,
         onMouseDown,
@@ -29,6 +30,7 @@ export const MoorhenButton = (props: MoorhenButtonPropsType) => {
         ref,
         className = "",
         style = {},
+        children,
     } = props;
 
     return (
@@ -44,6 +46,7 @@ export const MoorhenButton = (props: MoorhenButtonPropsType) => {
         >
             {icon && <MoorhenIcon name={icon} size={size} isActive={!disabled} style={{ ...style }} />}
             {label}
+            {children}
         </button>
     );
 };

@@ -58,7 +58,7 @@ export class MoorhenInstance {
         return this.commandCentre;
     }
 
-    public getCommandCentreRef(): React.RefObject<CommandCentre | null> {
+    public getCommandCentreRef(): React.RefObject<CommandCentre> {
         return this.commandCentreRef;
     }
 
@@ -71,7 +71,7 @@ export class MoorhenInstance {
         return this.timeCapsule;
     }
 
-    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule | null> {
+    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule> {
         return this.timeCapsuleRef;
     }
 
@@ -84,7 +84,7 @@ export class MoorhenInstance {
         return this.videoRecorder;
     }
 
-    public getVideoRecorderRef(): React.RefObject<ScreenRecorder | null> {
+    public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
         return this.videoRecorderRef;
     }
 

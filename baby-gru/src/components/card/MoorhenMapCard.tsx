@@ -15,7 +15,7 @@ import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../inp
 import { MoorhenButton } from "../inputs";
 import { MoorhenAccordion } from "../interface-base";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem";
 import { MoorhenScaleMap } from "../menu-item/MoorhenScaleMap";

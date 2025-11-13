@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
-import { RootState } from "../../store/MoorhenReduxStore";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
 
 export const MoorhenValidationMenu = () => {
     const dispatch = useDispatch();

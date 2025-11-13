@@ -1,20 +1,20 @@
-import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
+import { useState } from "react";
+import { showModal } from "../../store/modalsSlice";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
+import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem";
+import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
+import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem";
 import { MoorhenCopyFragmentUsingCidMenuItem } from "../menu-item/MoorhenCopyFragmentUsingCidMenuItem";
+import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem";
 import { MoorhenDeleteUsingCidMenuItem } from "../menu-item/MoorhenDeleteUsingCidMenuItem";
 import { MoorhenGoToMenuItem } from "../menu-item/MoorhenGoToMenuItem";
 import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem";
-import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem";
-import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem";
 import { MoorhenMoveMoleculeHere } from "../menu-item/MoorhenMoveMoleculeHere";
-import { MoorhenChangeChainIdMenuItem } from "../menu-item/MoorhenChangeChainIdMenuItem";
 import { MoorhenSetOccupancyMenuItem } from "../menu-item/MoorhenSetOccupancyMenuItem";
-import { MoorhenCreateSelectionMenuItem } from "../menu-item/MoorhenCreateSelectionMenuItem";
 import { MoorhenSplitModelsMenuItem } from "../menu-item/MoorhenSplitModelsMenuItem";
-import { moorhen } from "../../types/moorhen";
-import { showModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
 
 export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] }) => {
     const [, setPopoverIsShown] = useState(false);
@@ -48,7 +48,7 @@ export const MoorhenEditMenu = (props: { extraEditMenuItems?: React.ReactNode[] 
                     Create covalent link between two atoms...
                 </MoorhenMenuItem>
             )}
-            {props.extraEditMenuItems && props.extraEditMenuItems.map((menu) => menu)}
+            {props.extraEditMenuItems && props.extraEditMenuItems.map(menu => menu)}
         </>
     );
 };

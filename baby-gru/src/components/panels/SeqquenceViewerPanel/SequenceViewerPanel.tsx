@@ -1,20 +1,20 @@
-import { useSnackbar } from 'notistack';
-import { useDispatch, useSelector } from 'react-redux';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RootState } from '../../../store/MoorhenReduxStore';
-import { setShowBottomPanel } from '../../../store/globalUISlice';
-import { setHoveredAtom } from '../../../store/hoveringStatesSlice';
-import type { MoorhenMolecule } from '../../../utils/MoorhenMolecule';
-import { convertRemToPx } from '../../../utils/utils';
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from '../../inputs';
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../../sequence-viewer';
+import { useSnackbar } from "notistack";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { RootState } from "../../../store/MoorhenReduxStore";
+import { setShowBottomPanel } from "../../../store/globalUISlice";
+import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
+import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
+import { convertRemToPx } from "../../../utils/utils";
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from "../../inputs";
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../../sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
     handleResiduesSelection,
     useHoveredResidue,
-} from '../../sequence-viewer/utils';
-import './sequence-viewer-panel.css';
+} from "../../sequence-viewer/utils";
+import "./sequence-viewer-panel.css";
 
 export const SequenceViewerPanel = () => {
     const dispatch = useDispatch();
@@ -120,11 +120,11 @@ export const SequenceViewerPanel = () => {
                 className={`moorhen__bottom-panel-tab ${
                     bottomPanelIsShown
                         ? expand
-                            ? 'moorhen__bottom-panel-tab-panel-is-expanded'
-                            : ''
-                        : 'moorhen__bottom-panel-tab-panel-is-hidden'
+                            ? "moorhen__bottom-panel-tab-panel-is-expanded"
+                            : ""
+                        : "moorhen__bottom-panel-tab-panel-is-hidden"
                 }`}
-                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : '76px' }}
+                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
             >
                 {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
                 <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
@@ -134,7 +134,7 @@ export const SequenceViewerPanel = () => {
                     (sequenceList.length > 1 ? (
                         <MoorhenButton
                             type="icon-only"
-                            icon={expand ? 'MUISymbolDoubleArrowDown' : 'MUISymbolDoubleArrowUp'}
+                            icon={expand ? "MUISymbolDoubleArrowDown" : "MUISymbolDoubleArrowUp"}
                             size="small"
                             onClick={handleExpand}
                         />
@@ -143,8 +143,8 @@ export const SequenceViewerPanel = () => {
                     ))}
             </div>
             <div
-                className={`moorhen__bottom-panel-container ${bottomPanelIsShown ? '' : 'moorhen__bottom-panel-tab-panel-is-hidden'}`}
-                style={expand ? { height: expand ? `${displaySize}px` : '76px' } : {}}
+                className={`moorhen__bottom-panel-container ${bottomPanelIsShown ? "" : "moorhen__bottom-panel-tab-panel-is-hidden"}`}
+                style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
             >
                 <MoorhenSequenceViewer
                     key={seqViewerKey}

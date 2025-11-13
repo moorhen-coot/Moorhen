@@ -8,7 +8,7 @@ import { modalKeys } from "../../utils/enums"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import {v4 as uuidv4} from 'uuid';
 import { addVector, removeVector } from "../../store/vectorsSlice"
-import { MoorhenBaseMenuItem } from "../menu-item/MoorhenBaseMenuItem";
+import { MoorhenMenuItemPopover } from "../interface-base/MenuItemPopover";
 import { MoorhenColourPicker } from "../inputs";
 import type { MoorhenVector, VectorsCoordMode, VectorsDrawMode, VectorsArrowMode, VectorsLabelMode } from "../../store/vectorsSlice";
 
@@ -30,7 +30,7 @@ const MoorhenDeleteVectorMenuItem = (props: {
     const onCompleted = useCallback(() => {
     }, [vectorsList])
 
-    return <MoorhenBaseMenuItem
+    return <MoorhenMenuItemPopover
         textClassName="text-danger"
         buttonVariant="danger"
         buttonText="Delete"

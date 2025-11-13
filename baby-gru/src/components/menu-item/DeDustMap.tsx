@@ -1,14 +1,14 @@
-import { batch, useDispatch, useSelector, useStore } from 'react-redux';
-import { useRef } from 'react';
-import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
-import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from '../../store/mapContourSettingsSlice';
-import { addMap } from '../../store/mapsSlice';
-import { moorhen } from '../../types/moorhen';
-import { MoorhenMap } from '../../utils/MoorhenMap';
-import { MoorhenMapSelect } from '../select/MoorhenMapSelect';
-import { MoorhenBaseMenuItem } from './MoorhenBaseMenuItem';
+import { batch, useDispatch, useSelector, useStore } from "react-redux";
+import { useRef } from "react";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
+import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { addMap } from "../../store/mapsSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenMap } from "../../utils/MoorhenMap";
+import { MoorhenButton } from "../inputs";
+import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
-export const MoorhenDedustMapMenuItem = () => {
+export const DedustMap = () => {
     const dispatch = useDispatch();
 
     const maps = useSelector((state: moorhen.State) => state.maps);
@@ -48,11 +48,9 @@ export const MoorhenDedustMapMenuItem = () => {
     };
 
     return (
-        <MoorhenBaseMenuItem
-            id="dedustmap"
-            popoverContent={<MoorhenMapSelect maps={maps} ref={selectRef} />}
-            menuItemText="Dedust  Map..."
-            onCompleted={onCompleted}
-        />
+        <>
+            <MoorhenMapSelect maps={maps} ref={selectRef} />
+            <MoorhenButton onClick={onCompleted} />
+        </>
     );
 };

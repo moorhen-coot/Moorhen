@@ -1,10 +1,10 @@
-import { useDispatch } from 'react-redux';
-import { showModal } from '../../store/modalsSlice';
-import { modalKeys } from '../../utils/enums';
-import { MoorhenMenuItem } from '../menu-item/MenuItem';
-import { MoorhenLayoutSettings } from '../menu-item/MoorhenLayoutSettings';
-import { MoorhenOtherSceneSettings } from '../menu-item/MoorhenOtherSceneSettings';
-import { MoorhenScenePresetMenuItem } from '../menu-item/MoorhenScenePresetMenuItem';
+import { useDispatch } from "react-redux";
+import { showModal } from "../../store/modalsSlice";
+import { modalKeys } from "../../utils/enums";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
+import { MoorhenLayoutSettings } from "../menu-item/MoorhenLayoutSettings";
+import { MoorhenOtherSceneSettings } from "../menu-item/MoorhenOtherSceneSettings";
+import { MoorhenScenePresetMenuItem } from "../menu-item/MoorhenScenePresetMenuItem";
 
 export const MoorhenViewMenu = () => {
     const dispatch = useDispatch();

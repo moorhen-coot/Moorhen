@@ -1,18 +1,27 @@
-import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
-import { MoorhenMenuItem } from "../menu-item/MenuItem";
-import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
-import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
-import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
+import { JSX, useState } from "react";
+import { showModal } from "../../store/modalsSlice";
+import { moorhen } from "../../types/moorhen";
+import { modalKeys } from "../../utils/enums";
+import { MoorhenMenuItem } from "../interface-base/MenuItem";
 import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem";
+import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem";
+import { MoorhenClearSelfRestraintsMenuItem } from "../menu-item/MoorhenClearSelfRestraintsMenuItem";
+import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
+import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfactorMenuItem";
+import { MoorhenRandomJiggleBlurMenuItem } from "../menu-item/MoorhenRandomJiggleBlurMenuItem";
+import { MoorhenSelfRestraintsMenuItem } from "../menu-item/MoorhenSelfRestraintsMenuItem";
 //import { MoorhenStepRefinementMenuItem } from "../menu-item/MoorhenStepRefinementMenuItem"
 import { MoorhenShiftFieldBFactorRefinement } from "../menu-item/MoorhenShiftFieldBFactorRefinement";
-import { MoorhenMultiplyBfactorMenuItem } from "../menu-item/MoorhenMultiplyBfactorMenuItem";
-import { MoorhenCalculateTrajectoryMenuItem } from "../menu-item/MoorhenCalculateTrajectoryMenuItem";
-import { showModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
-import { moorhen } from "../../types/moorhen";
+
+export type MenuItem = {
+    label: string;
+    content: React.JSX.Element;
+};
+
+export type MenuMap = {
+    [key: number]: MenuItem;
+};
 
 export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.ReactElement[] }) => {
     const [, setPopoverIsShown] = useState<boolean>(false);
@@ -60,7 +69,7 @@ export const MoorhenCalculateMenu = (props: { extraCalculateMenuItems?: React.Re
                     </MoorhenMenuItem>
                 </>
             )}
-            {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map((menu) => menu)}
+            {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map(menu => menu)}
         </>
     );
 };
