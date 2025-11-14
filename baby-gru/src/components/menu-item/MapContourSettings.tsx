@@ -30,7 +30,7 @@ const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = fa
 
 const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100];
 
-export const MapContourSettings = (props: { popoverPlacement?: "left" | "right" }) => {
+export const MapContourSettings = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth);

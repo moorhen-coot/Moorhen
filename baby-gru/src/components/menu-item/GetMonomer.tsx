@@ -52,7 +52,7 @@ const CompoundAutoCompleteOption = (props: {
     );
 };
 
-export const GetMonomer = (props: { popoverPlacement?: "left" | "right" }) => {
+export const GetMonomer = () => {
     const store = useStore();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;

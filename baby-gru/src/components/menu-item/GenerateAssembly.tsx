@@ -1,7 +1,7 @@
-import { Button, Form, FormSelect } from "react-bootstrap";
+import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 

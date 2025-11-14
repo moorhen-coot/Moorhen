@@ -10,7 +10,7 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const SetOccupancy = props => {
+export const SetOccupancy = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidFormRef = useRef<null | HTMLInputElement>(null);
     const ruleSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -92,7 +92,6 @@ export const SetOccupancy = props => {
                 false
             );
             dispatch(triggerUpdate(selectedMolecule.molNo));
-            props.setPopoverIsShown(false);
             selectedMolecule.setAtomsDirty(true);
             await selectedMolecule.redraw();
             dispatch(triggerRedrawEnv(true));
@@ -125,7 +124,7 @@ export const SetOccupancy = props => {
                     ref={cidFormRef}
                     label="Atom selection"
                     margin="0.5rem"
-                    defaultValue={props.initialCid}
+                    // defaultValue={props.initialCid}
                     onChange={evt => setCid(evt.target.value)}
                     invalidCid={invalidCid}
                     allowUseCurrentSelection={true}

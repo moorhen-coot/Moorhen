@@ -5,7 +5,7 @@ import { moorhensession } from "../../protobuf/MoorhenSession";
 import { RootState } from "../../store/MoorhenReduxStore";
 import type { backupKey } from "../../utils/MoorhenTimeCapsule";
 import { doDownload, guid, readDataFile } from "../../utils/utils";
-import { MoorhenMenuItem } from "../interface-base";
+import { MoorhenMenuItem, MoorhenMenuItemPopover } from "../interface-base";
 import { Backups } from "./Backups";
 
 export const ManageSession = () => {
@@ -98,7 +98,6 @@ export const ManageSession = () => {
     };
     return (
         <>
-            <hr></hr>
             <label htmlFor="session-file-input" className="moorhen__input__label-menu">
                 Load from stored session
             </label>
@@ -113,11 +112,12 @@ export const ManageSession = () => {
             <MoorhenMenuItem id="download-session-menu-item" onClick={getSession}>
                 Download session
             </MoorhenMenuItem>
-            <hr></hr>
             <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
                 Save backup
             </MoorhenMenuItem>
-            <Backups disabled={!enableTimeCapsule} loadSession={loadSession} />
+            <MoorhenMenuItemPopover menuItemText="Load Backup">
+                <Backups disabled={!enableTimeCapsule} loadSession={loadSession} />
+            </MoorhenMenuItemPopover>
         </>
     );
 };

@@ -1,9 +1,9 @@
-@import '../../colors.css';
+@import "../../colors.css";
 /* General styles for the inputs */
 .moorhen__input,
 .moorhen__input-files-upload {
     display: block;
-    width: 100%;
+    width: 26rem;
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
     font-weight: 400;
@@ -60,7 +60,8 @@
     align-items: center;
     cursor: pointer;
     padding: 0;
-    height: 4rem;
+    height: 2.5rem;
+    margin-left: 0.8rem;
 }
 
 .moorhen__input-files-upload::file-selector-button {
@@ -69,6 +70,7 @@
     border: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-button-background);
     color: var(--moorhen-secondary);
+    height: 2.5rem;
 }
 
 .moorhen__input-files-upload:hover {

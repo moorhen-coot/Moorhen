@@ -12,7 +12,7 @@ import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const MultiplyBfactor = props => {
+export const MultiplyBfactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidFormRef = useRef<null | HTMLInputElement>(null);
@@ -121,7 +121,6 @@ export const MultiplyBfactor = props => {
                 false
             );
             dispatch(triggerUpdate(selectedMolecule.molNo));
-            props.setPopoverIsShown(false);
             selectedMolecule.setAtomsDirty(true);
             await selectedMolecule.redraw();
             dispatch(triggerRedrawEnv(true));
@@ -168,7 +167,7 @@ export const MultiplyBfactor = props => {
                     ref={cidFormRef}
                     label="Atom selection"
                     margin="0.5rem"
-                    defaultValue={props.initialCid}
+                    // defaultValue={props.initialCid}
                     onChange={evt => setCid(evt.target.value)}
                     invalidCid={invalidCid}
                     allowUseCurrentSelection={true}

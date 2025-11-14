@@ -125,7 +125,9 @@ const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<bool
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
         />
-    ) : null;
+    ) : (
+        <div>Window.coot not detected</div>
+    );
 };
 
 export const MoorhenLhasaModal = () => {

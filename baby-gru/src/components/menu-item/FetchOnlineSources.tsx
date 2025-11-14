@@ -13,17 +13,13 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 
-export const FetchOnlineSources = (props: {
-    sources?: string[];
-    downloadMaps?: boolean;
-    onMoleculeLoad?: (newMolecule: moorhen.Molecule) => any;
-}) => {
+export const FetchOnlineSources = () => {
     const defaultProps = {
         sources: ["PDBe", "PDB-REDO", "AFDB", "EMDB"],
         downloadMaps: true,
     };
 
-    const { sources, downloadMaps } = { ...defaultProps, ...props };
+    const { sources, downloadMaps } = { ...defaultProps };
 
     const store = useStore();
     const commandCentre = useCommandCentre();
@@ -180,7 +176,7 @@ export const FetchOnlineSources = (props: {
             await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? "CRs" : "CBs");
             await newMolecule.centreOn("/*/*/*/*", true);
             dispatch(addMolecule(newMolecule));
-            props.onMoleculeLoad?.(newMolecule);
+            // props.onMoleculeLoad?.(newMolecule);
             return newMolecule;
         } catch (err) {
             enqueueSnackbar("Failed to read molecule", { variant: "error" });
@@ -246,50 +242,48 @@ export const FetchOnlineSources = (props: {
             <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
                 Fetch from online services
             </label>
-            <InputGroup>
-                <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                    {sources.map(source => {
-                        return (
-                            <Dropdown.Item
-                                key={source}
-                                href="#"
-                                onClick={() => {
-                                    setRemoteSource(source);
-                                }}
-                            >
-                                {source}
-                            </Dropdown.Item>
-                        );
-                    })}
-                </SplitButton>
-                <Form.Control
-                    type="text"
-                    style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
-                    name="fetch-pdbe-form"
-                    id="fetch-pdbe-form"
-                    ref={pdbCodeFetchInputRef}
-                    onKeyDown={e => {
-                        setIsValidPdbId(true);
-                        if (e.code === "Enter") {
-                            fetchFiles();
-                        }
-                    }}
-                />
-                <Button variant="light" onClick={fetchFiles}>
-                    Fetch
-                </Button>
-            </InputGroup>
+            <div style={{ marginLeft: "0.8rem", width: "26rem", border: "1px solid var(--moorhen-border)", borderRadius: "0.4rem" }}>
+                <InputGroup>
+                    <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
+                        {sources.map(source => {
+                            return (
+                                <Dropdown.Item
+                                    key={source}
+                                    href="#"
+                                    onClick={() => {
+                                        setRemoteSource(source);
+                                    }}
+                                >
+                                    {source}
+                                </Dropdown.Item>
+                            );
+                        })}
+                    </SplitButton>
+                    <Form.Control
+                        type="text"
+                        style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
+                        name="fetch-pdbe-form"
+                        id="fetch-pdbe-form"
+                        ref={pdbCodeFetchInputRef}
+                        onKeyDown={e => {
+                            setIsValidPdbId(true);
+                            if (e.code === "Enter") {
+                                fetchFiles();
+                            }
+                        }}
+                    />
+                    <Button variant="light" onClick={fetchFiles}>
+                        Fetch
+                    </Button>
+                </InputGroup>
+            </div>
             <Form.Label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching
             </Form.Label>
             {downloadMaps && (
-                <Form.Check
-                    style={{ marginTop: "0.5rem" }}
-                    ref={fetchMapDataCheckRef}
-                    label={"fetch data for map"}
-                    name={`fetchMapData`}
-                    type="checkbox"
-                />
+                <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
+                    <Form.Check ref={fetchMapDataCheckRef} label="fetch data for map" name="fetchMapData" type="checkbox" inline />
+                </div>
             )}
         </>
     );

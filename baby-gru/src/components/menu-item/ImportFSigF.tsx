@@ -16,7 +16,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const ImportFSigF = (props: { selectedMolNo?: number }) => {
+export const ImportFSigF = () => {
     const commandCentre = useCommandCentre();
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -35,7 +35,8 @@ export const ImportFSigF = (props: { selectedMolNo?: number }) => {
 
     const connectMap = async () => {
         const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
-            props.selectedMolNo !== undefined ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
+            // props.selectedMolNo !== undefined ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
+            parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
@@ -129,17 +130,11 @@ export const ImportFSigF = (props: { selectedMolNo?: number }) => {
                 <Col key="Col2">
                     <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={map => map.isDifference} width="100%" />
                 </Col>
-                {props.selectedMolNo === undefined && (
-                    <Col key="Col3">
-                        <MoorhenMoleculeSelect
-                            molecules={molecules}
-                            ref={moleculeSelectRef}
-                            label="Molecule"
-                            allowAny={false}
-                            width="100%"
-                        />
-                    </Col>
-                )}
+                {/* {props.selectedMolNo === undefined && ( */}
+                <Col key="Col3">
+                    <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} label="Molecule" allowAny={false} width="100%" />
+                </Col>
+                {/* )} */}
             </Row>
             <MoorhenButton onClick={onCompleted} />
         </>

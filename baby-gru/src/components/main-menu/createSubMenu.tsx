@@ -1,3 +1,6 @@
+import { MenuItem } from "@mui/material";
+import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
+import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
@@ -6,27 +9,27 @@ import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interf
 import type { SubMenu, SubMenuMap, SubMenus } from "./SubMenuMap";
 
 export function menuFromMap(menuMap: SubMenuMap, selectedMenu: SubMenus): React.JSX.Element {
-    console.log("exec menu from map");
     const dispatch = useDispatch();
     const isDev = useSelector((state: RootState) => state.generalStates.devMode);
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
 
     const subMenuMap: SubMenu = menuMap[selectedMenu];
+    let key = 0;
 
     const menuItemList = subMenuMap.items.map(menuItem => {
-        if (menuItem.specialType === "upload" && disableFileUploads) {
+        if ("specialType" in menuItem && menuItem.specialType === "upload" && disableFileUploads) {
             return;
         }
-        if (menuItem.specialType === "script" && !allowScripting) {
+        if ("specialType" in menuItem && menuItem.specialType === "script" && !allowScripting) {
             return;
         }
 
-        if (!menuItem.devOnly || (menuItem.devOnly && isDev)) {
+        if (!("devOnly" in menuItem) || !menuItem.devOnly || (menuItem.devOnly && isDev)) {
             if (menuItem.type === "popover") {
                 return (
                     <MoorhenMenuItemPopover key={menuItem.label} menuItemText={menuItem.label}>
-                        {menuItem.content}
+                        <menuItem.content />
                     </MoorhenMenuItemPopover>
                 );
             } else if (menuItem.type === "item") {
@@ -48,9 +51,31 @@ export function menuFromMap(menuMap: SubMenuMap, selectedMenu: SubMenus): React.
                     </MoorhenMenuItem>
                 );
             } else if (menuItem.type === "customJSX") {
-                return menuItem.jsx;
+                return <menuItem.jsx key={menuItem.label} />;
+            } else if (menuItem.type === "preferenceSwitch") {
+                return (
+                    <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} key={menuItem.label} />
+                );
+            } else if (menuItem.type === "separator") {
+                key += 1;
+                return <hr key={key}></hr>;
             }
         }
     });
     return <MoorhenStack direction="column">{menuItemList}</MoorhenStack>;
 }
+
+const PreferenceChecker = (props: {
+    selector: (state: RootState) => boolean;
+    action: ActionCreatorWithOptionalPayload<boolean>;
+    label: string;
+}) => {
+    const checked = useSelector(props.selector);
+    const dispatch = useDispatch();
+
+    return (
+        <InputGroup className="moorhen-input-group-check">
+            <Form.Check type="switch" checked={checked} onChange={() => dispatch(props.action(!checked))} label={props.label} />
+        </InputGroup>
+    );
+};

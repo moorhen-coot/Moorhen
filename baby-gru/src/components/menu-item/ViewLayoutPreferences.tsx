@@ -79,7 +79,7 @@ export function Grid({ children, columns }: { children: React.ReactNode; columns
     );
 }
 
-export const ViewLayoutPreferences = (props: { popoverPlacement?: "left" | "right" }) => {
+export const ViewLayoutPreferences = () => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const imageRefMolDimer = useRef<null | HTMLImageElement>(null);

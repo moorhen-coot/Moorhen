@@ -1,8 +1,9 @@
 import { useMoorhenInstance } from "../../InstanceManager";
+import { createSubMenuMap } from "./SubMenuMap";
 import { menuFromMap } from "./createSubMenu";
 
 export const CalculateMenu = (props: { extraCalculateMenuItems?: React.ReactElement[] }) => {
-    const subMenuMap = useMoorhenInstance().subMenuMap;
+    const subMenuMap = createSubMenuMap();
     const calculateMenu = menuFromMap(subMenuMap, "calculate");
 
     return (
@@ -14,7 +15,7 @@ export const CalculateMenu = (props: { extraCalculateMenuItems?: React.ReactElem
 };
 
 export const EditMenu = (props: { extraEditMenuItems?: React.ReactNode[] }) => {
-    const subMenuMap = useMoorhenInstance().subMenuMap;
+    const subMenuMap = createSubMenuMap();
     const editMenu = menuFromMap(subMenuMap, "edit");
 
     return (
@@ -63,4 +64,11 @@ export const FileMenu = () => {
     const fileMenu = menuFromMap(subMenuMap, "file");
 
     return <>{fileMenu}</>;
+};
+
+export const PreferencesMenu = () => {
+    const subMenuMap = useMoorhenInstance().subMenuMap;
+    const preferencesMenu = menuFromMap(subMenuMap, "preferences");
+
+    return <>{preferencesMenu}</>;
 };

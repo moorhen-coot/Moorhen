@@ -40,7 +40,6 @@ export class MoorhenInstance {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
-        this.subMenuMap = createSubMenuMap();
     }
 
     public paths: {
@@ -190,6 +189,11 @@ export class MoorhenInstance {
     }
 
     public cleanup(): void {
-        this.commandCentre.close();
+        if (this.commandCentre) {
+            this.commandCentre.close();
+            this.commandCentre = undefined;
+            this.timeCapsule = undefined;
+            this.videoRecorder = undefined;
+        }
     }
 }

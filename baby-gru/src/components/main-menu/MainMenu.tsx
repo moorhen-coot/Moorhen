@@ -5,8 +5,9 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { ModalKey, showModal } from "../../store/modalsSlice";
 import { convertRemToPx } from "../../utils/utils";
 import { MoorhenIcon } from "../icons";
+import { createSubMenuMap } from "./SubMenuMap";
 import "./main-menu.css";
-import { MAIN_MENU_CONFIG } from "./mainMenuConfig";
+import { createMainMenu } from "./mainMenuConfig";
 
 export type ExtraNavBarMenus = {
     icon: React.JSX.Element;
@@ -35,16 +36,16 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         setIsOpen(prev => !prev);
     };
     const handleClickAway = event => {
-        console.log("click away from menu: ", event);
         if ((event.target as HTMLElement).closest(".moorhen__main-menu-buttons-container")) return;
-
         setActiveMenu(null);
     };
+
+    const main_menu_config = useMemo(() => createMainMenu(), [createMainMenu]);
 
     const subMenu = useMemo(() => {
         if (!activeMenu || !isOpen) return null;
 
-        const menuEntry = Object.values(MAIN_MENU_CONFIG).find(m => m.label === activeMenu);
+        const menuEntry = Object.values(main_menu_config).find(m => m.label === activeMenu);
 
         if (menuEntry) {
             const style = menuEntry.align ? { top: `${menuEntry.align * 1.5}rem` } : {};
@@ -93,7 +94,7 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
             setActiveMenu(current => (current === label ? null : label));
         };
 
-        const buttonsList = Object.entries(MAIN_MENU_CONFIG).map(([key, menu]) => {
+        const buttonsList = Object.entries(main_menu_config).map(([key, menu]) => {
             if (menu.label === "Dev tools" && !isDevMode) {
                 return null;
             }
@@ -123,25 +124,27 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
     }, [isOpen, props.extraNavBarMenus, isDevMode]);
 
     const menuLength =
-        Object.keys(MAIN_MENU_CONFIG).length - (!isDevMode ? 1 : 0) + (props.extraNavBarMenus ? props.extraNavBarMenus.length : 0);
+        Object.keys(main_menu_config).length - (!isDevMode ? 1 : 0) + (props.extraNavBarMenus ? props.extraNavBarMenus.length : 0);
     console.log(menuLength);
     const containerHeight = isOpen ? `${Math.min(convertRemToPx(4.5 + menuLength * 3.3), GLViewportHeight - 10)}px` : "4.5rem";
     const containerWidth = activeMenu === null ? "12rem" : "40rem";
 
     return (
-        <div className="moorhen__main-menu" style={{ width: containerWidth, height: containerHeight }}>
-            <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
-                {isOpen ? (
-                    <MoorhenIcon name={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
-                ) : (
-                    <MoorhenIcon name={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
-                )}
-                &nbsp;&nbsp;
-                <MoorhenIcon name={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
-            </button>
-            <div className="moorhen__main-menu-container">
-                {menu}
-                {subMenu ? <ClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</ClickAwayListener> : null}
+        <div className="moorhen__main-menu-scroll" style={{ width: containerWidth, height: containerHeight }}>
+            <div className="moorhen__main-menu" style={{ width: containerWidth, height: containerHeight }}>
+                <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
+                    {isOpen ? (
+                        <MoorhenIcon name={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
+                    ) : (
+                        <MoorhenIcon name={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
+                    )}
+                    &nbsp;&nbsp;
+                    <MoorhenIcon name={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
+                </button>
+                <div className="moorhen__main-menu-container">
+                    {menu}
+                    {subMenu ? <ClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</ClickAwayListener> : null}
+                </div>
             </div>
         </div>
     );

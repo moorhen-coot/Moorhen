@@ -1,9 +1,8 @@
 /* Main entry point */
 // @ts-strict
-import { MoorhenHelper } from "./Wrappers/MoorhenHelper";
 import "./app.css";
 
-customElements.define("moorhen-helper", MoorhenHelper);
+// customElements.define("moorhen-helper", MoorhenHelper);
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";

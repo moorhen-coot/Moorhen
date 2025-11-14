@@ -5,7 +5,7 @@ import { setDefaultBondSmoothness } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 
-export const DefaultBondSmoothnessPreferences = (props: { popoverPlacement?: "left" | "right" }) => {
+export const DefaultBondSmoothnessPreferences = () => {
     const dispatch = useDispatch();
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);

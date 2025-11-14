@@ -63,3 +63,4 @@ export { AutoLoadFiles } from "./AutoLoadFiles";
 export { ManageSession } from "./ManageSession";
 export { RecordVideo } from "./RecordVideo";
 export { ExportGltf } from "./ExportGltf";
+export { ShowShortcutModal } from "./ShowShortcutModal";

@@ -2,17 +2,14 @@ import { modalKeys } from "../../utils/enums";
 import { MoorhenIcon } from "../icons";
 import { MoorhenHistoryMenu } from "./HistoryMenu";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
-import { MoorhenPreferencesMenu } from "./MoorhenPreferencesMenu";
 import {
     CalculateMenu,
     EditMenu,
-    // DevMenu,
     FileMenu,
     HelpMenu,
-    // HistoryMenu,
     LigandMenu,
     MapToolsMenu,
-    // PreferencesMenu,
+    PreferencesMenu,
     ValidationMenu,
     ViewMenu,
 } from "./SubMenus";
@@ -30,7 +27,7 @@ export type MenuMap = {
     [key: number]: MenuEntry;
 };
 
-export const MAIN_MENU_CONFIG: MenuMap = {
+export const createMainMenu = (): MenuMap => ({
     1: {
         label: "File",
         icon: <MoorhenIcon name={`MUISymbolFileOpen`} className="moorhen__icon__menu" alt="Ligand" />,
@@ -102,7 +99,7 @@ export const MAIN_MENU_CONFIG: MenuMap = {
     11: {
         label: "Preferences",
         icon: <MoorhenIcon name={`MUISymbolSettings`} className="moorhen__icon__menu" alt="Preferences" />,
-        component: MoorhenPreferencesMenu,
+        component: PreferencesMenu,
         props: { dropdownId: "preferences-menu" },
         align: -2,
     },
@@ -120,4 +117,4 @@ export const MAIN_MENU_CONFIG: MenuMap = {
         props: { dropdownId: "dev-tools-menu" },
         align: 15,
     },
-};
+});

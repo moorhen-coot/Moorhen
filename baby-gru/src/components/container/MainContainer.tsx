@@ -37,6 +37,7 @@ import { parseAtomInfoLabel } from "../../utils/utils";
 import { MoorhenMainMenu } from "../main-menu/MainMenu";
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from "../main-menu/MainMenu";
+import { createSubMenuMap } from "../main-menu/SubMenuMap";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { BottomPanelContainer } from "../panels/BottomPanel";
@@ -64,6 +65,7 @@ import { cootAPIHelpers } from "./ContainerHelpers";
 //import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
 import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
+import { windowCootCCP4Loader } from "./windowCootCCP4Loader";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -341,8 +343,12 @@ const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops]);
 
+    const subMenuMap = useMemo(() => createSubMenuMap(), [createSubMenuMap]);
+    moorhenInstance.subMenuMap = subMenuMap;
+
     useEffect(() => {
         function startupEffect() {
+            if (!window.cootModule) windowCootCCP4Loader(".");
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
             dispatch(setDisableFileUpload(disableFileUploads));
@@ -353,6 +359,7 @@ const MoorhenContainer = (props: ContainerProps) => {
             if (!userPreferencesMounted) {
                 return;
             }
+
             //moorhenInstance.setMoleculesAndMapsRefs(timeCapsuleMoleculeRef, timeCapsuleMapRef);
             moorhenInstance.setPaths(urlPrefix, monomerLibraryPath);
             moorhenInstance.startInstance(

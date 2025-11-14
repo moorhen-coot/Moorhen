@@ -84,7 +84,7 @@ export const LoadTutorialData = () => {
                     })}
                 </Form.Select>
             </Form.Group>
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

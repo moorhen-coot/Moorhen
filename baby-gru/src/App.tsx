@@ -1,11 +1,11 @@
-import { MoorhenApp } from './components/MoorhenApp';
+import { MoorhenApp } from "./components/MoorhenApp";
 
 function App() {
-  return (
-    <div className="App">
-      <MoorhenApp/>
-    </div>
-  );
+    return (
+        <div className="App">
+            <MoorhenApp />
+        </div>
+    );
 }
 
 export default App;

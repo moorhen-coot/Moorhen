@@ -86,4 +86,6 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
     }
 }
 
-customElements.define("moorhen-web-component", MoorhenWebComponentNoReact);
+if (!customElements.get("moorhen-web-component")) {
+    customElements.define("moorhen-web-component", MoorhenWebComponentNoReact);
+}

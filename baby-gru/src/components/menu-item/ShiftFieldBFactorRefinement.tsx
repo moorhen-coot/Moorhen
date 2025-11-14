@@ -7,7 +7,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
-export const ShiftFieldBFactor = props => {
+export const ShiftFieldBFactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const commandCentre = useCommandCentre();

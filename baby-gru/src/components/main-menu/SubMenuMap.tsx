@@ -1,59 +1,16 @@
 import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
 import React from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { setMakeBackups } from "../../store/backupSettingsSlice";
+import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
+import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import type { ModalKey } from "../../store/modalsSlice";
-import {
-    About,
-    AddRemoveHydrogenAtoms,
-    AddSimple,
-    AddWaters,
-    AssociateReflectionsToMap,
-    AutoLoadFiles,
-    AutoOpenMtz,
-    CalculateTrajectory,
-    CentreOnLigand,
-    ChangeChainId,
-    ClearSelfRestraints,
-    Contact,
-    CopyFragmentUsingCid,
-    CreateSelection,
-    DedustMap,
-    DeleteEverything,
-    DeleteUsingCid,
-    ExportGltf,
-    FetchOnlineSources,
-    FlipMapHand,
-    GetMonomer,
-    GoTo,
-    ImportDictionary,
-    ImportFSigF,
-    ImportMap,
-    ImportMapCoefficients,
-    LayoutSettings,
-    LoadScript,
-    LoadTutorialData,
-    MakeMaskedMapsSplitByChain,
-    ManageSession,
-    MapMasking,
-    MatchLigands,
-    MergeMolecules,
-    MinimizeEnergy,
-    MoveMoleculeHere,
-    MultiplyBfactor,
-    OpenLhasa,
-    OtherSceneSettings,
-    RandomJiggleBlur,
-    RecordVideo,
-    References,
-    SMILESToLigand,
-    ScenePreset,
-    SelfRestraints,
-    SetOccupancy,
-    SharpenBlurMap,
-    ShiftFieldBFactor,
-    SplitModels,
-} from "../menu-item";
+import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
+import * as MenuItems from "../menu-item";
 
-export type SubMenus = "file" | "calculate" | "edit" | "help" | "ligand" | "map-tool" | "validation" | "view" | "preferences";
+// export type SubMenus = "file" | "calculate" | "edit" | "help" | "ligand" | "map-tool" | "validation" | "view" | "preferences";
+
+export type SubMenus = string;
 
 export type BaseMenuItem = {
     id: string;
@@ -66,7 +23,7 @@ export type BaseMenuItem = {
 
 export type MenuItemPopover = BaseMenuItem & {
     type: "popover";
-    content: React.ReactElement;
+    content: () => React.ReactElement;
 };
 
 export type MenuItem = BaseMenuItem & {
@@ -81,15 +38,21 @@ export type ShowModal = BaseMenuItem & {
 
 export type CustomJSX = BaseMenuItem & {
     type: "customJSX";
-    jsx: React.JSX.Element;
+    jsx: (aeg0: any) => React.JSX.Element;
 };
 
 export type PreferenceSwitch = BaseMenuItem & {
     type: "preferenceSwitch";
-    action: ActionCreatorWithOptionalPayload<any, string>;
+    selector: (state: RootState) => boolean;
+    action: ActionCreatorWithOptionalPayload<boolean>;
 };
 
-export type MenuItemType = MenuItem | MenuItemPopover | ShowModal | CustomJSX;
+export type Separator = {
+    type: "separator";
+    label?: string;
+};
+
+export type MenuItemType = MenuItem | MenuItemPopover | ShowModal | CustomJSX | PreferenceSwitch | Separator;
 
 export type SubMenu = {
     label: string;
@@ -111,25 +74,28 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "customJSX",
                     keywords: ["upload", "load", "pdb"],
                     description: "Upload and open files",
-                    jsx: <AutoLoadFiles />,
+                    jsx: MenuItems.AutoLoadFiles,
                     specialType: "upload",
                 },
+                { type: "separator" },
                 {
                     id: "fetch-online",
                     label: "Add Water...",
                     type: "customJSX",
                     keywords: ["upload", "load", "pdb"],
                     description: "fetch files from online resources",
-                    jsx: <FetchOnlineSources />,
+                    jsx: MenuItems.FetchOnlineSources,
                 },
+                { type: "separator" },
                 {
                     id: "manage-sessions",
                     label: "Session",
                     type: "customJSX",
                     keywords: ["session"],
                     description: "session manager",
-                    jsx: <ManageSession />,
+                    jsx: MenuItems.ManageSession,
                 },
+                { type: "separator" },
                 {
                     id: "query-online-services-sequence",
                     label: "Query online services with a sequence...",
@@ -141,52 +107,52 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Associate reflections to map...",
                     type: "popover",
                     specialType: "upload",
-                    content: <AssociateReflectionsToMap />,
+                    content: MenuItems.AssociateReflectionsToMap,
                 },
                 {
                     id: "auto-open-mtz",
                     label: "Auto open MTZ...",
                     type: "popover",
                     specialType: "upload",
-                    content: <AutoOpenMtz />,
+                    content: MenuItems.AutoOpenMtz,
                 },
                 {
                     id: "import-map-coefficients",
                     label: "Import map coefficients...",
                     type: "popover",
                     specialType: "upload",
-                    content: <ImportMapCoefficients />,
+                    content: MenuItems.ImportMapCoefficients,
                 },
                 {
                     id: "import-map",
                     label: "Import map...",
                     type: "popover",
                     specialType: "upload",
-                    content: <ImportMap />,
+                    content: MenuItems.ImportMap,
                 },
                 {
                     id: "import-fsigf",
                     label: "Import F/SigF...",
                     type: "popover",
-                    content: <ImportFSigF />,
+                    content: MenuItems.ImportFSigF,
                 },
                 {
                     id: "load-tutorial-data",
                     label: "Load tutorial data...",
                     type: "popover",
-                    content: <LoadTutorialData />,
+                    content: MenuItems.LoadTutorialData,
                 },
                 {
                     id: "record-video",
                     label: "Record a video",
                     type: "customJSX",
-                    jsx: <RecordVideo />,
+                    jsx: MenuItems.RecordVideo,
                 },
                 {
                     id: "export gltf",
                     label: "Export scene as gltf",
                     type: "customJSX",
-                    jsx: <ExportGltf />,
+                    jsx: MenuItems.ExportGltf,
                 },
                 {
                     id: "load-mrbump",
@@ -208,7 +174,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     id: "delete-everything",
                     label: "Delete everything",
                     type: "popover",
-                    content: <DeleteEverything />,
+                    content: MenuItems.DeleteEverything,
                 },
             ],
         },
@@ -221,7 +187,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["water"],
                     description: "automatically add water in the map",
-                    content: <AddWaters />,
+                    content: MenuItems.AddWaters,
                 },
                 {
                     id: "superpose",
@@ -235,7 +201,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["B-factors", "Multiply"],
                     description: "Multiply all B-factors by a set amount",
-                    content: <MultiplyBfactor />,
+                    content: MenuItems.MultiplyBfactor,
                 },
                 {
                     id: "shift-field-bfactor",
@@ -243,7 +209,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["B-factors", "refinement"],
                     description: "Use Shift Field to refine B factors",
-                    content: <ShiftFieldBFactor />,
+                    content: MenuItems.ShiftFieldBFactor,
                 },
                 {
                     id: "calculate-trajectory",
@@ -251,7 +217,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["animate", "trajectory"],
                     description: "automatically add water in the map",
-                    content: <CalculateTrajectory />,
+                    content: MenuItems.CalculateTrajectory,
                 },
                 {
                     id: "self-restraints",
@@ -259,7 +225,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["restraints", "self", "generate"],
                     description: "automatically add water in the map",
-                    content: <SelfRestraints />,
+                    content: MenuItems.SelfRestraints,
                 },
                 {
                     id: "clear-self-restraints",
@@ -267,7 +233,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["animate", "trajectory"],
                     description: "automatically add water in the map",
-                    content: <ClearSelfRestraints />,
+                    content: MenuItems.ClearSelfRestraints,
                 },
                 {
                     id: "jiggle-fit",
@@ -275,7 +241,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["fit", "fourrier", "jiggle"],
                     description: "automatically add water in the map",
-                    content: <RandomJiggleBlur />,
+                    content: MenuItems.RandomJiggleBlur,
                 },
                 {
                     id: "slice-n-dice",
@@ -289,7 +255,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["script"],
                     description: "automatically add water in the map",
-                    content: <LoadScript />,
+                    content: MenuItems.LoadScript,
                     specialType: "script",
                 },
                 {
@@ -310,7 +276,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["add", "simple"],
                     description: "Add simple molecule",
-                    content: <AddSimple />,
+                    content: MenuItems.AddSimple,
                 },
                 {
                     id: "add-remove-hydrogen",
@@ -318,7 +284,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["hydrogen", "add", "remove"],
                     description: "Add or remove hydrogen atoms",
-                    content: <AddRemoveHydrogenAtoms />,
+                    content: MenuItems.AddRemoveHydrogenAtoms,
                 },
                 {
                     id: "merge-molecules",
@@ -326,7 +292,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["merge", "combine"],
                     description: "Merge multiple molecules",
-                    content: <MergeMolecules />,
+                    content: MenuItems.MergeMolecules,
                 },
                 {
                     id: "move-molecule",
@@ -334,7 +300,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["move", "translate"],
                     description: "Move molecule to current position",
-                    content: <MoveMoleculeHere />,
+                    content: MenuItems.MoveMoleculeHere,
                 },
                 {
                     id: "change-chain-id",
@@ -342,7 +308,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["chain", "rename"],
                     description: "Change chain identifier",
-                    content: <ChangeChainId />,
+                    content: MenuItems.ChangeChainId,
                 },
                 {
                     id: "set-occupancy",
@@ -350,7 +316,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["occupancy"],
                     description: "Set atom occupancy",
-                    content: <SetOccupancy />,
+                    content: MenuItems.SetOccupancy,
                 },
                 {
                     id: "split-models",
@@ -358,7 +324,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["split", "models"],
                     description: "Split multi-model structure",
-                    content: <SplitModels />,
+                    content: MenuItems.SplitModels,
                 },
                 {
                     id: "delete-cid",
@@ -366,7 +332,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["delete", "remove", "cid"],
                     description: "Delete atoms using CID selection",
-                    content: <DeleteUsingCid />,
+                    content: MenuItems.DeleteUsingCid,
                 },
                 {
                     id: "create-selection",
@@ -374,7 +340,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["selection", "create"],
                     description: "Create atom selection",
-                    content: <CreateSelection />,
+                    content: MenuItems.CreateSelection,
                 },
                 {
                     id: "copy-fragment",
@@ -382,7 +348,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["copy", "fragment", "cid"],
                     description: "Copy fragment using CID selection",
-                    content: <CopyFragmentUsingCid />,
+                    content: MenuItems.CopyFragmentUsingCid,
                 },
                 {
                     id: "goto",
@@ -390,7 +356,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["goto", "navigate", "cid"],
                     description: "Navigate to CID location",
-                    content: <GoTo />,
+                    content: MenuItems.GoTo,
                 },
                 {
                     id: "covalent-link",
@@ -495,7 +461,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["sharpen", "blur", "map"],
                     description: "Sharpen or blur map",
-                    content: <SharpenBlurMap />,
+                    content: MenuItems.SharpenBlurMap,
                 },
                 {
                     id: "map-masking",
@@ -503,7 +469,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["mask", "masking", "map"],
                     description: "Apply mask to map",
-                    content: <MapMasking />,
+                    content: MenuItems.MapMasking,
                 },
                 {
                     id: "flip-map-hand",
@@ -511,7 +477,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["flip", "hand", "map"],
                     description: "Flip map hand",
-                    content: <FlipMapHand />,
+                    content: MenuItems.FlipMapHand,
                 },
                 {
                     id: "masked-maps-chain",
@@ -519,7 +485,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["masked", "maps", "chain", "split"],
                     description: "Create masked maps split by chain",
-                    content: <MakeMaskedMapsSplitByChain />,
+                    content: MenuItems.MakeMaskedMapsSplitByChain,
                 },
                 {
                     id: "colour-map",
@@ -533,7 +499,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["dedust", "dust", "map", "clean"],
                     description: "Remove dust from map",
-                    content: <DedustMap />,
+                    content: MenuItems.DedustMap,
                 },
             ],
         },
@@ -546,7 +512,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["scene", "preset"],
                     description: "Apply scene preset",
-                    content: <ScenePreset />,
+                    content: MenuItems.ScenePreset,
                 },
                 {
                     id: "scene-settings",
@@ -560,7 +526,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["scene", "settings", "other"],
                     description: "Other scene settings",
-                    content: <OtherSceneSettings />,
+                    content: MenuItems.OtherSceneSettings,
                 },
                 {
                     id: "layout-settings",
@@ -568,7 +534,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["layout", "settings"],
                     description: "Layout settings",
-                    content: <LayoutSettings />,
+                    content: MenuItems.LayoutSettings,
                 },
             ],
         },
@@ -595,7 +561,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["contact", "support"],
                     description: "Contact information",
-                    content: <Contact />,
+                    content: MenuItems.Contact,
                 },
                 {
                     id: "about",
@@ -603,7 +569,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["about", "version"],
                     description: "About Moorhen",
-                    content: <About />,
+                    content: MenuItems.About,
                 },
                 {
                     id: "references",
@@ -611,7 +577,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["references", "citations"],
                     description: "Moorhen references",
-                    content: <References />,
+                    content: MenuItems.References,
                 },
             ],
         },
@@ -624,7 +590,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["monomer", "get"],
                     description: "Get monomer from library",
-                    content: <GetMonomer />,
+                    content: MenuItems.GetMonomer,
                 },
                 {
                     id: "import-dictionary",
@@ -632,7 +598,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["dictionary", "import"],
                     description: "Import ligand dictionary",
-                    content: <ImportDictionary />,
+                    content: MenuItems.ImportDictionary,
                     specialType: "upload",
                 },
                 {
@@ -641,7 +607,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["SMILES", "ligand"],
                     description: "Convert SMILES to ligand",
-                    content: <SMILESToLigand />,
+                    content: MenuItems.SMILESToLigand,
                 },
                 {
                     id: "centre-on-ligand",
@@ -649,7 +615,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["centre", "ligand", "center"],
                     description: "Centre view on ligand",
-                    content: <CentreOnLigand />,
+                    content: MenuItems.CentreOnLigand,
                 },
                 {
                     id: "minimize-energy",
@@ -657,7 +623,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["minimize", "energy"],
                     description: "Minimize ligand energy",
-                    content: <MinimizeEnergy />,
+                    content: MenuItems.MinimizeEnergy,
                 },
                 {
                     id: "match-ligands",
@@ -665,7 +631,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["match", "ligands"],
                     description: "Match ligands",
-                    content: <MatchLigands />,
+                    content: MenuItems.MatchLigands,
                 },
                 {
                     id: "open-lhasa",
@@ -673,7 +639,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     type: "popover",
                     keywords: ["lhasa", "open"],
                     description: "Open Lhasa",
-                    content: <OpenLhasa />,
+                    content: MenuItems.OpenLhasa,
                 },
                 {
                     id: "find-ligand",
@@ -685,6 +651,113 @@ export const createSubMenuMap = (): SubMenuMap =>
         },
         preferences: {
             label: "Preferences",
-            items: [],
+            items: [
+                {
+                    id: "expand-display-cards",
+                    label: "Expand display cards after file upload",
+                    type: "preferenceSwitch",
+                    action: setDefaultExpandDisplayCards,
+                    selector: (state: RootState) => state.generalStates.defaultExpandDisplayCards,
+                },
+                {
+                    id: "transparent-modal",
+                    label: "Make modals transparent on mouse out",
+                    type: "preferenceSwitch",
+                    action: setTransparentModalsOnMouseOut,
+                    selector: (state: RootState) => state.generalStates.transparentModalsOnMouseOut,
+                },
+                {
+                    id: "atom-label-depth",
+                    label: "Depth cue atom labels",
+                    type: "preferenceSwitch",
+                    action: setAtomLabelDepthMode,
+                    selector: (state: RootState) => state.labelSettings.atomLabelDepthMode,
+                },
+                {
+                    id: "shortcut-toast",
+                    label: "Show shortcut popup",
+                    type: "preferenceSwitch",
+                    action: setShowShortcutToast,
+                    selector: (state: RootState) => state.shortcutSettings.showShortcutToast,
+                },
+                {
+                    id: "make-backups",
+                    label: "Enable molecule undo/redo backups",
+                    type: "preferenceSwitch",
+                    action: setMakeBackups,
+                    selector: (state: RootState) => state.backupSettings.makeBackups,
+                },
+                {
+                    id: "shortcut-hovered-atom",
+                    label: "Hover on residue to use shortcuts",
+                    type: "preferenceSwitch",
+                    action: setShortcutOnHoveredAtom,
+                    selector: (state: RootState) => state.shortcutSettings.shortcutOnHoveredAtom,
+                },
+                {
+                    id: "dev-mode",
+                    label: "Developer mode",
+                    type: "preferenceSwitch",
+                    action: setDevMode,
+                    selector: (state: RootState) => state.generalStates.devMode,
+                },
+                {
+                    type: "separator",
+                },
+                {
+                    id: "mouse-sensitivity",
+                    label: "Mouse sensitivity...",
+                    type: "popover",
+                    content: MenuItems.MouseSensitivitySettings,
+                },
+                {
+                    id: "backup-preferences",
+                    label: "Backup preferences...",
+                    type: "popover",
+                    content: MenuItems.BackupPreferences,
+                },
+                {
+                    id: "scores-toast",
+                    label: "Scores toast preferences...",
+                    type: "popover",
+                    content: MenuItems.ScoresToastPreferences,
+                },
+                {
+                    id: "bond-smoothness",
+                    label: "Default bond smoothness...",
+                    type: "popover",
+                    content: MenuItems.DefaultBondSmoothnessPreferences,
+                },
+                {
+                    id: "view-layout",
+                    label: "View layout...",
+                    type: "popover",
+                    content: MenuItems.ViewLayoutPreferences,
+                },
+                {
+                    id: "map-contour",
+                    label: "Map contour settings...",
+                    type: "popover",
+                    content: MenuItems.MapContourSettings,
+                },
+                {
+                    id: "refinement-settings",
+                    label: "Refinement settings...",
+                    type: "popover",
+                    content: MenuItems.RefinementSettings,
+                },
+                {
+                    id: "configure-shortcuts",
+                    label: "Configure shortcuts...",
+                    type: "customJSX",
+                    jsx: MenuItems.ShowShortcutModal,
+                },
+                {
+                    id: "gl-font",
+                    label: "GL font...",
+                    type: "popover",
+                    content: MenuItems.GLFont,
+                },
+            ],
         },
     }) as const;
