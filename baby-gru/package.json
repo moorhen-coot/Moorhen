@@ -61,9 +61,9 @@
         ]
     },
     "peerDependencies": {
+        "@reduxjs/toolkit": "^2.9.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
-        "@reduxjs/toolkit": "^2.9.0",
         "react-redux": "^9.2.0"
     },
     "dependencies": {
@@ -103,6 +103,7 @@
         "css-loader": "^7.1.2",
         "d3": "^7.9.0",
         "file-loader": "^6.2.0",
+        "fuse.js": "^7.1.0",
         "genversion": "^3.2.0",
         "gl-matrix": "^3.4.4",
         "graphql": "^16.11.0",

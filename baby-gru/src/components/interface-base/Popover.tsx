@@ -42,9 +42,11 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             } else {
                 topBottom = buttonRect.top + window.scrollY + buttonRect.height / 2 - popoverRect.height / 2;
             }
+            // Prevent the popover from going above the viewport
+            const clampedTop = Math.max(0, topBottom);
             setPopoverStyle({
                 position: "absolute",
-                top: topBottom,
+                top: clampedTop,
                 left: leftRight, // or rect.left for left alignment
                 zIndex: 10999,
             });

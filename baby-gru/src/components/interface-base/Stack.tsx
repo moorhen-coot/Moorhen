@@ -1,3 +1,5 @@
+import "./moorhen-stack.css";
+
 type MoorhenStackType = {
     direction?: "row" | "line" | "horizontal" | "column" | "vertical";
     gap?: number | string;

@@ -1,4 +1,3 @@
-import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,23 +5,22 @@ import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
-import type { SubMenu, SubMenuMap, SubMenus } from "./SubMenuMap";
+import type { MenuItemType } from "./SubMenuMap";
 
-export function menuFromMap(menuMap: SubMenuMap, selectedMenu: SubMenus): React.JSX.Element {
+export const MenuFromItems = (props: { menuItemList: MenuItemType[] }): React.JSX.Element => {
     const dispatch = useDispatch();
     const isDev = useSelector((state: RootState) => state.generalStates.devMode);
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
 
-    const subMenuMap: SubMenu = menuMap[selectedMenu];
     let key = 0;
 
-    const menuItemList = subMenuMap.items.map(menuItem => {
+    const menuJSXList = props.menuItemList.map(menuItem => {
         if ("specialType" in menuItem && menuItem.specialType === "upload" && disableFileUploads) {
-            return;
+            return null;
         }
         if ("specialType" in menuItem && menuItem.specialType === "script" && !allowScripting) {
-            return;
+            return null;
         }
 
         if (!("devOnly" in menuItem) || !menuItem.devOnly || (menuItem.devOnly && isDev)) {
@@ -62,8 +60,9 @@ export function menuFromMap(menuMap: SubMenuMap, selectedMenu: SubMenus): React.
             }
         }
     });
-    return <MoorhenStack direction="column">{menuItemList}</MoorhenStack>;
-}
+
+    return <MoorhenStack direction="column">{menuJSXList}</MoorhenStack>;
+};
 
 const PreferenceChecker = (props: {
     selector: (state: RootState) => boolean;

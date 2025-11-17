@@ -23,11 +23,11 @@ export type MenuEntry = {
     align?: number;
 };
 
-export type MenuMap = {
+export type MainMenuMap = {
     [key: number]: MenuEntry;
 };
 
-export const createMainMenu = (): MenuMap => ({
+export const createMainMenu = (): MainMenuMap => ({
     1: {
         label: "File",
         icon: <MoorhenIcon name={`MUISymbolFileOpen`} className="moorhen__icon__menu" alt="Ligand" />,

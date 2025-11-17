@@ -34,12 +34,13 @@ import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
 import { parseAtomInfoLabel } from "../../utils/utils";
-import { MoorhenMainMenu } from "../main-menu/MainMenu";
-//import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
-import type { ExtraMenuProps } from "../main-menu/MainMenu";
-import { createSubMenuMap } from "../main-menu/SubMenuMap";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
+import { MoorhenMainMenu } from "../menu-system/MainMenu";
+//import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
+import type { ExtraMenuProps } from "../menu-system/MainMenu";
+import { MoorhenMenuSystemProvider } from "../menu-system/MenuSystemContext";
+import { MoorhenSearchBar } from "../menu-system/searchBar";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
@@ -343,9 +344,6 @@ const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops]);
 
-    const subMenuMap = useMemo(() => createSubMenuMap(), [createSubMenuMap]);
-    moorhenInstance.subMenuMap = subMenuMap;
-
     useEffect(() => {
         function startupEffect() {
             if (!window.cootModule) windowCootCCP4Loader(".");
@@ -527,41 +525,36 @@ const MoorhenContainer = (props: ContainerProps) => {
                     Components={snackbarComponents}
                     preventDuplicate={true}
                 >
-                    <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
-                    <div style={viewportStyle} className="moorhen__viewport-container">
-                        <ActivityIndicator />
-                        {/* <MoorhenNavBar
-                                extraNavBarMenus={extraNavBarMenus}
-                                extraNavBarModals={extraNavBarModals}
-                                extraFileMenuItems={extraFileMenuItems}
-                                extraEditMenuItems={extraEditMenuItems}
-                                extraCalculateMenuItems={extraCalculateMenuItems}
-                                includeNavBarMenuNames={includeNavBarMenuNames}
-                                /> */}
+                    <MoorhenMenuSystemProvider>
+                        <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
 
-                        <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                        <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                        <MoorhenSnackBarManager />
-                        <MoorhenUpdatingMapsManager />
-                        <MoorhenMapsHeadManager />
+                        <div style={viewportStyle} className="moorhen__viewport-container">
+                            <MoorhenSearchBar />
+                            <ActivityIndicator />
+                            <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                            <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                            <MoorhenSnackBarManager />
+                            <MoorhenUpdatingMapsManager />
+                            <MoorhenMapsHeadManager />
 
-                        <MoorhenDroppable
-                            monomerLibraryPath={monomerLibraryPath}
-                            timeCapsuleRef={timeCapsuleRef}
-                            commandCentre={commandCentre}
-                        >
-                            <MoorhenWebMG
-                                ref={glRef}
+                            <MoorhenDroppable
                                 monomerLibraryPath={monomerLibraryPath}
                                 timeCapsuleRef={timeCapsuleRef}
-                                onAtomHovered={onAtomHovered}
-                                urlPrefix={urlPrefix}
-                                viewOnly={viewOnly}
-                            />
-                        </MoorhenDroppable>
-                    </div>
-                    <BottomPanelContainer />
-                    <MoorhenSidePanel width={300} />
+                                commandCentre={commandCentre}
+                            >
+                                <MoorhenWebMG
+                                    ref={glRef}
+                                    monomerLibraryPath={monomerLibraryPath}
+                                    timeCapsuleRef={timeCapsuleRef}
+                                    onAtomHovered={onAtomHovered}
+                                    urlPrefix={urlPrefix}
+                                    viewOnly={viewOnly}
+                                />
+                            </MoorhenDroppable>
+                        </div>
+                        <BottomPanelContainer />
+                        <MoorhenSidePanel width={300} />
+                    </MoorhenMenuSystemProvider>
                 </SnackbarProvider>
             </div>
         </>

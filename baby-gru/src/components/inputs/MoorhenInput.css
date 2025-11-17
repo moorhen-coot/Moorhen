@@ -71,6 +71,9 @@
     background-color: var(--moorhen-button-background);
     color: var(--moorhen-secondary);
     height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .moorhen__input-files-upload:hover {

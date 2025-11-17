@@ -5,9 +5,8 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { ModalKey, showModal } from "../../store/modalsSlice";
 import { convertRemToPx } from "../../utils/utils";
 import { MoorhenIcon } from "../icons";
-import { createSubMenuMap } from "./SubMenuMap";
+import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import "./main-menu.css";
-import { createMainMenu } from "./mainMenuConfig";
 
 export type ExtraNavBarMenus = {
     icon: React.JSX.Element;
@@ -40,7 +39,8 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
         setActiveMenu(null);
     };
 
-    const main_menu_config = useMemo(() => createMainMenu(), [createMainMenu]);
+    const menuSystem = useMoorhenMenuSystem();
+    const main_menu_config = menuSystem.mainMenuMap;
 
     const subMenu = useMemo(() => {
         if (!activeMenu || !isOpen) return null;
@@ -125,7 +125,6 @@ export const MoorhenMainMenu = memo((props: ExtraMenuProps) => {
 
     const menuLength =
         Object.keys(main_menu_config).length - (!isDevMode ? 1 : 0) + (props.extraNavBarMenus ? props.extraNavBarMenus.length : 0);
-    console.log(menuLength);
     const containerHeight = isOpen ? `${Math.min(convertRemToPx(4.5 + menuLength * 3.3), GLViewportHeight - 10)}px` : "4.5rem";
     const containerWidth = activeMenu === null ? "12rem" : "40rem";
 
