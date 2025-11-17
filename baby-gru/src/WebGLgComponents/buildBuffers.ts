@@ -19,7 +19,9 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
         const GLLabelsFontSize = store.getState().labelSettings.GLLabelsFontSize
 
-        const glTextFont = ""+GLLabelsFontSize+"px "+GLLabelsFontFamily;
+        let deviceScale = 1
+        if(window.devicePixelRatio) deviceScale = window.devicePixelRatio
+        const glTextFont = ""+GLLabelsFontSize*deviceScale+"px "+GLLabelsFontFamily;
 
         if(jsondata.image_data){
             if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
