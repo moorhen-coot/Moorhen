@@ -20,7 +20,12 @@ export class MoorhenMenuSystem {
     // }
 
     public getItems(selectedMenu: string) {
-        const itemList = this.subMenuMap[selectedMenu].items;
+        let itemList = [];
+        try {
+            itemList = this.subMenuMap[selectedMenu].items;
+        } catch {
+            console.error("Could not find menu items for menu: " + selectedMenu);
+        }
         return itemList;
     }
 }

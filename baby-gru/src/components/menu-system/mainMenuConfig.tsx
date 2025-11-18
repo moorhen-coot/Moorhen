@@ -1,3 +1,5 @@
+import React from "react";
+import { ModalKey } from "../../store/modalsSlice";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenIcon } from "../icons";
 import { MoorhenHistoryMenu } from "./HistoryMenu";
@@ -15,106 +17,122 @@ import {
 } from "./SubMenus";
 import "./main-menu.css";
 
-export type MenuEntry = {
+export type MainMenuEntrySubMenu = {
+    type: "sub-menu";
     label: string;
     icon: React.JSX.Element;
-    component: React.ElementType | string;
-    props?: { [key: string]: unknown };
+    menu: string;
+    align?: number;
+};
+
+export type MainMenuEntryModal = {
+    type: "modal";
+    label: string;
+    icon: React.JSX.Element;
+    modal: ModalKey;
+};
+
+export type MainMenuEntryJSX = {
+    type: "jsx";
+    label: string;
+    icon: React.JSX.Element;
+    component: React.JSX.Element;
+    props?: {};
     align?: number;
 };
 
 export type MainMenuMap = {
-    [key: number]: MenuEntry;
+    [key: number]: MainMenuEntrySubMenu | MainMenuEntryModal | MainMenuEntryJSX;
 };
 
 export const createMainMenu = (): MainMenuMap => ({
     1: {
+        type: "sub-menu",
         label: "File",
         icon: <MoorhenIcon name={`MUISymbolFileOpen`} className="moorhen__icon__menu" alt="Ligand" />,
-        component: FileMenu,
-        props: { dropdownId: "file-menu" },
+        menu: "file",
         align: -2,
     },
     2: {
+        type: "sub-menu",
         label: "Edit",
         icon: <MoorhenIcon name={`MUISymbolEdit`} className="moorhen__icon__menu" alt="Edit" />,
-        component: EditMenu,
-        props: { dropdownId: "edit-menu" },
+        menu: "edit",
         align: 2,
     },
     3: {
+        type: "sub-menu",
         label: "Calculate",
         icon: <MoorhenIcon name={`MUISymbolCalculate`} className="moorhen__icon__menu" alt="Calculate" />,
-        component: CalculateMenu,
-        props: { dropdownId: "calculate-menu" },
+        menu: "calculate",
         align: 3,
     },
     4: {
+        type: "sub-menu",
         label: "View",
         icon: <MoorhenIcon name={`MUISymbolVisibility`} className="moorhen__icon__menu" alt="View" />,
-        component: ViewMenu,
-        props: { dropdownId: "view-menu" },
+        menu: "view",
         align: 6,
     },
     5: {
+        type: "sub-menu",
         label: "Validation",
         icon: <MoorhenIcon name={`MUISymbolFactCheck`} className="moorhen__icon__menu" alt="Validation" />,
-        component: ValidationMenu,
-        props: { dropdownId: "validation-menu" },
+        menu: "validation",
         align: 3,
     },
     6: {
+        type: "sub-menu",
         label: "Ligand",
         icon: <MoorhenIcon name={`ligand`} className="moorhen__icon__menu" alt="Ligand" />,
-        component: LigandMenu,
-        props: { dropdownId: "ligand-menu" },
+        menu: "ligand",
         align: 8,
     },
     7: {
+        type: "modal",
         label: "Models",
         icon: <MoorhenIcon name={`menu-models`} className="moorhen__icon__menu" alt="Models" />,
-        component: modalKeys.MODELS,
-        props: { dropdownId: "models-menu" },
+        modal: "models",
     },
     8: {
+        type: "modal",
         label: "Maps",
         icon: <MoorhenIcon name={`menu-maps`} className="moorhen__icon__menu" alt="Maps" />,
-        component: modalKeys.MAPS,
-        props: { dropdownId: "maps-menu" },
+        modal: "maps",
     },
     9: {
+        type: "sub-menu",
         label: "Map Tools",
         icon: <MoorhenIcon name={`MUISymbolConstruction`} className="moorhen__icon__menu" alt="Map Tools" />,
-        component: MapToolsMenu,
-        props: { dropdownId: "map-tools-menu" },
+        menu: "map-tools",
         align: 12,
     },
     10: {
+        type: "jsx",
         label: "History",
         icon: <MoorhenIcon name={`MUISymbolHistory`} className="moorhen__icon__menu" alt="History" />,
-        component: MoorhenHistoryMenu,
-        props: { dropdownId: "history-menu" },
+        component: <MoorhenHistoryMenu />,
         align: -2,
     },
     11: {
+        type: "sub-menu",
         label: "Preferences",
         icon: <MoorhenIcon name={`MUISymbolSettings`} className="moorhen__icon__menu" alt="Preferences" />,
-        component: PreferencesMenu,
-        props: { dropdownId: "preferences-menu" },
+        menu: "preferences",
         align: -2,
     },
     12: {
+        type: "sub-menu",
         label: "Help",
         icon: <MoorhenIcon name={`MUISymbolHelp`} className="moorhen__icon__menu" alt="Help" />,
-        component: HelpMenu,
-        props: { dropdownId: "help-menu" },
+        menu: "help",
         align: 17,
     },
     13: {
+        type: "jsx",
         label: "Dev tools",
         icon: <MoorhenIcon name={`MUISymbolExperiment`} className="moorhen__icon__menu" alt="Dev tools" />,
-        component: MoorhenDevMenu,
-        props: { dropdownId: "dev-tools-menu" },
+        component: <MoorhenDevMenu />,
         align: 15,
     },
 });

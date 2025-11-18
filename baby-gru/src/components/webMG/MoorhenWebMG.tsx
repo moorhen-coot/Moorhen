@@ -139,6 +139,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
     const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
     const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
     useEffect(() => {
         const dispatchVectorsBuffers = async() => {
@@ -646,7 +647,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
+        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms || shortcutsBlocked ) {
             return false
         }
         return moorhenKeyPress(
@@ -667,7 +668,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current])
+    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current, shortcutsBlocked])
 
 
     const getCanvasRef = (() => {

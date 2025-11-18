@@ -44,11 +44,13 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             }
             // Prevent the popover from going above the viewport
             const clampedTop = Math.max(0, topBottom);
+            const arrowPos = topBottom < 0 ? `calc(50% + ${topBottom}px)` : `50%`;
             setPopoverStyle({
                 position: "absolute",
                 top: clampedTop,
                 left: leftRight, // or rect.left for left alignment
                 zIndex: 10999,
+                "--popover-arrow-top": arrowPos,
             });
         }
     }, [isShown]);

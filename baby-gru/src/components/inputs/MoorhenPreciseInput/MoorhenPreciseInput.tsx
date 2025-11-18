@@ -1,4 +1,6 @@
+import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
+import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import "../../interface-base/moorhen-stack.css";
 import "./MoorhenPreciseInput.css";
 
@@ -68,6 +70,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
     const isValidRef = useRef<boolean>(true);
+    const dispatch = useDispatch();
 
     let displayValue: string = "";
     if (!isUserInteracting) {
@@ -99,6 +102,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
+        dispatch(setShortCutsBlocked(true));
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         if (_isValid && !waitReturn) {
@@ -113,11 +117,13 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 props.setValue?.(internalValue);
             }
             setIsUserInteracting(false);
+            dispatch(setShortCutsBlocked(false));
         }
     };
 
     const handleBlur = () => {
         setIsUserInteracting(false);
+        dispatch(setShortCutsBlocked(false));
     };
 
     const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
@@ -144,6 +150,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}
+                onFocus={() => dispatch(setShortCutsBlocked(true))}
             />
         </div>
     );

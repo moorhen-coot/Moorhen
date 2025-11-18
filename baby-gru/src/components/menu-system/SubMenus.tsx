@@ -1,5 +1,5 @@
+import { MenuFromItems } from "./MenuFromItems ";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
-import { MenuFromItems } from "./createSubMenu";
 
 export const CalculateMenu = (props: { extraCalculateMenuItems?: React.ReactElement[] }) => {
     const calculateMenu = useMoorhenMenuSystem().getItems("calculate");

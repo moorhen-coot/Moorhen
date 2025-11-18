@@ -1,4 +1,5 @@
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { setShortCuts } from "./shortCutsSlice";
 
 const initialState: {
     busy: boolean;
@@ -6,16 +7,22 @@ const initialState: {
     isGlobalInstanceReady: boolean;
     sidePanelIsShown: boolean;
     bottomPanelIsShown: boolean;
+    isMainMenuOpen: boolean;
+    isSearchBarActive: boolean;
+    areShortcutsBlocked: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
     sidePanelIsShown: false,
     bottomPanelIsShown: true,
+    isMainMenuOpen: false,
+    isSearchBarActive: false,
+    areShortcutsBlocked: false,
 };
 
 const globalUISlice = createSlice({
-    name: 'globalUI',
+    name: "globalUI",
     initialState,
     reducers: {
         setBusy: (state, action: PayloadAction<boolean>) => {
@@ -33,8 +40,26 @@ const globalUISlice = createSlice({
         setShowBottomPanel: (state, action: PayloadAction<boolean>) => {
             state.bottomPanelIsShown = action.payload;
         },
+        setMainMenuOpen: (state, action: PayloadAction<boolean>) => {
+            state.isMainMenuOpen = action.payload;
+        },
+        setSearchBarActive: (state, action: PayloadAction<boolean>) => {
+            state.isSearchBarActive = action.payload;
+        },
+        setShortCutsBlocked: (state, action: PayloadAction<boolean>) => {
+            state.areShortcutsBlocked = action.payload;
+        },
     },
 });
 
-export const { setBusy, setTimeCapsuleBusy, setGlobalInstanceReady, setShowSidePanel, setShowBottomPanel } = globalUISlice.actions;
+export const {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setShowSidePanel,
+    setShowBottomPanel,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+} = globalUISlice.actions;
 export default globalUISlice.reducer;

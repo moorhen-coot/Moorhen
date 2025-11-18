@@ -14,6 +14,9 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[] }): React.JS
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
 
     let key = 0;
+    if (props.menuItemList === undefined) {
+        return <div>Empty menu list</div>;
+    }
 
     const menuJSXList = props.menuItemList.map(menuItem => {
         if ("specialType" in menuItem && menuItem.specialType === "upload" && disableFileUploads) {

@@ -1,16 +1,16 @@
-import { useCallback, useState } from "react";
-import { Stepper, Step, StepButton, StepLabel } from "@mui/material";
 import { SaveOutlined } from "@mui/icons-material";
-import { Stack } from "react-bootstrap";
-import { useSelector, useDispatch, useStore } from "react-redux";
+import { Step, StepButton, StepLabel, Stepper } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { Stack } from "react-bootstrap";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { useCallback, useState } from "react";
+import { useCommandAndCapsule, usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
+import type { HistoryEntry } from "../../utils/MoorhenHistory";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { convertViewtoPx } from "../../utils/utils";
-import { useCommandAndCapsule, usePaths } from "../../InstanceManager";
-import type { HistoryEntry } from "../../utils/MoorhenHistory";
 
-export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
+export const MoorhenHistoryMenu = () => {
     const [historyHead, setHistoryHead] = useState(0);
 
     const dispatch = useDispatch();
@@ -25,36 +25,32 @@ export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
-    const loadSession = useCallback(
-        async (sessionData: string) => {
-            try {
-                const status = await MoorhenTimeCapsule.loadSessionFromJsonString(
-                    sessionData as string,
-                    monomerLibraryPath,
-                    molecules,
-                    maps,
-                    commandCentre,
-                    timeCapsuleRef,
-                    store,
-                    dispatch
-                );
-                if (status === -1) {
-                    enqueueSnackbar("Failed to read backup (deprecated format)", { variant: "warning" });
-                }
-            } catch (err) {
-                console.log(err);
-                enqueueSnackbar("Error loading session", { variant: "error" });
+    const loadSession = async (sessionData: string) => {
+        try {
+            const status = await MoorhenTimeCapsule.loadSessionFromJsonString(
+                sessionData as string,
+                monomerLibraryPath,
+                molecules,
+                maps,
+                commandCentre,
+                timeCapsuleRef,
+                store,
+                dispatch
+            );
+            if (status === -1) {
+                enqueueSnackbar("Failed to read backup (deprecated format)", { variant: "warning" });
             }
-        },
-        [props]
-    );
-
+        } catch (err) {
+            console.log(err);
+            enqueueSnackbar("Error loading session", { variant: "error" });
+        }
+    };
     const getHistoryStep = useCallback(
         (historyEntry: HistoryEntry, index: number) => {
             const moleculeNames = [];
             if (historyEntry.changesMolecules?.length > 0) {
-                historyEntry.changesMolecules.forEach((imol) => {
-                    const molecule = molecules.find((mol) => mol.molNo === imol);
+                historyEntry.changesMolecules.forEach(imol => {
+                    const molecule = molecules.find(mol => mol.molNo === imol);
                     if (molecule) {
                         moleculeNames.push(molecule.name);
                     }
@@ -68,9 +64,7 @@ export const MoorhenHistoryMenu = (props: { dropdownId: string }) => {
             const handleClick = async () => {
                 if (historyEntry.associatedBackupKey) {
                     commandCentre.current.history.setSkipTracking(true);
-                    const backup = (await timeCapsuleRef.current.retrieveBackup(
-                        historyEntry.associatedBackupKey
-                    )) as string;
+                    const backup = (await timeCapsuleRef.current.retrieveBackup(historyEntry.associatedBackupKey)) as string;
                     await loadSession(backup);
                     commandCentre.current.history.setSkipTracking(false);
                     commandCentre.current.history.setCurrentHead(historyEntry.uniqueId);

@@ -20,7 +20,7 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 
-export const MoorhenDevMenu = (props: { dropdownId: string }) => {
+export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
 
     const customCid = useRef<string>("");

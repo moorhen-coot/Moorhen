@@ -40,7 +40,7 @@ import { MoorhenMainMenu } from "../menu-system/MainMenu";
 //import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
 import type { ExtraMenuProps } from "../menu-system/MainMenu";
 import { MoorhenMenuSystemProvider } from "../menu-system/MenuSystemContext";
-import { MoorhenSearchBar } from "../menu-system/searchBar";
+import { MoorhenSearchBar } from "../menu-system/SearchBar";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";

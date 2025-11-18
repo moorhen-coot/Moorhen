@@ -80,7 +80,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                 { type: "separator" },
                 {
                     id: "fetch-online",
-                    label: "Add Water...",
+                    label: "Fetch from online service",
                     type: "customJSX",
                     keywords: ["upload", "load", "pdb"],
                     description: "fetch files from online resources",
@@ -199,7 +199,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     id: "multiply-bfactor",
                     label: "Multiply molecule B-factors...",
                     type: "popover",
-                    keywords: ["B-factors", "Multiply"],
+                    keywords: ["B-factors", "B factors", "Multiply"],
                     description: "Multiply all B-factors by a set amount",
                     content: MenuItems.MultiplyBfactor,
                 },
@@ -207,7 +207,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     id: "shift-field-bfactor",
                     label: "Shift field B-factor refinement...",
                     type: "popover",
-                    keywords: ["B-factors", "refinement"],
+                    keywords: ["B-factors", "B factors", "refinement"],
                     description: "Use Shift Field to refine B factors",
                     content: MenuItems.ShiftFieldBFactor,
                 },
@@ -216,7 +216,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Animate multi-model trajectory...",
                     type: "popover",
                     keywords: ["animate", "trajectory"],
-                    description: "automatically add water in the map",
+                    description: "",
                     content: MenuItems.CalculateTrajectory,
                 },
                 {
@@ -224,7 +224,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Generate self-restraints...",
                     type: "popover",
                     keywords: ["restraints", "self", "generate"],
-                    description: "automatically add water in the map",
+                    description: "",
                     content: MenuItems.SelfRestraints,
                 },
                 {
@@ -232,7 +232,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Clear self-restraints...",
                     type: "popover",
                     keywords: ["animate", "trajectory"],
-                    description: "automatically add water in the map",
+                    description: "",
                     content: MenuItems.ClearSelfRestraints,
                 },
                 {
@@ -240,7 +240,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Jiggle Fit with Fourier Filtering...",
                     type: "popover",
                     keywords: ["fit", "fourrier", "jiggle"],
-                    description: "automatically add water in the map",
+                    description: "",
                     content: MenuItems.RandomJiggleBlur,
                 },
                 {
@@ -254,7 +254,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                     label: "Load and execute script...",
                     type: "popover",
                     keywords: ["script"],
-                    description: "automatically add water in the map",
+                    description: "",
                     content: MenuItems.LoadScript,
                     specialType: "script",
                 },
@@ -452,7 +452,7 @@ export const createSubMenuMap = (): SubMenuMap =>
                 },
             ],
         },
-        "map-tool": {
+        "map-tools": {
             label: "Map Tools",
             items: [
                 {
@@ -753,8 +753,9 @@ export const createSubMenuMap = (): SubMenuMap =>
                     jsx: MenuItems.ShowShortcutModal,
                 },
                 {
-                    id: "gl-font",
-                    label: "GL font...",
+                    id: "labels-font",
+                    label: "Labels font...",
+                    keywords: ["size", "labels", "fonts"],
                     type: "popover",
                     content: MenuItems.GLFont,
                 },

@@ -17,7 +17,7 @@
 .moorhen__menu-item-popover::after {
     content: "";
     position: absolute;
-    top: 50%;
+    top: var(--popover-arrow-top, 50%);
     left: -0.7rem;
     transform: translateY(-50%);
     border-width: 0.7rem 0.7rem 0.7rem 0;
@@ -26,7 +26,7 @@
     display: block;
 }
 
-.moorhen__menu-item-popover::before {
+/* .moorhen__menu-item-popover::before {
     content: "";
     position: absolute;
     top: 50%;
@@ -36,7 +36,7 @@
     border-style: solid;
     border-color: transparent var(--moorhen-background) transparent transparent;
     display: block;
-}
+} */
 
 .moorhen__menu-item-popover.right-arrow::after {
     left: auto;
@@ -44,12 +44,13 @@
     border-width: 0.7rem 0 0.7rem 0.7rem;
     border-color: transparent transparent transparent var(--moorhen-border);
 }
-.moorhen__menu-item-popover.right-arrow::before {
+
+/* .moorhen__menu-item-popover.right-arrow::before {
     left: auto;
     right: -0.6rem;
     border-width: 0.6rem 0 0.6rem 0.6rem;
     border-color: transparent transparent transparent var(--moorhen-background);
-}
+} */
 
 .moorhen__menu-item-popover.top-arrow::after {
     left: 50%;
@@ -60,14 +61,14 @@
     border-color: transparent transparent var(--moorhen-border) transparent;
 }
 
-.moorhen__menu-item-popover.top-arrow::before {
+/* .moorhen__menu-item-popover.top-arrow::before {
     left: 50%;
     top: -0.6rem;
     right: auto;
     transform: translateX(-50%);
     border-width: 0 0.6rem 0.6rem 0.6rem;
     border-color: transparent transparent var(--moorhen-background) transparent;
-}
+} */
 
 .moorhen__menu-item-popover.bottom-arrow::after {
     left: 50%;
@@ -79,7 +80,7 @@
     border-color: var(--moorhen-border) transparent transparent transparent;
 }
 
-.moorhen__menu-item-popover.bottom-arrow::before {
+/* .moorhen__menu-item-popover.bottom-arrow::before {
     left: 50%;
     top: auto;
     bottom: -0.6rem;
@@ -87,4 +88,4 @@
     transform: translateX(-50%);
     border-width: 0.6rem 0.6rem 0 0.6rem;
     border-color: var(--moorhen-background) transparent transparent transparent;
-}
+} */
