@@ -5,13 +5,16 @@ import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
+import { MoorhenMenuSystem } from "./MenuSystem";
+import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import type { MenuItemType } from "./SubMenuMap";
 
-export const MenuFromItems = (props: { menuItemList: MenuItemType[] }): React.JSX.Element => {
+export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: string }): React.JSX.Element => {
     const dispatch = useDispatch();
     const isDev = useSelector((state: RootState) => state.generalStates.devMode);
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
+    const menuSystem = useMoorhenMenuSystem();
 
     let key = 0;
     if (props.menuItemList === undefined) {
@@ -60,11 +63,23 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[] }): React.JS
             } else if (menuItem.type === "separator") {
                 key += 1;
                 return <hr key={key}></hr>;
+            } else if (menuItem.type === "subMenu") {
+                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={menuItem.id} />;
             }
         }
     });
 
-    return <MoorhenStack direction="column">{menuJSXList}</MoorhenStack>;
+    return (
+        <MoorhenStack direction="column">
+            {props.title ? (
+                <div className="moorhen__submenu-title">
+                    {props.title}
+                    <hr className="moorhen__submenu-title" />
+                </div>
+            ) : null}
+            {menuJSXList}
+        </MoorhenStack>
+    );
 };
 
 const PreferenceChecker = (props: {
@@ -77,7 +92,17 @@ const PreferenceChecker = (props: {
 
     return (
         <InputGroup className="moorhen-input-group-check">
-            <Form.Check type="switch" checked={checked} onChange={() => dispatch(props.action(!checked))} label={props.label} />
+            <Form.Check type="switch" defaultChecked={checked} onChange={() => dispatch(props.action(!checked))} label={props.label} />
         </InputGroup>
+    );
+};
+
+const SubMenuPopover = (props: { menu: string; label: string }) => {
+    const menuSystem = useMoorhenMenuSystem();
+    const items = menuSystem.getItems(props.menu);
+    return (
+        <MoorhenMenuItemPopover menuItemText={props.label}>
+            <MenuFromItems menuItemList={items} title={props.label} />
+        </MoorhenMenuItemPopover>
     );
 };

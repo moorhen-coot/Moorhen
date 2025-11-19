@@ -130,7 +130,7 @@ export const RandomJiggleBlur = () => {
                 setExternalValue={value => setScaleFactor(value)}
                 decimalPlaces={0}
             />
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

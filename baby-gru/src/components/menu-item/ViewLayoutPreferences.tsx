@@ -279,7 +279,7 @@ export const ViewLayoutPreferences = () => {
                     </DndContext>
                 </Tab>
             </Tabs>
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

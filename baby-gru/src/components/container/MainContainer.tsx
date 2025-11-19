@@ -3,7 +3,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { MoorhenInstance, MoorhenInstanceProvider, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
@@ -37,9 +37,8 @@ import { parseAtomInfoLabel } from "../../utils/utils";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
-//import type { ExtraNavBarMenus, ExtraNavBarModals } from "../navbar-menus/MoorhenNavBar";
-import type { ExtraMenuProps } from "../menu-system/MainMenu";
-import { MoorhenMenuSystemProvider } from "../menu-system/MenuSystemContext";
+import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
+import { MoorhenMenuSystemProvider, useMoorhenMenuSystem } from "../menu-system/MenuSystemContext";
 import { MoorhenSearchBar } from "../menu-system/SearchBar";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanel";
@@ -63,7 +62,6 @@ import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snac
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
-//import { MoorhenNavBar } from "../navbar-menus/MoorhenNavBar";
 import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import { windowCootCCP4Loader } from "./windowCootCCP4Loader";
@@ -143,13 +141,13 @@ interface ContainerRefs {
     activeMapRef?: React.RefObject<moorhen.Map>;
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
+    moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
 }
 
 interface ContainerOptionalProps {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
     disableFileUploads?: boolean;
     urlPrefix?: string;
-    //extraNavBarModals: ExtraNavBarModals[];
     viewOnly: boolean;
     extraDraggableModals?: React.JSX.Element[];
     monomerLibraryPath?: string;
@@ -157,8 +155,6 @@ interface ContainerOptionalProps {
     extraFileMenuItems?: React.JSX.Element[];
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
-    extraEditMenuItems?: React.JSX.Element[];
-    extraCalculateMenuItems?: React.JSX.Element[];
     aceDRGInstance?: moorhen.AceDRGInstance | null;
     includeNavBarMenuNames?: string[];
     store?: Store;
@@ -166,24 +162,17 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
 }
 
-export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps>, Partial<ExtraMenuProps> {}
+export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
 
 const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/baby-gru",
         monomerLibraryPath = "./baby-gru/monomers",
         setMoorhenDimensions = null,
-        //includeNavBarMenuNames = [],
-        //extraNavBarModals = [],
-        //extraNavBarMenus = [],
         disableFileUploads = false,
-        //extraFileMenuItems = [],
-        //extraEditMenuItems = [],
-        //extraCalculateMenuItems = [],
         allowScripting = true,
         allowAddNewFittedLigand = false,
         allowMergeFittedLigand = true,
-        //extraDraggableModals = [],
         viewOnly = false,
         aceDRGInstance = null,
     } = props;
@@ -237,10 +226,16 @@ const MoorhenContainer = (props: ContainerProps) => {
     const dispatch = useDispatch();
     const store: Store = useStore();
     const moorhenInstance = useMoorhenInstance();
+    const moorhenMenuSystem = useMoorhenMenuSystem();
 
-    if (props.moorhenInstanceRef) {
-        props.moorhenInstanceRef.current = moorhenInstance;
-    }
+    useEffect(() => {
+        if (props.moorhenInstanceRef) {
+            props.moorhenInstanceRef.current = moorhenInstance;
+        }
+        if (props.moorhenMenuSystemRef) {
+            props.moorhenMenuSystemRef.current = moorhenMenuSystem;
+        }
+    }, [props.moorhenInstanceRef, props.moorhenMenuSystemRef]);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -525,36 +520,33 @@ const MoorhenContainer = (props: ContainerProps) => {
                     Components={snackbarComponents}
                     preventDuplicate={true}
                 >
-                    <MoorhenMenuSystemProvider>
-                        <MoorhenMainMenu extraNavBarMenus={props.extraNavBarMenus} />
+                    <MoorhenMainMenu />
 
-                        <div style={viewportStyle} className="moorhen__viewport-container">
-                            <MoorhenSearchBar />
-                            <ActivityIndicator />
-                            <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                            <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                            <MoorhenSnackBarManager />
-                            <MoorhenUpdatingMapsManager />
-                            <MoorhenMapsHeadManager />
+                    <div style={viewportStyle} className="moorhen__viewport-container">
+                        <ActivityIndicator />
+                        <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                        <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                        <MoorhenSnackBarManager />
+                        <MoorhenUpdatingMapsManager />
+                        <MoorhenMapsHeadManager />
 
-                            <MoorhenDroppable
+                        <MoorhenDroppable
+                            monomerLibraryPath={monomerLibraryPath}
+                            timeCapsuleRef={timeCapsuleRef}
+                            commandCentre={commandCentre}
+                        >
+                            <MoorhenWebMG
+                                ref={glRef}
                                 monomerLibraryPath={monomerLibraryPath}
                                 timeCapsuleRef={timeCapsuleRef}
-                                commandCentre={commandCentre}
-                            >
-                                <MoorhenWebMG
-                                    ref={glRef}
-                                    monomerLibraryPath={monomerLibraryPath}
-                                    timeCapsuleRef={timeCapsuleRef}
-                                    onAtomHovered={onAtomHovered}
-                                    urlPrefix={urlPrefix}
-                                    viewOnly={viewOnly}
-                                />
-                            </MoorhenDroppable>
-                        </div>
-                        <BottomPanelContainer />
-                        <MoorhenSidePanel width={300} />
-                    </MoorhenMenuSystemProvider>
+                                onAtomHovered={onAtomHovered}
+                                urlPrefix={urlPrefix}
+                                viewOnly={viewOnly}
+                            />
+                        </MoorhenDroppable>
+                    </div>
+                    <BottomPanelContainer />
+                    <MoorhenSidePanel width={300} />
                 </SnackbarProvider>
             </div>
         </>
@@ -564,7 +556,9 @@ const MoorhenContainer = (props: ContainerProps) => {
 const MoorhenContainerWrapper = (props: ContainerProps) => {
     return (
         <MoorhenInstanceProvider>
-            <MoorhenContainer {...props} />
+            <MoorhenMenuSystemProvider>
+                <MoorhenContainer {...props} />
+            </MoorhenMenuSystemProvider>
         </MoorhenInstanceProvider>
     );
 };

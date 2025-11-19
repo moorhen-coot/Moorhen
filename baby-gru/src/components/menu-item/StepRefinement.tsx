@@ -57,7 +57,7 @@ export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.
             >
                 <MoorhenMoleculeSelect width="" molecules={molecules} ref={moleculeSelectRef} />
             </Form.Group>
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

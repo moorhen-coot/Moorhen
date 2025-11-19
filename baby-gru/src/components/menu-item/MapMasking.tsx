@@ -170,7 +170,7 @@ export const MapMasking = () => {
                     label="Invert mask"
                 />
             </Form.Group>
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

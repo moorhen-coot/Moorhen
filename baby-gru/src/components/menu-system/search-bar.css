@@ -3,6 +3,8 @@
 .moorhen__search-bar-closed,
 .moorhen__search-bar-open {
     position: absolute;
+    direction: ltr;
+    pointer-events: auto;
     top: 1rem;
     left: 8rem;
     z-index: 1000;
@@ -53,6 +55,8 @@
 
 .moorhen__search-menu-container {
     position: absolute;
+    direction: ltr;
+    pointer-events: auto;
     left: 5rem;
     top: 3rem;
     display: flex;

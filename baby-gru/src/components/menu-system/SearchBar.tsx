@@ -7,7 +7,7 @@ import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../
 import { MoorhenButton } from "../inputs";
 import { MenuFromItems } from "./MenuFromItems ";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
-import { MenuItem, SubMenu } from "./SubMenuMap";
+import { MenuItemType } from "./SubMenuMap";
 import "./search-bar.css";
 
 export const MoorhenSearchBar = () => {
@@ -17,20 +17,6 @@ export const MoorhenSearchBar = () => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const menuSystem = useMoorhenMenuSystem();
-
-    // Collect all menu items from all submenus
-    const getAllMenuItems = () => {
-        if (!menuSystem.subMenuMap) return [];
-        const items: MenuItem[] = [];
-        Object.values(menuSystem.subMenuMap).forEach((subMenu: SubMenu) => {
-            if (subMenu && Array.isArray(subMenu.items)) {
-                subMenu.items.forEach((item: MenuItem) => {
-                    if (item && item.label) items.push(item);
-                });
-            }
-        });
-        return items;
-    };
 
     // Set up Fuse.js options for label, keywords, description (priority order)
     const fuseOptions = {
@@ -49,14 +35,14 @@ export const MoorhenSearchBar = () => {
 
     const getResults = () => {
         if (query.length > 1) {
-            const fuse = new Fuse(getAllMenuItems(), fuseOptions);
+            const fuse = new Fuse(menuSystem.getAllItems(), fuseOptions);
             const fuseResults = fuse.search(query);
             const _results = fuseResults.map(r => r.item);
             const uniqueResults = _results.filter((item, pos) => {
                 return _results.indexOf(item) == pos;
             });
 
-            return uniqueResults as MenuItem[];
+            return uniqueResults as MenuItemType[];
         }
         return [];
     };

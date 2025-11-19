@@ -74,7 +74,7 @@ export const MakeMaskedMapsSplitByChain = () => {
         <>
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

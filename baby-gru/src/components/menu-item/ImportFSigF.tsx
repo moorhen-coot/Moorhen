@@ -136,7 +136,7 @@ export const ImportFSigF = () => {
                 </Col>
                 {/* )} */}
             </Row>
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

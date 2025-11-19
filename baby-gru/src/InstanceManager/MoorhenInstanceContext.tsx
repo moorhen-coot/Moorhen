@@ -14,9 +14,9 @@ interface MoorhenInstanceProviderProps {
     children: ReactNode;
     instance?: MoorhenInstance; // Optional - allows dependency injection for testing
 }
-export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = ({ children, instance }) => {
+export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = ({ children }) => {
     // Create or use provided instance - only created once per provider
-    const instanceRef = useRef<MoorhenInstance>(instance || new MoorhenInstance());
+    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance());
 
     // Add cleanup for unmount and HMR
     useEffect(() => {

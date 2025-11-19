@@ -1,4 +1,4 @@
-import React, { ReactNode, createContext, useContext, useEffect, useRef } from "react";
+import React, { ReactNode, createContext, useContext, useRef } from "react";
 import { MoorhenMenuSystem } from "./MenuSystem";
 
 // Create the context type
@@ -14,9 +14,9 @@ interface MoorhenMenuSystemProviderProps {
     children: ReactNode;
     instance?: MoorhenMenuSystem; // Optional - allows dependency injection for testing
 }
-export const MoorhenMenuSystemProvider: React.FC<MoorhenMenuSystemProviderProps> = ({ children, instance }) => {
+export const MoorhenMenuSystemProvider: React.FC<MoorhenMenuSystemProviderProps> = ({ children }) => {
     // Create or use provided instance - only created once per provider
-    const menuRef = useRef<MoorhenMenuSystem>(instance || new MoorhenMenuSystem());
+    const menuRef = useRef<MoorhenMenuSystem>(new MoorhenMenuSystem());
     const contextValue: MoorhenMenuSystemContextType = {
         menuSystem: menuRef.current,
     };

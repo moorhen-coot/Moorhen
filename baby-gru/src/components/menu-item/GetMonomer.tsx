@@ -382,7 +382,7 @@ export const GetMonomer = () => {
                     />
                 </Form.Group>
             )}
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

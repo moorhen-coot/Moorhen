@@ -211,7 +211,7 @@ const ImportLigandDictionary = (props: {
     return (
         <>
             {panelContent}
-            <MoorhenButton onClick={onCompleted} />
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

@@ -1,5 +1,4 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { setShortCuts } from "./shortCutsSlice";
 
 const initialState: {
     busy: boolean;

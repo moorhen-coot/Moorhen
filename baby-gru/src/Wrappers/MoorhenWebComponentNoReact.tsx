@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import React, { createContext } from "react";
+import { MoorhenMenuSystem } from "../components/menu-system/MenuSystem";
 import {
     MoorhenContainer,
     MoorhenInstance,
@@ -11,14 +12,16 @@ import {
     //MoorhenMap,
     addMolecule,
 } from "../moorhen";
-import { MoorhenReduxStoreType, reducers } from "../store/MoorhenReduxStore";
+import { reducers } from "../store/MoorhenReduxStore";
 
 export class MoorhenWebComponentNoReact extends HTMLElement {
     public moorhenInstanceRef: React.RefObject<null | MoorhenInstance>;
+    public moorhenMenuSystemRef: React.RefObject<null | MoorhenMenuSystem>;
     public setMoorhenDimensions: null | (() => [number, number]);
     public width: number | string;
     public height: number | string;
     public urlPrefix: string;
+    public onInnit: () => void;
 
     static get observedAttributes() {
         return ["width", "height", "url-prefix"];
@@ -26,6 +29,7 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
     constructor() {
         super();
         this.moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+        this.moorhenMenuSystemRef = React.createRef<null | MoorhenMenuSystem>();
         this.width = this.getAttribute("width") || 800;
         this.height = this.getAttribute("height") || this.width;
         this.setMoorhenDimensions = () => [+this.width, +this.height];
@@ -77,12 +81,21 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
                 <Provider store={MoorhenReduxStore}>
                     <MoorhenContainer
                         moorhenInstanceRef={this.moorhenInstanceRef}
+                        moorhenMenuSystemRef={this.moorhenMenuSystemRef}
                         setMoorhenDimensions={this.setMoorhenDimensions}
                         urlPrefix={this.urlPrefix}
                     />
                 </Provider>
             </div>
         );
+
+        const checkRefsReady = () => {
+            if (this.moorhenInstanceRef?.current && this.moorhenMenuSystemRef?.current) {
+                clearInterval(refCheckInterval);
+                this.onInnit();
+            }
+        };
+        const refCheckInterval = setInterval(checkRefsReady, 50);
     }
 }
 
