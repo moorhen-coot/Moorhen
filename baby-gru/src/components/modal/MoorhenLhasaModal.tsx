@@ -17,6 +17,8 @@ import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 const LhasaWrapper = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
+    maxWidth?: number;
+    maxHeight?: number;
 }) => {
 
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList)
@@ -121,22 +123,27 @@ const LhasaWrapper = (props: {
                     name_of_host_program='Moorhen'
                     smiles_callback={smilesCallback}
                     dark_mode={isDark}
+                    max_width={props.maxWidth}
+                    max_height={props.maxHeight}
                 /> : null
 }
 
 export const MoorhenLhasaModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
       
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const [lhasaMaxWidth, setLhasaMaxWidth] = useState<number>(convertRemToPx(37));
+    const [lhasaMaxHeight, setLhasaMaxHeight] = useState<number>(convertViewtoPx(30, height));
+
     const urlPrefix = usePaths().urlPrefix;    
 
-    const [busy, setBusy] = useState<boolean>(false)
+    const [busy, setBusy] = useState<boolean>(false);
 
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
     const handleClose = () => {
-        dispatch(emptyRdkitMoleculePickleList())
+        dispatch(emptyRdkitMoleculePickleList());
     }
 
     return <MoorhenDraggableModalBase
@@ -153,10 +160,17 @@ export const MoorhenLhasaModal = () => {
                 headerTitle='Lhasa'
                 resizeNodeRef={resizeNodeRef}
                 onClose={handleClose}
+                onResize={(_evt, _direction, _div, _delta, size) => {
+                    setLhasaMaxWidth(size.width);
+                    setLhasaMaxHeight(size.height);
+                }}
                 body={ 
                     <LhasaWrapper
                         urlPrefix={urlPrefix}
-                        setBusy={setBusy}/>
+                        setBusy={setBusy}
+                        maxHeight={lhasaMaxHeight}
+                        maxWidth={lhasaMaxWidth}
+                    />
                 }
                 additionalChildren={
                     <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
