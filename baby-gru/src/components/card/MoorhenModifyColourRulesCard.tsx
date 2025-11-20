@@ -189,7 +189,7 @@ export const MoorhenModifyColourRulesCard = memo((props: {
                 console.warn('Invalid CID selection used to create a colour rule')
             }
         } else {
-            const ruleArgs = await getMultiColourRuleArgs(props.molecule, ruleType)
+            const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourProperty)
             newRule = new MoorhenColourRule(
                 ruleType, "/*/*/*/*", "#ffffff", props.commandCentre, true
             )
