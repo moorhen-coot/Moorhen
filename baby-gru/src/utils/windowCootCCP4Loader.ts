@@ -1,4 +1,4 @@
-function loadScript(src: string): Promise<string> {
+export function loadScript(src: string): Promise<string> {
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.src = src;
@@ -10,8 +10,32 @@ function loadScript(src: string): Promise<string> {
 }
 
 export const windowCootCCP4Loader = (src: string) => {
+    // Prevent multiple executions using a custom property
+    if (window._cootModuleLoading) {
+        return;
+    }
+    window._cootModuleLoading = true;
+
+    if (window.cootModule) {
+        delete window._cootModuleLoading;
+        return;
+    }
+
     const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]));
     const isChromeLinux = navigator.appVersion.indexOf("Linux") != -1 && navigator.appVersion.indexOf("Chrome") != -1;
+
+    const onModuleLoaded = (returnedModule: any) => {
+        window.cootModule = returnedModule as any;
+        window.CCP4Module = returnedModule as any;
+        const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", {});
+        document.dispatchEvent(cootModuleAttachedEvent);
+        delete (window as any)._cootModuleLoading;
+    };
+
+    const onModuleError = (e: any) => {
+        console.debug(e);
+        delete window._cootModuleLoading;
+    };
 
     if (memory64 && !isChromeLinux) {
         loadScript(`${src}/moorhen64.js`)
@@ -19,7 +43,6 @@ export const windowCootCCP4Loader = (src: string) => {
                 console.debug(src + " loaded 64-bit successfully.");
                 /* eslint-disable no-undef */
                 createCoot64Module({
-                    /* eslint-enable no-undef */
                     print(t) {
                         console.debug(["output", t]);
                     },
@@ -27,16 +50,8 @@ export const windowCootCCP4Loader = (src: string) => {
                         console.error(["output", t]);
                     },
                 })
-                    .then(returnedModule => {
-                        window.cootModule = returnedModule as any;
-                        window.CCP4Module = returnedModule as any;
-                        const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", {});
-                        document.dispatchEvent(cootModuleAttachedEvent);
-                    })
-                    .catch(e => {
-                        console.debug(e);
-                        console.debug("There was a problem creating Coot64Module...");
-                    });
+                    .then(onModuleLoaded)
+                    .catch(onModuleError);
             })
             .catch(error => {
                 console.error(error.message);
@@ -53,15 +68,8 @@ export const windowCootCCP4Loader = (src: string) => {
                             console.debug(["output", t]);
                         },
                     })
-                        .then(returnedModule => {
-                            window.cootModule = returnedModule as any;
-                            window.CCP4Module = returnedModule as any;
-                            const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", {});
-                            document.dispatchEvent(cootModuleAttachedEvent);
-                        })
-                        .catch(e => {
-                            console.debug(e);
-                        });
+                        .then(onModuleLoaded)
+                        .catch(onModuleError);
                 });
             });
     } else {
@@ -76,15 +84,8 @@ export const windowCootCCP4Loader = (src: string) => {
                     console.debug(["output", t]);
                 },
             })
-                .then(returnedModule => {
-                    window.cootModule = returnedModule as any;
-                    window.CCP4Module = returnedModule as any;
-                    const cootModuleAttachedEvent = new CustomEvent("cootModuleAttached", {});
-                    document.dispatchEvent(cootModuleAttachedEvent);
-                })
-                .catch(e => {
-                    console.debug(e);
-                });
+                .then(onModuleLoaded)
+                .catch(onModuleError);
         });
     }
     if (window.cootModule) {

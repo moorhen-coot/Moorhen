@@ -4,16 +4,16 @@ export {};
 
 declare global {
     declare module "*.module.css";
-    namespace JSX {
-    }    
+    namespace JSX {}
     interface Window {
+        _cootModuleLoading: boolean;
+        _mathJaxLoading: boolean;
         CCP4Module: libcootApi.CCP4ModuleType;
         cootModule: libcootApi.CCP4ModuleType;
         MathJax: any;
     }
     declare module "*.svg" {
-    const content: string;
-    export default content;
+        const content: string;
+        export default content;
+    }
 }
-}
-

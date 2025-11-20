@@ -64,7 +64,8 @@ import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
-import { windowCootCCP4Loader } from "./windowCootCCP4Loader";
+import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { loadMathjax } from "../../utils/mathJaxLoader";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -342,6 +343,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         function startupEffect() {
             if (!window.cootModule) windowCootCCP4Loader(".");
+            if (!window.MathJax) loadMathjax(".");
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
             dispatch(setDisableFileUpload(disableFileUploads));
