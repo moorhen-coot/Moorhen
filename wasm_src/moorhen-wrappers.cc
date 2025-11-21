@@ -900,7 +900,7 @@ class molecules_container_js : public molecules_container_t {
                 out << "vn " << norm[0] << " " << norm[1] << " " << norm[2] << std::endl;
             }
             for(const auto &tri : sm.triangles){
-                out << "f " << tri[0]+1 << " " << tri[1]+1 << " " << tri[2]+1 << std::endl;
+                out << "f " << tri[0]+1 << "//" << tri[0]+1 << " " << tri[1]+1 << "//" << tri[1]+1<< " " << tri[2]+1 << "//"  << tri[2]+1 << std::endl;
             }
             out.close();
         }
