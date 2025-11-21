@@ -888,6 +888,41 @@ class molecules_container_js : public molecules_container_t {
             return cell;
         }
 
+        void write_simple_mesh_to_3mf_xml_file(const coot::simple_mesh_t &sm, const std::string &file_name){
+            std::string xml_header = R""""(<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <metadata name="Title">Moorhen Model</metadata>
+  <metadata name="Designer">The Moorhen Team</metadata>
+  <resources>)"""";
+            std::string xml_footer = R""""(</resources>
+  <build>
+    <item objectid="1" />
+  </build>
+</model>)"""";
+
+            std::ofstream out(file_name);
+            out << xml_header << std::endl;
+
+            out << "<object id=\"1\" name=\"Moorhen model (monochrome)\" type=\"model\">" << std::endl;
+            out << "<mesh>" << std::endl;
+            out << "<vertices>" << std::endl;
+            for(const auto &vert : sm.vertices){
+                const auto &pos = vert.pos;
+                out << "<vertex x=\"" << pos[0] << "\" y=\"" << pos[1] << "\" z=\"" << pos[2] << "\" />" << std::endl;
+            }
+            out << "</vertices>" << std::endl;
+            out << "<triangles>" << std::endl;
+            for(const auto &tri : sm.triangles){
+                out << "<triangle v1=\"" << tri[0] << "\" v2=\"" << tri[1] << "\" v3=\"" << tri[2] << "\" />" << std::endl;
+            }
+            out << "</triangles>" << std::endl;
+            out << "</mesh>" << std::endl;
+            out << "</object>" << std::endl;
+
+            out << xml_footer << std::endl;
+            out.close();
+        }
+
         void write_simple_mesh_to_obj_file(const coot::simple_mesh_t &sm, const std::string &file_name){
 
             std::ofstream out(file_name);
@@ -955,6 +990,56 @@ class molecules_container_js : public molecules_container_t {
          }
      }
 
+     void export_model_molecule_as_3mf_xml(int imol,
+                                          const std::string &selection_cid,
+                                          const std::string &mode,
+                                          bool against_a_dark_background,
+                                          float bonds_width, float atom_radius_to_bond_width_ratio, int smoothness_factor,
+                                          bool draw_hydrogen_atoms_flag, bool draw_missing_residue_loops,
+                                          const std::string &file_name) {
+
+        if (is_valid_model_molecule(imol)) {
+            bool show_atoms_as_aniso_flag = true;
+            bool show_aniso_atoms_as_ortep_flag = false; // pass these
+
+            coot::instanced_mesh_t im = get_bonds_mesh_for_selection_instanced(imol,  selection_cid,
+                                                                mode,
+                                                                against_a_dark_background,
+                                                                bonds_width, atom_radius_to_bond_width_ratio,
+                                                                show_atoms_as_aniso_flag,
+                                                                show_aniso_atoms_as_ortep_flag,
+                                                                draw_hydrogen_atoms_flag,
+                                                                smoothness_factor);
+
+            coot::simple_mesh_t sm = coot::instanced_mesh_to_simple_mesh(im);
+            //Now write this mesh as 3mf xml
+            write_simple_mesh_to_3mf_xml_file(sm,file_name);
+        }
+     }
+
+     void export_molecular_representation_as_3mf_xml(int imol, const std::string &atom_selection_cid,
+                                                 const std::string &colour_scheme, const std::string &style,
+                                                 int secondary_structure_usage_flag,
+                                                 const std::string &file_name) {
+
+        if (is_valid_model_molecule(imol)) {
+            coot::simple_mesh_t sm = get_molecular_representation_mesh(imol, atom_selection_cid, colour_scheme, style,
+                                                                  secondary_structure_usage_flag);
+            //Now write this mesh as 3mf xml
+            write_simple_mesh_to_3mf_xml_file(sm,file_name);
+        }
+     }
+     void export_map_molecule_as_3mf_xml(int imol, float pos_x, float pos_y, float pos_z, float radius, float contour_level,
+                                                   const std::string &file_name){
+         if (is_valid_map_molecule(imol)) {
+            coot::simple_mesh_t sm = get_map_contours_mesh(imol, pos_x, pos_y, pos_z, radius, contour_level);
+            //Now write this mesh as 3mf xml
+            write_simple_mesh_to_3mf_xml_file(sm,file_name);
+         } else {
+            std::cout << "WARNING:: " << __FUNCTION__ << "(): not a valid map molecule " << imol << std::endl;
+         }
+     }
+
      void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
          mmdb::Manager *mol = get_mol(imol);
          coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
@@ -970,6 +1055,13 @@ class molecules_container_js : public molecules_container_t {
          coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
          //Now write this mesh as .obj
          write_simple_mesh_to_obj_file(sm,file_name);
+     }
+
+     void export_metaballs_as_3mf_xml(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
+         mmdb::Manager *mol = get_mol(imol);
+         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         //Now write this mesh as 3mf xml
+         write_simple_mesh_to_3mf_xml_file(sm,file_name);
      }
 
 };
@@ -2067,8 +2159,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("export_molecular_representation_as_obj", &molecules_container_js::export_molecular_representation_as_obj)
     .function("export_model_molecule_as_obj", &molecules_container_js::export_model_molecule_as_obj)
     .function("export_map_molecule_as_obj", &molecules_container_js::export_map_molecule_as_obj)
+    .function("export_molecular_representation_as_3mf_xml", &molecules_container_js::export_molecular_representation_as_3mf_xml)
+    .function("export_model_molecule_as_3mf_xml", &molecules_container_js::export_model_molecule_as_3mf_xml)
+    .function("export_map_molecule_as_3mf_xml", &molecules_container_js::export_map_molecule_as_3mf_xml)
     .function("export_metaballs_as_obj", &molecules_container_js::export_metaballs_as_obj)
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
+    .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
