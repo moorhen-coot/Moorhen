@@ -503,6 +503,26 @@ const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, 
     return fileContents.buffer
 }
 
+const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: number, radius: number, isoLevel: number, fileType: string) => {
+    let fn
+    let suffix
+    if(fileType==="gltf"){
+        fn = "export_metaballs_as_gltf"
+        suffix = "glb"
+    } else if(fileType==="obj"){
+        fn = "export_metaballs_as_obj"
+        suffix = "obj"
+    } else {
+        return null
+    }
+    const fileName = `metaballs-${guid()}.${suffix}`
+    molecules_container[fn](imol, cid, gridSize, radius, isoLevel, fileName)
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+
+}
+
 const export_molecular_representation_as_mesh_file = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number, fileType: string) => {
     let fn
     let suffix
@@ -1258,6 +1278,9 @@ const doCootCommand = (messageData: {
                 break
             case "get_coord_header_info":
                 cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
+                break
+            case "shim_export_metaballs_as_mesh_file":
+                cootResult =  export_metaballs_as_mesh_file(...commandArgs as [number, string, number, number, number, string])
                 break
             default:
                 console.log("Calling",command)

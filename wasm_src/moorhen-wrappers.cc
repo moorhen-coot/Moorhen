@@ -904,7 +904,7 @@ class molecules_container_js : public molecules_container_t {
             }
             out.close();
         }
-        
+
         void export_model_molecule_as_obj(int imol,
                                           const std::string &selection_cid,
                                           const std::string &mode,
@@ -954,6 +954,20 @@ class molecules_container_js : public molecules_container_t {
             std::cout << "WARNING:: " << __FUNCTION__ << "(): not a valid map molecule " << imol << std::endl;
          }
      }
+
+     void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &fileName) {
+         mmdb::Manager *mol = get_mol(imol);
+         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         //And then do something ...
+     }
+
+     void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
+         mmdb::Manager *mol = get_mol(imol);
+         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         //Now write this mesh as .obj
+         write_simple_mesh_to_obj_file(sm,file_name);
+     }
+
 };
 
 std::string GetAtomNameFromAtom(mmdb::Atom *atom){
@@ -2049,6 +2063,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("export_molecular_representation_as_obj", &molecules_container_js::export_molecular_representation_as_obj)
     .function("export_model_molecule_as_obj", &molecules_container_js::export_model_molecule_as_obj)
     .function("export_map_molecule_as_obj", &molecules_container_js::export_map_molecule_as_obj)
+    .function("export_metaballs_as_obj", &molecules_container_js::export_metaballs_as_obj)
+    .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)

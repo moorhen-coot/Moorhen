@@ -1671,8 +1671,19 @@ export class MoleculeRepresentation {
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
+        } else if(this.style==="MetaBalls") {
+            const result = (await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "string",
+                    command: "shim_export_metaballs_as_mesh_file",
+                    commandArgs: [
+                        this.parentMolecule.molNo, this.cid, 0.2, 0.67, 1.8, fileType]
+                },
+                false
+            )) as moorhen.WorkerResponse<ArrayBuffer>;
+            gltfData = result.data.result.result;
         } else {
-            console.warn(`Unable to export molecule representation of style ${this.style} as gltf`);
+            console.warn(`Unable to export molecule representation of style ${this.style} as mesh file`);
         }
         return gltfData;
     }
