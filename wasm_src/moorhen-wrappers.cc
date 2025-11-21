@@ -955,10 +955,14 @@ class molecules_container_js : public molecules_container_t {
          }
      }
 
-     void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &fileName) {
+     void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
          mmdb::Manager *mol = get_mol(imol);
          coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
-         //And then do something ...
+         //Now write this mesh as .glb
+         bool as_binary = true; // test the extension of file_name
+         float gltf_pbr_roughness = 0.2;
+         float gltf_pbr_metalicity = 0.0;
+         sm.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
      }
 
      void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
