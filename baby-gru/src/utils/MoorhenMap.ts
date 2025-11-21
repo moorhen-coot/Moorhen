@@ -1146,13 +1146,13 @@ export class MoorhenMap {
      * Export the map as a gltf in binary format
      * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
      */
-    async exportAsGltf(): Promise<ArrayBuffer> {
+    async exportAsMeshFile(fileType: string): Promise<ArrayBuffer> {
         const originState = this.store.getState().glRef.origin
         const { mapRadius, contourLevel } = this.getMapContourParams()
         const result = await this.commandCentre.current.cootCommand({
             returnType: "arrayBuffer",
-            command: 'shim_export_map_as_gltf',
-            commandArgs: [ this.molNo, ...originState.map(coord => -coord), mapRadius, contourLevel ],
+            command: 'shim_export_map_as_mesh_file',
+            commandArgs: [ this.molNo, ...originState.map(coord => -coord), mapRadius, contourLevel, fileType ],
             changesMolecules: [ ]
         }, false) as moorhen.WorkerResponse<ArrayBuffer>
         return result.data.result.result

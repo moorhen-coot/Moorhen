@@ -44,7 +44,7 @@ const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => 
     return result
 }
 
-const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.): libcootApi.InstancedMeshJS => {
+const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.0): libcootApi.InstancedMeshJS => {
     //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
     let totIdxs: number[][] = []
@@ -484,28 +484,59 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
-const export_map_as_gltf = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number) => {
-    const fileName = `${guid()}.glb`
-    molecules_container.export_map_molecule_as_gltf(imol, x, y, z, radius, contourLevel, fileName)
+const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
+    let fn
+    let suffix
+    if(fileType==="gltf"){
+        fn = "export_map_molecule_as_gltf"
+        suffix = "glb"
+    } else if(fileType==="obj"){
+        fn = "export_map_molecule_as_obj"
+        suffix = "obj"
+    } else {
+        return null
+    }
+    const fileName = `${guid()}.${suffix}`
+    molecules_container[fn](imol, x, y, z, radius, contourLevel, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
 }
 
-const export_molecular_representation_as_gltf = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number) => {
-    const fileName = `${guid()}.glb`
-    molecules_container.export_molecular_representation_as_gltf(imol, cid, colourScheme, style, ssUsageScheme, fileName)
+const export_molecular_representation_as_mesh_file = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number, fileType: string) => {
+    let fn
+    let suffix
+    if(fileType==="gltf"){
+        fn = "export_molecular_representation_as_gltf"
+        suffix = "glb"
+    } else if(fileType==="obj"){
+        fn = "export_molecular_representation_as_obj"
+        suffix = "obj"
+    } else {
+        return null
+    }
+    const fileName = `${guid()}.${suffix}`
+    console.log(fn)
+    console.log(imol, cid, colourScheme, style, ssUsageScheme, fileName)
+    molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
     return fileContents.buffer
 }
 
-const export_molecule_as_gltf = (
+const export_molecule_as_mesh_file = (
     imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
-    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean
+    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
 ) => {
+    let fn
+    if(fileType==="gltf")
+        fn = "export_model_molecule_as_gltf"
+    else if(fileType==="obj")
+        fn = "export_model_molecule_as_obj"
+    else
+        return null
     const fileName = `${guid()}.glb`
-    molecules_container.export_model_molecule_as_gltf(
+    molecules_container[fn](
         imol,
         cid,
         mode,
@@ -1207,14 +1238,14 @@ const doCootCommand = (messageData: {
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgba: [number, number, number, number] }[], boolean])
                 break
-            case 'shim_export_map_as_gltf':
-                cootResult = export_map_as_gltf(...commandArgs as [number, number, number, number, number, number])
+            case 'shim_export_map_as_mesh_file':
+                cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])
                 break
-            case 'shim_export_molecule_as_gltf':
-                cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean])
+            case 'shim_export_molecule_as_mesh_file':
+                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean, string])
                 break
-            case 'shim_export_molecular_representation_as_gltf':
-                cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string, number])
+            case 'shim_export_molecular_representation_as_mesh_file':
+                cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string])
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])

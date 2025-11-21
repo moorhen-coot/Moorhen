@@ -90,21 +90,28 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
         document.body.click();
     };
 
-    const handleExportGltf = async () => {
+    const handleExportObj = async (fileType: string) => {
+        let suffix
+        if(fileType==="obj")
+            suffix = "obj"
+        else if(fileType==="gltf")
+            suffix = "glb"
+        else
+            return
         for (const map of maps) {
-            const gltfData = await map.exportAsGltf();
+            const gltfData = await map.exportAsMeshFile(fileType);
             if (gltfData) {
-                doDownload([gltfData], `${map.name}.glb`);
+                doDownload([gltfData], `${map.name}.${suffix}`);
             }
         }
         for (const molecule of molecules) {
             let index = 0;
             for (const representation of molecule.representations) {
                 if (representation.visible) {
-                    const gltfData = await representation.exportAsGltf();
+                    const gltfData = await representation.exportAsMeshFile(fileType);
                     if (gltfData) {
                         index += 1;
-                        doDownload([gltfData], `${molecule.name}-${index}.glb`);
+                        doDownload([gltfData], `${molecule.name}-${index}.${suffix}`);
                     }
                 }
             }
@@ -304,8 +311,11 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             >
                 Screenshot
             </MoorhenMenuItem>
-            <MoorhenMenuItem id="export-gltf-menu-item" onClick={handleExportGltf}>
+            <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => handleExportObj("gltf")}>
                 Export scene as gltf
+            </MoorhenMenuItem>
+            <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => handleExportObj("obj")}>
+                Export scene as obj
             </MoorhenMenuItem>
             <MoorhenMenuItem id="recording-menu-item" onClick={handleRecording}>
                 Record a video

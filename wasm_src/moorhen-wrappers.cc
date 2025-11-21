@@ -887,6 +887,73 @@ class molecules_container_js : public molecules_container_t {
             }
             return cell;
         }
+
+        void write_simple_mesh_to_obj_file(const coot::simple_mesh_t &sm, const std::string &file_name){
+
+            std::ofstream out(file_name);
+            for(const auto &vert : sm.vertices){
+                const auto &pos = vert.pos;
+                out << "v " << pos[0] << " " << pos[1] << " " << pos[2] << " 1.0" << std::endl;
+            }
+            for(const auto &vert : sm.vertices){
+                const auto &norm = vert.normal;
+                out << "vn " << norm[0] << " " << norm[1] << " " << norm[2] << std::endl;
+            }
+            for(const auto &tri : sm.triangles){
+                out << "f " << tri[0]+1 << " " << tri[1]+1 << " " << tri[2]+1 << std::endl;
+            }
+            out.close();
+        }
+        
+        void export_model_molecule_as_obj(int imol,
+                                          const std::string &selection_cid,
+                                          const std::string &mode,
+                                          bool against_a_dark_background,
+                                          float bonds_width, float atom_radius_to_bond_width_ratio, int smoothness_factor,
+                                          bool draw_hydrogen_atoms_flag, bool draw_missing_residue_loops,
+                                          const std::string &file_name) {
+
+        if (is_valid_model_molecule(imol)) {
+            bool show_atoms_as_aniso_flag = true;
+            bool show_aniso_atoms_as_ortep_flag = false; // pass these
+
+            coot::instanced_mesh_t im = get_bonds_mesh_for_selection_instanced(imol,  selection_cid,
+                                                                mode,
+                                                                against_a_dark_background,
+                                                                bonds_width, atom_radius_to_bond_width_ratio,
+                                                                show_atoms_as_aniso_flag,
+                                                                show_aniso_atoms_as_ortep_flag,
+                                                                draw_hydrogen_atoms_flag,
+                                                                smoothness_factor);
+
+            coot::simple_mesh_t sm = coot::instanced_mesh_to_simple_mesh(im);
+            //Now write this mesh as .obj
+            write_simple_mesh_to_obj_file(sm,file_name);
+        }
+     }
+
+     void export_molecular_representation_as_obj(int imol, const std::string &atom_selection_cid,
+                                                 const std::string &colour_scheme, const std::string &style,
+                                                 int secondary_structure_usage_flag,
+                                                 const std::string &file_name) {
+
+        if (is_valid_model_molecule(imol)) {
+            coot::simple_mesh_t sm = get_molecular_representation_mesh(imol, atom_selection_cid, colour_scheme, style,
+                                                                  secondary_structure_usage_flag);
+            //Now write this mesh as .obj
+            write_simple_mesh_to_obj_file(sm,file_name);
+        }
+     }
+     void export_map_molecule_as_obj(int imol, float pos_x, float pos_y, float pos_z, float radius, float contour_level,
+                                                   const std::string &file_name){
+         if (is_valid_map_molecule(imol)) {
+            coot::simple_mesh_t sm = get_map_contours_mesh(imol, pos_x, pos_y, pos_z, radius, contour_level);
+            //Now write this mesh as .obj
+            write_simple_mesh_to_obj_file(sm,file_name);
+         } else {
+            std::cout << "WARNING:: " << __FUNCTION__ << "(): not a valid map molecule " << imol << std::endl;
+         }
+     }
 };
 
 std::string GetAtomNameFromAtom(mmdb::Atom *atom){
@@ -1979,6 +2046,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
     .function("molecule_to_mmCIF_string_with_gemmi", &molecules_container_js::molecule_to_mmCIF_string_with_gemmi)
+    .function("export_molecular_representation_as_obj", &molecules_container_js::export_molecular_representation_as_obj)
+    .function("export_model_molecule_as_obj", &molecules_container_js::export_model_molecule_as_obj)
+    .function("export_map_molecule_as_obj", &molecules_container_js::export_map_molecule_as_obj)
     ;
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
