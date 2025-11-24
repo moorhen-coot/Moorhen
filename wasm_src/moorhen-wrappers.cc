@@ -903,7 +903,21 @@ class molecules_container_js : public molecules_container_t {
             std::ofstream out(file_name);
             out << xml_header << std::endl;
 
-            out << "<object id=\"1\" name=\"Moorhen model (monochrome)\" type=\"model\">" << std::endl;
+            out << "<m:colorgroup id=\"2\">" << std::endl;
+            out << std::hex;
+            out.fill('0');
+            for(const auto &tri : sm.triangles){
+                int r = static_cast<int>((sm.vertices[tri[0]].color[0] + sm.vertices[tri[1]].color[0] + sm.vertices[tri[2]].color[0]) / 3.0 * 255.0);
+                int g = static_cast<int>((sm.vertices[tri[0]].color[1] + sm.vertices[tri[1]].color[1] + sm.vertices[tri[2]].color[1]) / 3.0 * 255.0);
+                int b = static_cast<int>((sm.vertices[tri[0]].color[2] + sm.vertices[tri[1]].color[2] + sm.vertices[tri[2]].color[2]) / 3.0 * 255.0);
+                if(r>255) r = 255;
+                if(g>255) g = 255;
+                if(b>255) b = 255;
+                out << "<m:color color=\"#" << std::setw(2) << r << std::setw(2) << g << std::setw(2) << b << "\"/>" << std::endl;
+            }
+            out << std::dec;
+            out << "</m:colorgroup>" << std::endl;
+            out << "<object id=\"1\" name=\"Moorhen model (colour)\" type=\"model\">" << std::endl;
             out << "<mesh>" << std::endl;
             out << "<vertices>" << std::endl;
             for(const auto &vert : sm.vertices){
@@ -912,8 +926,10 @@ class molecules_container_js : public molecules_container_t {
             }
             out << "</vertices>" << std::endl;
             out << "<triangles>" << std::endl;
+            int itri = 0;
             for(const auto &tri : sm.triangles){
-                out << "<triangle v1=\"" << tri[0] << "\" v2=\"" << tri[1] << "\" v3=\"" << tri[2] << "\" />" << std::endl;
+                out << "<triangle v1=\"" << tri[0] << "\" v2=\"" << tri[1] << "\" v3=\"" << tri[2] << "\" pid=\"2\" p1=\"" << itri << "\" />" << std::endl;
+                itri++;
             }
             out << "</triangles>" << std::endl;
             out << "</mesh>" << std::endl;
