@@ -27,6 +27,8 @@ export const make3MFZipFile = async(modelFile) =>{
 
     const zipData =  await zip.generateAsync({
         type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 1 },
         streamFiles: true
     })
 
