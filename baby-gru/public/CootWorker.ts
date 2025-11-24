@@ -506,16 +506,22 @@ const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, 
 const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: number, radius: number, isoLevel: number, fileType: string) => {
     let fn
     let suffix
+    let fileName
     if(fileType==="gltf"){
         fn = "export_metaballs_as_gltf"
         suffix = "glb"
+        fileName = `metaballs-${guid()}.${suffix}`
     } else if(fileType==="obj"){
         fn = "export_metaballs_as_obj"
         suffix = "obj"
+        fileName = `metaballs-${guid()}.${suffix}`
+    } else if(fileType==="3mf"){
+        fn = "export_metaballs_as_3mf_xml"
+        fileName = "3dmodel.model"
     } else {
         return null
     }
-    const fileName = `metaballs-${guid()}.${suffix}`
+
     molecules_container[fn](imol, cid, gridSize, radius, isoLevel, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
@@ -525,19 +531,22 @@ const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: numb
 
 const export_molecular_representation_as_mesh_file = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number, fileType: string) => {
     let fn
-    let suffix
+    let fileName
     if(fileType==="gltf"){
         fn = "export_molecular_representation_as_gltf"
-        suffix = "glb"
+        const suffix = "glb"
+        fileName = `${guid()}.${suffix}`
     } else if(fileType==="obj"){
         fn = "export_molecular_representation_as_obj"
-        suffix = "obj"
+        const suffix = "obj"
+        fileName = `${guid()}.${suffix}`
+    } else if(fileType==="3mf"){
+        fn = "export_molecular_representation_as_3mf_xml"
+        fileName = "3dmodel.model"
     } else {
         return null
     }
-    const fileName = `${guid()}.${suffix}`
-    console.log(fn)
-    console.log(imol, cid, colourScheme, style, ssUsageScheme, fileName)
+
     molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
     const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
     cootModule.FS_unlink(fileName)
@@ -549,13 +558,21 @@ const export_molecule_as_mesh_file = (
     atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
 ) => {
     let fn
-    if(fileType==="gltf")
+    let fileName
+    if(fileType==="gltf"){
         fn = "export_model_molecule_as_gltf"
-    else if(fileType==="obj")
+        const suffix = "glb"
+        fileName = `${guid()}.${suffix}`
+    } else if(fileType==="obj"){
         fn = "export_model_molecule_as_obj"
-    else
+        const suffix = "obj"
+        fileName = `${guid()}.${suffix}`
+    } else if(fileType==="3mf"){
+        fn = "export_model_molecule_as_3mf_xml"
+        fileName = "3dmodel.model"
+    } else {
         return null
-    const fileName = `${guid()}.glb`
+    }
     molecules_container[fn](
         imol,
         cid,

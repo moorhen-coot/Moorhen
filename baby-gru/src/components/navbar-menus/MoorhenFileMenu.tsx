@@ -10,7 +10,7 @@ import { autoOpenFiles } from '../../utils/MoorhenFileLoading';
 import { MoorhenMolecule } from '../../utils/MoorhenMolecule';
 import { MoorhenTimeCapsule } from '../../utils/MoorhenTimeCapsule';
 import { modalKeys } from '../../utils/enums';
-import { doDownload, guid, readDataFile } from '../../utils/utils';
+import { doDownload, guid, readDataFile, make3MFZipFile } from '../../utils/utils';
 import { MoorhenFetchOnlineSourcesForm } from '../form/MoorhenFetchOnlineSourcesForm';
 import '../inputs/MoorhenInput.css';
 import { MoorhenMenuItem } from '../menu-item/MenuItem';
@@ -96,11 +96,16 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             suffix = "obj"
         else if(fileType==="gltf")
             suffix = "glb"
+        else if(fileType==="3mf")
+            suffix = "3mf"
         else
             return
         for (const map of maps) {
             const gltfData = await map.exportAsMeshFile(fileType);
             if (gltfData) {
+                if(fileType==="3mf"){
+                    console.log("Now some jiggery pokery ...")
+                }
                 doDownload([gltfData], `${map.name}.${suffix}`);
             }
         }
@@ -111,7 +116,13 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
                     const gltfData = await representation.exportAsMeshFile(fileType);
                     if (gltfData) {
                         index += 1;
-                        doDownload([gltfData], `${molecule.name}-${index}.${suffix}`);
+                        if(fileType==="3mf"){
+                            console.log("Now some jiggery pokery ...")
+                            const zipData = await make3MFZipFile(gltfData)
+                            doDownload([zipData], `${molecule.name}-${index}.${suffix}`);
+                        } else {
+                            doDownload([gltfData], `${molecule.name}-${index}.${suffix}`);
+                        }
                     }
                 }
             }
@@ -314,8 +325,11 @@ export const MoorhenFileMenu = (props: MoorhenFileMenuProps) => {
             <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => handleExportObj("gltf")}>
                 Export scene as gltf
             </MoorhenMenuItem>
-            <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => handleExportObj("obj")}>
+            <MoorhenMenuItem id="export-obj-menu-item" onClick={() => handleExportObj("obj")}>
                 Export scene as obj
+            </MoorhenMenuItem>
+            <MoorhenMenuItem id="export-3mf-menu-item" onClick={() => handleExportObj("3mf")}>
+                Export scene as 3mf
             </MoorhenMenuItem>
             <MoorhenMenuItem id="recording-menu-item" onClick={handleRecording}>
                 Record a video
