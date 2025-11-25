@@ -145,6 +145,7 @@
 .moorhen_menu-hr {
     all: unset;
     margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
     width: 100%;
     border-bottom: 1px solid var(--moorhen-border);
 }
