@@ -11,12 +11,16 @@
     box-sizing: border-box;
 }
 
-.moorhen__button__default {
+.moorhen__button__default,
+.moorhen__button__toggle-checked,
+.moorhen__button__toggle-unchecked {
     all: unset;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    width: fit-content;
+    height: 2.2rem;
     padding: 0.4rem;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -33,6 +37,10 @@
         transform 0.3s ease;
 }
 
+.moorhen__button__toggle-unchecked {
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+}
 .moorhen_button-variant-danger {
     background: var(--moorhen-danger);
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);

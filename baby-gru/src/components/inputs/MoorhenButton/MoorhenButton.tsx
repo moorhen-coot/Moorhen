@@ -1,4 +1,5 @@
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
+import { MoorhenStack } from "../../interface-base";
 import "./moorhen-button.css";
 
 type MoorhenButtonPropsTypeBase = {
@@ -27,12 +28,14 @@ type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     type?: "default";
     size?: "small" | "medium" | "large" | "sm" | "lg" | "md";
     variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
+    icon?: string;
 };
 
 type MoorhenButtonToggleProps = MoorhenButtonPropsTypeBase & {
     type: "toggle";
     checked: boolean;
     size?: "small" | "medium" | "large";
+    icon?: string;
 };
 
 export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps | MoorhenButtonToggleProps) => {
@@ -56,8 +59,8 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     let variant: string | null = null;
     if (type === "default" && "variant" in props) variant = props.variant as string;
 
-    const isChecked = type === "toggle" && "checked" in props ? props.checked : false;
-    const resultClassName = `moorhen__button__${type} ${isChecked ? "checked" : "unchecked"} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
+    const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
 
     return (
         <button
@@ -72,9 +75,11 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             style={{ ...props.style }}
             value={props.value}
         >
-            {icon && <MoorhenIcon name={icon} size={size} isActive={!disabled} style={{ ...style }} />}
-            {label}
-            {children}
+            <MoorhenStack direction="row" align="center" justify="center">
+                {icon && <MoorhenIcon name={icon} size={size} isActive={!disabled} style={{ ...style }} />}
+                {label}
+                {children}
+            </MoorhenStack>
         </button>
     );
 };

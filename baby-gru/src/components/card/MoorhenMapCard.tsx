@@ -197,10 +197,9 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         type="toggle"
                         checked={props.map === activeMap}
                         onClick={() => dispatch(setActiveMap(props.map))}
-                        label={props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     >
                         {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
-                        <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
+                        {props.map === activeMap ? "Active" : "Inactive"}
                     </MoorhenButton>
                     <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
                         <MoorhenStack direction="row" gap={3}>
