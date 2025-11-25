@@ -68,9 +68,9 @@ export const CreateSelection = () => {
                 ref={cidFormRef}
                 invalidCid={invalidCid}
             />
-            <Button variant="primary" onClick={createSelection}>
+            <MoorhenButton variant="primary" onClick={createSelection}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

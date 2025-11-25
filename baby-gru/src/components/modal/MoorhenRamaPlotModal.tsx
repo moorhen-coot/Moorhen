@@ -8,6 +8,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran";
 
@@ -54,7 +55,7 @@ export const MoorhenRamaPlotModal = () => {
             }
             additionalHeaderButtons={[
                 <Tooltip title={"Move to side panel"} key={1}>
-                    <Button
+                    <MoorhenButton
                         variant="white"
                         onClick={() => {
                             dispatch(hideModal(modalKeys.RAMA_PLOT));
@@ -75,7 +76,7 @@ export const MoorhenRamaPlotModal = () => {
                         }}
                     >
                         <LastPageOutlined />
-                    </Button>
+                    </MoorhenButton>
                 </Tooltip>,
             ]}
         />

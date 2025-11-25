@@ -78,7 +78,7 @@ type MoorhenDraggableModalBaseProps = {
  *                    <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
  *                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
  *                           <span>Click on an atom...</span>
- *                           <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
+ *                           <MoorhenButton variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</MoorhenButton>
  *                    </Stack>
  *                </Backdrop>
  *                }
@@ -97,9 +97,9 @@ type MoorhenDraggableModalBaseProps = {
  *                        <Form.Control type="text" readOnly={true} value={errorMessage}/>
  *                    </div>
  *                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
- *                        <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
- *                        <Button variant='danger' onClick={handleCancel}
- *                                  style={{marginLeft: '0.1rem'}}>Cancel</Button>
+ *                        <MoorhenButton variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</MoorhenButton>
+ *                        <MoorhenButton variant='danger' onClick={handleCancel}
+ *                                  style={{marginLeft: '0.1rem'}}>Cancel</MoorhenButton>
  *                    </div>
  *                    </div>
  *                }
@@ -405,7 +405,6 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         icon="resizable"
                         size="medium"
                         style={{ cursor: "nwse-resize" }}
-                        // @ts-expect-error
                         onMouseDown={handleResizeStart}
                     />
                 </div>

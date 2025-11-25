@@ -3,6 +3,7 @@ import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 
 export const ScaleMap = (props: { map: moorhen.Map; disabled: boolean }) => {
     const mapScaleRef = useRef<null | string>(null);
@@ -39,9 +40,9 @@ export const ScaleMap = (props: { map: moorhen.Map; disabled: boolean }) => {
                     }}
                 />
             </Form.Group>
-            <Button variant="primary" style={{ marginLeft: "0.1rem" }} onClick={onCompleted}>
+            <MoorhenButton variant="primary" style={{ marginLeft: "0.1rem" }} onClick={onCompleted}>
                 Scale Map
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

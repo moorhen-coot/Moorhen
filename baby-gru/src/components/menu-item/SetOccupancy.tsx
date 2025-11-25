@@ -6,6 +6,7 @@ import { useCommandCentre } from "../../InstanceManager";
 import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -150,9 +151,9 @@ export const SetOccupancy = () => {
                     }}
                 />
             </Form.Group>
-            <Button variant="primary" onClick={set_occupancy}>
+            <MoorhenButton variant="primary" onClick={set_occupancy}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

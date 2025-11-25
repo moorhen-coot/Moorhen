@@ -1,10 +1,10 @@
-import { memo, useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import Stack from "@mui/material/Stack";
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
+import Stack from "@mui/material/Stack";
+import { Button, Form } from "react-bootstrap";
+import { memo, useState } from "react";
+import { MoorhenButton, MoorhenColourPicker } from "..";
 import { usePersistentState } from "../../../store/menusSlice";
 import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenColourPicker } from "..";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
@@ -58,7 +58,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         setInternalColourTable(newColourTable);
     };
 
-    const colorStop = (index) => {
+    const colorStop = index => {
         const handleColorChange = (selectedColour: { r: number; g: number; b: number }) => {
             const newColourTable: [number, [number, number, number]][] = [];
             for (let i = 0; i < internalColourTable.length; i++) {
@@ -68,7 +68,10 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                 } else {
                     colour = internalColourTable[i][1];
                 }
-                const colourEntry: [number, [number, number, number]] = [i / (internalColourTable.length - 1), [colour[0], colour[1], colour[2]]];
+                const colourEntry: [number, [number, number, number]] = [
+                    i / (internalColourTable.length - 1),
+                    [colour[0], colour[1], colour[2]],
+                ];
                 newColourTable.push(colourEntry);
             }
             setInternalColourTable(newColourTable);
@@ -77,7 +80,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         return (
             <MoorhenColourPicker
                 colour={[internalColourTable[index][1][0], internalColourTable[index][1][1], internalColourTable[index][1][2]]}
-                setColour={(colour) => {
+                setColour={colour => {
                     handleColorChange({ r: colour[0], g: colour[1], b: colour[2] });
                 }}
                 onClose={updateExternalColourTable}
@@ -90,7 +93,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
 
     const getColourGradientImage = () => {
         const gradient = `linear-gradient(to right, ${internalColourTable
-            .map((colour) => `rgb(${colour[1][0]},${colour[1][1]},${colour[1][2]}) ${Math.round(colour[0] * 100)}%`)
+            .map(colour => `rgb(${colour[1][0]},${colour[1][1]},${colour[1][2]}) ${Math.round(colour[0] * 100)}%`)
             .join(", ")})`;
         return gradient;
     };
@@ -104,7 +107,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                     minMax={[2, 7]}
                     decimalDigits={0}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         handlePointsChange(+newVal);
                     }}
                     label="Points: "
@@ -112,7 +115,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                 Presets:
                 <Form.Select
                     value={selectedPreset}
-                    onChange={(evt) => {
+                    onChange={evt => {
                         handlePreset(evt.target.value);
                     }}
                     style={{
@@ -124,15 +127,15 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                     }}
                 >
                     <option value={"Custom"}>Custom</option>
-                    {Object.keys(gradientPresets).map((key) => (
+                    {Object.keys(gradientPresets).map(key => (
                         <option key={key} value={key}>
                             {key}
                         </option>
                     ))}
                 </Form.Select>
-                <Button key="centre-on-map" size="sm" variant="outlined" onClick={handleRevert}>
+                <MoorhenButton key="centre-on-map" size="sm" variant="outlined" onClick={handleRevert}>
                     <FlipCameraAndroidIcon />
-                </Button>
+                </MoorhenButton>
             </Stack>
 
             <Stack direction="column" style={{ margin: "0.5rem" }} gap={0.5}>

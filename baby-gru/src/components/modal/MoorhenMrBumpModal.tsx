@@ -10,6 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 const mrbump_json_keys = [
@@ -425,15 +426,15 @@ export const MoorhenMrBumpModal = () => {
                             {item.name}
                         </Col>
                         <Col style={{ display: "flex", justifyContent: "right" }}>
-                            <Button key={1} size="sm" variant="outlined">
+                            <MoorhenButton key={1} size="sm" variant="outlined">
                                 <VisibilityOutlined />
-                            </Button>
-                            <Button key={2} size="sm" variant="outlined">
+                            </MoorhenButton>
+                            <MoorhenButton key={2} size="sm" variant="outlined">
                                 <CenterFocusWeakOutlined />
-                            </Button>
-                            <Button key={3} size="sm" variant="outlined">
+                            </MoorhenButton>
+                            <MoorhenButton key={3} size="sm" variant="outlined">
                                 <DownloadOutlined />
-                            </Button>
+                            </MoorhenButton>
                         </Col>
                     </Stack>
                 </ListGroup.Item>
@@ -448,9 +449,9 @@ export const MoorhenMrBumpModal = () => {
                                 Range {key}
                             </Col>
                             <Col style={{ display: "flex", justifyContent: "right" }}>
-                                <Button key={1} size="sm" variant="outlined">
+                                <MoorhenButton key={1} size="sm" variant="outlined">
                                     <VisibilityOutlined />
-                                </Button>
+                                </MoorhenButton>
                             </Col>
                         </Stack>
                     </Card.Title>

@@ -11,6 +11,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const MoorhenScriptModal = () => {
@@ -67,9 +68,9 @@ export const MoorhenScriptModal = () => {
                 </div>
             }
             footer={
-                <Button variant="primary" onClick={handleScriptExe}>
+                <MoorhenButton variant="primary" onClick={handleScriptExe}>
                     <PlayArrowOutlined />
-                </Button>
+                </MoorhenButton>
             }
         />
     );

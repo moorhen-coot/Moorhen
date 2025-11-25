@@ -20,6 +20,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { representationLabelMapping } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from "../../utils/utils";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
+import { MoorhenButton } from "../inputs";
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
@@ -812,7 +813,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             </Col>
                             <Col md="auto" style={{ paddingLeft: 0, justifyContent: "center", display: "flex" }}>
                                 <Stack gap={1} direction="vertical">
-                                    <Button
+                                    <MoorhenButton
                                         style={{ height: "100%" }}
                                         variant="light"
                                         onClick={() =>
@@ -822,8 +823,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                         }
                                     >
                                         <FormatColorFillOutlined />
-                                    </Button>
-                                    <Button
+                                    </MoorhenButton>
+                                    <MoorhenButton
                                         style={{ height: "100%" }}
                                         variant="light"
                                         onClick={() =>
@@ -833,8 +834,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                         }
                                     >
                                         <TuneOutlined />
-                                    </Button>
-                                    <Button
+                                    </MoorhenButton>
+                                    <MoorhenButton
                                         style={{ height: "100%" }}
                                         variant="light"
                                         onClick={() =>
@@ -844,7 +845,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                         }
                                     >
                                         <AddOutlined />
-                                    </Button>
+                                    </MoorhenButton>
                                 </Stack>
                             </Col>
                             <MoorhenHeaderInfoCard

@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
-import { Row, Button, Card, Col, OverlayTrigger, Tooltip, Form, FormSelect } from "react-bootstrap";
-import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined, GrainOutlined } from "@mui/icons-material";
-import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
+import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined, GrainOutlined } from "@mui/icons-material";
 import { Popover } from "@mui/material";
+import { Button, Card, Col, Form, FormSelect, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
+import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector } from "react-redux";
+import { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import type { ColourRule } from "../../utils/MoorhenColourRule";
+import { MoorhenButton } from "../inputs";
 
 const ColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void }) => {
     const colourSwatchRef = useRef<null | HTMLDivElement>(null);
@@ -80,20 +81,16 @@ const ColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void }
                         <div className="moorhen-hex-input-decorator">#</div>
                         <HexColorInput className="moorhen-hex-input" color={hex} onChange={handleColorChange} />
                     </div>
-                    <Button style={{ marginTop: "0.2rem" }} onClick={handleClick}>
+                    <MoorhenButton style={{ marginTop: "0.2rem" }} onClick={handleClick}>
                         Apply
-                    </Button>
+                    </MoorhenButton>
                 </div>
             </Popover>
         </>
     );
 };
 
-export const NcsColourSwatch = (props: {
-    rule: ColourRule;
-    applyColourChange: () => void;
-    style?: { [key: string]: string };
-}) => {
+export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
     const ncsSwatchRef = useRef(null);
     const newNcsHexValueRef = useRef<string>("");
     const ncsCopySelectRef = useRef<null | HTMLSelectElement>(null);
@@ -108,7 +105,7 @@ export const NcsColourSwatch = (props: {
         const chainNames: string[] = JSON.parse(ncsCopySelectRef.current.value);
         const newRules = (rule.args[0] as string)
             .split("|")
-            .map((item) => {
+            .map(item => {
                 const [chainName, hex] = item.split("^");
                 if (chainNames.includes(chainName)) {
                     return `${chainName}^${newNcsHexValueRef.current}`;
@@ -175,29 +172,25 @@ export const NcsColourSwatch = (props: {
                             size="sm"
                             style={{ marginBottom: "0.2rem" }}
                             value={ncsCopyValue}
-                            onChange={(evt) => {
+                            onChange={evt => {
                                 setNcsCopyValue(evt.target.value);
                                 const chainNames = JSON.parse(evt.target.value);
                                 const hex = (rule.args[0] as string)
                                     .split("|")
-                                    .find((item) => item.includes(chainNames[0]))
+                                    .find(item => item.includes(chainNames[0]))
                                     ?.split("^")[1];
                                 setHex(hex);
                             }}
                         >
-                            {[...new Set((rule.args[0] as string).split("|").map((item) => item.split("^")[1]))].map(
-                                (hex, index) => {
-                                    const chainNames = JSON.stringify(
-                                        (rule.args[0] as string)
-                                            .split("|")
-                                            .filter((item) => item.includes(hex))
-                                            .map((item) => item.split("^")[0])
-                                    );
-                                    return (
-                                        <option key={chainNames} value={chainNames}>{`Copy no. ${index + 1}`}</option>
-                                    );
-                                }
-                            )}
+                            {[...new Set((rule.args[0] as string).split("|").map(item => item.split("^")[1]))].map((hex, index) => {
+                                const chainNames = JSON.stringify(
+                                    (rule.args[0] as string)
+                                        .split("|")
+                                        .filter(item => item.includes(hex))
+                                        .map(item => item.split("^")[0])
+                                );
+                                return <option key={chainNames} value={chainNames}>{`Copy no. ${index + 1}`}</option>;
+                            })}
                         </FormSelect>
                     </Form.Group>
                     <HexAlphaColorPicker
@@ -212,15 +205,15 @@ export const NcsColourSwatch = (props: {
                         <HexColorInput
                             className="moorhen-hex-input"
                             color={hex}
-                            onChange={(hex) => {
+                            onChange={hex => {
                                 newNcsHexValueRef.current = hex;
                                 setHex(hex);
                             }}
                         />
                     </div>
-                    <Button style={{ marginTop: "0.2rem" }} onClick={applyNcsColourChange}>
+                    <MoorhenButton style={{ marginTop: "0.2rem" }} onClick={applyNcsColourChange}>
                         Apply
-                    </Button>
+                    </MoorhenButton>
                 </div>
             </Popover>
         </>
@@ -398,48 +391,45 @@ export const MoorhenColourRuleCard = (props: {
                             delay={{ show: 400, hide: 400 }}
                             overlay={<Tooltip id="button-tooltip">Move up</Tooltip>}
                         >
-                            <Button
+                            <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
-                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     setRuleList({ action: "MoveUp", item: rule });
                                 }}
                             >
                                 <ArrowUpwardOutlined />
-                            </Button>
+                            </MoorhenButton>
                         </OverlayTrigger>
                         <OverlayTrigger
                             placement="top"
                             delay={{ show: 400, hide: 400 }}
                             overlay={<Tooltip id="button-tooltip">Move down</Tooltip>}
                         >
-                            <Button
+                            <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
-                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     setRuleList({ action: "MoveDown", item: rule });
                                 }}
                             >
                                 <ArrowDownwardOutlined />
-                            </Button>
+                            </MoorhenButton>
                         </OverlayTrigger>
                         <OverlayTrigger
                             placement="top"
                             delay={{ show: 400, hide: 400 }}
                             overlay={<Tooltip id="button-tooltip">Delete</Tooltip>}
                         >
-                            <Button
+                            <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
-                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     setRuleList({ action: "Remove", item: rule });
                                 }}
                             >
                                 <DeleteOutlined />
-                            </Button>
+                            </MoorhenButton>
                         </OverlayTrigger>
                     </Col>
                 </Row>

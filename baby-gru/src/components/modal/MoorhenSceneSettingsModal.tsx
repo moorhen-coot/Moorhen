@@ -38,7 +38,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
@@ -496,7 +496,7 @@ export const MoorhenSceneSettingsModal = () => {
             footer={null}
             additionalHeaderButtons={[
                 <Tooltip title={"Move to side panel"} key={1}>
-                    <Button
+                    <MoorhenButton
                         variant="white"
                         style={{ margin: "0.1rem", padding: "0.1rem" }}
                         onClick={() => {
@@ -516,7 +516,7 @@ export const MoorhenSceneSettingsModal = () => {
                         }}
                     >
                         <LastPageOutlined />
-                    </Button>
+                    </MoorhenButton>
                 </Tooltip>,
             ]}
         />

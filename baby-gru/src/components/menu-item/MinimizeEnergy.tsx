@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
@@ -200,9 +200,9 @@ export const MinimizeEnergy = () => {
                 externalValue={ncyc}
                 setExternalValue={value => setNcyc(value)}
             />
-            <Button variant="primary" onClick={minimizeEnergy}>
+            <MoorhenButton variant="primary" onClick={minimizeEnergy}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

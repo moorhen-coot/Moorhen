@@ -65,9 +65,9 @@ export const CopyFragmentUsingCid = () => {
                 invalidCid={invalidCid}
                 allowUseCurrentSelection={true}
             />
-            <Button variant="primary" onClick={createSelection}>
+            <MoorhenButton variant="primary" onClick={createSelection}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

@@ -46,9 +46,9 @@ export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
         <MoorhenPopover popoverPlacement={popoverPlacement} isShown={isShown} setIsShown={setIsShown} link={menuItem} linkRef={menuItemRef}>
             {children ? children : popoverContent}
             {/* {showOkButton ? (
-                <Button variant={buttonVariant} onClick={() => {}}>
+                <MoorhenButton variant={buttonVariant} onClick={() => {}}>
                     {buttonText}
-                </Button>
+                </MoorhenButton>
             ) : null} */}
         </MoorhenPopover>
     );

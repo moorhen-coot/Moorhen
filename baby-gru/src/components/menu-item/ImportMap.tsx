@@ -84,9 +84,9 @@ export const ImportMap = () => {
                     <Form.Check label={"is diff map"} name={`isDifference`} type="checkbox" ref={isDiffRef} />
                 </Col>
             </Row>
-            <Button variant="primary" onClick={readMaps} disabled={!isActiveButton}>
+            <MoorhenButton variant="primary" onClick={readMaps} disabled={!isActiveButton}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

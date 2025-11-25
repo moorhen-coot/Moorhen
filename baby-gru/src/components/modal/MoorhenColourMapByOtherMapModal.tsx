@@ -1,6 +1,5 @@
 import { Stack } from "@mui/material";
 import { Chart, registerables } from "chart.js";
-import { Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -8,7 +7,7 @@ import { dispatchPersistentStates, usePersistent, usePersistentState } from "../
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenGradientPicker } from "../inputs";
+import { MoorhenButton, MoorhenGradientPicker } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
@@ -44,7 +43,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
 
-    const handleDefaultColour = _evt => {
+    const handleDefaultColour = () => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
             return;
         }
@@ -212,9 +211,9 @@ export const MoorhenColourMapByOtherMapModal = () => {
                 <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." defaultValue={map2 || null} />
             </Stack>
 
-            <Button variant="secondary" onClick={handleDefaultColour} style={{ marginLeft: "0.5rem" }}>
+            <MoorhenButton variant="secondary" onClick={handleDefaultColour} style={{ marginLeft: "0.5rem" }}>
                 Or reset to default colour
-            </Button>
+            </MoorhenButton>
 
             <span style={{ marginTop: "0.5rem" }}>Set min and max values for the colour map:</span>
             <MoorhenGradientPicker colourTable={colourTable} setColourTable={setColourTable} menu={menu} />
@@ -248,19 +247,19 @@ export const MoorhenColourMapByOtherMapModal = () => {
             </Stack>
 
             <Stack direction="row" justifyContent="center" style={{ marginTop: "0.5rem" }}></Stack>
-            <Button variant="secondary" onClick={handleApplyColourTable} style={{ marginLeft: "0.5rem" }}>
+            <MoorhenButton variant="secondary" onClick={handleApplyColourTable} style={{ marginLeft: "0.5rem" }}>
                 Apply Colour Gradient
-            </Button>
+            </MoorhenButton>
             <Stack direction="row" justifyContent="center" style={{ marginTop: "0.5rem" }}>
-                <Button variant="secondary" onClick={() => setMinMaxValue([-1, 1])} style={{ marginLeft: "0.5rem" }}>
+                <MoorhenButton variant="secondary" onClick={() => setMinMaxValue([-1, 1])} style={{ marginLeft: "0.5rem" }}>
                     Default values
-                </Button>
-                <Button variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
+                </MoorhenButton>
+                <MoorhenButton variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
                     Guess Values
-                </Button>
-                <Button variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
+                </MoorhenButton>
+                <MoorhenButton variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
                     Draw Histogram
-                </Button>
+                </MoorhenButton>
             </Stack>
             <div className="histogram-plot-div" style={{ width: "95%" }}>
                 <canvas id={`histogram`}></canvas>

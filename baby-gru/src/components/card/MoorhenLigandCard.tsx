@@ -1,15 +1,11 @@
-import { useSelector } from "react-redux";
-import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
-import { useEffect, useRef, useState } from "react";
 import {
     CenterFocusStrongOutlined,
+    DownloadOutlined,
+    ExpandMoreOutlined,
     HelpOutlined,
     RadioButtonCheckedOutlined,
     RadioButtonUncheckedOutlined,
-    DownloadOutlined,
-    ExpandMoreOutlined,
 } from "@mui/icons-material";
-import parse from "html-react-parser";
 import {
     Accordion,
     AccordionDetails,
@@ -23,10 +19,15 @@ import {
     TableHead,
     TableRow,
 } from "@mui/material";
-import { convertViewtoPx, guid } from "../../utils/utils";
+import parse from "html-react-parser";
+import { Button, Card, Col, Row, Stack, ToggleButton } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
+import { convertViewtoPx, guid } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
+import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
 
 export const MoorhenLigandCard = (props: {
     ligand: LigandInfo;
@@ -69,14 +70,14 @@ export const MoorhenLigandCard = (props: {
     useEffect(() => {
         const changedState = { ...showState };
         validationStyles.forEach(
-            (style) =>
+            style =>
                 (changedState[style] = molecule.representations.some(
-                    (representation) => representation.style === style && representation.visible
+                    representation => representation.style === style && representation.visible
                 ))
         );
         setShowState(changedState);
         return () => {
-            validationStyles.forEach((key) => {
+            validationStyles.forEach(key => {
                 molecule.hide(key, ligand.cid);
             });
         };
@@ -128,8 +129,7 @@ export const MoorhenLigandCard = (props: {
     };
 
     let flev_placeholder = true;
-    if (ligand && ligand.flev_svg)
-        flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model");
+    if (ligand && ligand.flev_svg) flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model");
 
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return (
@@ -174,8 +174,7 @@ export const MoorhenLigandCard = (props: {
                                             {ligand.chem_comp_info.map((chemInfo, idx) => (
                                                 <TableRow
                                                     style={{
-                                                        backgroundColor:
-                                                            idx % 2 !== 0 ? "white" : "rgba(233, 233, 233, 0.3)",
+                                                        backgroundColor: idx % 2 !== 0 ? "white" : "rgba(233, 233, 233, 0.3)",
                                                     }}
                                                     key={`${chemInfo.first} - ${chemInfo.second}`}
                                                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -206,12 +205,9 @@ export const MoorhenLigandCard = (props: {
                             ) : null}
                         </Stack>
                     </Col>
-                    <Col
-                        className="col-3"
-                        style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}
-                    >
+                    <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
                         <Stack direction="vertical" gap={1} style={{ display: "flex", justifyContent: "center" }}>
-                            <Button
+                            <MoorhenButton
                                 variant="secondary"
                                 style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
                                 onClick={() => {
@@ -220,12 +216,12 @@ export const MoorhenLigandCard = (props: {
                             >
                                 <CenterFocusStrongOutlined style={{ marginRight: "0.5rem" }} />
                                 {ligand.cid}
-                            </Button>
-                            {validationStyles.map((style) => {
+                            </MoorhenButton>
+                            {validationStyles.map(style => {
                                 return getToggleButton(style, validationLabels[style]);
                             })}
                             {ligand.svg && (
-                                <Button
+                                <MoorhenButton
                                     variant="secondary"
                                     style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
                                     onClick={() => {
@@ -243,17 +239,17 @@ export const MoorhenLigandCard = (props: {
                                 >
                                     <DownloadOutlined />
                                     Download image (svg)
-                                </Button>
+                                </MoorhenButton>
                             )}
                             {ligand.chem_comp_info?.length > 0 && (
-                                <Button
+                                <MoorhenButton
                                     variant="secondary"
                                     style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
-                                    onClick={() => setShowInfoTable((prev) => !prev)}
+                                    onClick={() => setShowInfoTable(prev => !prev)}
                                 >
                                     <HelpOutlined style={{ marginRight: "0.5rem" }} />
                                     Show info
-                                </Button>
+                                </MoorhenButton>
                             )}
                         </Stack>
                     </Col>
@@ -261,10 +257,7 @@ export const MoorhenLigandCard = (props: {
                 {ligand.smiles && (
                     <Row>
                         <Col>
-                            <p
-                                className="fs-5"
-                                style={{ display: "flex", justifyContent: "left", color: isDark ? "white" : "black" }}
-                            >
+                            <p className="fs-5" style={{ display: "flex", justifyContent: "left", color: isDark ? "white" : "black" }}>
                                 {ligand.smiles}
                                 &nbsp;&nbsp;
                                 <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard" />
@@ -279,7 +272,7 @@ export const MoorhenLigandCard = (props: {
                         ligand.flev_svg.includes("<!-- Exposure Circle -->") ||
                         ligand.flev_svg.includes("<!-- Residue Circle")) && (
                         <Accordion
-                            onChange={() => setFlevAccordianExpanded((prev) => !prev)}
+                            onChange={() => setFlevAccordianExpanded(prev => !prev)}
                             expanded={flevAccordianExpanded}
                             className="moorhen-accordion"
                             disableGutters={true}
@@ -291,9 +284,7 @@ export const MoorhenLigandCard = (props: {
                             >
                                 2D Environment View
                             </AccordionSummary>
-                            <AccordionDetails
-                                style={{ padding: "0.2rem", backgroundColor: isDark ? "#696969" : "white" }}
-                            >
+                            <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#696969" : "white" }}>
                                 <Card key={guid()} style={{ marginTop: "0.5rem" }}>
                                     <Card.Body style={{ padding: "0.5rem" }}>
                                         <Row style={{ display: "flex", justifyContent: "between" }}>
@@ -321,7 +312,7 @@ export const MoorhenLigandCard = (props: {
                                                         gap={1}
                                                         style={{ display: "flex", justifyContent: "center" }}
                                                     >
-                                                        <Button
+                                                        <MoorhenButton
                                                             variant="secondary"
                                                             style={{
                                                                 marginRight: "0.5rem",
@@ -329,8 +320,7 @@ export const MoorhenLigandCard = (props: {
                                                                 justifyContent: "left",
                                                             }}
                                                             onClick={() => {
-                                                                let link: any =
-                                                                    document.getElementById("download_flev_svg_link");
+                                                                let link: any = document.getElementById("download_flev_svg_link");
                                                                 if (!link) {
                                                                     link = document.createElement("a");
                                                                     link.id = "download_flev_svg_link";
@@ -346,7 +336,7 @@ export const MoorhenLigandCard = (props: {
                                                         >
                                                             <DownloadOutlined />
                                                             Download image (svg)
-                                                        </Button>
+                                                        </MoorhenButton>
                                                     </Stack>
                                                 </Col>
                                             )}

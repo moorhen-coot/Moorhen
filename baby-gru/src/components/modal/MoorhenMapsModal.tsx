@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const MoorhenMapsModal = () => {
@@ -74,9 +75,14 @@ export const MoorhenMapsModal = () => {
             }}
             headerTitle={"Maps"}
             additionalHeaderButtons={[
-                <Button variant="white" key="collapse-all-maps" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleCollapseAll}>
+                <MoorhenButton
+                    variant="white"
+                    key="collapse-all-maps"
+                    style={{ margin: "0.1rem", padding: "0.1rem" }}
+                    onClick={handleCollapseAll}
+                >
                     <UnfoldLessOutlined />
-                </Button>,
+                </MoorhenButton>,
             ]}
             body={maps.length === 0 ? <span>No maps loaded</span> : sortedDisplayData}
             footer={null}

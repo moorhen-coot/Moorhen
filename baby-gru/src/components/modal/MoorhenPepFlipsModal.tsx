@@ -8,6 +8,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap";
 
@@ -45,7 +46,7 @@ export const MoorhenPepFlipsModal = () => {
             }
             additionalHeaderButtons={[
                 <Tooltip title={"Move to side panel"} key={1}>
-                    <Button
+                    <MoorhenButton
                         variant="white"
                         style={{ margin: "0.1rem", padding: "0.1rem" }}
                         onClick={() => {
@@ -67,7 +68,7 @@ export const MoorhenPepFlipsModal = () => {
                         }}
                     >
                         <LastPageOutlined />
-                    </Button>
+                    </MoorhenButton>
                 </Tooltip>,
             ]}
         />

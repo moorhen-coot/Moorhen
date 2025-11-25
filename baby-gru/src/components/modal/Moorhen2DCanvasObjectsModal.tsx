@@ -25,7 +25,7 @@ import type {
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenColourPicker } from "../inputs";
+import { MoorhenButton, MoorhenColourPicker } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const Moorhen2DCanvasObjectsModal = () => {
@@ -139,11 +139,11 @@ export const Moorhen2DCanvasObjectsModal = () => {
         }
     };
 
-    const handleDelete = (evt: React.MouseEvent<HTMLElement>) => {
+    const handleDelete = () => {
         deleteCurrentObject();
     };
 
-    const handleApply = (evt: React.MouseEvent<HTMLElement>) => {
+    const handleApply = () => {
         const objectType = drawModeRef.current.value;
         if (vectorSelectRef.current.value !== "new") {
             deleteCurrentObject();
@@ -544,13 +544,13 @@ export const Moorhen2DCanvasObjectsModal = () => {
     const footer = (
         <>
             {vectorSelectRef.current && selectedOption !== "new" && (
-                <Button className="m-2" variant="danger" onClick={handleDelete}>
+                <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
                     Delete
-                </Button>
+                </MoorhenButton>
             )}
-            <Button className="m-2" onClick={handleApply}>
+            <MoorhenButton className="m-2" onClick={handleApply}>
                 Apply
-            </Button>
+            </MoorhenButton>
         </>
     );
 
@@ -845,16 +845,15 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             </Col>
                         )}
                         <Col sm={2}>
-                            <Button
+                            <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
-                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     inputFile.current.click();
                                 }}
                             >
                                 <FileOpen />
-                            </Button>
+                            </MoorhenButton>
                         </Col>
                     </Row>
                     <Row>
@@ -1121,10 +1120,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                         />
                                     </Form.Group>
                                     <Col sm={2}>
-                                        <Button
+                                        <MoorhenButton
                                             size="sm"
                                             style={{ margin: "0.1rem" }}
-                                            variant={isDark ? "dark" : "light"}
                                             onClick={() => {
                                                 updateObject(
                                                     {
@@ -1138,7 +1136,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                             }}
                                         >
                                             <Delete />
-                                        </Button>
+                                        </MoorhenButton>
                                     </Col>
                                 </Row>
                             );
@@ -1146,10 +1144,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     <Row>
                         <Col sm={9}></Col>
                         <Col sm={3}>
-                            <Button
+                            <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
-                                variant={isDark ? "dark" : "light"}
                                 onClick={() => {
                                     updateObject(
                                         {
@@ -1166,7 +1163,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 }}
                             >
                                 Add new colour
-                            </Button>
+                            </MoorhenButton>
                         </Col>
                     </Row>
                 </>

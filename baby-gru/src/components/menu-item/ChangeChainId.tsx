@@ -3,6 +3,7 @@ import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -119,9 +120,9 @@ export const ChangeChainId = () => {
                     ref={newChainIdFormRef}
                 />
             </Form.Group>
-            <Button variant="primary" onClick={changeChainId}>
+            <MoorhenButton variant="primary" onClick={changeChainId}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

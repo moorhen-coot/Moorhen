@@ -95,9 +95,9 @@ export const MatchLigands = () => {
                 molecules={molecules}
                 selectedCoordMolNo={selectedMovingMolNo}
             />
-            <Button variant="primary" onClick={matchLigands}>
+            <MoorhenButton variant="primary" onClick={matchLigands}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

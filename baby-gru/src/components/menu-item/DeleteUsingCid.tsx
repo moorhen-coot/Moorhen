@@ -71,9 +71,9 @@ export const DeleteUsingCid = () => {
                 invalidCid={invalidCid}
                 allowUseCurrentSelection={true}
             />
-            <Button variant="primary" onClick={deleteSelection}>
+            <MoorhenButton variant="primary" onClick={deleteSelection}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

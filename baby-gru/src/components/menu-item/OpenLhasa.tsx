@@ -7,6 +7,7 @@ import { addRdkitMoleculePickle } from "../../store/lhasaSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenButton } from "../inputs";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
@@ -149,9 +150,9 @@ export const OpenLhasa = () => {
                     )}
                 </>
             )}
-            <Button variant="primary" onClick={onCompleted}>
+            <MoorhenButton variant="primary" onClick={onCompleted}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

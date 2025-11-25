@@ -199,9 +199,9 @@ export const MultiplyBfactor = () => {
                     }}
                 />
             </div>
-            <Button variant="primary" onClick={multiplyBfactor}>
+            <MoorhenButton variant="primary" onClick={multiplyBfactor}>
                 OK
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

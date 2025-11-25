@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const MoorhenModelsModal = () => {
@@ -60,9 +61,14 @@ export const MoorhenModelsModal = () => {
             maxWidth={convertRemToPx(55)}
             headerTitle={"Models"}
             additionalHeaderButtons={[
-                <Button variant="white" key="collapse-all-maps" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleCollapseAll}>
+                <MoorhenButton
+                    variant="white"
+                    key="collapse-all-maps"
+                    style={{ margin: "0.1rem", padding: "0.1rem" }}
+                    onClick={handleCollapseAll}
+                >
                     <UnfoldLessOutlined />
-                </Button>,
+                </MoorhenButton>,
             ]}
             body={molecules.length === 0 ? <span>No models loaded</span> : displayData}
             footer={null}

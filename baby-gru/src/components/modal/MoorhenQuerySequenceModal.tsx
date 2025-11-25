@@ -12,7 +12,7 @@ import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -333,26 +333,26 @@ const MoorhenQuerySequence = () => {
                                 Page {currentResultsPage + 1} of {Math.ceil(totalNumberOfHits / 10)}
                             </span>
                         ) : null}
-                        <Button
+                        <MoorhenButton
                             variant="primary"
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}
                         >
                             <FirstPageOutlined />
-                        </Button>
-                        <Button
+                        </MoorhenButton>
+                        <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === 0}
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage - 1)}
                         >
                             <ArrowBackIosOutlined />
-                        </Button>
-                        <Button
+                        </MoorhenButton>
+                        <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === Math.ceil(totalNumberOfHits / 10) - 1}
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}
                         >
                             <ArrowForwardIosOutlined />
-                        </Button>
+                        </MoorhenButton>
                     </Stack>
                 </>
             }

@@ -1,11 +1,12 @@
 import { ClickAwayListener, FormGroup, IconButton } from "@mui/material";
-import { useCallback, useEffect, useRef } from "react";
 import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { moorhen } from "../../types/moorhen";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { useCallback, useEffect, useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
 
 const MoorhenPopoverOptions = (props: {
@@ -43,14 +44,7 @@ const MoorhenPopoverOptions = (props: {
     const handleClick = useCallback(() => {
         props.setDefaultValue?.(selectRef.current.value);
         if (!nonCootCommand) {
-            props.doEdit(
-                props.getCootCommandInput?.(
-                    props.selectedMolecule,
-                    props.chosenAtom,
-                    selectRef.current.value,
-                    extraInputRef
-                )
-            );
+            props.doEdit(props.getCootCommandInput?.(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef));
         } else {
             nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value);
         }
@@ -69,7 +63,7 @@ const MoorhenPopoverOptions = (props: {
                 <FormGroup>
                     <FormLabel>{props.label}</FormLabel>
                     <FormSelect key={props.label} ref={selectRef} defaultValue={defaultValue}>
-                        {props.options.map((optionName) => {
+                        {props.options.map(optionName => {
                             return (
                                 <option key={optionName} value={optionName}>
                                     {optionName}
@@ -79,7 +73,7 @@ const MoorhenPopoverOptions = (props: {
                     </FormSelect>
                 </FormGroup>
                 {props.extraInput?.(extraInputRef)}
-                <Button onClick={handleClick}>OK</Button>
+                <MoorhenButton onClick={handleClick}>OK</MoorhenButton>
             </Stack>
         </ClickAwayListener>
     );
@@ -124,11 +118,7 @@ export const MoorhenContextButtonBase = (props: {
         label: string;
         options: string[];
         nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
-        getCootCommandInput?: (
-            arg0: moorhen.Molecule,
-            arg2: moorhen.ResidueSpec,
-            arg3: string
-        ) => moorhen.cootCommandKwargs;
+        getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
         extraInput?: (arg0: React.RefObject<any>) => React.JSX.Element;
         defaultValue?: string;
         setDefaultValue?: (arg0: string) => void;

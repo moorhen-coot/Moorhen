@@ -7,6 +7,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 type AceDRGtomPickerProps = {
@@ -168,9 +169,9 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         >
             <Stack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
                 <InputGroup>
-                    <Button variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
+                    <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                         Set Atom {props.id}
-                    </Button>
+                    </MoorhenButton>
                     <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : "No atom selected"} />
                 </InputGroup>
                 <div>
@@ -370,9 +371,9 @@ export const MoorhenCreateAcedrgLinkModal = () => {
                     <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
                         <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                         <span>Click on an atom...</span>
-                        <Button variant="danger" onClick={() => setAwaitAtomClick(-1)}>
+                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
                             Cancel
-                        </Button>
+                        </MoorhenButton>
                     </Stack>
                 </Backdrop>
             }
@@ -404,12 +405,12 @@ export const MoorhenCreateAcedrgLinkModal = () => {
                         <Form.Control type="text" readOnly={true} value={errorMessage} />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "right" }}>
-                        <Button variant="primary" onClick={handleSubmitToAcedrg}>
+                        <MoorhenButton variant="primary" onClick={handleSubmitToAcedrg}>
                             Run AceDRG
-                        </Button>
-                        <Button variant="danger" onClick={handleCancel} style={{ marginLeft: "0.1rem" }}>
+                        </MoorhenButton>
+                        <MoorhenButton variant="danger" onClick={handleCancel} style={{ marginLeft: "0.1rem" }}>
                             Cancel
-                        </Button>
+                        </MoorhenButton>
                     </div>
                 </div>
             }

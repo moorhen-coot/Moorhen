@@ -21,6 +21,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
@@ -740,9 +741,9 @@ export const MoorhenSliceNDiceModal = () => {
                 </SplitButton>
             </Stack>
             <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <Button variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
+                <MoorhenButton variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
                     Slice
-                </Button>
+                </MoorhenButton>
                 <SplitButton id="download-slice-n-dice" variant="info" title="Save & Close" onClick={() => handleClose(true)}>
                     <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>
                         Close and save changes to Moorhen
@@ -786,13 +787,13 @@ export const MoorhenSliceNDiceModal = () => {
                 title="This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A. et al. (2022) available at bioRxiv."
                 key={1}
             >
-                <Button
+                <MoorhenButton
                     variant="white"
                     style={{ margin: "0.1rem", padding: "0.1rem" }}
                     onClick={() => window.open("https://doi.org/10.1101/2022.06.30.497974")}
                 >
                     <InfoOutlined />
-                </Button>
+                </MoorhenButton>
             </Tooltip>
         </Stack>
     );

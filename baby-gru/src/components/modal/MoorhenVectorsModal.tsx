@@ -9,7 +9,7 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import {v4 as uuidv4} from 'uuid';
 import { addVector, removeVector } from "../../store/vectorsSlice"
 import { MoorhenMenuItemPopover } from "../interface-base/MenuItemPopover";
-import { MoorhenColourPicker } from "../inputs";
+import { MoorhenButton, MoorhenColourPicker } from "../inputs";
 import type { MoorhenVector, VectorsCoordMode, VectorsDrawMode, VectorsArrowMode, VectorsLabelMode } from "../../store/vectorsSlice";
 
 const MoorhenDeleteVectorMenuItem = (props: {
@@ -98,12 +98,12 @@ export const MoorhenVectorsModal = () => {
     const [coordsModeButtonState, setCoordsModeButtonState] = useState<string>("atoms")
     const [vectorColour, setVectorColour] = useState({r:0,g:0,b:0})
 
-    const handleDelete = (evt: React.MouseEvent<HTMLElement> ) => {
+    const handleDelete = () => {
         dispatch(removeVector(theVector))
         setSelectedOption("new")
     }
 
-    const handleApply = (evt: React.MouseEvent<HTMLElement> ) => {
+    const handleApply = () => {
         if(vectorSelectRef.current.value!=="new"){
             dispatch(removeVector(theVector))
         }
@@ -163,9 +163,9 @@ export const MoorhenVectorsModal = () => {
                         </Row>
 
     const footer = <>{vectorSelectRef.current && selectedOption!=="new" &&
-                    <Button className='m-2' variant="danger" onClick={handleDelete}>Delete</Button>
+                    <MoorhenButton className='m-2' variant="danger" onClick={handleDelete}>Delete</MoorhenButton>
                     }
-                    <Button className='m-2' onClick={handleApply}>Apply</Button></>
+                    <MoorhenButton className='m-2' onClick={handleApply}>Apply</MoorhenButton></>
 
     const updateVector = ({
         coordsMode=undefined,

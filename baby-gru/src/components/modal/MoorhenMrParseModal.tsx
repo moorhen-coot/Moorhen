@@ -30,6 +30,7 @@ import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
@@ -722,7 +723,7 @@ export const MoorhenMrParseModal = () => {
                     />
                 </Form.Group>
             </Stack>
-            {false && <Button onClick={handleLoadFromUrlExample}>Load from URL example</Button>}
+            {false && <MoorhenButton onClick={handleLoadFromUrlExample}>Load from URL example</MoorhenButton>}
         </Stack>
     );
 
@@ -792,15 +793,15 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{homEl.rmsd}</td>
                                                 <td>{homEl.seq_ident.toFixed(2)}</td>
                                                 <td>
-                                                    <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                                                    <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                    </Button>
-                                                    <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
                                                         <CenterFocusWeakOutlined />
-                                                    </Button>
-                                                    <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
-                                                    </Button>
+                                                    </MoorhenButton>
                                                 </td>
                                             </tr>
                                         );
@@ -873,15 +874,15 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{afEl.h_score}</td>
                                                 <td>{afEl.seq_ident.toFixed(2)}</td>
                                                 <td>
-                                                    <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                                                    <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                    </Button>
-                                                    <Button key={2} size="sm" variant="outlined" onClick={handleCentering}>
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
                                                         <CenterFocusWeakOutlined />
-                                                    </Button>
-                                                    <Button key={3} size="sm" variant="outlined" onClick={handleDownload}>
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
-                                                    </Button>
+                                                    </MoorhenButton>
                                                 </td>
                                             </tr>
                                         );

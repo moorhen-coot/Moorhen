@@ -12,9 +12,12 @@
     --moorhen-middle: #d3d3d3;
     --moorhen-error: #dc3545;
     --moorhen-disabled: #6c757d;
+    --moorhen-danger: #ca3f3f;
+    --moorhen-warning: #ffc107;
 
     /* Button */
-    --moorhen-button-background: #8097ac;
+    --moorhen-button-background: #4578c4;
+    --moorhen-button-background-secondary: #7387a5;
     --moorhen-button-text: var(--moorhen-secondary);
 
     /* Shadow colors */

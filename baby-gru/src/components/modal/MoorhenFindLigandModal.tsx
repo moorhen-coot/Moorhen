@@ -9,6 +9,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -298,12 +299,12 @@ export const MoorheFindLigandModal = () => {
                 direction="horizontal"
                 style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
             >
-                <Button variant="primary" onClick={findLigand}>
+                <MoorhenButton variant="primary" onClick={findLigand}>
                     Find
-                </Button>
-                <Button variant="danger" onClick={handleClose}>
+                </MoorhenButton>
+                <MoorhenButton variant="danger" onClick={handleClose}>
                     Close
-                </Button>
+                </MoorhenButton>
             </Stack>
         </>
     );

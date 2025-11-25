@@ -18,6 +18,7 @@ import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
+import { MoorhenButton } from "../inputs";
 import { MoorhenMenuItemPopover } from "../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../menu-item";
 
@@ -75,9 +76,9 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button key={1} size="sm" variant="outlined" onClick={handleVisibility}>
+                    <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -92,7 +93,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button
+                    <MoorhenButton
                         key={2}
                         size="sm"
                         variant="outlined"
@@ -101,7 +102,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
                         disabled={!makeBackups}
                     >
                         <UndoOutlined />
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -116,7 +117,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button
+                    <MoorhenButton
                         key={3}
                         size="sm"
                         variant="outlined"
@@ -125,7 +126,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
                         disabled={!makeBackups}
                     >
                         <RedoOutlined />
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -140,9 +141,9 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button key={4} size="sm" variant="outlined" onClick={props.handleCentering}>
+                    <MoorhenButton key={4} size="sm" variant="outlined" onClick={props.handleCentering}>
                         <CenterFocusWeakOutlined />
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -157,9 +158,9 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button key={5} size="sm" variant="outlined" onClick={props.handleDownload}>
+                    <MoorhenButton key={5} size="sm" variant="outlined" onClick={props.handleDownload}>
                         <DownloadOutlined />
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -180,9 +181,9 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             },
             expanded: () => {
                 return (
-                    <Button key={6} size="sm" variant="outlined" onClick={props.handleShowInfo}>
+                    <MoorhenButton key={6} size="sm" variant="outlined" onClick={props.handleShowInfo}>
                         <InfoOutlined />
-                    </Button>
+                    </MoorhenButton>
                 );
             },
         },
@@ -310,7 +311,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             >
                 <div style={{ maxHeight: convertViewtoPx(50, height) * 0.5, overflowY: "auto" }}>{compressedButtons}</div>
             </DropdownButton>
-            <Button
+            <MoorhenButton
                 key="expandButton"
                 size="sm"
                 variant="outlined"
@@ -319,7 +320,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
                 }}
             >
                 {props.isCollapsed ? <ExpandMoreOutlined /> : <ExpandLessOutlined />}
-            </Button>
+            </MoorhenButton>
         </Fragment>
     );
 };

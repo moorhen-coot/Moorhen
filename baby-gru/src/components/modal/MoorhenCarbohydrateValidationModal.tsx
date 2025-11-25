@@ -8,6 +8,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
 
@@ -26,13 +27,13 @@ export const MoorhenCarbohydrateValidationModal = () => {
                 title="This plugin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Dialpuri, J. et al. Acta Cryst. Section F 80.2 (2024)."
                 key={1}
             >
-                <Button
+                <MoorhenButton
                     variant="white"
                     style={{ margin: "0.1rem", padding: "0.1rem" }}
                     onClick={() => window.open("https://privateer.york.ac.uk/")}
                 >
                     <InfoOutlined />
-                </Button>
+                </MoorhenButton>
             </Tooltip>
         </Stack>
     );
@@ -62,7 +63,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
             body={body({ height: "100%" })}
             additionalHeaderButtons={[
                 <Tooltip title={"Move to side panel"} key={2}>
-                    <Button
+                    <MoorhenButton
                         variant="white"
                         style={{ margin: "0.1rem", padding: "0.1rem" }}
                         onClick={() => {
@@ -78,7 +79,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
                         }}
                     >
                         <LastPageOutlined />
-                    </Button>
+                    </MoorhenButton>
                 </Tooltip>,
             ]}
         />

@@ -3,6 +3,7 @@ import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 
 export const SetMapWeight = (props: { map: moorhen.Map }) => {
     const mapWeightRef = useRef<null | string>(null);
@@ -52,12 +53,12 @@ export const SetMapWeight = (props: { map: moorhen.Map }) => {
                     }}
                 />
             </Form.Group>
-            <Button variant="secondary" style={{ marginLeft: "0.1rem" }} onClick={estimateMapWeight}>
+            <MoorhenButton variant="secondary" style={{ marginLeft: "0.1rem" }} onClick={estimateMapWeight}>
                 Estimate
-            </Button>
-            <Button variant="primary" style={{ marginLeft: "0.1rem" }} onClick={onCompleted}>
+            </MoorhenButton>
+            <MoorhenButton variant="primary" style={{ marginLeft: "0.1rem" }} onClick={onCompleted}>
                 Set
-            </Button>
+            </MoorhenButton>
         </>
     );
 };

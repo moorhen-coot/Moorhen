@@ -1,21 +1,17 @@
-import { useCallback, useMemo } from "react";
-import { Card, Row, Col, Button } from "react-bootstrap";
-import { useSelector, useDispatch, useStore } from "react-redux";
 import { enqueueSnackbar } from "notistack";
-import { getMultiColourRuleArgs } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { Button, Card, Col, Row } from "react-bootstrap";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { useCallback, useMemo } from "react";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
+import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
-import { usePaths, useCommandCentre } from "../../InstanceManager";
+import { getMultiColourRuleArgs } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 
-export const MoorhenQueryHitCard = (props: {
-    data: GetPolimerInfoQuery;
-    idx: number;
-    selectedMolNo: number;
-    selectedChain: string;
-}) => {
+export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: number; selectedMolNo: number; selectedChain: string }) => {
     const { selectedMolNo, data, idx, selectedChain } = props;
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -103,13 +99,10 @@ export const MoorhenQueryHitCard = (props: {
                     <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>
                         <span>{label}</span>
                     </Col>
-                    <Col
-                        className="col-3"
-                        style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}
-                    >
-                        <Button style={{ marginRight: "0.5rem" }} onClick={fetchAndSuperpose}>
+                    <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
+                        <MoorhenButton style={{ marginRight: "0.5rem" }} onClick={fetchAndSuperpose}>
                             Fetch
-                        </Button>
+                        </MoorhenButton>
                     </Col>
                 </Row>
             </Card.Body>

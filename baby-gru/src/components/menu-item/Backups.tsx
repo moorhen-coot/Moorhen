@@ -2,6 +2,7 @@ import { useSnackbar } from "notistack";
 import { Button, Row, Stack } from "react-bootstrap";
 import { useCallback, useRef } from "react";
 import { useCommandAndCapsule } from "../../InstanceManager";
+import { MoorhenButton } from "../inputs";
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect";
 
 export const Backups = (props: { disabled: boolean; loadSession: (sessionDataString: string) => Promise<void> }) => {
@@ -33,9 +34,9 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
             </Row>
             <Row>
                 <Stack direction="horizontal" gap={2}>
-                    <Button variant="primary" onClick={retrieveSession}>
+                    <MoorhenButton variant="primary" onClick={retrieveSession}>
                         OK
-                    </Button>
+                    </MoorhenButton>
                 </Stack>
             </Row>
         </>

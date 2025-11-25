@@ -9,6 +9,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -326,7 +327,7 @@ export const MoorheSuperposeStructuresModal = () => {
             </Stack>
             {algortihm === "lsqkb" && (
                 <>
-                    <Button onClick={handleAddLsqkbMatch}>Add match</Button>
+                    <MoorhenButton onClick={handleAddLsqkbMatch}>Add match</MoorhenButton>
                     <hr></hr>
                     {lsqkbResidueRanges.length > 0 ? (
                         lsqkbResidueRanges.map(item => {
@@ -400,12 +401,12 @@ export const MoorheSuperposeStructuresModal = () => {
                 direction="horizontal"
                 style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
             >
-                <Button variant="primary" onClick={handleSuperpose}>
+                <MoorhenButton variant="primary" onClick={handleSuperpose}>
                     Superpose
-                </Button>
-                <Button variant="danger" onClick={() => dispatch(hideModal(modalKeys.SUPERPOSE_MODELS))}>
+                </MoorhenButton>
+                <MoorhenButton variant="danger" onClick={() => dispatch(hideModal(modalKeys.SUPERPOSE_MODELS))}>
                     Close
-                </Button>
+                </MoorhenButton>
             </Stack>
         </>
     );

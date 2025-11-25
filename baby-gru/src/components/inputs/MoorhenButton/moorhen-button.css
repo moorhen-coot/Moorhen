@@ -32,7 +32,29 @@
         transform 0.3s ease;
 }
 
+.moorhen_button-variant-danger {
+    background: var(--moorhen-danger);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);
+}
+
+.moorhen_button-variant-secondary {
+    background: var(--moorhen-button-background-secondary);
+}
+
+.moorhen_button-variant-outlined {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+}
+
+.moorhen_button-variant-white {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
 .moorhen__button__default:hover {
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-hover-shadow);
-    transform: scale(1.05);
+    transform: scale(1.02);
 }

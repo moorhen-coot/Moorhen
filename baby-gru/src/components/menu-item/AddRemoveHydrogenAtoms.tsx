@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 ("Add/Remove hydrogen atoms...");
@@ -37,14 +39,16 @@ export const AddRemoveHydrogenAtoms = () => {
     );
 
     return (
-        <Form.Group>
+        <>
             <MoorhenMoleculeSelect molecules={molecules} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
-            <Button className="mx-2" variant="primary" onClick={() => handleClick("add_hydrogen_atoms")}>
-                Add
-            </Button>
-            <Button className="mx-2" variant="danger" onClick={() => handleClick("delete_hydrogen_atoms")}>
-                Remove
-            </Button>
-        </Form.Group>
+            <MoorhenStack direction="line" justify="flex-start">
+                <MoorhenButton className="mx-2" variant="primary" onClick={() => handleClick("add_hydrogen_atoms")}>
+                    Add
+                </MoorhenButton>
+                <MoorhenButton className="mx-2" variant="danger" onClick={() => handleClick("delete_hydrogen_atoms")}>
+                    Remove
+                </MoorhenButton>
+            </MoorhenStack>
+        </>
     );
 };

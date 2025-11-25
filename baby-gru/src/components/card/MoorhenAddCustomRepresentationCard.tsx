@@ -10,7 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../utils/enums";
 import { getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
@@ -886,7 +886,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                             </Popover>
                         </>
                     )}
-                    <Button onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</Button>
+                    <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>
                 </Stack>
             </Popover>
         );
