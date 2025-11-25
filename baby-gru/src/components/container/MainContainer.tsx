@@ -3,7 +3,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from "react";
 import { MoorhenInstance, MoorhenInstanceProvider, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
@@ -33,7 +33,9 @@ import {
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
+import { loadMathjax } from "../../utils/mathJaxLoader";
 import { parseAtomInfoLabel } from "../../utils/utils";
+import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
@@ -64,8 +66,6 @@ import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
-import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
-import { loadMathjax } from "../../utils/mathJaxLoader";
 
 declare module "notistack" {
     interface VariantOverrides {
@@ -296,25 +296,25 @@ const MoorhenContainer = (props: ContainerProps) => {
         head.appendChild(style);
     }, []);
 
-    useLayoutEffect(() => {
-        const head = document.head;
-        const style: HTMLLinkElement = document.createElement("link");
+    // useLayoutEffect(() => {
+    //     const head = document.head;
+    //     const style: HTMLLinkElement = document.createElement("link");
 
-        if (isDark) {
-            style.href = `${urlPrefix}/darkly.css`;
-        } else {
-            style.href = `${urlPrefix}/flatly.css`;
-        }
+    //     if (isDark) {
+    //         style.href = `${urlPrefix}/darkly.css`;
+    //     } else {
+    //         style.href = `${urlPrefix}/flatly.css`;
+    //     }
 
-        style.rel = "stylesheet";
-        // style.async = true;
-        style.type = "text/css";
+    //     style.rel = "stylesheet";
+    //     // style.async = true;
+    //     style.type = "text/css";
 
-        head.appendChild(style);
-        return () => {
-            head.removeChild(style);
-        };
-    }, [isDark, isGlobalInstanceReady]);
+    //     head.appendChild(style);
+    //     return () => {
+    //         head.removeChild(style);
+    //     };
+    // }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);

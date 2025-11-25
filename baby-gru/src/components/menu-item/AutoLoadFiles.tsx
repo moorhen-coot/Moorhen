@@ -29,7 +29,7 @@ export const AutoLoadFiles = () => {
             </label>
             <input
                 id="upload-form"
-                className="moorhen__input-files-upload"
+                className="moorhen__input-files-upload "
                 type="file"
                 multiple={true}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

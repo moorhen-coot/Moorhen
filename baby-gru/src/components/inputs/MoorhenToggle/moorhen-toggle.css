@@ -1,0 +1,65 @@
+@import "../../../colors.css";
+
+.moorhen__toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.moorhen__toggle-menu-item {
+    margin-top: 0.8rem;
+    margin-left: 0.8rem;
+    margin-right: 0.8rem;
+}
+
+.moorhen__toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+}
+
+.moorhen__toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.moorhen__toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    transition: 0.4s;
+    border-radius: 10px;
+}
+
+.moorhen__toggle-slider:before {
+    position: absolute;
+    bottom: 1px;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 1px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+    border: 1px solid var(--moorhen-border);
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-slider {
+    background-color: var(--moorhen-focus);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus-shadow);
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-slider:before {
+    transform: translateX(16px);
+}
+
+.moorhen__toggle-label-text {
+    font-size: 1rem;
+}

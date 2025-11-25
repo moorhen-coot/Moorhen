@@ -17,6 +17,8 @@ import { reducers } from "../store/MoorhenReduxStore";
 export class MoorhenWebComponentNoReact extends HTMLElement {
     public moorhenInstanceRef: React.RefObject<null | MoorhenInstance>;
     public moorhenMenuSystemRef: React.RefObject<null | MoorhenMenuSystem>;
+    public moorhenInstance: MoorhenInstance;
+    public moorhenMenuSystem: MoorhenMenuSystem;
     public setMoorhenDimensions: null | (() => [number, number]);
     public width: number | string;
     public height: number | string;
@@ -38,34 +40,35 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
 
     public connectedCallback() {
         // shadow context
-        const shadow = this.attachShadow({ mode: "open" });
+        //const shadow = this.attachShadow({ mode: "open" });
         const rootElement = document.createElement("div");
-        shadow.appendChild(rootElement);
+        this.appendChild(rootElement);
+        // shadow.appendChild(rootElement);
 
-        const loadStylesheets = async () => {
-            const [moorhenRes, flatlyRes] = await Promise.all([
-                fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href),
-                fetch(new URL(`${this.urlPrefix}/flatly.css`, window.location.href).href),
-            ]);
+        // const loadStylesheets = async () => {
+        //     const [moorhenRes, flatlyRes] = await Promise.all([
+        //         fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href),
+        //         fetch(new URL(`${this.urlPrefix}/flatly.css`, window.location.href).href),
+        //     ]);
 
-            const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);
+        //     const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);
 
-            if ("adoptedStyleSheets" in shadow) {
-                const moorhenSheet = new CSSStyleSheet();
-                const flatlySheet = new CSSStyleSheet();
-                moorhenSheet.replaceSync(moorhenCss);
-                flatlySheet.replaceSync(flatlyCss);
-                shadow.adoptedStyleSheets = [moorhenSheet, flatlySheet];
-            } else {
-                const moorhenStyle = document.createElement("style");
-                const flatlyStyle = document.createElement("style");
-                moorhenStyle.textContent = moorhenCss;
-                flatlyStyle.textContent = flatlyCss;
-                (shadow as ShadowRoot).appendChild(moorhenStyle);
-                (shadow as ShadowRoot).appendChild(flatlyStyle);
-            }
-        };
-        loadStylesheets();
+        //     if ("adoptedStyleSheets" in shadow) {
+        //         const moorhenSheet = new CSSStyleSheet();
+        //         const flatlySheet = new CSSStyleSheet();
+        //         moorhenSheet.replaceSync(moorhenCss);
+        //         flatlySheet.replaceSync(flatlyCss);
+        //         shadow.adoptedStyleSheets = [moorhenSheet, flatlySheet];
+        //     } else {
+        //         const moorhenStyle = document.createElement("style");
+        //         const flatlyStyle = document.createElement("style");
+        //         moorhenStyle.textContent = moorhenCss;
+        //         flatlyStyle.textContent = flatlyCss;
+        //         (shadow as ShadowRoot).appendChild(moorhenStyle);
+        //         (shadow as ShadowRoot).appendChild(flatlyStyle);
+        //     }
+        // };
+        // loadStylesheets();
 
         const MoorhenReduxStore = configureStore({
             reducer: reducers,
@@ -92,6 +95,8 @@ export class MoorhenWebComponentNoReact extends HTMLElement {
         const checkRefsReady = () => {
             if (this.moorhenInstanceRef?.current && this.moorhenMenuSystemRef?.current) {
                 clearInterval(refCheckInterval);
+                this.moorhenInstance = this.moorhenInstanceRef.current;
+                this.moorhenMenuSystem = this.moorhenMenuSystemRef.current;
                 this.onInnit();
             }
         };

@@ -12,6 +12,8 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
+import "../inputs/MoorhenInput.css";
 
 export const FetchOnlineSources = () => {
     const defaultProps = {
@@ -242,40 +244,34 @@ export const FetchOnlineSources = () => {
             <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
                 Fetch from online services
             </label>
-            <div style={{ marginLeft: "0.8rem", width: "26rem", border: "1px solid var(--moorhen-border)", borderRadius: "0.4rem" }}>
-                <InputGroup>
-                    <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                        {sources.map(source => {
-                            return (
-                                <Dropdown.Item
-                                    key={source}
-                                    href="#"
-                                    onClick={() => {
-                                        setRemoteSource(source);
-                                    }}
-                                >
-                                    {source}
-                                </Dropdown.Item>
-                            );
-                        })}
-                    </SplitButton>
-                    <Form.Control
-                        type="text"
-                        style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
-                        name="fetch-pdbe-form"
-                        id="fetch-pdbe-form"
-                        ref={pdbCodeFetchInputRef}
-                        onKeyDown={e => {
-                            setIsValidPdbId(true);
-                            if (e.code === "Enter") {
-                                fetchFiles();
-                            }
-                        }}
-                    />
-                    <Button variant="light" onClick={fetchFiles}>
-                        Fetch
-                    </Button>
-                </InputGroup>
+            <div className="moorhen__input-fetch-online-container">
+                <select
+                    name="source-select"
+                    id="source-select"
+                    className="moorhen__input-fetch-online-select "
+                    onChange={e => setRemoteSource(e.target.value)}
+                >
+                    {sources.map(source => {
+                        return <option key={source}>{source}</option>;
+                    })}
+                </select>
+                <input
+                    type="text"
+                    className="moorhen__input-fetch-online-text-input"
+                    style={{ borderColor: isValidPdbId ? "" : "red", textTransform: "uppercase" }}
+                    name="fetch-pdbe-form"
+                    id="fetch-pdbe-form"
+                    ref={pdbCodeFetchInputRef}
+                    onKeyDown={e => {
+                        setIsValidPdbId(true);
+                        if (e.code === "Enter") {
+                            fetchFiles();
+                        }
+                    }}
+                />
+                <MoorhenButton onClick={fetchFiles} className="moorhen__input-fetch-online-button">
+                    Fetch
+                </MoorhenButton>
             </div>
             <Form.Label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching

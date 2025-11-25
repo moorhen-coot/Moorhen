@@ -138,4 +138,13 @@
     height: 1.5rem;
     font-weight: bold;
     pointer-events: none;
+    border: none;
+    border-bottom: 1px solid var(--moorhen-border);
+}
+
+.moorhen_menu-hr {
+    all: unset;
+    margin-top: 0.5rem;
+    width: 100%;
+    border-bottom: 1px solid var(--moorhen-border);
 }

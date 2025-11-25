@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
+import { MoorhenToggle } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
-import { MoorhenMenuSystem } from "./MenuSystem";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import type { MenuItemType } from "./SubMenuMap";
 
@@ -14,7 +14,6 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
     const isDev = useSelector((state: RootState) => state.generalStates.devMode);
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
-    const menuSystem = useMoorhenMenuSystem();
 
     let key = 0;
     if (props.menuItemList === undefined) {
@@ -62,7 +61,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                 );
             } else if (menuItem.type === "separator") {
                 key += 1;
-                return <hr key={key}></hr>;
+                return <hr key={key} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
                 return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={menuItem.id} />;
             }
@@ -71,12 +70,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
 
     return (
         <MoorhenStack direction="column">
-            {props.title ? (
-                <div className="moorhen__submenu-title">
-                    {props.title}
-                    <hr className="moorhen__submenu-title" />
-                </div>
-            ) : null}
+            {props.title ? <div className="moorhen__submenu-title">{props.title}</div> : null}
             {menuJSXList}
         </MoorhenStack>
     );
@@ -91,9 +85,12 @@ const PreferenceChecker = (props: {
     const dispatch = useDispatch();
 
     return (
-        <InputGroup className="moorhen-input-group-check">
-            <Form.Check type="switch" defaultChecked={checked} onChange={() => dispatch(props.action(!checked))} label={props.label} />
-        </InputGroup>
+        <MoorhenToggle
+            checked={checked}
+            onChange={() => dispatch(props.action(!checked))}
+            label={props.label}
+            className="moorhen__toggle-menu-item"
+        />
     );
 };
 
