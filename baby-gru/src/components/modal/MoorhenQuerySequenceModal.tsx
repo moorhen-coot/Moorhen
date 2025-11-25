@@ -13,6 +13,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -323,11 +324,7 @@ const MoorhenQuerySequence = () => {
             }
             footer={
                 <>
-                    <Stack
-                        gap={2}
-                        direction="horizontal"
-                        style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
-                    >
+                    <MoorhenStack gap={2} direction="horizontal" justify="flex-end">
                         {totalNumberOfHits > 0 ? (
                             <span>
                                 Page {currentResultsPage + 1} of {Math.ceil(totalNumberOfHits / 10)}
@@ -353,7 +350,7 @@ const MoorhenQuerySequence = () => {
                         >
                             <ArrowForwardIosOutlined />
                         </MoorhenButton>
-                    </Stack>
+                    </MoorhenStack>
                 </>
             }
         />

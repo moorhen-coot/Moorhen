@@ -404,6 +404,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         type="icon-only"
                         icon="resizable"
                         size="medium"
+                        className="moorhen__modal-stretch-button"
                         style={{ cursor: "nwse-resize" }}
                         onMouseDown={handleResizeStart}
                     />
