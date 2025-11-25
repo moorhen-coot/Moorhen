@@ -7,6 +7,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const MoorhenWaterValidation = () => {
@@ -221,7 +222,7 @@ export const MoorhenWaterValidation = () => {
                 </Col>
             </Row>
             <Row>
-                <Stack direction="horizontal" gap={1} style={{ display: "flex" }}>
+                <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
                     <InputGroup className="moorhen-input-group-check" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
                         <Form.Check
                             label="Ignore part. occ."
@@ -245,7 +246,7 @@ export const MoorhenWaterValidation = () => {
                             }}
                         />
                     </InputGroup>
-                </Stack>
+                </MoorhenStack>
             </Row>
         </>
     );

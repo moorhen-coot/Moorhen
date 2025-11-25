@@ -9,6 +9,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
@@ -266,9 +267,9 @@ export const MoorhenModifyColourRulesCard = memo(
                     },
                 }}
             >
-                <Stack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem" }}>
-                    <Stack gap={2} direction="horizontal" style={{ margin: 0, padding: 0 }}>
-                        <Stack
+                <MoorhenStack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem" }}>
+                    <MoorhenStack gap={2} direction="horizontal" style={{ margin: 0, padding: 0 }}>
+                        <MoorhenStack
                             gap={2}
                             direction="vertical"
                             style={{
@@ -345,9 +346,9 @@ export const MoorhenModifyColourRulesCard = memo(
                             <MoorhenButton onClick={createRule} style={{ margin: "0px", width: "100%" }}>
                                 Add rule
                             </MoorhenButton>
-                        </Stack>
+                        </MoorhenStack>
                         {ruleType !== "property" && (
-                            <Stack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
+                            <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
                                 <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                                     <HexAlphaColorPicker color={selectedColour} onChange={handleColorChange} />
                                 </div>
@@ -367,9 +368,9 @@ export const MoorhenModifyColourRulesCard = memo(
                                     <div className="moorhen-hex-input-decorator">#</div>
                                     <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={handleColorChange} />
                                 </div>
-                            </Stack>
+                            </MoorhenStack>
                         )}
-                    </Stack>
+                    </MoorhenStack>
                     {ruleType === "residue-range" && (
                         <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
                             <MoorhenSequenceViewer
@@ -403,7 +404,7 @@ export const MoorhenModifyColourRulesCard = memo(
                                   />
                               ))}
                     </div>
-                </Stack>
+                </MoorhenStack>
             </Popover>
         );
     }

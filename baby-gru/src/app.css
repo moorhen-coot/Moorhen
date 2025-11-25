@@ -110,6 +110,9 @@ div.darkly text.end-label {
 .scene-settings-panel,
 .scene-settings-panel-flex-between,
 .scene-settings-panel-flex-center {
+    display: flex;
+    flex-direction: vertical;
+    gap: 1;
     width: 100%;
     height: 100%;
     padding: 0.5rem;
@@ -123,11 +126,6 @@ div.darkly text.end-label {
     justify-content: space-between;
     display: flex;
     flex-direction: column;
-}
-
-.scene-settings-panel-flex-center {
-    justify-content: center;
-    display: flex;
 }
 
 .tab-content {

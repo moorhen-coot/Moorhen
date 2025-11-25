@@ -5,6 +5,7 @@ import React, { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
 export const AssociateReflectionsToMap = () => {
@@ -60,7 +61,7 @@ export const AssociateReflectionsToMap = () => {
 
     return (
         <>
-            <Stack direction="vertical" gap={2}>
+            <MoorhenStack direction="vertical" gap={2}>
                 <MoorhenMapSelect
                     maps={maps}
                     ref={mapSelectRef}
@@ -80,7 +81,7 @@ export const AssociateReflectionsToMap = () => {
                         }}
                     />
                 </Form.Group>
-                <Stack direction="horizontal">
+                <MoorhenStack direction="horizontal">
                     <Form.Group style={{ width: "7rem", margin: "0.5rem", padding: "0rem" }} controlId="fobs" className="mb-3">
                         <Form.Label>Fobs</Form.Label>
                         <FormSelect size="sm" ref={fobsSelectRef} defaultValue="FP" onChange={val => {}}>
@@ -117,8 +118,8 @@ export const AssociateReflectionsToMap = () => {
                                 ))}
                         </FormSelect>
                     </Form.Group>
-                </Stack>
-            </Stack>
+                </MoorhenStack>
+            </MoorhenStack>
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
         </>
     );

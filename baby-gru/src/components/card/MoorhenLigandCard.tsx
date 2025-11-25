@@ -27,6 +27,7 @@ import { moorhen } from "../../types/moorhen";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
 
 export const MoorhenLigandCard = (props: {
@@ -192,7 +193,7 @@ export const MoorhenLigandCard = (props: {
                                 </TableContainer>
                             </Popover>
                         )}
-                        <Stack direction="vertical" gap={1}>
+                        <MoorhenStack direction="vertical" gap={1}>
                             {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                             {calculateQScore && activeMap ? (
                                 <div style={{ display: "flex", justifyContent: "center" }}>
@@ -203,10 +204,10 @@ export const MoorhenLigandCard = (props: {
                                     )}
                                 </div>
                             ) : null}
-                        </Stack>
+                        </MoorhenStack>
                     </Col>
                     <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                        <Stack direction="vertical" gap={1} style={{ display: "flex", justifyContent: "center" }}>
+                        <MoorhenStack direction="vertical" gap={1} style={{ display: "flex", justifyContent: "center" }}>
                             <MoorhenButton
                                 variant="secondary"
                                 style={{ marginRight: "0.5rem", display: "flex", justifyContent: "left" }}
@@ -251,7 +252,7 @@ export const MoorhenLigandCard = (props: {
                                     Show info
                                 </MoorhenButton>
                             )}
-                        </Stack>
+                        </MoorhenStack>
                     </Col>
                 </Row>
                 {ligand.smiles && (
@@ -307,7 +308,7 @@ export const MoorhenLigandCard = (props: {
                                                         display: "flex",
                                                     }}
                                                 >
-                                                    <Stack
+                                                    <MoorhenStack
                                                         direction="vertical"
                                                         gap={1}
                                                         style={{ display: "flex", justifyContent: "center" }}
@@ -337,7 +338,7 @@ export const MoorhenLigandCard = (props: {
                                                             <DownloadOutlined />
                                                             Download image (svg)
                                                         </MoorhenButton>
-                                                    </Stack>
+                                                    </MoorhenStack>
                                                 </Col>
                                             )}
                                         </Row>

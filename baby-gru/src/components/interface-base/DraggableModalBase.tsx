@@ -75,21 +75,21 @@ type MoorhenDraggableModalBaseProps = {
  *             additionalChildren={
  *                <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
  *                            open={awaitAtomClick !== -1}>
- *                    <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
+ *                    <MoorhenStack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
  *                        <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
  *                           <span>Click on an atom...</span>
  *                           <MoorhenButton variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</MoorhenButton>
- *                    </Stack>
+ *                    </MoorhenStack>
  *                </Backdrop>
  *                }
  *                body={
- *                    <Stack direction='horizontal' gap={2}
+ *                    <MoorhenStack direction='horizontal' gap={2}
  *                             style={{display: 'flex', justifyContent: 'space-between'}}>
  *                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick}
  *                           setAwaitAtomClick={setAwaitAtomClick} />
  *                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick}
  *                           setAwaitAtomClick={setAwaitAtomClick} />
- *                    </Stack>
+ *                    </MoorhenStack>
  *                }
  *                footer={
  *                    <div style={{display: 'flex', justifyContent: 'space-between', width: '100%'}}>

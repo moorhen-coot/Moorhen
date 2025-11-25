@@ -6,6 +6,7 @@ import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContou
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSlider } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
+import { MoorhenStack } from "../../interface-base";
 import { MoorhenAccordion } from "../../interface-base/Accordion";
 
 interface MoorhenMapCardSettings {
@@ -113,9 +114,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
 
     return (
         <MoorhenAccordion title="Draw Settings">
-            <Stack direction="vertical" gap={1}>
-                <Stack direction="horizontal" gap={4}>
-                    <Stack direction="vertical" gap={2} style={{ paddingTop: "0.6rem" }}>
+            <MoorhenStack direction="vertical" gap={1}>
+                <MoorhenStack direction="horizontal" gap={4}>
+                    <MoorhenStack direction="vertical" gap={2} style={{ paddingTop: "0.6rem" }}>
                         <ToggleButton
                             id={`lock-origin-toggle-${props.map.molNo}`}
                             type="checkbox"
@@ -144,7 +145,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             </span>
                         </ToggleButton>
 
-                        <Stack
+                        <MoorhenStack
                             direction="vertical"
                             gap={1}
                             style={{
@@ -191,16 +192,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 }}
                                 label="Draw as lit lines"
                             />
-                        </Stack>
-                        <Stack
-                            direction="vertical"
-                            gap={1}
-                            style={{
-                                justifyContent: "center",
-                            }}
-                        ></Stack>
-                    </Stack>
-                    <Stack direction="vertical" style={{ width: "100%" }}>
+                        </MoorhenStack>
+                    </MoorhenStack>
+                    <MoorhenStack direction="vertical" style={{ width: "100%" }}>
                         <MoorhenSlider
                             minVal={2}
                             maxVal={maxRadius}
@@ -223,9 +217,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             piWidth={"3rem"}
                         />
                         {opacitySlider}
-                    </Stack>
-                </Stack>
-            </Stack>
+                    </MoorhenStack>
+                </MoorhenStack>
+            </MoorhenStack>
         </MoorhenAccordion>
     );
 };

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
 import { Popover, Stack } from "@mui/material";
-import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
-import { hexToRGB, rgbToHex } from "../../../utils/utils";
 import Tooltip from "@mui/material/Tooltip";
+import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
+import { useEffect, useState } from "react";
+import { hexToRGB, rgbToHex } from "../../../utils/utils";
+import { MoorhenStack } from "../../interface-base";
 
 type MoorhenColourPickerBase = {
     colour: [number, number, number];
@@ -139,10 +140,10 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                     },
                 }}
             >
-                <Stack gap={3} direction="row">
+                <MoorhenStack gap={3} direction="row">
                     {useAlpha &&
                         [{ c: colour, set: setColourWithAlpha, label }].filter(Boolean).map(({ c, set, label }, i) => (
-                            <Stack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
+                            <MoorhenStack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
                                 {label ? <span>{label}</span> : null}
                                 <RgbaColorPicker
                                     color={{ r: c[0], g: c[1], b: c[2], a: alpha }}
@@ -160,13 +161,13 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                     <HexColorInput
                                         className="moorhen-hex-input"
                                         color={rgbToHex(c[0], c[1], c[2])}
-                                        onChange={(hex) => {
+                                        onChange={hex => {
                                             const [r, g, b] = hexToRGB(hex);
                                             set([r, g, b, alpha]);
                                         }}
                                     />
                                 </div>
-                            </Stack>
+                            </MoorhenStack>
                         ))}
                     {!useAlpha &&
                         [
@@ -175,12 +176,9 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                         ]
                             .filter(Boolean)
                             .map(({ c, set, label }, i) => (
-                                <Stack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
+                                <MoorhenStack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
                                     {label ? <span>{label}</span> : null}
-                                    <RgbColorPicker
-                                        color={{ r: c[0], g: c[1], b: c[2] }}
-                                        onChange={({ r, g, b }) => set([r, g, b])}
-                                    />
+                                    <RgbColorPicker color={{ r: c[0], g: c[1], b: c[2] }} onChange={({ r, g, b }) => set([r, g, b])} />
                                     <div
                                         style={{
                                             width: "100%",
@@ -193,15 +191,15 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                         <HexColorInput
                                             className="moorhen-hex-input"
                                             color={rgbToHex(c[0], c[1], c[2])}
-                                            onChange={(hex) => {
+                                            onChange={hex => {
                                                 const [r, g, b] = hexToRGB(hex);
                                                 set([r, g, b]);
                                             }}
                                         />
                                     </div>
-                                </Stack>
+                                </MoorhenStack>
                             ))}
-                </Stack>
+                </MoorhenStack>
             </Popover>
         </>
     );

@@ -11,6 +11,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 const mrbump_json_keys = [
@@ -387,7 +388,7 @@ export const MoorhenMrBumpModal = () => {
     };
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -398,7 +399,7 @@ export const MoorhenMrBumpModal = () => {
                 width: "100%",
             }}
         >
-            <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMtBump" className="mb-3">
                     <Form.Control
                         ref={filesRef}
@@ -412,8 +413,8 @@ export const MoorhenMrBumpModal = () => {
                         }}
                     />
                 </Form.Group>
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 
     const domains = Object.entries(mrBumpDomains).map(([key, val]) => {
@@ -421,7 +422,7 @@ export const MoorhenMrBumpModal = () => {
         const mols = theMols.map(item => {
             return (
                 <ListGroup.Item key={"row" + item.name}>
-                    <Stack gap={2} direction="horizontal">
+                    <MoorhenStack gap={2} direction="horizontal">
                         <Col className="align-items-center" style={{ display: "flex", justifyContent: "left" }}>
                             {item.name}
                         </Col>
@@ -436,7 +437,7 @@ export const MoorhenMrBumpModal = () => {
                                 <DownloadOutlined />
                             </MoorhenButton>
                         </Col>
-                    </Stack>
+                    </MoorhenStack>
                 </ListGroup.Item>
             );
         });
@@ -444,7 +445,7 @@ export const MoorhenMrBumpModal = () => {
             <ListGroup.Item key={"cardy" + key}>
                 <Card key={"col" + key}>
                     <Card.Title style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}>
-                        <Stack gap={2} direction="horizontal">
+                        <MoorhenStack gap={2} direction="horizontal">
                             <Col className="align-items-center" style={{ display: "flex", justifyContent: "left" }}>
                                 Range {key}
                             </Col>
@@ -453,7 +454,7 @@ export const MoorhenMrBumpModal = () => {
                                     <VisibilityOutlined />
                                 </MoorhenButton>
                             </Col>
-                        </Stack>
+                        </MoorhenStack>
                     </Card.Title>
                     <ListGroup className="list-group-flush">{mols}</ListGroup>
                     <Card.Footer>

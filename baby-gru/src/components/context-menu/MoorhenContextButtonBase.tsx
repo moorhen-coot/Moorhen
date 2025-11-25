@@ -7,6 +7,7 @@ import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
 
 const MoorhenPopoverOptions = (props: {
@@ -59,7 +60,7 @@ const MoorhenPopoverOptions = (props: {
 
     return (
         <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
-            <Stack direction="vertical" gap={2}>
+            <MoorhenStack direction="vertical" gap={2}>
                 <FormGroup>
                     <FormLabel>{props.label}</FormLabel>
                     <FormSelect key={props.label} ref={selectRef} defaultValue={defaultValue}>
@@ -74,7 +75,7 @@ const MoorhenPopoverOptions = (props: {
                 </FormGroup>
                 {props.extraInput?.(extraInputRef)}
                 <MoorhenButton onClick={handleClick}>OK</MoorhenButton>
-            </Stack>
+            </MoorhenStack>
         </ClickAwayListener>
     );
 };

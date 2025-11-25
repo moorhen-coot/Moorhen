@@ -13,6 +13,7 @@ import {
     showModal,
 } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.Element; id: string; title: string; modalId: ModalKey }>(
     (props, ref) => {
@@ -46,9 +47,9 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.E
 
         return (
             <SnackbarContent ref={ref} className="moorhen-sidebar-div" style={{ backgroundColor: isDark ? "grey" : "white" }}>
-                <Stack direction="horizontal" gap={1} style={{ justifyContent: "space-between", width: "90%" }}>
+                <MoorhenStack direction="horizontal" gap={1} style={{ justifyContent: "space-between", width: "90%" }}>
                     <span>{props.title}</span>
-                    <Stack gap={1} direction="horizontal">
+                    <MoorhenStack gap={1} direction="horizontal">
                         <IconButton
                             onClick={() => dispatch(isCollapsed ? expandSideBarModal(props.modalId) : collapseSideBarModal(props.modalId))}
                         >
@@ -60,8 +61,8 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, { children: React.JSX.E
                         <IconButton onClick={handleClose}>
                             <CloseOutlined />
                         </IconButton>
-                    </Stack>
-                </Stack>
+                    </MoorhenStack>
+                </MoorhenStack>
                 {!isCollapsed && props.children}
             </SnackbarContent>
         );

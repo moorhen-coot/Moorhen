@@ -12,6 +12,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<boolean>>; urlPrefix: string }) => {
@@ -163,10 +164,10 @@ export const MoorhenLhasaModal = () => {
             body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} />}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-                    <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
                         <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                         <span>Please wait...</span>
-                    </Stack>
+                    </MoorhenStack>
                 </Backdrop>
             }
         />

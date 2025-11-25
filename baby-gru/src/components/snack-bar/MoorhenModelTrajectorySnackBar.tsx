@@ -11,6 +11,7 @@ import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 import { sleep } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenModelTrajectorySnackBar = forwardRef<
     HTMLDivElement,
@@ -119,12 +120,12 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
             {busyComputingFrames ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <span>Please wait...</span>
                     <LinearProgress variant="determinate" value={progress} />
-                </Stack>
+                </MoorhenStack>
             ) : nFrames > 0 ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <div style={{ display: "flex", justifyContent: "center" }}>
                         <IconButton onClick={playAnimation}>
                             {iFrameRef.current === framesRef.current.length - 1 ? (
@@ -165,7 +166,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
                             }
                         }}
                     />
-                </Stack>
+                </MoorhenStack>
             ) : (
                 <span>Something went wrong...</span>
             )}

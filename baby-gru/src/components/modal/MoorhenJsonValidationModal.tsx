@@ -5,6 +5,7 @@ import { setValidationJson } from "../../store/jsonValidation";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
 
@@ -25,7 +26,7 @@ export const MoorhenJsonValidationModal = () => {
     };
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -36,7 +37,7 @@ export const MoorhenJsonValidationModal = () => {
                 width: "100%",
             }}
         >
-            <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
                     <Form.Control
                         type="file"
@@ -45,8 +46,8 @@ export const MoorhenJsonValidationModal = () => {
                         }}
                     />
                 </Form.Group>
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 
     return (

@@ -12,6 +12,7 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapp
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { NcsColourSwatch } from "./MoorhenColourRuleCard";
@@ -458,7 +459,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     },
                 }}
             >
-                <Stack gap={2} direction="vertical" style={{ width: "25rem", margin: "0.5rem" }}>
+                <MoorhenStack gap={2} direction="vertical" style={{ width: "25rem", margin: "0.5rem" }}>
                     <Form.Group style={{ margin: "0px", width: "100%" }}>
                         <Form.Label>Style</Form.Label>
                         <FormSelect
@@ -559,7 +560,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                         <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
                     )}
                     {representationStyle === "residue_environment" && !useDefaultRepresentationSettings && (
-                        <Stack
+                        <MoorhenStack
                             gap={1}
                             direction="horizontal"
                             style={{
@@ -607,7 +608,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     })}
                                 </FormSelect>
                             </Form.Group>
-                        </Stack>
+                        </MoorhenStack>
                     )}
                     <InputGroup className="moorhen-input-group-check">
                         <Form.Check
@@ -866,7 +867,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     },
                                 }}
                             >
-                                <Stack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
+                                <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
                                     <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                                         <HexAlphaColorPicker color={colour} onChange={color => setColour(color)} />
                                     </div>
@@ -882,12 +883,12 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                         <div className="moorhen-hex-input-decorator">#</div>
                                         <HexColorInput className="moorhen-hex-input" color={colour} onChange={color => setColour(color)} />
                                     </div>
-                                </Stack>
+                                </MoorhenStack>
                             </Popover>
                         </>
                     )}
                     <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>
-                </Stack>
+                </MoorhenStack>
             </Popover>
         );
     }

@@ -39,6 +39,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
@@ -210,7 +211,7 @@ const BackgroundColorPanel = () => {
 
     const swatchCols = ["#000000", "#5c5c5c", "#8a8a8a", "#cccccc", "#ffffff"];
     return (
-        <Stack gap={1} direction="vertical" className="scene-settings-panel-flex-center">
+        <div className="scene-settings-panel-flex-center">
             <span>Background Colour</span>
             <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                 <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
@@ -241,7 +242,7 @@ const BackgroundColorPanel = () => {
                     }}
                 />
             </div>
-        </Stack>
+        </div>
     );
 };
 
@@ -458,18 +459,22 @@ const LightingPanel = () => {
 const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     return (
-        <Stack gap={2} direction={props.stackDirection} style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}>
-            <Stack gap={2} direction="vertical">
+        <MoorhenStack
+            gap={2}
+            direction={props.stackDirection}
+            style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
+        >
+            <MoorhenStack gap={2} direction="vertical">
                 <ClipFogPanel />
                 <BackgroundColorPanel />
                 <EdgeDetectPanel />
-            </Stack>
-            <Stack gap={1} direction="vertical">
+            </MoorhenStack>
+            <MoorhenStack gap={1} direction="vertical">
                 <LightingPanel />
                 {isWebGL2 && <DepthBlurPanel />}
                 <OcclusionPanel />
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 };
 

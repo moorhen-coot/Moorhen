@@ -32,9 +32,9 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { cidToSpec } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: string }>((props, ref) => {
-    const notificationComponentRef = useRef(null);
     const changeColourAnchorRef = useRef(null);
     const cidAnchorRef = useRef(null);
     const cidFormRef = useRef(null);
@@ -390,8 +390,12 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
             <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{ zIndex: 99 }}>
-                <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
-                    <Stack gap={0} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <MoorhenStack direction="vertical" gap={1}>
+                    <MoorhenStack
+                        gap={0}
+                        direction="horizontal"
+                        style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
+                    >
                         <span style={{ paddingLeft: "2.2rem", width: "100%", display: "flex", justifyContent: "center" }}>{`${
                             residueSelection.label?.length > 16 ? residueSelection.label.substring(0, 12) + "..." : residueSelection.label
                         }`}</span>
@@ -402,10 +406,10 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                         >
                             <CloseOutlined />
                         </IconButton>
-                    </Stack>
+                    </MoorhenStack>
                     <hr style={{ margin: 0, padding: 0 }}></hr>
-                    <Stack gap={2} direction="vertical" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                        <Stack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                             <IconButton
                                 disabled={activeMap === null}
                                 onClick={handleRefinement}
@@ -432,8 +436,8 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents("Delete")}>
                                 <DeleteOutlined />
                             </IconButton>
-                        </Stack>
-                        <Stack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                        </MoorhenStack>
+                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                             <IconButton
                                 ref={cidAnchorRef}
                                 onClick={() => {
@@ -471,8 +475,8 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             >
                                 <SwipeRightAlt />
                             </IconButton>
-                        </Stack>
-                    </Stack>
+                        </MoorhenStack>
+                    </MoorhenStack>
                     <Popover
                         onMouseEnter={() => setTooltipContents(null)}
                         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -488,7 +492,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             },
                         }}
                     >
-                        <Stack gap={3} direction="horizontal">
+                        <MoorhenStack gap={3} direction="horizontal">
                             <div style={{ width: "100%", textAlign: "center" }}>
                                 <HexColorPicker
                                     style={{ padding: "0.05rem" }}
@@ -512,7 +516,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                                     Apply
                                 </MoorhenButton>
                             </div>
-                        </Stack>
+                        </MoorhenStack>
                     </Popover>
                     <Popover
                         onMouseEnter={() => setTooltipContents(null)}
@@ -532,7 +536,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             },
                         }}
                     >
-                        <Stack gap={3} direction="horizontal">
+                        <MoorhenStack gap={3} direction="horizontal">
                             <div style={{ padding: "0.2rem", textAlign: "center" }}>
                                 <MoorhenCidInputForm
                                     margin="0"
@@ -550,9 +554,9 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                                     Apply
                                 </MoorhenButton>
                             </div>
-                        </Stack>
+                        </MoorhenStack>
                     </Popover>
-                </Stack>
+                </MoorhenStack>
             </Tooltip>
         </SnackbarContent>
     );

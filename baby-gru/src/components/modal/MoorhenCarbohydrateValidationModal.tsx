@@ -9,6 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
 
@@ -21,7 +22,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     const header = (title: string) => (
-        <Stack direction="horizontal" gap={1}>
+        <MoorhenStack direction="horizontal" gap={1}>
             <span>{title}</span>
             <Tooltip
                 title="This plugin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Dialpuri, J. et al. Acta Cryst. Section F 80.2 (2024)."
@@ -35,7 +36,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
                     <InfoOutlined />
                 </MoorhenButton>
             </Tooltip>
-        </Stack>
+        </MoorhenStack>
     );
 
     const body = (style: CSSProperties) => (

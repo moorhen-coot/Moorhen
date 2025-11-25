@@ -22,6 +22,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
@@ -523,8 +524,8 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const bodyContent = (
-        <Stack direction="vertical" gap={1}>
-            <Stack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
+        <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <MoorhenMoleculeSelect
                     width="100%"
                     molecules={molecules}
@@ -549,10 +550,10 @@ export const MoorhenSliceNDiceModal = () => {
                         </option>
                     </FormSelect>
                 </Form.Group>
-            </Stack>
-            <Stack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
+            </MoorhenStack>
+            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <div style={{ margin: "0.5rem", padding: "0.2rem", width: "100%" }}>
-                    <Stack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
+                    <MoorhenStack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
                         <Form.Check
                             style={{ margin: 0 }}
                             type="radio"
@@ -585,7 +586,7 @@ export const MoorhenSliceNDiceModal = () => {
                             }}
                             label="B-Factor"
                         />
-                    </Stack>
+                    </MoorhenStack>
                     <Slider
                         aria-label="B-Factor threshold"
                         getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`}
@@ -657,7 +658,7 @@ export const MoorhenSliceNDiceModal = () => {
                         />
                     </div>
                 )}
-            </Stack>
+            </MoorhenStack>
             {clusteringType === "pae" && (
                 <Form.Group style={{ margin: "0.5rem", padding: "0.2rem" }} controlId="uploadPAE">
                     <Form.Label>Upload PAE file</Form.Label>
@@ -715,11 +716,11 @@ export const MoorhenSliceNDiceModal = () => {
                     <span>No results...</span>
                 )}
             </Row>
-        </Stack>
+        </MoorhenStack>
     );
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -730,7 +731,7 @@ export const MoorhenSliceNDiceModal = () => {
                 width: "100%",
             }}
         >
-            <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <SplitButton id="download-slice-n-dice" variant="primary" title="Download all" onClick={() => handleDownload()}>
                     <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>
                         As individual files
@@ -739,8 +740,8 @@ export const MoorhenSliceNDiceModal = () => {
                         As a single file
                     </Dropdown.Item>
                 </SplitButton>
-            </Stack>
-            <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+            </MoorhenStack>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <MoorhenButton variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
                     Slice
                 </MoorhenButton>
@@ -752,8 +753,8 @@ export const MoorhenSliceNDiceModal = () => {
                         Close without saving
                     </Dropdown.Item>
                 </SplitButton>
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 
     const spinnerContent = (
@@ -781,7 +782,7 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const header = (
-        <Stack direction="horizontal" gap={1}>
+        <MoorhenStack direction="horizontal" gap={1}>
             <span>Slice-n-Dice</span>
             <Tooltip
                 title="This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A. et al. (2022) available at bioRxiv."
@@ -795,7 +796,7 @@ export const MoorhenSliceNDiceModal = () => {
                     <InfoOutlined />
                 </MoorhenButton>
             </Tooltip>
-        </Stack>
+        </MoorhenStack>
     );
 
     return (

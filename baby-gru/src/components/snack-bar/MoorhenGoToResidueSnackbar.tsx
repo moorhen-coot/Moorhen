@@ -10,6 +10,7 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { moorhen } from "../../types/moorhen";
 import { getCentreAtom } from "../../utils/utils";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenGoToResidueSnackbar = forwardRef<
     HTMLDivElement,
@@ -51,7 +52,7 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
 
     return (
         <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? "grey" : "white" }}>
-            <Stack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+            <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <MoorhenCidInputForm
                     ref={cidFormRef}
                     invalidCid={invalidCid}
@@ -75,7 +76,7 @@ export const MoorhenGoToResidueSnackbar = forwardRef<
                         <CloseOutlined />
                     </IconButton>
                 </div>
-            </Stack>
+            </MoorhenStack>
         </SnackbarContent>
     );
 });

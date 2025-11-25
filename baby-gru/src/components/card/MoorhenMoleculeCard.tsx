@@ -21,6 +21,7 @@ import { representationLabelMapping } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, getCentreAtom } from "../../utils/utils";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "../list/MoorhenLigandList";
 import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
@@ -739,7 +740,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         <>
             <Card ref={cardRef} className="px-0" style={{ marginBottom: "0.5rem", padding: "0" }} key={props.molecule.molNo}>
                 <Card.Header ref={cardHeaderDivRef} style={{ padding: "0.1rem" }}>
-                    <Stack gap={2} direction="horizontal">
+                    <MoorhenStack gap={2} direction="horizontal">
                         <Col
                             className="align-items-center"
                             style={{ display: "flex", justifyContent: "left", color: isDark ? "white" : "black" }}
@@ -759,10 +760,10 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 {...handleProps}
                             />
                         </Col>
-                    </Stack>
+                    </MoorhenStack>
                 </Card.Header>
                 <Card.Body style={{ display: isCollapsed ? "none" : "", padding: "0.25rem", justifyContent: "center" }}>
-                    <Stack gap={2} direction="vertical">
+                    <MoorhenStack gap={2} direction="vertical">
                         <Row style={{ display: "flex" }}>
                             <Col style={{ display: "flex" }}>
                                 <div
@@ -812,7 +813,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 </div>
                             </Col>
                             <Col md="auto" style={{ paddingLeft: 0, justifyContent: "center", display: "flex" }}>
-                                <Stack gap={1} direction="vertical">
+                                <MoorhenStack gap={1} direction="vertical">
                                     <MoorhenButton
                                         style={{ height: "100%" }}
                                         variant="light"
@@ -846,7 +847,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                     >
                                         <AddOutlined />
                                     </MoorhenButton>
-                                </Stack>
+                                </MoorhenStack>
                             </Col>
                             <MoorhenHeaderInfoCard
                                 anchorEl={cardHeaderDivRef}
@@ -952,7 +953,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 </Accordion>
                             )}
                         </div>
-                    </Stack>
+                    </MoorhenStack>
                 </Card.Body>
             </Card>
         </>

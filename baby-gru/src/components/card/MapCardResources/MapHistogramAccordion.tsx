@@ -9,6 +9,7 @@ import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
+import { MoorhenStack } from "../../interface-base";
 import { MoorhenAccordion } from "../../interface-base/Accordion";
 
 Chart.register(...registerables);
@@ -191,11 +192,11 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
 
     return (
         <MoorhenAccordion title="Histogram" onChange={isExpanded => setShowHistogram(isExpanded)}>
-            <Stack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
+            <MoorhenStack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
                 <div className="histogram-plot-div" style={{ width: "95%" }}>
                     <canvas id={`${props.map.molNo}-histogram`}></canvas>
                 </div>
-                <Stack
+                <MoorhenStack
                     style={{
                         display: "flex",
                         width: "1.5rem",
@@ -232,9 +233,9 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                     >
                         <ZoomOutOutlined />
                     </IconButton>
-                </Stack>
-            </Stack>
-            <Stack
+                </MoorhenStack>
+            </MoorhenStack>
+            <MoorhenStack
                 style={{ display: "flex", margin: 0, padding: 0, height: 0, position: "relative", top: -15 }}
                 gap={1}
                 direction="horizontal"
@@ -243,7 +244,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 <span style={{ margin: "0.0rem", fontSize: "0.8rem" }}>
                     Log<sub>10</sub>(Y)
                 </span>
-            </Stack>
+            </MoorhenStack>
         </MoorhenAccordion>
     );
 };

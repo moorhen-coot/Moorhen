@@ -191,8 +191,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     return (
         <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
-            <Stack direction="vertical" gap={1}>
-                <Stack direction="horizontal" gap={4}>
+            <MoorhenStack direction="vertical" gap={1}>
+                <MoorhenStack direction="horizontal" gap={4}>
                     <ToggleButton
                         id={`active-map-toggle-${props.map.molNo}`}
                         type="checkbox"
@@ -211,7 +211,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
                         <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
                     </ToggleButton>
-                    <Stack direction="vertical" style={{ justifyContent: "center" }}>
+                    <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
                         <MoorhenStack direction="row" gap={3}>
                             <MoorhenPreciseInput
                                 value={mapContourLevel}
@@ -253,8 +253,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             }}
                             piWaitReturn={true}
                         />
-                    </Stack>
-                </Stack>
+                    </MoorhenStack>
+                </MoorhenStack>
                 <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
                 <MapSettingsAccordion
                     map={props.map}
@@ -263,7 +263,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     mapRadius={mapRadius}
                     mapOpacity={mapOpacity}
                 />
-            </Stack>
+            </MoorhenStack>
         </MoorhenAccordion>
     );
 };

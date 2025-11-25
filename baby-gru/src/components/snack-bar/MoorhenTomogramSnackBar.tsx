@@ -15,6 +15,7 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { setIsShowingTomograms } from "../../store/generalStatesSlice";
 import { setOrigin, setTexturedShapes, setZoom } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenTomogramSnackBar = forwardRef<
     HTMLDivElement,
@@ -147,12 +148,12 @@ export const MoorhenTomogramSnackBar = forwardRef<
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
             {busyComputingFrames ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <span>Please wait...</span>
                     <LinearProgress variant="determinate" value={progress} />
-                </Stack>
+                </MoorhenStack>
             ) : nFrames > 0 ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                         <IconButton
                             onClick={() => {
@@ -206,7 +207,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
                             }
                         }}
                     />
-                </Stack>
+                </MoorhenStack>
             ) : (
                 <span>Something went wrong...</span>
             )}

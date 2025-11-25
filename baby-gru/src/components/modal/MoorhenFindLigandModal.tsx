@@ -10,6 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -294,7 +295,7 @@ export const MoorheFindLigandModal = () => {
 
     const footerContent = (
         <>
-            <Stack
+            <MoorhenStack
                 gap={2}
                 direction="horizontal"
                 style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
@@ -305,7 +306,7 @@ export const MoorheFindLigandModal = () => {
                 <MoorhenButton variant="danger" onClick={handleClose}>
                     Close
                 </MoorhenButton>
-            </Stack>
+            </MoorhenStack>
         </>
     );
 

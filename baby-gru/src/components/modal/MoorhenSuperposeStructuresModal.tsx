@@ -10,6 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -256,7 +257,7 @@ export const MoorheSuperposeStructuresModal = () => {
     }, [molecules.length]);
 
     const bodyContent = (
-        <Stack direction="vertical" gap={1} style={{ display: "flex" }}>
+        <MoorhenStack direction="vertical" gap={1} style={{ display: "flex" }}>
             <Form.Group style={{ margin: "0.5rem" }}>
                 <Form.Label>Algorithm</Form.Label>
                 <FormSelect ref={algorithmSelectRef} value={algortihm} onChange={evt => setAlgorithm(evt.target.value)}>
@@ -265,7 +266,7 @@ export const MoorheSuperposeStructuresModal = () => {
                 </FormSelect>
             </Form.Group>
             <hr></hr>
-            <Stack direction="horizontal" gap={1} style={{ display: "flex" }}>
+            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
                 <Form.Group
                     key="reference-model-select"
                     style={{ margin: "0.5rem", width: "100%" }}
@@ -324,7 +325,7 @@ export const MoorheSuperposeStructuresModal = () => {
                         />
                     )}
                 </Form.Group>
-            </Stack>
+            </MoorhenStack>
             {algortihm === "lsqkb" && (
                 <>
                     <MoorhenButton onClick={handleAddLsqkbMatch}>Add match</MoorhenButton>
@@ -391,12 +392,12 @@ export const MoorheSuperposeStructuresModal = () => {
                 ref={makeCopyOfMovStructCheckRef}
                 label="Move a copy of moving structure"
             />
-        </Stack>
+        </MoorhenStack>
     );
 
     const footerContent = (
         <>
-            <Stack
+            <MoorhenStack
                 gap={2}
                 direction="horizontal"
                 style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
@@ -407,7 +408,7 @@ export const MoorheSuperposeStructuresModal = () => {
                 <MoorhenButton variant="danger" onClick={() => dispatch(hideModal(modalKeys.SUPERPOSE_MODELS))}>
                     Close
                 </MoorhenButton>
-            </Stack>
+            </MoorhenStack>
         </>
     );
 

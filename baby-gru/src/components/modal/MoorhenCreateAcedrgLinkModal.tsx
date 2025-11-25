@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 type AceDRGtomPickerProps = {
@@ -167,7 +168,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                 overflowY: "auto",
             }}
         >
-            <Stack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
+            <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
                 <InputGroup>
                     <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                         Set Atom {props.id}
@@ -312,7 +313,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                         />
                     </Row>
                 </div>
-            </Stack>
+            </MoorhenStack>
         </Card>
     );
 });
@@ -368,17 +369,17 @@ export const MoorhenCreateAcedrgLinkModal = () => {
             maxWidth={convertRemToPx(55)}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
-                    <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
                         <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                         <span>Click on an atom...</span>
                         <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
                             Cancel
                         </MoorhenButton>
-                    </Stack>
+                    </MoorhenStack>
                 </Backdrop>
             }
             body={
-                <Stack
+                <MoorhenStack
                     direction="horizontal"
                     gap={2}
                     style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", height: "100%" }}
@@ -397,7 +398,7 @@ export const MoorhenCreateAcedrgLinkModal = () => {
                         setAwaitAtomClick={setAwaitAtomClick}
                         monomerLibraryPath={monomerLibraryPath}
                     />
-                </Stack>
+                </MoorhenStack>
             }
             footer={
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>

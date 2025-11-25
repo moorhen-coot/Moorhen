@@ -31,6 +31,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
@@ -692,7 +693,7 @@ export const MoorhenMrParseModal = () => {
     };
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -703,7 +704,7 @@ export const MoorhenMrParseModal = () => {
                 width: "100%",
             }}
         >
-            <Stack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
                     <Form.Control
                         ref={filesRef}
@@ -722,9 +723,9 @@ export const MoorhenMrParseModal = () => {
                         }}
                     />
                 </Form.Group>
-            </Stack>
+            </MoorhenStack>
             {false && <MoorhenButton onClick={handleLoadFromUrlExample}>Load from URL example</MoorhenButton>}
-        </Stack>
+        </MoorhenStack>
     );
 
     const pdbArrow = homologsSortReversed ? <>&darr;</> : <>&uarr;</>;

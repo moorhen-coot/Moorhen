@@ -11,6 +11,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const CompoundAutoCompleteOption = (props: {
@@ -43,10 +44,10 @@ const CompoundAutoCompleteOption = (props: {
     return (
         <OverlayTrigger placement="right" overlay={tooltip}>
             <MenuItem onClick={() => props.setValue(props.compoundName)}>
-                <Stack direction="horizontal" gap={1} style={{ width: "100%" }}>
+                <MoorhenStack direction="horizontal" gap={1} style={{ width: "100%" }}>
                     {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
                     <span style={{ width: "100%", overflow: "hidden" }}>{props.compoundName}</span>
-                </Stack>
+                </MoorhenStack>
             </MenuItem>
         </OverlayTrigger>
     );

@@ -3,6 +3,7 @@ import { Button, Row, Stack } from "react-bootstrap";
 import { useCallback, useRef } from "react";
 import { useCommandAndCapsule } from "../../InstanceManager";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect";
 
 export const Backups = (props: { disabled: boolean; loadSession: (sessionDataString: string) => Promise<void> }) => {
@@ -33,11 +34,11 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
                 <MoorhenBackupSelect ref={backupSelectRef} width="100%" label="Select backup" />
             </Row>
             <Row>
-                <Stack direction="horizontal" gap={2}>
+                <MoorhenStack direction="horizontal" gap={2}>
                     <MoorhenButton variant="primary" onClick={retrieveSession}>
                         OK
                     </MoorhenButton>
-                </Stack>
+                </MoorhenStack>
             </Row>
         </>
     );

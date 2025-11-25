@@ -1,23 +1,17 @@
-import { SnackbarContent, useSnackbar } from "notistack";
-import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Stack } from "react-bootstrap";
+import { CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import {
-    CheckOutlined,
-    CloseOutlined,
-    FirstPageOutlined,
-    NavigateBeforeOutlined,
-    NavigateNextOutlined,
-} from "@mui/icons-material";
-import { moorhen } from "../../types/moorhen";
-import { libcootApi } from "../../types/libcoot";
-import { webGL } from "../../types/mgWebGL";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { SnackbarContent, useSnackbar } from "notistack";
+import { useDispatch, useSelector } from "react-redux";
+import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { useCommandCentre } from "../../InstanceManager";
 import { setIsChangingRotamers } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
-import { useCommandCentre } from "../../InstanceManager";
+import { libcootApi } from "../../types/libcoot";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenRotamerChangeSnackBar = forwardRef<
     HTMLDivElement,
@@ -47,7 +41,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
 
     useEffect(() => {
         const doRotamerChange = async () => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === props.moleculeMolNo);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === props.moleculeMolNo);
             if (!selectedMolecule) {
                 closeSnackbar(props.id);
                 enqueueSnackbar("Something went wrong", { variant: "warning" });
@@ -73,11 +67,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
                 {
                     returnType: "rotamer_info_t",
                     command: "change_to_next_rotamer",
-                    commandArgs: [
-                        newMolecule.molNo,
-                        selectedFragmentRef.current.cid,
-                        selectedFragmentRef.current.alt_conf,
-                    ],
+                    commandArgs: [newMolecule.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
                 },
                 true
             )) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>;
@@ -88,7 +78,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
                 chosenMolecule.current.hideCid(selectedFragmentRef.current.cid);
                 await Promise.all(
                     selectedMolecule.representations
-                        .filter((item) => {
+                        .filter(item => {
                             return [
                                 "CRs",
                                 "CBs",
@@ -103,7 +93,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
                                 "MetaBalls",
                             ].includes(item.style);
                         })
-                        .map((representation) => {
+                        .map(representation => {
                             if (representation.buffers.length > 0 && representation.buffers[0].visible) {
                                 return newMolecule.addRepresentation(representation.style, representation.cid);
                             } else {
@@ -131,11 +121,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
             {
                 returnType: "rotamer_info_t",
                 command: command,
-                commandArgs: [
-                    fragmentMolecule.current.molNo,
-                    selectedFragmentRef.current.cid,
-                    selectedFragmentRef.current.alt_conf,
-                ],
+                commandArgs: [fragmentMolecule.current.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>;
@@ -153,11 +139,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
             {
                 returnType: "status",
                 command: "replace_fragment",
-                commandArgs: [
-                    chosenMolecule.current.molNo,
-                    fragmentMolecule.current.molNo,
-                    selectedFragmentRef.current.cid,
-                ],
+                commandArgs: [chosenMolecule.current.molNo, fragmentMolecule.current.molNo, selectedFragmentRef.current.cid],
                 changesMolecules: [chosenMolecule.current.molNo],
             },
             true
@@ -186,24 +168,17 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
             className="moorhen-notification-div"
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
-            <Stack direction="vertical" gap={1}>
+            <MoorhenStack direction="vertical" gap={1}>
                 <div>
                     <span>
                         Current rotamer: {rotamerName} ({rotamerRank + 1}
-                        <sup>
-                            {rotamerRank === 0 ? "st" : rotamerRank === 1 ? "nd" : rotamerRank === 2 ? "rd" : "th"}
-                        </sup>
-                        )
+                        <sup>{rotamerRank === 0 ? "st" : rotamerRank === 1 ? "nd" : rotamerRank === 2 ? "rd" : "th"}</sup>)
                     </span>
                 </div>
                 <div>
                     <span>Probability: {rotamerProbability}%</span>
                 </div>
-                <Stack
-                    gap={2}
-                    direction="horizontal"
-                    style={{ width: "100%", display: "flex", justifyContent: "center" }}
-                >
+                <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                     <IconButton
                         onClick={() => {
                             changeRotamer("change_to_first_rotamer");
@@ -231,8 +206,8 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
                     <IconButton style={{ padding: 0, color: isDark ? "white" : "grey" }} onClick={rejectTransform}>
                         <CloseOutlined />
                     </IconButton>
-                </Stack>
-            </Stack>
+                </MoorhenStack>
+            </MoorhenStack>
         </SnackbarContent>
     );
 });

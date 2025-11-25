@@ -4,6 +4,7 @@ import { Button, Form } from "react-bootstrap";
 import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "..";
 import { usePersistentState } from "../../../store/menusSlice";
+import { MoorhenStack } from "../../interface-base";
 import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
 import { gradientPresets } from "./gradientPresets";
 
@@ -100,8 +101,8 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
     const colourGradientImage = getColourGradientImage();
 
     return (
-        <Stack direction="column" style={{ margin: "0.5rem" }} gap={2}>
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="Center">
+        <MoorhenStack direction="column" style={{ margin: "0.5rem" }} gap={2}>
+            <MoorhenStack direction="row" gap={1} align="center" justify="center">
                 <MoorhenPreciseInput
                     value={nOfPoints}
                     minMax={[2, 7]}
@@ -136,12 +137,12 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                 <MoorhenButton key="centre-on-map" size="sm" variant="outlined" onClick={handleRevert}>
                     <FlipCameraAndroidIcon />
                 </MoorhenButton>
-            </Stack>
+            </MoorhenStack>
 
-            <Stack direction="column" style={{ margin: "0.5rem" }} gap={0.5}>
-                <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+            <MoorhenStack direction="column" style={{ margin: "0.5rem" }} gap={0.5}>
+                <MoorhenStack direction="row" gap={1} align="center" justify="space-between">
                     {colorStops}
-                </Stack>
+                </MoorhenStack>
                 <div
                     style={{
                         marginLeft: "0.2rem",
@@ -153,8 +154,8 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                         backgroundImage: colourGradientImage,
                     }}
                 />
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 });
 

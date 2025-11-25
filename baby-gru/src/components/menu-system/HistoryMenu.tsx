@@ -9,6 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import type { HistoryEntry } from "../../utils/MoorhenHistory";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenHistoryMenu = () => {
     const [historyHead, setHistoryHead] = useState(0);
@@ -75,7 +76,7 @@ export const MoorhenHistoryMenu = () => {
                 <Step key={index} completed={false}>
                     <StepButton color="inherit" onClick={handleClick}>
                         <StepLabel>
-                            <Stack gap={3} direction="horizontal" style={{ color: isDark ? "white" : "black" }}>
+                            <MoorhenStack gap={3} direction="horizontal" style={{ color: isDark ? "white" : "black" }}>
                                 {historyEntry.label ? historyEntry.label : historyEntry.command}
                                 {historyEntry.associatedBackupKey && (
                                     <div
@@ -91,7 +92,7 @@ export const MoorhenHistoryMenu = () => {
                                         <SaveOutlined />
                                     </div>
                                 )}
-                            </Stack>
+                            </MoorhenStack>
                         </StepLabel>
                     </StepButton>
                 </Step>
