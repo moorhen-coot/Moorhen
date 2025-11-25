@@ -7,10 +7,10 @@ import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const MultiplyBfactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);

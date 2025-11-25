@@ -6,6 +6,15 @@
     gap: 8px;
 }
 
+.moorhen__toggle-container-large {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid red;
+    height: 2.5rem;
+    width: fit-content;
+}
+
 .moorhen__toggle-menu-item {
     margin-top: 0.4rem;
     margin-bottom: 0.4rem;
@@ -63,4 +72,30 @@
 
 .moorhen__toggle-label-text {
     font-size: 1rem;
+}
+
+.moorhen__toggle-button {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    transition: 0.4s;
+    border-radius: 10px;
+}
+
+.moorhen__toggle-button:before {
+    position: absolute;
+    bottom: 1px;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 1px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+    border: 1px solid var(--moorhen-border);
 }

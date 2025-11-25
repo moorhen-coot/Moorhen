@@ -1,6 +1,5 @@
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
-import Stack from "@mui/material/Stack";
-import { Button, Form } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "..";
 import { usePersistentState } from "../../../store/menusSlice";

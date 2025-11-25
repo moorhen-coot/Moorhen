@@ -6,8 +6,8 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const menuItemText = "Copy fragment...";
 

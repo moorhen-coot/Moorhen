@@ -10,9 +10,9 @@ import { moorhen } from "../../types/moorhen";
 import { residueCodesOneToThree } from "../../utils/enums";
 import { convertViewtoPx, getResidueInfo } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -50,11 +50,6 @@ export const MoorhenMMRRCCPlot = () => {
                 return sequenceData.sequence;
             }
         }
-    };
-
-    const handleModelChange = evt => {
-        setSelectedModel(parseInt(evt.target.value));
-        setSelectedChain(chainSelectRef.current.value);
     };
 
     const handleMapChange = evt => {
@@ -313,7 +308,7 @@ export const MoorhenMMRRCCPlot = () => {
                 <Form.Group>
                     <Row style={{ padding: "0", margin: "0" }}>
                         <Col>
-                            <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
+                            <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
                         </Col>
                         <Col>
                             <MoorhenChainSelect

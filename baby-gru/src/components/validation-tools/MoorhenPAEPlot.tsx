@@ -7,7 +7,7 @@ import { setRequestDrawScene } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 interface MoorhenPAEProps {
     resizeTrigger?: boolean;
@@ -700,16 +700,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 <Row>
                     <Col sm={3}>Molecule</Col>
                     <Col sm={4}>
-                        <MoorhenMoleculeSelect
-                            label={null}
-                            width=""
-                            defaultValue={selectedModel}
-                            onChange={handleModelChange}
-                            molecules={molecules}
-                            ref={moleculeSelectRef}
-                            height="3rem"
-                            margin="0rem"
-                        />
+                        <MoorhenMoleculeSelect selected={selectedModel} onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
                     </Col>
                     <Col sm={4}>
                         <MoorhenButton

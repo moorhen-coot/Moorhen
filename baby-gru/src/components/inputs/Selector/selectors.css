@@ -1,4 +1,4 @@
-@import '../../../colors.css';
+@import "../../../colors.css";
 
 .moorhen__selector-container {
     display: flex;
@@ -12,7 +12,9 @@
     background-color: var(--moorhen-background);
     border-radius: 0.2rem;
     width: 100%;
-    height: 2rem;
+    height: 2.2rem;
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
 }
 
 .moorhen__selector:hover {

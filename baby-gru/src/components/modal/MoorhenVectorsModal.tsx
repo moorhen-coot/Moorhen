@@ -1,11 +1,12 @@
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { moorhen } from "../../types/moorhen"
 import { useRef, useCallback, useState } from "react"
-import { Form, Row, Col, Card, Button,  FormSelect, InputGroup } from "react-bootstrap"
+import { Form,  Button,  FormSelect, InputGroup } from "react-bootstrap"
+import {Row, Col, Card, CardBody } from "../interface-base/bootstrapDropIns"
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils'
 import { useSelector, useDispatch } from "react-redux"
 import { modalKeys } from "../../utils/enums"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 import {v4 as uuidv4} from 'uuid';
 import { addVector, removeVector } from "../../store/vectorsSlice"
 import { MoorhenMenuItemPopover } from "../interface-base/MenuItemPopover";
@@ -210,11 +211,11 @@ export const MoorhenVectorsModal = () => {
         setVector(newVector)
     }
 
-    const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>, isModelTo: boolean) => {
+    const handleModelChange = (selected:number, isModelTo: boolean) => {
         if(isModelTo)
-            updateVector({molNoTo:parseInt(evt.target.value)})
+            updateVector({molNoTo:selected})
         else
-            updateVector({molNoFrom:parseInt(evt.target.value)})
+            updateVector({molNoFrom:selected})
     }
 
     const handleModeChange = ((event,type) => {
@@ -272,7 +273,7 @@ export const MoorhenVectorsModal = () => {
                             Molecule
                             </Col>
                             <Col>
-                            <MoorhenMoleculeSelect label={null} molecules={molecules} height="3rem" margin="0rem" onChange={(evt) => handleModelChange(evt, false)} />
+                            <MoorhenMoleculeSelect label={null} style={{height: "3rem", margin: "0rem"}} onSelect={(sel) => handleModelChange(sel, false)} />
                             </Col>
                             </Row>
                             <Row style={{textAlign:'left'}}>
@@ -301,7 +302,7 @@ export const MoorhenVectorsModal = () => {
                             Molecule
                             </Col>
                             <Col style={{verticalAlign:"top"}}>
-                            <MoorhenMoleculeSelect label={null} molecules={molecules} height="3rem" margin="0rem" onChange={(evt) => handleModelChange(evt, true)} />
+                            <MoorhenMoleculeSelect label={null} style={{height: "3rem", margin: "0rem"}} onSelect={(sel) => handleModelChange(sel, true)} />
                             </Col>
                             </Row>
                             <Row style={{textAlign:'left'}}>

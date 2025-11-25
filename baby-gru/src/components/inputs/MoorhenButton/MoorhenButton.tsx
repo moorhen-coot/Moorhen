@@ -14,6 +14,7 @@ type MoorhenButtonPropsTypeBase = {
     className?: string;
     children?: React.ReactNode;
     value?: string | number;
+    id?: string;
 };
 
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
@@ -28,7 +29,13 @@ type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
 };
 
-export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps) => {
+type MoorhenButtonToggleProps = MoorhenButtonPropsTypeBase & {
+    type: "toggle";
+    checked: boolean;
+    size?: "small" | "medium" | "large";
+};
+
+export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps | MoorhenButtonToggleProps) => {
     const {
         type = "default",
         label,
@@ -49,10 +56,12 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     let variant: string | null = null;
     if (type === "default" && "variant" in props) variant = props.variant as string;
 
-    const resultClassName = `moorhen__button__${type} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
+    const isChecked = type === "toggle" && "checked" in props ? props.checked : false;
+    const resultClassName = `moorhen__button__${type} ${isChecked ? "checked" : "unchecked"} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
 
     return (
         <button
+            id={props.id}
             className={resultClassName}
             onClick={onClick}
             onMouseDown={onMouseDown}

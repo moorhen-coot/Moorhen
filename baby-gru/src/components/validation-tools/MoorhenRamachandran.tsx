@@ -1,30 +1,30 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react"
-import { Col, Row, Form } from 'react-bootstrap';
-import { useSelector, useDispatch } from 'react-redux';
-import { convertRemToPx } from '../../utils/utils';
-import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
-import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
+import { Col, Form, Row } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { convertRemToPx } from "../../utils/utils";
+import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 
 interface MoorhenRamachandranProps {
     resizeTrigger?: boolean;
     resizeNodeRef?: React.RefObject<HTMLDivElement>;
-    size?: { width: number; height: number; };
+    size?: { width: number; height: number };
 }
 
 export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
-    
+
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
     const ramaPlotDivRef = useRef<HTMLDivElement>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
     const chainSelectRef = useRef<HTMLSelectElement>(null);
-    const reqRef = useRef<number>(null)
-    const hitRef = useRef<number>(-1)
+    const reqRef = useRef<number>(null);
+    const hitRef = useRef<number>(-1);
     const imageRefAll = useRef<null | HTMLImageElement>(null);
     const oldImage = useRef<null | HTMLImageElement>(null);
     const imageRefGly = useRef<null | HTMLImageElement>(null);
@@ -40,294 +40,357 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
     const ramaPlotOtherNormalImageRef = useRef<null | HTMLImageElement>(null);
     const ramaPlotOtherOutlierImageRef = useRef<null | HTMLImageElement>(null);
 
-    const [clickedResidue, setClickedResidue] = useState<null | {modelIndex: number; coordMolNo: number; molName: string; chain: string; seqNum: number; insCode: string;}>(null)
-    const [ramaPlotDimensions, setRamaPlotDimensions] = useState<number>(230)
-    const [ramaPlotData, setRamaPlotData] = useState<null | libcootApi.RamaDataJS[]>(null)
-    const [selectedModel, setSelectedModel] = useState<null | number>(null)
-    const [selectedChain, setSelectedChain] = useState<string | null>(null)
-    const [molName, setMolName] = useState<null | string>(null)
-    const [chainId, setChainId] = useState<null | string>(null)
-    
-    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo)
-    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch)
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const dispatch = useDispatch()
+    const [clickedResidue, setClickedResidue] = useState<null | {
+        modelIndex: number;
+        coordMolNo: number;
+        molName: string;
+        chain: string;
+        seqNum: number;
+        insCode: string;
+    }>(null);
+    const [ramaPlotDimensions, setRamaPlotDimensions] = useState<number>(230);
+    const [ramaPlotData, setRamaPlotData] = useState<null | libcootApi.RamaDataJS[]>(null);
+    const [selectedModel, setSelectedModel] = useState<null | number>(null);
+    const [selectedChain, setSelectedChain] = useState<string | null>(null);
+    const [molName, setMolName] = useState<null | string>(null);
+    const [chainId, setChainId] = useState<null | string>(null);
 
-    const getMolName = useCallback((selectedMolNo: number) => {
-        if (selectedMolNo === null || molecules.length === 0) {
-            return;
-        }
-        const coordMolNums = molecules.map(molecule => molecule.molNo);
-        const molNames = molecules.map(molecule => molecule.name);
-        const moleculeIndex = coordMolNums.findIndex(num => num === selectedMolNo)
-        return molNames[moleculeIndex];
-    }, [molecules])
+    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
+    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
+    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const dispatch = useDispatch();
+
+    const getMolName = useCallback(
+        (selectedMolNo: number) => {
+            if (selectedMolNo === null || molecules.length === 0) {
+                return;
+            }
+            const coordMolNums = molecules.map(molecule => molecule.molNo);
+            const molNames = molecules.map(molecule => molecule.name);
+            const moleculeIndex = coordMolNums.findIndex(num => num === selectedMolNo);
+            return molNames[moleculeIndex];
+        },
+        [molecules]
+    );
 
     const getOffsetRect = (elem: HTMLCanvasElement) => {
         const box = elem.getBoundingClientRect();
         const body = document.body;
         const docElem = document.documentElement;
-    
+
         const scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
         const scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
         const clientTop = docElem.clientTop || body.clientTop || 0;
         const clientLeft = docElem.clientLeft || body.clientLeft || 0;
-        const top  = box.top +  scrollTop - clientTop;
+        const top = box.top + scrollTop - clientTop;
         const left = box.left + scrollLeft - clientLeft;
-        
+
         return { top: Math.round(top), left: Math.round(left) };
-    }  
+    };
 
     const fixContext = useCallback(() => {
-        const context = canvasRef.current.getContext('2d');
+        const context = canvasRef.current.getContext("2d");
         const imageData = context.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-        return [context, imageData]    
-    }, [canvasRef])
+        return [context, imageData];
+    }, [canvasRef]);
 
-    const draw = useCallback((iframe: number, newHit?: number) => {
-        if(canvasRef.current === null) {
-            return
-        } 
-
-        const [ ctx, imageData ] = fixContext() as [CanvasRenderingContext2D, ImageData];
-
-        let pointSize: number
-        
-        pointSize = canvasRef.current.width * 0.02
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        
-        const animationFrames = 15
-
-        if(newHit > -1) {
-
-            ctx.globalAlpha = iframe / animationFrames;
-            // And we can determine background image with this.
-            if (ramaPlotData[newHit].restype=== "GLY") {
-                if(imageRefGly.current) {
-                    if(imageRefGly.current===oldImage.current) ctx.globalAlpha = 1;
-                    ctx.drawImage(imageRefGly.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                    if(iframe===animationFrames-1) oldImage.current = imageRefGly.current;
-                }
-            } else {
-                if (ramaPlotData[newHit].restype=== "PRO") {
-                    if(imageRefPro.current) {
-                        if(imageRefPro.current===oldImage.current) ctx.globalAlpha = 1;
-                        ctx.drawImage(imageRefPro.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                        if(iframe===animationFrames-1) oldImage.current = imageRefPro.current;
-                    }
-                } else {
-                    if (ramaPlotData[newHit].is_pre_pro) {
-                        if(imageRefPrePro.current) {
-                            if(imageRefPrePro.current===oldImage.current) ctx.globalAlpha = 1;
-                            ctx.drawImage(imageRefPrePro.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                            if(iframe===animationFrames-1) oldImage.current = imageRefPrePro.current;
-                        }
-                    } else {
-                        if (ramaPlotData[newHit].restype=== "ILE" || ramaPlotData[newHit].restype=== "VAL") {
-                            if(imageRefIleVal.current) {
-                                if(imageRefIleVal.current===oldImage.current) ctx.globalAlpha = 1;
-                                ctx.drawImage(imageRefIleVal.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                                if(iframe===animationFrames-1) oldImage.current = imageRefIleVal.current;
-                            }
-                        } else {
-                            if(imageRefNonGlyProIleVal.current) {
-                                if(imageRefNonGlyProIleVal.current===oldImage.current) ctx.globalAlpha = 1;
-                                ctx.drawImage(imageRefNonGlyProIleVal.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                                if(iframe===animationFrames-1) oldImage.current = imageRefNonGlyProIleVal.current;
-                            }
-                        }
-                    }
-                }
+    const draw = useCallback(
+        (iframe: number, newHit?: number) => {
+            if (canvasRef.current === null) {
+                return;
             }
 
-            if (Math.abs(ctx.globalAlpha - 1.0) > 1e-2) {
+            const [ctx, imageData] = fixContext() as [CanvasRenderingContext2D, ImageData];
+
+            let pointSize: number;
+
+            pointSize = canvasRef.current.width * 0.02;
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+            const animationFrames = 15;
+
+            if (newHit > -1) {
+                ctx.globalAlpha = iframe / animationFrames;
+                // And we can determine background image with this.
+                if (ramaPlotData[newHit].restype === "GLY") {
+                    if (imageRefGly.current) {
+                        if (imageRefGly.current === oldImage.current) ctx.globalAlpha = 1;
+                        ctx.drawImage(imageRefGly.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                        if (iframe === animationFrames - 1) oldImage.current = imageRefGly.current;
+                    }
+                } else {
+                    if (ramaPlotData[newHit].restype === "PRO") {
+                        if (imageRefPro.current) {
+                            if (imageRefPro.current === oldImage.current) ctx.globalAlpha = 1;
+                            ctx.drawImage(imageRefPro.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                            if (iframe === animationFrames - 1) oldImage.current = imageRefPro.current;
+                        }
+                    } else {
+                        if (ramaPlotData[newHit].is_pre_pro) {
+                            if (imageRefPrePro.current) {
+                                if (imageRefPrePro.current === oldImage.current) ctx.globalAlpha = 1;
+                                ctx.drawImage(imageRefPrePro.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                                if (iframe === animationFrames - 1) oldImage.current = imageRefPrePro.current;
+                            }
+                        } else {
+                            if (ramaPlotData[newHit].restype === "ILE" || ramaPlotData[newHit].restype === "VAL") {
+                                if (imageRefIleVal.current) {
+                                    if (imageRefIleVal.current === oldImage.current) ctx.globalAlpha = 1;
+                                    ctx.drawImage(imageRefIleVal.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                                    if (iframe === animationFrames - 1) oldImage.current = imageRefIleVal.current;
+                                }
+                            } else {
+                                if (imageRefNonGlyProIleVal.current) {
+                                    if (imageRefNonGlyProIleVal.current === oldImage.current) ctx.globalAlpha = 1;
+                                    ctx.drawImage(imageRefNonGlyProIleVal.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                                    if (iframe === animationFrames - 1) oldImage.current = imageRefNonGlyProIleVal.current;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (Math.abs(ctx.globalAlpha - 1.0) > 1e-2) {
+                    if (oldImage.current) {
+                        ctx.globalAlpha = 1.0 - iframe / animationFrames;
+                        ctx.drawImage(oldImage.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                    } else if (imageRefAll.current) {
+                        ctx.globalAlpha = 1.0 - iframe / animationFrames;
+                        ctx.drawImage(imageRefAll.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                    }
+                }
+            } else {
+                ctx.globalAlpha = 1.0;
                 if (oldImage.current) {
-                    ctx.globalAlpha = 1.0 - iframe / animationFrames;
                     ctx.drawImage(oldImage.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
                 } else if (imageRefAll.current) {
-                    ctx.globalAlpha = 1.0 - iframe / animationFrames;
                     ctx.drawImage(imageRefAll.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
                 }
             }
 
-        } else {
             ctx.globalAlpha = 1.0;
-            if(oldImage.current) {
-                ctx.drawImage(oldImage.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-            } else if (imageRefAll.current) {
-                ctx.drawImage(imageRefAll.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-            }
-        }
-        
-        ctx.globalAlpha = 1.0;
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 1;
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
 
-        if(ramaPlotData && ramaPlotOtherOutlierImageRef.current && ramaPlotOtherNormalImageRef.current && ramaPlotGlyOutlierImageRef.current && ramaPlotProOutlierImageRef.current){
-            for (let ip=0; ip < ramaPlotData.length; ip++) {
-                const phitest = ramaPlotData[ip].phi;
-                const psitest = ramaPlotData[ip].psi;
-                const x = ((phitest /180) * 0.5 + 0.5) * canvasRef.current.width;
-                const y = ((-psitest /180) * 0.5 + 0.5) * canvasRef.current.height;
+            if (
+                ramaPlotData &&
+                ramaPlotOtherOutlierImageRef.current &&
+                ramaPlotOtherNormalImageRef.current &&
+                ramaPlotGlyOutlierImageRef.current &&
+                ramaPlotProOutlierImageRef.current
+            ) {
+                for (let ip = 0; ip < ramaPlotData.length; ip++) {
+                    const phitest = ramaPlotData[ip].phi;
+                    const psitest = ramaPlotData[ip].psi;
+                    const x = ((phitest / 180) * 0.5 + 0.5) * canvasRef.current.width;
+                    const y = ((-psitest / 180) * 0.5 + 0.5) * canvasRef.current.height;
 
-                if(ramaPlotData[ip].isOutlier){
-                    if (ramaPlotData[ip].restype === "PRO") {
-                        ctx.drawImage(ramaPlotProOutlierImageRef.current, x-4, y-4, pointSize, pointSize);
-                    } else if (ramaPlotData[ip].restype === "GLY") {
-                        ctx.drawImage(ramaPlotGlyOutlierImageRef.current, x-4, y-4, pointSize, pointSize);
+                    if (ramaPlotData[ip].isOutlier) {
+                        if (ramaPlotData[ip].restype === "PRO") {
+                            ctx.drawImage(ramaPlotProOutlierImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        } else if (ramaPlotData[ip].restype === "GLY") {
+                            ctx.drawImage(ramaPlotGlyOutlierImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        } else {
+                            ctx.drawImage(ramaPlotOtherOutlierImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        }
                     } else {
-                        ctx.drawImage(ramaPlotOtherOutlierImageRef.current, x-4, y-4, pointSize, pointSize);
+                        if (ramaPlotData[ip].restype === "PRO") {
+                            ctx.drawImage(ramaPlotProNormalImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        } else if (ramaPlotData[ip].restype === "GLY") {
+                            ctx.drawImage(ramaPlotGlyNormalImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        } else {
+                            ctx.drawImage(ramaPlotOtherNormalImageRef.current, x - 4, y - 4, pointSize, pointSize);
+                        }
                     }
-                } else {
-                    if (ramaPlotData[ip].restype === "PRO") {
-                        ctx.drawImage(ramaPlotProNormalImageRef.current, x-4, y-4, pointSize, pointSize);
-                    } else if (ramaPlotData[ip].restype === "GLY") {
-                        ctx.drawImage(ramaPlotGlyNormalImageRef.current, x-4, y-4, pointSize, pointSize);
+                }
+                if (newHit > -1) {
+                    const phitest = ramaPlotData[newHit].phi;
+                    const psitest = ramaPlotData[newHit].psi;
+                    const x = ((phitest / 180) * 0.5 + 0.5) * canvasRef.current.width;
+                    const y = ((-psitest / 180) * 0.5 + 0.5) * canvasRef.current.height;
+
+                    if (ramaPlotData[newHit].isOutlier) {
+                        if (ramaPlotData[newHit].restype === "PRO") {
+                            ctx.drawImage(
+                                ramaPlotProOutlierImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        } else if (ramaPlotData[newHit].restype === "GLY") {
+                            ctx.drawImage(
+                                ramaPlotGlyOutlierImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        } else {
+                            ctx.drawImage(
+                                ramaPlotOtherOutlierImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        }
                     } else {
-                        ctx.drawImage(ramaPlotOtherNormalImageRef.current, x-4, y-4, pointSize, pointSize);
+                        if (ramaPlotData[newHit].restype === "PRO") {
+                            ctx.drawImage(
+                                ramaPlotProNormalImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        } else if (ramaPlotData[newHit].restype === "GLY") {
+                            ctx.drawImage(
+                                ramaPlotGlyNormalImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        } else {
+                            ctx.drawImage(
+                                ramaPlotOtherNormalImageRef.current,
+                                x - 4 - (iframe / animationFrames) * 2,
+                                y - 4 - (iframe / animationFrames) * 2,
+                                pointSize + (iframe / animationFrames) * 4,
+                                pointSize + (iframe / animationFrames) * 4
+                            );
+                        }
                     }
                 }
             }
-            if (newHit > -1) {
-                const phitest = ramaPlotData[newHit].phi;
-                const psitest = ramaPlotData[newHit].psi;
-                const x = ((phitest /180) * 0.5 + 0.5) * canvasRef.current.width;
-                const y = ((-psitest /180) * 0.5 + 0.5) * canvasRef.current.height;
-
-                if(ramaPlotData[newHit].isOutlier){
-                    if(ramaPlotData[newHit].restype==="PRO"){
-                        ctx.drawImage(ramaPlotProOutlierImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    } else if(ramaPlotData[newHit].restype==="GLY"){
-                        ctx.drawImage(ramaPlotGlyOutlierImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    } else {
-                        ctx.drawImage(ramaPlotOtherOutlierImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    }
-                } else {
-                    if(ramaPlotData[newHit].restype==="PRO"){
-                        ctx.drawImage(ramaPlotProNormalImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    } else if(ramaPlotData[newHit].restype==="GLY"){
-                        ctx.drawImage(ramaPlotGlyNormalImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    } else {
-                        ctx.drawImage(ramaPlotOtherNormalImageRef.current, x-4-iframe/animationFrames*2, y-4-iframe/animationFrames*2, pointSize+iframe/animationFrames*4, pointSize+iframe/animationFrames*4);
-                    }
-                }
+            if (iframe < animationFrames) {
+                reqRef.current = requestAnimationFrame(() => draw(iframe + 1, newHit));
+            } else {
+                reqRef.current = null;
             }
-        }
-        if (iframe < animationFrames) {
-            reqRef.current = requestAnimationFrame(() => draw(iframe+1, newHit));
-        } else {
-            reqRef.current = null;
-        }
 
-        if (newHit) {
-            hitRef.current = newHit
-        } else {
-            hitRef.current = -1
-        }
+            if (newHit) {
+                hitRef.current = newHit;
+            } else {
+                hitRef.current = -1;
+            }
+        },
+        [ramaPlotData, canvasRef, fixContext]
+    );
 
-    }, [ramaPlotData, canvasRef, fixContext])
+    const getHit = useCallback(
+        evt => {
+            let x: number;
+            let y: number;
 
-    const getHit = useCallback((evt) => {
-        let x: number;
-        let y: number;
+            if (evt.pageX || evt.pageY) {
+                x = evt.pageX;
+                y = evt.pageY;
+            } else {
+                x = evt.clientX;
+                y = evt.clientY;
+            }
 
-        if (evt.pageX || evt.pageY) {
-            x = evt.pageX;
-            y = evt.pageY;
-        }
-        else {
-            x = evt.clientX ;
-            y = evt.clientY ;
-        }
-
-       
-        if (ramaPlotData) {
-            const offset = getOffsetRect(canvasRef.current);
-            x -= offset.left;
-            y -= offset.top;
-            let ihit = -1;
-            let mindist = 100000;
-            for (let ip=0; ip < ramaPlotData.length; ip++) {
-                const phitest = ramaPlotData[ip].phi;
-                const psitest = ramaPlotData[ip].psi;
-                const xp = ((phitest /180) * 0.5 + 0.5) * canvasRef.current.width;
-                const yp = ((-psitest /180) * 0.5 + 0.5) * canvasRef.current.height;
-                if( (Math.abs(xp-x) < 3) && (Math.abs(yp-y) < 3) ) {
-                    const dist = (xp-x)*(xp-x) + (yp-y)*(yp-y);
-                    if (dist < mindist) {
-                        mindist = dist;
-                        ihit = ip;
+            if (ramaPlotData) {
+                const offset = getOffsetRect(canvasRef.current);
+                x -= offset.left;
+                y -= offset.top;
+                let ihit = -1;
+                let mindist = 100000;
+                for (let ip = 0; ip < ramaPlotData.length; ip++) {
+                    const phitest = ramaPlotData[ip].phi;
+                    const psitest = ramaPlotData[ip].psi;
+                    const xp = ((phitest / 180) * 0.5 + 0.5) * canvasRef.current.width;
+                    const yp = ((-psitest / 180) * 0.5 + 0.5) * canvasRef.current.height;
+                    if (Math.abs(xp - x) < 3 && Math.abs(yp - y) < 3) {
+                        const dist = (xp - x) * (xp - x) + (yp - y) * (yp - y);
+                        if (dist < mindist) {
+                            mindist = dist;
+                            ihit = ip;
+                        }
                     }
                 }
+                return ihit;
             }
-            return ihit;
-        }
-        return -1;
-    }, [ramaPlotData, canvasRef])
+            return -1;
+        },
+        [ramaPlotData, canvasRef]
+    );
 
-    const handleMouseClick = useCallback((event) => {
-        if (ramaPlotData) {
-            const newHit = getHit(event);
-            if (newHit > -1) {
-                // WARNING: ALWAYS ASSUMING FIRST MODEL IN MOLECULE
-                setClickedResidue({
-                    modelIndex: 0,
-                    coordMolNo: selectedModel,
-                    molName: molName,
-                    chain: chainId,
-                    seqNum: ramaPlotData[newHit].seqNum,
-                    insCode: ramaPlotData[newHit].insCode
-                });
+    const handleMouseClick = useCallback(
+        event => {
+            if (ramaPlotData) {
+                const newHit = getHit(event);
+                if (newHit > -1) {
+                    // WARNING: ALWAYS ASSUMING FIRST MODEL IN MOLECULE
+                    setClickedResidue({
+                        modelIndex: 0,
+                        coordMolNo: selectedModel,
+                        molName: molName,
+                        chain: chainId,
+                        seqNum: ramaPlotData[newHit].seqNum,
+                        insCode: ramaPlotData[newHit].insCode,
+                    });
+                }
             }
-        }
-    }, [molName, chainId, ramaPlotData, selectedModel, getHit])
-    
-    const doAnimation = useCallback((oldHit: number, newHit: number) => {
-        if (oldHit === newHit) {
-            return
-        } else if (reqRef.current) {
-            cancelAnimationFrame(reqRef.current)
-        }
-        reqRef.current = requestAnimationFrame(() => draw(0, newHit));
-    }, [draw])
+        },
+        [molName, chainId, ramaPlotData, selectedModel, getHit]
+    );
 
-    const handleHoveredAtom = useCallback((cid: string) => {
-        if (selectedModel !== null) {
-            const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]) {
-                dispatch( setHoveredAtom({ molecule:molecules[selectedMoleculeIndex], cid: cid }) )
+    const doAnimation = useCallback(
+        (oldHit: number, newHit: number) => {
+            if (oldHit === newHit) {
+                return;
+            } else if (reqRef.current) {
+                cancelAnimationFrame(reqRef.current);
             }
-        }
-    }, [selectedModel, molecules])
+            reqRef.current = requestAnimationFrame(() => draw(0, newHit));
+        },
+        [draw]
+    );
 
-    const handleMouseMove = useCallback((event) => {
-    
-        if (ramaPlotData) {
-            const newHit = getHit(event);
-            if (newHit > -1) {
-                doAnimation(hitRef.current, newHit)
-                handleHoveredAtom(`//${chainId}/${ramaPlotData[newHit].seqNum}${ramaPlotData[newHit].insCode ? '.' + ramaPlotData[newHit].insCode : ''}(${ramaPlotData[newHit].restype})/`)
-            };
-            hitRef.current = newHit;
-        }
-    }, [hitRef, getHit, ramaPlotData, chainId, doAnimation, handleHoveredAtom])
+    const handleHoveredAtom = useCallback(
+        (cid: string) => {
+            if (selectedModel !== null) {
+                const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
+                if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]) {
+                    dispatch(setHoveredAtom({ molecule: molecules[selectedMoleculeIndex], cid: cid }));
+                }
+            }
+        },
+        [selectedModel, molecules]
+    );
+
+    const handleMouseMove = useCallback(
+        event => {
+            if (ramaPlotData) {
+                const newHit = getHit(event);
+                if (newHit > -1) {
+                    doAnimation(hitRef.current, newHit);
+                    handleHoveredAtom(
+                        `//${chainId}/${ramaPlotData[newHit].seqNum}${ramaPlotData[newHit].insCode ? "." + ramaPlotData[newHit].insCode : ""}(${ramaPlotData[newHit].restype})/`
+                    );
+                }
+                hitRef.current = newHit;
+            }
+        },
+        [hitRef, getHit, ramaPlotData, chainId, doAnimation, handleHoveredAtom]
+    );
 
     useEffect(() => {
-        
-        const newMolName = getMolName(selectedModel)
-        setMolName(newMolName)
-        setChainId(chainSelectRef.current.value)
-        draw(-1)
-
-    }, [ramaPlotData, draw, chainSelectRef, selectedModel, getMolName, ramaPlotDimensions])
+        const newMolName = getMolName(selectedModel);
+        setMolName(newMolName);
+        setChainId(chainSelectRef.current.value);
+        draw(-1);
+    }, [ramaPlotData, draw, chainSelectRef, selectedModel, getMolName, ramaPlotDimensions]);
 
     useEffect(() => {
-
         const imgAll = new window.Image();
         imgAll.src = `${urlPrefix}/pixmaps/rama2_all.png`;
         imgAll.crossOrigin = "Anonymous";
@@ -345,7 +408,7 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
 
         const imgPro = new window.Image();
         imgPro.src = `${urlPrefix}/pixmaps/rama2_pro.png`;
-        imgPro.crossOrigin= "Anonymous";
+        imgPro.crossOrigin = "Anonymous";
         imageRefPro.current = imgPro;
 
         const imgIleVal = new window.Image();
@@ -392,128 +455,147 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
         imgOtherOutlier.src = `${urlPrefix}/pixmaps/rama-plot-other-outlier.png`;
         imgOtherOutlier.crossOrigin = "Anonymous";
         ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
-        
-        canvasRef.current.addEventListener("mousemove", handleMouseMove , false);
+
+        canvasRef.current.addEventListener("mousemove", handleMouseMove, false);
         canvasRef.current.addEventListener("click", handleMouseClick, false);
-        
 
         return () => {
             if (canvasRef.current !== null) {
                 canvasRef.current.removeEventListener("mousemove", handleMouseMove);
-                canvasRef.current.removeEventListener("click", handleMouseClick);    
+                canvasRef.current.removeEventListener("click", handleMouseClick);
             }
-        }
-        
-    }, [canvasRef, handleMouseClick, handleMouseMove])
-
+        };
+    }, [canvasRef, handleMouseClick, handleMouseMove]);
 
     useEffect(() => {
         setTimeout(() => {
-            const plotHeigth = (props.size.height) - convertRemToPx(7)
-            const plotWidth = (props.size.width) - convertRemToPx(3)
+            const plotHeigth = props.size.height - convertRemToPx(7);
+            const plotWidth = props.size.width - convertRemToPx(3);
             if (plotHeigth > 0 && plotWidth > 0) {
-                plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth)
+                plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth);
             }
         }, 50);
+    }, [width, height, props.resizeTrigger, props.size]);
 
-    }, [width, height, props.resizeTrigger, props.size])
-
-    const fetchRamaData = useCallback( async () => {
+    const fetchRamaData = useCallback(async () => {
         if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
-            setRamaPlotData(null)
-            return
+            setRamaPlotData(null);
+            return;
         }
-        const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-        const response = await commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
-        setRamaPlotData(response.data.result.result)
-    }, [])
+        const inputData = {
+            message: "coot_command",
+            command: "ramachandran_validation",
+            returnType: "ramachandran_data",
+            commandArgs: [parseInt(moleculeSelectRef.current.value)],
+            chainID: chainSelectRef.current.value,
+        };
+        const response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>;
+        setRamaPlotData(response.data.result.result);
+    }, []);
 
     useEffect(() => {
-
-        fetchRamaData()
-
-    }, [selectedModel, selectedChain, fetchRamaData])
+        fetchRamaData();
+    }, [selectedModel, selectedChain, fetchRamaData]);
 
     useEffect(() => {
-        if (selectedModel === updateMolNo && ramaPlotData !== null && selectedModel !== null && chainSelectRef.current.value !== null && molecules.length !== 0) {
-            fetchRamaData()
+        if (
+            selectedModel === updateMolNo &&
+            ramaPlotData !== null &&
+            selectedModel !== null &&
+            chainSelectRef.current.value !== null &&
+            molecules.length !== 0
+        ) {
+            fetchRamaData();
         }
-    }, [updateSwitch, fetchRamaData])
+    }, [updateSwitch, fetchRamaData]);
 
     useEffect(() => {
         if (molecules.length === 0) {
-            setSelectedModel(null)
+            setSelectedModel(null);
         } else if (selectedModel === null) {
-            setSelectedModel(molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo);
         } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(molecules[0].molNo)
+            setSelectedModel(molecules[0].molNo);
         }
-
-    }, [molecules.length])
+    }, [molecules.length]);
 
     useEffect(() => {
         if (!clickedResidue) {
-            return
+            return;
         }
 
         const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
         if (selectedMoleculeIndex === -1) {
-            console.log(`Cannot find molecule ${clickedResidue.molName}`)
-            return
+            console.log(`Cannot find molecule ${clickedResidue.molName}`);
+            return;
         }
 
-        molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`, true, true)
-
-    }, [clickedResidue])
-
-    const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedModel(parseInt(evt.target.value))
-        setSelectedChain(chainSelectRef.current.value)
-    }
+        molecules[selectedMoleculeIndex].centreOn(
+            `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`,
+            true,
+            true
+        );
+    }, [clickedResidue]);
 
     const handleChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedChain(evt.target.value)
-    }
+        setSelectedChain(evt.target.value);
+    };
 
     useEffect(() => {
-        if (hoveredAtom===null || hoveredAtom.molecule === null || hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  hoveredAtom.molecule.molNo || canvasRef.current === null) {
-            return
+        if (
+            hoveredAtom === null ||
+            hoveredAtom.molecule === null ||
+            hoveredAtom.cid === null ||
+            ramaPlotData === null ||
+            selectedModel === null ||
+            chainSelectRef.current.value === null ||
+            selectedModel !== hoveredAtom.molecule.molNo ||
+            canvasRef.current === null
+        ) {
+            return;
         }
 
-        const [_, insCode, chainId, resInfo, atomName]   = hoveredAtom.cid.split('/')
+        const [_, insCode, chainId, resInfo, atomName] = hoveredAtom.cid.split("/");
 
         if (chainSelectRef.current.value !== chainId || !resInfo) {
-            return
+            return;
         }
-        
-        const resNum = resInfo.split('(')[0]
-        const newHit = ramaPlotData.findIndex(residue => residue.seqNum === parseInt(resNum))
+
+        const resNum = resInfo.split("(")[0];
+        const newHit = ramaPlotData.findIndex(residue => residue.seqNum === parseInt(resNum));
 
         if (newHit === -1 || newHit === hitRef.current) {
-            return
+            return;
         }
 
-        doAnimation(hitRef.current, newHit)
-        hitRef.current = newHit
+        doAnimation(hitRef.current, newHit);
+        hitRef.current = newHit;
+    }, [hoveredAtom]);
 
-    }, [hoveredAtom])
-
-    return <Fragment>
-        <Form style={{ padding:'0', margin: '0' }}>
-            <Form.Group>
-                <Row style={{ padding: '0', margin: '0' }}>
-                    <Col>
-                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef}/>
-                    </Col>
-                    <Col>
-                        <MoorhenChainSelect width="" molecules={molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
-                    </Col>
-                </Row>
-            </Form.Group>
-        </Form>
-        <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{padding:'0rem', margin:'0rem'}}>
-            <canvas ref={canvasRef} style={{ marginTop:'1rem' }} height={ramaPlotDimensions} width={ramaPlotDimensions} />
-        </div>
-    </Fragment>
-
-}
+    return (
+        <Fragment>
+            <Form style={{ padding: "0", margin: "0" }}>
+                <Form.Group>
+                    <Row style={{ padding: "0", margin: "0" }}>
+                        <Col>
+                            <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
+                        </Col>
+                        <Col>
+                            <MoorhenChainSelect
+                                width=""
+                                molecules={molecules}
+                                onChange={handleChainChange}
+                                selectedCoordMolNo={selectedModel}
+                                ref={chainSelectRef}
+                                allowedTypes={[1, 2]}
+                            />
+                        </Col>
+                    </Row>
+                </Form.Group>
+            </Form>
+            <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{ padding: "0rem", margin: "0rem" }}>
+                <canvas ref={canvasRef} style={{ marginTop: "1rem" }} height={ramaPlotDimensions} width={ramaPlotDimensions} />
+            </div>
+        </Fragment>
+    );
+};

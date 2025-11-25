@@ -6,7 +6,7 @@ import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { cidToSpec } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const GoTo = () => {
     const cidRef = useRef<null | HTMLInputElement>(null);
@@ -53,7 +53,7 @@ export const GoTo = () => {
 
     return (
         <>
-            <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} width="20rem" />
+            <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} style={{ width: "20rem" }} />
             <Form.Group className="moorhen-form-group" controlId="cid">
                 <Form.Label>Atom selection</Form.Label>
                 <Form.Control

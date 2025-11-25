@@ -10,11 +10,11 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const lsqkbResidueRangesReducer = (
     oldList: moorhen.lskqbResidueRangeMatch[],
@@ -174,17 +174,17 @@ export const MoorheSuperposeStructuresModal = () => {
         dispatch(hideModal(modalKeys.SUPERPOSE_MODELS));
     }, [molecules, lsqkbResidueRanges]);
 
-    const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>, isReferenceModel: boolean) => {
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(evt.target.value));
+    const handleModelChange = (evt: number, isReferenceModel: boolean) => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
         if (isReferenceModel) {
-            setSelectedRefModel(parseInt(evt.target.value));
+            setSelectedRefModel(evt);
             if (selectedMolecule.sequences && selectedMolecule.sequences.length > 0 && selectedMolecule.sequences[0].chain) {
                 setSelectedRefChain(selectedMolecule.sequences[0].chain);
             } else {
                 setSelectedRefChain("A");
             }
         } else {
-            setSelectedMovModel(parseInt(evt.target.value));
+            setSelectedMovModel(evt);
             if (selectedMolecule.sequences && selectedMolecule.sequences.length > 0 && selectedMolecule.sequences[0].chain) {
                 setSelectedMovChain(selectedMolecule.sequences[0].chain);
             } else {
@@ -275,10 +275,9 @@ export const MoorheSuperposeStructuresModal = () => {
                 >
                     <Form.Label>Reference structure</Form.Label>
                     <MoorhenMoleculeSelect
-                        width="100%"
-                        molecules={molecules}
+                        style={{ width: "100%" }}
                         ref={refMoleculeSelectRef}
-                        onChange={evt => handleModelChange(evt, true)}
+                        onSelect={sel => handleModelChange(sel, true)}
                     />
                     <MoorhenChainSelect
                         width="100%"
@@ -304,10 +303,9 @@ export const MoorheSuperposeStructuresModal = () => {
                 >
                     <Form.Label>Moving structure</Form.Label>
                     <MoorhenMoleculeSelect
-                        width="100%"
-                        molecules={molecules}
+                        style={{ width: "100%" }}
                         ref={movMoleculeSelectRef}
-                        onChange={evt => handleModelChange(evt, false)}
+                        onSelect={sel => handleModelChange(sel, false)}
                     />
                     <MoorhenChainSelect
                         width="100%"

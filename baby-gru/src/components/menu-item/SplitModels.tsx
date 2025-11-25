@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const SplitModels = () => {
     const dispatch = useDispatch();

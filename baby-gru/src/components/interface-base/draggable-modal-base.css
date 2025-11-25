@@ -5,7 +5,7 @@
     position: absolute;
     border: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
-    border-radius: 0.4rem;
+    border-radius: 0.2rem;
     top: 0;
     left: 0;
     box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);

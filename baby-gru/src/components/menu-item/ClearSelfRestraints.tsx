@@ -4,7 +4,7 @@ import { removeGeneralRepresentation } from "../../moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const ClearSelfRestraints = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);

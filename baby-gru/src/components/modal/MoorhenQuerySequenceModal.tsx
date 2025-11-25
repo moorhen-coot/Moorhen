@@ -13,10 +13,10 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const GET_POLYMER_INFO = gql(`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
@@ -240,7 +240,7 @@ const MoorhenQuerySequence = () => {
                 <>
                     <Row style={{ padding: "0", margin: "0" }}>
                         <Col>
-                            <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
+                            <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
                         </Col>
                         <Col>
                             <MoorhenChainSelect

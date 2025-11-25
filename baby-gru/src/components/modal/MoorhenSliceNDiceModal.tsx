@@ -22,9 +22,9 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -527,8 +527,7 @@ export const MoorhenSliceNDiceModal = () => {
         <MoorhenStack direction="vertical" gap={1}>
             <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <MoorhenMoleculeSelect
-                    width="100%"
-                    molecules={molecules}
+                    style={{ width: "100%" }}
                     allowAny={false}
                     ref={moleculeSelectRef}
                     onChange={evt => setSelectedMolNo(parseInt(evt.target.value))}

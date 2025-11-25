@@ -7,11 +7,11 @@ import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const MapMasking = () => {

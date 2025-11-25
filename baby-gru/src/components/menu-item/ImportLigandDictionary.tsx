@@ -12,7 +12,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 const ImportLigandDictionary = (props: {
     id: string;

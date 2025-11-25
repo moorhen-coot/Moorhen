@@ -6,8 +6,8 @@ import { setResidueSelection } from "../../store/generalStatesSlice";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const CreateSelection = () => {
     const dispatch = useDispatch();
@@ -60,7 +60,7 @@ export const CreateSelection = () => {
 
     return (
         <>
-            <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} width="20rem" />
+            <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} style={{ width: "20rem" }} />
             <MoorhenCidInputForm
                 margin={"0.5rem"}
                 width="95%"

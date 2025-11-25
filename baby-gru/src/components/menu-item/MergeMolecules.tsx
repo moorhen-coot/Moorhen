@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const MergeMolecules = () => {
     const toRef = useRef<null | HTMLSelectElement>(null);

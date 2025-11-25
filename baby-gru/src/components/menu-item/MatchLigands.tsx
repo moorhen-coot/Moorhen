@@ -4,8 +4,8 @@ import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const MatchLigands = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

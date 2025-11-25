@@ -1,7 +1,6 @@
 import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
-import { Stack, ToggleButton } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../hooks/useFastContourMode";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
@@ -11,7 +10,7 @@ import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertPxToRem, convertRemToPx } from "../../utils/utils";
 import { doDownload } from "../../utils/utils";
-import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../inputs";
+import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover } from "../interface-base";
 import { MoorhenStack } from "../interface-base";
@@ -193,24 +192,16 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
             <MoorhenStack direction="vertical" gap={1}>
                 <MoorhenStack direction="horizontal" gap={4}>
-                    <ToggleButton
+                    <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}
-                        type="checkbox"
-                        variant={isDark ? "outline-light" : "outline-primary"}
+                        type="toggle"
                         checked={props.map === activeMap}
-                        style={{
-                            marginLeft: "0.1rem",
-                            marginRight: "0.5rem",
-                            justifyContent: "space-betweeen",
-                            display: "flex",
-                            width: "8rem",
-                        }}
                         onClick={() => dispatch(setActiveMap(props.map))}
-                        value={""}
+                        label={props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     >
                         {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
                         <span style={{ marginLeft: "0.5rem" }}>{props.map === activeMap ? "Active" : "Inactive"}</span>
-                    </ToggleButton>
+                    </MoorhenButton>
                     <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
                         <MoorhenStack direction="row" gap={3}>
                             <MoorhenPreciseInput

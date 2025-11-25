@@ -5,9 +5,9 @@ import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const RandomJiggleBlur = () => {
     const commandCentre = useCommandCentre();

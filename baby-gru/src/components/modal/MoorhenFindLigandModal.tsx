@@ -10,10 +10,10 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 const LigandHitCard = (props: {
@@ -199,8 +199,6 @@ export const MoorheFindLigandModal = () => {
                 </Col>
                 <Col>
                     <MoorhenMoleculeSelect
-                        width=""
-                        molecules={molecules}
                         label="Molecule"
                         allowAny={false}
                         ref={intoMoleculeRef}
@@ -210,8 +208,6 @@ export const MoorheFindLigandModal = () => {
                 </Col>
                 <Col>
                     <MoorhenMoleculeSelect
-                        width=""
-                        molecules={molecules}
                         label="Ligand"
                         allowAny={false}
                         ref={ligandMoleculeRef}

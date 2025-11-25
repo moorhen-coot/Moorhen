@@ -11,7 +11,7 @@ import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { hsvToRgb, rgbToHsv } from "../../utils/utils";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const MoorhenJsonValidation = () => {
     const dispatch = useDispatch();
@@ -498,7 +498,7 @@ export const MoorhenJsonValidation = () => {
 
     return (
         <Container>
-            <MoorhenMoleculeSelect label="Molecule" width="" allowAny={false} molecules={molecules} ref={intoMoleculeRef} />
+            <MoorhenMoleculeSelect allowAny={false} ref={intoMoleculeRef} />
             <h5 className="mb-3">{cards.title}</h5>
             {cards.cards}
         </Container>

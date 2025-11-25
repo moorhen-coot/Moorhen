@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 ("Add simple...");
 
@@ -62,7 +62,7 @@ export const AddSimple = () => {
                     })}
                 </FormSelect>
             </Form.Group>
-            <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
+            <MoorhenMoleculeSelect allowAny={false} ref={moleculeSelectRef} />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );

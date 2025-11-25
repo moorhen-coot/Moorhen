@@ -11,8 +11,8 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;

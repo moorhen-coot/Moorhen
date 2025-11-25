@@ -4,9 +4,9 @@ import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const ChangeChainId = () => {
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);

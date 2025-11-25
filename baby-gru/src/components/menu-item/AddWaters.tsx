@@ -8,8 +8,8 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenPreciseInput } from "../inputs";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const AddWaters = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);

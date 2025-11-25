@@ -5,7 +5,7 @@ import { useCallback, useRef } from "react";
 import { useTimeCapsule } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -55,7 +55,7 @@ export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.
                 controlId="modelSelect"
                 className="mb-3"
             >
-                <MoorhenMoleculeSelect width="" molecules={molecules} ref={moleculeSelectRef} />
+                <MoorhenMoleculeSelect ref={moleculeSelectRef} />
             </Form.Group>
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>

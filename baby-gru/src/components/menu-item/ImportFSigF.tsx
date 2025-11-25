@@ -13,8 +13,8 @@ import {
 } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const ImportFSigF = () => {
     const commandCentre = useCommandCentre();
@@ -132,7 +132,13 @@ export const ImportFSigF = () => {
                 </Col>
                 {/* {props.selectedMolNo === undefined && ( */}
                 <Col key="Col3">
-                    <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} label="Molecule" allowAny={false} width="100%" />
+                    <MoorhenMoleculeSelect
+                        molecules={molecules}
+                        ref={moleculeSelectRef}
+                        label="Molecule"
+                        allowAny={false}
+                        style={{ width: "100%" }}
+                    />
                 </Col>
                 {/* )} */}
             </Row>

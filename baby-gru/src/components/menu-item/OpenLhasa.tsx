@@ -8,8 +8,8 @@ import { showModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 export const OpenLhasa = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

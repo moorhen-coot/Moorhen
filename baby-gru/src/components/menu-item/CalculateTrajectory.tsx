@@ -6,7 +6,7 @@ import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { representationLabelMapping } from "../../utils/enums";
 import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
+import { MoorhenMoleculeSelect } from "../inputs";
 
 const animationRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres"];
 
