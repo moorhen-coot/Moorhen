@@ -366,7 +366,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     mmdb::Residue *currentResidue = 0;
     for(int i=0;i<nHetAtoms;i++){
-        if(HetAtoms[i]->Het){
+        if(true||HetAtoms[i]->Het){
             std::string element = std::string(HetAtoms[i]->element);
             trim(element);
             std::transform(element.begin(), element.end(), element.begin(), ::toupper);
