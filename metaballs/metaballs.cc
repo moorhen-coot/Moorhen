@@ -84,6 +84,7 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     std::fill(field.begin(), field.end(), mIsoLevel);
     auto t_field_fill = std::chrono::high_resolution_clock::now();
 
+    float cutoff = 5.0f;
     for(unsigned ip=0;ip<np;ip++){
         float x0 = points[ip].first[0];
         float y0 = points[ip].first[1];
@@ -92,19 +93,22 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         float rr = r0 * r0;
         for(unsigned iz=0;iz<ncell_z;iz++){
             float z = min_z + iz * cell_z;
+            if(fabs(z-z0)>cutoff) continue;
             int idx_z = iz*ncell_x*ncell_y;
             float zz = (z - z0)*(z - z0);
             for(unsigned iy=0;iy<ncell_y;iy++){
                 float y = min_y + iy * cell_y;
+                if(fabs(y-y0)>cutoff) continue;
                 int idx_y = iy*ncell_x;
                 float yy = (y - y0)*(y - y0);
                 for(unsigned ix=0;ix<ncell_x;ix++){
                     float x = min_x + ix * cell_x;
+                    if(fabs(x-x0)>cutoff) continue;
                     float xx = (x - x0)*(x - x0);
                     int newIdx = idx_z + idx_y + ix;
                     //Potential cutoff and obscure fudge factor.
                     float d2 = (xx + yy + zz);
-                    d2 = smoothstep(0.0f,12.0f,d2) * sqrt(1.0*np)*5.;
+                    d2 = smoothstep(0.0f,12.0f,d2) * 30.0;
                     field[newIdx] += rr / d2;
                     /*
                     field[newIdx] += rr / (xx + yy + zz);

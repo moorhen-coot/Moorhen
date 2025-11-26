@@ -1578,12 +1578,11 @@ export class MoleculeRepresentation {
     }
 
     /**
-     * Export the current representation as a gltf binary file
-     * @returns {ArrayBuffer} - The contents of the gltf binary file
+     * Export the current representation as a Wavefront Obj file
+     * @returns {ArrayBuffer} - The contents of the obj file
      */
-    async exportAsGltf(): Promise<ArrayBuffer> {
+    async exportAsObj(): Promise<ArrayBuffer> {
         await this.applyColourRules();
-
         let gltfData: ArrayBuffer;
         if (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
             const bondArgs = this.getBondArgs(this.style);
@@ -1592,7 +1591,7 @@ export class MoleculeRepresentation {
             const result = (await this.commandCentre.current.cootCommand(
                 {
                     returnType: "string",
-                    command: "shim_export_molecule_as_gltf",
+                    command: "shim_export_molecule_as_obj",
                     commandArgs: [this.parentMolecule.molNo, this.cid, ...bondArgs, drawMissingLoops],
                 },
                 false
@@ -1609,7 +1608,7 @@ export class MoleculeRepresentation {
             const result = (await this.commandCentre.current.cootCommand(
                 {
                     returnType: "string",
-                    command: "shim_export_molecular_representation_as_gltf",
+                    command: "shim_export_molecular_representation_as_obj",
                     commandArgs: [
                         this.parentMolecule.molNo,
                         m2tSelection,
@@ -1623,6 +1622,68 @@ export class MoleculeRepresentation {
             gltfData = result.data.result.result;
         } else {
             console.warn(`Unable to export molecule representation of style ${this.style} as gltf`);
+        }
+        return gltfData;
+    }
+
+    /**
+     * Export the current representation as a gltf binary file or Wavefront Obj file
+     * @returns {ArrayBuffer} - The contents of the gltf binary file
+     */
+    async exportAsMeshFile(fileType: string): Promise<ArrayBuffer> {
+        await this.applyColourRules();
+
+        let gltfData: ArrayBuffer;
+        if (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
+            const bondArgs = this.getBondArgs(this.style);
+            const state = this.parentMolecule.store.getState();
+            const drawMissingLoops = state.sceneSettings.drawMissingLoops;
+            const result = (await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "string",
+                    command: "shim_export_molecule_as_mesh_file",
+                    commandArgs: [this.parentMolecule.molNo, this.cid, ...bondArgs, drawMissingLoops, fileType],
+                },
+                false
+            )) as moorhen.WorkerResponse<ArrayBuffer>;
+            gltfData = result.data.result.result;
+        } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
+            const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid);
+            let ssUsageScheme;
+            if (this.useDefaultM2tParams) {
+                ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme;
+            } else {
+                ssUsageScheme = this.m2tParams.ssUsageScheme;
+            }
+            const result = (await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "string",
+                    command: "shim_export_molecular_representation_as_mesh_file",
+                    commandArgs: [
+                        this.parentMolecule.molNo,
+                        m2tSelection,
+                        "colorRampChainsScheme",
+                        m2tStyle,
+                        ssUsageScheme,
+                        fileType
+                    ],
+                },
+                false
+            )) as moorhen.WorkerResponse<ArrayBuffer>;
+            gltfData = result.data.result.result;
+        } else if(this.style==="MetaBalls") {
+            const result = (await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "string",
+                    command: "shim_export_metaballs_as_mesh_file",
+                    commandArgs: [
+                        this.parentMolecule.molNo, this.cid, 0.2, 0.67, 1.8, fileType]
+                },
+                false
+            )) as moorhen.WorkerResponse<ArrayBuffer>;
+            gltfData = result.data.result.result;
+        } else {
+            console.warn(`Unable to export molecule representation of style ${this.style} as mesh file`);
         }
         return gltfData;
     }
