@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { MoorhenMoleculeSelect }  from '../../src/components/select/MoorhenMoleculeSelect'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenMoleculeSelect', () => {
 

@@ -15,7 +15,7 @@ import { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
 import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'

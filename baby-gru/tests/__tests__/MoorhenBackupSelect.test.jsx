@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { createRef } from 'react';
 import { MoorhenInstanceProvider, MoorhenInstance } from '../../src/InstanceManager';
 import { MoorhenBackupSelect } from '../../src/components/select/MoorhenBackupSelect';
-import { MoorhenReduxStore } from '../../src/store/MoorhenReduxStore';
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+
 describe('Testing MoorhenBackupSelect', () => {
     afterEach(cleanup);
 

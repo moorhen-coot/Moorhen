@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'

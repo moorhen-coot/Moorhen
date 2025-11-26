@@ -8,3 +8,4 @@ MoorhenContextMenu.tsx
 MoorhenVectorsModal.tsx
 eslint.config.mjs
 src/LhasaReact/*
+tests/*

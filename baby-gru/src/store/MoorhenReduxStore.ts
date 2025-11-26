@@ -51,7 +51,7 @@ export const reducers = {
     vectors: vectorsReducer,
 };
 
-const _MoorhenReduxStore = configureStore({
+export const _MoorhenReduxStore = configureStore({
     reducer: reducers,
     middleware: getDefaultMiddleware =>
         getDefaultMiddleware({

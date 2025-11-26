@@ -3,7 +3,7 @@ import { render, screen, cleanup, waitFor }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { createRef } from 'react'
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 
 describe('Testing MoorhenNumberForm', () => {
