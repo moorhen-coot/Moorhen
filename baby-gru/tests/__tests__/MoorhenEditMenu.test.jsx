@@ -16,8 +16,8 @@ import { act } from 'react-dom/test-utils'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
-import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
-import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
+import { MoorhenModalsContainer } from '../../src/components/container/ModalsContainer'
+// import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
@@ -165,7 +165,7 @@ describeIfWasmExists('Testing MoorhenEditMenu', () => {
     test("MoorhenEditMenu merge molecules" , async () => {
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenNavBar {...collectedProps}/>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
                 <MoorhenModalsContainer {...collectedProps}/>
             </Provider>
         )
