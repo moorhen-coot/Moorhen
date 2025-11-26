@@ -502,7 +502,7 @@ const export_molecular_representation_as_gltf = (imol: number, cid: string, colo
 
 const export_molecule_as_gltf = (
     imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
-    atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean
+    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean
 ) => {
     const fileName = `${guid()}.glb`
     molecules_container.export_model_molecule_as_gltf(
@@ -1211,7 +1211,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_map_as_gltf(...commandArgs as [number, number, number, number, number, number])
                 break
             case 'shim_export_molecule_as_gltf':
-                cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, number, boolean, boolean])
+                cootResult = export_molecule_as_gltf(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean])
                 break
             case 'shim_export_molecular_representation_as_gltf':
                 cootResult = export_molecular_representation_as_gltf(...commandArgs as [number, string, string, string, number])

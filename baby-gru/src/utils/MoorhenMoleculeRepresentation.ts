@@ -1539,12 +1539,11 @@ export class MoleculeRepresentation {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
             const drawMissingLoops = state.sceneSettings.drawMissingLoops;
-            const drawHydrogens = false;
             const result = (await this.commandCentre.current.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecule_as_gltf",
-                    commandArgs: [this.parentMolecule.molNo, this.cid, ...bondArgs, drawHydrogens, drawMissingLoops],
+                    commandArgs: [this.parentMolecule.molNo, this.cid, ...bondArgs, drawMissingLoops],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;

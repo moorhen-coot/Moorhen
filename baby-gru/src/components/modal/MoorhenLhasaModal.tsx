@@ -12,10 +12,14 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base";
 
-const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<boolean>>; urlPrefix: string }) => {
+const LhasaWrapper = (props: {
+    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+    urlPrefix: string;
+    maxWidth?: number;
+    maxHeight?: number;
+}) => {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
@@ -123,12 +127,14 @@ const LhasaWrapper = (props: { setBusy: React.Dispatch<React.SetStateAction<bool
             show_top_panel={false}
             rdkit_molecule_pickle_list={rdkitMoleculePickleList}
             icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
+            data_path_prefix={`${props.urlPrefix}/`}
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
+            dark_mode={isDark}
+            max_width={props.maxWidth}
+            max_height={props.maxHeight}
         />
-    ) : (
-        <div>Window.coot not detected</div>
-    );
+    ) : null;
 };
 
 export const MoorhenLhasaModal = () => {
@@ -136,6 +142,9 @@ export const MoorhenLhasaModal = () => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const [lhasaMaxWidth, setLhasaMaxWidth] = useState<number>(convertRemToPx(37));
+    const [lhasaMaxHeight, setLhasaMaxHeight] = useState<number>(convertViewtoPx(30, height));
+
     const urlPrefix = usePaths().urlPrefix;
 
     const [busy, setBusy] = useState<boolean>(false);
@@ -161,13 +170,17 @@ export const MoorhenLhasaModal = () => {
             headerTitle="Lhasa"
             resizeNodeRef={resizeNodeRef}
             onClose={handleClose}
-            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} />}
+            onResize={(_evt, _direction, _div, _delta, size) => {
+                setLhasaMaxWidth(size.width);
+                setLhasaMaxHeight(size.height);
+            }}
+            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} maxHeight={lhasaMaxHeight} maxWidth={lhasaMaxWidth} />}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                    <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
                         <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                         <span>Please wait...</span>
-                    </MoorhenStack>
+                    </Stack>
                 </Backdrop>
             }
         />

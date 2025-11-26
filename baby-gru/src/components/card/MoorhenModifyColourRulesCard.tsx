@@ -191,7 +191,7 @@ export const MoorhenModifyColourRulesCard = memo(
                     console.warn("Invalid CID selection used to create a colour rule");
                 }
             } else {
-                const ruleArgs = await getMultiColourRuleArgs(props.molecule, ruleType);
+                const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourProperty);
                 newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre, true);
                 newRule.setParentMolecule(props.molecule);
                 newRule.setArgs([ruleArgs]);
