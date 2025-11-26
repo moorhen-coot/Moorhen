@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
 import { moorhen } from "../../../types/moorhen";
-import { MoorhenSlider } from "../../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenAccordion } from "../../interface-base/Accordion";
@@ -117,44 +117,34 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             <MoorhenStack direction="vertical" gap={1}>
                 <MoorhenStack direction="horizontal" gap={4}>
                     <MoorhenStack direction="vertical" gap={2} style={{ paddingTop: "0.6rem" }}>
-                        <ToggleButton
+                        <MoorhenButton
                             id={`lock-origin-toggle-${props.map.molNo}`}
-                            type="checkbox"
-                            variant={isDark ? "outline-light" : "outline-primary"}
+                            type="toggle"
                             checked={isOriginLocked}
-                            style={{
-                                marginLeft: "0.1rem",
-                                marginRight: "0.5rem",
-                                justifyContent: "space-betweeen",
-                                display: "flex",
-                                width: "10rem",
-                            }}
                             onClick={() => {
                                 handleOriginLockClick();
                             }}
-                            value={""}
                             disabled={!props.mapIsVisible}
+                            icon={isOriginLocked ? "MUISymbolLockClose" : "MUISymbolLockOpen"}
                         >
-                            {props.map.isOriginLocked ? <LockOutline /> : <LockOpen />}
                             <span
                                 style={{
                                     marginLeft: "0.5rem",
                                 }}
                             >
-                                {props.map.isOriginLocked ? "Unlock" : "Lock"} Origin
+                                {props.map.isOriginLocked ? "Locked Origin" : "Moving Origin"}
                             </span>
-                        </ToggleButton>
+                        </MoorhenButton>
 
                         <MoorhenStack
                             direction="vertical"
-                            gap={1}
+                            gap={"0.5rem"}
                             style={{
                                 justifyContent: "flex-start",
                                 alignItems: "flex-start",
                             }}
                         >
-                            <Form.Check
-                                type="switch"
+                            <MoorhenToggle
                                 checked={props.mapStyle === "lines"}
                                 onChange={() => {
                                     dispatch(
@@ -166,8 +156,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 }}
                                 label="Draw as mesh"
                             />
-                            <Form.Check
-                                type="switch"
+                            <MoorhenToggle
                                 checked={props.mapStyle === "solid"}
                                 onChange={() => {
                                     dispatch(
@@ -179,8 +168,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                                 }}
                                 label="Draw as a surface"
                             />
-                            <Form.Check
-                                type="switch"
+                            <MoorhenToggle
                                 checked={props.mapStyle === "lit-lines"}
                                 onChange={() => {
                                     dispatch(

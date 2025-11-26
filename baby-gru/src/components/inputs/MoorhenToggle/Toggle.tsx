@@ -7,6 +7,7 @@ type MoorhenToggleProps = {
     className?: string;
     id?: string;
     style?: React.CSSProperties;
+    type?: "switch" | "radio";
 };
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {

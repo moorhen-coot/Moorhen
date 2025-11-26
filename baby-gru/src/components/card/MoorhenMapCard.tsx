@@ -191,18 +191,19 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     return (
         <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
             <MoorhenStack direction="vertical" gap={1}>
-                <MoorhenStack direction="horizontal" gap={4}>
+                <MoorhenStack direction="horizontal" gap={4} align="center">
                     <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}
                         type="toggle"
                         checked={props.map === activeMap}
                         onClick={() => dispatch(setActiveMap(props.map))}
+                        style={{ width: "6rem" }}
+                        icon={props.map === activeMap ? "MUISymbolRadioButtonChecked" : "MUISymbolRadioButtonUnchecked"}
                     >
-                        {props.map === activeMap ? <RadioButtonCheckedOutlined /> : <RadioButtonUncheckedOutlined />}
-                        {props.map === activeMap ? "Active" : "Inactive"}
+                        {props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     </MoorhenButton>
                     <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
-                        <MoorhenStack direction="row" gap={3}>
+                        <MoorhenStack direction="row" gap={3} justify="center">
                             <MoorhenPreciseInput
                                 value={mapContourLevel}
                                 setValue={newVal => {

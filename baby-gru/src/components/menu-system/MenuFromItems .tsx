@@ -7,7 +7,7 @@ import { showModal } from "../../store/modalsSlice";
 import { MoorhenToggle } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
-import type { MenuItemType } from "./SubMenuMap";
+import type { MenuItemType } from "./subMenuConfig";
 
 export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: string }): React.JSX.Element => {
     const dispatch = useDispatch();

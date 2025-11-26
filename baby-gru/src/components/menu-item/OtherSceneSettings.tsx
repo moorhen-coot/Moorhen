@@ -12,7 +12,7 @@ import {
     setDrawScaleBar,
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { SubMenuMap } from "../menu-system/SubMenuMap";
+import { SubMenuMap } from "../menu-system/subMenuConfig";
 
 export const OtherSceneSettings = () => {
     const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);

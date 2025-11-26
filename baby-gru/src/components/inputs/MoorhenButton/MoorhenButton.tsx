@@ -60,6 +60,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     if (type === "default" && "variant" in props) variant = props.variant as string;
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
+    const iconSize = type === "toggle" ? "medium" : size;
     const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
 
     return (
@@ -76,7 +77,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             value={props.value}
         >
             <MoorhenStack direction="row" align="center" justify="center">
-                {icon && <MoorhenIcon name={icon} size={size} isActive={!disabled} style={{ ...style }} />}
+                {icon && <MoorhenIcon name={icon} size={iconSize} isActive={!disabled} style={{ ...style }} />}
                 {label}
                 {children}
             </MoorhenStack>

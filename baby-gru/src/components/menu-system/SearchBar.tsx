@@ -7,8 +7,8 @@ import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../
 import { MoorhenButton } from "../inputs";
 import { MenuFromItems } from "./MenuFromItems ";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
-import { MenuItemType } from "./SubMenuMap";
 import "./search-bar.css";
+import { MenuItemType } from "./subMenuConfig";
 
 export const MoorhenSearchBar = () => {
     const open = useSelector((state: RootState) => state.globalUI.isSearchBarActive);

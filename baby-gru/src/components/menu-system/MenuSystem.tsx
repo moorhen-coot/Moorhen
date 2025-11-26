@@ -1,6 +1,6 @@
 import { OtherSceneSettingsMenu } from "../menu-item/OtherSceneSettings";
-import { HELP_MENU, MenuItem, MenuItemType, SubMenu, SubMenuMap, subMenuMap } from "./SubMenuMap";
 import { MainMenu, MainMenuMap, MainMenuType } from "./mainMenuConfig";
+import { HELP_MENU, MenuItem, MenuItemType, SubMenu, SubMenuMap, subMenuMap } from "./subMenuConfig";
 
 export class MoorhenMenuSystem {
     public subMenuMap: SubMenuMap = {};
