@@ -133,7 +133,7 @@ void fill_field(const std::vector<std::pair<std::array<float,4>,std::array<float
     }
 }
 
-moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize){
+moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize, int n_threads){
 
     auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -197,9 +197,7 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
 
     float cutoff = 5.0f;
 
-    int n_threads = 4;
-
-    if(np>20){
+    if(np>20&&n_threads>1){
         std::vector<std::thread> fill_threads;
         for(int i=0;i<n_threads;i++){
             int start =     i * np / n_threads;
@@ -242,7 +240,7 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     int np_smooth = mesh.vertices.size();
     std::array<float,4> theColor{0.5,0.5,0.5,1.0};
     mesh.colors.resize(np_smooth,theColor);
-    if(np_smooth>20){
+    if(np_smooth>20&&n_threads>1){
         std::vector<std::thread> smooth_threads;
         for(int i=0;i<n_threads;i++){
             int start =     i * np_smooth / n_threads;

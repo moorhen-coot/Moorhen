@@ -1401,7 +1401,7 @@ export class MoleculeRepresentation {
             {
                 returnType: "mesh_perm",
                 command: "DrawMoorhenMetaBalls",
-                commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8],
+                commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8, 4],
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;

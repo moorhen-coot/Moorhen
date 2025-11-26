@@ -8,5 +8,5 @@ typedef struct moorhenMesh : public MC::mcMesh {
 
 
 namespace MoorhenMetaBalls {
-    moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize);
+    moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, float isoLevel, float gridSize, int n_threads=4);
 }
