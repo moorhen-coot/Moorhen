@@ -740,18 +740,16 @@ export const MoorhenMrParseModal = () => {
                     controlId="uploadMrParse"
                     className="mb-3"
                 >
-                    <Form.Control
-                        ref={filesRef}
-                        type="file"
-                        multiple={true}
+{/* @ts-expect-error */}
+                    <Form.Control ref={filesRef} type="file" multiple={true} directory="" webkitdirectory="true"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             loadMrParseFiles(
                                 Array.from(e.target.files),
                                 commandCentre,
+                                store,
                                 monomerLibraryPath,
                                 backgroundColor,
                                 defaultBondSmoothness,
-                                store,
                                 dispatch
                             );
                         }}
