@@ -1,4 +1,4 @@
-@import '../../../colors.css';
+@import "../../../colors.css";
 
 .moorhen__edge-panel-sequence-viewer {
     border: none;
@@ -58,6 +58,7 @@
     padding: 0;
     margin: 0;
     cursor: pointer;
+    color: var(--moorhen-primary);
 }
 
 .moorhen__bottom-panel-button:hover {
