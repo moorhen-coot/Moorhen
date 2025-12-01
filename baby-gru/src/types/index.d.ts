@@ -13,7 +13,7 @@ declare global {
         MathJax: any;
     }
     declare module "*.svg" {
-        const content: string;
-        export default content;
+        const SVGComponent: React.FC<React.SVGProps<SVGSVGElement>>;
+        export default SVGComponent;
     }
 }

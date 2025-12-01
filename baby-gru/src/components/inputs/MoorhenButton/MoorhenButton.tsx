@@ -1,3 +1,4 @@
+import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenStack } from "../../interface-base";
 import "./moorhen-button.css";
@@ -9,7 +10,6 @@ type MoorhenButtonPropsTypeBase = {
     onMouseUp?: () => void;
     onMouseLeave?: () => void;
     disabled?: boolean;
-    icon?: string;
     ref?: React.Ref<HTMLButtonElement>;
     style?: React.CSSProperties;
     className?: string;
@@ -21,21 +21,21 @@ type MoorhenButtonPropsTypeBase = {
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
     type: "icon-only";
     size?: "small" | "medium" | "large" | "accordion";
-    icon: string;
+    icon: MoorhenSVG;
 };
 
 type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     type?: "default";
     size?: "small" | "medium" | "large" | "sm" | "lg" | "md";
     variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
-    icon?: string;
+    icon?: MoorhenSVG;
 };
 
 type MoorhenButtonToggleProps = MoorhenButtonPropsTypeBase & {
     type: "toggle";
     checked: boolean;
     size?: "small" | "medium" | "large";
-    icon?: string;
+    icon?: MoorhenSVG;
 };
 
 export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps | MoorhenButtonToggleProps) => {
@@ -54,7 +54,15 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         children,
     } = props;
 
-    let size = props.size === "lg" ? "large" : props.size === "sm" ? "small" : props.size === "md" ? "medium" : props.size;
+    let size = props.size
+        ? props.size === "lg"
+            ? "large"
+            : props.size === "sm"
+              ? "small"
+              : props.size === "md"
+                ? "medium"
+                : props.size
+        : "medium";
 
     let variant: string | null = null;
     if (type === "default" && "variant" in props) variant = props.variant as string;
@@ -77,7 +85,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             value={props.value}
         >
             <MoorhenStack direction="row" align="center" justify="center">
-                {icon && <MoorhenIcon name={icon} size={iconSize} isActive={!disabled} style={{ ...style }} />}
+                {icon && <MoorhenIcon moorhenSVG={icon} size={iconSize} isActive={!disabled} style={{ ...style }} />}
                 {label}
                 {children}
             </MoorhenStack>

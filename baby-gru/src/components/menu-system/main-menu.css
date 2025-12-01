@@ -89,12 +89,6 @@
     }
 }
 
-.moorhen__icon__menu {
-    filter: invert(1) brightness(var(--moorhen-icon-brightness));
-    width: 30px;
-    height: 30px;
-}
-
 .moorhen__main-menu-button,
 .moorhen__main-menu-toggle {
     pointer-events: auto;

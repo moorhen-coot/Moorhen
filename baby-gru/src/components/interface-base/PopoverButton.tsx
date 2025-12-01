@@ -1,5 +1,5 @@
-import { Propane } from "@mui/icons-material";
 import { useRef, useState } from "react";
+import { MoorhenSVG } from "../icons";
 import { MoorhenButton } from "../inputs";
 import { MoorhenPopover } from "./Popover";
 
@@ -7,7 +7,7 @@ type MoorhenPopoverButtonType = {
     popoverContent?: React.JSX.Element;
     disabled?: boolean;
     size?: "small" | "medium" | "large" | "accordion";
-    icon?: "string";
+    icon?: MoorhenSVG;
     popoverPlacement?: "left" | "right" | "top" | "bottom";
     children?: React.ReactNode;
 };

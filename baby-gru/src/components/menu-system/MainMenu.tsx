@@ -4,7 +4,7 @@ import { memo, useMemo, useState } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { ModalKey, showModal } from "../../store/modalsSlice";
-import { MoorhenIcon } from "../icons";
+import { MoorhenIcon, MoorhenSVG } from "../icons";
 import { MenuFromItems } from "./MenuFromItems ";
 import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import { MoorhenSearchBar } from "./SearchBar";
@@ -112,12 +112,12 @@ export const MoorhenMainMenu = memo(() => {
             <div className="moorhen__main-menu">
                 <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                     {isOpen ? (
-                        <MoorhenIcon name={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
                     ) : (
-                        <MoorhenIcon name={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
                     )}
                     &nbsp;&nbsp;
-                    <MoorhenIcon name={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
+                    <MoorhenIcon moorhenSVG={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
                 </button>
                 <div className="moorhen__main-menu-container">
                     {menu}
@@ -129,10 +129,10 @@ export const MoorhenMainMenu = memo(() => {
 });
 MoorhenMainMenu.displayName = "MoorhenMainMenu";
 
-const MainMenuButton = (props: { icon: string; label: string; onClick: () => void }) => {
+const MainMenuButton = (props: { icon: MoorhenSVG; label: string; onClick: () => void }) => {
     return (
         <button className="moorhen__main-menu-button" onClick={props.onClick}>
-            <MoorhenIcon name={props.icon} className="moorhen__icon__menu" alt={props.icon} />
+            <MoorhenIcon moorhenSVG={props.icon} className="moorhen__icon__menu" alt={props.icon} />
             &nbsp;&nbsp;
             {props.label}
         </button>

@@ -103,6 +103,20 @@ module.exports = (env, argv) => {
         target: "web",
         optimization: {
             minimize: argv.mode === "production",
+            minimizer: [
+                new TerserPlugin({
+                    terserOptions: {
+                        compress: {
+                            pure_funcs: argv.mode === "production" ? ["console.log"] : [],
+                            drop_console: argv.mode === "production",
+                        },
+                        format: {
+                            comments: false,
+                        },
+                    },
+                    extractComments: false,
+                }),
+            ],
         },
         cache: false,
         output: {
@@ -155,8 +169,36 @@ module.exports = (env, argv) => {
                     ],
                 },
                 {
-                    test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,
-                    loader: "file-loader",
+                    test: /\.svg$/,
+                    use: [
+                        {
+                            loader: "@svgr/webpack",
+                            options: {
+                                exportType: "default",
+                                dimensions: false,
+                                svgoConfig: {
+                                    plugins: [
+                                        {
+                                            name: "preset-default",
+                                            params: {
+                                                overrides: {
+                                                    removeViewBox: false,
+                                                    cleanupIds: false,
+                                                },
+                                            },
+                                        },
+                                        "removeDimensions",
+                                        "removeComments",
+                                        "removeMetadata",
+                                        "removeUselessDefs",
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    test: /\.(?:ico|gif|png|jpg|jpeg|xpm)$/,
                     type: "asset/resource",
                 },
                 {

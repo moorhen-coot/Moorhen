@@ -1,33 +1,31 @@
 import React from "react";
 import { ModalKey } from "../../store/modalsSlice";
-import { MoorhenIcon } from "../icons";
+import { MoorhenSVG } from "../icons";
 import { MoorhenHistoryMenu } from "./HistoryMenu";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import "./main-menu.css";
 
+type Icon = { icon: MoorhenSVG; iconSrc?: never } | { icon?: never; iconSrc: string };
 export type MainMenuEntrySubMenu = {
     type: "sub-menu";
     label: string;
-    icon: string;
     menu: string;
     align?: number;
-};
+} & Icon;
 
 export type MainMenuEntryModal = {
     type: "modal";
     label: string;
-    icon: string;
     modal: ModalKey;
-};
+} & Icon;
 
 export type MainMenuEntryJSX = {
     type: "jsx";
     label: string;
-    icon: string;
     component: React.JSX.Element;
     props?: {};
     align?: number;
-};
+} & Icon;
 
 export type MainMenuType = MainMenuEntrySubMenu | MainMenuEntryModal | MainMenuEntryJSX;
 
@@ -81,13 +79,13 @@ export const MainMenu: MainMenuMap = {
     7: {
         type: "modal",
         label: "Models",
-        icon: `menu-models`,
+        icon: `menuModels`,
         modal: "models",
     },
     8: {
         type: "modal",
         label: "Maps",
-        icon: `menu-maps`,
+        icon: `menuMaps`,
         modal: "maps",
     },
     9: {

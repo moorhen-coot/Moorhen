@@ -25,10 +25,10 @@
 .moorhen__search-bar-closed {
     animation: expandWidth 0.2s cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
+    color: var(--moorhen-primary);
 }
 
 .moorhen__search-bar-open {
-    /* width: 15rem; */
     justify-content: left;
     border: 1px solid var(--moorhen-border);
     padding-left: 0.5rem;

@@ -1,7 +1,7 @@
 import { ClickAwayListener } from "@mui/material";
 import Fuse from "fuse.js";
 import { useDispatch, useSelector } from "react-redux";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenButton } from "../inputs";
@@ -67,7 +67,7 @@ export const MoorhenSearchBar = () => {
     if (!open) {
         return (
             <div className={`moorhen__search-bar-closed`}>
-                <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} />
+                <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} size="medium" />
             </div>
         );
     }
@@ -75,7 +75,7 @@ export const MoorhenSearchBar = () => {
         <ClickAwayListener onClickAway={handleClick}>
             <div>
                 <div className={`moorhen__search-bar-open`}>
-                    <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} />
+                    <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} size="medium" />
                     {open && (
                         <input
                             ref={inputRef}
