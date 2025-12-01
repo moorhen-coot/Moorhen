@@ -405,6 +405,8 @@ struct moorhen_hbond {
 };
 
 coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4);
+coot::simple_mesh_t GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
+
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
 
@@ -528,8 +530,11 @@ class molecules_container_js : public molecules_container_t {
         }
 
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
-            mmdb::Manager *mol = get_mol(imol);
-            return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel,n_threads);
+            //FIXME - pass in against_a_dark_background
+            bool against_a_dark_background = false;
+            coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, true, 1);
+
+            return GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
         }
 
         std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
@@ -1057,8 +1062,7 @@ class molecules_container_js : public molecules_container_t {
      }
 
      void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         mmdb::Manager *mol = get_mol(imol);
-         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .glb
          bool as_binary = true; // test the extension of file_name
          float gltf_pbr_roughness = 0.2;
@@ -1067,15 +1071,13 @@ class molecules_container_js : public molecules_container_t {
      }
 
      void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         mmdb::Manager *mol = get_mol(imol);
-         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .obj
          write_simple_mesh_to_obj_file(sm,file_name);
      }
 
      void export_metaballs_as_3mf_xml(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         mmdb::Manager *mol = get_mol(imol);
-         coot::simple_mesh_t sm = GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
+         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as 3mf xml
          write_simple_mesh_to_3mf_xml_file(sm,file_name);
      }
