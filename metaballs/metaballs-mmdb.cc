@@ -389,7 +389,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instan
                 col[0] = mesh.colors[iv][0];
                 col[1] = mesh.colors[iv][1];
                 col[2] = mesh.colors[iv][2];
-                col[3] = 1.0;
+                col[3] = mesh.colors[iv][3];
                 coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
             }
             totVert += mesh.vertices.size();
@@ -488,7 +488,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
                 col[0] = mesh.colors[iv][0];
                 col[1] = mesh.colors[iv][1];
                 col[2] = mesh.colors[iv][2];
-                col[3] = 1.0;
+                col[3] = mesh.colors[iv][3];
                 coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
             }
             totVert += mesh.vertices.size();
