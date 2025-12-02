@@ -1,16 +1,16 @@
-import { useSnackbar } from 'notistack';
-import { useDispatch, useSelector } from 'react-redux';
-import React, { useCallback, useMemo } from 'react';
-import { RootState } from '../../store/MoorhenReduxStore';
-import { setHoveredAtom } from '../../store/hoveringStatesSlice';
-import { moorhen } from '../../types/moorhen';
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from '../sequence-viewer';
+import { useSnackbar } from "notistack";
+import { useDispatch, useSelector } from "react-redux";
+import React, { useCallback, useMemo } from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
     handleResiduesSelection,
     useHoveredResidue,
-} from '../sequence-viewer/utils';
+} from "../sequence-viewer/utils";
 
 export const MoorhenSequenceList = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -42,7 +42,7 @@ export const MoorhenSequenceList = (props: {
 
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         return MoleculeToSeqViewerSequences(props.molecule);
-    }, [props.molecule]);
+    }, [props.molecule, props.molecule.sequences]);
 
     const display = sequenceList && sequenceList.length > 0 ? true : false;
 

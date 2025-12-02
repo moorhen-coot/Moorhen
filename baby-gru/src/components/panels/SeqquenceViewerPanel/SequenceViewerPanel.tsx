@@ -25,9 +25,11 @@ export const SequenceViewerPanel = () => {
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
-    const molecule: MoorhenMolecule | null = useMemo(() => {
-        return moleculeList.length > 0 ? (moleculeList.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList[0]) : null;
-    }, [moleculeList, selectedMolecule]);
+    const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
+        return moleculeList.length > 0
+            ? (state.molecules.moleculeList.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList[0])
+            : null;
+    });
 
     const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
@@ -51,7 +53,7 @@ export const SequenceViewerPanel = () => {
 
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         return MoleculeToSeqViewerSequences(molecule);
-    }, [molecule, selectedMolecule]);
+    }, [selectedMolecule, molecule?.sequences]);
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
