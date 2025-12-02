@@ -2,6 +2,7 @@ import { hexToRgb } from "@mui/material";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
+import { Shortcut } from "../components/managers/preferences";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
