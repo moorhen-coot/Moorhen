@@ -42,6 +42,7 @@
 
 #include "coot-utils/simple-mesh.hh"
 #include "coords/graphical-bonds-container.hh"
+#include "api/instancing.hh"
 
 #include "MC.h"
 #include "metaballs.h"
@@ -343,7 +344,63 @@ void mergeLastTwoGroupsIfNecessary(std::vector<std::vector<std::pair<std::array<
 
 }
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float r, float isoLevel) {
+coot::simple_mesh_t GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads) {
+
+    coot::simple_mesh_t coot_mesh;
+
+    std::vector<std::vector<std::pair<std::array<float,4>,std::array<float,4>>>> all_points;
+    std::vector<std::pair<std::array<float,4>,std::array<float,4>>> points;
+
+    const auto geom = spheres_mesh.geom;
+    for(const auto &inst : geom){
+        const auto &As = inst.instancing_data_A;
+        for(const auto &inst_data : As){
+            const auto &instDataPosition = inst_data.position;
+            const auto &instDataColour = inst_data.colour;
+            const float atomMult = inst_data.size[0];
+            std::array<float,4> point{instDataPosition[0],instDataPosition[1],instDataPosition[2],r*atomMult/1.7f};
+            std::array<float,4> atomCol{instDataColour[0],instDataColour[1],instDataColour[2],instDataColour[3]};
+            std::pair<std::array<float,4>,std::array<float,4>> point_col;
+            point_col.first = point;
+            point_col.second = atomCol;
+            points.push_back(point_col);
+        }
+    }
+
+    all_points.push_back(points);
+
+    int totVert = 0;
+    for(unsigned imesh=0;imesh<all_points.size();imesh++){
+        moorhenMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize, n_threads);
+
+        //FIXME - colours.
+        glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
+
+        if(mesh.vertices.size()>0&&mesh.normals.size()==mesh.vertices.size()&&mesh.indices.size()>0){
+            coot_mesh.status = 1;
+            coot_mesh.name = "Metaballs";
+            for(unsigned ii=0;ii<mesh.indices.size();ii+=3){
+                coot_mesh.triangles.push_back(g_triangle(mesh.indices[ii]+totVert,mesh.indices[ii+1]+totVert,mesh.indices[ii+2]+totVert));
+            }
+            std::vector<coot::api::vnc_vertex> vertices;
+            for(unsigned iv=0;iv<mesh.vertices.size();iv++){
+                glm::vec3 v(mesh.vertices[iv].x,mesh.vertices[iv].y,mesh.vertices[iv].z);
+                glm::vec3 n(mesh.normals[iv].x,mesh.normals[iv].y,mesh.normals[iv].z);
+                col[0] = mesh.colors[iv][0];
+                col[1] = mesh.colors[iv][1];
+                col[2] = mesh.colors[iv][2];
+                col[3] = mesh.colors[iv][3];
+                coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
+            }
+            totVert += mesh.vertices.size();
+        }
+    }
+
+    return coot_mesh;
+
+}
+
+coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float r, float isoLevel, int n_threads) {
 
     coot::simple_mesh_t coot_mesh;
 
@@ -413,7 +470,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
 
     int totVert = 0;
     for(unsigned imesh=0;imesh<all_points.size();imesh++){
-        moorhenMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize);
+        moorhenMesh mesh = MoorhenMetaBalls::GenerateMeshFromPoints(all_points[imesh], isoLevel, gridSize, n_threads);
 
         //FIXME - colours.
         glm::vec4 col = glm::vec4(0.6f, 0.6f, 0.2f, 1.0f);
@@ -431,7 +488,7 @@ coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::s
                 col[0] = mesh.colors[iv][0];
                 col[1] = mesh.colors[iv][1];
                 col[2] = mesh.colors[iv][2];
-                col[3] = 1.0;
+                col[3] = mesh.colors[iv][3];
                 coot_mesh.vertices.push_back(coot::api::vnc_vertex(v, n, col));
             }
             totVert += mesh.vertices.size();
