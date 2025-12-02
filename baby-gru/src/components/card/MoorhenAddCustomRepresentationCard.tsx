@@ -312,9 +312,6 @@ export const MoorhenAddCustomRepresentationCard = memo(
                         colourRule.setArgs([ruleArgs]);
                         colourRule.setParentMolecule(props.molecule);
                         break;
-                    case "metaballs":
-                        //I do not think we have to do anything as there is no way to change colours for metaballs at present.
-                        break;
                     default:
                         console.log("Unrecognised colour mode");
                         break;
@@ -371,8 +368,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                 colourMode === "secondary-structure" ||
                 colourMode === "af2-plddt" ||
                 colourMode === "electrostatics" ||
-                colourMode === "jones-rainbow" ||
-                representationStyle === "MetaBalls"
+                colourMode === "jones-rainbow"
                     ? nonCustomOpacity
                     : null;
             if (mode === "add") {
@@ -623,7 +619,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                             }}
                         />
                     </InputGroup>
-                    {["CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
+                    {["MetaBalls", "CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
                         <InputGroup className="moorhen-input-group-check">
                             <Form.Check
                                 ref={applyColourToNonCarbonAtomsSwitchRef}
@@ -648,7 +644,6 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     defaultValue={colourMode}
                                     onChange={handleColourModeChange}
                                 >
-                                    {representationStyle !== "MetaBalls" && (
                                         <>
                                             <option value={"custom"} key={"custom"}>
                                                 User defined colour
@@ -672,19 +667,12 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                                 Mol. Symmetry
                                             </option>
                                         </>
-                                    )}
                                     {representationStyle === "MolecularSurface" && (
                                         <option value={"electrostatics"} key={"electrostatics"}>
                                             Electrostatics
                                         </option>
                                     )}
-                                    {representationStyle === "MetaBalls" && (
-                                        <option value={"metaballs"} key={"metaballs"}>
-                                            Metaballs colours
-                                        </option>
-                                    )}
                                 </FormSelect>
-                                {representationStyle !== "MetaBalls" && (
                                     <>
                                         {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
                                             <img
@@ -807,23 +795,6 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                             />
                                         )}
                                     </>
-                                )}
-                                {representationStyle === "MetaBalls" && (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/metaballscolour.svg`}
-                                        alt="ss2"
-                                        style={{
-                                            width: "30px",
-                                            height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
-                                            padding: 0,
-                                        }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
-                                    />
-                                )}
                             </Row>
                             <Popover
                                 anchorOrigin={{ vertical: "bottom", horizontal: "left" }}

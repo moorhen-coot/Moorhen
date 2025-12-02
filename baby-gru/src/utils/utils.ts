@@ -1,12 +1,37 @@
 import { hexToRgb } from "@mui/material";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
-import { Shortcut } from "../components/managers/preferences";
+import JSZip from "jszip";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import type { ResidueInfo } from "./MoorhenMolecule";
+
+export const make3MFZipFile = async modelFile => {
+    const zip = new JSZip();
+    const threeD = zip.folder("3D");
+    threeD.file("3dmodel.model", modelFile);
+
+    const contents_type_xml = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" /><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml" /></Types>`;
+
+    const contents_type_blob = new Blob([contents_type_xml], { type: "text/plain" });
+    zip.file("[Content_Types].xml ", contents_type_blob);
+
+    const rels_xml = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel" /></Relationships>`;
+    const rels_blob = new Blob([rels_xml], { type: "text/plain" });
+    const rels = zip.folder("_rels");
+    rels.file(".rels", rels_blob);
+
+    const zipData = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 1 },
+        streamFiles: true,
+    });
+
+    return zipData;
+};
 
 export const resizeImageData = async (imageData, width, height) => {
     const resizeWidth = width;

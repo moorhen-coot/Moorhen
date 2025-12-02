@@ -704,6 +704,18 @@ export const MoorhenMrParseModal = () => {
                 width: "100%",
             }}
         >
+            <Stack
+                gap={2}
+                direction="horizontal"
+                style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}
+            >
+                <Form.Group
+                    style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }}
+                    controlId="uploadMrParse"
+                    className="mb-3"
+                >
+{/* @ts-expect-error */}
+                    <Form.Control ref={filesRef} type="file" multiple={true} directory="" webkitdirectory="true"
             <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
                     <Form.Control
@@ -714,10 +726,10 @@ export const MoorhenMrParseModal = () => {
                             loadMrParseFiles(
                                 Array.from(e.target.files),
                                 commandCentre,
+                                store,
                                 monomerLibraryPath,
                                 backgroundColor,
                                 defaultBondSmoothness,
-                                store,
                                 dispatch
                             );
                         }}

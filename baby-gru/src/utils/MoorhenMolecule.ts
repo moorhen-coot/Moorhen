@@ -2687,7 +2687,7 @@ export class MoorhenMolecule {
     async exportAsGltf(representationId: string): Promise<ArrayBuffer> {
         const selectedRepresentation = this.representations.find(item => item.uniqueId === representationId);
         if (selectedRepresentation) {
-            const fileContents = await selectedRepresentation.exportAsGltf();
+            const fileContents = await selectedRepresentation.exportAsMeshFile("gltf");
             return fileContents;
         } else {
             console.warn(`Could not find representation with id ${representationId}`);
