@@ -1634,7 +1634,7 @@ export class MoleculeRepresentation {
         await this.applyColourRules();
 
         let gltfData: ArrayBuffer;
-        if (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
+        if (!(this.style==="MetaBalls") && (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation)) {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
             const drawMissingLoops = state.sceneSettings.drawMissingLoops;
@@ -1647,7 +1647,7 @@ export class MoleculeRepresentation {
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
-        } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
+        } else if (!(this.style==="MetaBalls") && (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation)) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid);
             let ssUsageScheme;
             if (this.useDefaultM2tParams) {
