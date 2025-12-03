@@ -62,6 +62,7 @@ export class MoorhenMap {
     webMGContour: boolean;
     showOnLoad: boolean;
     displayObjects: any;
+    cellCentre: [number, number, number];
     isDifference: boolean;
     hasReflectionData: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
@@ -102,6 +103,7 @@ export class MoorhenMap {
         this.suggestedRadius = null;
         this.mapCentre = null;
         this.isOriginLocked = false;
+        this.cellCentre = null;
         this.otherMapForColouring = null;
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
         this.defaultMapColour = _DEFAULT_MAP_COLOUR;
@@ -749,9 +751,9 @@ export class MoorhenMap {
         style: "solid" | "lines" | "lit-lines"
     ): Promise<void> {
         if (this.isOriginLocked) {
-            x = Math.abs(this.mapCentre[0]);
-            y = Math.abs(this.mapCentre[1]);
-            z = Math.abs(this.mapCentre[2]);
+            x = Math.abs(this.cellCentre[0]);
+            y = Math.abs(this.cellCentre[1]);
+            z = Math.abs(this.cellCentre[2]);
         }
 
         let returnType: string;
@@ -1352,6 +1354,8 @@ export class MoorhenMap {
         headerInfo.cell.alpha = cell.data.result.result.alpha;
         headerInfo.cell.beta = cell.data.result.result.beta;
         headerInfo.cell.gamma = cell.data.result.result.gamma;
+
+        this.cellCentre = [headerInfo.cell.a / 2, headerInfo.cell.b / 2, headerInfo.cell.c / 2];
 
         this.headerInfo = headerInfo;
 
