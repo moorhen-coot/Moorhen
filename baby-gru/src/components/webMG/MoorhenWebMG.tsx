@@ -219,7 +219,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
        if (glRef !== null && typeof glRef !== 'function') {
-           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef())
+           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef(), store)
            moorhenGlobalInstance.setVideoRecorder(videoRecorder);
        }
     }, [])

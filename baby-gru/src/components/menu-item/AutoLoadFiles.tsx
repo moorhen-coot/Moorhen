@@ -31,6 +31,7 @@ export const AutoLoadFiles = () => {
                 id="upload-form"
                 className="moorhen__input-files-upload "
                 type="file"
+                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc"
                 multiple={true}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     autoLoadHandler(e);

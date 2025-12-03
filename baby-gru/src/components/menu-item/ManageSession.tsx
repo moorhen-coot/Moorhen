@@ -99,16 +99,16 @@ export const ManageSession = () => {
     return (
         <>
             <label htmlFor="session-file-input" className="moorhen__input__label-menu">
-                Load from stored session
+                Sessions
             </label>
-            <input
+            {/* <input
                 className="moorhen__input-files-upload"
                 type="file"
                 accept=".pb,"
                 multiple={false}
                 onChange={handleSessionUpload}
                 id="session-file-input"
-            />
+            /> */}
             <MoorhenMenuItem id="download-session-menu-item" onClick={getSession}>
                 Download session
             </MoorhenMenuItem>

@@ -1,4 +1,6 @@
+import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
+import { enqueueSnackbar, useSnackbar } from "notistack";
 import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
@@ -119,12 +121,19 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.AssociateReflectionsToMap,
             },
             {
-                id: "auto-open-mtz",
-                label: "Auto open MTZ...",
-                type: "popover",
-                specialType: "upload",
-                content: MenuItems.AutoOpenMtz,
+                type: "customJSX",
+                id: "screenshot-menu-item",
+                label: "Screenshot",
+                jsx: MenuItems.Screenshot,
             },
+
+            // {
+            //     id: "auto-open-mtz",
+            //     label: "Auto open MTZ...",
+            //     type: "popover",
+            //     specialType: "upload",
+            //     content: MenuItems.AutoOpenMtz,
+            // },
             {
                 id: "import-map-coefficients",
                 label: "Import map coefficients...",

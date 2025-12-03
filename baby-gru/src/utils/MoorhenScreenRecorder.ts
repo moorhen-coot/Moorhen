@@ -21,9 +21,10 @@ export class ScreenRecorder  {
     store: MoorhenReduxStoreType
     _isRecording: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>){
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: MoorhenReduxStoreType){
         this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
+        this.store = store;
         this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
 
