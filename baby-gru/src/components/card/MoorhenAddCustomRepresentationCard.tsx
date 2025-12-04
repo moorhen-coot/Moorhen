@@ -88,6 +88,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
 
         const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain || "");
         const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null);
+        console.log(sequenceResidueRange);
 
         const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(
             props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio
@@ -433,8 +434,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
         };
 
         const handleResiduesRangeSelection = selection => {
-            setSequenceResidueRange(selection.range);
-            console.log("handleResiduesRangeSelection", selection.range);
+            setSequenceResidueRange(selection.range[0] < selection.range[1] ? selection.range : [selection.range[1], selection.range[0]]);
         };
 
         return (
@@ -644,157 +644,157 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     defaultValue={colourMode}
                                     onChange={handleColourModeChange}
                                 >
-                                        <>
-                                            <option value={"custom"} key={"custom"}>
-                                                User defined colour
-                                            </option>
-                                            <option value={"secondary-structure"} key={"secondary-structure"}>
-                                                Secondary structure
-                                            </option>
-                                            <option value={"jones-rainbow"} key={"jones-rainbow"}>
-                                                Jones' rainbow
-                                            </option>
-                                            <option value={"b-factor"} key={"b-factor"}>
-                                                B-Factor
-                                            </option>
-                                            <option value={"b-factor-norm"} key={"b-factor-norm"}>
-                                                B-Factor (normalised)
-                                            </option>
-                                            <option value={"af2-plddt"} key={"af2-plddt"}>
-                                                AF2 PLDDT
-                                            </option>
-                                            <option value={"mol-symm"} key={"mol-symm"}>
-                                                Mol. Symmetry
-                                            </option>
-                                        </>
+                                    <>
+                                        <option value={"custom"} key={"custom"}>
+                                            User defined colour
+                                        </option>
+                                        <option value={"secondary-structure"} key={"secondary-structure"}>
+                                            Secondary structure
+                                        </option>
+                                        <option value={"jones-rainbow"} key={"jones-rainbow"}>
+                                            Jones' rainbow
+                                        </option>
+                                        <option value={"b-factor"} key={"b-factor"}>
+                                            B-Factor
+                                        </option>
+                                        <option value={"b-factor-norm"} key={"b-factor-norm"}>
+                                            B-Factor (normalised)
+                                        </option>
+                                        <option value={"af2-plddt"} key={"af2-plddt"}>
+                                            AF2 PLDDT
+                                        </option>
+                                        <option value={"mol-symm"} key={"mol-symm"}>
+                                            Mol. Symmetry
+                                        </option>
+                                    </>
                                     {representationStyle === "MolecularSurface" && (
                                         <option value={"electrostatics"} key={"electrostatics"}>
                                             Electrostatics
                                         </option>
                                     )}
                                 </FormSelect>
-                                    <>
-                                        {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
-                                            <img
-                                                className="colour-rule-icon"
-                                                src={`${props.urlPrefix}/pixmaps/temperature.svg`}
-                                                alt="b-factor"
+                                <>
+                                    {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
+                                        <img
+                                            className="colour-rule-icon"
+                                            src={`${props.urlPrefix}/pixmaps/temperature.svg`}
+                                            alt="b-factor"
+                                            style={{
+                                                width: "30px",
+                                                height: "30px",
+                                                borderRadius: "3px",
+                                                border: "1px solid #c9c9c9",
+                                                padding: 0,
+                                            }}
+                                            ref={alphaSwatchRef}
+                                            onClick={() => setShowAlphaSlider(true)}
+                                        />
+                                    ) : colourMode === "secondary-structure" ? (
+                                        <img
+                                            className="colour-rule-icon"
+                                            src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`}
+                                            alt="ss2"
+                                            style={{
+                                                width: "30px",
+                                                height: "30px",
+                                                borderRadius: "3px",
+                                                border: "1px solid #c9c9c9",
+                                                padding: 0,
+                                            }}
+                                            ref={alphaSwatchRef}
+                                            onClick={() => setShowAlphaSlider(true)}
+                                        />
+                                    ) : colourMode === "electrostatics" ? (
+                                        <img
+                                            className="colour-rule-icon"
+                                            src={`${props.urlPrefix}/pixmaps/esurf.svg`}
+                                            alt="Electrostatic surface"
+                                            style={{
+                                                width: "30px",
+                                                height: "30px",
+                                                borderRadius: "3px",
+                                                border: "1px solid #c9c9c9",
+                                                padding: 0,
+                                            }}
+                                            ref={alphaSwatchRef}
+                                            onClick={() => setShowAlphaSlider(true)}
+                                        />
+                                    ) : colourMode === "jones-rainbow" ? (
+                                        <img
+                                            className="colour-rule-icon"
+                                            src={`${props.urlPrefix}/pixmaps/jones_rainbow.svg`}
+                                            alt="ss2"
+                                            style={{
+                                                width: "30px",
+                                                height: "30px",
+                                                borderRadius: "3px",
+                                                border: "1px solid #c9c9c9",
+                                                padding: 0,
+                                            }}
+                                            ref={alphaSwatchRef}
+                                            onClick={() => setShowAlphaSlider(true)}
+                                        />
+                                    ) : colourMode === "mol-symm" ? (
+                                        mode === "edit" ? (
+                                            <NcsColourSwatch
                                                 style={{
-                                                    width: "30px",
-                                                    height: "30px",
-                                                    borderRadius: "3px",
-                                                    border: "1px solid #c9c9c9",
-                                                    padding: 0,
-                                                }}
-                                                ref={alphaSwatchRef}
-                                                onClick={() => setShowAlphaSlider(true)}
-                                            />
-                                        ) : colourMode === "secondary-structure" ? (
-                                            <img
-                                                className="colour-rule-icon"
-                                                src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`}
-                                                alt="ss2"
-                                                style={{
-                                                    width: "30px",
-                                                    height: "30px",
-                                                    borderRadius: "3px",
-                                                    border: "1px solid #c9c9c9",
-                                                    padding: 0,
-                                                }}
-                                                ref={alphaSwatchRef}
-                                                onClick={() => setShowAlphaSlider(true)}
-                                            />
-                                        ) : colourMode === "electrostatics" ? (
-                                            <img
-                                                className="colour-rule-icon"
-                                                src={`${props.urlPrefix}/pixmaps/esurf.svg`}
-                                                alt="Electrostatic surface"
-                                                style={{
-                                                    width: "30px",
-                                                    height: "30px",
-                                                    borderRadius: "3px",
-                                                    border: "1px solid #c9c9c9",
-                                                    padding: 0,
-                                                }}
-                                                ref={alphaSwatchRef}
-                                                onClick={() => setShowAlphaSlider(true)}
-                                            />
-                                        ) : colourMode === "jones-rainbow" ? (
-                                            <img
-                                                className="colour-rule-icon"
-                                                src={`${props.urlPrefix}/pixmaps/jones_rainbow.svg`}
-                                                alt="ss2"
-                                                style={{
-                                                    width: "30px",
-                                                    height: "30px",
-                                                    borderRadius: "3px",
-                                                    border: "1px solid #c9c9c9",
-                                                    padding: 0,
-                                                }}
-                                                ref={alphaSwatchRef}
-                                                onClick={() => setShowAlphaSlider(true)}
-                                            />
-                                        ) : colourMode === "mol-symm" ? (
-                                            mode === "edit" ? (
-                                                <NcsColourSwatch
-                                                    style={{
-                                                        cursor: "pointer",
-                                                        height: "30px",
-                                                        width: "30px",
-                                                        padding: "0px",
-                                                        borderStyle: "solid",
-                                                        borderColor: "#ced4da",
-                                                        borderWidth: "3px",
-                                                        borderRadius: "8px",
-                                                    }}
-                                                    rule={ncsColourRuleRef?.current}
-                                                    applyColourChange={applyNcsColourChange}
-                                                />
-                                            ) : (
-                                                <GrainOutlined
-                                                    style={{
-                                                        height: "30px",
-                                                        width: "30px",
-                                                        padding: 0,
-                                                        borderStyle: "solid",
-                                                        borderColor: "#ced4da",
-                                                        borderWidth: "3px",
-                                                        borderRadius: "8px",
-                                                    }}
-                                                />
-                                            )
-                                        ) : colourMode === "custom" ? (
-                                            <div
-                                                style={{
-                                                    display: colourMode === "custom" ? "flex" : "none",
-                                                    width: "28px",
-                                                    height: "28px",
-                                                    borderRadius: "8px",
-                                                    border: "3px solid #fff",
-                                                    boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
                                                     cursor: "pointer",
-                                                    backgroundColor: colour,
+                                                    height: "30px",
+                                                    width: "30px",
+                                                    padding: "0px",
+                                                    borderStyle: "solid",
+                                                    borderColor: "#ced4da",
+                                                    borderWidth: "3px",
+                                                    borderRadius: "8px",
                                                 }}
-                                                onClick={() => setShowColourPicker(true)}
-                                                ref={colourSwatchRef}
+                                                rule={ncsColourRuleRef?.current}
+                                                applyColourChange={applyNcsColourChange}
                                             />
                                         ) : (
-                                            <img
-                                                className="colour-rule-icon"
-                                                src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`}
-                                                alt="ss2"
+                                            <GrainOutlined
                                                 style={{
-                                                    width: "30px",
                                                     height: "30px",
-                                                    borderRadius: "3px",
-                                                    border: "1px solid #c9c9c9",
+                                                    width: "30px",
                                                     padding: 0,
+                                                    borderStyle: "solid",
+                                                    borderColor: "#ced4da",
+                                                    borderWidth: "3px",
+                                                    borderRadius: "8px",
                                                 }}
-                                                ref={alphaSwatchRef}
-                                                onClick={() => setShowAlphaSlider(true)}
                                             />
-                                        )}
-                                    </>
+                                        )
+                                    ) : colourMode === "custom" ? (
+                                        <div
+                                            style={{
+                                                display: colourMode === "custom" ? "flex" : "none",
+                                                width: "28px",
+                                                height: "28px",
+                                                borderRadius: "8px",
+                                                border: "3px solid #fff",
+                                                boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
+                                                cursor: "pointer",
+                                                backgroundColor: colour,
+                                            }}
+                                            onClick={() => setShowColourPicker(true)}
+                                            ref={colourSwatchRef}
+                                        />
+                                    ) : (
+                                        <img
+                                            className="colour-rule-icon"
+                                            src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`}
+                                            alt="ss2"
+                                            style={{
+                                                width: "30px",
+                                                height: "30px",
+                                                borderRadius: "3px",
+                                                border: "1px solid #c9c9c9",
+                                                padding: 0,
+                                            }}
+                                            ref={alphaSwatchRef}
+                                            onClick={() => setShowAlphaSlider(true)}
+                                        />
+                                    )}
+                                </>
                             </Row>
                             <Popover
                                 anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
