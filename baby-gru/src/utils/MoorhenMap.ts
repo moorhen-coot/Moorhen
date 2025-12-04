@@ -1127,8 +1127,9 @@ export class MoorhenMap {
             this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevel(),
             this.guessMapRange(),
-            this.fetchCellInfo(),
         ]);
+        const headerInfo = await this.fetchCellInfo();
+        this.cellCentre = [headerInfo.cell.a / 2, headerInfo.cell.b / 2, headerInfo.cell.c / 2];
     }
 
     async fetchMapMean() {
@@ -1354,8 +1355,6 @@ export class MoorhenMap {
         headerInfo.cell.alpha = cell.data.result.result.alpha;
         headerInfo.cell.beta = cell.data.result.result.beta;
         headerInfo.cell.gamma = cell.data.result.result.gamma;
-
-        this.cellCentre = [headerInfo.cell.a / 2, headerInfo.cell.b / 2, headerInfo.cell.c / 2];
 
         this.headerInfo = headerInfo;
 
