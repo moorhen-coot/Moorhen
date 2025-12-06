@@ -8,6 +8,7 @@ import { setDrawCrosshairs } from "../../moorhen";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenScreenshotSnackBar = forwardRef<
     HTMLDivElement,
@@ -21,6 +22,7 @@ export const MoorhenScreenshotSnackBar = forwardRef<
     const moorhenInstance = useMoorhenInstance();
     const videoRecorderRef = moorhenInstance.getVideoRecorderRef();
     const showCrosshairs = useSelector((state: RootState) => state.sceneSettings.drawCrosshairs);
+    const pictureNameRef = useRef(null);
 
     const [doTransparentBackground, setDoTransparentBackground] = useState<boolean>(false);
 
@@ -34,7 +36,7 @@ export const MoorhenScreenshotSnackBar = forwardRef<
         dispatch(setHoveredAtom({ molecule: null, cid: null }));
         dispatch(setDrawCrosshairs(false));
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("hover"));
-        await videoRecorderRef.current?.takeScreenShot("moorhen.png", doTransparentBackgroundRef.current);
+        await videoRecorderRef.current?.takeScreenShot(`${pictureNameRef.current.value}.png`, doTransparentBackgroundRef.current);
         closeSnackbar(props.id);
         dispatch(setDrawCrosshairs(showCrosshairs));
     };
@@ -45,29 +47,34 @@ export const MoorhenScreenshotSnackBar = forwardRef<
             className="moorhen-notification-div"
             style={{ justifyContent: "space-between", backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
-            <Tooltip title={"Take screenshot"}>
-                <IconButton
-                    onClick={handleScreenShot}
-                    style={{ borderStyle: "solid", borderWidth: "1px", borderColor: isDark ? "black" : "black" }}
-                >
-                    <CameraAlt style={{ color: isDark ? "black" : "black", paddingTop: 0, paddingBottom: 0 }} />
-                </IconButton>
-            </Tooltip>
-            <Tooltip title={doTransparentBackground ? "Use opaque background" : "Use transparent background"}>
-                <IconButton
-                    onClick={() => {
-                        doTransparentBackgroundRef.current = !doTransparentBackgroundRef.current;
-                        setDoTransparentBackground(prev => !prev);
-                    }}
-                >
-                    {doTransparentBackground ? <PhotoOutlined /> : <Photo />}
-                </IconButton>
-            </Tooltip>
-            <Tooltip title={"Do transparent background"}>
-                <IconButton onClick={() => closeSnackbar(props.id)}>
-                    <CloseOutlined />
-                </IconButton>
-            </Tooltip>
+            <MoorhenStack direction="column">
+                <MoorhenStack direction="line">
+                    <Tooltip title={"Take screenshot"}>
+                        <IconButton
+                            onClick={handleScreenShot}
+                            style={{ borderStyle: "solid", borderWidth: "1px", borderColor: isDark ? "black" : "black" }}
+                        >
+                            <CameraAlt style={{ color: isDark ? "black" : "black", paddingTop: 0, paddingBottom: 0 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={doTransparentBackground ? "Use opaque background" : "Use transparent background"}>
+                        <IconButton
+                            onClick={() => {
+                                doTransparentBackgroundRef.current = !doTransparentBackgroundRef.current;
+                                setDoTransparentBackground(prev => !prev);
+                            }}
+                        >
+                            {doTransparentBackground ? <PhotoOutlined /> : <Photo />}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={"Do transparent background"}>
+                        <IconButton onClick={() => closeSnackbar(props.id)}>
+                            <CloseOutlined />
+                        </IconButton>
+                    </Tooltip>
+                </MoorhenStack>
+                <input type="text" ref={pictureNameRef} defaultValue={"moorhen"}></input>
+            </MoorhenStack>
         </SnackbarContent>
     );
 });
