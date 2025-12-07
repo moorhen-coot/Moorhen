@@ -19,6 +19,7 @@
     transition: box-shadow 0.2s;
     padding: 0 1rem; /* Add horizontal padding for extra space */
     box-sizing: border-box;
+    width: 20rem;
 }
 
 .moorhen__inner-container {

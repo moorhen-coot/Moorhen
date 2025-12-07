@@ -3,6 +3,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
+import { buffer } from "stream/consumers";
 import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from "react";
 import { MoorhenInstance, MoorhenInstanceProvider, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
@@ -41,7 +42,6 @@ import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPref
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { MoorhenMenuSystemProvider, useMoorhenMenuSystem } from "../menu-system/MenuSystemContext";
-import { MoorhenSearchBar } from "../menu-system/SearchBar";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
@@ -61,6 +61,7 @@ import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
 import { MoorhenSnackBarManager } from "../snack-bar/MoorhenSnackBarManager";
 import { MoorhenTomogramSnackBar } from "../snack-bar/MoorhenTomogramSnackBar";
 import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
+import { DrawHoverAtom } from "../webMG/HoverAtom";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
@@ -180,12 +181,12 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const glRef = props.glRef ? props.glRef : innerGlRef;
-    const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
-    const lastHoveredAtomRef = props.lastHoveredAtomRef ? props.lastHoveredAtomRef : innerLastHoveredAtomRef;
+    //const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
+    //const lastHoveredAtomRef = props.lastHoveredAtomRef ? props.lastHoveredAtomRef : innerLastHoveredAtomRef;
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
-    const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
+    // const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
     const cursorStyle = useSelector((state: moorhen.State) => state.hoveringStates.cursorStyle);
 
     const cootInitialized = useSelector((state: moorhen.State) => state.generalStates.cootInitialized);
@@ -250,16 +251,12 @@ const MoorhenContainer = (props: ContainerProps) => {
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
             if (identifier == null) {
-                if (lastHoveredAtomRef.current !== null && lastHoveredAtomRef.current.molecule !== null) {
-                    dispatch(setHoveredAtom({ molecule: null, cid: null }));
-                }
+                dispatch(setHoveredAtom({ molecule: null, cid: null }));
             } else {
                 molecules.forEach(molecule => {
                     if (molecule.buffersInclude(identifier.buffer)) {
                         const newCid = parseAtomInfoLabel(identifier.atom);
-                        if (molecule !== hoveredAtom.molecule || newCid !== hoveredAtom.cid) {
-                            dispatch(setHoveredAtom({ molecule: molecule, cid: newCid }));
-                        }
+                        dispatch(setHoveredAtom({ molecule: molecule, cid: newCid }));
                     }
                 });
             }
@@ -382,40 +379,40 @@ const MoorhenContainer = (props: ContainerProps) => {
         startupEffect();
     }, [userPreferencesMounted]);
 
-    useEffect(() => {
-        const checkMoleculeSizes = async () => {
-            const moleculeAtomCounts = await Promise.all(
-                molecules.filter(molecule => !molecule.atomCount).map(molecule => molecule.getNumberOfAtoms())
-            );
-            const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0);
-            if (totalAtomCount >= 80000) {
-                dispatch(setEnableAtomHovering(false));
-            }
-        };
-        checkMoleculeSizes();
-    }, [molecules]);
+    console.log("execute container");
 
-    useEffect(() => {
-        if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
-            if (
-                lastHoveredAtomRef.current == null ||
-                hoveredAtom.molecule !== lastHoveredAtomRef.current.molecule ||
-                hoveredAtom.cid !== lastHoveredAtomRef.current.cid
-            ) {
-                hoveredAtom.molecule.drawHover(hoveredAtom.cid);
-                //if we have changed molecule, might have to clean up hover display item of previous molecule
-            }
-        }
+    // useEffect(() => {
+    //     const checkMoleculeSizes = async () => {
+    //         const moleculeAtomCounts = await Promise.all(molecules.map(molecule => molecule.getNumberOfAtoms()));
+    //         const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0);
+    //         if (totalAtomCount >= 80000) {
+    //             dispatch(setEnableAtomHovering(false));
+    //         }
+    //     };
+    //     checkMoleculeSizes();
+    // }, [molecules]);
 
-        if (
-            lastHoveredAtomRef.current !== null &&
-            lastHoveredAtomRef.current.molecule !== null &&
-            lastHoveredAtomRef.current.molecule !== hoveredAtom.molecule
-        ) {
-            lastHoveredAtomRef.current.molecule.clearBuffersOfStyle("hover");
-        }
-        lastHoveredAtomRef.current = hoveredAtom;
-    }, [hoveredAtom]);
+    // useEffect(() => {
+    //     if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
+    //         if (
+    //             lastHoveredAtomRef.current == null ||
+    //             hoveredAtom.molecule !== lastHoveredAtomRef.current.molecule ||
+    //             hoveredAtom.cid !== lastHoveredAtomRef.current.cid
+    //         ) {
+    //             hoveredAtom.molecule.drawHover(hoveredAtom.cid);
+    //             //if we have changed molecule, might have to clean up hover display item of previous molecule
+    //         }
+    //     }
+
+    //     if (
+    //         lastHoveredAtomRef.current !== null &&
+    //         lastHoveredAtomRef.current.molecule !== null &&
+    //         lastHoveredAtomRef.current.molecule !== hoveredAtom.molecule
+    //     ) {
+    //         lastHoveredAtomRef.current.molecule.clearBuffersOfStyle("hover");
+    //     }
+    //     lastHoveredAtomRef.current = hoveredAtom;
+    // }, [hoveredAtom]);
 
     useEffect(() => {
         dispatch(setRequestDrawScene(true));

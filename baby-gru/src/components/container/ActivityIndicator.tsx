@@ -9,10 +9,12 @@ export const ActivityIndicator = () => {
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
     const showHoverInfo = useSelector((state: moorhen.State) => state.generalStates.showHoverInfo);
     const timeCapsuleBusy = useSelector((state: moorhen.State) => state.globalUI.isTimeCapsuleBusy);
+    const cidAsArray = hoveredAtom.cid?.split("/") || [];
+    const reformatedCid = `${cidAsArray[2]} - ${cidAsArray[3]} - ${cidAsArray[4]}`;
     const text = hoveredAtom.molecule
         ? hoveredAtom.molecule.name.length > 16
-            ? `${hoveredAtom.molecule.name.substring(0, 13)}...:\u00A0\u00A0\u00A0${hoveredAtom.cid}`
-            : `${hoveredAtom.molecule.name}:\u00A0\u00A0\u00A0${hoveredAtom.cid}`
+            ? `${hoveredAtom.molecule.name.substring(0, 13)}...:\u00A0\u00A0\u00A0${reformatedCid}`
+            : `${hoveredAtom.molecule.name}:\u00A0\u00A0\u00A0${reformatedCid}`
         : null;
 
     const busyIndicator = busy ? (
@@ -26,7 +28,6 @@ export const ActivityIndicator = () => {
     if (!show) {
         return null;
     }
-    console.log(showHoverInfo, hoveredAtom.cid);
     return (
         <div className="moorhen__activity-indicator">
             {busyIndicator}

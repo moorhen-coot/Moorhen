@@ -6005,18 +6005,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    private hoverDebounceTimeout: NodeJS.Timeout | null = null;
+
     doHover(event, self) {
-        const displayBuffers = this.store.getState().glRef.displayBuffers
-        if (this.props.onAtomHovered) {
-            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
-            if (minidx > -1) {
-                this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
-            }
-            else {
-                this.props.onAtomHovered(null)
-            }
-            self.drawScene();
+
+        if (this.hoverDebounceTimeout) {
+            clearTimeout(this.hoverDebounceTimeout);
         }
+        
+        this.hoverDebounceTimeout = setTimeout(() => {
+            const displayBuffers = this.store.getState().glRef.displayBuffers
+            if (this.props.onAtomHovered) {
+                const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+                if (minidx > -1) {
+                    this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
+                }
+                else {
+                    this.props.onAtomHovered(null)
+                }
+                self.drawScene();
+            }
+            this.hoverDebounceTimeout = null;
+        }, 15);
     }
 
     doWheel(event) {

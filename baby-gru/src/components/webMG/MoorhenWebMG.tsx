@@ -18,6 +18,7 @@ import { setQuat, setOrigin, setZoom,
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
+import { DrawHoverAtom } from './HoverAtom';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -760,6 +761,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
+                <DrawHoverAtom />
             </>
 });
 
