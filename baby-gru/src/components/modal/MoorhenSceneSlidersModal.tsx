@@ -166,7 +166,20 @@ const ClipFogPanel = () => {
     );
 };
 
+enum GrabHandle
+{
+ NONE,
+ CLIP_START,
+ CLIP_END,
+ FOG_START,
+ FOG_END,
+ BLUR_DEPTH,
+}
+
 const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
+
+    const dispatch = useDispatch();
+
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const plotWidth = 450
     const plotHeight = 200
@@ -193,7 +206,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const [releaseY, setReleaseY] = useState<number>(-1)
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
 
-    const plotTheData = async () => {
+    const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
+
         let min_x =  1e5;
         let max_x = -1e5;
         let min_y =  1e5;
@@ -220,6 +234,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         let atom_span = 2000.0
         if(haveAtoms)
             atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+
+    const plotTheData = async () => {
         if(!canvasRef)
             return
 
@@ -379,6 +395,36 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const [x,y] = getXY(evt)
 
         setMouseHeldDown(true)
+
+        const scale = atom_span * 1.5
+
+        const fogStart = fogClipOffset - gl_fog_start
+        const fogEnd = gl_fog_end - fogClipOffset
+        const clipStartPos = plotWidth * .5 - clipStart / scale * plotWidth * .5
+        const clipEndPos = plotWidth * .5 + clipEnd / scale * plotWidth * .5
+        const fogStartPos = plotWidth * .5 - fogStart / scale * plotWidth * .5
+        const fogEndPos = plotWidth * .5 + fogEnd / scale * plotWidth * .5
+        const depthBlurDepthPos = depthBlurDepth * plotWidth
+
+        if(Math.abs(x-clipStartPos)<5){
+            console.log("Grabbed clip start")
+            setGrabbed(GrabHandle.CLIP_START)
+        } else if(Math.abs(x-clipEndPos)<5){
+            console.log("Grabbed clip end")
+            setGrabbed(GrabHandle.CLIP_END)
+        } else if(Math.abs(x-fogStartPos)<5){
+            console.log("Grabbed fog start")
+            setGrabbed(GrabHandle.FOG_START)
+        } else if(Math.abs(x-fogEndPos)<5){
+            console.log("Grabbed fog end")
+            setGrabbed(GrabHandle.FOG_END)
+        } else if(Math.abs(x-depthBlurDepthPos)<5){
+            console.log("Grabbed blur")
+            setGrabbed(GrabHandle.BLUR_DEPTH)
+        } else {
+            setGrabbed(GrabHandle.NONE)
+        }
+
         setClickX(x)
         setClickY(y)
 
@@ -389,6 +435,25 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
+
+        const scale = atom_span * 1.5
+
+        if(grabbed===GrabHandle.CLIP_START){
+            const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
+            dispatch(setClipStart(newValue))
+        } else if(grabbed===GrabHandle.CLIP_END){
+            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
+            dispatch(setClipEnd(newValue))
+        } else if(grabbed===GrabHandle.FOG_START){
+            const newValue = (plotWidth * 0.5 -x) * scale / plotWidth / 0.5
+            dispatch(setFogStart(fogClipOffset - newValue));
+        } else if(grabbed===GrabHandle.FOG_END){
+            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
+            dispatch(setFogEnd(newValue + fogClipOffset))
+        } else if(grabbed===GrabHandle.BLUR_DEPTH){
+            const newValue = x / plotWidth
+            dispatch(setDepthBlurDepth(newValue))
+        }
 
         setMoveX(x)
         setMoveY(y)
@@ -404,6 +469,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const [x,y] = getXY(evt)
         setReleaseX(x)
         setReleaseY(y)
+        setGrabbed(GrabHandle.NONE)
 
     },[clickX,clickY,releaseX,releaseY])
 
