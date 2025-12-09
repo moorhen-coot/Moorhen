@@ -269,6 +269,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         }
 
         let grabbed = false
+        let drawText = ""
+
         if(Math.abs(moveX-clipStartPos)>5){
             ctx.strokeStyle = "red"
             ctx.lineWidth = 2
@@ -276,6 +278,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 3
             grabbed = true
+            drawText = "Front clip"
         }
         ctx.beginPath()
         ctx.moveTo(clipStartPos,0)
@@ -289,6 +292,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 3
             grabbed = true
+            drawText = "Back clip"
         }
         ctx.beginPath()
         ctx.moveTo(clipEndPos,0)
@@ -302,6 +306,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 3
             grabbed = true
+            drawText = "Front fog"
         }
         ctx.beginPath()
         ctx.moveTo(fogStartPos,0)
@@ -315,6 +320,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 3
             grabbed = true
+            drawText = "Back fog"
         }
         ctx.beginPath()
         ctx.moveTo(fogEndPos,0)
@@ -328,6 +334,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 3
             grabbed = true
+            drawText = "Blur depth"
         }
         ctx.beginPath()
         ctx.moveTo(depthBlurDepthPos,0)
@@ -363,6 +370,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.lineTo(5,canvas.height/2)
         ctx.lineTo(35,canvas.height/2+25)
         ctx.stroke()
+
+        if(drawText.length>0){
+        ctx.fillStyle = "black"
+            ctx.font = "11pt Arial"
+            ctx.fillText(drawText,5,20)
+        }
 
         ctx.restore()
     }
@@ -407,19 +420,14 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const depthBlurDepthPos = depthBlurDepth * plotWidth
 
         if(Math.abs(x-clipStartPos)<5){
-            console.log("Grabbed clip start")
             setGrabbed(GrabHandle.CLIP_START)
         } else if(Math.abs(x-clipEndPos)<5){
-            console.log("Grabbed clip end")
             setGrabbed(GrabHandle.CLIP_END)
         } else if(Math.abs(x-fogStartPos)<5){
-            console.log("Grabbed fog start")
             setGrabbed(GrabHandle.FOG_START)
         } else if(Math.abs(x-fogEndPos)<5){
-            console.log("Grabbed fog end")
             setGrabbed(GrabHandle.FOG_END)
         } else if(Math.abs(x-depthBlurDepthPos)<5){
-            console.log("Grabbed blur")
             setGrabbed(GrabHandle.BLUR_DEPTH)
         } else {
             setGrabbed(GrabHandle.NONE)
