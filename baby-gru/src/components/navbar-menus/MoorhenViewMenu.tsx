@@ -20,6 +20,14 @@ export const MoorhenViewMenu = () => {
             >
                 Scene settings...
             </MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => {
+                    dispatch(showModal(modalKeys.SCENE_SLIDERS));
+                    document.body.click();
+                }}
+            >
+                Scene settings MkII...
+            </MoorhenMenuItem>
             <MoorhenOtherSceneSettings />
             <MoorhenLayoutSettings />
         </>

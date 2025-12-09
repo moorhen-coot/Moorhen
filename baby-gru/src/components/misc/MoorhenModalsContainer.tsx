@@ -24,6 +24,7 @@ import { MoorhenQScoreModal } from '../modal/MoorhenQScoreModal';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenRamaPlotModal } from '../modal/MoorhenRamaPlotModal';
 import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal';
+import { MoorhenSceneSlidersModal } from '../modal/MoorhenSceneSlidersModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
 import { MoorhenSliceNDiceModal } from '../modal/MoorhenSliceNDiceModal';
 import { MoorheSuperposeStructuresModal } from '../modal/MoorhenSuperposeStructuresModal';
@@ -69,6 +70,7 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
 
     const showVectorsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.VECTORS));
     const showOverlays2DModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.OVERLAYS2D));
+    const showSceneSlidersModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCENE_SLIDERS));
 
     return (
         <>
@@ -116,6 +118,8 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
 
             {showSceneSettingsModal && <MoorhenSceneSettingsModal />}
 
+            {showSceneSlidersModal && <MoorhenSceneSlidersModal />}
+
             {showSliceNDiceModal && <MoorhenSliceNDiceModal />}
 
             {showSuperposeModal && <MoorheSuperposeStructuresModal />}
@@ -130,3 +134,5 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
         </>
     );
 });
+
+MoorhenModalsContainer.displayName = "Modals containter"

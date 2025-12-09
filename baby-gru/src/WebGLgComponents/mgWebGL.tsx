@@ -4405,7 +4405,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const absDepth = this.blurDepth * (1000 - -1000) - 1000;
         let fracDepth = (absDepth-f)/(b - f);
         fracDepth = this.blurDepth * 1000 / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
-        console.log(fracDepth);
         //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
