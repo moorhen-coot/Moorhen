@@ -7,8 +7,11 @@ import { useMoorhenInstance } from "../../InstanceManager";
 import { setDrawCrosshairs } from "../../moorhen";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
+import "./snackbars.css";
 
 export const MoorhenScreenshotSnackBar = forwardRef<
     HTMLDivElement,
@@ -22,7 +25,7 @@ export const MoorhenScreenshotSnackBar = forwardRef<
     const moorhenInstance = useMoorhenInstance();
     const videoRecorderRef = moorhenInstance.getVideoRecorderRef();
     const showCrosshairs = useSelector((state: RootState) => state.sceneSettings.drawCrosshairs);
-    const pictureNameRef = useRef(null);
+    const [pictureName, setPictureName] = usePersistentState("scrrenshot", "pictureName", "moorhen_screenshot", true);
 
     const [doTransparentBackground, setDoTransparentBackground] = useState<boolean>(false);
 
@@ -36,7 +39,8 @@ export const MoorhenScreenshotSnackBar = forwardRef<
         dispatch(setHoveredAtom({ molecule: null, cid: null }));
         dispatch(setDrawCrosshairs(false));
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("hover"));
-        await videoRecorderRef.current?.takeScreenShot(`${pictureNameRef.current.value}.png`, doTransparentBackgroundRef.current);
+        const _pictureName = pictureName !== "" ? pictureName : "moorhen_screenshot";
+        await videoRecorderRef.current?.takeScreenShot(`${_pictureName}.png`, doTransparentBackgroundRef.current);
         closeSnackbar(props.id);
         dispatch(setDrawCrosshairs(showCrosshairs));
     };
@@ -47,8 +51,8 @@ export const MoorhenScreenshotSnackBar = forwardRef<
             className="moorhen-notification-div"
             style={{ justifyContent: "space-between", backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
-            <MoorhenStack direction="column">
-                <MoorhenStack direction="line">
+            <MoorhenStack direction="column" align="normal" gap="0.5rem">
+                <div className="moorhen_snackbar_screenshot-buttons">
                     <Tooltip title={"Take screenshot"}>
                         <IconButton
                             onClick={handleScreenShot}
@@ -72,8 +76,14 @@ export const MoorhenScreenshotSnackBar = forwardRef<
                             <CloseOutlined />
                         </IconButton>
                     </Tooltip>
-                </MoorhenStack>
-                <input type="text" ref={pictureNameRef} defaultValue={"moorhen"}></input>
+                </div>
+                <MoorhenTextInput
+                    label="Name: "
+                    text={pictureName}
+                    setText={setPictureName}
+                    style={{ width: "40%" }}
+                    labelPosition="left"
+                />
             </MoorhenStack>
         </SnackbarContent>
     );

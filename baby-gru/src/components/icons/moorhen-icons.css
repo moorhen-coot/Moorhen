@@ -9,25 +9,25 @@
 }
 
 .moorhen__icon__small {
-    color: var(--moorhen-primary);
+    color: inherit;
     width: 22px;
     height: 22px;
 }
 
 .moorhen__icon__medium {
-    color: var(--moorhen-primary);
+    color: inherit;
     width: 32px;
     height: 32px;
 }
 
 .moorhen__icon__large {
-    color: var(--moorhen-primary);
+    color: inherit;
     width: 64px;
     height: 64px;
 }
 
 .moorhen__icon__accordion {
-    color: var(--moorhen-primary);
+    color: inherit;
     width: 24px;
     height: 24px;
 }

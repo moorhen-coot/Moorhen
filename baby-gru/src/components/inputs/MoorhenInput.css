@@ -152,3 +152,34 @@
     padding: 1rem; /* Adds spacing inside the options */
     font-size: 1rem;
 }
+
+.moorhen__input-text-container {
+    align-items: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 90%;
+}
+
+.moorhen__input-text-box {
+    box-sizing: border-box;
+    border-radius: 0.5rem;
+    border: 1px solid var(--moorhen-border);
+    padding-left: 0.5rem;
+    margin-left: 0.2rem;
+}
+
+.moorhen__input-text-box-wbutton {
+    box-sizing: border-box;
+    border-radius: 0.5rem 0 0 0.5rem;
+    border: 1px solid var(--moorhen-border);
+    padding-left: 0.5rem;
+    margin-left: 0.2rem;
+    margin-right: 0;
+    height: 2.2rem;
+}
+
+.moorhen__input-text-box-button {
+    margin-left: 0;
+    border-radius: 0 0.5rem 0.5rem 0;
+}

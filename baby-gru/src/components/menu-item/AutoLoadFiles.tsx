@@ -2,6 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { MoorhenIcon } from "../icons";
 
 export const AutoLoadFiles = () => {
     const commandCentre = useCommandCentre();
@@ -27,16 +28,25 @@ export const AutoLoadFiles = () => {
             <label htmlFor="upload-form" className="moorhen__input__label-menu">
                 Load files
             </label>
-            <input
-                id="upload-form"
-                className="moorhen__input-files-upload "
-                type="file"
-                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc"
-                multiple={true}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    autoLoadHandler(e);
-                }}
-            />
+            <label
+                htmlFor="upload-form"
+                className="moorhen__button__default moorhen_menu-custom-left-margin"
+                style={{ cursor: "pointer", height: "2.2rem" }}
+            >
+                <MoorhenIcon size="medium" moorhenSVG="MUISymbolFileOpen" />
+                   Browse...   
+                <input
+                    id="upload-form"
+                    className="moorhen__input-files-upload"
+                    type="file"
+                    accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc"
+                    multiple={true}
+                    style={{ display: "none" }}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        autoLoadHandler(e);
+                    }}
+                />
+            </label>
         </>
     );
 };

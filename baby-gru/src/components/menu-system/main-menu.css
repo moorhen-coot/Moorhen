@@ -143,3 +143,7 @@
     width: 100%;
     border-bottom: 1px solid var(--moorhen-border);
 }
+
+.moorhen_menu-custom-left-margin {
+    margin-left: 1rem;
+}

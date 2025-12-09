@@ -34,6 +34,7 @@ import MUISymbolCollapse from "./MUISymbolCollapse.svg"
 import MUISymbolExpand from "./MUISymbolExpand.svg"
 import MUISymbolHelp from "./MUISymbolHelp.svg"
 import MUISymbolEdit from "./MUISymbolEdit.svg"
+import MUISymbolFileDownload from "./MUISymbolFileDownload.svg"
 import MUISymbolCheckBox from "./MUISymbolCheckBox.svg"
 import MUISymbolSearch from "./MUISymbolSearch.svg"
 import MUISymbolTiltShiftFilter from "./MUISymbolTiltShiftFilter.svg"
@@ -78,6 +79,7 @@ export const moorhenSVGs = {"plus": plus,
  "MUISymbolExpand": MUISymbolExpand,
  "MUISymbolHelp": MUISymbolHelp,
  "MUISymbolEdit": MUISymbolEdit,
+ "MUISymbolFileDownload": MUISymbolFileDownload,
  "MUISymbolCheckBox": MUISymbolCheckBox,
  "MUISymbolSearch": MUISymbolSearch,
  "MUISymbolTiltShiftFilter": MUISymbolTiltShiftFilter,
@@ -123,6 +125,7 @@ export type MoorhenSVG = "plus" |
  "MUISymbolExpand" |
  "MUISymbolHelp" |
  "MUISymbolEdit" |
+ "MUISymbolFileDownload" |
  "MUISymbolCheckBox" |
  "MUISymbolSearch" |
  "MUISymbolTiltShiftFilter" |

@@ -3,14 +3,17 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { RootState } from "../../store/MoorhenReduxStore";
+import { usePersistentState } from "../../store/menusSlice";
 import type { backupKey } from "../../utils/MoorhenTimeCapsule";
 import { doDownload, guid, readDataFile } from "../../utils/utils";
-import { MoorhenMenuItem, MoorhenMenuItemPopover } from "../interface-base";
+import { MoorhenButton, MoorhenTextInput } from "../inputs";
+import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
 import { Backups } from "./Backups";
 
 export const ManageSession = () => {
     const commandCentre = useCommandCentre();
     const store = useStore();
+    const [sessionName, setSessionName] = usePersistentState("manageSession", "uploadName", "moorhen_session", true);
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
     const maps = useSelector((state: RootState) => state.maps);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
@@ -36,10 +39,11 @@ export const ManageSession = () => {
 
     const getSession = async () => {
         const sessionData = await timeCapsule.current.fetchSession(true);
+        const _sessionName = sessionName !== "" ? sessionName : "moorhen_session";
         //console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData);
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
-        doDownload([sessionBytes] as BlobPart[], "moorhen_session.pb");
+        doDownload([sessionBytes] as BlobPart[], `${_sessionName}.pb`);
     };
 
     const createBackup = async () => {
@@ -99,19 +103,20 @@ export const ManageSession = () => {
     return (
         <>
             <label htmlFor="session-file-input" className="moorhen__input__label-menu">
-                Sessions
+                Save Session File:
             </label>
-            {/* <input
-                className="moorhen__input-files-upload"
-                type="file"
-                accept=".pb,"
-                multiple={false}
-                onChange={handleSessionUpload}
-                id="session-file-input"
-            /> */}
-            <MoorhenMenuItem id="download-session-menu-item" onClick={getSession}>
-                Download session
-            </MoorhenMenuItem>
+            <label htmlFor="text-input-session" className="moorhen_menu-custom-left-margin">
+                <MoorhenTextInput
+                    text={sessionName}
+                    setText={setSessionName}
+                    button={true}
+                    onClick={getSession}
+                    icon="MUISymbolFileDownload"
+                    style={{ width: "85%", marginLeft: "0", paddingLeft: "0" }}
+                    id="text-input-session"
+                />
+            </label>
+            <hr className="moorhen_menu-hr"></hr>
             <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
                 Save backup
             </MoorhenMenuItem>
