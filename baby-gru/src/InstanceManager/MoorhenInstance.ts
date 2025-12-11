@@ -23,6 +23,7 @@ export class MoorhenInstance {
     private videoRecorder: ScreenRecorder;
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
+    private containerRef: React.RefObject<HTMLDivElement> = null;
     private store: Store;
     private preferences: Preferences;
     private maps: MoorhenMap[] = [];
@@ -31,13 +32,14 @@ export class MoorhenInstance {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand!: CootCommandWrapper;
 
-    constructor() {
+    constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this.containerRef = containerRef;
     }
 
     public paths: {
@@ -111,6 +113,10 @@ export class MoorhenInstance {
 
     public getDispatch(): Dispatch<UnknownAction> {
         return this.dispatch;
+    }
+
+    public getContainerRef() {
+        return this.containerRef;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {

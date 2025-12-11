@@ -2,6 +2,7 @@ import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import "./popover.css";
 
@@ -66,6 +67,8 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         arrow = `top-arrow`;
     }
 
+    const containerRef = useMoorhenInstance().getContainerRef();
+
     const popover = useMemo(() => {
         return (
             <>
@@ -80,7 +83,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
                             {popoverContent || props.children}
                         </div>
                     </ClickAwayListener>,
-                    document.body
+                    containerRef.current
                 )}
             </>
         );

@@ -12,11 +12,11 @@ const MoorhenInstanceContext = createContext<MoorhenInstanceContextType | null>(
 // Provider props interface
 interface MoorhenInstanceProviderProps {
     children: ReactNode;
-    instance?: MoorhenInstance; // Optional - allows dependency injection for testing
 }
 export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = ({ children }) => {
     // Create or use provided instance - only created once per provider
-    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance());
+    const popOverContainerRef = useRef<HTMLDivElement>(null);
+    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance(popOverContainerRef));
 
     // Add cleanup for unmount and HMR
     useEffect(() => {
@@ -29,7 +29,11 @@ export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = (
         instance: instanceRef.current,
     };
 
-    return <MoorhenInstanceContext.Provider value={contextValue}>{children}</MoorhenInstanceContext.Provider>;
+    return (
+        <div ref={popOverContainerRef}>
+            <MoorhenInstanceContext.Provider value={contextValue}>{children}</MoorhenInstanceContext.Provider>
+        </div>
+    );
 };
 
 // Export the context for use in hooks

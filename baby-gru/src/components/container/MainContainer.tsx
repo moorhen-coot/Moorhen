@@ -283,15 +283,15 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     useWindowEventListener("resize", setWindowDimensions);
 
-    // Style append to header at initialization
-    useLayoutEffect(() => {
-        const head = document.head;
-        const style: HTMLLinkElement = document.createElement("link");
-        style.href = `${urlPrefix}/moorhen.css`;
-        style.rel = "stylesheet";
-        style.type = "text/css";
-        head.appendChild(style);
-    }, []);
+    // // Style append to header at initialization
+    // useLayoutEffect(() => {
+    //     const head = document.head;
+    //     const style: HTMLLinkElement = document.createElement("link");
+    //     style.href = `${urlPrefix}/moorhen.css`;
+    //     style.rel = "stylesheet";
+    //     style.type = "text/css";
+    //     head.appendChild(style);
+    // }, []);
 
     // useLayoutEffect(() => {
     //     const head = document.head;
@@ -509,7 +509,13 @@ const MoorhenContainer = (props: ContainerProps) => {
     // ========== Main Interface ==========
     return (
         <>
-            <div style={backgroundStyle} className="moorhen__inner-container" ref={containerRef} data-theme={isDark ? "dark" : "light"}>
+            <div
+                style={backgroundStyle}
+                className="moorhen__inner-container"
+                ref={containerRef}
+                id="moorhen-main-container"
+                data-theme={isDark ? "dark" : "light"}
+            >
                 <SnackbarProvider
                     hideIconVariant={false}
                     autoHideDuration={4000}

@@ -1,3 +1,4 @@
+:host,
 :root {
     /* Moorhen specific colors */
     --moorhen-primary: #212529;
@@ -33,6 +34,7 @@
     --moorhen-font-family: Inter, sans-serif;
 }
 
+:host([data-theme="dark"]),
 [data-theme="dark"] {
     /* Moorhen specific colors for dark theme */
     --moorhen-primary: #dddddd;
