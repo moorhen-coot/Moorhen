@@ -268,73 +268,73 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
         }
 
-        let grabbed = false
+        let hovering = false
         let drawText = ""
 
-        if(Math.abs(moveX-clipStartPos)>5){
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 2
-        } else {
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5){
             ctx.strokeStyle = "white"
-            ctx.lineWidth = 3
-            grabbed = true
+            ctx.lineWidth = 4
+            hovering = true
             drawText = "Front clip"
+        } else {
+            ctx.strokeStyle = "red"
+            ctx.lineWidth = 3
         }
         ctx.beginPath()
         ctx.moveTo(clipStartPos,0)
         ctx.lineTo(clipStartPos,canvas.height)
         ctx.stroke()
 
-        if(grabbed||Math.abs(moveX-clipEndPos)>5){
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 2
-        } else {
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
             ctx.strokeStyle = "white"
-            ctx.lineWidth = 3
-            grabbed = true
+            ctx.lineWidth = 4
+            hovering = true
             drawText = "Back clip"
+        } else {
+            ctx.strokeStyle = "red"
+            ctx.lineWidth = 3
         }
         ctx.beginPath()
         ctx.moveTo(clipEndPos,0)
         ctx.lineTo(clipEndPos,canvas.height)
         ctx.stroke()
 
-        if(grabbed||Math.abs(moveX-fogStartPos)>5){
-            ctx.strokeStyle = "yellow"
-            ctx.lineWidth = 2
-        } else {
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
             ctx.strokeStyle = "white"
-            ctx.lineWidth = 3
-            grabbed = true
+            ctx.lineWidth = 4
+            hovering = true
             drawText = "Front fog"
+        } else {
+            ctx.strokeStyle = "yellow"
+            ctx.lineWidth = 3
         }
         ctx.beginPath()
         ctx.moveTo(fogStartPos,0)
         ctx.lineTo(fogStartPos,canvas.height)
         ctx.stroke()
 
-        if(grabbed||Math.abs(moveX-fogEndPos)>5){
-            ctx.strokeStyle = "yellow"
-            ctx.lineWidth = 2
-        } else {
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_END)&&Math.abs(moveX-fogEndPos)<5&&!hovering){
             ctx.strokeStyle = "white"
-            ctx.lineWidth = 3
-            grabbed = true
+            ctx.lineWidth = 4
+            hovering = true
             drawText = "Back fog"
+        } else {
+            ctx.strokeStyle = "yellow"
+            ctx.lineWidth = 3
         }
         ctx.beginPath()
         ctx.moveTo(fogEndPos,0)
         ctx.lineTo(fogEndPos,canvas.height)
         ctx.stroke()
 
-        if(grabbed||Math.abs(moveX-depthBlurDepthPos)>5){
-            ctx.strokeStyle = "lightblue"
-            ctx.lineWidth = 2
-        } else {
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
             ctx.strokeStyle = "white"
-            ctx.lineWidth = 3
-            grabbed = true
+            ctx.lineWidth = 4
+            hovering = true
             drawText = "Blur depth"
+        } else {
+            ctx.strokeStyle = "lightblue"
+            ctx.lineWidth = 3
         }
         ctx.beginPath()
         ctx.moveTo(depthBlurDepthPos,0)
@@ -342,12 +342,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.stroke()
 
         ctx.fillStyle = "white"
-        ctx.lineWidth = 2
+        ctx.lineWidth = 3
         ctx.beginPath()
         ctx.arc(5, canvas.height/2, 30, -0.7, 0.7)
         ctx.fill()
 
-        ctx.lineWidth = 2
+        ctx.lineWidth = 3
         ctx.beginPath()
         ctx.moveTo(29,canvas.height/2-20)
         ctx.lineTo(5,canvas.height/2)
