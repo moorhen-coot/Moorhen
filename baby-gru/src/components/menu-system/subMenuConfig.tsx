@@ -41,6 +41,11 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
+export type MenuItemSlider = BaseMenuItem & {
+    type: "customJSX";
+    jsx: (aeg0: any) => React.JSX.Element;
+};
+
 export type MenuItemSubMenu = BaseMenuItem & {
     type: "subMenu";
     menu: string;
@@ -167,11 +172,13 @@ export const subMenuMap: SubMenuMap = {
                 jsx: MenuItems.RecordVideo,
             },
             {
-                id: "export gltf",
-                label: "Export scene as gltf",
-                type: "customJSX",
-                jsx: MenuItems.ExportGltf,
+                id: "export",
+                label: "Export scene as...",
+                type: "popover",
+                content: MenuItems.ExportMenuItem,
+                keywords: ["gltf", "obj", "3mf", "export"],
             },
+
             {
                 id: "load-mrbump",
                 label: "MrBump results...",
