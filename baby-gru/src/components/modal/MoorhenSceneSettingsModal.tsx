@@ -54,7 +54,7 @@ const EdgeDetectPanel = () => {
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale);
 
     return (
-        <div className="scene-settings-panel-flex-between">
+        <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -109,7 +109,7 @@ const EdgeDetectPanel = () => {
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -120,7 +120,7 @@ const OcclusionPanel = () => {
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias);
 
     return (
-        <div className="scene-settings-panel-flex-between">
+        <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -153,7 +153,7 @@ const OcclusionPanel = () => {
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -211,7 +211,7 @@ const BackgroundColorPanel = () => {
 
     const swatchCols = ["#000000", "#5c5c5c", "#8a8a8a", "#cccccc", "#ffffff"];
     return (
-        <div className="scene-settings-panel-flex-center">
+        <MoorhenStack direction="vertical" card={true}>
             <span>Background Colour</span>
             <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                 <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
@@ -242,7 +242,7 @@ const BackgroundColorPanel = () => {
                     }}
                 />
             </div>
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -253,7 +253,7 @@ const DepthBlurPanel = () => {
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     return (
-        <div className="scene-settings-panel-flex-between">
+        <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -286,7 +286,7 @@ const DepthBlurPanel = () => {
                 stepButtons={1}
                 decimalPlaces={0}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -302,7 +302,7 @@ const ClipFogPanel = () => {
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
 
     return (
-        <div className="scene-settings-panel-flex-between">
+        <MoorhenStack direction="vertical" card={true}>
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
@@ -367,7 +367,7 @@ const ClipFogPanel = () => {
                     label="'Clip-cap' perfect spheres"
                 />
             </InputGroup>
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -387,7 +387,7 @@ const LightingPanel = () => {
     const dispatch = useDispatch();
 
     return (
-        <div className="scene-settings-panel">
+        <MoorhenStack direction="vertical" card={true}>
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
@@ -436,12 +436,14 @@ const LightingPanel = () => {
                 stepButtons={1}
                 decimalPlaces={0}
             />
-            <MoorhenLightPosition
-                initialValue={lightPosition}
-                setExternalValue={(newValues: [number, number, number]) => {
-                    dispatch(setLightPosition([newValues[0], -newValues[1], newValues[2], 1.0]));
-                }}
-            />
+            <MoorhenStack align="center">
+                <MoorhenLightPosition
+                    initialValue={lightPosition}
+                    setExternalValue={(newValues: [number, number, number]) => {
+                        dispatch(setLightPosition([newValues[0], -newValues[1], newValues[2], 1.0]));
+                    }}
+                />
+            </MoorhenStack>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -452,24 +454,20 @@ const LightingPanel = () => {
                     label="Shadows"
                 />
             </InputGroup>
-        </div>
+        </MoorhenStack>
     );
 };
 
 const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     return (
-        <MoorhenStack
-            gap={2}
-            direction={props.stackDirection}
-            style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
-        >
-            <MoorhenStack gap={2} direction="vertical">
+        <MoorhenStack direction={props.stackDirection}>
+            <MoorhenStack direction="vertical">
                 <ClipFogPanel />
                 <BackgroundColorPanel />
                 <EdgeDetectPanel />
             </MoorhenStack>
-            <MoorhenStack gap={1} direction="vertical">
+            <MoorhenStack direction="vertical">
                 <LightingPanel />
                 {isWebGL2 && <DepthBlurPanel />}
                 <OcclusionPanel />

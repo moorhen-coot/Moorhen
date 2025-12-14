@@ -60,6 +60,7 @@ export const MoorhenLightPosition = (props) => {
     }, [])
 
     return (
+        <div style={{width:"200px", height:"200px"}}>
             <canvas
                 ref={canvasRef}
                 width={200}
@@ -84,6 +85,6 @@ export const MoorhenLightPosition = (props) => {
                         draw(ctx);
                     }
                 }}
-            />
+            /></div>
     );
 }

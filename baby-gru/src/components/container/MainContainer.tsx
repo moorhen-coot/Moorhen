@@ -283,15 +283,15 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     useWindowEventListener("resize", setWindowDimensions);
 
-    // // Style append to header at initialization
-    // useLayoutEffect(() => {
-    //     const head = document.head;
-    //     const style: HTMLLinkElement = document.createElement("link");
-    //     style.href = `${urlPrefix}/moorhen.css`;
-    //     style.rel = "stylesheet";
-    //     style.type = "text/css";
-    //     head.appendChild(style);
-    // }, []);
+    // Style append to header at initialization
+    useLayoutEffect(() => {
+        const head = document.head;
+        const style: HTMLLinkElement = document.createElement("link");
+        style.href = `${urlPrefix}/moorhen.css`;
+        style.rel = "stylesheet";
+        style.type = "text/css";
+        head.appendChild(style);
+    }, []);
 
     // useLayoutEffect(() => {
     //     const head = document.head;
