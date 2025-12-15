@@ -6,13 +6,14 @@ import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
 import { addMap } from "../../store/mapsSlice";
+import { usePersistentState } from "../../store/menusSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import "../inputs/MoorhenInput.css";
 
 export const FetchOnlineSources = () => {
@@ -27,7 +28,7 @@ export const FetchOnlineSources = () => {
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
-    const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
+    const [fetchMap, setFetchMap] = usePersistentState("file", "fetch-map", false, true);
 
     const [remoteSource, setRemoteSource] = useState<string>("PDBe");
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true);
@@ -79,7 +80,7 @@ export const FetchOnlineSources = () => {
         const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`;
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
-        if (pdbCode && fetchMapDataCheckRef.current?.checked) {
+        if (pdbCode && fetchMap) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, pdbCode),
                 fetchMapFromURL(mapUrl, `${pdbCode}-map`),
@@ -134,7 +135,7 @@ export const FetchOnlineSources = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value;
         const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.cif`;
         const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`;
-        if (pdbCode && fetchMapDataCheckRef.current?.checked) {
+        if (pdbCode && fetchMap) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
                 fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, {
@@ -278,7 +279,7 @@ export const FetchOnlineSources = () => {
             </Form.Label>
             {downloadMaps && (
                 <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
-                    <Form.Check ref={fetchMapDataCheckRef} label="fetch data for map" name="fetchMapData" type="checkbox" inline />
+                    <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" type="checkbox" />
                 </div>
             )}
         </>

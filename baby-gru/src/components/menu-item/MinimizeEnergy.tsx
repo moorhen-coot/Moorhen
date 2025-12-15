@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -137,7 +137,7 @@ export const MinimizeEnergy = () => {
                 />
             )}
             <InputGroup className="moorhen-input-group-check" style={{ width: "20rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     ref={useRamaRestraintsCheckRef}
                     type="switch"
                     checked={useRamaRestraints}
@@ -148,7 +148,7 @@ export const MinimizeEnergy = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check" style={{ width: "20rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     ref={useTorsionRestraintsCheckRef}
                     type="switch"
                     checked={useTorsionRestraints}

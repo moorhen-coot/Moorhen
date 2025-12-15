@@ -29,7 +29,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     //const [minMaxValue, setMinMaxValue] = useState<number> ([-1, 1])
-    const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1]);
+    const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1], false);
 
     const map1 = usePersistent<number>(menu, "map1", -999999);
     const map2 = usePersistent<number>(menu, "map2", -999999);

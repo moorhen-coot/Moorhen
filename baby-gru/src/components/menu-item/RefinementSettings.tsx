@@ -11,7 +11,7 @@ import {
     setuseTorsionRefinementRestraints,
 } from "../../store/refinementSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs";
 
 export const RefinementSettings = () => {
@@ -140,7 +140,7 @@ export const RefinementSettings = () => {
             </Form.Group>
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={animateRefine}
                     onChange={() => {
@@ -150,7 +150,7 @@ export const RefinementSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={enableRefineAfterMod}
                     onChange={() => {
@@ -160,7 +160,7 @@ export const RefinementSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     ref={useRamaRestraintsCheckRef}
                     type="switch"
                     checked={useRamaRestraints}
@@ -171,7 +171,7 @@ export const RefinementSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     ref={useTorsionRestraintsCheckRef}
                     type="switch"
                     checked={useTorsionRestraints}

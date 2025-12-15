@@ -12,6 +12,7 @@ import {
     setDrawScaleBar,
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenToggle } from "../inputs";
 import { SubMenuMap } from "../menu-system/subMenuConfig";
 
 export const OtherSceneSettings = () => {
@@ -32,7 +33,7 @@ export const OtherSceneSettings = () => {
     return (
         <div style={{ width: "18rem" }}>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawFPS}
                     onChange={() => {
@@ -42,7 +43,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={enableAtomHovering}
                     onChange={() => {
@@ -55,7 +56,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawCrosshairs}
                     onChange={() => {
@@ -65,7 +66,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawScaleBar}
                     onChange={() => {
@@ -75,7 +76,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawAxes}
                     onChange={() => {
@@ -85,7 +86,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawMissingLoops}
                     onChange={() => {
@@ -95,7 +96,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={drawEnvBOcc}
                     onChange={() => {
@@ -105,7 +106,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doPerspectiveProjection}
                     onChange={() => {
@@ -115,7 +116,7 @@ export const OtherSceneSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doSpin}
                     onChange={() => {

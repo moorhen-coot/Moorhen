@@ -7,7 +7,7 @@ import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 
 export const ImportMap = () => {
     const dispatch = useDispatch();
@@ -19,12 +19,11 @@ export const ImportMap = () => {
     const filesRef = useRef<null | HTMLInputElement>(null);
     const isDiffRef = useRef<undefined | HTMLInputElement>(null);
     const [isActiveButton, setIsActiveButton] = useState(true);
-
-    const menuItemText = "CCP4/MRC map...";
+    const [isDiff, setIsDiff] = useState<boolean>(false);
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const readMaps = useCallback(async () => {
+    const readMaps = async () => {
         if (filesRef.current.files.length > 0) {
             setIsActiveButton(false);
             const files = Array.from(filesRef.current.files);
@@ -33,11 +32,11 @@ export const ImportMap = () => {
                 for (const file of files) {
                     const newMap = new MoorhenMap(commandCentre, store);
                     try {
-                        await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked);
+                        await newMap.loadToCootFromMapFile(file, isDiff);
                     } catch (err) {
                         // Try again if this is a compressed file...
                         if (file.name.includes(".gz")) {
-                            await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked, true);
+                            await newMap.loadToCootFromMapFile(file, isDiff, true);
                         } else {
                             console.warn(err);
                             throw new Error("Cannot read the fetched map...");
@@ -69,7 +68,7 @@ export const ImportMap = () => {
                 document.body.click();
             }
         }
-    }, [filesRef.current, isDiffRef.current, commandCentre, molecules, maps]);
+    };
 
     return (
         <>
@@ -81,7 +80,14 @@ export const ImportMap = () => {
             </Row>
             <Row style={{ marginBottom: "1rem" }}>
                 <Col>
-                    <Form.Check label={"is diff map"} name={`isDifference`} type="checkbox" ref={isDiffRef} />
+                    <MoorhenToggle
+                        label={"is diff map"}
+                        name={`isDifference`}
+                        type="checkbox"
+                        ref={isDiffRef}
+                        checked={isDiff}
+                        onChange={e => setIsDiff(e.target.checked)}
+                    />
                 </Col>
             </Row>
             <MoorhenButton variant="primary" onClick={readMaps} disabled={!isActiveButton}>

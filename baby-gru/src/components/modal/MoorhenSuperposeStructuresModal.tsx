@@ -9,7 +9,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
@@ -384,12 +384,7 @@ export const MoorheSuperposeStructuresModal = () => {
                     <hr></hr>
                 </>
             )}
-            <Form.Check
-                style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
-                type="switch"
-                ref={makeCopyOfMovStructCheckRef}
-                label="Move a copy of moving structure"
-            />
+            <Form.Check type="switch" ref={makeCopyOfMovStructCheckRef} label="Move a copy of moving structure" />
         </MoorhenStack>
     );
 

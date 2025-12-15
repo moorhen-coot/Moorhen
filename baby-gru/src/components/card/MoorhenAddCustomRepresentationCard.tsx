@@ -10,7 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../utils/enums";
 import { getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -536,7 +536,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     ) : null}
                     {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
                         <InputGroup className="moorhen-input-group-check">
-                            <Form.Check
+                            <MoorhenToggle
                                 ref={useDefaultRepresentationSettingsSwitchRef}
                                 type="switch"
                                 label={`Apply general representation settings`}
@@ -607,7 +607,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                         </MoorhenStack>
                     )}
                     <InputGroup className="moorhen-input-group-check">
-                        <Form.Check
+                        <MoorhenToggle
                             ref={useDefaultColoursSwitchRef}
                             type="switch"
                             label="Apply general colour settings"
@@ -621,7 +621,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     </InputGroup>
                     {["MetaBalls", "CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
                         <InputGroup className="moorhen-input-group-check">
-                            <Form.Check
+                            <MoorhenToggle
                                 ref={applyColourToNonCarbonAtomsSwitchRef}
                                 type="switch"
                                 label="Apply colour to non-carbon atoms also"

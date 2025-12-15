@@ -1,11 +1,11 @@
-import { Button, Card, Col, Form, InputGroup, Row, Stack } from "react-bootstrap";
+import { Card, Col, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
@@ -224,7 +224,7 @@ export const MoorhenWaterValidation = () => {
             <Row>
                 <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
                     <InputGroup className="moorhen-input-group-check" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                        <Form.Check
+                        <MoorhenToggle
                             label="Ignore part. occ."
                             ref={ignorePartOccRef}
                             type="switch"
@@ -235,7 +235,7 @@ export const MoorhenWaterValidation = () => {
                                 setTriggerDataFetch(prev => !prev);
                             }}
                         />
-                        <Form.Check
+                        <MoorhenToggle
                             label="Ignore zero occ."
                             ref={ignoreZeroOccRef}
                             type="switch"

@@ -6,7 +6,7 @@ import { clearResidueSelection, setResidueSelection } from "../../store/generalS
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 
 interface MoorhenPAEProps {

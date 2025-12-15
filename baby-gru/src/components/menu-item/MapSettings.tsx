@@ -2,7 +2,7 @@ import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 
 export const MapSettings = (props: {
     map: moorhen.Map;
@@ -18,7 +18,7 @@ export const MapSettings = (props: {
     return (
         <>
             {props.mapStyle !== "lit-lines" && (
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={props.mapStyle === "solid"}
                     onChange={() => {
@@ -28,7 +28,7 @@ export const MapSettings = (props: {
                 />
             )}
             {props.mapStyle !== "solid" && (
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={props.mapStyle === "lit-lines"}
                     onChange={() => {

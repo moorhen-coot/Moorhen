@@ -6,7 +6,7 @@ import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
@@ -84,7 +84,7 @@ export const SharpenBlurMap = () => {
             <MoorhenMapSelect maps={maps} ref={selectRef} />
             <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50} allowNegativeValues={true} />
             <InputGroup className="moorhen-input-group-check" style={{ width: "100%" }}>
-                <Form.Check
+                <MoorhenToggle
                     ref={useResampleSwitchRef}
                     type="switch"
                     checked={useResample}

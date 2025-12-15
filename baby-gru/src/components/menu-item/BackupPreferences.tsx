@@ -2,7 +2,7 @@ import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setEnableTimeCapsule, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 
 export const BackupPreferences = () => {
     const dispatch = useDispatch();
@@ -13,7 +13,7 @@ export const BackupPreferences = () => {
     return (
         <>
             <Form.Group style={{ maxWidth: "25rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={enableTimeCapsule}
                     onChange={() => {

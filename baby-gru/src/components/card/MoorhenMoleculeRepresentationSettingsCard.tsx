@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
 export const BondSettingsPanel = (props: {
@@ -73,9 +73,9 @@ export const BondSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={2}
             />
-            <Form.Check type="switch" checked={showAniso} onChange={() => setShowAniso(prev => !prev)} label="Show Thermal ellipsoids" />
-            <Form.Check type="switch" checked={showOrtep} onChange={() => setShowOrtep(prev => !prev)} label="Ortep style" />
-            <Form.Check type="switch" checked={showHs} onChange={() => setShowHs(prev => !prev)} label="Show Hs" />
+            <MoorhenToggle type="switch" checked={showAniso} onChange={() => setShowAniso(prev => !prev)} label="Show Thermal ellipsoids" />
+            <MoorhenToggle type="switch" checked={showOrtep} onChange={() => setShowOrtep(prev => !prev)} label="Ortep style" />
+            <MoorhenToggle type="switch" checked={showHs} onChange={() => setShowHs(prev => !prev)} label="Show Hs" />
             <span>Bond Smoothness</span>
             <Slider
                 aria-label="Smoothness"
@@ -283,7 +283,7 @@ const SymmetrySettingsPanel = (props: {
                 borderRadius: "1.5rem",
             }}
         >
-            <Form.Check
+            <MoorhenToggle
                 type="switch"
                 checked={showUnitCell}
                 onChange={() => {
@@ -291,7 +291,7 @@ const SymmetrySettingsPanel = (props: {
                 }}
                 label="Show unit cell"
             />
-            <Form.Check
+            <MoorhenToggle
                 type="switch"
                 checked={symmetryOn}
                 onChange={() => {
@@ -301,7 +301,7 @@ const SymmetrySettingsPanel = (props: {
                 label="Show symmetry mates"
             />
             {showAssemblies && (
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={biomolOn}
                     onChange={() => {
@@ -620,9 +620,9 @@ export const ResidueEnvironmentSettingsPanel = (props: {
                 borderRadius: "1.5rem",
             }}
         >
-            <Form.Check type="switch" checked={labelled} onChange={() => setLabelled(prev => !prev)} label="Show labels" />
-            <Form.Check type="switch" checked={showHBonds} onChange={() => setShowHBonds(prev => !prev)} label="Show H bonds" />
-            <Form.Check type="switch" checked={showContacts} onChange={() => setShowContacts(prev => !prev)} label="Show contacts" />
+            <MoorhenToggle type="switch" checked={labelled} onChange={() => setLabelled(prev => !prev)} label="Show labels" />
+            <MoorhenToggle type="switch" checked={showHBonds} onChange={() => setShowHBonds(prev => !prev)} label="Show H bonds" />
+            <MoorhenToggle type="switch" checked={showContacts} onChange={() => setShowContacts(prev => !prev)} label="Show contacts" />
             <MoorhenSlider
                 sliderTitle="Neighbouring Res. Dist."
                 externalValue={maxDist}

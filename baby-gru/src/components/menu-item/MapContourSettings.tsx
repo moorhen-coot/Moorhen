@@ -11,7 +11,7 @@ import {
     setReContourMapOnlyOnMouseUp,
 } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = [];
@@ -91,7 +91,7 @@ export const MapContourSettings = () => {
     return (
         <>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={defaultMapLitLines}
                     onChange={() => {
@@ -104,7 +104,7 @@ export const MapContourSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={defaultMapSurface}
                     onChange={() => {
@@ -117,7 +117,7 @@ export const MapContourSettings = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={reContourMapOnlyOnMouseUp}
                     onChange={() => {

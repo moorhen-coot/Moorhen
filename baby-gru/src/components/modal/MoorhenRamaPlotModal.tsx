@@ -18,10 +18,15 @@ export const MoorhenRamaPlotModal = () => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(menu, "modalSize", {
-        width: convertRemToPx(50),
-        height: convertRemToPx(42),
-    });
+    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
+        menu,
+        "modalSize",
+        {
+            width: convertRemToPx(50),
+            height: convertRemToPx(42),
+        },
+        false
+    );
 
     const { enqueueSnackbar } = useSnackbar();
 

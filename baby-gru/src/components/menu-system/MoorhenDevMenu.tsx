@@ -19,6 +19,7 @@ import {
 import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { MoorhenToggle } from "../inputs";
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
@@ -280,7 +281,7 @@ export const MoorhenDevMenu = () => {
             </MenuItem>
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={useGemmi}
                     onChange={() => {
@@ -292,7 +293,7 @@ export const MoorhenDevMenu = () => {
 
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doOutline}
                     onChange={() => {
@@ -302,7 +303,7 @@ export const MoorhenDevMenu = () => {
                 />
             </InputGroup>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={overlaysOn}
                     onChange={evt => {

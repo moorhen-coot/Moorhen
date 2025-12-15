@@ -8,7 +8,7 @@ import {
     setDoThreeWayView,
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 
 export const LayoutSettings = () => {
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo);

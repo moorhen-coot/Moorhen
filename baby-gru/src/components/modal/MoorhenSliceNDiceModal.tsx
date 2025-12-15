@@ -21,7 +21,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
@@ -553,7 +553,7 @@ export const MoorhenSliceNDiceModal = () => {
             <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <div style={{ margin: "0.5rem", padding: "0.2rem", width: "100%" }}>
                     <MoorhenStack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
-                        <Form.Check
+                        <MoorhenToggle
                             style={{ margin: 0 }}
                             type="radio"
                             checked={thresholdType === "af2-plddt"}
@@ -569,7 +569,7 @@ export const MoorhenSliceNDiceModal = () => {
                             }}
                             label="PLDDT"
                         />
-                        <Form.Check
+                        <MoorhenToggle
                             style={{ margin: 0 }}
                             type="radio"
                             checked={thresholdType === "b-factor-norm"}

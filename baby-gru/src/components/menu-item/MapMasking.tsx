@@ -6,7 +6,7 @@ import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -153,7 +153,7 @@ export const MapMasking = () => {
                 <MoorhenNumberForm ref={maskRadiusFormRef} defaultValue={2.5} label="Mask radius" allowNegativeValues={false} />
             )}
             <Form.Group className="moorhen-form-group">
-                <Form.Check
+                <MoorhenToggle
                     ref={useDefaultMaskRadiusRef}
                     type="switch"
                     checked={useDefaultMaskRadius}
@@ -162,7 +162,7 @@ export const MapMasking = () => {
                 />
             </Form.Group>
             <Form.Group className="moorhen-form-group">
-                <Form.Check
+                <MoorhenToggle
                     ref={invertFlagRef}
                     type="switch"
                     checked={invertFlag}

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
 import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 
 export const ScoresToastPreferences = () => {
     const dispatch = useDispatch();
@@ -22,7 +22,7 @@ export const ScoresToastPreferences = () => {
     return (
         <>
             <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={showScoresToast}
                     onChange={() => {
@@ -32,7 +32,7 @@ export const ScoresToastPreferences = () => {
                 />
             </InputGroup>
             <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={defaultUpdatingScores.includes("Rfactor")}
                     onChange={() => handleScoreChange("Rfactor")}
@@ -40,7 +40,7 @@ export const ScoresToastPreferences = () => {
                 />
             </InputGroup>
             <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={defaultUpdatingScores.includes("Rfree")}
                     onChange={() => handleScoreChange("Rfree")}
@@ -48,7 +48,7 @@ export const ScoresToastPreferences = () => {
                 />
             </InputGroup>
             <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={defaultUpdatingScores.includes("Moorhen Points")}
                     onChange={() => handleScoreChange("Moorhen Points")}

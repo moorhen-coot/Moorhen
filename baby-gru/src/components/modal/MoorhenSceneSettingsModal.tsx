@@ -1,10 +1,10 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Button, Form, InputGroup, Stack } from "react-bootstrap";
+import { InputGroup } from "react-bootstrap";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     setAmbient,
     setClipEnd,
@@ -38,7 +38,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
@@ -56,7 +56,7 @@ const EdgeDetectPanel = () => {
     return (
         <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doEdgeDetect}
                     onChange={() => {
@@ -122,7 +122,7 @@ const OcclusionPanel = () => {
     return (
         <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doSSAO}
                     onChange={() => {
@@ -255,7 +255,7 @@ const DepthBlurPanel = () => {
     return (
         <MoorhenStack direction="vertical" card={true}>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={useOffScreenBuffers}
                     onChange={() => {
@@ -348,7 +348,7 @@ const ClipFogPanel = () => {
                 decimalPlaces={1}
             />
             <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={resetClippingFogging}
                     onChange={() => {
@@ -358,7 +358,7 @@ const ClipFogPanel = () => {
                 />
             </InputGroup>
             <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={clipCap}
                     onChange={() => {
@@ -445,7 +445,7 @@ const LightingPanel = () => {
                 />
             </MoorhenStack>
             <InputGroup className="moorhen-input-group-check">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={doShadow}
                     onChange={() => {

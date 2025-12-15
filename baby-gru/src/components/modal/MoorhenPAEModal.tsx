@@ -14,10 +14,15 @@ export const MoorhenPAEModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const dispatch = useDispatch();
 
-    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(menu, "modalSize", {
-        width: convertRemToPx(20),
-        height: convertRemToPx(42),
-    });
+    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
+        menu,
+        "modalSize",
+        {
+            width: convertRemToPx(20),
+            height: convertRemToPx(42),
+        },
+        false
+    );
 
     return (
         <MoorhenDraggableModalBase

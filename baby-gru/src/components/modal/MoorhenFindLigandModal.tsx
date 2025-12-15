@@ -9,7 +9,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
@@ -218,7 +218,7 @@ export const MoorheFindLigandModal = () => {
             </Row>
             <Row style={{ padding: "0", margin: "0" }}>
                 <Col style={{ alignContent: "start", alignItems: "start", display: "flex", flexDirection: "column" }}>
-                    <Form.Check
+                    <MoorhenToggle
                         style={{ margin: "0.5rem" }}
                         type="radio"
                         checked={!fitAnywhere}
@@ -228,7 +228,7 @@ export const MoorheFindLigandModal = () => {
                         }}
                         label="Search right here"
                     />
-                    <Form.Check
+                    <MoorhenToggle
                         style={{ margin: "0.5rem" }}
                         type="radio"
                         checked={fitAnywhere}
@@ -240,7 +240,7 @@ export const MoorheFindLigandModal = () => {
                     />
                 </Col>
                 <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <Form.Check
+                    <MoorhenToggle
                         style={{ margin: "0.5rem" }}
                         type="switch"
                         checked={useConformers}

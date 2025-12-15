@@ -13,7 +13,7 @@ import {
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { get_grid } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 
 function SortableItem(props: { id: string; urlPrefix: string }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.id });
