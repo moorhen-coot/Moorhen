@@ -1,8 +1,6 @@
-import * as vec3 from 'gl-matrix/vec3';
 import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { guid } from '../utils/utils';
 import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
-import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
@@ -68,7 +66,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
                 let maxSize = 0.27;
                 for (let idx = 0; idx < displayBuffers.length; idx++) {
-                    if (displayBuffers[idx].hasOwnProperty("atoms") && displayBuffers[idx].atoms.length > 0) {
+                    if (Object.prototype.hasOwnProperty.call(displayBuffers[idx],"atoms") && displayBuffers[idx].atoms.length > 0) {
                         for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
                             if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
                                 if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
@@ -451,23 +449,172 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
 
     }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
+interface MGWebGLBuffer {
+    itemSize: number;
+    numItems: number;
+}
+
+export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingContext) : DisplayBuffer[] => {
+    const newBuffers: DisplayBuffer[] = []
+
+    for (const oldBuffer of displayBuffers) {
+        const theBuffer = new DisplayBuffer()
+        theBuffer.isDirty = true
+        theBuffer.id = guid()
+        //theBuffer.origin = oldBuffer.origin.slice()
+        theBuffer.visible = oldBuffer.visible
+        theBuffer.name_label = oldBuffer.name_label
+        theBuffer.display_class = oldBuffer.display_class
+        theBuffer.transparent = oldBuffer.transparent
+        theBuffer.alphaChanged = oldBuffer.alphaChanged
+        theBuffer.atoms = oldBuffer.atoms ? oldBuffer.atoms.slice() : null
+        //theBuffer.symmetryAtoms = { ...oldBuffer.symmetryAtoms }
+        theBuffer.symmetryMatrices = oldBuffer.symmetryMatrices ? oldBuffer.symmetryMatrices.slice() : null
+        theBuffer.changeColourWithSymmetry = oldBuffer.changeColourWithSymmetry
+        theBuffer.triangleIndexs = oldBuffer.triangleIndexs ? oldBuffer.triangleIndexs.slice() : null
+        theBuffer.triangleVertices = oldBuffer.triangleVertices ? oldBuffer.triangleVertices.slice() : null
+        theBuffer.triangleInstanceOrigins = oldBuffer.triangleInstanceOrigins ? oldBuffer.triangleInstanceOrigins.slice() : null
+        theBuffer.triangleInstanceSizes = oldBuffer.symmetryMatrices ? oldBuffer.triangleInstanceSizes.slice() : null
+        theBuffer.triangleColours = oldBuffer.triangleColours ? oldBuffer.triangleColours.slice() : null
+        theBuffer.triangleNormals = oldBuffer.triangleNormals ? oldBuffer.triangleNormals.slice() : null
+        theBuffer.primitiveSizes = oldBuffer.primitiveSizes ? oldBuffer.primitiveSizes.slice() : null
+        theBuffer.bufferTypes = oldBuffer.bufferTypes ? oldBuffer.bufferTypes.slice() : null
+        //theBuffer.customColour = oldBuffer.customColour.slice() as [number,number,number,number] | null
+        theBuffer.transformMatrix = oldBuffer.transformMatrix ? oldBuffer.transformMatrix.slice() : null
+        theBuffer.transformMatrixInteractive = oldBuffer.transformMatrixInteractive ? oldBuffer.transformMatrixInteractive.slice() : null
+        theBuffer.transformOriginInteractive = oldBuffer.transformOriginInteractive ? oldBuffer.transformOriginInteractive.slice() : null
+        theBuffer.symopnums = oldBuffer.symopnums ? oldBuffer.symopnums.slice() : null
+        //theBuffer.supplementary = {...oldBuffer.supplementary}
+        theBuffer.textNormals = oldBuffer.textNormals ? oldBuffer.textNormals.slice() : null
+        theBuffer.textColours = oldBuffer.textColours ? oldBuffer.textColours.slice() : null
+        theBuffer.isHoverBuffer = oldBuffer.isHoverBuffer
+        theBuffer.multiViewGroup = oldBuffer.multiViewGroup
+        theBuffer.clickTol = oldBuffer.clickTol
+        theBuffer.doStencil = oldBuffer.doStencil
+
+        for(const buf of oldBuffer.triangleVertexRealNormalBuffer){
+            theBuffer.triangleVertexRealNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleVertexRealNormalBuffer[theBuffer.triangleVertexRealNormalBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleVertexNormalBuffer){
+            theBuffer.triangleVertexNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleVertexNormalBuffer[theBuffer.triangleVertexNormalBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleVertexPositionBuffer){
+            theBuffer.triangleVertexPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleVertexPositionBuffer[theBuffer.triangleVertexPositionBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleVertexIndexBuffer){
+            theBuffer.triangleVertexIndexBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleVertexIndexBuffer[theBuffer.triangleVertexIndexBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleVertexTextureBuffer){
+            theBuffer.triangleVertexTextureBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleVertexTextureBuffer[theBuffer.triangleVertexTextureBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleInstanceOriginBuffer){
+            theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleInstanceOriginBuffer[theBuffer.triangleInstanceOriginBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleInstanceOrientationBuffer){
+            theBuffer.triangleInstanceOrientationBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleInstanceOrientationBuffer[theBuffer.triangleInstanceOrientationBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleInstanceSizeBuffer){
+            theBuffer.triangleInstanceSizeBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleInstanceSizeBuffer[theBuffer.triangleInstanceSizeBuffer.length-1].numItems = buf.numItems
+        }
+
+        for(const buf of oldBuffer.triangleColourBuffer){
+            theBuffer.triangleColourBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+            theBuffer.triangleColourBuffer[theBuffer.triangleColourBuffer.length-1].numItems = buf.numItems
+        }
+
+        if(oldBuffer.textNormalBuffer){
+            for(const buf of oldBuffer.textNormalBuffer){
+                theBuffer.textNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.textNormalBuffer[theBuffer.textNormalBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.textPositionBuffer){
+            for(const buf of oldBuffer.textPositionBuffer){
+                theBuffer.textPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.textPositionBuffer[theBuffer.textPositionBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.textColourBuffer){
+            for(const buf of oldBuffer.textColourBuffer){
+                theBuffer.textColourBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.textColourBuffer[theBuffer.textColourBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.textTexCoordBuffer){
+            for(const buf of oldBuffer.textTexCoordBuffer){
+                theBuffer.textTexCoordBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.textTexCoordBuffer[theBuffer.textTexCoordBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.textIndexesBuffer){
+            for(const buf of oldBuffer.textIndexesBuffer){
+                theBuffer.textIndexesBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.textIndexesBuffer[theBuffer.textIndexesBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.clickLinePositionBuffer){
+            for(const buf of oldBuffer.clickLinePositionBuffer){
+                theBuffer.clickLinePositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.clickLinePositionBuffer[theBuffer.clickLinePositionBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.clickLineColourBuffer){
+            for(const buf of oldBuffer.clickLineColourBuffer){
+                theBuffer.clickLineColourBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.clickLineColourBuffer[theBuffer.clickLineColourBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        if(oldBuffer.clickLineIndexesBuffer){
+            for(const buf of oldBuffer.clickLineIndexesBuffer){
+                theBuffer.clickLineIndexesBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+                theBuffer.clickLineIndexesBuffer[theBuffer.clickLineIndexesBuffer.length-1].numItems = buf.numItems
+            }
+        }
+
+        newBuffers.push(theBuffer)
+    }
+
+    return newBuffers
+}
+
+export const buildBuffers = (displayBuffers:DisplayBuffer[], gl_in:WebGL2RenderingContext|WebGLRenderingContext|null=null,isWeGL2_in:boolean=false) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth
-        const isWebGL2 = store.getState().glRef.isWebGL2
-        const gl = store.getState().glRef.glCtx
+
+        let isWebGL2 = store.getState().glRef.isWebGL2
+        let gl = store.getState().glRef.glCtx
+        if(gl_in){
+            gl = gl_in
+            isWebGL2 = isWeGL2_in
+        }
 
         const tbb1 = performance.now()
-        const xaxis = vec3Create([1.0, 0.0, 0.0]);
-        const yaxis = vec3Create([0.0, 1.0, 0.0]);
-        const zaxis = vec3Create([0.0, 0.0, 1.0]);
-        const Q = vec3.create();
-        const R = vec3.create();
 
         // FIXME - These need to be global preferences or properties of primitive.
         // spline_accu = 4 is OK for 5kcr on QtWebKit, 8 runs out of memory.
-        const accuStep = 20;
 
         const thisdisplayBufferslength = displayBuffers.length;
         //console.log(thisdisplayBufferslength+" buffers to build");

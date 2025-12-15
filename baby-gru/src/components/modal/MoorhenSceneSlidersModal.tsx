@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react"
+import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { Tooltip } from "@mui/material";
@@ -6,6 +6,9 @@ import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenReduxStore as store } from '../../store/MoorhenReduxStore'
+import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
+import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
+import { getShader, initSideOnShadersInstanced } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setClipCap,
     setDepthBlurDepth,
@@ -24,6 +27,8 @@ import {
     setClipEnd,
 } from "../../store/glRefSlice";
 import { usePaths } from "../../InstanceManager";
+import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
+import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
@@ -184,6 +189,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const plotWidth = 450
     const plotHeight = 200
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
     const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
@@ -193,6 +199,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
 
     const imageRef = useRef<null | HTMLImageElement>(null);
+    const programRef = useRef<null | WebGLProgram>(null);
 
     const urlPrefix = usePaths().urlPrefix;
 
@@ -208,6 +215,23 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
 
+    const myBuffers:DisplayBuffer[] = useMemo(() => {
+        if(!canvasRefWebGL)
+            return []
+
+        if(!canvasRefWebGL.current)
+            return []
+
+        const canvasWebGL = canvasRefWebGL.current
+        const gl = canvasWebGL.getContext("webgl2")
+
+        const clonedBuffers = cloneBuffers(displayBuffers,gl)
+        buildBuffers(clonedBuffers,gl,true)
+        return clonedBuffers
+
+    }, [displayBuffers])
+
+    const atomSpan = useMemo(() => {
         let min_x =  1e5;
         let max_x = -1e5;
         let min_y =  1e5;
@@ -231,15 +255,48 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             }
         })
 
-        let atom_span = 2000.0
+        let atom_span = 9999.0
         if(haveAtoms)
             atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+        return atom_span
+    }, [displayBuffers])
+
+    const drawGL = async (width,height) => {
+
+        if(!canvasRefWebGL)
+            return
+
+        if(!canvasRefWebGL.current)
+            return
+
+        if(!programRef.current)
+            return
+
+        const canvasWebGL = canvasRefWebGL.current
+        const gl = canvasWebGL.getContext("webgl2")
+
+        console.log(programRef.current)
+
+        gl.clearColor(0.5,0.5,0.5,1.0);
+        gl.viewport(0, 0, width, height);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        for (const buffer of myBuffers) {
+            if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
+                for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
+                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
+                        console.log(buffer.triangleInstanceOriginBuffer[j],buffer.bufferTypes[j])
+                    }
+                }
+            }
+        }
+    }
 
     const plotTheData = async () => {
+
         if(!canvasRef)
             return
 
-        if(!(canvasRef.current))
+        if(!canvasRef.current)
             return
 
         if(!imageRef.current||!imageRef.current.complete) return
@@ -247,7 +304,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atom_span * 1.5
+        const scale = atomSpan * 1.5
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -259,12 +316,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         ctx.save()
         ctx.clearRect(0,0,canvas.width,canvas.height)
-        ctx.fillStyle = "grey"
+        ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
 
-        const imgSize = canvasRef.current.height * atom_span/scale
+        const imgSize = canvasRef.current.height * atomSpan/scale
 
-        if(imageRef.current&&imageRef.current.complete&&haveAtoms) {
+        if(imageRef.current&&imageRef.current.complete&&atomSpan<9999) {
             ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
         }
 
@@ -378,6 +435,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         }
 
         ctx.restore()
+        drawGL(canvas.width,canvas.height)
+
     }
 
     const getXY = (evt) => {
@@ -409,7 +468,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         setMouseHeldDown(true)
 
-        const scale = atom_span * 1.5
+        const scale = atomSpan * 1.5
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -444,7 +503,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const [x,y] = getXY(evt)
 
-        const scale = atom_span * 1.5
+        const scale = atomSpan * 1.5
 
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
@@ -503,6 +562,16 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         img.crossOrigin = "Anonymous";
         imageRef.current = img;
         img.onload = plotTheData
+
+        const canvasWebGL = canvasRefWebGL.current
+        const gl = canvasWebGL.getContext("webgl2")
+        console.log(gl)
+        const vertexShader = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
+        const fragmentShader = getShader(gl, triangle_side_on_view_fragment_shader_source, "fragment");
+        console.log(vertexShader)
+        console.log(fragmentShader)
+        programRef.current = initSideOnShadersInstanced(vertexShader,fragmentShader,gl)
+
     }, [])
 
     useEffect(() => {
@@ -523,7 +592,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             <Stack gap={1} direction="vertical">
                 {isWebGL2 && <DepthBlurPanel />}
                 <div>
-                <canvas height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
+                <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
+                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
+                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
+                </figure>
                 </div>
             </Stack>
         </Stack>
