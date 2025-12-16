@@ -293,25 +293,25 @@ const MoorhenContainer = (props: ContainerProps) => {
         head.appendChild(style);
     }, []);
 
-    // useLayoutEffect(() => {
-    //     const head = document.head;
-    //     const style: HTMLLinkElement = document.createElement("link");
+    useLayoutEffect(() => {
+        const head = document.head;
+        const style: HTMLLinkElement = document.createElement("link");
 
-    //     if (isDark) {
-    //         style.href = `${urlPrefix}/darkly.css`;
-    //     } else {
-    //         style.href = `${urlPrefix}/flatly.css`;
-    //     }
+        if (isDark) {
+            style.href = `${urlPrefix}/darkly.css`;
+        } else {
+            style.href = `${urlPrefix}/flatly.css`;
+        }
 
-    //     style.rel = "stylesheet";
-    //     // style.async = true;
-    //     style.type = "text/css";
+        style.rel = "stylesheet";
+        // style.async = true;
+        style.type = "text/css";
 
-    //     head.appendChild(style);
-    //     return () => {
-    //         head.removeChild(style);
-    //     };
-    // }, [isDark, isGlobalInstanceReady]);
+        head.appendChild(style);
+        return () => {
+            head.removeChild(style);
+        };
+    }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);

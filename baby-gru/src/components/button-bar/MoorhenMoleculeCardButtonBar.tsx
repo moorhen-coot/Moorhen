@@ -17,7 +17,7 @@ import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
-import { clickedResidueType } from "../card/MoorhenMoleculeCard";
+import { clickedResidueType } from "../card/MoleculeCard/MoorhenMoleculeCard";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMenuItemPopover } from "../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../menu-item";

@@ -4,32 +4,32 @@ import { Button, Card, Col, Row, Spinner, Stack } from "react-bootstrap";
 import { Root } from "react-dom/client";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
-import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
-import { RootState } from "../../store/MoorhenReduxStore";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { useCommandCentre, usePaths } from "../../../InstanceManager";
+import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
+import { RootState } from "../../../store/MoorhenReduxStore";
+import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import {
     addGeneralRepresentation,
     addMolecule,
     removeCustomRepresentation,
     removeGeneralRepresentation,
     showMolecule,
-} from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../../utils/MoorhenColourRule";
-import { representationLabelMapping } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, getCentreAtom } from "../../utils/utils";
-import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar";
-import { MoorhenButton } from "../inputs";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenCarbohydrateList } from "../list/MoorhenCarbohydrateList";
-import { MoorhenLigandList } from "../list/MoorhenLigandList";
-import { MoorhenSequenceList } from "../list/MoorhenSequenceList";
-import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard";
-import { MoorhenHeaderInfoCard } from "./MoorhenHeaderInfoCard";
-import { MoorhenModifyColourRulesCard } from "./MoorhenModifyColourRulesCard";
-import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard";
-import { getNameLabel } from "./cardUtils";
+} from "../../../store/moleculesSlice";
+import { moorhen } from "../../../types/moorhen";
+import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { representationLabelMapping } from "../../../utils/enums";
+import { convertRemToPx, convertViewtoPx, getCentreAtom } from "../../../utils/utils";
+import { MoorhenMoleculeCardButtonBar } from "../../button-bar/MoorhenMoleculeCardButtonBar";
+import { MoorhenButton } from "../../inputs";
+import { MoorhenStack } from "../../interface-base";
+import { MoorhenCarbohydrateList } from "../../list/MoorhenCarbohydrateList";
+import { MoorhenLigandList } from "../../list/MoorhenLigandList";
+import { MoorhenSequenceList } from "../../list/MoorhenSequenceList";
+import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresentationCard";
+import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
+import { MoorhenModifyColourRulesCard } from "../MoorhenModifyColourRulesCard";
+import { MoorhenMoleculeRepresentationSettingsCard } from "../MoorhenMoleculeRepresentationSettingsCard";
+import { getNameLabel } from "../cardUtils";
 
 const allRepresentations: moorhen.RepresentationStyles[] = [
     "CBs",

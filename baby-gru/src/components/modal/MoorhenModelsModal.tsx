@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
+import { MoorhenMoleculeCard } from "../card/MoleculeCard/MoorhenMoleculeCard";
 import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
