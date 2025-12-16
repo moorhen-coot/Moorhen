@@ -316,16 +316,16 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const mvMatrix = mat4.create();
         mat4.set(mvMatrix,
+            /*
             1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, -100.0, 1.0,
-            /*
+            */
             0.0, 0.0, 1.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
            -1.0, 0.0, 0.0, 0.0,
             0.0, 0.0, -100.0, 1.0,
-            */
         )
         mat4.multiply(mvMatrix, mvMatrix, theMatrix);
 
