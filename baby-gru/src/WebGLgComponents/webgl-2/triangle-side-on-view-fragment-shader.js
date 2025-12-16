@@ -26,13 +26,15 @@ const triangle_side_on_view_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = (1.2*theColor*Idiff);
+      vec4 color = normalize(1.2*theColor*Idiff);
 
       color.a = vColor.a;
 
       fragColor = color;
       fragColor.a = vColor.a;
 
+      //Hackery for now...
+      //fragColor = vColor;
     }
 `;
 

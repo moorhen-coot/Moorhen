@@ -1,3 +1,5 @@
+import * as vec3 from 'gl-matrix/vec3';
+import * as mat4 from 'gl-matrix/mat4';
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
@@ -8,7 +10,8 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenReduxStore as store } from '../../store/MoorhenReduxStore'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
-import { getShader, initSideOnShadersInstanced } from '../../WebGLgComponents/mgWebGLShaders'
+import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
+import { getShader, initSideOnShaders, initSideOnShadersInstanced } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setClipCap,
     setDepthBlurDepth,
@@ -28,6 +31,7 @@ import {
 } from "../../store/glRefSlice";
 import { usePaths } from "../../InstanceManager";
 import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
+import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
 import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
@@ -181,6 +185,27 @@ enum GrabHandle
  BLUR_DEPTH,
 }
 
+interface SideOnProgram extends WebGLProgram {
+    pMatrixUniform: WebGLUniformLocation;
+    mvMatrixUniform: WebGLUniformLocation;
+    screenZ: WebGLUniformLocation;
+    vertexPositionAttribute: GLint;
+    vertexNormalAttribute: GLint;
+    vertexColourAttribute: GLint;
+}
+
+interface SideOnProgramInstanced extends WebGLProgram {
+    pMatrixUniform: WebGLUniformLocation;
+    mvMatrixUniform: WebGLUniformLocation;
+    screenZ: WebGLUniformLocation;
+    vertexInstanceOriginAttribute: GLint;
+    vertexInstanceSizeAttribute: GLint;
+    vertexPositionAttribute: GLint;
+    vertexNormalAttribute: GLint;
+    vertexColourAttribute: GLint;
+    vertexInstanceOrientationAttribute: GLint;
+}
+
 const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
 
     const dispatch = useDispatch();
@@ -197,9 +222,11 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
+    const quat = useSelector((state: moorhen.State) => state.glRef.quat)
 
     const imageRef = useRef<null | HTMLImageElement>(null);
-    const programRef = useRef<null | WebGLProgram>(null);
+    const programRef = useRef<null | SideOnProgram>(null);
+    const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
 
     const urlPrefix = usePaths().urlPrefix;
 
@@ -269,22 +296,130 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         if(!canvasRefWebGL.current)
             return
 
-        if(!programRef.current)
+        if(!programInstancedRef.current)
             return
 
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
 
-        console.log(programRef.current)
 
+        gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.5,0.5,0.5,1.0);
         gl.viewport(0, 0, width, height);
+        const screenZ = vec3.create();
+        vec3.set(screenZ,0,0,-1)
+        const pMatrix = mat4.create();
+        mat4.ortho(pMatrix, -width/2/window.devicePixelRatio, width/2/window.devicePixelRatio, -height/2/window.devicePixelRatio, height/2/window.devicePixelRatio, 0.1, 1000.0);
+
+        const theMatrix = quatToMat4(quat);
+        console.log(theMatrix)
+
+        const mvMatrix = mat4.create();
+        mat4.set(mvMatrix,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, -100.0, 1.0,
+            /*
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+           -1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, -100.0, 1.0,
+            */
+        )
+        mat4.multiply(mvMatrix, mvMatrix, theMatrix);
+
+        //FIXME - hack for 5a3h centre.
+        mat4.translate(mvMatrix,mvMatrix,[-64,-40,-24])
+
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+// useProgram is not a React hook.
+// eslint-disable-next-line
+        gl.useProgram(programInstancedRef.current)
+
+        gl.uniform3fv(programInstancedRef.current.screenZ, screenZ);
+        gl.uniformMatrix4fv(programInstancedRef.current.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(programInstancedRef.current.mvMatrixUniform, false, mvMatrix);
+
+        for(let i = 0; i<16; i++)
+            gl.disableVertexAttribArray(i);
+        gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOriginAttribute);
+        gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceSizeAttribute);
+        gl.enableVertexAttribArray(programInstancedRef.current.vertexColourAttribute);
+        gl.enableVertexAttribArray(programInstancedRef.current.vertexPositionAttribute);
+        gl.enableVertexAttribArray(programInstancedRef.current.vertexNormalAttribute);
+
+        console.log(myBuffers)
+        /*
         for (const buffer of myBuffers) {
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
                 for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        console.log(buffer.triangleInstanceOriginBuffer[j],buffer.bufferTypes[j])
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOriginBuffer[j]);
+                        gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOriginAttribute, buffer.triangleInstanceOriginBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceSizeBuffer[j]);
+                        gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceSizeAttribute, buffer.triangleInstanceSizeBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
+                        gl.vertexAttribPointer(programInstancedRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[j]);
+                        gl.vertexAttribPointer(programInstancedRef.current.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
+                        gl.vertexAttribPointer(programInstancedRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
+                        if(buffer.triangleInstanceOrientationBuffer[j]){
+                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
+                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
+                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
+                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+3);
+                            gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOrientationBuffer[j]);
+                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute, 4, gl.FLOAT, false, 64, 0);
+                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+1, 4, gl.FLOAT, false, 64, 16);
+                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+2, 4, gl.FLOAT, false, 64, 32);
+                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+3, 4, gl.FLOAT, false, 64, 48);
+                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute, 1);
+                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+1, 1);
+                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+2, 1);
+                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+3, 1);
+                        } else {
+                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
+                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
+                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
+                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+3);
+                        }
+                        console.log("Drawing",buffer.triangleVertexIndexBuffer[j].numItems,"triangles")
+                        gl.drawElements(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0);
+                    }
+                }
+            }
+        }
+        */
+// useProgram is not a React hook.
+// eslint-disable-next-line
+        gl.useProgram(programRef.current);
+
+        gl.uniform3fv(programRef.current.screenZ, screenZ);
+        gl.uniformMatrix4fv(programRef.current.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(programRef.current.mvMatrixUniform, false, mvMatrix);
+
+        for(let i = 0; i<16; i++)
+            gl.disableVertexAttribArray(i);
+        gl.enableVertexAttribArray(programRef.current.vertexColourAttribute);
+        gl.enableVertexAttribArray(programRef.current.vertexPositionAttribute);
+        gl.enableVertexAttribArray(programRef.current.vertexNormalAttribute);
+
+        for (const buffer of myBuffers) {
+            if(!buffer.triangleInstanceOriginBuffer||buffer.triangleInstanceOriginBuffer.length===0){
+                for (let j = 0; j < buffer.triangleVertexPositionBuffer.length; j++) {
+                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleVertexPositionBuffer[j].numItems>0){
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
+                        gl.vertexAttribPointer(programRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[j]);
+                        gl.vertexAttribPointer(programRef.current.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
+                        gl.vertexAttribPointer(programRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
+                        gl.drawElements(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0);
                     }
                 }
             }
@@ -322,7 +457,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const imgSize = canvasRef.current.height * atomSpan/scale
 
         if(imageRef.current&&imageRef.current.complete&&atomSpan<9999) {
-            ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
+            //ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
         }
 
         let hovering = false
@@ -566,17 +701,17 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
         console.log(gl)
-        const vertexShader = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
+        const vertexShaderInstanced = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
         const fragmentShader = getShader(gl, triangle_side_on_view_fragment_shader_source, "fragment");
-        console.log(vertexShader)
-        console.log(fragmentShader)
-        programRef.current = initSideOnShadersInstanced(vertexShader,fragmentShader,gl)
+        programInstancedRef.current = initSideOnShadersInstanced(vertexShaderInstanced,fragmentShader,gl)
+        const vertexShader = getShader(gl, triangle_side_on_view_vertex_shader_source, "vertex");
+        programRef.current = initSideOnShaders(vertexShader,fragmentShader,gl)
 
     }, [])
 
     useEffect(() => {
         plotTheData()
-    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY])
+    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat])
 
 
     return (

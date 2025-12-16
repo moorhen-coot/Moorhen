@@ -1111,6 +1111,42 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
 
 }
 
+export function initSideOnShaders(vertexShader, fragmentShader, gl) {
+
+    const shaderProgram = gl.createProgram();
+
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.bindAttribLocation(shaderProgram, 0, "aVertexPosition");
+    gl.bindAttribLocation(shaderProgram, 1, "aVertexColour");
+    gl.bindAttribLocation(shaderProgram, 2, "aVertexNormal");
+    gl.linkProgram(shaderProgram);
+
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        alert("Could not initialise shaders (initSideOnShaders)");
+        console.log(gl.getProgramInfoLog(shaderProgram));
+    }
+
+    gl.useProgram(shaderProgram);
+
+    shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+    gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
+    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+    gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+    shaderProgram.vertexColourAttribute = gl.getAttribLocation(shaderProgram, "aVertexColour");
+    gl.enableVertexAttribArray(shaderProgram.vertexColourAttribute);
+
+    shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+
+    shaderProgram.screenZ = gl.getUniformLocation(shaderProgram, "screenZFrag");
+
+    return shaderProgram
+
+}
+
 export function initSideOnShadersInstanced(vertexShader, fragmentShader, gl) {
 
     const shaderProgramInstanced = gl.createProgram();
@@ -1144,8 +1180,6 @@ export function initSideOnShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.vertexInstanceOriginAttribute = gl.getAttribLocation(shaderProgramInstanced, "instancePosition");
     shaderProgramInstanced.vertexInstanceSizeAttribute = gl.getAttribLocation(shaderProgramInstanced, "instanceSize");
     shaderProgramInstanced.vertexInstanceOrientationAttribute = gl.getAttribLocation(shaderProgramInstanced, "instanceOrientation");
-
-    gl.enableVertexAttribArray(shaderProgramInstanced.vertexColourAttribute);
 
     shaderProgramInstanced.pMatrixUniform = gl.getUniformLocation(shaderProgramInstanced, "uPMatrix");
     shaderProgramInstanced.mvMatrixUniform = gl.getUniformLocation(shaderProgramInstanced, "uMVMatrix");
