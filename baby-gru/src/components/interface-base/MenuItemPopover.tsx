@@ -16,19 +16,11 @@ type MoorhenMenuItemPopoverProps = {
     id?: string;
     menuItemText: string;
     disabled?: boolean;
+    style?: React.CSSProperties;
 };
 
 export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
-    const {
-        popoverContent = null,
-        popoverPlacement = "right",
-        //showOkButton = true,
-        buttonVariant = "primary",
-        buttonText = "OK",
-        menuItemText = "...",
-        disabled = false,
-        children,
-    } = props;
+    const { popoverContent = null, popoverPlacement = "right", menuItemText = "...", disabled = false, children, style = {} } = props;
 
     const menuItemRef = useRef<HTMLButtonElement>(null);
     const [isShown, setIsShown] = useState(false);
@@ -37,7 +29,7 @@ export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
     };
 
     const menuItem = (
-        <MoorhenMenuItem onClick={handleClick} ref={menuItemRef} selected={isShown}>
+        <MoorhenMenuItem onClick={handleClick} ref={menuItemRef} selected={isShown} style={{ ...style }}>
             {menuItemText}
         </MoorhenMenuItem>
     );
@@ -45,11 +37,6 @@ export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
     return (
         <MoorhenPopover popoverPlacement={popoverPlacement} isShown={isShown} setIsShown={setIsShown} link={menuItem} linkRef={menuItemRef}>
             {children ? children : popoverContent}
-            {/* {showOkButton ? (
-                <MoorhenButton variant={buttonVariant} onClick={() => {}}>
-                    {buttonText}
-                </MoorhenButton>
-            ) : null} */}
         </MoorhenPopover>
     );
 };

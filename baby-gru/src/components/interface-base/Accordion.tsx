@@ -45,7 +45,7 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
                     />
                 </div>
             </div>
-            <div className={`moorhen__accordion-content-${isOpen ? "shown" : "hidden"}`}>{children}</div>
+            <div className={`moorhen__accordion-content-${isOpen ? "shown" : "hidden"}`}>{isOpen ? children : null}</div>
         </div>
     );
 };

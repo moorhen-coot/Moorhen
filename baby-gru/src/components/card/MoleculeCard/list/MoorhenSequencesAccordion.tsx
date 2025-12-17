@@ -1,18 +1,19 @@
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import React, { useCallback, useMemo } from "react";
-import { RootState } from "../../store/MoorhenReduxStore";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../sequence-viewer";
+import { RootState } from "../../../../store/MoorhenReduxStore";
+import { setHoveredAtom } from "../../../../store/hoveringStatesSlice";
+import { moorhen } from "../../../../types/moorhen";
+import { MoorhenAccordion } from "../../../interface-base";
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../../../sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
     handleResiduesSelection,
     useHoveredResidue,
-} from "../sequence-viewer/utils";
+} from "../../../sequence-viewer/utils";
 
-export const MoorhenSequenceList = (props: {
+export const MoorhenSequencesAccordion = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     molecule: moorhen.Molecule;
     setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
@@ -69,19 +70,23 @@ export const MoorhenSequenceList = (props: {
 
     const hoveredResidue = useHoveredResidue();
 
-    return !display ? (
-        <div>
-            <b>No sequence data</b>
-        </div>
-    ) : (
-        <MoorhenSequenceViewer
-            sequences={sequenceList}
-            selectedResidues={sequenceSelection}
-            onResidueClick={handleClickResidue}
-            onResiduesSelect={residueSelectionCallback}
-            onHoverResidue={handleHoverResidue}
-            hoveredResidue={hoveredResidue}
-            maxDisplayHeight={8}
-        />
+    return (
+        <MoorhenAccordion title="Sequences">
+            {!display ? (
+                <div>
+                    <b>No sequence data</b>
+                </div>
+            ) : (
+                <MoorhenSequenceViewer
+                    sequences={sequenceList}
+                    selectedResidues={sequenceSelection}
+                    onResidueClick={handleClickResidue}
+                    onResiduesSelect={residueSelectionCallback}
+                    onHoverResidue={handleHoverResidue}
+                    hoveredResidue={hoveredResidue}
+                    maxDisplayHeight={8}
+                />
+            )}
+        </MoorhenAccordion>
     );
 };

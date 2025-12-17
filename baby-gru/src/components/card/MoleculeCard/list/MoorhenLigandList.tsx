@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { Row, Col } from "react-bootstrap";
-import { useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenLigandCard } from "../card/MoorhenLigandCard";
-import { modalKeys } from "../../utils/enums";
-import { LigandInfo } from "../../utils/MoorhenMolecule";
-import { useCommandCentre } from "../../InstanceManager";
+import { Col, Row } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useCommandCentre } from "../../../../InstanceManager";
+import { moorhen } from "../../../../types/moorhen";
+import { LigandInfo } from "../../../../utils/MoorhenMolecule";
+import { modalKeys } from "../../../../utils/enums";
+import { MoorhenLigandCard } from "../../MoorhenLigandCard";
 
 export const MoorhenLigandList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -88,7 +88,7 @@ export const MoorhenLigandList = (props: {
                 <>
                     <Row style={{ maxHeight: props.height ?? "30vh", overflowY: "auto" }}>
                         <Col style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
-                            {ligandList.map((ligand) => {
+                            {ligandList.map(ligand => {
                                 return (
                                     <MoorhenLigandCard
                                         key={`${ligand.cid}-${props.molecule.molNo}`}

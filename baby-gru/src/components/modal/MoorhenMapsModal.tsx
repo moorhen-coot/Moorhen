@@ -1,11 +1,10 @@
 import { UnfoldLessOutlined } from "@mui/icons-material";
-import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useMemo, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenMapCard } from "../card/MoorhenMapCard";
+import { MoorhenMapCard } from "../card/MapCard/MoorhenMapCard";
 import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 

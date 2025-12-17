@@ -89,43 +89,43 @@ def remove_black_colors_from_style(style_string):
     
     return '; '.join(properties)
 
-def remove_black_colors_from_svg(filepath, dry_run=False):
-    """Replace black colors with currentColor in all SVG elements."""
-    try:
-        ET.register_namespace('', 'http://www.w3.org/2000/svg')
+# def remove_black_colors_from_svg(filepath, dry_run=False):
+#     """Replace black colors with currentColor in all SVG elements."""
+#     try:
+#         ET.register_namespace('', 'http://www.w3.org/2000/svg')
         
-        tree = ET.parse(filepath)
-        root = tree.getroot()
+#         tree = ET.parse(filepath)
+#         root = tree.getroot()
         
-        modified = False
+#         modified = False
         
-        # Process all elements
-        for elem in root.iter():
-            # Replace black colors in inline styles
-            style_attr = elem.get('style')
-            if style_attr:
-                new_style = remove_black_colors_from_style(style_attr)
-                if new_style != style_attr:
-                    elem.set('style', new_style)
-                    modified = True
+#         # Process all elements
+#         for elem in root.iter():
+#             # Replace black colors in inline styles
+#             style_attr = elem.get('style')
+#             if style_attr:
+#                 new_style = remove_black_colors_from_style(style_attr)
+#                 if new_style != style_attr:
+#                     elem.set('style', new_style)
+#                     modified = True
             
-            # Also replace fill and stroke attributes
-            for attr in ['fill', 'stroke']:
-                attr_value = elem.get(attr)
-                if attr_value and is_black_color(attr_value):
-                    elem.set(attr, 'currentColor')
-                    modified = True
+#             # Also replace fill and stroke attributes
+#             for attr in ['fill', 'stroke']:
+#                 attr_value = elem.get(attr)
+#                 if attr_value and is_black_color(attr_value):
+#                     elem.set(attr, 'currentColor')
+#                     modified = True
         
-        if modified and not dry_run:
-            tree.write(filepath, encoding='utf-8', xml_declaration=True)
+#         if modified and not dry_run:
+#             tree.write(filepath, encoding='utf-8', xml_declaration=True)
         
-        return modified
+#         return modified
         
-    except Exception as e:
-        print(f"⚠️  Error removing black colors from {filepath}: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+#     except Exception as e:
+#         print(f"⚠️  Error removing black colors from {filepath}: {e}")
+#         import traceback
+#         traceback.print_exc()
+#         return False
 
 def remove_black_colors_from_svg(filepath, dry_run=False):
     """Remove black colors from all SVG elements."""
