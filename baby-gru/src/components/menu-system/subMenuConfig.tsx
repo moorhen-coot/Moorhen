@@ -7,6 +7,7 @@ import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import type { ModalKey } from "../../store/modalsSlice";
+import { refinementSettings } from "../../store/refinementSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import * as MenuItems from "../menu-item";
 
@@ -155,9 +156,10 @@ export const subMenuMap: SubMenuMap = {
             },
             {
                 id: "import-fsigf",
-                label: "Import F/SigF...",
+                label: "Connect Molecule and Maps...",
                 type: "popover",
-                content: MenuItems.ImportFSigF,
+                content: MenuItems.ConnectMoleculeToMaps,
+                keywords: ["refinement", "refine", "maps", "associate", "connect"],
             },
             {
                 id: "load-tutorial-data",

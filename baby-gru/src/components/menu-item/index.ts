@@ -24,7 +24,7 @@ export { GLFont } from "./GLFont";
 export { GenerateAssembly } from "./GenerateAssembly";
 export { GetMonomer } from "./GetMonomer";
 export { GoTo } from "./GoTo";
-export { ImportFSigF } from "./ImportFSigF";
+export { ConnectMoleculeToMaps } from "./ConnectMoleculeToMaps";
 export { ImportDictionary, SMILESToLigand } from "./ImportLigandDictionary";
 export { ImportMap } from "./ImportMap";
 export { ImportMapCoefficients } from "./ImportMapCoefficients";

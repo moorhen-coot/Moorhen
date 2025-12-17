@@ -16,7 +16,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
-export const ImportFSigF = () => {
+export const ConnectMoleculeToMaps = () => {
     const commandCentre = useCommandCentre();
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const twoFoFcSelectRef = useRef<null | HTMLSelectElement>(null);
