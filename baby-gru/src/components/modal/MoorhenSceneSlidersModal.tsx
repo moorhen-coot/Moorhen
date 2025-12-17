@@ -307,7 +307,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.clearColor(0.5,0.5,0.5,1.0);
         gl.viewport(0, 0, width, height);
         const screenZ = vec3.create();
-        vec3.set(screenZ,0,0,-1)
+        vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
         mat4.ortho(pMatrix, -width/2/window.devicePixelRatio, width/2/window.devicePixelRatio, -height/2/window.devicePixelRatio, height/2/window.devicePixelRatio, 0.1, 1000.0);
 

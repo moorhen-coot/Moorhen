@@ -5,6 +5,7 @@ const triangle_side_on_view_fragment_shader_source = `#version 300 es\n
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
+    in lowp mat3 mvMatrix;
 
     uniform vec3 screenZFrag;
 
@@ -19,14 +20,13 @@ const triangle_side_on_view_fragment_shader_source = `#version 300 es\n
       vec3 norm = normalize(vNormal);
 
       E = screenZFrag;
-      L = vec3(0.0,0.0,-60.0);
-      R = normalize(-reflect(L,norm));
+      L = normalize((inverse(mvMatrix)*vec3(0.0,0.0,1.0)).xyz);
 
       Idiff += max(dot(norm,L), 0.0);
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = normalize(1.2*theColor*Idiff);
+      vec4 color = normalize(theColor*Idiff);
 
       color.a = vColor.a;
 
@@ -34,7 +34,7 @@ const triangle_side_on_view_fragment_shader_source = `#version 300 es\n
       fragColor.a = vColor.a;
 
       //Hackery for now...
-      //fragColor = vColor;
+      //fragColor = vec4(L.x,L.y,L.z,1.0);
     }
 `;
 
