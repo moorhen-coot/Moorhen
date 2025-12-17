@@ -224,14 +224,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
 
-    const imageRef = useRef<null | HTMLImageElement>(null);
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
 
-    const urlPrefix = usePaths().urlPrefix;
-
     const displayBuffers = store.getState().glRef.displayBuffers
     const storeMolecules = store.getState().molecules.moleculeList
+    const originState =  store.getState().glRef.origin
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
@@ -314,7 +312,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -width/2/window.devicePixelRatio, width/2/window.devicePixelRatio, -height/2/window.devicePixelRatio, height/2/window.devicePixelRatio, 0.1, 1000.0);
+        mat4.ortho(pMatrix, -atomSpan * 1.5, atomSpan * 1.5, -atomSpan * 1.5 * height/width, atomSpan * 1.5 * height/width, 0.1, 1000.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -333,7 +331,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         )
         mat4.multiply(mvMatrix, mvMatrix, theMatrix);
 
-        mat4.translate(mvMatrix,mvMatrix,[-atomCOM[0],-atomCOM[1],-atomCOM[2]])
+        mat4.translate(mvMatrix,mvMatrix,originState)
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -437,12 +435,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         if(!canvasRef.current)
             return
 
-        if(!imageRef.current||!imageRef.current.complete) return
-
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = canvas.width/2/window.devicePixelRatio
+        const scale = atomSpan * 1.5
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -470,12 +466,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const fogDrawStart = Math.max(fogStartPos,clipStartPos)
         const fogDrawWidth = Math.min(fogEndPos,clipEndPos)-fogDrawStart
         ctx.fillRect(fogDrawStart,0,fogDrawWidth,canvas.height)
-        /*
-        if(imageRef.current&&imageRef.current.complete&&atomSpan<9999) {
-            const imgSize = canvasRef.current.height * atomSpan/scale
-            ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
-        }
-        */
 
         let hovering = false
         let drawText = ""
@@ -620,7 +610,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         setMouseHeldDown(true)
 
-        const scale = canvasRef.current.width/2/window.devicePixelRatio
+        const scale = atomSpan * 1.5
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -655,7 +645,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const [x,y] = getXY(evt)
 
-        const scale = canvasRef.current.width/2/window.devicePixelRatio
+        const scale = atomSpan * 1.5
 
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
@@ -709,11 +699,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     }, [canvasRef, handleMouseMove,handleMouseUp,handleMouseDown])
 
     useEffect(() => {
-        const img = new window.Image();
-        img.src = `${urlPrefix}/pixmaps/molecule_cartoon.png`;
-        img.crossOrigin = "Anonymous";
-        imageRef.current = img;
-        img.onload = plotTheData
 
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
