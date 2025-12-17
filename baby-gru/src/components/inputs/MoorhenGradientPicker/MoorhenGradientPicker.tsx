@@ -1,7 +1,7 @@
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
 import { Form } from "react-bootstrap";
 import { memo, useState } from "react";
-import { MoorhenButton, MoorhenColourPicker } from "..";
+import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { usePersistentState } from "../../../store/menusSlice";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
@@ -113,17 +113,10 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                     label="Points: "
                 />
                 Presets:
-                <Form.Select
-                    value={selectedPreset}
+                <MoorhenSelect
+                    defaultValue={selectedPreset}
                     onChange={evt => {
                         handlePreset(evt.target.value);
-                    }}
-                    style={{
-                        width: "10rem",
-                        marginLeft: "0.5rem",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        border: "2px solid #fff",
                     }}
                 >
                     <option value={"Custom"}>Custom</option>
@@ -132,7 +125,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                             {key}
                         </option>
                     ))}
-                </Form.Select>
+                </MoorhenSelect>
                 <MoorhenButton key="centre-on-map" size="sm" variant="outlined" onClick={handleRevert}>
                     <FlipCameraAndroidIcon />
                 </MoorhenButton>

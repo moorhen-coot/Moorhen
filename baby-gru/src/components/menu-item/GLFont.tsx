@@ -2,6 +2,8 @@ import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const GLFont = () => {
     const dispatch = useDispatch();
@@ -13,39 +15,37 @@ export const GLFont = () => {
     const menuItemText = "Fonts...";
 
     return (
-        <div>
-            <Form.Group key="WebGLFontFamily" style={{ width: "20rem", margin: "0.5rem" }} controlId="WebGLFontFamily" className="mb-3">
-                <Form.Label>Graphics labels font</Form.Label>
-                <Form.Select
-                    value={GLLabelsFontFamily}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                        dispatch(setGLLabelsFontFamily(e.target.value));
-                    }}
-                >
-                    {availableFonts.map(item => {
-                        return (
-                            <option key={item} value={item}>
-                                {item}
-                            </option>
-                        );
-                    })}
-                </Form.Select>
-                <Form.Label>Graphics labels size</Form.Label>
-                <Form.Select
-                    value={GLLabelsFontSize}
-                    onChange={e => {
-                        dispatch(setGLLabelsFontSize(parseInt(e.target.value)));
-                    }}
-                >
-                    {fontSizes.map(item => {
-                        return (
-                            <option key={item} value={item}>
-                                {item}
-                            </option>
-                        );
-                    })}
-                </Form.Select>
-            </Form.Group>
-        </div>
+        <MoorhenStack>
+            <MoorhenSelect
+                label="Graphics labels font"
+                value={GLLabelsFontFamily}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    dispatch(setGLLabelsFontFamily(e.target.value));
+                }}
+            >
+                {availableFonts.map(item => {
+                    return (
+                        <option key={item} value={item}>
+                            {item}
+                        </option>
+                    );
+                })}
+            </MoorhenSelect>
+            <MoorhenSelect
+                label="Graphics labels size"
+                value={GLLabelsFontSize}
+                onChange={e => {
+                    dispatch(setGLLabelsFontSize(parseInt(e.target.value)));
+                }}
+            >
+                {fontSizes.map(item => {
+                    return (
+                        <option key={item} value={item}>
+                            {item}
+                        </option>
+                    );
+                })}
+            </MoorhenSelect>
+        </MoorhenStack>
     );
 };

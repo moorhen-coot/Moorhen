@@ -1,7 +1,7 @@
 import { GrainOutlined } from "@mui/icons-material";
 import { Popover } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Button, Form, FormSelect, InputGroup, Row, Stack } from "react-bootstrap";
+import { Button, Form, InputGroup, Row, Stack } from "react-bootstrap";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useRef, useState } from "react";
@@ -10,7 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../utils/enums";
 import { getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
@@ -456,29 +456,31 @@ export const MoorhenAddCustomRepresentationCard = memo(
                 }}
             >
                 <MoorhenStack gap={2} direction="vertical" style={{ width: "25rem", margin: "0.5rem" }}>
-                    <Form.Group style={{ margin: "0px", width: "100%" }}>
-                        <Form.Label>Style</Form.Label>
-                        <FormSelect
-                            ref={styleSelectRef}
-                            size="sm"
-                            value={representationStyle}
-                            onChange={evt => {
-                                setRepresentationStyle(evt.target.value as moorhen.RepresentationStyles);
-                                if (evt.target.value === "residue_environment") setRuleType("cid");
-                            }}
-                        >
-                            {customRepresentations.map(key => {
-                                return (
-                                    <option value={key} key={key}>
-                                        {representationLabelMapping[key]}
-                                    </option>
-                                );
-                            })}
-                        </FormSelect>
-                    </Form.Group>
+                    <MoorhenSelect
+                        ref={styleSelectRef}
+                        value={representationStyle}
+                        label={"Style"}
+                        onChange={evt => {
+                            setRepresentationStyle(evt.target.value as moorhen.RepresentationStyles);
+                            if (evt.target.value === "residue_environment") setRuleType("cid");
+                        }}
+                    >
+                        {customRepresentations.map(key => {
+                            return (
+                                <option value={key} key={key}>
+                                    {representationLabelMapping[key]}
+                                </option>
+                            );
+                        })}
+                    </MoorhenSelect>
                     <Form.Group style={{ width: "100%", margin: 0 }}>
                         <Form.Label>Residue selection</Form.Label>
-                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
+                        <MoorhenSelect
+                            label={"Residue selection"}
+                            ref={ruleSelectRef}
+                            defaultValue={ruleType}
+                            onChange={val => setRuleType(val.target.value)}
+                        >
                             {representationStyle === "residue_environment" ? (
                                 <>
                                     <option value={"cid"} key={"cid"}>
@@ -501,7 +503,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     </option>
                                 </>
                             )}
-                        </FormSelect>
+                        </MoorhenSelect>
                     </Form.Group>
                     {ruleType === "cid" && (
                         <MoorhenCidInputForm
@@ -572,38 +574,32 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                 borderRadius: "1.5rem",
                             }}
                         >
-                            <Form.Group style={{ margin: "0px", width: "100%" }}>
-                                <Form.Label>Focus Style</Form.Label>
-                                <FormSelect
-                                    ref={focusStyleSelectRef}
-                                    defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? "CBs"}
-                                    size="sm"
-                                >
-                                    {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
-                                        return (
-                                            <option value={key} key={key}>
-                                                {representationLabelMapping[key]}
-                                            </option>
-                                        );
-                                    })}
-                                </FormSelect>
-                            </Form.Group>
-                            <Form.Group style={{ margin: "0px", width: "100%" }}>
-                                <Form.Label>Background Style</Form.Label>
-                                <FormSelect
-                                    ref={backgroundStyleSelectRef}
-                                    defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? "CRs"}
-                                    size="sm"
-                                >
-                                    {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
-                                        return (
-                                            <option value={key} key={key}>
-                                                {representationLabelMapping[key]}
-                                            </option>
-                                        );
-                                    })}
-                                </FormSelect>
-                            </Form.Group>
+                            <MoorhenSelect
+                                ref={focusStyleSelectRef}
+                                defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? "CBs"}
+                                label={"Focus Style"}
+                            >
+                                {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
+                                    return (
+                                        <option value={key} key={key}>
+                                            {representationLabelMapping[key]}
+                                        </option>
+                                    );
+                                })}
+                            </MoorhenSelect>
+                            <MoorhenSelect
+                                ref={backgroundStyleSelectRef}
+                                defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? "CRs"}
+                                label={"Background Style"}
+                            >
+                                {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
+                                    return (
+                                        <option value={key} key={key}>
+                                            {representationLabelMapping[key]}
+                                        </option>
+                                    );
+                                })}
+                            </MoorhenSelect>
                         </MoorhenStack>
                     )}
                     <InputGroup className="moorhen-input-group-check">
@@ -637,13 +633,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     {!useDefaultColours && (
                         <>
                             <Row style={{ paddingLeft: "1rem" }}>
-                                <FormSelect
-                                    style={{ width: "50%", marginRight: "0.5rem" }}
-                                    size="sm"
-                                    ref={colourModeSelectRef}
-                                    defaultValue={colourMode}
-                                    onChange={handleColourModeChange}
-                                >
+                                <MoorhenSelect ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
                                     <>
                                         <option value={"custom"} key={"custom"}>
                                             User defined colour
@@ -672,7 +662,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                             Electrostatics
                                         </option>
                                     )}
-                                </FormSelect>
+                                </MoorhenSelect>
                                 <>
                                     {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
                                         <img

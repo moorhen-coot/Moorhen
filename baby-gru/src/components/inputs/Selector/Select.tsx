@@ -7,12 +7,13 @@ export type MoorhenSelectProps = {
     label?: string;
     inline?: boolean;
     defaultValue?: string | number | readonly string[];
+    value?: string | number | readonly string[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     disabled?: boolean;
 };
 
 export const MoorhenSelect = (props: MoorhenSelectProps) => {
-    const { children, ref = null, label = "", inline = true, defaultValue, onChange, disabled = false } = props;
+    const { children, ref = null, label = "", inline = true, defaultValue, onChange, disabled = false, value } = props;
     const id = useId();
     return (
         <MoorhenStack direction={inline ? "line" : "column"} align="center">
@@ -26,6 +27,7 @@ export const MoorhenSelect = (props: MoorhenSelectProps) => {
                 defaultValue={defaultValue}
                 onChange={onChange}
                 disabled={disabled}
+                value={value}
             >
                 {children}
             </select>

@@ -75,7 +75,7 @@ export const LoadTutorialData = () => {
 
     return (
         <>
-            <MoorhenSelect label="Select Tutorial Data">
+            <MoorhenSelect label="Select Tutorial Data" ref={tutorialNumberSelectorRef}>
                 {allTutorialNumbers.map(tutorialNumber => {
                     return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>;
                 })}

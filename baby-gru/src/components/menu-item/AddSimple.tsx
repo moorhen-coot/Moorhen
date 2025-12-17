@@ -1,9 +1,8 @@
-import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 
 ("Add simple...");
@@ -50,18 +49,15 @@ export const AddSimple = () => {
 
     return (
         <>
-            <Form.Group className="moorhen-form-group" controlId="MoorhenAddSimpleMenuItem">
-                <Form.Label>Add...</Form.Label>
-                <FormSelect size="sm" ref={molTypeSelectRef} defaultValue={"HOH"}>
-                    {molTypes.map(type => {
-                        return (
-                            <option value={type} key={type}>
-                                {type}
-                            </option>
-                        );
-                    })}
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect label={"Add..."} ref={molTypeSelectRef} defaultValue={"HOH"}>
+                {molTypes.map(type => {
+                    return (
+                        <option value={type} key={type}>
+                            {type}
+                        </option>
+                    );
+                })}
+            </MoorhenSelect>
             <MoorhenMoleculeSelect allowAny={false} ref={moleculeSelectRef} />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>

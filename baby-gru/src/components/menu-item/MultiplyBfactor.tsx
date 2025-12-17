@@ -10,7 +10,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
+import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 
 export const MultiplyBfactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);

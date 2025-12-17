@@ -11,7 +11,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { readTextFile } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 
 const ImportLigandDictionary = (props: {
@@ -176,7 +176,7 @@ const ImportLigandDictionary = (props: {
                             No
                         </Dropdown.Item>
                     </SplitButton>
-                    <Form.Select
+                    <MoorhenSelect
                         disabled={!createInstance}
                         ref={addToRef}
                         value={addToMolecule}
@@ -193,7 +193,7 @@ const ImportLigandDictionary = (props: {
                                 ...add to {molecule.name}
                             </option>
                         ))}
-                    </Form.Select>
+                    </MoorhenSelect>
                 </InputGroup>
             </Form.Group>
         </>
@@ -483,23 +483,21 @@ export const ImportDictionary = () => {
                 />
                 {!validDictFile && <span>Unable to parse</span>}
             </Form.Group>
-            <Form.Group style={{ width: "20rem", margin: "0.5rem" }} className="mb-3">
-                <Form.Label>Monomer identifier</Form.Label>
-                <Form.Select
-                    ref={tlcSelectRef}
-                    value={tlc}
-                    onChange={newVal => {
-                        setTlc(newVal.target.value);
-                        tlcValueRef.current = newVal.target.value;
-                    }}
-                >
-                    {tlcsOfFile.map(tlcOfFile => (
-                        <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>
-                            {tlcOfFile.comp_id}
-                        </option>
-                    ))}
-                </Form.Select>
-            </Form.Group>
+            <MoorhenSelect
+                label={"Monomer identifier"}
+                ref={tlcSelectRef}
+                value={tlc}
+                onChange={newVal => {
+                    setTlc(newVal.target.value);
+                    tlcValueRef.current = newVal.target.value;
+                }}
+            >
+                {tlcsOfFile.map(tlcOfFile => (
+                    <option key={tlcOfFile.comp_id} value={tlcOfFile.comp_id}>
+                        {tlcOfFile.comp_id}
+                    </option>
+                ))}
+            </MoorhenSelect>
         </>
     );
 

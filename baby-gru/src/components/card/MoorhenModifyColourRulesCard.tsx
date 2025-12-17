@@ -1,5 +1,4 @@
 import { Popover } from "@mui/material";
-import { Button, Form, FormSelect, Stack } from "react-bootstrap";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector } from "react-redux";
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from "react";
@@ -7,7 +6,7 @@ import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
@@ -280,26 +279,23 @@ export const MoorhenModifyColourRulesCard = memo(
                                 justifyContent: "center",
                             }}
                         >
-                            <Form.Group style={{ width: "100%", margin: 0 }}>
-                                <Form.Label>Rule type</Form.Label>
-                                <FormSelect size="sm" defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
-                                    <option value={"molecule"} key={"molecule"}>
-                                        By molecule
-                                    </option>
-                                    <option value={"chain"} key={"chain"}>
-                                        By chain
-                                    </option>
-                                    <option value={"residue-range"} key={"residue-range"}>
-                                        By residue range
-                                    </option>
-                                    <option value={"cid"} key={"cid"}>
-                                        By atom selection
-                                    </option>
-                                    <option value={"property"} key={"property"}>
-                                        By property
-                                    </option>
-                                </FormSelect>
-                            </Form.Group>
+                            <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
+                                <option value={"molecule"} key={"molecule"}>
+                                    By molecule
+                                </option>
+                                <option value={"chain"} key={"chain"}>
+                                    By chain
+                                </option>
+                                <option value={"residue-range"} key={"residue-range"}>
+                                    By residue range
+                                </option>
+                                <option value={"cid"} key={"cid"}>
+                                    By atom selection
+                                </option>
+                                <option value={"property"} key={"property"}>
+                                    By property
+                                </option>
+                            </MoorhenSelect>
                             {(ruleType === "chain" || ruleType === "residue-range") && (
                                 <MoorhenChainSelect
                                     width="100%"
@@ -319,29 +315,30 @@ export const MoorhenModifyColourRulesCard = memo(
                                 />
                             )}
                             {ruleType === "property" && (
-                                <Form.Group style={{ margin: "0px", width: "100%" }}>
-                                    <Form.Label>Property</Form.Label>
-                                    <FormSelect size="sm" defaultValue={"b-factor"} onChange={val => setColourProperty(val.target.value)}>
-                                        <option value={"mol-symm"} key={"mol-symm"}>
-                                            Mol. Symmetry
-                                        </option>
-                                        <option value={"secondary-structure"} key={"secondary-structure"}>
-                                            Secondary structure
-                                        </option>
-                                        <option value={"jones-rainbow"} key={"jones-rainbow"}>
-                                            Jones' rainbow
-                                        </option>
-                                        <option value={"b-factor"} key={"b-factor"}>
-                                            B-Factor
-                                        </option>
-                                        <option value={"b-factor-norm"} key={"b-factor-norm"}>
-                                            B-Factor (normalised)
-                                        </option>
-                                        <option value={"af2-plddt"} key={"af2-plddt"}>
-                                            AF2 PLDDT
-                                        </option>
-                                    </FormSelect>
-                                </Form.Group>
+                                <MoorhenSelect
+                                    label={"Property"}
+                                    defaultValue={"b-factor"}
+                                    onChange={val => setColourProperty(val.target.value)}
+                                >
+                                    <option value={"mol-symm"} key={"mol-symm"}>
+                                        Mol. Symmetry
+                                    </option>
+                                    <option value={"secondary-structure"} key={"secondary-structure"}>
+                                        Secondary structure
+                                    </option>
+                                    <option value={"jones-rainbow"} key={"jones-rainbow"}>
+                                        Jones' rainbow
+                                    </option>
+                                    <option value={"b-factor"} key={"b-factor"}>
+                                        B-Factor
+                                    </option>
+                                    <option value={"b-factor-norm"} key={"b-factor-norm"}>
+                                        B-Factor (normalised)
+                                    </option>
+                                    <option value={"af2-plddt"} key={"af2-plddt"}>
+                                        AF2 PLDDT
+                                    </option>
+                                </MoorhenSelect>
                             )}
                             <MoorhenButton onClick={createRule} style={{ margin: "0px", width: "100%" }}>
                                 Add rule

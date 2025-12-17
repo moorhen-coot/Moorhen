@@ -1,12 +1,12 @@
 import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined, GrainOutlined } from "@mui/icons-material";
 import { Popover } from "@mui/material";
-import { Button, Card, Col, Form, FormSelect, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
+import { Card, Col, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import type { ColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 const ColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void }) => {
     const colourSwatchRef = useRef<null | HTMLDivElement>(null);
@@ -165,34 +165,30 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
                         flexDirection: "column",
                     }}
                 >
-                    <Form.Group>
-                        <Form.Label style={{ justifyContent: "center", display: "flex" }}>NCS colours</Form.Label>
-                        <FormSelect
-                            ref={ncsCopySelectRef}
-                            size="sm"
-                            style={{ marginBottom: "0.2rem" }}
-                            value={ncsCopyValue}
-                            onChange={evt => {
-                                setNcsCopyValue(evt.target.value);
-                                const chainNames = JSON.parse(evt.target.value);
-                                const hex = (rule.args[0] as string)
+                    <MoorhenSelect
+                        ref={ncsCopySelectRef}
+                        label={"NCS colours"}
+                        value={ncsCopyValue}
+                        onChange={evt => {
+                            setNcsCopyValue(evt.target.value);
+                            const chainNames = JSON.parse(evt.target.value);
+                            const hex = (rule.args[0] as string)
+                                .split("|")
+                                .find(item => item.includes(chainNames[0]))
+                                ?.split("^")[1];
+                            setHex(hex);
+                        }}
+                    >
+                        {[...new Set((rule.args[0] as string).split("|").map(item => item.split("^")[1]))].map((hex, index) => {
+                            const chainNames = JSON.stringify(
+                                (rule.args[0] as string)
                                     .split("|")
-                                    .find(item => item.includes(chainNames[0]))
-                                    ?.split("^")[1];
-                                setHex(hex);
-                            }}
-                        >
-                            {[...new Set((rule.args[0] as string).split("|").map(item => item.split("^")[1]))].map((hex, index) => {
-                                const chainNames = JSON.stringify(
-                                    (rule.args[0] as string)
-                                        .split("|")
-                                        .filter(item => item.includes(hex))
-                                        .map(item => item.split("^")[0])
-                                );
-                                return <option key={chainNames} value={chainNames}>{`Copy no. ${index + 1}`}</option>;
-                            })}
-                        </FormSelect>
-                    </Form.Group>
+                                    .filter(item => item.includes(hex))
+                                    .map(item => item.split("^")[0])
+                            );
+                            return <option key={chainNames} value={chainNames}>{`Copy no. ${index + 1}`}</option>;
+                        })}
+                    </MoorhenSelect>
                     <HexAlphaColorPicker
                         color={hex}
                         onChange={(color: string) => {

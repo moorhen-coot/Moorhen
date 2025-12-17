@@ -6,6 +6,7 @@
     width: auto;
     flex: 1;
     min-width: 0;
+    font-family: var(--moorhen-font-family);
 }
 .moorhen__stack__row {
     flex-direction: row;

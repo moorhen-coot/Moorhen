@@ -1,12 +1,9 @@
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton, Popover, Slider } from "@mui/material";
-import { Form, FormSelect, InputGroup, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { setRequestDrawScene } from "../../store/glRefSlice";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
 export const BondSettingsPanel = (props: {
@@ -458,25 +455,24 @@ export const RibbonSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={0}
             />
-            <Form.Group style={{ margin: "0px", width: "100%" }}>
-                <Form.Label>Secondary structure method</Form.Label>
-                <FormSelect size="sm" value={ssUsageScheme} onChange={evt => setSsUsageScheme(parseInt(evt.target.value))}>
-                    <option value={"0"}>Use header</option>
-                    <option value={"1"}>Do not use header</option>
-                    <option value={"2"}>Calculate secondary structure</option>
-                </FormSelect>
-            </Form.Group>
-            <Form.Group style={{ margin: "0px", width: "100%" }}>
-                <Form.Label>Nucleotide ribbon style</Form.Label>
-                <FormSelect
-                    size="sm"
-                    value={nucleotideRibbonStyle}
-                    onChange={evt => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}
-                >
-                    <option value={"StickBases"}>Sticks</option>
-                    <option value={"DishyBases"}>Dishes</option>
-                </FormSelect>
-            </Form.Group>
+
+            <MoorhenSelect
+                label={"Secondary structure method"}
+                value={ssUsageScheme}
+                onChange={evt => setSsUsageScheme(parseInt(evt.target.value))}
+            >
+                <option value={"0"}>Use header</option>
+                <option value={"1"}>Do not use header</option>
+                <option value={"2"}>Calculate secondary structure</option>
+            </MoorhenSelect>
+            <MoorhenSelect
+                label="Nucleotide ribbon style"
+                value={nucleotideRibbonStyle}
+                onChange={evt => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}
+            >
+                <option value={"StickBases"}>Sticks</option>
+                <option value={"DishyBases"}>Dishes</option>
+            </MoorhenSelect>
         </div>
     );
 };

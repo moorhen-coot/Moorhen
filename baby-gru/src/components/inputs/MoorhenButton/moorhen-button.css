@@ -32,6 +32,7 @@
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
     cursor: pointer;
     box-sizing: border-box;
+    font-family: var(--moorhen-font-family);
     transition:
         box-shadow 0.3s ease,
         transform 0.3s ease;

@@ -7,7 +7,7 @@ import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
+import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 
 export const MinimizeEnergy = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

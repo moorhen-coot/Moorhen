@@ -12,7 +12,7 @@ import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
-import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
@@ -253,17 +253,14 @@ const MoorhenQuerySequence = () => {
                             />
                         </Col>
                         <Col>
-                            <Form.Group style={{ margin: "0.5rem" }}>
-                                <Form.Label>Source</Form.Label>
-                                <FormSelect size="sm" ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
-                                    <option value="PDB" key="PDB">
-                                        PDB
-                                    </option>
-                                    <option value="AFDB" key="AFDB">
-                                        Predicted Models
-                                    </option>
-                                </FormSelect>
-                            </Form.Group>
+                            <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
+                                <option value="PDB" key="PDB">
+                                    PDB
+                                </option>
+                                <option value="AFDB" key="AFDB">
+                                    Predicted Models
+                                </option>
+                            </MoorhenSelect>
                         </Col>
                     </Row>
                     <Row>

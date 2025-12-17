@@ -1,10 +1,10 @@
 import { useSnackbar } from "notistack";
-import { Form, FormSelect, Stack } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import React, { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 
@@ -82,42 +82,33 @@ export const AssociateReflectionsToMap = () => {
                     />
                 </Form.Group>
                 <MoorhenStack direction="horizontal">
-                    <Form.Group style={{ width: "7rem", margin: "0.5rem", padding: "0rem" }} controlId="fobs" className="mb-3">
-                        <Form.Label>Fobs</Form.Label>
-                        <FormSelect size="sm" ref={fobsSelectRef} defaultValue="FP" onChange={val => {}}>
-                            {Object.keys(columns)
-                                .filter(key => columns[key] === "F")
-                                .map(key => (
-                                    <option value={key} key={key}>
-                                        {key}
-                                    </option>
-                                ))}
-                        </FormSelect>
-                    </Form.Group>
-                    <Form.Group style={{ width: "7rem", margin: "0.5rem", padding: "0rem" }} controlId="sigfobs" className="mb-3">
-                        <Form.Label>SIGFobs</Form.Label>
-                        <FormSelect size="sm" ref={sigFobsSelectRef} defaultValue="SIGFP" onChange={val => {}}>
-                            {Object.keys(columns)
-                                .filter(key => columns[key] === "Q")
-                                .map(key => (
-                                    <option value={key} key={key}>
-                                        {key}
-                                    </option>
-                                ))}
-                        </FormSelect>
-                    </Form.Group>
-                    <Form.Group style={{ width: "7rem", margin: "0.5rem", padding: "0rem" }} controlId="freeR" className="mb-3">
-                        <Form.Label>Free R</Form.Label>
-                        <FormSelect size="sm" ref={freeRSelectRef} defaultValue="FREER" onChange={val => {}}>
-                            {Object.keys(columns)
-                                .filter(key => columns[key] === "I")
-                                .map(key => (
-                                    <option value={key} key={key}>
-                                        {key}
-                                    </option>
-                                ))}
-                        </FormSelect>
-                    </Form.Group>
+                    <MoorhenSelect label="Fobs" ref={fobsSelectRef} defaultValue="FP" onChange={val => {}}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === "F")
+                            .map(key => (
+                                <option value={key} key={key}>
+                                    {key}
+                                </option>
+                            ))}
+                    </MoorhenSelect>
+                    <MoorhenSelect label="SIGFobs" ref={sigFobsSelectRef} defaultValue="SIGFP" onChange={val => {}}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === "Q")
+                            .map(key => (
+                                <option value={key} key={key}>
+                                    {key}
+                                </option>
+                            ))}
+                    </MoorhenSelect>
+                    <MoorhenSelect label="Free R" ref={freeRSelectRef} defaultValue="FREER" onChange={val => {}}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === "I")
+                            .map(key => (
+                                <option value={key} key={key}>
+                                    {key}
+                                </option>
+                            ))}
+                    </MoorhenSelect>
                 </MoorhenStack>
             </MoorhenStack>
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>

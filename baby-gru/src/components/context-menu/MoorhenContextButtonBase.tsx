@@ -1,12 +1,11 @@
-import { ClickAwayListener, FormGroup, IconButton } from "@mui/material";
-import { Button, FormLabel, FormSelect, Stack } from "react-bootstrap";
+import { ClickAwayListener, IconButton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
 
@@ -61,18 +60,16 @@ const MoorhenPopoverOptions = (props: {
     return (
         <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
             <MoorhenStack direction="vertical" gap={2}>
-                <FormGroup>
-                    <FormLabel>{props.label}</FormLabel>
-                    <FormSelect key={props.label} ref={selectRef} defaultValue={defaultValue}>
-                        {props.options.map(optionName => {
-                            return (
-                                <option key={optionName} value={optionName}>
-                                    {optionName}
-                                </option>
-                            );
-                        })}
-                    </FormSelect>
-                </FormGroup>
+                <MoorhenSelect label={props.label} key={props.label} ref={selectRef} defaultValue={defaultValue}>
+                    {props.options.map(optionName => {
+                        return (
+                            <option key={optionName} value={optionName}>
+                                {optionName}
+                            </option>
+                        );
+                    })}
+                </MoorhenSelect>
+
                 {props.extraInput?.(extraInputRef)}
                 <MoorhenButton onClick={handleClick}>OK</MoorhenButton>
             </MoorhenStack>

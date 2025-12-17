@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
+import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 
 export const MatchLigands = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

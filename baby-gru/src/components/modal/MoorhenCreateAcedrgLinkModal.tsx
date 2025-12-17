@@ -7,7 +7,7 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
@@ -156,18 +156,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     }, [props.awaitAtomClick]);
 
     return (
-        <Card
-            style={{
-                width: "100%",
-                height: "100%",
-                margin: 0,
-                padding: "0.5rem",
-                borderColor: "grey",
-                borderWidth: 3,
-                overflowX: "hidden",
-                overflowY: "auto",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
                 <InputGroup>
                     <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
@@ -175,13 +164,13 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     </MoorhenButton>
                     <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : "No atom selected"} />
                 </InputGroup>
-                <div>
-                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
+                <MoorhenToggle label="Delete atom..." checked={deleteAtom} onChange={() => setDeleteAtom(!deleteAtom)} />
+                {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...
                     </Form.Label>
                     <InputGroup>
                         <SplitButton title={deleteAtom ? "Yes" : "No"}>
-                            {/* @ts-ignore */}
+                            {/* @ts-ignore 
                             <Dropdown.Item
                                 key="Yes"
                                 onClick={() => {
@@ -200,26 +189,31 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                             >
                                 No
                             </Dropdown.Item>
-                        </SplitButton>
-                        <Form.Select disabled={!deleteAtom} ref={deleteSelectedAtomValueRef}>
-                            {monomerAtoms.map(atom => {
-                                const label = parseAtomInfoLabel(atom);
-                                return (
-                                    <option key={label} value={label}>
-                                        {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
-                                    </option>
-                                );
-                            })}
-                        </Form.Select>
-                    </InputGroup>
-                </div>
-                <div>
-                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
+                        </SplitButton> */}
+                <MoorhenSelect disabled={!deleteAtom} ref={deleteSelectedAtomValueRef}>
+                    {monomerAtoms.map(atom => {
+                        const label = parseAtomInfoLabel(atom);
+                        return (
+                            <option key={label} value={label}>
+                                {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
+                            </option>
+                        );
+                    })}
+                </MoorhenSelect>
+                {/* </InputGroup> */}
+                <MoorhenToggle
+                    label={"Change order of bond..."}
+                    checked={changeOrderBond}
+                    onChange={() => {
+                        setChangeOrderBond(!changeOrderBond);
+                    }}
+                />
+
+                {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Change order of bond...
                     </Form.Label>
                     <InputGroup>
                         <SplitButton title={changeOrderBond ? "Yes" : "No"}>
-                            {/* @ts-ignore */}
                             <Dropdown.Item
                                 key="Yes"
                                 onClick={() => {
@@ -238,36 +232,38 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                             >
                                 No
                             </Dropdown.Item>
-                        </SplitButton>
-                        <Form.Select ref={changeSelectedBondOrderValueRef} disabled={!changeOrderBond}>
-                            {monomerBonds.map(bond => (
-                                <option key={bond.label} value={bond.label}>
-                                    {bond.label}
-                                </option>
-                            ))}
-                        </Form.Select>
-                    </InputGroup>
-                    <Row style={{ justifyContent: "center", display: changeOrderBond ? "flex" : "none" }}>
-                        <Form.Select style={{ width: "50%" }} ref={newBondOrderValueRef}>
-                            <option key={"SINGLE"} value={"SINGLE"}>
-                                SINGLE
-                            </option>
-                            <option key={"DOUBLE"} value={"DOUBLE"}>
-                                DOUBLE
-                            </option>
-                            <option key={"TRIPLE"} value={"TRIPLE"}>
-                                TRIPLE
-                            </option>
-                        </Form.Select>
-                    </Row>
-                </div>
-                <div>
-                    <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
-                        Change formal charge of an atom...
-                    </Form.Label>
-                    <InputGroup>
-                        <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
-                            {/* @ts-ignore */}
+                        </SplitButton> */}
+                <MoorhenSelect ref={changeSelectedBondOrderValueRef} disabled={!changeOrderBond}>
+                    {monomerBonds.map(bond => (
+                        <option key={bond.label} value={bond.label}>
+                            {bond.label}
+                        </option>
+                    ))}
+                </MoorhenSelect>
+                {/* </InputGroup> */}
+                <Row style={{ justifyContent: "center", display: changeOrderBond ? "flex" : "none" }}>
+                    <MoorhenSelect ref={newBondOrderValueRef}>
+                        <option key={"SINGLE"} value={"SINGLE"}>
+                            SINGLE
+                        </option>
+                        <option key={"DOUBLE"} value={"DOUBLE"}>
+                            DOUBLE
+                        </option>
+                        <option key={"TRIPLE"} value={"TRIPLE"}>
+                            TRIPLE
+                        </option>
+                    </MoorhenSelect>
+                </Row>
+                <InputGroup>
+                    <MoorhenToggle
+                        label={"Change formal charge of an atom..."}
+                        checked={changeAtomCharge}
+                        onChange={() => setChangeAtomCharge(!changeAtomCharge)}
+                        // ref={changeAtomChargeValueRef}
+                    />
+                    {/* <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
+                            
+
                             <Dropdown.Item
                                 key="Yes"
                                 onClick={() => {
@@ -286,35 +282,34 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                             >
                                 No
                             </Dropdown.Item>
-                        </SplitButton>
-                        <Form.Select disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
-                            {monomerAtoms.map(atom => {
-                                const label = parseAtomInfoLabel(atom);
-                                return (
-                                    <option key={label} value={label}>
-                                        {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
-                                    </option>
-                                );
-                            })}
-                        </Form.Select>
-                    </InputGroup>
-                    <Row style={{ justifyContent: "center", display: changeAtomCharge ? "flex" : "none" }}>
-                        <TextField
-                            style={{ margin: "0.5rem", width: "50%" }}
-                            label="New charge"
-                            type="number"
-                            variant="standard"
-                            error={isNaN(parseInt(newAtomCharge)) || parseInt(newAtomCharge) === Infinity}
-                            value={newAtomCharge}
-                            onChange={evt => {
-                                newAtomChargeValueRef.current = evt.target.value;
-                                setNewAtomCharge(evt.target.value);
-                            }}
-                        />
-                    </Row>
-                </div>
+                        </SplitButton> */}
+                    <MoorhenSelect disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
+                        {monomerAtoms.map(atom => {
+                            const label = parseAtomInfoLabel(atom);
+                            return (
+                                <option key={label} value={label}>
+                                    {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
+                                </option>
+                            );
+                        })}
+                    </MoorhenSelect>
+                </InputGroup>
+                {changeAtomCharge ? (
+                    <TextField
+                        style={{ margin: "0.5rem", width: "50%" }}
+                        label="New charge"
+                        type="number"
+                        variant="standard"
+                        error={isNaN(parseInt(newAtomCharge)) || parseInt(newAtomCharge) === Infinity}
+                        value={newAtomCharge}
+                        onChange={evt => {
+                            newAtomChargeValueRef.current = evt.target.value;
+                            setNewAtomCharge(evt.target.value);
+                        }}
+                    />
+                ) : null}
             </MoorhenStack>
-        </Card>
+        </MoorhenStack>
     );
 });
 

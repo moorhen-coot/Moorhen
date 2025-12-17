@@ -1,6 +1,6 @@
-import { Form, FormSelect } from "react-bootstrap";
 import { forwardRef } from "react";
 import { moorhen } from "../../../types/moorhen";
+import { MoorhenSelect } from "./Select";
 
 type MoorhenChainSelectPropsType = {
     allowedTypes?: number[];
@@ -45,11 +45,8 @@ export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSele
     };
 
     return (
-        <Form.Group style={{ width: width, margin: margin, height: height }}>
-            <Form.Label>{label}</Form.Label>
-            <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} onChange={handleChange}>
-                {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) : null}
-            </FormSelect>
-        </Form.Group>
+        <MoorhenSelect ref={selectRef} defaultValue={defaultValue} onChange={handleChange} label={label}>
+            {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) : null}
+        </MoorhenSelect>
     );
 });
