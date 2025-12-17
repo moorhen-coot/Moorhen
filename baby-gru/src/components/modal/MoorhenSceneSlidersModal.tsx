@@ -260,7 +260,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     }, [displayBuffers,storeMolecules])
 
-    const atomSpan = useMemo(() => {
+    const [atomSpan,atomCOM] = useMemo(() => {
         let min_x =  1e5;
         let max_x = -1e5;
         let min_y =  1e5;
@@ -285,9 +285,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         })
 
         let atom_span = 9999.0
-        if(haveAtoms)
+        let atom_com = [0,0,0]
+        if(haveAtoms){
             atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
-        return atom_span
+            atom_com = [(max_x + min_x)/2,(max_y + min_y)/2,(max_z + min_z)/2]
+        }
+        return [atom_span,atom_com]
     }, [displayBuffers])
 
     const drawGL = async (width,height) => {
@@ -330,8 +333,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         )
         mat4.multiply(mvMatrix, mvMatrix, theMatrix);
 
-        //FIXME - hack for 5a3h centre.
-        mat4.translate(mvMatrix,mvMatrix,[-64,-40,-24])
+        mat4.translate(mvMatrix,mvMatrix,[-atomCOM[0],-atomCOM[1],-atomCOM[2]])
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -451,6 +453,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const depthBlurDepthPos = depthBlurDepth * plotWidth
 
         ctx.save()
+
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -464,7 +467,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         fogGradient.addColorStop(1, "#ffffffff");
 
         ctx.fillStyle = fogGradient
-        ctx.fillRect(fogStartPos,0,fogEndPos-fogStartPos,canvas.height)
+        const fogDrawStart = Math.max(fogStartPos,clipStartPos)
+        const fogDrawWidth = Math.min(fogEndPos,clipEndPos)-fogDrawStart
+        ctx.fillRect(fogDrawStart,0,fogDrawWidth,canvas.height)
         /*
         if(imageRef.current&&imageRef.current.complete&&atomSpan<9999) {
             const imgSize = canvasRef.current.height * atomSpan/scale
