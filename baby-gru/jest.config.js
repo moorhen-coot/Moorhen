@@ -19,6 +19,7 @@ module.exports = {
             transformIgnorePatterns: ["node_modules/(?!(uuid)/)"],
             moduleNameMapper: {
                 "\\.(css|less|scss)$": "<rootDir>/tests/__mocks__/mockStyle.js",
+                "\\.(svg)$": "<rootDir>/tests/__mocks__/mockSvg.js",
                 mockService: "<rootDir>/tests/__mocks__",
             },
         },
