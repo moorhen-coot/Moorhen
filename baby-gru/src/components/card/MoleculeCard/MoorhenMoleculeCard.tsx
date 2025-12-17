@@ -10,7 +10,6 @@ import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import { addGeneralRepresentation, addMolecule, hideMolecule, showMolecule } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
-import { MoorhenMoleculeCardButtonBar } from "../../button-bar/MoorhenMoleculeCardButtonBar";
 import { MoorhenButton, MoorhenPopoverButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
