@@ -442,7 +442,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atomSpan * 1.5
+        const scale = canvas.width/2/window.devicePixelRatio
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -620,7 +620,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         setMouseHeldDown(true)
 
-        const scale = atomSpan * 1.5
+        const scale = canvasRef.current.width/2/window.devicePixelRatio
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -655,7 +655,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const [x,y] = getXY(evt)
 
-        const scale = atomSpan * 1.5
+        const scale = canvasRef.current.width/2/window.devicePixelRatio
 
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
