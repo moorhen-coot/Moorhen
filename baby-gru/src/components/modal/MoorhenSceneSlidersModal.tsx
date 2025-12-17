@@ -231,6 +231,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const urlPrefix = usePaths().urlPrefix;
 
     const displayBuffers = store.getState().glRef.displayBuffers
+    const storeMolecules = store.getState().molecules.moleculeList
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
@@ -243,6 +244,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
 
     const myBuffers:DisplayBuffer[] = useMemo(() => {
+
         if(!canvasRefWebGL)
             return []
 
@@ -256,7 +258,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         buildBuffers(clonedBuffers,gl,true)
         return clonedBuffers
 
-    }, [displayBuffers])
+    }, [displayBuffers,storeMolecules])
 
     const atomSpan = useMemo(() => {
         let min_x =  1e5;
@@ -312,7 +314,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         mat4.ortho(pMatrix, -width/2/window.devicePixelRatio, width/2/window.devicePixelRatio, -height/2/window.devicePixelRatio, height/2/window.devicePixelRatio, 0.1, 1000.0);
 
         const theMatrix = quatToMat4(quat);
-        console.log(theMatrix)
 
         const mvMatrix = mat4.create();
         mat4.set(mvMatrix,
@@ -350,7 +351,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.enableVertexAttribArray(programInstancedRef.current.vertexPositionAttribute);
         gl.enableVertexAttribArray(programInstancedRef.current.vertexNormalAttribute);
 
-        console.log(myBuffers)
         /*
         for (const buffer of myBuffers) {
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
@@ -409,6 +409,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.enableVertexAttribArray(programRef.current.vertexNormalAttribute);
 
         for (const buffer of myBuffers) {
+            if(buffer.visible)
             if(!buffer.triangleInstanceOriginBuffer||buffer.triangleInstanceOriginBuffer.length===0){
                 for (let j = 0; j < buffer.triangleVertexPositionBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleVertexPositionBuffer[j].numItems>0){
@@ -453,43 +454,26 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
+        ctx.fillStyle = "#77222244"
+        ctx.fillRect(0,0,clipStartPos,canvas.height)
+        ctx.fillRect(clipEndPos,0,canvas.width-clipStartPos,canvas.height)
 
-        const imgSize = canvasRef.current.height * atomSpan/scale
 
+        const fogGradient = ctx.createLinearGradient(fogStartPos, 0, fogEndPos, 0)
+        fogGradient.addColorStop(0, "#ffffff00");
+        fogGradient.addColorStop(1, "#ffffffff");
+
+        ctx.fillStyle = fogGradient
+        ctx.fillRect(fogStartPos,0,fogEndPos-fogStartPos,canvas.height)
+        /*
         if(imageRef.current&&imageRef.current.complete&&atomSpan<9999) {
-            //ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
+            const imgSize = canvasRef.current.height * atomSpan/scale
+            ctx.drawImage(imageRef.current, canvasRef.current.width/2-imgSize/2, canvasRef.current.height/2-imgSize/2, imgSize, imgSize);
         }
+        */
 
         let hovering = false
         let drawText = ""
-
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Front clip"
-        } else {
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 3
-        }
-        ctx.beginPath()
-        ctx.moveTo(clipStartPos,0)
-        ctx.lineTo(clipStartPos,canvas.height)
-        ctx.stroke()
-
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Back clip"
-        } else {
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 3
-        }
-        ctx.beginPath()
-        ctx.moveTo(clipEndPos,0)
-        ctx.lineTo(clipEndPos,canvas.height)
-        ctx.stroke()
 
         if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
             ctx.strokeStyle = "white"
@@ -531,6 +515,34 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.beginPath()
         ctx.moveTo(depthBlurDepthPos,0)
         ctx.lineTo(depthBlurDepthPos,canvas.height)
+        ctx.stroke()
+
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
+            ctx.strokeStyle = "white"
+            ctx.lineWidth = 4
+            hovering = true
+            drawText = "Front clip"
+        } else {
+            ctx.strokeStyle = "red"
+            ctx.lineWidth = 3
+        }
+        ctx.beginPath()
+        ctx.moveTo(clipStartPos,0)
+        ctx.lineTo(clipStartPos,canvas.height)
+        ctx.stroke()
+
+        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
+            ctx.strokeStyle = "white"
+            ctx.lineWidth = 4
+            hovering = true
+            drawText = "Back clip"
+        } else {
+            ctx.strokeStyle = "red"
+            ctx.lineWidth = 3
+        }
+        ctx.beginPath()
+        ctx.moveTo(clipEndPos,0)
+        ctx.lineTo(clipEndPos,canvas.height)
         ctx.stroke()
 
         ctx.fillStyle = "white"
@@ -700,7 +712,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
-        console.log(gl)
         const vertexShaderInstanced = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
         const fragmentShader = getShader(gl, triangle_side_on_view_fragment_shader_source, "fragment");
         programInstancedRef.current = initSideOnShadersInstanced(vertexShaderInstanced,fragmentShader,gl)
@@ -711,7 +722,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     useEffect(() => {
         plotTheData()
-    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat])
+    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
 
 
     return (
