@@ -4,7 +4,7 @@ import { userEvent } from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { createRef } from 'react';
 import { MoorhenInstanceProvider, MoorhenInstance } from '../../src/InstanceManager';
-import { MoorhenBackupSelect } from '../../src/components/select/MoorhenBackupSelect';
+import { MoorhenBackupSelect } from '../../src/components/menu-item/Backups';
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenBackupSelect', () => {

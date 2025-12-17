@@ -14,9 +14,9 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 
 const GET_POLYMER_INFO = gql(`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {

@@ -8,7 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 export const MakeMaskedMapsSplitByChain = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);

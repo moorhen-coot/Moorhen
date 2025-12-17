@@ -7,7 +7,7 @@ import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const SharpenBlurMap = () => {

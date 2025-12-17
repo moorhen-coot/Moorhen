@@ -18,7 +18,7 @@ export { CommandCentre } from "./InstanceManager/CommandCentre";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
 export { Preferences } from "./components/managers/preferences/MoorhenPreferences";
 export { MoorhenMoleculeSelect } from "./components/inputs";
-export { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
+export { MoorhenMapSelect } from "./components/inputs/Selector/MoorhenMapSelect";
 export { MoorhenSlider } from "./components/inputs";
 export { FetchOnlineSources } from "./components/menu-item";
 export { MoorhenRamachandran } from "./components/validation-tools/MoorhenRamachandran";

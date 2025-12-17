@@ -7,8 +7,8 @@ import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

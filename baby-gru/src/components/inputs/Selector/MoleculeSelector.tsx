@@ -1,6 +1,8 @@
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
+import { MoorhenStack } from "../../interface-base";
+import { MoorhenSelect } from "./Select";
 import "./selectors.css";
 
 type MoorhenMoleculeSelectType = {
@@ -66,24 +68,14 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     };
 
     return (
-        <div
-            className="moorhen__selector-container"
-            style={{
-                ...props.style,
-            }}
+        <MoorhenSelect
+            label={props.label === undefined ? "Select Molecule:" : props.label}
+            disabled={disabled}
+            defaultValue={props.selected ? props.selected : 0}
+            onChange={e => handleChange(e)}
+            ref={props.ref}
         >
-            <label htmlFor="MoleculeSelector">{props.label === undefined ? "Select Molecule:" : props.label}</label>
-            <select
-                disabled={disabled}
-                defaultValue={props.selected ? props.selected : 0}
-                name="MoleculeSelector"
-                id="MoleculeSelector"
-                className="moorhen__selector"
-                onChange={e => handleChange(e)}
-                ref={props.ref}
-            >
-                {options}
-            </select>
-        </div>
+            {options}
+        </MoorhenSelect>
     );
 };

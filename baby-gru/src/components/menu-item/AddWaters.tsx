@@ -9,7 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenPreciseInput } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 export const AddWaters = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);

@@ -1,6 +1,6 @@
-import React, { ChangeEvent, forwardRef } from "react";
-import { Form, FormSelect } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
+import React, { ChangeEvent } from "react";
+import { MoorhenSelect } from "..";
+import { moorhen } from "../../../types/moorhen";
 
 type MoorhenMapSelectPropsType = {
     height?: string;
@@ -10,7 +10,8 @@ type MoorhenMapSelectPropsType = {
     filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     defaultValue?: number | null;
-    selectRef?: React.Ref<HTMLSelectElement>;
+    ref?: React.Ref<HTMLSelectElement>;
+    disabled?: boolean;
 };
 
 /**
@@ -38,45 +39,44 @@ type MoorhenMapSelectPropsType = {
      width='100%' label='Select a map' onChange={handleMapChange} />
  * )
  */
-export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPropsType>((props, selectRef) => {
-    
-    const { 
+export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
+    const {
         height = "4rem",
         width = "20rem",
         maps = null,
         label = "Map",
         filterFunction = () => true,
-        defaultValue = -999999
+        defaultValue = -999999,
+        ref,
     } = props;
 
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt);
     };
 
-    const getMapOptions = () => {
-        const mapOptions:React.JSX.Element[] = [];
+    const filteredMaps = maps ? maps.filter(filterFunction) : [];
+    const isDisabled = props.disabled ?? filteredMaps.length === 0;
 
-        if (maps) {
-            maps.forEach((map) => {
-                if (filterFunction(map)) {
-                    mapOptions.push(
-                        <option key={map.molNo} value={map.molNo}>
-                            {map.molNo}: {map.name}
-                        </option>
-                    );
-                }
-            });
-        }
-
-        return mapOptions.length > 0 ? mapOptions : null;
-    };
+    const mapOptions: React.JSX.Element[] = [];
+    if (filteredMaps.length > 0) {
+        filteredMaps.forEach(map => {
+            mapOptions.push(
+                <option key={map.molNo} value={map.molNo}>
+                    {map.molNo}: {map.name}
+                </option>
+            );
+        });
+    } else {
+        mapOptions.push(
+            <option selected disabled>
+                No maps available
+            </option>
+        );
+    }
 
     return (
-        <Form.Group style={{ width: width, margin: "0.5rem", height: height }}>
-            <Form.Label>{label}</Form.Label>
-            <FormSelect size="sm" ref={selectRef} defaultValue={defaultValue} onChange={handleChange}>
-                {getMapOptions()}
-            </FormSelect>
-        </Form.Group>
+        <MoorhenSelect ref={ref} defaultValue={defaultValue} onChange={handleChange} label={label} inline disabled={isDisabled}>
+            {mapOptions}
+        </MoorhenSelect>
     );
-});
+};

@@ -8,3 +8,4 @@ export { MoorhenPopoverButton } from "../interface-base/PopoverButton";
 export { MoorhenMoleculeSelect } from "./Selector/MoleculeSelector";
 export { MoorhenToggle } from "./MoorhenToggle/Toggle";
 export { MoorhenTextInput } from "./TextInput";
+export { MoorhenSelect } from "./Selector/Select";

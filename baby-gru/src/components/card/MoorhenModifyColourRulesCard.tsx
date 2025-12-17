@@ -9,9 +9,9 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard";
 

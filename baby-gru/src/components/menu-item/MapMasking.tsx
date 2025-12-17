@@ -9,9 +9,9 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const MapMasking = () => {

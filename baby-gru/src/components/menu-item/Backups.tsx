@@ -1,10 +1,9 @@
 import { useSnackbar } from "notistack";
 import { Button, Row, Stack } from "react-bootstrap";
-import { useCallback, useRef } from "react";
-import { useCommandAndCapsule } from "../../InstanceManager";
-import { MoorhenButton } from "../inputs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useCommandAndCapsule, useTimeCapsule } from "../../InstanceManager";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect";
 
 export const Backups = (props: { disabled: boolean; loadSession: (sessionDataString: string) => Promise<void> }) => {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -44,3 +43,41 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
     );
 };
 ("Recover session backup...");
+
+type MoorhenBackupSelectPropsType = {
+    height?: string;
+    width?: string;
+    label?: string;
+    ref?: React.Ref<HTMLSelectElement>;
+};
+
+export const MoorhenBackupSelect = (props: MoorhenBackupSelectPropsType) => {
+    const timeCapsule = useTimeCapsule();
+    const { ref, label } = props;
+
+    const [backupOptions, setBackupOptions] = useState<null | React.JSX.Element[]>(null);
+
+    useEffect(() => {
+        async function fetchKeys(): Promise<void> {
+            const sortedKeys = await timeCapsule.current.getSortedKeys();
+            const newStorageOptions = sortedKeys.map((key, index) => {
+                return (
+                    <option key={`${key.label}-${index}`} value={JSON.stringify(key)}>
+                        {key.label}
+                    </option>
+                );
+            });
+            setBackupOptions(newStorageOptions);
+        }
+
+        if (timeCapsule.current) {
+            fetchKeys();
+        }
+    }, [timeCapsule]);
+
+    return (
+        <MoorhenSelect label={label} ref={ref} defaultValue={-999999} inline={false}>
+            {backupOptions}
+        </MoorhenSelect>
+    );
+};

@@ -44,6 +44,7 @@
 .moorhen__input__label,
 .moorhen__input__label-menu {
     display: inline-block;
+    white-space: nowrap;
     width: auto !important;
     color: var(--moorhen-primary);
     padding-right: 0rem;

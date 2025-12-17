@@ -5,7 +5,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;

@@ -1,4 +1,3 @@
-import { Form } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -8,7 +7,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 export const LoadTutorialData = () => {
     const dispatch = useDispatch();
@@ -76,14 +75,11 @@ export const LoadTutorialData = () => {
 
     return (
         <>
-            <Form.Group className="moorhen-form-group" controlId="loadTutorialData">
-                <Form.Label>Select tutorial number</Form.Label>
-                <Form.Select ref={tutorialNumberSelectorRef}>
-                    {allTutorialNumbers.map(tutorialNumber => {
-                        return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>;
-                    })}
-                </Form.Select>
-            </Form.Group>
+            <MoorhenSelect label="Select Tutorial Data">
+                {allTutorialNumbers.map(tutorialNumber => {
+                    return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>;
+                })}
+            </MoorhenSelect>
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );

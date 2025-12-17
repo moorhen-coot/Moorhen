@@ -5,8 +5,8 @@ import React, { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
 import { MoorhenButton } from "../inputs";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
 export const AssociateReflectionsToMap = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);

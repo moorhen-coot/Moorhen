@@ -7,7 +7,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { convertRemToPx } from "../../utils/utils";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 
 interface MoorhenRamachandranProps {
     resizeTrigger?: boolean;

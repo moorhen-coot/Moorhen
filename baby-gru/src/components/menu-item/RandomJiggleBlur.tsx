@@ -7,7 +7,7 @@ import { MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 export const RandomJiggleBlur = () => {
     const commandCentre = useCommandCentre();

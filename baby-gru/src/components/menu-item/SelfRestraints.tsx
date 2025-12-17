@@ -10,7 +10,7 @@ import { MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 
 export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

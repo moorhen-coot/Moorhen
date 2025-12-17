@@ -12,8 +12,8 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapp
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
 import { NcsColourSwatch } from "./MoorhenColourRuleCard";
 import {

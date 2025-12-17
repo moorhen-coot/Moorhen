@@ -11,8 +11,8 @@ import { residueCodesOneToThree } from "../../utils/enums";
 import { convertViewtoPx, getResidueInfo } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

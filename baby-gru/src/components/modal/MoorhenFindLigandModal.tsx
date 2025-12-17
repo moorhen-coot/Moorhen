@@ -11,9 +11,9 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 const LigandHitCard = (props: {

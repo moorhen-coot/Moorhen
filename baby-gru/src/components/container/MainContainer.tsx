@@ -293,25 +293,25 @@ const MoorhenContainer = (props: ContainerProps) => {
         head.appendChild(style);
     }, []);
 
-    useLayoutEffect(() => {
-        const head = document.head;
-        const style: HTMLLinkElement = document.createElement("link");
+    // useLayoutEffect(() => {
+    //     const head = document.head;
+    //     const style: HTMLLinkElement = document.createElement("link");
 
-        if (isDark) {
-            style.href = `${urlPrefix}/darkly.css`;
-        } else {
-            style.href = `${urlPrefix}/flatly.css`;
-        }
+    //     if (isDark) {
+    //         style.href = `${urlPrefix}/darkly.css`;
+    //     } else {
+    //         style.href = `${urlPrefix}/flatly.css`;
+    //     }
 
-        style.rel = "stylesheet";
-        // style.async = true;
-        style.type = "text/css";
+    //     style.rel = "stylesheet";
+    //     // style.async = true;
+    //     style.type = "text/css";
 
-        head.appendChild(style);
-        return () => {
-            head.removeChild(style);
-        };
-    }, [isDark, isGlobalInstanceReady]);
+    //     head.appendChild(style);
+    //     return () => {
+    //         head.removeChild(style);
+    //     };
+    // }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
@@ -380,39 +380,6 @@ const MoorhenContainer = (props: ContainerProps) => {
     }, [userPreferencesMounted]);
 
     console.log("execute container");
-
-    // useEffect(() => {
-    //     const checkMoleculeSizes = async () => {
-    //         const moleculeAtomCounts = await Promise.all(molecules.map(molecule => molecule.getNumberOfAtoms()));
-    //         const totalAtomCount = moleculeAtomCounts.reduce((partialAtomCount, atomCount) => partialAtomCount + atomCount, 0);
-    //         if (totalAtomCount >= 80000) {
-    //             dispatch(setEnableAtomHovering(false));
-    //         }
-    //     };
-    //     checkMoleculeSizes();
-    // }, [molecules]);
-
-    // useEffect(() => {
-    //     if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
-    //         if (
-    //             lastHoveredAtomRef.current == null ||
-    //             hoveredAtom.molecule !== lastHoveredAtomRef.current.molecule ||
-    //             hoveredAtom.cid !== lastHoveredAtomRef.current.cid
-    //         ) {
-    //             hoveredAtom.molecule.drawHover(hoveredAtom.cid);
-    //             //if we have changed molecule, might have to clean up hover display item of previous molecule
-    //         }
-    //     }
-
-    //     if (
-    //         lastHoveredAtomRef.current !== null &&
-    //         lastHoveredAtomRef.current.molecule !== null &&
-    //         lastHoveredAtomRef.current.molecule !== hoveredAtom.molecule
-    //     ) {
-    //         lastHoveredAtomRef.current.molecule.clearBuffersOfStyle("hover");
-    //     }
-    //     lastHoveredAtomRef.current = hoveredAtom;
-    // }, [hoveredAtom]);
 
     useEffect(() => {
         dispatch(setRequestDrawScene(true));

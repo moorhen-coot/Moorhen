@@ -11,10 +11,10 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 
 const lsqkbResidueRangesReducer = (
     oldList: moorhen.lskqbResidueRangeMatch[],

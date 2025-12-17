@@ -10,9 +10,9 @@ import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton, MoorhenGradientPicker } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 
 Chart.register(...registerables);
 

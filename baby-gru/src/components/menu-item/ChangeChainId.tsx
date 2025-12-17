@@ -5,8 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 
 export const ChangeChainId = () => {
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);

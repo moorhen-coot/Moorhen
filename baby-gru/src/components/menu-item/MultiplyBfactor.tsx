@@ -9,7 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect";
 
 export const MultiplyBfactor = () => {
