@@ -2,7 +2,7 @@ import '@testing-library/jest-dom'
 import { render, screen, cleanup }  from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
-import { MoorhenMapSelect }  from '../../src/components/select/MoorhenMapSelect'
+import { MoorhenMapSelect }  from '../../src/components/inputs/Selector/MoorhenMapSelect'
 import { MoorhenMap } from '../../src/utils/MoorhenMap'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 

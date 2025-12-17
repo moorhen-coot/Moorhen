@@ -40,15 +40,7 @@ type MoorhenMapSelectPropsType = {
  * )
  */
 export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
-    const {
-        height = "4rem",
-        width = "20rem",
-        maps = null,
-        label = "Map",
-        filterFunction = () => true,
-        defaultValue = -999999,
-        ref,
-    } = props;
+    const { height = "4rem", width = "20rem", maps = null, label = "Map", filterFunction = () => true, defaultValue = 0, ref } = props;
 
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt);
@@ -68,7 +60,7 @@ export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
         });
     } else {
         mapOptions.push(
-            <option selected disabled>
+            <option disabled value={0}>
                 No maps available
             </option>
         );

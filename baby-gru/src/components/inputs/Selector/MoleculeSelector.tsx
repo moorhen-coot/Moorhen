@@ -22,19 +22,20 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     const {
         onSelect = null,
         onChange = null,
-        selected,
         molecules = null,
         allowAny,
         ref,
         label,
         style,
         filterFunction = () => true,
+        selected,
     } = props;
 
     const storeMolecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const moleculesList = molecules ? molecules : storeMolecules;
 
     let disabled: boolean = props.disabled;
+
     const options = moleculesList.map(option => {
         if (filterFunction(option)) {
             return (
@@ -56,7 +57,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     if (options.length === 0) {
         disabled = true;
         options.push(
-            <option selected disabled>
+            <option disabled value={0}>
                 No molecules loaded
             </option>
         );
@@ -71,7 +72,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         <MoorhenSelect
             label={props.label === undefined ? "Select Molecule:" : props.label}
             disabled={disabled}
-            defaultValue={props.selected ? props.selected : 0}
+            defaultValue={selected ? selected : 0}
             onChange={e => handleChange(e)}
             ref={props.ref}
         >
