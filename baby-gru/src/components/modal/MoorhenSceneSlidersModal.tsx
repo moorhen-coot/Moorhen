@@ -241,7 +241,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
 
-    const myBuffers:DisplayBuffer[] = useMemo(() => {
+    let myBuffers:DisplayBuffer[]
+    myBuffers = useMemo(() => {
 
         if(!canvasRefWebGL)
             return []
@@ -258,7 +259,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     }, [displayBuffers,storeMolecules])
 
-    const [atomSpan,atomCOM] = useMemo(() => {
+    const atomSpan = useMemo(() => {
         let min_x =  1e5;
         let max_x = -1e5;
         let min_y =  1e5;
@@ -283,12 +284,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         })
 
         let atom_span = 9999.0
-        let atom_com = [0,0,0]
         if(haveAtoms){
             atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
-            atom_com = [(max_x + min_x)/2,(max_y + min_y)/2,(max_z + min_z)/2]
         }
-        return [atom_span,atom_com]
+        return atom_span
     }, [displayBuffers])
 
     const drawGL = async (width,height) => {
@@ -318,12 +317,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const mvMatrix = mat4.create();
         mat4.set(mvMatrix,
-            /*
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, -100.0, 1.0,
-            */
             0.0, 0.0, 1.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
            -1.0, 0.0, 0.0, 0.0,
@@ -700,6 +693,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     useEffect(() => {
 
+        if(!canvasRefWebGL) return
+        if(!canvasRefWebGL.current) return
+
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
         const vertexShaderInstanced = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
@@ -708,6 +704,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const vertexShader = getShader(gl, triangle_side_on_view_vertex_shader_source, "vertex");
         programRef.current = initSideOnShaders(vertexShader,fragmentShader,gl)
 
+        const clonedBuffers = cloneBuffers(displayBuffers,gl)
+        buildBuffers(clonedBuffers,gl,true)
+        myBuffers = clonedBuffers
     }, [])
 
     useEffect(() => {
