@@ -10,6 +10,7 @@ type MoorhenStackType = {
     card?: boolean;
     className?: string;
     inputGrid?: boolean;
+    gridWidth?: 1 | 2 | 3 | 4;
 };
 
 export const MoorhenStack = ({
@@ -22,6 +23,7 @@ export const MoorhenStack = ({
     card = null,
     className,
     inputGrid = false,
+    gridWidth = 1,
 }: MoorhenStackType) => {
     let mainClass = inputGrid
         ? "moorhen__input-grid"
@@ -35,7 +37,16 @@ export const MoorhenStack = ({
         mainClass += ` ${className}`;
     }
     return (
-        <div className={mainClass} style={{ gap, justifyContent: justify, alignItems: align, ...style }}>
+        <div
+            className={mainClass}
+            style={{
+                ...(inputGrid && { gridTemplateColumns: `repeat(${gridWidth}, auto 1fr)` }),
+                gap,
+                justifyContent: justify,
+                alignItems: align,
+                ...style,
+            }}
+        >
             {children}
         </div>
     );

@@ -10,6 +10,7 @@ type MoorhenToggleProps = {
     type?: "switch" | "radio" | "checkbox";
     ref?: React.Ref<HTMLInputElement>;
     name?: string;
+    inline?: boolean;
 };
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
