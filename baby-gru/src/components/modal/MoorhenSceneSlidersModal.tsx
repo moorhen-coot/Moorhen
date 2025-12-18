@@ -11,7 +11,7 @@ import { MoorhenReduxStore as store } from '../../store/MoorhenReduxStore'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
-import { getShader, initSideOnShaders, initSideOnShadersInstanced } from '../../WebGLgComponents/mgWebGLShaders'
+import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setClipCap,
     setDepthBlurDepth,
@@ -29,10 +29,11 @@ import {
     setClipStart,
     setClipEnd,
 } from "../../store/glRefSlice";
-import { usePaths } from "../../InstanceManager";
 import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
 import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
 import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
+import { twod_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/twodshapes-side-on-view-vertex-shader.js';
+import { perfect_sphere_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/perfect-sphere-side-on-view-fragment-shader.js';
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
@@ -185,6 +186,33 @@ enum GrabHandle
  BLUR_DEPTH,
 }
 
+interface SideOnProgramSphere extends WebGLProgram {
+        vertexTextureAttribute: GLint;
+        offsetAttribute: GLint;
+        sizeAttribute: GLint;
+        invSymMatrixUniform: WebGLUniformLocation;
+        textureMatrixUniform: WebGLUniformLocation;
+        xPixelOffset: WebGLUniformLocation;
+        yPixelOffset: WebGLUniformLocation;
+        xSSAOScaling: WebGLUniformLocation;
+        ySSAOScaling: WebGLUniformLocation;
+        ShadowMap: WebGLUniformLocation;
+        SSAOMap: WebGLUniformLocation;
+        edgeDetectMap: WebGLUniformLocation;
+        outlineSize: WebGLUniformLocation;
+        shadowQuality: WebGLUniformLocation;
+        doShadows: WebGLUniformLocation;
+        doSSAO: WebGLUniformLocation;
+        doEdgeDetect: WebGLUniformLocation;
+        occludeDiffuse: WebGLUniformLocation;
+        doPerspective: WebGLUniformLocation;
+        clipCap: WebGLUniformLocation;
+        specularPower: WebGLUniformLocation;
+        scaleMatrix: WebGLUniformLocation;
+        ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
+        zoom: WebGLUniformLocation;
+}
+
 interface SideOnProgram extends WebGLProgram {
     pMatrixUniform: WebGLUniformLocation;
     mvMatrixUniform: WebGLUniformLocation;
@@ -226,6 +254,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
+    const sphereProgramRef = useRef<null | SideOnProgramSphere>(null);
 
     const displayBuffers = store.getState().glRef.displayBuffers
     const storeMolecules = store.getState().molecules.moleculeList
@@ -421,6 +450,19 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                         gl.vertexAttribPointer(programRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
                         gl.drawElements(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0);
+                    }
+                }
+            }
+        }
+// useProgram is not a React hook.
+// eslint-disable-next-line
+        gl.useProgram(sphereProgramRef.current)
+        for (const buffer of myBuffers) {
+            if(buffer.visible)
+            if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
+                for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
+                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="PERFECT_SPHERES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
+                        console.log("Some spheres ...",buffer)
                     }
                 }
             }
@@ -710,6 +752,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         programInstancedRef.current = initSideOnShadersInstanced(vertexShaderInstanced,fragmentShader,gl)
         const vertexShader = getShader(gl, triangle_side_on_view_vertex_shader_source, "vertex");
         programRef.current = initSideOnShaders(vertexShader,fragmentShader,gl)
+        const sphereVertexShader = getShader(gl, twod_side_on_view_vertex_shader_source, "vertex");
+        const sphereFragmentShader = getShader(gl, perfect_sphere_side_on_view_fragment_shader_source, "fragment");
+        sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
         buildBuffers(clonedBuffers,gl,true)

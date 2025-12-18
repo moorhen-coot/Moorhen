@@ -1111,6 +1111,53 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
 
 }
 
+export function initSideOnSphereShaders(vertexShader, fragmentShader, gl) {
+    const shaderProgramPerfectSpheres = gl.createProgram();
+    gl.attachShader(shaderProgramPerfectSpheres, vertexShader);
+    gl.attachShader(shaderProgramPerfectSpheres, fragmentShader);
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 0, "aVertexPosition");
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 1, "aVertexColour");
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 2, "aVertexNormal");
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 3, "aVertexTexture");
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 8, "size");
+    gl.bindAttribLocation(shaderProgramPerfectSpheres, 9, "offset");
+    gl.linkProgram(shaderProgramPerfectSpheres);
+
+    if (!gl.getProgramParameter(shaderProgramPerfectSpheres, gl.LINK_STATUS)) {
+        alert("Could not initialise shaders (initSideOnSphereShaders)");
+        console.log(gl.getProgramInfoLog(shaderProgramPerfectSpheres));
+    }
+
+    gl.useProgram(shaderProgramPerfectSpheres);
+
+    shaderProgramPerfectSpheres.vertexPositionAttribute = gl.getAttribLocation(shaderProgramPerfectSpheres, "aVertexPosition");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.vertexPositionAttribute);
+
+    shaderProgramPerfectSpheres.vertexNormalAttribute = gl.getAttribLocation(shaderProgramPerfectSpheres, "aVertexNormal");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.vertexNormalAttribute);
+
+    shaderProgramPerfectSpheres.vertexColourAttribute = gl.getAttribLocation(shaderProgramPerfectSpheres, "aVertexColour");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.vertexColourAttribute);
+
+    shaderProgramPerfectSpheres.vertexTextureAttribute = gl.getAttribLocation(shaderProgramPerfectSpheres, "aVertexTexture");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.vertexTextureAttribute);
+
+    shaderProgramPerfectSpheres.offsetAttribute = gl.getAttribLocation(shaderProgramPerfectSpheres, "offset");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.offsetAttribute);
+
+    shaderProgramPerfectSpheres.sizeAttribute= gl.getAttribLocation(shaderProgramPerfectSpheres, "size");
+    //gl.enableVertexAttribArray(shaderProgramPerfectSpheres.sizeAttribute);
+
+    shaderProgramPerfectSpheres.pMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uPMatrix");
+    shaderProgramPerfectSpheres.mvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uMVMatrix");
+    shaderProgramPerfectSpheres.mvInvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uMVINVMatrix");
+    shaderProgramPerfectSpheres.textureMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "TextureMatrix");
+    shaderProgramPerfectSpheres.invSymMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uINVSymmMatrix");
+
+    return shaderProgramPerfectSpheres
+
+}
+
 export function initSideOnShaders(vertexShader, fragmentShader, gl) {
 
     const shaderProgram = gl.createProgram();
