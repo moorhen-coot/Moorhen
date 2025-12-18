@@ -344,8 +344,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.enableVertexAttribArray(programInstancedRef.current.vertexPositionAttribute);
         gl.enableVertexAttribArray(programInstancedRef.current.vertexNormalAttribute);
 
-        /*
         for (const buffer of myBuffers) {
+            if(buffer.visible)
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
                 for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
@@ -360,7 +360,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
                         gl.vertexAttribPointer(programInstancedRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
-                        if(buffer.triangleInstanceOrientationBuffer[j]){
+                        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 1);
+                        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 1);
+                        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,1);
+                        if(buffer.triangleInstanceOrientationBuffer[j]&&buffer.triangleInstanceOrientations.length>0&&buffer.triangleInstanceOrientations[j].length>0){
                             gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
                             gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
                             gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
@@ -374,19 +377,23 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                             gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+1, 1);
                             gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+2, 1);
                             gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+3, 1);
+                            gl.drawElementsInstanced(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
                         } else {
+                            console.log("Oh, no orientations! Need to do something else.")
                             gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
                             gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
                             gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
                             gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+3);
                         }
+                        /*
                         console.log("Drawing",buffer.triangleVertexIndexBuffer[j].numItems,"triangles")
-                        gl.drawElements(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0);
+                        console.log("Buffer",buffer)
+                        gl.drawElementsInstanced(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
+                        */
                     }
                 }
             }
         }
-        */
 // useProgram is not a React hook.
 // eslint-disable-next-line
         gl.useProgram(programRef.current);

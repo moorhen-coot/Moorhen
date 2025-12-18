@@ -473,6 +473,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.changeColourWithSymmetry = oldBuffer.changeColourWithSymmetry
         theBuffer.triangleIndexs = oldBuffer.triangleIndexs ? oldBuffer.triangleIndexs.slice() : null
         theBuffer.triangleVertices = oldBuffer.triangleVertices ? oldBuffer.triangleVertices.slice() : null
+        theBuffer.triangleInstanceOrientations = oldBuffer.triangleInstanceOrientations ? oldBuffer.triangleInstanceOrientations.slice() : null
         theBuffer.triangleInstanceOrigins = oldBuffer.triangleInstanceOrigins ? oldBuffer.triangleInstanceOrigins.slice() : null
         theBuffer.triangleInstanceSizes = oldBuffer.symmetryMatrices ? oldBuffer.triangleInstanceSizes.slice() : null
         theBuffer.triangleColours = oldBuffer.triangleColours ? oldBuffer.triangleColours.slice() : null
