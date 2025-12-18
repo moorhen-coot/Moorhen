@@ -1,8 +1,10 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
+import { useState } from "react";
 import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
-import { MoorhenIcon } from "../icons";
+import { MoorhenFileInput } from "../inputs";
+import "../interface-base/menu-item.css";
 
 export const AutoLoadFiles = () => {
     const commandCentre = useCommandCentre();
@@ -12,41 +14,41 @@ export const AutoLoadFiles = () => {
     const dispatch = useDispatch();
     const timeCapsule = useTimeCapsule();
     const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIsLoading(true);
         const files: File[] = [];
         if (e.target.files) {
             for (let ifile = 0; ifile < e.target.files.length; ifile++) {
                 files.push(e.target.files[ifile]);
             }
-            autoOpenFiles(files, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, timeCapsule, dispatch);
+            await autoOpenFiles(
+                files,
+                commandCentre,
+                store,
+                monomerLibraryPath,
+                backgroundColor,
+                defaultBondSmoothness,
+                timeCapsule,
+                dispatch
+            );
         }
+        setIsLoading(false);
     };
 
     return (
         <>
-            <label htmlFor="upload-form" className="moorhen__input__label-menu">
-                Load files
-            </label>
-            <label
-                htmlFor="upload-form"
-                className="moorhen__button__default moorhen_menu-custom-left-margin"
-                style={{ cursor: "pointer", height: "2.2rem" }}
-            >
-                <MoorhenIcon size="medium" moorhenSVG="MUISymbolFileOpen" />
-                   Browse...   
-                <input
-                    id="upload-form"
-                    className="moorhen__input-files-upload"
-                    type="file"
-                    accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc"
-                    multiple={true}
-                    style={{ display: "none" }}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        autoLoadHandler(e);
-                    }}
-                />
-            </label>
+            <span className="moorhen__input__label-menu">Open Files</span>
+            <MoorhenFileInput
+                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc"
+                multiple={true}
+                isLoading={isLoading}
+                className="moorhen_menu-custom-left-margin"
+                onChange={e => {
+                    autoLoadHandler(e);
+                }}
+            />
         </>
     );
 };

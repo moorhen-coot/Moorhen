@@ -9,3 +9,4 @@ export { MoorhenMoleculeSelect } from "./Selector/MoleculeSelector";
 export { MoorhenToggle } from "./MoorhenToggle/Toggle";
 export { MoorhenTextInput } from "./TextInput";
 export { MoorhenSelect } from "./Selector/Select";
+export { MoorhenFileInput } from "./Files/Files";

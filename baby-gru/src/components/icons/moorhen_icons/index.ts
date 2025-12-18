@@ -21,6 +21,7 @@ import MUISymbolSettings from "./MUISymbolSettings.svg"
 import MUISymbolRadioButtonChecked from "./MUISymbolRadioButtonChecked.svg"
 import MUISymbolAdd from "./MUISymbolAdd.svg"
 import MUISymbolRemove from "./MUISymbolRemove.svg"
+import MUISymbolProgressActivity from "./MUISymbolProgressActivity.svg"
 import ligand from "./ligand.svg"
 import MUISymbolMenu from "./MUISymbolMenu.svg"
 import plus from "./plus.svg"
@@ -67,6 +68,7 @@ export const moorhenSVGs = {"MUISymbolTiltShiftFilter": MUISymbolTiltShiftFilter
  "MUISymbolRadioButtonChecked": MUISymbolRadioButtonChecked,
  "MUISymbolAdd": MUISymbolAdd,
  "MUISymbolRemove": MUISymbolRemove,
+ "MUISymbolProgressActivity": MUISymbolProgressActivity,
  "ligand": ligand,
  "MUISymbolMenu": MUISymbolMenu,
  "plus": plus,
@@ -114,6 +116,7 @@ export type MoorhenSVG = "MUISymbolTiltShiftFilter" |
  "MUISymbolRadioButtonChecked" |
  "MUISymbolAdd" |
  "MUISymbolRemove" |
+ "MUISymbolProgressActivity" |
  "ligand" |
  "MUISymbolMenu" |
  "plus" |

@@ -31,5 +31,8 @@
         "titleBar.activeForeground": "#FFFBFC"
     },
     "cmake.ignoreCMakeListsMissing": true,
-    "files.associations": { "*.json": "jsonc" }
+    "files.associations": { "*.json": "jsonc" },
+    "files.exclude": {
+        "tsDist/**": true
+    }
 }

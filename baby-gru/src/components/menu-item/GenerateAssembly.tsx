@@ -1,9 +1,8 @@
-import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 export const GenerateAssembly = (props: {
     item: moorhen.Molecule;
@@ -39,12 +38,9 @@ export const GenerateAssembly = (props: {
 
     return (
         <>
-            <Form.Group style={{ width: "10rem", margin: "0" }} controlId="MoorhenGenerateAssemblyMenuItem" className="mb-3">
-                <Form.Label>Assembly</Form.Label>
-                <FormSelect size="sm" ref={ruleSelectRef} onChange={val => setSelectionType(val.target.value)}>
-                    {rows}
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect label="Assembly" ref={ruleSelectRef} onChange={val => setSelectionType(val.target.value)}>
+                {rows}
+            </MoorhenSelect>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );

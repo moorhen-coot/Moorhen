@@ -1,0 +1,21 @@
+@import "../../../colors.css";
+
+.moorhen__input-files-upload {
+    display: none;
+}
+
+.moorhen__input-files-button {
+    border-radius: 0.5rem 0 0 0.5rem;
+    margin: 0;
+}
+.moorhen__input-files-textfield {
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0 0.5rem 0.5rem 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 18rem;
+    height: 2.2rem;
+    margin: 0px;
+    padding: 5px;
+}

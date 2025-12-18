@@ -1,6 +1,7 @@
 @import "../../colors.css";
 
-.moorhen__icon {
+.moorhen__icon,
+.moorhen__icon-spinner {
     display: block;
     width: 100%;
     height: 100%;
@@ -48,4 +49,17 @@
 .moorhen__icon__menu {
     width: 30px;
     height: 30px;
+}
+
+.moorhen__icon-spinner {
+    animation: moorhen-spinner-spin 1s linear infinite;
+}
+
+@keyframes moorhen-spinner-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

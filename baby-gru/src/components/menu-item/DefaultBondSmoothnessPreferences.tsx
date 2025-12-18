@@ -1,9 +1,8 @@
-import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { setDefaultBondSmoothness } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 export const DefaultBondSmoothnessPreferences = () => {
     const dispatch = useDispatch();
@@ -20,20 +19,17 @@ export const DefaultBondSmoothnessPreferences = () => {
 
     const panelContent = (
         <>
-            <Form.Group className="mb-3" style={{ width: "10rem", margin: "0" }} controlId="MoorhenSmoothnessSelector">
-                <Form.Label>Smoothness</Form.Label>
-                <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={defaultBondSmoothness}>
-                    <option value={1} key={1}>
-                        Coarse
-                    </option>
-                    <option value={2} key={2}>
-                        Nice
-                    </option>
-                    <option value={3} key={3}>
-                        Smooth
-                    </option>
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect label="Smoothness" ref={smoothnesSelectRef} defaultValue={defaultBondSmoothness}>
+                <option value={1} key={1}>
+                    Coarse
+                </option>
+                <option value={2} key={2}>
+                    Nice
+                </option>
+                <option value={3} key={3}>
+                    Smooth
+                </option>
+            </MoorhenSelect>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );

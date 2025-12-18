@@ -1,14 +1,15 @@
 import { useSnackbar } from "notistack";
-import { Col, Form, FormSelect, Row } from "react-bootstrap";
+import { Col, Form, Row } from "react-bootstrap";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
-import { Dispatch, RefObject, SetStateAction, useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenSelect, MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const ImportMapCoefficients = () => {
     const dispatch = useDispatch();
@@ -84,137 +85,110 @@ export const ImportMapCoefficients = () => {
 
     return (
         <>
-            <Row>
-                <Form.Group style={{ width: "30rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadDicts" className="mb-3">
-                    <Form.Label>Map coefficient files</Form.Label>
-                    <Form.Control
-                        ref={filesRef}
-                        type="file"
-                        multiple={false}
-                        accept=".mtz"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            handleFileRead(e);
-                        }}
-                    />
-                </Form.Group>
-            </Row>
-            <Row key="Row1" style={{ marginBottom: "1rem" }}>
-                <Col key="F">
-                    Amplitude
-                    <FormSelect size="sm" ref={fSelectRef} defaultValue="FWT" onChange={() => {}}>
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "F")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-                <Col key="Phi">
-                    Phase
-                    <FormSelect size="sm" ref={phiSelectRef} defaultValue="PHWT" onChange={() => {}}>
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "P")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-                <Col key="Weight">
-                    Weight
-                    <FormSelect size="sm" ref={wSelectRef} defaultValue="FOM" onChange={() => {}}>
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "W")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-            </Row>
-            <Row style={{ marginBottom: "1rem" }}>
-                <Col>
-                    <Form.Check label="is diff map" name="isDifference" type="checkbox" ref={isDiffRef} />
-                </Col>
-                <Col>
-                    <Form.Check label="use weight" name="useWeight" type="checkbox" ref={useWeightRef} />
-                </Col>
-                <Row key="Row4" style={{ marginTop: "1rem" }}>
-                    <Col>
-                        <Form.Check
-                            ref={calcStructFactRef}
-                            label="assign labels for structure factor calculation?"
-                            name="calcStructFactors"
-                            type="checkbox"
-                            onChange={() =>
-                                setCalcStructFact(prev => {
-                                    return !prev;
-                                })
-                            }
-                        />
-                    </Col>
-                </Row>
-            </Row>
-            <Row key="Row3" style={{ marginBottom: "1rem" }}>
-                <Col key="F">
-                    Fobs
-                    <FormSelect
-                        size="sm"
-                        disabled={!calcStructFactRef.current?.checked}
-                        ref={fobsSelectRef}
-                        defaultValue="FP"
-                        onChange={() => {}}
-                    >
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "F")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-                <Col key="SigF">
-                    SIGFobs
-                    <FormSelect
-                        size="sm"
-                        disabled={!calcStructFactRef.current?.checked}
-                        ref={sigFobsSelectRef}
-                        defaultValue="SIGFP"
-                        onChange={() => {}}
-                    >
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "Q")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-                <Col key="FreeR">
-                    Free R
-                    <FormSelect
-                        size="sm"
-                        disabled={!calcStructFactRef.current?.checked}
-                        ref={freeRSelectRef}
-                        defaultValue="FREER"
-                        onChange={() => {}}
-                    >
-                        {Object.keys(columns)
-                            .filter(key => columns[key] === "I")
-                            .map(key => (
-                                <option value={key} key={key}>
-                                    {key}
-                                </option>
-                            ))}
-                    </FormSelect>
-                </Col>
-            </Row>
+            <MoorhenFileInput
+                label="Map coefficient files"
+                ref={filesRef}
+                multiple={false}
+                accept=".mtz"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleFileRead(e);
+                }}
+            />
+            <MoorhenStack direction="line">
+                <MoorhenSelect label="Amplitude" inline={false} ref={fSelectRef} defaultValue="FWT" onChange={() => {}}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "F")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+
+                <MoorhenSelect label="Phase" inline={false} ref={phiSelectRef} defaultValue="PHWT" onChange={() => {}}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "P")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+
+                <MoorhenSelect label="Weight" inline={false} ref={wSelectRef} defaultValue="FOM" onChange={() => {}}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "W")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+            </MoorhenStack>
+            <MoorhenToggle label="is diff map" name="isDifference" type="checkbox" ref={isDiffRef} />
+            <MoorhenToggle label="use weight" name="useWeight" type="checkbox" ref={useWeightRef} />
+            <p />
+            <MoorhenToggle
+                ref={calcStructFactRef}
+                label="assign labels for structure factor calculation?"
+                name="calcStructFactors"
+                type="checkbox"
+                onChange={() =>
+                    setCalcStructFact(prev => {
+                        return !prev;
+                    })
+                }
+            />
+            <MoorhenStack direction="line">
+                <MoorhenSelect
+                    label="Fobs"
+                    inline={false}
+                    disabled={!calcStructFactRef.current?.checked}
+                    ref={fobsSelectRef}
+                    defaultValue="FP"
+                    onChange={() => {}}
+                >
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "F")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+                <MoorhenSelect
+                    label="SIGFobs"
+                    inline={false}
+                    disabled={!calcStructFactRef.current?.checked}
+                    ref={sigFobsSelectRef}
+                    defaultValue="SIGFP"
+                    onChange={() => {}}
+                >
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "Q")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+                <MoorhenSelect
+                    label="Free R"
+                    inline={false}
+                    disabled={!calcStructFactRef.current?.checked}
+                    ref={freeRSelectRef}
+                    defaultValue="FREER"
+                    onChange={() => {}}
+                >
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === "I")
+                        .map(key => (
+                            <option value={key} key={key}>
+                                {key}
+                            </option>
+                        ))}
+                </MoorhenSelect>
+            </MoorhenStack>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );

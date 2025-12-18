@@ -2,7 +2,7 @@ import { InfoOutlined } from "@mui/icons-material";
 import { Autocomplete, CircularProgress, MenuItem, Skeleton, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
 import { useSnackbar } from "notistack";
-import { Button, Form, FormSelect, OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
+import { Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -10,7 +10,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
@@ -285,25 +285,22 @@ export const GetMonomer = () => {
                 >
                     <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
                 </OverlayTrigger>
-                <FormSelect ref={sourceSelectRef} size="sm" value={source} onChange={handleSourceChange}>
+                <MoorhenSelect ref={sourceSelectRef} value={source} onChange={handleSourceChange}>
                     <option value={"default"}>Default</option>
                     <option value={"libcoot-api"}>Imported dictionary</option>
                     <option value={"local-monomer-library"}>Local monomer library</option>
                     <option value={"remote-monomer-library"}>Remote monomer library</option>
                     <option value={"pdbe"}>PDBe</option>
-                </FormSelect>
+                </MoorhenSelect>
             </Form.Group>
             {["default", "libcoot-api"].includes(source) && (
                 <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
             )}
             {source === "default" && (
-                <Form.Group className="moorhen-form-group">
-                    <Form.Label>Search by...</Form.Label>
-                    <FormSelect ref={searchModeSelectRef} size="sm" value={searchMode} onChange={handleSearchModeChange}>
-                        <option value={"tlc"}>Three letter code</option>
-                        <option value={"name"}>Compound name</option>
-                    </FormSelect>
-                </Form.Group>
+                <MoorhenSelect ref={searchModeSelectRef} value={searchMode} onChange={handleSearchModeChange}>
+                    <option value={"tlc"}>Three letter code</option>
+                    <option value={"name"}>Compound name</option>
+                </MoorhenSelect>
             )}
             {searchMode === "tlc" ? (
                 <Form.Group className="moorhen-form-group" controlId="MoorhenGetMonomerMenuItem">

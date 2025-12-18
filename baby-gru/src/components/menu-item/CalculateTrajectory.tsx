@@ -1,11 +1,10 @@
 import { useSnackbar } from "notistack";
-import { Form, FormSelect } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { representationLabelMapping } from "../../utils/enums";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 
 const animationRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres"];
@@ -41,23 +40,20 @@ export const CalculateTrajectory = () => {
 
     return (
         <>
-            <Form.Group style={{ margin: "0.5rem", width: "20rem" }}>
-                <Form.Label>Style</Form.Label>
-                <FormSelect
-                    ref={styleSelectRef}
-                    size="sm"
-                    value={representationStyle}
-                    onChange={evt => setRepresentationStyle(evt.target.value)}
-                >
-                    {animationRepresentations.map(key => {
-                        return (
-                            <option value={key} key={key}>
-                                {representationLabelMapping[key]}
-                            </option>
-                        );
-                    })}
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect
+                ref={styleSelectRef}
+                label="Style"
+                value={representationStyle}
+                onChange={evt => setRepresentationStyle(evt.target.value)}
+            >
+                {animationRepresentations.map(key => {
+                    return (
+                        <option value={key} key={key}>
+                            {representationLabelMapping[key]}
+                        </option>
+                    );
+                })}
+            </MoorhenSelect>
             <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
         </>

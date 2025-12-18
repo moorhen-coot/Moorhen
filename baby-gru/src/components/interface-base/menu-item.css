@@ -25,3 +25,7 @@
     background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
     border: 1px solid var(--moorhen-border);
 }
+
+.moorhen_menu-custom-left-margin {
+    margin-left: 1rem;
+}

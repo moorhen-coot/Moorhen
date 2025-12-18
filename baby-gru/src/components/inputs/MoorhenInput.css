@@ -58,28 +58,6 @@
     margin-top: 0.25rem;
 }
 
-.moorhen__input-files-upload {
-    align-items: center;
-    cursor: pointer;
-    padding: 0;
-    height: 2.5rem;
-    margin-left: 0.8rem;
-}
-
-.moorhen__input-files-upload::file-selector-button {
-    margin: 0.5;
-    border: 1px solid var(--moorhen-border);
-    background-color: var(--moorhen-button-background);
-    color: var(--moorhen-secondary);
-    height: 2.5rem;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.moorhen__input-files-upload::file-selector-button:hover {
-    transform: scale(1.05);
-}
-
 .moorhen__input-files-upload:hover,
 .moorhen__input-fetch-online-container:hover {
     border-color: var(--moorhen-focus);

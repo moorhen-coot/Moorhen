@@ -2,6 +2,7 @@ import { SaveOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenSpinner } from "../icons";
 import { MoorhenStack } from "../interface-base";
 import "./container.css";
 
@@ -22,7 +23,7 @@ export const ActivityIndicator = () => {
 
     const busyIndicator = busy ? (
         <>
-            <CircularProgress color="inherit" size="1.6rem" />
+            <MoorhenSpinner size="3rem" />
             &nbsp;&nbsp;&nbsp;
         </>
     ) : null;

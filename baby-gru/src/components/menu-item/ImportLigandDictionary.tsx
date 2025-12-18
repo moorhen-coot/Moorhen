@@ -1,7 +1,7 @@
 import { InfoOutlined } from "@mui/icons-material";
 import { TextField } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Dropdown, Form, FormSelect, InputGroup, OverlayTrigger, SplitButton, Tooltip } from "react-bootstrap";
+import { Dropdown, Form, InputGroup, OverlayTrigger, SplitButton, Tooltip } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -337,10 +337,10 @@ export const SMILESToLigand = () => {
                 >
                     <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
                 </OverlayTrigger>
-                <FormSelect ref={sourceSelectRef} size="sm" value={source} onChange={handleSourceChange}>
+                <MoorhenSelect ref={sourceSelectRef} value={source} onChange={handleSourceChange}>
                     <option value={"smiles"}>SMILES</option>
                     <option value={"pubchem"}>PubChem search</option>
-                </FormSelect>
+                </MoorhenSelect>
             </Form.Group>
 
             <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="SmilesString" className="mb-3">
