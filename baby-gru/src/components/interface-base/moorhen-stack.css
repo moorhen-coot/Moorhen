@@ -25,3 +25,23 @@
     border-radius: 0.5rem;
     margin: 0.5rem;
 }
+
+.moorhen__input-grid {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    width: fit-content;
+    font-family: var(--moorhen-font-family);
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/**
+ * MoorhenStack children within input grid (label + input pairs)
+ * Each child should stay as a flex row
+ */
+.moorhen__input-grid > .moorhen__stack__row {
+    display: contents;
+}

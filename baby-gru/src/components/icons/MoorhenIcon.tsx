@@ -8,11 +8,25 @@ type BaseIconProps = {
     style?: React.CSSProperties;
     isActive?: boolean;
     className?: string;
+    ref?: React.Ref<HTMLSpanElement | HTMLImageElement>;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 };
 
 type MoorhenIconPropsType = BaseIconProps & ({ moorhenSVG: MoorhenSVG; src?: never } | { src: string; moorhenSVG?: never });
 
-export const MoorhenIcon = ({ moorhenSVG, src, alt, size, isActive = null, className = "", style = null }: MoorhenIconPropsType) => {
+export const MoorhenIcon = ({
+    moorhenSVG,
+    src,
+    alt,
+    size,
+    isActive = null,
+    className = "",
+    style = null,
+    ref,
+    onMouseEnter,
+    onMouseLeave,
+}: MoorhenIconPropsType) => {
     const internalClassName = className
         ? className
         : `moorhen__icon__${size} ${isActive !== null ? (isActive ? "moorhen__icon__active" : "moorhen__icon__inactive") : ""}`;
@@ -24,6 +38,9 @@ export const MoorhenIcon = ({ moorhenSVG, src, alt, size, isActive = null, class
                 className={internalClassName}
                 style={{ display: "inline-block", lineHeight: 0, ...style }}
                 aria-label={alt ? alt : moorhenSVG}
+                ref={ref}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
             >
                 <SvgComponent className="moorhen__icon" />
             </span>

@@ -1,5 +1,3 @@
-import { InfoOutlined } from "@mui/icons-material";
-import { Form, FormSelect, InputGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -11,8 +9,8 @@ import {
     setuseTorsionRefinementRestraints,
 } from "../../store/refinementSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider, MoorhenToggle } from "../inputs";
-import { MoorhenButton } from "../inputs";
+import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
 export const RefinementSettings = () => {
     const useRamaRestraintsCheckRef = useRef<null | HTMLInputElement>(null);
@@ -109,25 +107,10 @@ export const RefinementSettings = () => {
     const menuItemText = "Refinement settings...";
 
     return torsionWeight !== null && ramaWeight !== null ? (
-        <>
-            <Form.Group style={{}}>
-                <Form.Label>Default refinement selection</Form.Label>
-                <OverlayTrigger
-                    placement="top"
-                    overlay={
-                        <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{ zIndex: 99999 }}>
-                            <em>
-                                Specifies whether refinement should only be done for the clicked residue (Single res.), for the residues
-                                directly adjacent to the clicked residue (Adjacent res.) or for the residues within a spherical selection
-                                around the clicked residue (Sphere).
-                            </em>
-                        </Tooltip>
-                    }
-                >
-                    <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
-                </OverlayTrigger>
-                <FormSelect
-                    size="sm"
+        <MoorhenStack>
+            <MoorhenStack direction="line" align="center" gap="0.5rem">
+                <MoorhenSelect
+                    label="Default refinement selection"
                     value={refinementSelection}
                     onChange={evt => {
                         dispatch(setRefinementSelection(evt.target.value as "SINGLE" | "TRIPLE" | "SPHERE"));
@@ -136,52 +119,51 @@ export const RefinementSettings = () => {
                     <option value={"SINGLE"}>Single residue</option>
                     <option value={"TRIPLE"}>Adjacent residues</option>
                     <option value={"SPHERE"}>Sphere</option>
-                </FormSelect>
-            </Form.Group>
-            <hr></hr>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={animateRefine}
-                    onChange={() => {
-                        dispatch(setAnimateRefine(!animateRefine));
-                    }}
-                    label="Show animation during refinement"
+                </MoorhenSelect>
+                <MoorhenInfoCard
+                    infoText="
+                                Specifies whether refinement should only be done for the clicked residue (Single res.), for the residues
+                                directly adjacent to the clicked residue (Adjacent res.) or for the residues within a spherical selection
+                                around the clicked residue (Sphere).
+                    "
                 />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={enableRefineAfterMod}
-                    onChange={() => {
-                        dispatch(setEnableRefineAfterMod(!enableRefineAfterMod));
-                    }}
-                    label="Automatic refinement post-modification"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    ref={useRamaRestraintsCheckRef}
-                    type="switch"
-                    checked={useRamaRestraints}
-                    onChange={() => {
-                        dispatch(setUseRamaRefinementRestraints(!useRamaRestraints));
-                    }}
-                    label="Use ramachandran restraints"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    ref={useTorsionRestraintsCheckRef}
-                    type="switch"
-                    checked={useTorsionRestraints}
-                    onChange={() => {
-                        dispatch(setuseTorsionRefinementRestraints(!useTorsionRestraints));
-                    }}
-                    label="Use torsion restraints"
-                />
-            </InputGroup>
-            <hr></hr>
+            </MoorhenStack>
+            <hr />
+            <MoorhenToggle
+                type="switch"
+                checked={animateRefine}
+                onChange={() => {
+                    dispatch(setAnimateRefine(!animateRefine));
+                }}
+                label="Show animation during refinement"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={enableRefineAfterMod}
+                onChange={() => {
+                    dispatch(setEnableRefineAfterMod(!enableRefineAfterMod));
+                }}
+                label="Automatic refinement post-modification"
+            />
+            <MoorhenToggle
+                ref={useRamaRestraintsCheckRef}
+                type="switch"
+                checked={useRamaRestraints}
+                onChange={() => {
+                    dispatch(setUseRamaRefinementRestraints(!useRamaRestraints));
+                }}
+                label="Use ramachandran restraints"
+            />
+            <MoorhenToggle
+                ref={useTorsionRestraintsCheckRef}
+                type="switch"
+                checked={useTorsionRestraints}
+                onChange={() => {
+                    dispatch(setuseTorsionRefinementRestraints(!useTorsionRestraints));
+                }}
+                label="Use torsion restraints"
+            />
+            <hr />
             <MoorhenSlider
                 isDisabled={!useRamaRestraints}
                 sliderTitle="Ramachandran restraints weight"
@@ -202,7 +184,7 @@ export const RefinementSettings = () => {
                 externalValue={torsionWeight}
                 setExternalValue={value => setTorsionWeight(value)}
             />
-        </>
+        </MoorhenStack>
     ) : (
         <span>Please wait</span>
     );

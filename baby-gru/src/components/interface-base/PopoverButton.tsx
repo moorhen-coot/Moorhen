@@ -25,15 +25,13 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     );
 
     return (
-        <>
-            <MoorhenPopover
-                link={popOverLink}
-                linkRef={buttonRef}
-                isShown={popoverIsShown}
-                popoverContent={props.children}
-                popoverPlacement={props.popoverPlacement}
-                setIsShown={setPopOverIsShown}
-            />
-        </>
+        <MoorhenPopover
+            link={popOverLink}
+            linkRef={buttonRef}
+            isShown={popoverIsShown}
+            popoverContent={props.children}
+            popoverPlacement={props.popoverPlacement}
+            setIsShown={setPopOverIsShown}
+        />
     );
 };

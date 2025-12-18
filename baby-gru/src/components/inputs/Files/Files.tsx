@@ -38,7 +38,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
 
     return (
         <>
-            <label htmlFor="upload-form">{label}</label>
+            {label && <label htmlFor="upload-form">{label}</label>}
             <MoorhenStack
                 direction="line"
                 align="center"

@@ -1,12 +1,11 @@
 import { Slider } from "@mui/material";
-import { Button, Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -133,23 +132,25 @@ export const MultiplyBfactor = () => {
 
     return (
         <>
-            <Form.Group style={{ width: "100%", margin: 0 }}>
-                <Form.Label>Selection type</Form.Label>
-                <FormSelect size="sm" ref={ruleSelectRef} defaultValue={"molecule"} onChange={val => setSelectionType(val.target.value)}>
-                    <option value={"molecule"} key={"molecule"}>
-                        By molecule
-                    </option>
-                    <option value={"chain"} key={"chain"}>
-                        By chain
-                    </option>
-                    <option value={"ligand"} key={"ligand"}>
-                        By ligand
-                    </option>
-                    <option value={"cid"} key={"cid"}>
-                        By atom selection
-                    </option>
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect
+                label="Selection type"
+                ref={ruleSelectRef}
+                defaultValue={"molecule"}
+                onChange={val => setSelectionType(val.target.value)}
+            >
+                <option value={"molecule"} key={"molecule"}>
+                    By molecule
+                </option>
+                <option value={"chain"} key={"chain"}>
+                    By chain
+                </option>
+                <option value={"ligand"} key={"ligand"}>
+                    By ligand
+                </option>
+                <option value={"cid"} key={"cid"}>
+                    By atom selection
+                </option>
+            </MoorhenSelect>
             <MoorhenMoleculeSelect molecules={molecules} onChange={handleModelChange} allowAny={false} ref={moleculeSelectRef} />
             {selectionType === "chain" && (
                 <MoorhenChainSelect

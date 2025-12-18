@@ -4,7 +4,7 @@
 .moorhen__input-files-upload,
 .moorhen__input-fetch-online-container {
     display: block;
-    width: 26rem;
+    width: auto;
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
     font-weight: 400;
@@ -130,14 +130,6 @@
 .moorhen__input-fetch-online-select option {
     padding: 1rem; /* Adds spacing inside the options */
     font-size: 1rem;
-}
-
-.moorhen__input-text-container {
-    align-items: left;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    width: 90%;
 }
 
 .moorhen__input-text-box {

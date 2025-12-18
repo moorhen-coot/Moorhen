@@ -17,7 +17,7 @@ type MoorhenCidInputFormPropsType = {
 
 export const MoorhenCidInputForm = ({
     height = "4rem",
-    width = "20rem",
+    width = "16rem",
     margin = "0.1rem",
     label = "Atom selection",
     placeholder = "",
@@ -34,7 +34,7 @@ export const MoorhenCidInputForm = ({
         if (onChange) {
             onChange(evt);
         }
-        if (cidFormRef && typeof cidFormRef === 'object' && 'current' in cidFormRef && cidFormRef.current) {
+        if (cidFormRef && typeof cidFormRef === "object" && "current" in cidFormRef && cidFormRef.current) {
             cidFormRef.current.value = evt.target.value;
         }
     };
@@ -43,7 +43,8 @@ export const MoorhenCidInputForm = ({
         if (evt.target.checked) {
             if (residueSelection.cid) {
                 // @ts-expect-error - Creating synthetic event object for handleChange
-                handleChange({ target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") } });
+                handleChange({target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") },
+                });
             }
         } else {
             // @ts-expect-error - Creating synthetic event object for handleChange

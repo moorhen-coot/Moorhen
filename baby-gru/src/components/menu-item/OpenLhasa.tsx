@@ -1,5 +1,4 @@
 import { useSnackbar } from "notistack";
-import { Button, FormControl, FormGroup, FormLabel, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -7,9 +6,10 @@ import { addRdkitMoleculePickle } from "../../store/lhasaSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const OpenLhasa = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -33,9 +33,9 @@ export const OpenLhasa = () => {
         setSelectedCoordMolNo(parseInt(evt.target.value));
     };
 
-    const handleLoadLigandSource = useCallback(evt => {
+    const handleLoadLigandSource = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setOnStartLigandSource(evt.target.value);
-    }, []);
+    };
 
     const fetchAndAddRdkitPickle = useCallback(
         async (resName: string, molNo: number, cid: string = null) => {
@@ -120,18 +120,20 @@ export const OpenLhasa = () => {
     }, [molecules, fetchAndAddRdkitPickle]);
 
     return (
-        <>
-            <FormGroup style={{ height: "4rem", width: "20rem", margin: "0.5rem" }}>
-                <FormLabel>Load a ligand on start?</FormLabel>
-                <FormSelect ref={loadLigandSelectRef} size="sm" onChange={handleLoadLigandSource} defaultValue={"none"}>
-                    <option value={"none"}>Do not load a ligand</option>
-                    <option value={"molecule"}>From a molecule</option>
-                    <option value={"libcoot-api"}>From an imported dictionary</option>
-                    <option value={"local-monomer-library"}>From the local monomer library</option>
-                    <option value={"remote-monomer-library"}>From the remote monomer library</option>
-                    <option value={"pdbe"}>From the PDBe</option>
-                </FormSelect>
-            </FormGroup>
+        <MoorhenStack>
+            <MoorhenSelect
+                label="Load a ligand on start?"
+                ref={loadLigandSelectRef}
+                onChange={handleLoadLigandSource}
+                defaultValue={"none"}
+            >
+                <option value={"none"}>Do not load a ligand</option>
+                <option value={"molecule"}>From a molecule</option>
+                <option value={"libcoot-api"}>From an imported dictionary</option>
+                <option value={"local-monomer-library"}>From the local monomer library</option>
+                <option value={"remote-monomer-library"}>From the remote monomer library</option>
+                <option value={"pdbe"}>From the PDBe</option>
+            </MoorhenSelect>
             {onStartLigandSource !== "none" && (
                 <>
                     <MoorhenMoleculeSelect
@@ -143,16 +145,13 @@ export const OpenLhasa = () => {
                     {onStartLigandSource === "molecule" ? (
                         <MoorhenLigandSelect ref={ligandSelectRef} molecules={molecules} selectedCoordMolNo={selectedCoordMolNo} />
                     ) : (
-                        <FormGroup className="moorhen-form-group" controlId="MoorhenGetMonomerMenuItem">
-                            <FormLabel>Monomer identifier</FormLabel>
-                            <FormControl ref={tlcRef} type="text" size="sm" style={{ textTransform: "uppercase" }} />
-                        </FormGroup>
+                        <MoorhenTextInput inline label="Monomer identifier" ref={tlcRef} style={{ width: "25rem" }} />
                     )}
                 </>
             )}
             <MoorhenButton variant="primary" onClick={onCompleted}>
                 OK
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

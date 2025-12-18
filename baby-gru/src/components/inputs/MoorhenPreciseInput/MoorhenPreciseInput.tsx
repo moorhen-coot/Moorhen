@@ -1,12 +1,14 @@
 import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
+import { MoorhenStack } from "../../interface-base";
 import "../../interface-base/moorhen-stack.css";
 import "./MoorhenPreciseInput.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null;
-    setValue: (newVal: string) => void;
+    setValue?: (newVal: string) => void;
+    onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
     decimalDigits?: number;
@@ -65,6 +67,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         waitReturn = false,
         minMax = null,
         type = "standard",
+        labelPosition = "left",
     } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
@@ -108,6 +111,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
+        props.onChange(evt);
     };
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,7 +134,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div className={`${props.labelPosition === "top" ? "moorhen__label__column" : "moorhen__label__row"}`}>
+        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"}>
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;
@@ -152,6 +156,6 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 onBlur={handleBlur}
                 onFocus={() => dispatch(setShortCutsBlocked(true))}
             />
-        </div>
+        </MoorhenStack>
     );
 };

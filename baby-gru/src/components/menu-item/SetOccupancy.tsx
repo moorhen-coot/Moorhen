@@ -1,15 +1,14 @@
-import { TextField } from "@mui/material";
-import { Button, Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenPreciseInput, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const SetOccupancy = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -58,7 +57,7 @@ export const SetOccupancy = () => {
     };
 
     const set_occupancy = async () => {
-        if (!moleculeSelectRef.current.value || !ruleSelectRef.current?.value || occupancyValueRef.current === null) {
+        if (!moleculeSelectRef.current.value || !ruleSelectRef.current?.value === null) {
             console.warn("Missing data, doing nothing...");
             return;
         }
@@ -87,7 +86,7 @@ export const SetOccupancy = () => {
             await commandCentre.current.cootCommand(
                 {
                     command: "set_occupancy",
-                    commandArgs: [selectedMolecule.molNo, cid, occupancyValueRef.current],
+                    commandArgs: [selectedMolecule.molNo, cid, occupancy],
                     returnType: "status",
                 },
                 false
@@ -105,52 +104,38 @@ export const SetOccupancy = () => {
 
     return (
         <>
-            <Form.Group style={{ width: "100%", margin: 0 }}>
-                <Form.Label>Selection type</Form.Label>
-                <FormSelect size="sm" ref={ruleSelectRef} defaultValue={"ligand"} onChange={val => setSelectionType(val.target.value)}>
+            <MoorhenStack inputGrid align="center">
+                <MoorhenSelect
+                    label="Selection type"
+                    ref={ruleSelectRef}
+                    defaultValue={"ligand"}
+                    onChange={val => setSelectionType(val.target.value)}
+                >
                     <option value={"ligand"} key={"ligand"}>
                         By ligand
                     </option>
                     <option value={"cid"} key={"cid"}>
                         By atom selection
                     </option>
-                </FormSelect>
-            </Form.Group>
-            <MoorhenMoleculeSelect molecules={molecules} onChange={handleModelChange} allowAny={false} ref={moleculeSelectRef} />
-            {selectionType === "ligand" && (
-                <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={selectedModel} ref={ligandSelectRef} />
-            )}
-            {selectionType === "cid" && (
-                <MoorhenCidInputForm
-                    ref={cidFormRef}
-                    label="Atom selection"
-                    margin="0.5rem"
-                    // defaultValue={props.initialCid}
-                    onChange={evt => setCid(evt.target.value)}
-                    invalidCid={invalidCid}
-                    allowUseCurrentSelection={true}
-                />
-            )}
-            <Form.Group style={{ width: "100%", margin: 0 }}>
-                <TextField
-                    style={{ width: "30%", margin: "0.5rem" }}
-                    id="conformer-count"
-                    label="Occupancy"
-                    type="number"
-                    variant="standard"
-                    error={isNaN(parseFloat(occupancy)) || parseFloat(occupancy) < 0 || parseInt(occupancy) === Infinity}
-                    value={occupancy}
-                    inputProps={{
-                        step: ".1",
-                        max: 1.0,
-                        min: 0.0,
-                    }}
-                    onChange={evt => {
-                        occupancyValueRef.current = parseFloat(evt.target.value);
-                        setOccupancy(evt.target.value);
-                    }}
-                />
-            </Form.Group>
+                </MoorhenSelect>
+                <MoorhenMoleculeSelect molecules={molecules} onChange={handleModelChange} allowAny={false} ref={moleculeSelectRef} />
+                {selectionType === "ligand" && (
+                    <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={selectedModel} ref={ligandSelectRef} />
+                )}
+                {selectionType === "cid" && (
+                    <MoorhenCidInputForm
+                        ref={cidFormRef}
+                        label="Atom selection"
+                        margin="0.5rem"
+                        // defaultValue={props.initialCid}
+                        onChange={evt => setCid(evt.target.value)}
+                        invalidCid={invalidCid}
+                        allowUseCurrentSelection={true}
+                    />
+                )}
+                <MoorhenPreciseInput label="Occupancy" type="number" value={Number(occupancy)} setValue={setOccupancy} minMax={[0, 1]} />
+            </MoorhenStack>
+            <p />
             <MoorhenButton variant="primary" onClick={set_occupancy}>
                 OK
             </MoorhenButton>

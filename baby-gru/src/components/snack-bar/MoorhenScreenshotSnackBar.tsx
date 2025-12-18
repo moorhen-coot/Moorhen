@@ -77,13 +77,7 @@ export const MoorhenScreenshotSnackBar = forwardRef<
                         </IconButton>
                     </Tooltip>
                 </div>
-                <MoorhenTextInput
-                    label="Name: "
-                    text={pictureName}
-                    setText={setPictureName}
-                    style={{ width: "40%" }}
-                    labelPosition="left"
-                />
+                <MoorhenTextInput label="Name: " text={pictureName} setText={setPictureName} style={{ width: "40%" }} />
             </MoorhenStack>
         </SnackbarContent>
     );

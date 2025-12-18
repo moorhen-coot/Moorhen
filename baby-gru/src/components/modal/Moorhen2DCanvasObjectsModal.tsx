@@ -1,5 +1,4 @@
 import { Delete, FileOpen } from "@mui/icons-material";
-import { Button, Col, Form, FormSelect, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
@@ -25,7 +24,8 @@ import type {
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker } from "../inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenPreciseInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
 
 export const Moorhen2DCanvasObjectsModal = () => {
@@ -492,53 +492,50 @@ export const Moorhen2DCanvasObjectsModal = () => {
     const combinedArrays = [...latexOverlays, ...imageOverlays, ...textOverlays, ...svgPathOverlays, ...fracPathOverlays];
 
     const headerContent = (
-        <Row>
-            <Col sm={2}>Object</Col>
-            <Form.Group as={Col} className="mb-3">
-                <FormSelect ref={vectorSelectRef} size="sm" onChange={handleObjectChange} value={selectedOption}>
-                    <option value="new">New</option>
-                    {combinedArrays.length > 0 &&
-                        combinedArrays.map((vec, i) => {
-                            if (vec.type === "SvgPath") {
-                                return (
-                                    <option key={i} value={vec.uniqueId}>
-                                        {"SVG path: " + vec.path.substring(0, 50)}
-                                    </option>
-                                );
-                            } else if (vec.type === "FracPath") {
-                                return (
-                                    <option key={i} value={vec.uniqueId}>
-                                        {"Fractional points path: " +
-                                            vec.path
-                                                .flat()
-                                                .map(number => number.toFixed(3))
-                                                .toString()
-                                                .substring(0, 50)}
-                                    </option>
-                                );
-                            } else if (vec.type === "Image") {
-                                return (
-                                    <option key={i} value={vec.uniqueId}>
-                                        {"Image: " + vec.src.substring(0, 50)}
-                                    </option>
-                                );
-                            } else if (vec.text) {
-                                return (
-                                    <option key={i} value={vec.uniqueId}>
-                                        {"Text: " + vec.text.substring(0, 50)}
-                                    </option>
-                                );
-                            } else {
-                                return (
-                                    <option key={i} value={vec.uniqueId}>
-                                        {vec.uniqueId}
-                                    </option>
-                                );
-                            }
-                        })}
-                </FormSelect>
-            </Form.Group>
-        </Row>
+        <MoorhenStack inputGrid>
+            <MoorhenSelect ref={vectorSelectRef} label="Object" onChange={handleObjectChange} value={selectedOption}>
+                <option value="new">New</option>
+                {combinedArrays.length > 0 &&
+                    combinedArrays.map((vec, i) => {
+                        if (vec.type === "SvgPath") {
+                            return (
+                                <option key={i} value={vec.uniqueId}>
+                                    {"SVG path: " + vec.path.substring(0, 50)}
+                                </option>
+                            );
+                        } else if (vec.type === "FracPath") {
+                            return (
+                                <option key={i} value={vec.uniqueId}>
+                                    {"Fractional points path: " +
+                                        vec.path
+                                            .flat()
+                                            .map(number => number.toFixed(3))
+                                            .toString()
+                                            .substring(0, 50)}
+                                </option>
+                            );
+                        } else if (vec.type === "Image") {
+                            return (
+                                <option key={i} value={vec.uniqueId}>
+                                    {"Image: " + vec.src.substring(0, 50)}
+                                </option>
+                            );
+                        } else if (vec.text) {
+                            return (
+                                <option key={i} value={vec.uniqueId}>
+                                    {"Text: " + vec.text.substring(0, 50)}
+                                </option>
+                            );
+                        } else {
+                            return (
+                                <option key={i} value={vec.uniqueId}>
+                                    {vec.uniqueId}
+                                </option>
+                            );
+                        }
+                    })}
+            </MoorhenSelect>
+        </MoorhenStack>
     );
 
     const footer = (
@@ -707,312 +704,238 @@ export const Moorhen2DCanvasObjectsModal = () => {
     const bodyContent = (
         <>
             {headerContent}
-            <Row>
-                <Col sm={2}>Type</Col>
-                <Form.Group as={Col} className="mb-3">
-                    <FormSelect
-                        size="sm"
-                        ref={drawModeRef}
-                        defaultValue="text"
-                        onChange={evt => {
-                            if (drawModeRef !== null && typeof drawModeRef !== "function") {
-                                drawModeRef.current.value = evt.target.value;
-                                updateObject({ drawMode: evt.target.value }, evt.target.value);
+            <MoorhenStack inputGrid>
+                <MoorhenSelect
+                    label="Type"
+                    ref={drawModeRef}
+                    defaultValue="text"
+                    onChange={evt => {
+                        if (drawModeRef !== null && typeof drawModeRef !== "function") {
+                            drawModeRef.current.value = evt.target.value;
+                            updateObject({ drawMode: evt.target.value }, evt.target.value);
+                        }
+                    }}
+                >
+                    <option value="text">Text</option>
+                    <option value="svgpath">SVG path</option>
+                    <option value="fracpath">Fractional points path</option>
+                    <option value="image">Image</option>
+                    <option value="latex">Latex</option>
+                </MoorhenSelect>
+                {(isDefaultNew ||
+                    (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
+                    <>
+                        <MoorhenTextInput
+                            label="Text"
+                            text={theOverlayObject.text}
+                            onChange={evt => {
+                                updateObject({ text: evt.target.value }, drawModeRef.current.value);
+                            }}
+                        />
+
+                        <MoorhenTextInput
+                            label="Position"
+                            text={positionText}
+                            onChange={evt => {
+                                setPositionText(evt.target.value);
+                            }}
+                            isInvalid={!checkPositionText()}
+                        />
+                        <MoorhenPreciseInput
+                            type="number"
+                            label="Size"
+                            value={
+                                drawModeRef !== null && drawModeRef.current !== null && drawModeRef.current.value === "latex"
+                                    ? theOverlayObject.height
+                                    : theOverlayObject.fontPixelSize
                             }
+                            onChange={evt => {
+                                try {
+                                    const h = parseFloat(evt.target.value);
+                                    if (drawModeRef.current.value === "latex") updateObject({ height: h }, drawModeRef.current.value);
+                                    else updateObject({ fontPixelSize: h }, drawModeRef.current.value);
+                                } catch (e) {}
+                            }}
+                        />
+                    </>
+                )}
+                {drawModeRef.current && drawModeRef.current.value === "svgpath" && (
+                    <MoorhenTextInput
+                        label="Path"
+                        text={theOverlayObject.path}
+                        onChange={evt => {
+                            updateObject({ path: evt.target.value }, drawModeRef.current.value);
                         }}
-                    >
-                        <option value="text">Text</option>
-                        <option value="svgpath">SVG path</option>
-                        <option value="fracpath">Fractional points path</option>
-                        <option value="image">Image</option>
-                        <option value="latex">Latex</option>
-                    </FormSelect>
-                </Form.Group>
-            </Row>
-            {(isDefaultNew || (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
-                <>
-                    <Row>
-                        <Col sm={2}>Text</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="textInput">
-                            <Col sm={10}>
-                                <Form.Control
-                                    type="text"
-                                    value={theOverlayObject.text}
-                                    onChange={evt => {
-                                        updateObject({ text: evt.target.value }, drawModeRef.current.value);
-                                    }}
-                                />
-                            </Col>
-                        </Form.Group>
-                    </Row>
-                    <Row>
-                        <Col sm={2}>Position</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="textInput">
-                            <Col sm={10}>
-                                <Form.Control
-                                    type="text"
-                                    value={positionText}
-                                    onChange={evt => {
-                                        setPositionText(evt.target.value);
-                                    }}
-                                    isInvalid={!checkPositionText()}
-                                />
-                            </Col>
-                        </Form.Group>
-                    </Row>
-                    <Row>
-                        <Col sm={2}>Size</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="textInput">
-                            <Col sm={10}>
-                                <Form.Control
-                                    type="number"
-                                    value={
-                                        drawModeRef !== null && drawModeRef.current !== null && drawModeRef.current.value === "latex"
-                                            ? theOverlayObject.height
-                                            : theOverlayObject.fontPixelSize
-                                    }
-                                    onChange={evt => {
-                                        try {
-                                            const h = parseFloat(evt.target.value);
-                                            if (drawModeRef.current.value === "latex")
-                                                updateObject({ height: h }, drawModeRef.current.value);
-                                            else updateObject({ fontPixelSize: h }, drawModeRef.current.value);
-                                        } catch (e) {}
-                                    }}
-                                />
-                            </Col>
-                        </Form.Group>
-                    </Row>
-                </>
-            )}
-            {drawModeRef.current && drawModeRef.current.value === "svgpath" && (
-                <Row>
-                    <Col sm={2}>Path</Col>
-                    <Form.Group as={Col} className="mb-3" controlId="svgPathInput">
-                        <Form.Control
-                            type="text"
-                            value={theOverlayObject.path}
-                            onChange={evt => {
-                                updateObject({ path: evt.target.value }, drawModeRef.current.value);
-                            }}
-                        />
-                    </Form.Group>
-                </Row>
-            )}
-            {drawModeRef.current && drawModeRef.current.value === "fracpath" && (
-                <Row>
-                    <Col sm={2}>Path</Col>
-                    <Form.Group as={Col} className="mb-3" controlId="fracPathInput">
-                        <Form.Control
-                            type="text"
-                            value={pathText}
-                            onChange={evt => {
-                                setPathText(evt.target.value);
-                            }}
-                            isInvalid={!checkFracPathText()}
-                        />
-                    </Form.Group>
-                </Row>
-            )}
-            {drawModeRef.current && drawModeRef.current.value === "image" && (
-                <>
-                    <Row>
-                        <input
-                            type="file"
-                            id="file"
+                    />
+                )}
+                {drawModeRef.current && drawModeRef.current.value === "fracpath" && (
+                    <MoorhenTextInput
+                        label="Path"
+                        text={pathText}
+                        onChange={evt => {
+                            setPathText(evt.target.value);
+                        }}
+                        isInvalid={!checkFracPathText()}
+                    />
+                )}
+                {drawModeRef.current && drawModeRef.current.value === "image" && (
+                    <>
+                        <MoorhenFileInput
                             ref={inputFile}
                             accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP"
-                            style={{ display: "none" }}
                             onChange={e => {
                                 console.log("Change", e.target.files);
                                 upLoadNewImage(e.target.files[0]);
                             }}
                         />
-                        <Col sm={2}>Path</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="imagePathInput">
-                            <Form.Control
-                                disabled
-                                type="text"
-                                value={pathText}
-                                onChange={evt => {
-                                    updateObject({ src: evt.target.value }, drawModeRef.current.value);
-                                }}
-                            />
-                        </Form.Group>
+                        <MoorhenTextInput
+                            disabled
+                            text={pathText}
+                            onChange={evt => {
+                                updateObject({ src: evt.target.value }, drawModeRef.current.value);
+                            }}
+                        />
                         {imageString && (
-                            <Col sm={1}>
+                            <MoorhenStack direction="line">
                                 <img style={{ margin: "0.3rem" }} src={imageString} width="28" height="28" />
-                            </Col>
-                        )}
-                        <Col sm={2}>
-                            <MoorhenButton
-                                size="sm"
-                                style={{ margin: "0.1rem" }}
-                                onClick={() => {
-                                    inputFile.current.click();
-                                }}
-                            >
-                                <FileOpen />
-                            </MoorhenButton>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col sm={2}>Position</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="textInput">
-                            <Col sm={10}>
-                                <Form.Control
-                                    type="text"
-                                    value={positionText}
-                                    onChange={evt => {
-                                        setPositionText(evt.target.value);
+                                <MoorhenButton
+                                    size="sm"
+                                    style={{ margin: "0.1rem" }}
+                                    onClick={() => {
+                                        inputFile.current.click();
                                     }}
-                                    isInvalid={!checkPositionText()}
-                                />
-                            </Col>
-                        </Form.Group>
-                    </Row>
-                    <Row>
-                        <Col sm={2}>Width</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="imageWidthInput">
-                            <Form.Control
-                                type="number"
-                                value={theOverlayObject.width}
-                                onChange={evt => {
-                                    try {
-                                        const w = parseFloat(evt.target.value);
-                                        updateObject({ width: w }, drawModeRef.current.value);
-                                    } catch (e) {}
-                                }}
-                            />
-                        </Form.Group>
-                        <Col sm={2}>Height</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="imageHeightInput">
-                            <Form.Control
-                                type="number"
-                                value={theOverlayObject.height}
-                                onChange={evt => {
-                                    try {
-                                        const h = parseFloat(evt.target.value);
-                                        updateObject({ height: h }, drawModeRef.current.value);
-                                    } catch (e) {}
-                                }}
-                            />
-                        </Form.Group>
-                    </Row>
-                </>
-            )}
-            {drawModeRef.current && drawModeRef.current.value === "text" && (
-                <Row>
-                    <Col sm={2}>Font</Col>
-                    <Form.Group as={Col} className="mb-3" controlId="textFontSelect">
-                        <FormSelect
-                            value={selectedFont}
+                                >
+                                    <FileOpen />
+                                </MoorhenButton>
+                            </MoorhenStack>
+                        )}
+                        <MoorhenTextInput
+                            label="Position"
+                            text={positionText}
+                            onChange={evt => {
+                                setPositionText(evt.target.value);
+                            }}
+                            isInvalid={!checkPositionText()}
+                        />
+                        <MoorhenPreciseInput
+                            type="number"
+                            label="Width"
+                            value={theOverlayObject.width}
+                            onChange={evt => {
+                                try {
+                                    const w = parseFloat(evt.target.value);
+                                    updateObject({ width: w }, drawModeRef.current.value);
+                                } catch (e) {}
+                            }}
+                        />
+                        <MoorhenPreciseInput
+                            label="Height"
+                            type="number"
+                            value={theOverlayObject.height}
+                            onChange={evt => {
+                                try {
+                                    const h = parseFloat(evt.target.value);
+                                    updateObject({ height: h }, drawModeRef.current.value);
+                                } catch (e) {}
+                            }}
+                        />
+                    </>
+                )}
+                {drawModeRef.current && drawModeRef.current.value === "text" && (
+                    <MoorhenSelect
+                        label="Font"
+                        value={selectedFont}
+                        onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                            setSelectedFont(evt.target.value);
+                            updateObject({ fontFamily: evt.target.value }, drawModeRef.current.value);
+                        }}
+                    >
+                        {availableFonts.map(item => {
+                            return (
+                                <option key={item} value={item}>
+                                    {item}
+                                </option>
+                            );
+                        })}
+                        <option key="serif" value="serif">
+                            Serif
+                        </option>
+                        <option key="sans-serif" value="sans-serif">
+                            Sans serif
+                        </option>
+                        <option key="monospace" value="monospace">
+                            Monospace
+                        </option>
+                        <option key="cursive" value="cursive">
+                            Cursive
+                        </option>
+                        <option key="fantasy" value="fantasy">
+                            Fantasy
+                        </option>
+                    </MoorhenSelect>
+                )}
+                {drawModeRef.current &&
+                    (drawModeRef.current.value === "text" ||
+                        drawModeRef.current.value === "svgpath" ||
+                        drawModeRef.current.value === "fracpath") && (
+                        <MoorhenSelect
+                            label="Draw Style"
+                            value={selectedDrawStyle}
                             onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                                setSelectedFont(evt.target.value);
-                                updateObject({ fontFamily: evt.target.value }, drawModeRef.current.value);
+                                setSelectedDrawStyle(evt.target.value);
+                                if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === "fill") {
+                                    updateObject(
+                                        {
+                                            drawStyle: evt.target.value,
+                                            fillStyle: theOverlayObject.strokeStyle,
+                                        },
+                                        drawModeRef.current.value
+                                    );
+                                } else if (!theOverlayObject.strokeStyle && theOverlayObject.fillStyle && evt.target.value === "stroke") {
+                                    updateObject(
+                                        {
+                                            drawStyle: evt.target.value,
+                                            strokeStyle: theOverlayObject.fillStyle,
+                                        },
+                                        drawModeRef.current.value
+                                    );
+                                } else {
+                                    updateObject({ drawStyle: evt.target.value }, drawModeRef.current.value);
+                                }
                             }}
                         >
-                            {availableFonts.map(item => {
-                                return (
-                                    <option key={item} value={item}>
-                                        {item}
-                                    </option>
-                                );
-                            })}
-                            <option key="serif" value="serif">
-                                Serif
+                            <option key="stroke" value="stroke">
+                                Outline
                             </option>
-                            <option key="sans-serif" value="sans-serif">
-                                Sans serif
+                            <option key="fill" value="fill">
+                                Filled
                             </option>
-                            <option key="monospace" value="monospace">
-                                Monospace
+                            <option key="gradient" value="gradient">
+                                Gradient
                             </option>
-                            <option key="cursive" value="cursive">
-                                Cursive
-                            </option>
-                            <option key="fantasy" value="fantasy">
-                                Fantasy
-                            </option>
-                        </FormSelect>
-                    </Form.Group>
-                </Row>
-            )}
-            {drawModeRef.current &&
-                (drawModeRef.current.value === "text" ||
-                    drawModeRef.current.value === "svgpath" ||
-                    drawModeRef.current.value === "fracpath") && (
-                    <Row>
-                        <Col sm={2}>Draw style</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="drawStyleSelect">
-                            <FormSelect
-                                value={selectedDrawStyle}
-                                onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                                    setSelectedDrawStyle(evt.target.value);
-                                    if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === "fill") {
-                                        updateObject(
-                                            {
-                                                drawStyle: evt.target.value,
-                                                fillStyle: theOverlayObject.strokeStyle,
-                                            },
-                                            drawModeRef.current.value
-                                        );
-                                    } else if (
-                                        !theOverlayObject.strokeStyle &&
-                                        theOverlayObject.fillStyle &&
-                                        evt.target.value === "stroke"
-                                    ) {
-                                        updateObject(
-                                            {
-                                                drawStyle: evt.target.value,
-                                                strokeStyle: theOverlayObject.fillStyle,
-                                            },
-                                            drawModeRef.current.value
-                                        );
-                                    } else {
-                                        updateObject({ drawStyle: evt.target.value }, drawModeRef.current.value);
-                                    }
-                                }}
-                            >
-                                <option key="stroke" value="stroke">
-                                    Outline
-                                </option>
-                                <option key="fill" value="fill">
-                                    Filled
-                                </option>
-                                <option key="gradient" value="gradient">
-                                    Gradient
-                                </option>
-                            </FormSelect>
-                        </Form.Group>
-                    </Row>
-                )}
-            {drawModeRef.current &&
-                selectedDrawStyle === "stroke" &&
-                (drawModeRef.current.value === "text" ||
-                    drawModeRef.current.value === "svgpath" ||
-                    drawModeRef.current.value === "fracpath") && (
-                    <Row>
-                        <Col sm={2}>Line width</Col>
-                        <Col sm={10} className="mb-3">
-                            <Form.Control
-                                type="number"
-                                value={theOverlayObject.lineWidth}
-                                onChange={evt => {
-                                    updateObject({ lineWidth: evt.target.value }, drawModeRef.current.value);
-                                }}
-                            />
-                        </Col>
-                    </Row>
-                )}
-            {selectedDrawStyle !== "gradient" &&
-                drawModeRef.current &&
-                (drawModeRef.current.value === "svgpath" ||
-                    drawModeRef.current.value === "fracpath" ||
-                    drawModeRef.current.value === "text") && (
-                    <Row>
-                        <Col sm={2}>Colour</Col>
-                        <Col sm={2} className="mb-3">
+                        </MoorhenSelect>
+                    )}
+                {drawModeRef.current &&
+                    selectedDrawStyle === "stroke" &&
+                    (drawModeRef.current.value === "text" ||
+                        drawModeRef.current.value === "svgpath" ||
+                        drawModeRef.current.value === "fracpath") && (
+                        <MoorhenPreciseInput
+                            label="Line Width"
+                            type="number"
+                            value={theOverlayObject.lineWidth}
+                            onChange={evt => {
+                                updateObject({ lineWidth: evt.target.value }, drawModeRef.current.value);
+                            }}
+                        />
+                    )}
+                {selectedDrawStyle !== "gradient" &&
+                    drawModeRef.current &&
+                    (drawModeRef.current.value === "svgpath" ||
+                        drawModeRef.current.value === "fracpath" ||
+                        drawModeRef.current.value === "text") && (
+                        <MoorhenStack direction="line">
+                            <label>Colour</label>
                             <MoorhenColourPicker
                                 colour={existingColour !== null ? existingColour : [1, 0, 0]}
                                 setColourWithAlpha={color => {
@@ -1024,42 +947,33 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 position="bottom"
                                 tooltip="Change colour"
                             />
-                        </Col>
-                        {selectedAlpha < 0.99 && <Col sm={8}>(Opacity {selectedAlpha.toFixed(2)})</Col>}
-                    </Row>
-                )}
-            {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
-                <>
-                    <Row>
-                        <Col sm={2}>Gradient boundaries</Col>
-                        <Form.Group as={Col} className="mb-3" controlId="gradBoundaryInput">
-                            <Form.Control
-                                type="text"
-                                value={gradientBoundaryText}
-                                onChange={evt => {
-                                    setGradientBoundaryText(evt.target.value);
-                                }}
-                                isInvalid={!checkGradientBoundaryText()}
-                            />
-                        </Form.Group>
-                    </Row>
-                    <Row>
-                        <Col sm={2}>Gradient stops</Col>
-                    </Row>
-                    {theOverlayObject.gradientStops &&
-                        theOverlayObject.gradientStops.map((s, istop) => {
-                            let col;
-                            let alpha = 1.0;
-                            if (s.colour.startsWith("#") && s.colour.length === 9) {
-                                col = hexToRGB(getHexForCanvasColourName(s.colour.substring(0, 7)));
-                                alpha = parseInt(s.colour.substring(7), 16) / 255;
-                            } else {
-                                col = hexToRGB(getHexForCanvasColourName(s.colour));
-                            }
-                            return (
-                                <Row key={istop}>
-                                    <Col sm={2}></Col>
-                                    <Col sm={1}>
+                            {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
+                        </MoorhenStack>
+                    )}
+                {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
+                    <>
+                        <MoorhenTextInput
+                            label="Gradient boundaries"
+                            text={gradientBoundaryText}
+                            onChange={evt => {
+                                setGradientBoundaryText(evt.target.value);
+                            }}
+                            isInvalid={!checkGradientBoundaryText()}
+                        />
+                        <MoorhenStack direction="line">Gradient stops</MoorhenStack>
+                        {theOverlayObject.gradientStops &&
+                            theOverlayObject.gradientStops.map((s, istop) => {
+                                let col;
+                                let alpha = 1.0;
+                                if (s.colour.startsWith("#") && s.colour.length === 9) {
+                                    col = hexToRGB(getHexForCanvasColourName(s.colour.substring(0, 7)));
+                                    alpha = parseInt(s.colour.substring(7), 16) / 255;
+                                } else {
+                                    col = hexToRGB(getHexForCanvasColourName(s.colour));
+                                }
+                                return (
+                                    <MoorhenStack direction="line">
+                                        <label></label>
                                         <MoorhenColourPicker
                                             colour={col}
                                             setColourWithAlpha={color => {
@@ -1091,16 +1005,12 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                             position="bottom"
                                             tooltip="Change colour"
                                         />
-                                    </Col>
-                                    {alpha < 0.99 && <Col sm={3}>(Opacity {alpha.toFixed(2)})</Col>}
-                                    {alpha >= 0.99 && <Col sm={3}></Col>}
-                                    <Form.Group as={Col} className="mb-3" controlId="textInput">
-                                        <Form.Control
+                                        {alpha < 0.99 && <div>(Opacity {alpha.toFixed(2)})</div>}
+                                        {alpha >= 0.99 && <div></div>}
+                                        <MoorhenPreciseInput
                                             type="number"
-                                            inputMode="decimal"
-                                            min="0.0"
-                                            max="1.0"
-                                            step="0.01"
+                                            minMax={[0.0, 1.0]}
+                                            decimalDigits={2}
                                             value={s.stop}
                                             onChange={evt => {
                                                 updateObject(
@@ -1118,8 +1028,6 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                                 );
                                             }}
                                         />
-                                    </Form.Group>
-                                    <Col sm={2}>
                                         <MoorhenButton
                                             size="sm"
                                             style={{ margin: "0.1rem" }}
@@ -1137,13 +1045,11 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                         >
                                             <Delete />
                                         </MoorhenButton>
-                                    </Col>
-                                </Row>
-                            );
-                        })}
-                    <Row>
-                        <Col sm={9}></Col>
-                        <Col sm={3}>
+                                    </MoorhenStack>
+                                );
+                            })}
+                        <MoorhenStack direction="line">
+                            <label></label>
                             <MoorhenButton
                                 size="sm"
                                 style={{ margin: "0.1rem" }}
@@ -1164,38 +1070,34 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             >
                                 Add new colour
                             </MoorhenButton>
-                        </Col>
-                    </Row>
-                </>
-            )}
-            <Row>
-                <Col sm={2}>Z-depth</Col>
-                <Form.Group as={Col} className="mb-3" controlId="zIndexSelect">
-                    <FormSelect
-                        value={selectedDepth}
-                        onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                            setSelectedDepth(parseInt(evt.target.value));
-                            updateObject({ zIndex: parseInt(evt.target.value) }, drawModeRef.current.value);
-                        }}
-                    >
-                        <option key="0" value="0">
-                            0
-                        </option>
-                        <option key="1" value="1">
-                            1
-                        </option>
-                        <option key="2" value="2">
-                            2
-                        </option>
-                        <option key="3" value="3">
-                            3
-                        </option>
-                        <option key="4" value="4">
-                            4
-                        </option>
-                    </FormSelect>
-                </Form.Group>
-            </Row>
+                        </MoorhenStack>
+                    </>
+                )}
+                <MoorhenSelect
+                    label="Z-depth"
+                    value={selectedDepth}
+                    onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                        setSelectedDepth(parseInt(evt.target.value));
+                        updateObject({ zIndex: parseInt(evt.target.value) }, drawModeRef.current.value);
+                    }}
+                >
+                    <option key="0" value="0">
+                        0
+                    </option>
+                    <option key="1" value="1">
+                        1
+                    </option>
+                    <option key="2" value="2">
+                        2
+                    </option>
+                    <option key="3" value="3">
+                        3
+                    </option>
+                    <option key="4" value="4">
+                        4
+                    </option>
+                </MoorhenSelect>
+            </MoorhenStack>
         </>
     );
 

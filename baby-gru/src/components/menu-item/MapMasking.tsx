@@ -1,4 +1,3 @@
-import { Form, FormSelect } from "react-bootstrap";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -6,7 +5,7 @@ import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -105,31 +104,28 @@ export const MapMasking = () => {
 
     return (
         <>
-            <Form.Group style={{ margin: "0.5rem", width: "20rem" }}>
-                <Form.Label>Create mask by...</Form.Label>
-                <FormSelect
-                    size="sm"
-                    ref={maskTypeSelectRef}
-                    defaultValue={"molecule"}
-                    onChange={evt => {
-                        setMaskType(evt.target.value);
-                        maskTypeSelectRef.current.value = evt.target.value;
-                    }}
-                >
-                    <option value={"molecule"} key={"molecule"}>
-                        By molecule
-                    </option>
-                    <option value={"chain"} key={"chain"}>
-                        By chain
-                    </option>
-                    <option value={"ligand"} key={"ligand"}>
-                        By ligand
-                    </option>
-                    <option value={"cid"} key={"cid"}>
-                        By atom selection
-                    </option>
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect
+                label="Create mask by..."
+                ref={maskTypeSelectRef}
+                defaultValue={"molecule"}
+                onChange={evt => {
+                    setMaskType(evt.target.value);
+                    maskTypeSelectRef.current.value = evt.target.value;
+                }}
+            >
+                <option value={"molecule"} key={"molecule"}>
+                    By molecule
+                </option>
+                <option value={"chain"} key={"chain"}>
+                    By chain
+                </option>
+                <option value={"ligand"} key={"ligand"}>
+                    By ligand
+                </option>
+                <option value={"cid"} key={"cid"}>
+                    By atom selection
+                </option>
+            </MoorhenSelect>
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
             {maskTypeSelectRef.current?.value === "cid" && (
@@ -152,24 +148,20 @@ export const MapMasking = () => {
             {!useDefaultMaskRadius && (
                 <MoorhenNumberForm ref={maskRadiusFormRef} defaultValue={2.5} label="Mask radius" allowNegativeValues={false} />
             )}
-            <Form.Group className="moorhen-form-group">
-                <MoorhenToggle
-                    ref={useDefaultMaskRadiusRef}
-                    type="switch"
-                    checked={useDefaultMaskRadius}
-                    onChange={() => setUseDefaultMaskRadius(!useDefaultMaskRadius)}
-                    label="Use default mask radius"
-                />
-            </Form.Group>
-            <Form.Group className="moorhen-form-group">
-                <MoorhenToggle
-                    ref={invertFlagRef}
-                    type="switch"
-                    checked={invertFlag}
-                    onChange={() => setInvertFlag(!invertFlag)}
-                    label="Invert mask"
-                />
-            </Form.Group>
+            <MoorhenToggle
+                ref={useDefaultMaskRadiusRef}
+                type="switch"
+                checked={useDefaultMaskRadius}
+                onChange={() => setUseDefaultMaskRadius(!useDefaultMaskRadius)}
+                label="Use default mask radius"
+            />
+            <MoorhenToggle
+                ref={invertFlagRef}
+                type="switch"
+                checked={invertFlag}
+                onChange={() => setInvertFlag(!invertFlag)}
+                label="Invert mask"
+            />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );

@@ -9,6 +9,7 @@ type MoorhenStackType = {
     style?: React.CSSProperties;
     card?: boolean;
     className?: string;
+    inputGrid?: boolean;
 };
 
 export const MoorhenStack = ({
@@ -20,9 +21,13 @@ export const MoorhenStack = ({
     style = null,
     card = null,
     className,
+    inputGrid = false,
 }: MoorhenStackType) => {
-    let mainClass =
-        direction === "row" || direction === "line" || direction === "horizontal" ? "moorhen__stack__row" : "moorhen__stack__column";
+    let mainClass = inputGrid
+        ? "moorhen__input-grid"
+        : direction === "row" || direction === "line" || direction === "horizontal"
+          ? "moorhen__stack__row"
+          : "moorhen__stack__column";
     if (card) {
         mainClass += " moorhen_stack_card";
     }

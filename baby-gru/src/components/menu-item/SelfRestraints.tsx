@@ -1,16 +1,14 @@
-import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
-import { Form, FormSelect } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { addGeneralRepresentation } from "../../moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenSlider } from "../inputs";
+import { MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -90,9 +88,13 @@ export const SelfRestraints = () => {
 
     return (
         <>
-            <Form.Group className="moorhen-form-group" controlId="MoorhenSelfRestraintsMenuItem">
-                <Form.Label>Selection</Form.Label>
-                <FormSelect size="sm" ref={modeTypeSelectRef} defaultValue={"Molecule"} onChange={evt => setSelectedMode(evt.target.value)}>
+            <MoorhenStack inputGrid align="center">
+                <MoorhenSelect
+                    label="Selection"
+                    ref={modeTypeSelectRef}
+                    defaultValue={"Molecule"}
+                    onChange={evt => setSelectedMode(evt.target.value)}
+                >
                     {modes.map(type => {
                         return (
                             <option value={type} key={type}>
@@ -100,26 +102,26 @@ export const SelfRestraints = () => {
                             </option>
                         );
                     })}
-                </FormSelect>
-            </Form.Group>
-            <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} onChange={handleModelChange} />
-            {selectedMode === "Chain" && (
-                <MoorhenChainSelect
-                    ref={chainSelectRef}
-                    molecules={molecules}
-                    selectedCoordMolNo={selectedMolNo}
-                    onChange={evt => setSelectedChain(evt.target.value)}
-                />
-            )}
-            {selectedMode === "Atom Selection" && (
-                <MoorhenCidInputForm
-                    ref={cidSelectRef}
-                    margin="0.5rem"
-                    onChange={evt => setCid(evt.target.value)}
-                    allowUseCurrentSelection={true}
-                    placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}
-                />
-            )}
+                </MoorhenSelect>
+                <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} onChange={handleModelChange} />
+                {selectedMode === "Chain" && (
+                    <MoorhenChainSelect
+                        ref={chainSelectRef}
+                        molecules={molecules}
+                        selectedCoordMolNo={selectedMolNo}
+                        onChange={evt => setSelectedChain(evt.target.value)}
+                    />
+                )}
+                {selectedMode === "Atom Selection" && (
+                    <MoorhenCidInputForm
+                        ref={cidSelectRef}
+                        margin="0.5rem"
+                        onChange={evt => setCid(evt.target.value)}
+                        allowUseCurrentSelection={true}
+                        placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}
+                    />
+                )}
+            </MoorhenStack>
             <MoorhenSlider
                 sliderTitle="Max. dist."
                 minVal={4}

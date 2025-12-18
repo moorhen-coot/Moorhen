@@ -57,7 +57,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     if (options.length === 0) {
         disabled = true;
         options.push(
-            <option disabled value={0}>
+            <option disabled value={0} key={0}>
                 No molecules loaded
             </option>
         );

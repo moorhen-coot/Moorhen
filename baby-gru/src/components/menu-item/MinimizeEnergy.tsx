@@ -1,9 +1,8 @@
-import { Button, Form, FormSelect, InputGroup } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -95,28 +94,25 @@ export const MinimizeEnergy = () => {
 
     return (
         <>
-            <Form.Group style={{ margin: "0.5rem", width: "20rem" }}>
-                <Form.Label>Selection type...</Form.Label>
-                <FormSelect
-                    size="sm"
-                    ref={selectionTypeSelectRef}
-                    defaultValue={selectionType}
-                    onChange={evt => {
-                        setSelectionType(evt.target.value);
-                        selectionTypeSelectRef.current.value = evt.target.value;
-                    }}
-                >
-                    <option value={"ligand"} key={"ligand"}>
-                        By ligand
-                    </option>
-                    <option value={"chain"} key={"chain"}>
-                        By chain
-                    </option>
-                    <option value={"cid"} key={"cid"}>
-                        By atom selection
-                    </option>
-                </FormSelect>
-            </Form.Group>
+            <MoorhenSelect
+                label="Selection type..."
+                ref={selectionTypeSelectRef}
+                defaultValue={selectionType}
+                onChange={evt => {
+                    setSelectionType(evt.target.value);
+                    selectionTypeSelectRef.current.value = evt.target.value;
+                }}
+            >
+                <option value={"ligand"} key={"ligand"}>
+                    By ligand
+                </option>
+                <option value={"chain"} key={"chain"}>
+                    By chain
+                </option>
+                <option value={"cid"} key={"cid"}>
+                    By atom selection
+                </option>
+            </MoorhenSelect>
             <MoorhenMoleculeSelect
                 molecules={molecules}
                 allowAny={false}
@@ -136,28 +132,26 @@ export const MinimizeEnergy = () => {
                     ref={ligandSelectRef}
                 />
             )}
-            <InputGroup className="moorhen-input-group-check" style={{ width: "20rem" }}>
-                <MoorhenToggle
-                    ref={useRamaRestraintsCheckRef}
-                    type="switch"
-                    checked={useRamaRestraints}
-                    onChange={() => {
-                        setUseRamaRestraints(!useRamaRestraints);
-                    }}
-                    label="Use ramachandran restraints"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check" style={{ width: "20rem" }}>
-                <MoorhenToggle
-                    ref={useTorsionRestraintsCheckRef}
-                    type="switch"
-                    checked={useTorsionRestraints}
-                    onChange={() => {
-                        setUseTorsionRestraints(!useTorsionRestraints);
-                    }}
-                    label="Use torsion restraints"
-                />
-            </InputGroup>
+
+            <MoorhenToggle
+                ref={useRamaRestraintsCheckRef}
+                type="switch"
+                checked={useRamaRestraints}
+                onChange={() => {
+                    setUseRamaRestraints(!useRamaRestraints);
+                }}
+                label="Use ramachandran restraints"
+            />
+
+            <MoorhenToggle
+                ref={useTorsionRestraintsCheckRef}
+                type="switch"
+                checked={useTorsionRestraints}
+                onChange={() => {
+                    setUseTorsionRestraints(!useTorsionRestraints);
+                }}
+                label="Use torsion restraints"
+            />
             <div style={{ display: useRamaRestraints ? "" : "none" }}>
                 <MoorhenSlider
                     isDisabled={!useRamaRestraints}
@@ -200,6 +194,7 @@ export const MinimizeEnergy = () => {
                 externalValue={ncyc}
                 setExternalValue={value => setNcyc(value)}
             />
+            <p />
             <MoorhenButton variant="primary" onClick={minimizeEnergy}>
                 OK
             </MoorhenButton>
