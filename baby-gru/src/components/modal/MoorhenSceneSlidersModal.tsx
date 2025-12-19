@@ -51,14 +51,35 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
     return { top: Math.round(top), left: Math.round(left) }
 }
 
-const DepthBlurPanel = () => {
+const ClipFogBlurOptionsPanel = () => {
     const dispatch = useDispatch();
+
+    const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
+    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     return (
         <div className="scene-settings-panel-flex-between">
+            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
+                <Form.Check
+                    type="switch"
+                    checked={resetClippingFogging}
+                    onChange={() => {
+                        dispatch(setResetClippingFogging(!resetClippingFogging));
+                    }}
+                    label="Reset clipping and fogging on zoom"
+                />
+                <Form.Check
+                    type="switch"
+                    checked={clipCap}
+                    onChange={() => {
+                        dispatch(setClipCap(!clipCap));
+                    }}
+                    label="'Clip-cap' perfect spheres"
+                />
+            </InputGroup>
             <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
@@ -95,87 +116,6 @@ const DepthBlurPanel = () => {
     );
 };
 
-const ClipFogPanel = () => {
-    const dispatch = useDispatch();
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
-    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
-    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
-
-    const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
-
-    return (
-        <div className="scene-settings-panel-flex-between">
-            <MoorhenSlider
-                minVal={0.1}
-                maxVal={1000}
-                logScale={true}
-                sliderTitle="Front clip"
-                externalValue={clipStart}
-                setExternalValue={(newValue) => {
-                    dispatch(setClipStart(newValue));
-                }}
-                decimalPlaces={1}
-            />
-            <MoorhenSlider
-                minVal={0.1}
-                maxVal={1000}
-                logScale={true}
-                sliderTitle="Back clip"
-                externalValue={clipEnd}
-                setExternalValue={(newValue) => {
-                    dispatch(setClipEnd(newValue));
-                }}
-                decimalPlaces={1}
-            />
-            <MoorhenSlider
-                minVal={0.1}
-                maxVal={1000}
-                logScale={true}
-                sliderTitle="Front zFog"
-                externalValue={fogClipOffset - gl_fog_start}
-                setExternalValue={(newValue) => {
-                    dispatch(setFogStart(fogClipOffset - newValue));
-                }}
-                decimalPlaces={1}
-            />
-            <MoorhenSlider
-                minVal={0.1}
-                maxVal={1000}
-                logScale={true}
-                sliderTitle="Back zFog"
-                externalValue={gl_fog_end - fogClipOffset}
-                setExternalValue={(newValue) => {
-                    dispatch(setFogEnd(newValue + fogClipOffset));
-                }}
-                decimalPlaces={1}
-            />
-            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <Form.Check
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clipping and fogging on zoom"
-                />
-            </InputGroup>
-            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <Form.Check
-                    type="switch"
-                    checked={clipCap}
-                    onChange={() => {
-                        dispatch(setClipCap(!clipCap));
-                    }}
-                    label="'Clip-cap' perfect spheres"
-                />
-            </InputGroup>
-        </div>
-    );
-};
-
 enum GrabHandle
 {
  NONE,
@@ -192,15 +132,15 @@ interface MGWebGLBuffer {
 }
 
 interface SideOnProgramSphere extends WebGLProgram {
-        vertexPositionAttribute: GLint;
-        vertexNormalAttribute: GLint;
-        vertexColourAttribute: GLint;
-        vertexTextureAttribute: GLint;
-        offsetAttribute: GLint;
-        sizeAttribute: GLint;
-        pMatrixUniform: WebGLUniformLocation;
-        mvMatrixUniform: WebGLUniformLocation;
-        mvInvMatrixUniform: WebGLUniformLocation;
+    vertexPositionAttribute: GLint;
+    vertexNormalAttribute: GLint;
+    vertexColourAttribute: GLint;
+    vertexTextureAttribute: GLint;
+    offsetAttribute: GLint;
+    sizeAttribute: GLint;
+    pMatrixUniform: WebGLUniformLocation;
+    mvMatrixUniform: WebGLUniformLocation;
+    mvInvMatrixUniform: WebGLUniformLocation;
 }
 
 interface SideOnProgram extends WebGLProgram {
@@ -230,7 +170,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const plotWidth = 450
-    const plotHeight = 200
+    const plotHeight = 400
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
@@ -331,7 +271,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -atomSpan * 1.5, atomSpan * 1.5, -atomSpan * 1.5 * height/width, atomSpan * 1.5 * height/width, 0.1, 1000.0);
+        mat4.ortho(pMatrix, -atomSpan * 0.75, atomSpan * 0.75, -atomSpan * 0.75 * height/width, atomSpan * 0.75 * height/width, 0.1, 1000.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -583,7 +523,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atomSpan * 1.5
+        const scale = atomSpan * 0.75
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -755,7 +695,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         setMouseHeldDown(true)
 
-        const scale = atomSpan * 1.5
+        const scale = atomSpan * 0.75
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -790,7 +730,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const [x,y] = getXY(evt)
 
-        const scale = atomSpan * 1.5
+        const scale = atomSpan * 0.75
 
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
@@ -879,10 +819,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
         >
             <Stack gap={2} direction="vertical">
-                <ClipFogPanel />
+                <ClipFogBlurOptionsPanel />
             </Stack>
             <Stack gap={1} direction="vertical">
-                {isWebGL2 && <DepthBlurPanel />}
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
