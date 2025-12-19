@@ -186,31 +186,23 @@ enum GrabHandle
  BLUR_DEPTH,
 }
 
+interface MGWebGLBuffer {
+    itemSize: number;
+    numItems: number;
+}
+
 interface SideOnProgramSphere extends WebGLProgram {
+        vertexPositionAttribute: GLint;
+        vertexNormalAttribute: GLint;
+        vertexColourAttribute: GLint;
         vertexTextureAttribute: GLint;
         offsetAttribute: GLint;
         sizeAttribute: GLint;
-        invSymMatrixUniform: WebGLUniformLocation;
+        pMatrixUniform: WebGLUniformLocation;
+        mvMatrixUniform: WebGLUniformLocation;
+        mvInvMatrixUniform: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
-        xPixelOffset: WebGLUniformLocation;
-        yPixelOffset: WebGLUniformLocation;
-        xSSAOScaling: WebGLUniformLocation;
-        ySSAOScaling: WebGLUniformLocation;
-        ShadowMap: WebGLUniformLocation;
-        SSAOMap: WebGLUniformLocation;
-        edgeDetectMap: WebGLUniformLocation;
-        outlineSize: WebGLUniformLocation;
-        shadowQuality: WebGLUniformLocation;
-        doShadows: WebGLUniformLocation;
-        doSSAO: WebGLUniformLocation;
-        doEdgeDetect: WebGLUniformLocation;
-        occludeDiffuse: WebGLUniformLocation;
-        doPerspective: WebGLUniformLocation;
-        clipCap: WebGLUniformLocation;
-        specularPower: WebGLUniformLocation;
-        scaleMatrix: WebGLUniformLocation;
-        ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
-        zoom: WebGLUniformLocation;
+        invSymMatrixUniform: WebGLUniformLocation;
 }
 
 interface SideOnProgram extends WebGLProgram {
@@ -255,6 +247,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
     const sphereProgramRef = useRef<null | SideOnProgramSphere>(null);
+
+    const imageBuffersRef = useRef<null | DisplayBuffer>(null);
 
     const displayBuffers = store.getState().glRef.displayBuffers
     const storeMolecules = store.getState().molecules.moleculeList
@@ -332,7 +326,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
-
 
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.5,0.5,0.5,1.0);
@@ -457,16 +450,94 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 // useProgram is not a React hook.
 // eslint-disable-next-line
         gl.useProgram(sphereProgramRef.current)
+        gl.uniformMatrix4fv(sphereProgramRef.current.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(sphereProgramRef.current.mvMatrixUniform, false, mvMatrix);
+
+        for(let i = 0; i<16; i++)
+            gl.disableVertexAttribArray(i);
+
+        gl.enableVertexAttribArray(sphereProgramRef.current.vertexColourAttribute);
+        gl.enableVertexAttribArray(sphereProgramRef.current.vertexPositionAttribute);
+        gl.enableVertexAttribArray(sphereProgramRef.current.vertexNormalAttribute);
+        gl.enableVertexAttribArray(sphereProgramRef.current.vertexTextureAttribute);
+        gl.enableVertexAttribArray(sphereProgramRef.current.offsetAttribute);
+        gl.enableVertexAttribArray(sphereProgramRef.current.sizeAttribute);
+
         for (const buffer of myBuffers) {
             if(buffer.visible)
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
                 for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="PERFECT_SPHERES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        console.log("Some spheres ...",buffer)
+                        console.log("Some spheres ...",buffer,imageBuffersRef.current)
                     }
                 }
             }
         }
+    }
+
+    const buildDiskBuffers = ():DisplayBuffer => {
+
+        if(!canvasRefWebGL)
+            return
+
+        if(!canvasRefWebGL.current)
+            return
+
+        if(!programInstancedRef.current)
+            return
+
+        const canvasWebGL = canvasRefWebGL.current
+        const gl = canvasWebGL.getContext("webgl2")
+
+        const diskIndices = [];
+        const diskNormals = [];
+        const imageVertices = [];
+        const accuStep = 90;
+        let diskIdx = 0;
+        imageVertices.push(0.0);
+        imageVertices.push(0.0);
+        imageVertices.push(0.0);
+        diskNormals.push(0.0);
+        diskNormals.push(0.0);
+        diskNormals.push(-1.0);
+        diskIndices.push(diskIdx++);
+        for(let theta = 45; theta <= 405; theta += accuStep) {
+            const theta1 = Math.PI * (theta) / 180.0;
+            const x1 = Math.cos(theta1);
+            const y1 = Math.sin(theta1);
+            imageVertices.push(x1);
+            imageVertices.push(-y1);
+            imageVertices.push(0.0);
+            diskNormals.push(0.0);
+            diskNormals.push(0.0);
+            diskNormals.push(-1.0);
+            diskIndices.push(diskIdx++);
+        }
+        const imageBuffer = new DisplayBuffer();
+        imageBuffer.triangleVertexNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+        imageBuffer.triangleVertexIndexBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+        imageBuffer.triangleVertexTextureBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+        imageBuffer.triangleVertexPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, imageBuffer.triangleVertexIndexBuffer[0]);
+        imageBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
+        imageBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexNormalBuffer[0]);
+        imageBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
+        imageBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(diskNormals), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexPositionBuffer[0]);
+        imageBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
+        imageBuffer.triangleVertexPositionBuffer[0].numItems = imageVertices.length / 3;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(imageVertices), gl.DYNAMIC_DRAW);
+
+        const imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexTextureBuffer[0]);
+        imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
+        imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(imageTextures), gl.STATIC_DRAW);
+
+        return imageBuffer
     }
 
     const plotTheData = async () => {
@@ -759,6 +830,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
         buildBuffers(clonedBuffers,gl,true)
         myBuffers = clonedBuffers
+        imageBuffersRef.current = buildDiskBuffers()
+
     }, [])
 
     useEffect(() => {
