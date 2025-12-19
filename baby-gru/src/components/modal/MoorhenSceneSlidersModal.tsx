@@ -200,9 +200,6 @@ interface SideOnProgramSphere extends WebGLProgram {
         sizeAttribute: GLint;
         pMatrixUniform: WebGLUniformLocation;
         mvMatrixUniform: WebGLUniformLocation;
-        mvInvMatrixUniform: WebGLUniformLocation;
-        textureMatrixUniform: WebGLUniformLocation;
-        invSymMatrixUniform: WebGLUniformLocation;
 }
 
 interface SideOnProgram extends WebGLProgram {
@@ -366,6 +363,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.enableVertexAttribArray(programInstancedRef.current.vertexPositionAttribute);
         gl.enableVertexAttribArray(programInstancedRef.current.vertexNormalAttribute);
 
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 1);
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 1);
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,1);
+
         for (const buffer of myBuffers) {
             if(buffer.visible)
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
@@ -382,9 +383,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
                         gl.vertexAttribPointer(programInstancedRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
-                        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 1);
-                        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 1);
-                        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,1);
                         if(buffer.triangleInstanceOrientationBuffer[j]&&buffer.triangleInstanceOrientations.length>0&&buffer.triangleInstanceOrientations[j].length>0){
                             gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
                             gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
@@ -416,6 +414,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                 }
             }
         }
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 0);
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 0);
+        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,0);
 // useProgram is not a React hook.
 // eslint-disable-next-line
         gl.useProgram(programRef.current);
@@ -456,23 +457,45 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         for(let i = 0; i<16; i++)
             gl.disableVertexAttribArray(i);
 
-        gl.enableVertexAttribArray(sphereProgramRef.current.vertexColourAttribute);
         gl.enableVertexAttribArray(sphereProgramRef.current.vertexPositionAttribute);
         gl.enableVertexAttribArray(sphereProgramRef.current.vertexNormalAttribute);
         gl.enableVertexAttribArray(sphereProgramRef.current.vertexTextureAttribute);
+
+        gl.enableVertexAttribArray(sphereProgramRef.current.vertexColourAttribute);
         gl.enableVertexAttribArray(sphereProgramRef.current.offsetAttribute);
         gl.enableVertexAttribArray(sphereProgramRef.current.sizeAttribute);
+
+        gl.vertexAttribDivisor(sphereProgramRef.current.sizeAttribute, 1);
+        gl.vertexAttribDivisor(sphereProgramRef.current.offsetAttribute, 1);
+        gl.vertexAttribDivisor(sphereProgramRef.current.vertexColourAttribute,1);
 
         for (const buffer of myBuffers) {
             if(buffer.visible)
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
                 for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="PERFECT_SPHERES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        console.log("Some spheres ...",buffer,imageBuffersRef.current)
+                        console.log("Some spheres ...",imageBuffersRef.current)
+                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexNormalBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.vertexNormalAttribute, imageBuffersRef.current.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexPositionBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.vertexPositionAttribute, imageBuffersRef.current.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexTextureBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.vertexTextureAttribute, imageBuffersRef.current.triangleVertexTextureBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOriginBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.offsetAttribute, buffer.triangleInstanceOriginBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceSizeBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.sizeAttribute, buffer.triangleInstanceSizeBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
+                        gl.vertexAttribPointer(sphereProgramRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, imageBuffersRef.current.triangleVertexIndexBuffer[j]);
+                        gl.drawElementsInstanced(gl.TRIANGLES, imageBuffersRef.current.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
                     }
                 }
             }
         }
+        gl.vertexAttribDivisor(sphereProgramRef.current.sizeAttribute, 0);
+        gl.vertexAttribDivisor(sphereProgramRef.current.offsetAttribute, 0);
+        gl.vertexAttribDivisor(sphereProgramRef.current.vertexColourAttribute,0);
     }
 
     const buildDiskBuffers = ():DisplayBuffer => {

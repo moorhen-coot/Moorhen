@@ -1150,9 +1150,6 @@ export function initSideOnSphereShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramPerfectSpheres.pMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uPMatrix");
     shaderProgramPerfectSpheres.mvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uMVMatrix");
-    shaderProgramPerfectSpheres.mvInvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uMVINVMatrix");
-    shaderProgramPerfectSpheres.textureMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "TextureMatrix");
-    shaderProgramPerfectSpheres.invSymMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheres, "uINVSymmMatrix");
 
     return shaderProgramPerfectSpheres
 
