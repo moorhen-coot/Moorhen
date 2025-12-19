@@ -14,7 +14,7 @@ import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider, MoorhenToggle
 import { MoorhenButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover } from "../../interface-base";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenMenuItem } from "../../interface-base/MenuItem";
+import { MoorhenMenuItem } from "../../interface-base/MenuItems/MenuItem";
 import { DeleteDisplayObject, RenameDisplayObject, ScaleMap, SetMapWeight } from "../../menu-item";
 import { getNameLabel } from "../cardUtils";
 import { MapColourSelector } from "./MapColourSelector";
@@ -130,11 +130,11 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const cardTitle = useMemo(() => {
         return (
-            <div style={{ display: "flex" }}>
+            <MoorhenStack align="center" direction="line">
                 #{props.map.molNo}
                 <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
                 &nbsp;&nbsp;{getNameLabel(props.map, labelSpace)}
-            </div>
+            </MoorhenStack>
         );
     }, [props.map]);
 
@@ -172,6 +172,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             onClick={handleVisibility}
             type="icon-only"
             size="accordion"
+            tooltip="Toggle visibility"
         />,
         <MoorhenButton
             key="centre on map"
@@ -181,9 +182,17 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                 props.map.centreOnMap();
             }}
             size="accordion"
+            tooltip="Centre on map"
         />,
-        <MoorhenButton key="download" type="icon-only" icon={`MUISymbolDownload`} onClick={handleDownload} size="accordion" />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left">
+        <MoorhenButton
+            key="download"
+            type="icon-only"
+            icon={`MUISymbolDownload`}
+            onClick={handleDownload}
+            size="accordion"
+            tooltip="Save model file"
+        />,
+        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];

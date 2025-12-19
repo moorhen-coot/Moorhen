@@ -1,5 +1,5 @@
-import React, { SyntheticEvent, useCallback, useState } from "react";
-import { MoorhenButton } from "../inputs";
+import React, { useCallback, useState } from "react";
+import { MoorhenButton } from "../../inputs";
 import "./accordion.css";
 
 export type MoorhenAccordionType = {

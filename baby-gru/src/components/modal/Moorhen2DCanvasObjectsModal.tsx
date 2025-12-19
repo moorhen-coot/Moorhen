@@ -26,7 +26,7 @@ import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenPreciseInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 export const Moorhen2DCanvasObjectsModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { MoorhenPopover } from ".";
-import { MoorhenIcon } from "../icons";
+import { MoorhenPopover } from "..";
+import { MoorhenIcon } from "../../icons";
 
 type InfoCardProps = { infoText: string; popoverPlacement?: "left" | "right" | "top" | "bottom" };
 

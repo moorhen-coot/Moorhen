@@ -16,6 +16,7 @@ type MoorhenTextInputBase = {
     onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
     isInvalid?: boolean;
     disabled?: boolean;
+    placeholder?: string;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -29,7 +30,7 @@ export type MoorhenTextInputButtonProps = MoorhenTextInputBase & {
 };
 
 export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInputButtonProps) => {
-    const { inline = true, ref, isInvalid, disabled = false } = props;
+    const { inline = true, ref, isInvalid, disabled = false, placeholder } = props;
     const id = useId();
     const dispatch = useDispatch();
     const handleBlur = () => {
@@ -54,6 +55,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     onFocus={() => dispatch(setShortCutsBlocked(true))}
                     ref={ref}
                     disabled={disabled}
+                    placeholder={placeholder}
                 />
                 {props.button ? (
                     <MoorhenButton icon={props.icon} onClick={props.onClick} className="moorhen__input-text-box-button" />

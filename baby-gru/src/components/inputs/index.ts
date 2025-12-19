@@ -4,7 +4,7 @@ export { MoorhenColourPicker } from "./MoorhenColourPicker/MoorhenColourPicker";
 export { MoorhenGradientPicker } from "./MoorhenGradientPicker/MoorhenGradientPicker";
 export { MoorhenPreciseInput } from "./MoorhenPreciseInput/MoorhenPreciseInput";
 export { MoorhenSlider } from "./MoorhenSlider/MoorhenSlider";
-export { MoorhenPopoverButton } from "../interface-base/PopoverButton";
+export { MoorhenPopoverButton } from "../interface-base/Popovers/PopoverButton";
 export { MoorhenMoleculeSelect } from "./Selector/MoleculeSelector";
 export { MoorhenToggle } from "./MoorhenToggle/Toggle";
 export { MoorhenTextInput } from "./TextInput";

@@ -7,7 +7,7 @@ import { usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const shortCutMouseActions = {
     open_context_menu: ["circle-right-mouse-click", "two-finger-tap"],

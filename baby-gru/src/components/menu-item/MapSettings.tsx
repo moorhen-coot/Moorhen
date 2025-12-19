@@ -1,4 +1,3 @@
-import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -37,17 +36,15 @@ export const MapSettings = (props: {
                     label="Activate lit lines"
                 />
             )}
-            <Form.Group style={{ width: "100%", margin: "0.1rem" }} controlId="MoorhenMapOpacitySlider">
-                <MoorhenSlider
-                    minVal={0.0}
-                    maxVal={1.0}
-                    decimalPlaces={2}
-                    logScale={false}
-                    sliderTitle="Opacity"
-                    externalValue={props.mapOpacity}
-                    setExternalValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
-                />
-            </Form.Group>
+            <MoorhenSlider
+                minVal={0.0}
+                maxVal={1.0}
+                decimalPlaces={2}
+                logScale={false}
+                sliderTitle="Opacity"
+                externalValue={props.mapOpacity}
+                setExternalValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
+            />
         </>
     );
 };

@@ -11,6 +11,7 @@ type MoorhenStackType = {
     className?: string;
     inputGrid?: boolean;
     gridWidth?: 1 | 2 | 3 | 4;
+    addMargin?: boolean;
 };
 
 export const MoorhenStack = ({
@@ -24,6 +25,7 @@ export const MoorhenStack = ({
     className,
     inputGrid = false,
     gridWidth = 1,
+    addMargin = null,
 }: MoorhenStackType) => {
     let mainClass = inputGrid
         ? "moorhen__input-grid"
@@ -32,6 +34,9 @@ export const MoorhenStack = ({
           : "moorhen__stack__column";
     if (card) {
         mainClass += " moorhen_stack_card";
+    }
+    if (addMargin && !card) {
+        mainClass += " moorhen_stack_margins";
     }
     if (className) {
         mainClass += ` ${className}`;

@@ -1,4 +1,4 @@
-@import "../../colors.css";
+@import "../../../colors.css";
 
 .moorhen__menu-item-popover {
     font-family: var(--moorhen-font-family);
@@ -26,31 +26,12 @@
     display: block;
 }
 
-/* .moorhen__menu-item-popover::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: -0.6rem;
-    transform: translateY(-50%);
-    border-width: 0.6rem 0.6rem 0.6rem 0;
-    border-style: solid;
-    border-color: transparent var(--moorhen-background) transparent transparent;
-    display: block;
-} */
-
 .moorhen__menu-item-popover.right-arrow::after {
     left: auto;
     right: -0.7rem;
     border-width: 0.7rem 0 0.7rem 0.7rem;
     border-color: transparent transparent transparent var(--moorhen-border);
 }
-
-/* .moorhen__menu-item-popover.right-arrow::before {
-    left: auto;
-    right: -0.6rem;
-    border-width: 0.6rem 0 0.6rem 0.6rem;
-    border-color: transparent transparent transparent var(--moorhen-background);
-} */
 
 .moorhen__menu-item-popover.top-arrow::after {
     left: 50%;
@@ -60,15 +41,6 @@
     border-width: 0 0.7rem 0.7rem 0.7rem;
     border-color: transparent transparent var(--moorhen-border) transparent;
 }
-
-/* .moorhen__menu-item-popover.top-arrow::before {
-    left: 50%;
-    top: -0.6rem;
-    right: auto;
-    transform: translateX(-50%);
-    border-width: 0 0.6rem 0.6rem 0.6rem;
-    border-color: transparent transparent var(--moorhen-background) transparent;
-} */
 
 .moorhen__menu-item-popover.bottom-arrow::after {
     left: 50%;
@@ -80,12 +52,31 @@
     border-color: var(--moorhen-border) transparent transparent transparent;
 }
 
-/* .moorhen__menu-item-popover.bottom-arrow::before {
-    left: 50%;
-    top: auto;
-    bottom: -0.6rem;
-    right: auto;
-    transform: translateX(-50%);
-    border-width: 0.6rem 0.6rem 0 0.6rem;
-    border-color: var(--moorhen-background) transparent transparent transparent;
-} */
+@keyframes tooltipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.moorhen__tooltip {
+    box-sizing: border-box;
+    position: fixed;
+    background: color-mix(in srgb, var(--moorhen-primary) 80%, transparent);
+    color: var(--moorhen-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    z-index: 1001;
+    font-family: var(--moorhen-font-family);
+    width: auto;
+    animation: tooltipSlideIn 0.2s ease-out;
+}

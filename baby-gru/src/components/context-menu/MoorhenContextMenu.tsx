@@ -23,7 +23,7 @@ import { MoorhenRotamerChangeButton } from "./MoorhenRotamerChangeButton";
 import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneButton";
 import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
-import { MoorhenMenuItem } from "../interface-base/MenuItem";
+import { MoorhenMenuItem } from "../interface-base/MenuItems/MenuItem";
 import { MoorhenMenuItemPopover } from "../interface-base";
 
 export type ActionButtonSettings = {

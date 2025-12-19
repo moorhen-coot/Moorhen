@@ -6,7 +6,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenMapCard } from "../card/MapCard/MoorhenMapCard";
 import { MoorhenButton } from "../inputs";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 export const MoorhenMapsModal = () => {
     const [collapseAll, setCollapseAll] = useState<boolean>(false);

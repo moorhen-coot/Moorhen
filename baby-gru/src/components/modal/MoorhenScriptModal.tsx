@@ -12,7 +12,7 @@ import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 export const MoorhenScriptModal = () => {
     const [code, setCode] = useState<string>("");

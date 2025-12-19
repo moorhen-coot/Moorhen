@@ -2,8 +2,8 @@ import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useMoorhenInstance } from "../../InstanceManager";
-import { RootState } from "../../store/MoorhenReduxStore";
+import { useMoorhenInstance } from "../../../InstanceManager";
+import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
 
 type MoorhenPopoverType = {
@@ -14,47 +14,57 @@ type MoorhenPopoverType = {
     link: React.JSX.Element;
     linkRef: React.RefObject<HTMLDivElement | HTMLButtonElement>;
     isShown: boolean;
+    type?: "default" | "tooltip";
     setIsShown: (arg0: boolean) => void;
+    overridePopoverSize?: { width: number; height: number };
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
-    const { popoverContent = null, popoverPlacement = "top", isShown } = props;
+    const { popoverContent = null, popoverPlacement = "top", isShown, type = "default", overridePopoverSize = null } = props;
 
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverStyle, setPopoverStyle] = useState({});
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
 
-    useLayoutEffect(() => {
+    const calculatePosition = () => {
         if (isShown && props.linkRef.current && popoverRef.current) {
             const buttonRect = props.linkRef.current.getBoundingClientRect();
-            const popoverRect = popoverRef.current.getBoundingClientRect();
-            let leftRight;
+
+            const popoverRect = !overridePopoverSize ? popoverRef.current.getBoundingClientRect() : overridePopoverSize;
+
+            const extraSpace = type === "default" ? 10 : 0;
+
+            let left;
             if (popoverPlacement === "left") {
-                leftRight = buttonRect.left + window.scrollX - popoverRect.width - 10;
+                left = buttonRect.left + window.scrollX - popoverRect.width - extraSpace;
             } else if (popoverPlacement === "right") {
-                leftRight = buttonRect.right + window.scrollX + 10;
+                left = buttonRect.right + window.scrollX + extraSpace;
             } else {
-                leftRight = buttonRect.right + window.scrollX - popoverRect.width / 2 - buttonRect.width / 2;
+                left = buttonRect.right - buttonRect.width / 2 + window.scrollX - popoverRect.width / 2;
             }
-            let topBottom;
+            let top;
             if (popoverPlacement === "bottom") {
-                topBottom = buttonRect.top - window.scrollY + popoverRect.height - buttonRect.width;
+                top = buttonRect.top - window.scrollY + buttonRect.width + extraSpace;
             } else if (popoverPlacement === "top") {
-                topBottom = buttonRect.top + window.scrollY - popoverRect.height - buttonRect.width / 2;
+                top = buttonRect.top + window.scrollY - popoverRect.height - extraSpace;
             } else {
-                topBottom = buttonRect.top + window.scrollY + buttonRect.height / 2 - popoverRect.height / 2;
+                top = buttonRect.top + window.scrollY + buttonRect.height / 2 - popoverRect.height / 2;
             }
             // Prevent the popover from going above the viewport
-            const clampedTop = Math.max(0, topBottom);
-            const arrowPos = topBottom < 0 ? `calc(50% + ${topBottom}px)` : `50%`;
+            const clampedTop = Math.max(0, top);
+            const arrowPos = top < 0 ? `calc(50% + ${top}px)` : `50%`;
             setPopoverStyle({
                 position: "absolute",
                 top: clampedTop,
-                left: leftRight, // or rect.left for left alignment
+                left: left,
                 zIndex: 10999,
                 "--popover-arrow-top": arrowPos,
             });
         }
-    }, [isShown]);
+    };
+
+    useLayoutEffect(() => {
+        calculatePosition();
+    }, [isShown, popoverPlacement]);
 
     let arrow: string;
     if (popoverPlacement === "left") {
@@ -69,25 +79,23 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     const containerRef = useMoorhenInstance().getContainerRef();
 
-    const popover = useMemo(() => {
-        return (
-            <>
-                {createPortal(
-                    <ClickAwayListener onClickAway={() => props.setIsShown(false)}>
-                        <div
-                            className={`moorhen__menu-item-popover ${arrow}`}
-                            style={popoverStyle}
-                            ref={popoverRef}
-                            data-theme={isDark ? "dark" : "light"}
-                        >
-                            {popoverContent || props.children}
-                        </div>
-                    </ClickAwayListener>,
-                    containerRef.current
-                )}
-            </>
-        );
-    }, [props.popoverContent, popoverStyle]);
+    const popover = (
+        <>
+            {createPortal(
+                <ClickAwayListener onClickAway={() => props.setIsShown(false)}>
+                    <div
+                        className={type === "tooltip" ? "moorhen__tooltip" : `moorhen__menu-item-popover ${arrow}`}
+                        style={popoverStyle}
+                        ref={popoverRef}
+                        data-theme={isDark ? "dark" : "light"}
+                    >
+                        {popoverContent || props.children}
+                    </div>
+                </ClickAwayListener>,
+                containerRef.current
+            )}
+        </>
+    );
 
     return (
         <>

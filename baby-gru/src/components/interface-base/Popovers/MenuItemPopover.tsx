@@ -1,7 +1,7 @@
 import { Button } from "react-bootstrap";
 import { useRef, useState } from "react";
-import { MoorhenPopover } from ".";
-import { MoorhenMenuItem } from "./MenuItem";
+import { MoorhenPopover } from "..";
+import { MoorhenMenuItem } from "../MenuItems/MenuItem";
 
 type MoorhenMenuItemPopoverProps = {
     popoverContent?: React.JSX.Element;

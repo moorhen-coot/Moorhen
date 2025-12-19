@@ -12,7 +12,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const mrbump_json_keys = [
     "modelName",

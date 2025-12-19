@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation";
 
 export const MoorhenLigandValidationModal = () => {

@@ -40,7 +40,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 

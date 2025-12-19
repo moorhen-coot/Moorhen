@@ -10,7 +10,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
 
 export const MoorhenCarbohydrateValidationModal = () => {

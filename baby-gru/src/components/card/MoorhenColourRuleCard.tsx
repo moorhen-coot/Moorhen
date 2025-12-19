@@ -1,12 +1,11 @@
 import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined, GrainOutlined } from "@mui/icons-material";
 import { Popover } from "@mui/material";
-import { Card, Col, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
-import { useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import type { ColourRule } from "../../utils/MoorhenColourRule";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 const ColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void }) => {
     const colourSwatchRef = useRef<null | HTMLDivElement>(null);
@@ -226,8 +225,6 @@ export const MoorhenColourRuleCard = (props: {
     const busyRedrawing = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-
     const { index, molecule, rule, urlPrefix, setRuleList } = props;
 
     const redrawIfDirty = () => {
@@ -242,194 +239,174 @@ export const MoorhenColourRuleCard = (props: {
     };
 
     return (
-        <Card className="hide-scrolling" style={{ margin: "0.1rem", maxWidth: "100%", overflowX: "scroll" }}>
-            <Card.Body>
-                <Row className="align-items-center">
-                    <Col
-                        className="align-items-center"
-                        style={{ display: "flex", justifyContent: "left", color: isDark ? "white" : "black" }}
+        <>
+            <MoorhenStack align="center" inputGrid>
+                <label>
+                    <b>{`#${index + 1}. `}</b>
+                    <span>{`. ${rule.label}`}</span>
+                </label>
+                <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
+                    {!rule.isMultiColourRule ? (
+                        <ColourSwatch
+                            rule={rule}
+                            applyColourChange={() => {
+                                isDirty.current = true;
+                                if (!busyRedrawing.current) {
+                                    redrawIfDirty();
+                                }
+                            }}
+                        />
+                    ) : rule.ruleType === "secondary-structure" ? (
+                        <img
+                            className="colour-rule-icon"
+                            src={`${urlPrefix}/pixmaps/secondary-structure-grey.svg`}
+                            alt="ss2"
+                            style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
+                        />
+                    ) : rule.ruleType === "jones-rainbow" ? (
+                        <>
+                            <div
+                                style={{
+                                    borderColor: "rgb(255, 0, 0)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(255, 0, 0)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(255, 255, 0)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(255, 255, 0)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(0, 255, 0)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(0, 255, 0)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(0, 0, 255)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(0, 0, 255)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                        </>
+                    ) : rule.ruleType === "mol-symm" ? (
+                        <NcsColourSwatch
+                            rule={rule}
+                            applyColourChange={() => {
+                                isDirty.current = true;
+                                if (!busyRedrawing.current) {
+                                    redrawIfDirty();
+                                }
+                            }}
+                        />
+                    ) : rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm" ? (
+                        <img
+                            className="colour-rule-icon"
+                            src={`${urlPrefix}/pixmaps/temperature.svg`}
+                            alt="b-factor"
+                            style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
+                        />
+                    ) : (
+                        <>
+                            <div
+                                style={{
+                                    borderColor: "rgb(255, 125, 69)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(255, 125, 69)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(255, 219, 19)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(255, 219, 19)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(101, 203, 243)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(101, 203, 243)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                            <div
+                                style={{
+                                    borderColor: "rgb(0, 83, 214)",
+                                    borderWidth: "5px",
+                                    backgroundColor: "rgb(0, 83, 214)",
+                                    height: "20px",
+                                    width: "5px",
+                                    margin: "0rem",
+                                    padding: "0rem",
+                                }}
+                            />
+                        </>
+                    )}
+                    <MoorhenButton
+                        size="sm"
+                        style={{ margin: "0.1rem" }}
+                        onClick={() => {
+                            setRuleList({ action: "MoveUp", item: rule });
+                        }}
+                        tooltip="Move Up"
                     >
-                        <b>{`#${index + 1}. `}</b>
-                        <span>{`. ${rule.label}`}</span>
-                    </Col>
-                    <Col style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
-                        {!rule.isMultiColourRule ? (
-                            <ColourSwatch
-                                rule={rule}
-                                applyColourChange={() => {
-                                    isDirty.current = true;
-                                    if (!busyRedrawing.current) {
-                                        redrawIfDirty();
-                                    }
-                                }}
-                            />
-                        ) : rule.ruleType === "secondary-structure" ? (
-                            <img
-                                className="colour-rule-icon"
-                                src={`${urlPrefix}/pixmaps/secondary-structure-grey.svg`}
-                                alt="ss2"
-                                style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
-                            />
-                        ) : rule.ruleType === "jones-rainbow" ? (
-                            <>
-                                <div
-                                    style={{
-                                        borderColor: "rgb(255, 0, 0)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(255, 0, 0)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(255, 255, 0)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(255, 255, 0)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(0, 255, 0)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(0, 255, 0)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(0, 0, 255)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(0, 0, 255)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                            </>
-                        ) : rule.ruleType === "mol-symm" ? (
-                            <NcsColourSwatch
-                                rule={rule}
-                                applyColourChange={() => {
-                                    isDirty.current = true;
-                                    if (!busyRedrawing.current) {
-                                        redrawIfDirty();
-                                    }
-                                }}
-                            />
-                        ) : rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm" ? (
-                            <img
-                                className="colour-rule-icon"
-                                src={`${urlPrefix}/pixmaps/temperature.svg`}
-                                alt="b-factor"
-                                style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
-                            />
-                        ) : (
-                            <>
-                                <div
-                                    style={{
-                                        borderColor: "rgb(255, 125, 69)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(255, 125, 69)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(255, 219, 19)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(255, 219, 19)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(101, 203, 243)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(101, 203, 243)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                                <div
-                                    style={{
-                                        borderColor: "rgb(0, 83, 214)",
-                                        borderWidth: "5px",
-                                        backgroundColor: "rgb(0, 83, 214)",
-                                        height: "20px",
-                                        width: "5px",
-                                        margin: "0rem",
-                                        padding: "0rem",
-                                    }}
-                                />
-                            </>
-                        )}
-                        <OverlayTrigger
-                            placement="top"
-                            delay={{ show: 400, hide: 400 }}
-                            overlay={<Tooltip id="button-tooltip">Move up</Tooltip>}
-                        >
-                            <MoorhenButton
-                                size="sm"
-                                style={{ margin: "0.1rem" }}
-                                onClick={() => {
-                                    setRuleList({ action: "MoveUp", item: rule });
-                                }}
-                            >
-                                <ArrowUpwardOutlined />
-                            </MoorhenButton>
-                        </OverlayTrigger>
-                        <OverlayTrigger
-                            placement="top"
-                            delay={{ show: 400, hide: 400 }}
-                            overlay={<Tooltip id="button-tooltip">Move down</Tooltip>}
-                        >
-                            <MoorhenButton
-                                size="sm"
-                                style={{ margin: "0.1rem" }}
-                                onClick={() => {
-                                    setRuleList({ action: "MoveDown", item: rule });
-                                }}
-                            >
-                                <ArrowDownwardOutlined />
-                            </MoorhenButton>
-                        </OverlayTrigger>
-                        <OverlayTrigger
-                            placement="top"
-                            delay={{ show: 400, hide: 400 }}
-                            overlay={<Tooltip id="button-tooltip">Delete</Tooltip>}
-                        >
-                            <MoorhenButton
-                                size="sm"
-                                style={{ margin: "0.1rem" }}
-                                onClick={() => {
-                                    setRuleList({ action: "Remove", item: rule });
-                                }}
-                            >
-                                <DeleteOutlined />
-                            </MoorhenButton>
-                        </OverlayTrigger>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
+                        <ArrowUpwardOutlined />
+                    </MoorhenButton>
+                    <MoorhenButton
+                        size="sm"
+                        style={{ margin: "0.1rem" }}
+                        onClick={() => {
+                            setRuleList({ action: "MoveDown", item: rule });
+                        }}
+                        tooltip="Move Down"
+                    >
+                        <ArrowDownwardOutlined />
+                    </MoorhenButton>
+                    <MoorhenButton
+                        size="sm"
+                        style={{ margin: "0.1rem" }}
+                        onClick={() => {
+                            setRuleList({ action: "Remove", item: rule });
+                        }}
+                        tooltip="Delete rule"
+                    >
+                        <DeleteOutlined />
+                    </MoorhenButton>
+                </div>
+            </MoorhenStack>
+        </>
     );
 };

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { MoorhenSVG } from "../icons";
-import { MoorhenButton } from "../inputs";
+import { MoorhenSVG } from "../../icons";
+import { MoorhenButton } from "../../inputs";
 import { MoorhenPopover } from "./Popover";
 
 type MoorhenPopoverButtonType = {
@@ -10,10 +10,13 @@ type MoorhenPopoverButtonType = {
     icon?: MoorhenSVG;
     popoverPlacement?: "left" | "right" | "top" | "bottom";
     children?: React.ReactNode;
+    tooltip?: string;
 };
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     const [popoverIsShown, setPopOverIsShown] = useState<boolean>(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const { tooltip = null } = props;
+
     const popOverLink = (
         <MoorhenButton
             type="icon-only"
@@ -21,6 +24,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             size={props.size}
             ref={buttonRef}
             onClick={() => setPopOverIsShown(!popoverIsShown)}
+            tooltip={tooltip}
         />
     );
 

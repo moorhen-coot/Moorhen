@@ -2,7 +2,6 @@ import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { MoorhenStack } from "../../interface-base";
-import "../../interface-base/moorhen-stack.css";
 import "./MoorhenPreciseInput.css";
 
 type MoorhenPreciseInputPropsType = {

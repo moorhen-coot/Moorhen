@@ -1,4 +1,3 @@
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import {
@@ -13,6 +12,7 @@ import {
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { SubMenuMap } from "../menu-system/subMenuConfig";
 
 export const OtherSceneSettings = () => {
@@ -31,101 +31,89 @@ export const OtherSceneSettings = () => {
     const menuItemText = "Other settings...";
 
     return (
-        <div style={{ width: "18rem" }}>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawFPS}
-                    onChange={() => {
-                        dispatch(setDrawFPS(!drawFPS));
-                    }}
-                    label="Show frames per second counter"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={enableAtomHovering}
-                    onChange={() => {
-                        if (enableAtomHovering) {
-                            dispatch(setHoveredAtom({ molecule: null, cid: null }));
-                        }
-                        dispatch(setEnableAtomHovering(!enableAtomHovering));
-                    }}
-                    label="Enable atom hovering"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawCrosshairs}
-                    onChange={() => {
-                        dispatch(setDrawCrosshairs(!drawCrosshairs));
-                    }}
-                    label="Show crosshairs"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawScaleBar}
-                    onChange={() => {
-                        dispatch(setDrawScaleBar(!drawScaleBar));
-                    }}
-                    label="Show scale bar"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawAxes}
-                    onChange={() => {
-                        dispatch(setDrawAxes(!drawAxes));
-                    }}
-                    label="Show axes"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawMissingLoops}
-                    onChange={() => {
-                        dispatch(setDrawMissingLoops(!drawMissingLoops));
-                    }}
-                    label="Show missing loops"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={drawEnvBOcc}
-                    onChange={() => {
-                        dispatch(setDrawEnvBOcc(!drawEnvBOcc));
-                    }}
-                    label="Show env. temp factors and occ."
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doPerspectiveProjection}
-                    onChange={() => {
-                        dispatch(setDoPerspectiveProjection(!doPerspectiveProjection));
-                    }}
-                    label="Perspective projection"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doSpin}
-                    onChange={() => {
-                        dispatch(setDoSpin(!doSpin));
-                    }}
-                    label="Spin view"
-                />
-            </InputGroup>
-        </div>
+        <MoorhenStack>
+            <MoorhenToggle
+                type="switch"
+                checked={drawFPS}
+                onChange={() => {
+                    dispatch(setDrawFPS(!drawFPS));
+                }}
+                label="Show frames per second counter"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={enableAtomHovering}
+                onChange={() => {
+                    if (enableAtomHovering) {
+                        dispatch(setHoveredAtom({ molecule: null, cid: null }));
+                    }
+                    dispatch(setEnableAtomHovering(!enableAtomHovering));
+                }}
+                label="Enable atom hovering"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={drawCrosshairs}
+                onChange={() => {
+                    dispatch(setDrawCrosshairs(!drawCrosshairs));
+                }}
+                label="Show crosshairs"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={drawScaleBar}
+                onChange={() => {
+                    dispatch(setDrawScaleBar(!drawScaleBar));
+                }}
+                label="Show scale bar"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={drawAxes}
+                onChange={() => {
+                    dispatch(setDrawAxes(!drawAxes));
+                }}
+                label="Show axes"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={drawMissingLoops}
+                onChange={() => {
+                    dispatch(setDrawMissingLoops(!drawMissingLoops));
+                }}
+                label="Show missing loops"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={drawEnvBOcc}
+                onChange={() => {
+                    dispatch(setDrawEnvBOcc(!drawEnvBOcc));
+                }}
+                label="Show env. temp factors and occ."
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={doPerspectiveProjection}
+                onChange={() => {
+                    dispatch(setDoPerspectiveProjection(!doPerspectiveProjection));
+                }}
+                label="Perspective projection"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={doSpin}
+                onChange={() => {
+                    dispatch(setDoSpin(!doSpin));
+                }}
+                label="Spin view"
+            />
+        </MoorhenStack>
     );
 };
 

@@ -9,8 +9,8 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenMoleculeSelect, MoorhenPreciseInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenButton, MoorhenColourPicker } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
-import { MoorhenMenuItemPopover } from "../interface-base/MenuItemPopover";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
 const MoorhenDeleteVectorMenuItem = (props: {
     item: moorhen.Map | moorhen.Molecule;

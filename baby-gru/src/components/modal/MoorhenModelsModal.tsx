@@ -7,7 +7,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenMoleculeCard } from "../card/MoleculeCard/MoorhenMoleculeCard";
 import { MoorhenButton } from "../inputs";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 export const MoorhenModelsModal = () => {
     const cardListRef = useRef([]);

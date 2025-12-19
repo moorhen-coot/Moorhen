@@ -4,7 +4,6 @@ import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../Inst
 import { RootState } from "../../store/MoorhenReduxStore";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
 import { MoorhenFileInput } from "../inputs";
-import "../interface-base/menu-item.css";
 
 export const AutoLoadFiles = () => {
     const commandCentre = useCommandCentre();

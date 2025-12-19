@@ -4,7 +4,7 @@ import { dispatchPersistentStates, usePersistentState } from "../../store/menusS
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenPAEPlot } from "../validation-tools/MoorhenPAEPlot";
 
 export const MoorhenPAEModal = () => {

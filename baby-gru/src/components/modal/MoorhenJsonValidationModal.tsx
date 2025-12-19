@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
 
 export const MoorhenJsonValidationModal = () => {

@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
-import { MoorhenMenuItemPopover } from "../../interface-base/MenuItemPopover";
+import { MoorhenMenuItemPopover } from "../../interface-base/Popovers/MenuItemPopover";
 
 export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean }) => {
     const [cell, setCell] = useState<string | null>(null);

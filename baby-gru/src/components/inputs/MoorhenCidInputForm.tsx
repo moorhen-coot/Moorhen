@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
+import { MoorhenStack } from "../interface-base";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -13,6 +14,7 @@ type MoorhenCidInputFormPropsType = {
     invalidCid?: boolean;
     allowUseCurrentSelection?: boolean;
     ref?: React.Ref<HTMLInputElement>;
+    inline?: boolean
 };
 
 export const MoorhenCidInputForm = ({
@@ -26,6 +28,7 @@ export const MoorhenCidInputForm = ({
     allowUseCurrentSelection = false,
     onChange,
     ref: cidFormRef,
+    inline = true,
 }: MoorhenCidInputFormPropsType) => {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
@@ -54,7 +57,7 @@ export const MoorhenCidInputForm = ({
 
     return (
         <>
-            <div style={{ width: width, margin: margin, height: height }}>
+            <MoorhenStack  direction={inline? "line" : null} style={{ width: width, margin: margin, height: height }}>
                 {label && <label style={{ display: "block", marginBottom: "0.25rem" }}>{label}</label>}
                 <input
                     type="text"
@@ -64,7 +67,7 @@ export const MoorhenCidInputForm = ({
                     onChange={handleChange}
                     ref={cidFormRef}
                 />
-            </div>
+            </MoorhenStack>
             {allowUseCurrentSelection && showResidueSelection && (
                 <div style={{ width: width, margin: margin, display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <input type="checkbox" id="useCurrentSelection" onChange={handleFillCurrentSelection} />

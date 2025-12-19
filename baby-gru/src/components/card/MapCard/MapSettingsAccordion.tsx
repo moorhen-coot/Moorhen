@@ -1,5 +1,3 @@
-import { ExpandMoreOutlined, LockOpen, LockOutline } from "@mui/icons-material";
-import { Form, Stack, ToggleButton } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setMapAlpha, setMapRadius, setMapStyle } from "../../../store/mapContourSettingsSlice";
@@ -7,7 +5,7 @@ import { moorhen } from "../../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenAccordion } from "../../interface-base/Accordion";
+import { MoorhenAccordion } from "../../interface-base/Accordion/Accordion";
 
 interface MoorhenMapCardSettings {
     map: moorhen.Map;

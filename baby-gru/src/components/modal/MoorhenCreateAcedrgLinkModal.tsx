@@ -9,7 +9,7 @@ import { modalKeys } from "../../utils/enums";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
-import { MoorhenDraggableModalBase } from "../interface-base/DraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;

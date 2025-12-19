@@ -2,7 +2,6 @@ import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
 import { Checkbox, IconButton } from "@mui/material";
 import { Chart, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { setContourLevel } from "../../../store/mapContourSettingsSlice";
@@ -10,7 +9,7 @@ import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenAccordion } from "../../interface-base/Accordion";
+import { MoorhenAccordion } from "../../interface-base/Accordion/Accordion";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);

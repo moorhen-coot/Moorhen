@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { setEnableAtomHovering } from "../../store/hoveringStatesSlice";
-import { ModalKey, focusOnModal, hideModal, unFocusModal } from "../../store/modalsSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { setIsDraggingAtoms } from "../../../store/generalStatesSlice";
+import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
+import { ModalKey, focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
+import { moorhen } from "../../../types/moorhen";
+import { MoorhenButton } from "../../inputs";
 import "./draggable-modal-base.css";
 
 type MoorhenDraggableModalBaseProps = {

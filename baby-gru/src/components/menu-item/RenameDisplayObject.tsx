@@ -1,7 +1,6 @@
-import { Form } from "react-bootstrap";
 import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenTextInput } from "../inputs";
 
 export const RenameDisplayObject = (props: {
     item: moorhen.Molecule | moorhen.Map;
@@ -22,9 +21,7 @@ export const RenameDisplayObject = (props: {
 
     return (
         <>
-            <Form.Group style={{ width: "10rem", margin: "0" }} controlId="MoorhenGetRenameMenuItem" className="mb-3">
-                <Form.Control ref={newNameInputRef} type="text" name="newItemName" placeholder="New name" />
-            </Form.Group>
+            <MoorhenTextInput ref={newNameInputRef} placeholder="New name" />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
