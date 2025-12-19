@@ -36,7 +36,7 @@ var perfect_sphere_side_on_view_fragment_shader_source = `#version 300 es\n
       vec3 norm = vec3(x,y,z);
 
       E = normalize(norm);
-      L = normalize((inverse(mvMatrix)*vec3(0.0,0.0,1.0)).xyz);
+      L = vec3(0.0,0.0,1.0);
       Idiff += max(dot(E,L), 0.0);
 
       vec4 theColor = vec4(vColor);

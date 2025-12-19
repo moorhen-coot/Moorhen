@@ -200,6 +200,7 @@ interface SideOnProgramSphere extends WebGLProgram {
         sizeAttribute: GLint;
         pMatrixUniform: WebGLUniformLocation;
         mvMatrixUniform: WebGLUniformLocation;
+        mvInvMatrixUniform: WebGLUniformLocation;
 }
 
 interface SideOnProgram extends WebGLProgram {
@@ -453,6 +454,15 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         gl.useProgram(sphereProgramRef.current)
         gl.uniformMatrix4fv(sphereProgramRef.current.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(sphereProgramRef.current.mvMatrixUniform, false, mvMatrix);
+        const invmat = mat4.create();
+        const invmatin = mat4.create();
+        mat4.set(invmatin,
+                mvMatrix[0], mvMatrix[1], mvMatrix[2], 0.0,
+                mvMatrix[4], mvMatrix[5], mvMatrix[6], 0.0,
+                mvMatrix[8], mvMatrix[9], mvMatrix[10], 0.0,
+                0.0, 0.0, 0.0, 1.0);
+        mat4.invert(invmat, invmatin);
+        gl.uniformMatrix4fv(sphereProgramRef.current.mvInvMatrixUniform, false, invmat);
 
         for(let i = 0; i<16; i++)
             gl.disableVertexAttribArray(i);
@@ -474,7 +484,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
                 for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
                     if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="PERFECT_SPHERES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        console.log("Some spheres ...",imageBuffersRef.current)
                         gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexNormalBuffer[j]);
                         gl.vertexAttribPointer(sphereProgramRef.current.vertexNormalAttribute, imageBuffersRef.current.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexPositionBuffer[j]);

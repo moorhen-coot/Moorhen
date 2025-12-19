@@ -9,6 +9,7 @@ var twod_side_on_view_vertex_shader_source = `#version 300 es\n
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
+    uniform mat4 uMVInvMatrix;
 
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
@@ -23,7 +24,7 @@ var twod_side_on_view_vertex_shader_source = `#version 300 es\n
     void main(void) {
 
       float silly_scale = 1.4142135623730951;
-      vec4 theVert = vec4((silly_scale*(size[0])) * (vec4(aVertexPosition,1.0)).xyz+offset,1.0);
+      vec4 theVert = vec4((silly_scale*(size[0])) * (uMVInvMatrix*vec4(aVertexPosition,1.0)).xyz+offset,1.0);
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
