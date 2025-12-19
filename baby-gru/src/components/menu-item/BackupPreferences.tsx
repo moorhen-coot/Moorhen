@@ -1,8 +1,8 @@
-import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setEnableTimeCapsule, setMaxBackupCount, setModificationCountBackupThreshold } from "../../store/backupSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const BackupPreferences = () => {
     const dispatch = useDispatch();
@@ -11,43 +11,37 @@ export const BackupPreferences = () => {
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
 
     return (
-        <>
-            <Form.Group style={{ maxWidth: "25rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={enableTimeCapsule}
-                    onChange={() => {
-                        dispatch(setEnableTimeCapsule(!enableTimeCapsule));
-                    }}
-                    label="Make automatic backups"
-                />
-            </Form.Group>
+        <MoorhenStack gap="0.5rem">
+            <MoorhenToggle
+                type="switch"
+                checked={enableTimeCapsule}
+                onChange={() => {
+                    dispatch(setEnableTimeCapsule(!enableTimeCapsule));
+                }}
+                label="Make automatic backups"
+            />
             <hr></hr>
-            <Form.Group className="mb-3" style={{ width: "18rem", margin: "0" }} controlId="MoorhenMaxBackupCount">
-                <MoorhenSlider
-                    isDisabled={!enableTimeCapsule}
-                    minVal={1}
-                    maxVal={30}
-                    decimalPlaces={0}
-                    logScale={false}
-                    sliderTitle="Max. number of stored backups"
-                    externalValue={maxBackupCount}
-                    setExternalValue={(val: number) => dispatch(setMaxBackupCount(val))}
-                />
-            </Form.Group>
-            <Form.Group className="mb-3" style={{ width: "18rem", margin: "0" }} controlId="MoorhenModifThresholdBackup">
-                <MoorhenSlider
-                    isDisabled={!enableTimeCapsule}
-                    minVal={1}
-                    maxVal={30}
-                    decimalPlaces={0}
-                    logScale={false}
-                    sliderTitle="No. of modifications to trigger backup"
-                    externalValue={modificationCountBackupThreshold}
-                    setExternalValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))}
-                />
-            </Form.Group>
-        </>
+            <MoorhenSlider
+                isDisabled={!enableTimeCapsule}
+                minVal={1}
+                maxVal={30}
+                decimalPlaces={0}
+                logScale={false}
+                sliderTitle="Max. number of stored backups"
+                externalValue={maxBackupCount}
+                setExternalValue={(val: number) => dispatch(setMaxBackupCount(val))}
+            />
+            <MoorhenSlider
+                isDisabled={!enableTimeCapsule}
+                minVal={1}
+                maxVal={30}
+                decimalPlaces={0}
+                logScale={false}
+                sliderTitle="No. of modifications to trigger backup"
+                externalValue={modificationCountBackupThreshold}
+                setExternalValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))}
+            />
+        </MoorhenStack>
     );
 };
 

@@ -1,9 +1,7 @@
-import { Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";

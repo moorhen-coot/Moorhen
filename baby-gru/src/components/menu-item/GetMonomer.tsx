@@ -1,8 +1,6 @@
-import { InfoOutlined } from "@mui/icons-material";
 import { Autocomplete, CircularProgress, MenuItem, Skeleton, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
 import { useSnackbar } from "notistack";
-import { Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -10,9 +8,9 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenInfoCard, MoorhenPopover, MoorhenStack } from "../interface-base";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
@@ -20,36 +18,59 @@ const CompoundAutoCompleteOption = (props: {
     setValue: (newVal: string) => void;
 }) => {
     const [ligandSVG, setLigandSVG] = useState<string>("");
+    const [isShown, setIsShown] = useState<boolean>(false);
 
     const tooltip = useMemo(() => {
         return (
-            <Tooltip style={{ zIndex: 99999 }}>
-                {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
+            <div
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                }}
+            >
+                <div style={{ maxWidth: "300px", maxHeight: "300px", overflow: "hidden" }}>
+                    {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
+                </div>
                 <br></br>
                 <strong>{props.compoundName}</strong>
-            </Tooltip>
+            </div>
         );
     }, [ligandSVG]);
 
     useEffect(() => {
         const fetchLigandSVG = async () => {
             const threeLetterCode = props.monLibListRef.current.find(item => item.name === props.compoundName)?.three_letter_code;
-            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_100.svg`);
+            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_300.svg`);
             const text = await response.text();
             setLigandSVG(text);
         };
         fetchLigandSVG();
     }, []);
 
+    const popoverLinkRef = useRef<HTMLButtonElement>(null);
+
+    const popoverLink = (
+        <button
+            ref={popoverLinkRef}
+            onMouseEnter={() => setIsShown(true)}
+            onMouseLeave={() => setIsShown(false)}
+            onClick={() => props.setValue(props.compoundName)}
+            style={{ all: "unset", width: "18rem", height: "6rem", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+            <div style={{ width: "100px", height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
+            </div>
+            <span style={{ width: "12rem", textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{props.compoundName}</span>
+        </button>
+    );
+
     return (
-        <OverlayTrigger placement="right" overlay={tooltip}>
-            <MenuItem onClick={() => props.setValue(props.compoundName)}>
-                <MoorhenStack direction="horizontal" gap={1} style={{ width: "100%" }}>
-                    {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
-                    <span style={{ width: "100%", overflow: "hidden" }}>{props.compoundName}</span>
-                </MoorhenStack>
-            </MenuItem>
-        </OverlayTrigger>
+        <MoorhenPopover link={popoverLink} linkRef={popoverLinkRef} isShown={isShown} setIsShown={setIsShown} popoverPlacement="right">
+            {tooltip}
+        </MoorhenPopover>
     );
 };
 
@@ -269,47 +290,43 @@ export const GetMonomer = () => {
     const menuItemText = "Get monomer...";
 
     return (
-        <>
-            <Form.Group className="moorhen-form-group">
-                <Form.Label>Source...</Form.Label>
-                <OverlayTrigger
-                    placement="right"
-                    overlay={
-                        <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{ zIndex: 99999 }}>
-                            <em>
-                                By default, &quot;Get monomer&quot; will search in each of the following sources until a match is found for
-                                your monomer. You can instead override this behaviour by selecting a specific source for your monomer.
-                            </em>
-                        </Tooltip>
-                    }
-                >
-                    <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
-                </OverlayTrigger>
-                <MoorhenSelect ref={sourceSelectRef} value={source} onChange={handleSourceChange}>
-                    <option value={"default"}>Default</option>
-                    <option value={"libcoot-api"}>Imported dictionary</option>
-                    <option value={"local-monomer-library"}>Local monomer library</option>
-                    <option value={"remote-monomer-library"}>Remote monomer library</option>
-                    <option value={"pdbe"}>PDBe</option>
-                </MoorhenSelect>
-            </Form.Group>
+        <MoorhenStack inputGrid>
+            <MoorhenSelect
+                ref={sourceSelectRef}
+                value={source}
+                onChange={handleSourceChange}
+                label={
+                    <label>
+                        Source...
+                        <MoorhenInfoCard
+                            infoText='By default, "Get monomer" will search in each of the following sources until a match is found for
+                                your monomer. You can instead override this behaviour by selecting a specific source for your monomer.'
+                        />
+                    </label>
+                }
+            >
+                <option value={"default"}>Default</option>
+                <option value={"libcoot-api"}>Imported dictionary</option>
+                <option value={"local-monomer-library"}>Local monomer library</option>
+                <option value={"remote-monomer-library"}>Remote monomer library</option>
+                <option value={"pdbe"}>PDBe</option>
+            </MoorhenSelect>
             {["default", "libcoot-api"].includes(source) && (
                 <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
             )}
             {source === "default" && (
-                <MoorhenSelect ref={searchModeSelectRef} value={searchMode} onChange={handleSearchModeChange}>
+                <MoorhenSelect ref={searchModeSelectRef} value={searchMode} onChange={handleSearchModeChange} label="Search for">
                     <option value={"tlc"}>Three letter code</option>
                     <option value={"name"}>Compound name</option>
                 </MoorhenSelect>
             )}
             {searchMode === "tlc" ? (
-                <Form.Group className="moorhen-form-group" controlId="MoorhenGetMonomerMenuItem">
-                    <Form.Label>Monomer identifier</Form.Label>
-                    <Form.Control ref={tlcRef} type="text" size="sm" style={{ textTransform: "uppercase" }} />
-                </Form.Group>
+                <>
+                    <MoorhenTextInput ref={tlcRef} uppercase label="Monomer identifier" />
+                </>
             ) : (
-                <Form.Group className="moorhen-form-group" controlId="MoorhenGetMonomerMenuItem">
-                    <Form.Label>Compound Name</Form.Label>
+                <MoorhenStack direction="line">
+                    <label>Compound Name</label>
                     <Autocomplete
                         disablePortal
                         selectOnFocus
@@ -322,6 +339,7 @@ export const GetMonomer = () => {
                         loading={busy}
                         value={autoCompleteValue}
                         open={autocompleteOpen}
+                        style={{ width: "18rem" }}
                         onClose={() => setAutocompleteOpen(false)}
                         onOpen={() => setAutocompleteOpen(true)}
                         renderInput={params => (
@@ -378,9 +396,9 @@ export const GetMonomer = () => {
                             },
                         }}
                     />
-                </Form.Group>
+                </MoorhenStack>
             )}
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

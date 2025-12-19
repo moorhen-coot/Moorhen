@@ -1,5 +1,4 @@
 import { enqueueSnackbar } from "notistack";
-import { Button, Card, Col, Row } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useMemo } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -10,6 +9,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { GetPolimerInfoQuery } from "../../utils/__graphql__/graphql";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: number; selectedMolNo: number; selectedChain: string }) => {
     const { selectedMolNo, data, idx, selectedChain } = props;
@@ -93,19 +93,11 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
     }, [entryInfo, entityInfo, fetchMoleculeFromURL, selectedChain, selectedMolNo]);
 
     return (
-        <Card style={{ marginTop: "0.5rem" }}>
-            <Card.Body style={{ padding: "0.5rem" }}>
-                <Row style={{ display: "flex", justifyContent: "between" }}>
-                    <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>
-                        <span>{label}</span>
-                    </Col>
-                    <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                        <MoorhenButton style={{ marginRight: "0.5rem" }} onClick={fetchAndSuperpose}>
-                            Fetch
-                        </MoorhenButton>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
+        <MoorhenStack direction="line">
+            <label>{label}</label>
+            <MoorhenButton style={{ marginRight: "0.5rem" }} onClick={fetchAndSuperpose}>
+                Fetch
+            </MoorhenButton>
+        </MoorhenStack>
     );
 };

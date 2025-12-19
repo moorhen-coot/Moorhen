@@ -1,11 +1,11 @@
 import { useSnackbar } from "notistack";
-import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 
 export const ChangeChainId = () => {
@@ -103,28 +103,30 @@ export const ChangeChainId = () => {
 
     return (
         <>
-            <MoorhenMoleculeSelect onChange={handleModelChange} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
-            <MoorhenChainSelect
-                molecules={molecules}
-                selectedCoordMolNo={selectedModel}
-                onChange={handleChainChange}
-                ref={chainSelectRef}
-            />
-            <MoorhenSequenceRangeSlider ref={residueRangeRef} selectedChainId={selectedChain} selectedMolNo={selectedModel} />
-            <Form.Group style={{ width: "95%", margin: "0.5rem", height: "4rem" }}>
-                <Form.Label>New chain ID</Form.Label>
-                <Form.Control
-                    size="sm"
-                    type="text"
+            <MoorhenStack inputGrid>
+                <MoorhenMoleculeSelect onChange={handleModelChange} molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
+                <MoorhenChainSelect
+                    molecules={molecules}
+                    selectedCoordMolNo={selectedModel}
+                    onChange={handleChainChange}
+                    ref={chainSelectRef}
+                />
+                <MoorhenTextInput
+                    label="New chain ID"
                     style={{ width: "100%", color: invalidNewId ? "red" : "", borderColor: invalidNewId ? "red" : "" }}
                     ref={newChainIdFormRef}
                 />
-            </Form.Group>
+            </MoorhenStack>
+            <MoorhenSequenceRangeSlider
+                style={{ marginTop: "1rem", marginBottom: "1.5rem" }}
+                ref={residueRangeRef}
+                selectedChainId={selectedChain}
+                selectedMolNo={selectedModel}
+            />
+
             <MoorhenButton variant="primary" onClick={changeChainId}>
                 OK
             </MoorhenButton>
         </>
     );
 };
-
-("Change chain ID...");

@@ -225,10 +225,10 @@ const MoorhenQuerySequence = () => {
             modalId={modalKeys.SEQ_QUERY}
             left={width / 4}
             top={height / 4}
-            minHeight={convertViewtoPx(15, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(50, height)}
-            maxWidth={convertViewtoPx(50, width)}
+            minHeight={400}
+            minWidth={220}
+            maxHeight={900}
+            maxWidth={400}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
                     <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
@@ -237,87 +237,69 @@ const MoorhenQuerySequence = () => {
             }
             headerTitle="Query using a sequence"
             body={
-                <>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
-                        </Col>
-                        <Col>
-                            <MoorhenChainSelect
-                                width=""
-                                molecules={molecules}
-                                onChange={handleChainChange}
-                                selectedCoordMolNo={selectedModel}
-                                ref={chainSelectRef}
-                                allowedTypes={[1, 2]}
-                            />
-                        </Col>
-                        <Col>
-                            <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
-                                <option value="PDB" key="PDB">
-                                    PDB
-                                </option>
-                                <option value="AFDB" key="AFDB">
-                                    Predicted Models
-                                </option>
-                            </MoorhenSelect>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                            <Form.Group controlId="eValueSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                                <MoorhenSlider
-                                    minVal={0.1}
-                                    maxVal={1.0}
-                                    logScale={false}
-                                    sliderTitle="E-Val cutoff"
-                                    decimalPlaces={1}
-                                    externalValue={eValCutoff}
-                                    setExternalValue={value => setEValCutoff(value)}
-                                />
-                            </Form.Group>
-                        </Col>
-                        <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                            <Form.Group controlId="seqIdSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                                <MoorhenSlider
-                                    minVal={1}
-                                    maxVal={100}
-                                    logScale={false}
-                                    sliderTitle="Seq. Id. cutoff"
-                                    externalValue={seqIdCutoff}
-                                    decimalPlaces={0}
-                                    setExternalValue={value => setSeqIdCutoff(value)}
-                                />
-                            </Form.Group>
-                        </Col>
-                    </Row>
+                <MoorhenStack>
+                    <MoorhenStack inputGrid addMargin>
+                        <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
+                        <MoorhenChainSelect
+                            width=""
+                            molecules={molecules}
+                            onChange={handleChainChange}
+                            selectedCoordMolNo={selectedModel}
+                            ref={chainSelectRef}
+                            allowedTypes={[1, 2]}
+                        />
+                        <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
+                            <option value="PDB" key="PDB">
+                                PDB
+                            </option>
+                            <option value="AFDB" key="AFDB">
+                                Predicted Models
+                            </option>
+                        </MoorhenSelect>
+                    </MoorhenStack>
+                    <MoorhenSlider
+                        minVal={0.1}
+                        maxVal={1.0}
+                        logScale={false}
+                        sliderTitle="E-Val cutoff"
+                        decimalPlaces={1}
+                        externalValue={eValCutoff}
+                        setExternalValue={value => setEValCutoff(value)}
+                    />
+                    <MoorhenSlider
+                        minVal={1}
+                        maxVal={100}
+                        logScale={false}
+                        sliderTitle="Seq. Id. cutoff"
+                        externalValue={seqIdCutoff}
+                        decimalPlaces={0}
+                        setExternalValue={value => setSeqIdCutoff(value)}
+                    />
                     <hr></hr>
-                    <Row>
-                        {data ? (
-                            <>
-                                {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
-                                {totalNumberOfHits > 0 ? (
-                                    <div style={{ height: "100px", width: "100%" }}>
-                                        {data &&
-                                            data.entityInfo.map((entityInfo, idx) => {
-                                                return (
-                                                    <MoorhenQueryHitCard
-                                                        key={entityInfo.entityId}
-                                                        selectedMolNo={parseInt(moleculeSelectRef.current.value)}
-                                                        selectedChain={chainSelectRef.current.value}
-                                                        data={data}
-                                                        idx={idx}
-                                                    />
-                                                );
-                                            })}
-                                    </div>
-                                ) : (
-                                    <span>No results found...</span>
-                                )}
-                            </>
-                        ) : null}
-                    </Row>
-                </>
+                    {data ? (
+                        <>
+                            {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
+                            {totalNumberOfHits > 0 ? (
+                                <MoorhenStack inputGrid>
+                                    {data &&
+                                        data.entityInfo.map((entityInfo, idx) => {
+                                            return (
+                                                <MoorhenQueryHitCard
+                                                    key={entityInfo.entityId}
+                                                    selectedMolNo={parseInt(moleculeSelectRef.current.value)}
+                                                    selectedChain={chainSelectRef.current.value}
+                                                    data={data}
+                                                    idx={idx}
+                                                />
+                                            );
+                                        })}
+                                </MoorhenStack>
+                            ) : (
+                                <span>No results found...</span>
+                            )}
+                        </>
+                    ) : null}
+                </MoorhenStack>
             }
             footer={
                 <>

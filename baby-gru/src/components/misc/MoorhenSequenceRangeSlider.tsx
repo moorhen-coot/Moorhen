@@ -11,6 +11,7 @@ export const MoorhenSequenceRangeSlider = forwardRef<
     {
         selectedMolNo: number;
         selectedChainId: string;
+        style?: React.CSSProperties;
     }
 >((props, ref) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
@@ -68,7 +69,7 @@ export const MoorhenSequenceRangeSlider = forwardRef<
     };
 
     return (
-        <>
+        <div style={{ ...props.style }}>
             <span style={{ margin: "0.5rem" }}>Residue range</span>
             <MoorhenStack direction="horizontal" gap={1} style={{}}>
                 <MoorhenStack direction="vertical" gap={0} style={{ justifyContent: "center" }}>
@@ -200,6 +201,6 @@ export const MoorhenSequenceRangeSlider = forwardRef<
                     </IconButton>
                 </MoorhenStack>
             </MoorhenStack>
-        </>
+        </div>
     );
 });

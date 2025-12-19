@@ -1,4 +1,3 @@
-import { Button } from "react-bootstrap";
 import { useRef, useState } from "react";
 import { MoorhenPopover } from "..";
 import { MoorhenMenuItem } from "../MenuItems/MenuItem";

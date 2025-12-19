@@ -12,6 +12,7 @@ type MoorhenStackType = {
     inputGrid?: boolean;
     gridWidth?: 1 | 2 | 3 | 4;
     addMargin?: boolean;
+    ref?: React.RefObject<HTMLDivElement>;
 };
 
 export const MoorhenStack = ({
@@ -25,7 +26,8 @@ export const MoorhenStack = ({
     className,
     inputGrid = false,
     gridWidth = 1,
-    addMargin = null,
+    addMargin = false,
+    ref = null,
 }: MoorhenStackType) => {
     let mainClass = inputGrid
         ? "moorhen__input-grid"
@@ -33,10 +35,10 @@ export const MoorhenStack = ({
           ? "moorhen__stack__row"
           : "moorhen__stack__column";
     if (card) {
-        mainClass += " moorhen_stack_card";
+        mainClass += " moorhen__stack_card";
     }
     if (addMargin && !card) {
-        mainClass += " moorhen_stack_margins";
+        mainClass += " moorhen__stack_margins";
     }
     if (className) {
         mainClass += ` ${className}`;
@@ -51,6 +53,7 @@ export const MoorhenStack = ({
                 alignItems: align,
                 ...style,
             }}
+            ref={ref}
         >
             {children}
         </div>

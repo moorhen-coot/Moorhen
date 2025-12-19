@@ -1,5 +1,4 @@
 import { useSnackbar } from "notistack";
-import { Button, Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -274,9 +273,9 @@ export const FetchOnlineSources = () => {
                     Fetch
                 </MoorhenButton>
             </div>
-            <Form.Label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
+            <label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching
-            </Form.Label>
+            </label>
             {downloadMaps && (
                 <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
                     <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" type="checkbox" />

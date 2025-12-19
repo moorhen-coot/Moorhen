@@ -1,9 +1,7 @@
 import { useSnackbar } from "notistack";
-import { Button, Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { setResidueSelection } from "../../store/generalStatesSlice";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";

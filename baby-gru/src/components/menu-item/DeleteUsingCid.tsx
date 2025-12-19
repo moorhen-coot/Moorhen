@@ -1,4 +1,3 @@
-import { Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
@@ -8,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 
 export const DeleteUsingCid = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -60,7 +60,7 @@ export const DeleteUsingCid = () => {
     }, [residueSelection, molecules]);
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={moleculeSelectRef} />
             <MoorhenCidInputForm
                 margin={"0.5rem"}
@@ -74,6 +74,6 @@ export const DeleteUsingCid = () => {
             <MoorhenButton variant="primary" onClick={deleteSelection}>
                 OK
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

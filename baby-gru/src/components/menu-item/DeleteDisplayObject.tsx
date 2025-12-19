@@ -1,4 +1,3 @@
-import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
 import { setActiveMap } from "../../store/generalStatesSlice";
@@ -6,6 +5,7 @@ import { removeMap } from "../../store/mapsSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const DeleteDisplayObject = (props: { item: moorhen.Map | moorhen.Molecule }) => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
@@ -33,11 +33,11 @@ export const DeleteDisplayObject = (props: { item: moorhen.Map | moorhen.Molecul
     }, [activeMap, maps]);
 
     return (
-        <>
-            <Form.Group style={{ width: "10rem", margin: "0.5rem" }} controlId="MoorhenGetDeleteMenuItem" className="mb-3">
-                <span style={{ fontWeight: "bold" }}>Are you sure?</span>
-            </Form.Group>
-            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
-        </>
+        <MoorhenStack justify="center" align="center" gap="0.5rem">
+            <span style={{ fontWeight: "bold" }}>Are you sure?</span>
+            <MoorhenButton onClick={onCompleted} variant="danger">
+                Yes delete
+            </MoorhenButton>
+        </MoorhenStack>
     );
 };

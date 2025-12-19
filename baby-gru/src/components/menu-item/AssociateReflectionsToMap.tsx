@@ -1,10 +1,9 @@
 import { useSnackbar } from "notistack";
-import { Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import React, { useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 
@@ -61,7 +60,7 @@ export const AssociateReflectionsToMap = () => {
 
     return (
         <>
-            <MoorhenStack direction="vertical" gap={2}>
+            <MoorhenStack direction="vertical" gap={"1rem"} style={{ marginBottom: "1rem" }}>
                 <MoorhenMapSelect
                     maps={maps}
                     ref={mapSelectRef}
@@ -69,19 +68,16 @@ export const AssociateReflectionsToMap = () => {
                     width="100%"
                     label="Select a map"
                 />
-                <Form.Group style={{ width: "100%", margin: "0.5rem", padding: "0rem" }} controlId="uploadMTZ" className="mb-3">
-                    <Form.Label>Upload MTZ file with reflection data</Form.Label>
-                    <Form.Control
-                        ref={filesRef}
-                        type="file"
-                        multiple={false}
-                        accept=".mtz"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            handleFileRead(e);
-                        }}
-                    />
-                </Form.Group>
-                <MoorhenStack direction="horizontal">
+                <MoorhenFileInput
+                    label="Upload MTZ file with reflection data"
+                    ref={filesRef}
+                    multiple={false}
+                    accept=".mtz"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        handleFileRead(e);
+                    }}
+                />
+                <MoorhenStack inputGrid gridWidth={3}>
                     <MoorhenSelect label="Fobs" ref={fobsSelectRef} defaultValue="FP" onChange={val => {}}>
                         {Object.keys(columns)
                             .filter(key => columns[key] === "F")

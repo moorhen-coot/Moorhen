@@ -16,7 +16,11 @@
     flex-direction: column;
 }
 
-.moorhen_stack_card {
+.moorhen__stack_margins {
+    margin: 1rem;
+}
+
+.moorhen__stack_card {
     width: auto;
     flex: 1;
     min-width: 0;
@@ -37,10 +41,12 @@
     font-family: var(--moorhen-font-family);
 }
 
-/**
- * MoorhenStack children within input grid (label + input pairs)
- * Each child should stay as a flex row
- */
 .moorhen__input-grid > .moorhen__stack__row {
     display: contents;
+}
+.moorhen__stack__column > hr {
+    border: none;
+    border-top: 1px solid var(--moorhen-border);
+    margin: 1rem 0;
+    opacity: 1;
 }

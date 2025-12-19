@@ -1,9 +1,9 @@
-import { Form } from "react-bootstrap";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { emptyMaps } from "../../store/mapsSlice";
 import { emptyMolecules } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const DeleteEverything = () => {
     const dispatch = useDispatch();
@@ -24,11 +24,11 @@ export const DeleteEverything = () => {
     };
 
     return (
-        <>
-            <Form.Group style={{ width: "18rem", margin: "0.5rem" }} controlId="MoorhenGetDeleteEverythingMenuItem" className="mb-3">
-                <span style={{ fontWeight: "bold" }}>Warning: this action cannot be reversed.</span>
-            </Form.Group>
-            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
-        </>
+        <MoorhenStack align="center" gap="1rem">
+            <span style={{ fontWeight: "bold" }}>Warning: this action cannot be reversed.</span>
+            <MoorhenButton onClick={onCompleted} variant="danger">
+                Delete everything
+            </MoorhenButton>
+        </MoorhenStack>
     );
 };

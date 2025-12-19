@@ -1,13 +1,11 @@
 import { useSnackbar } from "notistack";
-import { Form, Row } from "react-bootstrap";
 import { useDispatch, useStore } from "react-redux";
 import { useCallback, useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMapList } from "../../store/mapsSlice";
-import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenFileInput } from "../inputs";
 
 export const AutoOpenMtz = () => {
     const filesRef = useRef<null | HTMLInputElement>(null);
@@ -40,12 +38,7 @@ export const AutoOpenMtz = () => {
 
     return (
         <>
-            <Row>
-                <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMTZ" className="mb-3">
-                    <Form.Label>Auto open MTZ file</Form.Label>
-                    <Form.Control ref={filesRef} type="file" multiple={false} accept=".mtz" />
-                </Form.Group>
-            </Row>
+            <MoorhenFileInput ref={filesRef} multiple={false} accept=".mtz" label="Auto open MTZ file" />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
         </>
     );

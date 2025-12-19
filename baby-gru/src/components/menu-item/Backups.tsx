@@ -1,5 +1,4 @@
 import { useSnackbar } from "notistack";
-import { Button, Row, Stack } from "react-bootstrap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandAndCapsule, useTimeCapsule } from "../../InstanceManager";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
@@ -28,18 +27,12 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
     }, [props.loadSession, timeCapsuleRef]);
 
     return (
-        <>
-            <Row style={{ width: "30rem", marginTop: "0.5rem", marginBottom: "0.5rem" }}>
-                <MoorhenBackupSelect ref={backupSelectRef} width="100%" label="Select backup" />
-            </Row>
-            <Row>
-                <MoorhenStack direction="horizontal" gap={2}>
-                    <MoorhenButton variant="primary" onClick={retrieveSession}>
-                        OK
-                    </MoorhenButton>
-                </MoorhenStack>
-            </Row>
-        </>
+        <MoorhenStack gap="1rem">
+            <MoorhenBackupSelect ref={backupSelectRef} width="100%" label="Select backup" />
+            <MoorhenButton variant="primary" onClick={retrieveSession}>
+                OK
+            </MoorhenButton>
+        </MoorhenStack>
     );
 };
 ("Recover session backup...");

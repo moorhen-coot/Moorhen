@@ -17,6 +17,7 @@ type MoorhenTextInputBase = {
     isInvalid?: boolean;
     disabled?: boolean;
     placeholder?: string;
+    uppercase?: boolean;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -56,6 +57,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     ref={ref}
                     disabled={disabled}
                     placeholder={placeholder}
+                    style={props.uppercase ? { textTransform: "uppercase" } : null}
                 />
                 {props.button ? (
                     <MoorhenButton icon={props.icon} onClick={props.onClick} className="moorhen__input-text-box-button" />

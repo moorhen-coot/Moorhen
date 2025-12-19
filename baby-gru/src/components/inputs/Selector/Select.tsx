@@ -1,10 +1,10 @@
-import { useId } from "react";
+import React, { useId } from "react";
 import { MoorhenStack } from "../../interface-base";
 
 export type MoorhenSelectProps = {
     children: React.ReactNode;
     ref?: React.Ref<HTMLSelectElement>;
-    label?: string;
+    label?: string | React.JSX.Element;
     inline?: boolean;
     defaultValue?: string | number | readonly string[];
     value?: string | number | readonly string[];
@@ -17,9 +17,11 @@ export const MoorhenSelect = (props: MoorhenSelectProps) => {
     const id = useId();
     return (
         <MoorhenStack direction={inline ? "line" : "column"} align="center" gap="0.5rem">
-            <label htmlFor={`Selector-${id}`} className="moorhen__input__label">
-                {label}
-            </label>
+            {label && (
+                <label htmlFor={`Selector-${id}`} className="moorhen__input__label">
+                    {label}
+                </label>
+            )}
             <select
                 id={`Selector-${id}`}
                 ref={ref}

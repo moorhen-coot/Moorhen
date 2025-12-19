@@ -1,5 +1,4 @@
 import { useSnackbar } from "notistack";
-import { Col, Row } from "react-bootstrap";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -15,6 +14,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const ConnectMoleculeToMaps = () => {
     const commandCentre = useCommandCentre();
@@ -111,38 +111,27 @@ export const ConnectMoleculeToMaps = () => {
     };
 
     return (
-        <>
-            <Row>
-                <Col style={{ width: "30rem" }}>
-                    <MoorhenMapSelect
-                        maps={maps}
-                        ref={mapSelectRef}
-                        filterFunction={map => map.hasReflectionData}
-                        width="100%"
-                        label="Reflection data"
-                    />
-                </Col>
-            </Row>
-            <Row style={{ marginBottom: "1rem" }}>
-                <Col key="Col1">
-                    <MoorhenMapSelect maps={maps} ref={twoFoFcSelectRef} label="2foFc" width="100%" />
-                </Col>
-                <Col key="Col2">
-                    <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={map => map.isDifference} width="100%" />
-                </Col>
-                {/* {props.selectedMolNo === undefined && ( */}
-                <Col key="Col3">
-                    <MoorhenMoleculeSelect
-                        molecules={molecules}
-                        ref={moleculeSelectRef}
-                        label="Molecule"
-                        allowAny={false}
-                        style={{ width: "100%" }}
-                    />
-                </Col>
-                {/* )} */}
-            </Row>
+        <MoorhenStack inputGrid>
+            <MoorhenMapSelect
+                maps={maps}
+                ref={mapSelectRef}
+                filterFunction={map => map.hasReflectionData}
+                width="100%"
+                label="Reflection data"
+            />
+
+            <MoorhenMapSelect maps={maps} ref={twoFoFcSelectRef} label="2foFc" width="100%" />
+
+            <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={map => map.isDifference} width="100%" />
+
+            <MoorhenMoleculeSelect
+                molecules={molecules}
+                ref={moleculeSelectRef}
+                label="Molecule"
+                allowAny={false}
+                style={{ width: "100%" }}
+            />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

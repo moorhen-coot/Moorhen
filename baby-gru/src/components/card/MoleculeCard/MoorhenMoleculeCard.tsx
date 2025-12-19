@@ -1,6 +1,5 @@
 import { AddOutlined, FormatColorFillOutlined, TuneOutlined } from "@mui/icons-material";
-import { FormGroup, LinearProgress } from "@mui/material";
-import { Card, Col, Row, Spinner, Stack } from "react-bootstrap";
+import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../../InstanceManager";
@@ -22,6 +21,7 @@ import { CustomRepresentationChip, RepresentationCheckbox } from "./Representati
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
 import { MoorhenSequencesAccordion } from "./list/MoorhenSequencesAccordion";
+import "./molecule-card.css";
 
 const allRepresentations: moorhen.RepresentationStyles[] = [
     "CBs",
@@ -806,12 +806,27 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             onClick={handleVisibility}
             type="icon-only"
             icon={isVisible ? `MUISymbolVisibility` : `MUISymbolVisibilityOff`}
+            tooltip="Toggle visibility"
         />,
-        <MoorhenButton key="undo" size="accordion" onClick={handleUndo} type="icon-only" icon="MUISymbolUndo" />,
-        <MoorhenButton key="redo" size="accordion" onClick={handleRedo} type="icon-only" icon="MUISymbolRedo" />,
-        <MoorhenButton key="center" size="accordion" onClick={handleCentering} type="icon-only" icon="MUISymbolFilterFocus" />,
-        <MoorhenButton key="download" type="icon-only" icon={`MUISymbolDownload`} onClick={handleDownload} size="accordion" />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left">
+        <MoorhenButton key="undo" size="accordion" onClick={handleUndo} type="icon-only" icon="MUISymbolUndo" tooltip="Undo" />,
+        <MoorhenButton key="redo" size="accordion" onClick={handleRedo} type="icon-only" icon="MUISymbolRedo" tooltip="Redo" />,
+        <MoorhenButton
+            key="center"
+            size="accordion"
+            onClick={handleCentering}
+            type="icon-only"
+            icon="MUISymbolFilterFocus"
+            tooltip="Center on molecule"
+        />,
+        <MoorhenButton
+            key="download"
+            type="icon-only"
+            icon={`MUISymbolDownload`}
+            onClick={handleDownload}
+            size="accordion"
+            tooltip="Save molecule"
+        />,
+        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];
@@ -819,35 +834,17 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     return (
         <MoorhenAccordion title={getNameLabel(props.molecule)} type="card" defaultOpen={true} extraControls={extraControls}>
             <MoorhenStack gap={2} direction="vertical">
-                <Row style={{ display: "flex" }}>
-                    <Col style={{ display: "flex" }}>
-                        <div
-                            ref={addColourRulesAnchorDivRef}
-                            style={{
-                                margin: "1px",
-                                paddingTop: "0.25rem",
-                                paddingBottom: "0.25rem",
-                                border: "1px solid",
-                                borderRadius: "0.33rem",
-                                borderColor: "#CCC",
-                            }}
-                        >
-                            <FormGroup
-                                style={{
-                                    margin: "0px",
-                                    padding: "0px",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                }}
-                                row
-                            >
-                                {allRepresentations.map(key => (
-                                    <RepresentationCheckbox key={key} style={key} molecule={props.molecule} isVisible={isVisible} />
-                                ))}
-                            </FormGroup>
-                            <hr style={{ margin: "0.5rem" }}></hr>
+                <div className="moorhen__molecule_card_representation">
+                    <MoorhenStack direction="vertical" card>
+                        <div className="moorhen__molecule_card_representation-chip-container" ref={addColourRulesAnchorDivRef}>
+                            {allRepresentations.map(key => (
+                                <RepresentationCheckbox key={key} style={key} molecule={props.molecule} isVisible={isVisible} />
+                            ))}
+                        </div>
+                        <hr style={{ margin: "0.5rem" }}></hr>
+                        <div className="moorhen__molecule_card_representation-chip-container">
                             {props.molecule.representations.some(representation => representation.isCustom) ? (
-                                <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                                <>
                                     {customRepresentationList
                                         .filter(representation => representation !== undefined)
                                         .map(representation => {
@@ -860,87 +857,85 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                                 />
                                             );
                                         })}
-                                </FormGroup>
+                                </>
                             ) : (
                                 <span>No custom representations</span>
                             )}
                             {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
                         </div>
-                    </Col>
-                    <Col md="auto" style={{ paddingLeft: 0, justifyContent: "center", display: "flex" }}>
-                        <MoorhenStack gap={1} direction="vertical">
-                            <MoorhenButton
-                                style={{ height: "100%" }}
-                                variant="light"
-                                onClick={() =>
-                                    setShowColourRulesModal(prev => {
-                                        return !prev;
-                                    })
-                                }
-                            >
-                                <FormatColorFillOutlined />
-                            </MoorhenButton>
-                            <MoorhenButton
-                                style={{ height: "100%" }}
-                                variant="light"
-                                onClick={() =>
-                                    setShowCreateRepresentationSettingsModal(prev => {
-                                        return !prev;
-                                    })
-                                }
-                            >
-                                <TuneOutlined />
-                            </MoorhenButton>
-                            <MoorhenButton
-                                style={{ height: "100%" }}
-                                variant="light"
-                                onClick={() =>
-                                    setShowCreateCustomRepresentation(prev => {
-                                        return !prev;
-                                    })
-                                }
-                            >
-                                <AddOutlined />
-                            </MoorhenButton>
-                        </MoorhenStack>
-                    </Col>
-                    <MoorhenHeaderInfoCard
-                        anchorEl={cardHeaderDivRef}
-                        molecule={props.molecule}
-                        show={showHeaderInfo}
-                        setShow={setShowHeaderInfo}
-                    />
-                    <MoorhenMoleculeRepresentationSettingsCard
-                        residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
-                        cylinderSettingsProps={cylinderSettingsProps}
-                        molSurfSettingsProps={molSurfSettingsProps}
-                        ribbonSettingsProps={ribbonSettingsProps}
-                        symmetrySettingsProps={symmetrySettingsProps}
-                        gaussianSettingsProps={gaussianSettingsProps}
-                        bondSettingsProps={bondSettingsProps}
-                        urlPrefix={urlPrefix}
-                        molecule={props.molecule}
-                        anchorEl={addColourRulesAnchorDivRef}
-                        show={showCreateRepresentationSettingsModal}
-                        setShow={setShowCreateRepresentationSettingsModal}
-                    />
-                    <MoorhenModifyColourRulesCard
-                        anchorEl={addColourRulesAnchorDivRef}
-                        urlPrefix={urlPrefix}
-                        commandCentre={commandCentre}
-                        molecule={props.molecule}
-                        showColourRulesToast={showColourRulesModal}
-                        setShowColourRulesToast={setShowColourRulesModal}
-                    />
-                    <MoorhenAddCustomRepresentationCard
-                        setBusy={setBusyDrawingCustomRepresentation}
-                        urlPrefix={urlPrefix}
-                        molecule={props.molecule}
-                        anchorEl={addColourRulesAnchorDivRef}
-                        show={showCreateCustomRepresentation}
-                        setShow={setShowCreateCustomRepresentation}
-                    />
-                </Row>
+                    </MoorhenStack>
+                    <div className="moorhen__molecule_card_representation-buttons">
+                        <MoorhenButton
+                            style={{ height: "100%" }}
+                            variant="light"
+                            onClick={() =>
+                                setShowColourRulesModal(prev => {
+                                    return !prev;
+                                })
+                            }
+                        >
+                            <FormatColorFillOutlined />
+                        </MoorhenButton>
+                        <MoorhenButton
+                            style={{ height: "100%" }}
+                            variant="light"
+                            onClick={() =>
+                                setShowCreateRepresentationSettingsModal(prev => {
+                                    return !prev;
+                                })
+                            }
+                        >
+                            <TuneOutlined />
+                        </MoorhenButton>
+                        <MoorhenButton
+                            style={{ height: "100%" }}
+                            variant="light"
+                            onClick={() =>
+                                setShowCreateCustomRepresentation(prev => {
+                                    return !prev;
+                                })
+                            }
+                        >
+                            <AddOutlined />
+                        </MoorhenButton>
+                    </div>
+                </div>
+                <MoorhenHeaderInfoCard
+                    anchorEl={cardHeaderDivRef}
+                    molecule={props.molecule}
+                    show={showHeaderInfo}
+                    setShow={setShowHeaderInfo}
+                />
+                <MoorhenMoleculeRepresentationSettingsCard
+                    residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
+                    cylinderSettingsProps={cylinderSettingsProps}
+                    molSurfSettingsProps={molSurfSettingsProps}
+                    ribbonSettingsProps={ribbonSettingsProps}
+                    symmetrySettingsProps={symmetrySettingsProps}
+                    gaussianSettingsProps={gaussianSettingsProps}
+                    bondSettingsProps={bondSettingsProps}
+                    urlPrefix={urlPrefix}
+                    molecule={props.molecule}
+                    anchorEl={addColourRulesAnchorDivRef}
+                    show={showCreateRepresentationSettingsModal}
+                    setShow={setShowCreateRepresentationSettingsModal}
+                />
+                <MoorhenModifyColourRulesCard
+                    anchorEl={addColourRulesAnchorDivRef}
+                    urlPrefix={urlPrefix}
+                    commandCentre={commandCentre}
+                    molecule={props.molecule}
+                    showColourRulesToast={showColourRulesModal}
+                    setShowColourRulesToast={setShowColourRulesModal}
+                />
+                <MoorhenAddCustomRepresentationCard
+                    setBusy={setBusyDrawingCustomRepresentation}
+                    urlPrefix={urlPrefix}
+                    molecule={props.molecule}
+                    anchorEl={addColourRulesAnchorDivRef}
+                    show={showCreateCustomRepresentation}
+                    setShow={setShowCreateCustomRepresentation}
+                />
                 <div>
                     <MoorhenSequencesAccordion
                         setBusy={setBusyLoadingSequences}
