@@ -59,7 +59,7 @@
     opacity: 1;
     transition: all 0.3s ease-out;
     overflow: hidden;
-    padding: 0 0.4rem 0.4rem 0.5rem;
+    padding: 0.5rem 0.4rem 0rem 0.5rem;
 }
 
 .moorhen__accordion-content-hidden {

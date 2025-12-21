@@ -133,7 +133,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"}>
+        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center">
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;

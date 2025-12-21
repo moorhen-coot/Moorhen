@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { JSX, useRef, useState } from "react";
 import { MoorhenPopover } from "./Popover";
 
 type ToolTipProps = {
-    tooltip: string;
+    tooltip: string | JSX.Element;
     children: React.ReactNode;
 };
 

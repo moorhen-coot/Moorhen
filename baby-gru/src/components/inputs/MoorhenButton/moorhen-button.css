@@ -34,8 +34,9 @@
     box-sizing: border-box;
     font-family: var(--moorhen-font-family);
     transition:
-        box-shadow 0.3s ease,
-        transform 0.3s ease;
+        box-shadow 0.5s ease,
+        border-color 0.5s ease,
+        filter 0.5s ease;
 }
 
 .moorhen__button__toggle-unchecked {
@@ -65,6 +66,7 @@
 }
 
 .moorhen__button__default:hover {
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-hover-shadow);
-    transform: scale(1.02);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus);
+    border-color: var(--moorhen-secondary);
+    filter: brightness(1.1);
 }

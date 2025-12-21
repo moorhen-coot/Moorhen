@@ -5,7 +5,6 @@
     display: flex;
     width: auto;
     flex: 1;
-    min-width: 0;
     font-family: var(--moorhen-font-family);
 }
 .moorhen__stack__row {
@@ -23,7 +22,6 @@
 .moorhen__stack_card {
     width: auto;
     flex: 1;
-    min-width: 0;
     border: 1px solid var(--moorhen-border);
     padding: 1rem;
     border-radius: 0.5rem;

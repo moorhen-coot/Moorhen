@@ -1,4 +1,5 @@
 import { Tooltip } from "@mui/material";
+import { JSX } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenStack } from "../../interface-base";
@@ -18,7 +19,8 @@ type MoorhenButtonPropsTypeBase = {
     children?: React.ReactNode;
     value?: string | number;
     id?: string;
-    tooltip?: string;
+    tooltip?: string | JSX.Element;
+    iconStyle?: React.CSSProperties;
 };
 
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
@@ -30,7 +32,7 @@ type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
 type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     type?: "default";
     size?: "small" | "medium" | "large" | "sm" | "lg" | "md";
-    variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
+    variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light" | "text";
     icon?: MoorhenSVG;
 };
 
@@ -56,6 +58,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         style = {},
         children,
         tooltip = null,
+        iconStyle = null,
     } = props;
 
     let size = props.size
@@ -88,8 +91,8 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             style={{ ...props.style }}
             value={props.value}
         >
-            <MoorhenStack direction="row" align="center" justify="center">
-                {icon && <MoorhenIcon moorhenSVG={icon} size={iconSize} isActive={!disabled} style={{ ...style }} />}
+            <MoorhenStack direction="row" align="center" justify="center" style={{ ...style }}>
+                {icon && <MoorhenIcon moorhenSVG={icon} size={iconSize} isActive={!disabled} style={{ ...iconStyle }} />}
                 {label}
                 {children}
             </MoorhenStack>
