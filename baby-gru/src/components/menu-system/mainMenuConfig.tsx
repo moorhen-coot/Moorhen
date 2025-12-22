@@ -123,4 +123,4 @@ export const MainMenu: MainMenuMap = {
         component: <MoorhenDevMenu />,
         align: 15,
     },
-};
+} as const;

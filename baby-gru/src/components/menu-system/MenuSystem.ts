@@ -1,6 +1,6 @@
 import { OtherSceneSettingsMenu } from "../menu-item/OtherSceneSettings";
 import { MainMenu, MainMenuMap, MainMenuType } from "./mainMenuConfig";
-import { MenuItem, MenuItemType, SubMenu, SubMenuMap, getSubMenuMap } from "./subMenuConfig";
+import { MenuItem, MenuItemType, SubMenu, SubMenuMap, subMenuMap } from "./subMenuConfig";
 
 export class MoorhenMenuSystem {
     public subMenuMap: SubMenuMap = {};
@@ -12,7 +12,7 @@ export class MoorhenMenuSystem {
     }
 
     private createSubMenu = () => {
-        this.addSubmenu(getSubMenuMap());
+        this.addSubmenu(subMenuMap);
         this.addSubmenu(OtherSceneSettingsMenu);
     };
 
@@ -54,9 +54,9 @@ export class MoorhenMenuSystem {
     public addMainMenu = (mainMenuItem: MainMenuType, position: number = undefined) => {
         const maxPosition = Math.max(...Object.keys(this.mainMenuMap).map(k => parseInt(k)));
         if (position === undefined) {
-            const newPosition = maxPosition + 1;
+            position = maxPosition + 1;
         } else {
-            for (let i = maxPosition; i < position; i--) {
+            for (let i = maxPosition; i >= position; i--) {
                 this.mainMenuMap[i + 1] = this.mainMenuMap[i];
             }
         }
