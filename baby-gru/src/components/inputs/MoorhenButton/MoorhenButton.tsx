@@ -32,7 +32,7 @@ type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
 type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     type?: "default";
     size?: "small" | "medium" | "large" | "sm" | "lg" | "md";
-    variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light" | "text";
+    variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
     icon?: MoorhenSVG;
 };
 

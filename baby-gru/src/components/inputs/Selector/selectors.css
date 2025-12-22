@@ -8,7 +8,8 @@
 
 .moorhen__selector {
     border: 1px solid var(--moorhen-border);
-    background-color: var(--moorhen-background);
+    background-color: var(--moorhen-input-background);
+    color: var(--moorhen-primary);
     border-radius: 0.2rem;
     width: auto;
     height: 2.2rem;

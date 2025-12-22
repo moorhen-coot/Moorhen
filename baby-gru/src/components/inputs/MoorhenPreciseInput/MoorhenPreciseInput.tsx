@@ -17,6 +17,7 @@ type MoorhenPreciseInputPropsType = {
     minMax?: [number, number];
     type?: string;
     labelPosition?: "top" | "left";
+    style?: React.CSSProperties;
 };
 
 /**
@@ -67,6 +68,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         minMax = null,
         type = "standard",
         labelPosition = "left",
+        style,
     } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
@@ -133,7 +135,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center">
+        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center" style={{ ...style }}>
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;

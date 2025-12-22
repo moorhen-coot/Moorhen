@@ -39,7 +39,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
     };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.onChange(event);
+        props.onChange ? props.onChange(event) : null;
         props.setText(event.target.value);
     };
     return (

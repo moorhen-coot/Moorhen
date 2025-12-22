@@ -34,11 +34,13 @@
 .moorhen__accordion-title {
     text-align: left;
     flex: 1;
-    padding: 2rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .moorhen__accordion-control-panel {
     display: flex;
+    flex-shrink: 0;
     align-items: right;
     justify-content: flex-end;
     gap: 8px;

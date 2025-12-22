@@ -34,7 +34,7 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
             <div
                 className={`moorhen__accordion-header ${type === "default" ? "" : "moorhen__accordion-header-card"} ${disabled ? "disabled" : ""} ${isOpen ? " moorhen__accordion-open" : " moorhen__accordion-closed"}`}
             >
-                <div className="moorhen-accordion-title">{title}</div>
+                <div className="moorhen__accordion-title">{title}</div>
                 <div className="moorhen__accordion-control-panel">
                     {extraControls}
                     <MoorhenButton

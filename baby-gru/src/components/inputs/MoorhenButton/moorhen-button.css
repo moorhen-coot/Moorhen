@@ -9,6 +9,7 @@
     outline: none;
     box-shadow: none;
     box-sizing: border-box;
+    color: var(--moorhen-primary);
 }
 
 .moorhen__button__default,
@@ -25,7 +26,7 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     margin: 0.1rem;
-    color: var(--moorhen-secondary);
+    color: var(--moorhen-button-text);
     background: var(--moorhen-button-background);
     border: 1px solid var(--moorhen-border);
     border-radius: 0.25rem;
@@ -63,6 +64,26 @@
     background: none;
     box-shadow: none;
     border: none;
+}
+
+.moorhen_button-variant-text {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
+.moorhen_button-text {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
+.moorhen_button-text:hover {
+    box-shadow: none;
+    border-color: transparent;
+    filter: none;
 }
 
 .moorhen__button__default:hover {

@@ -179,6 +179,8 @@ const MoorhenContainer = (props: ContainerProps) => {
         aceDRGInstance = null,
     } = props;
 
+    const sidePanelWidth = 500;
+
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const glRef = props.glRef ? props.glRef : innerGlRef;
     //const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
@@ -269,7 +271,7 @@ const MoorhenContainer = (props: ContainerProps) => {
         if (setMoorhenDimensions) {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
-        const GLviewWidth = newWidth - (sidePanelIsShown ? 300 : 0);
+        const GLviewWidth = newWidth - (sidePanelIsShown ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
@@ -518,7 +520,7 @@ const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
-                    <MoorhenSidePanel width={300} />
+                    <MoorhenSidePanel width={sidePanelWidth} />
                 </SnackbarProvider>
             </div>
         </>

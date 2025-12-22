@@ -148,7 +148,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 height: bodyRef.current.offsetHeight,
             });
             setMeasured(true);
-            console.log("measured body size", bodyRef.current.offsetWidth, bodyRef.current.offsetHeight);
+            // console.log("measured body size", bodyRef.current.offsetWidth, bodyRef.current.offsetHeight);
         }
     }, [measured, props.body]);
 
@@ -256,7 +256,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             } else if (y > windowHeight - 100) {
                 y = windowHeight - 100;
             }
-            console.log("Setting position XY", x, y);
+            // console.log("Setting position XY", x, y);
             return { x, y };
         });
     };
@@ -400,6 +400,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 </div>
                 <div className="moorhen__modal-footer">
                     {props.footer}
+                    {"\u00A0\u00A0\u00A0"}
                     <MoorhenButton
                         type="icon-only"
                         icon="resizable"

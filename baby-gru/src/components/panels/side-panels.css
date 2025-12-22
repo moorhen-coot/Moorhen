@@ -1,10 +1,10 @@
-.moorhen__todo-container {
+.moorhen__panel-container {
     position: absolute;
     top: 0;
-    right: -295px;
+    right: var(--side-panel-translate);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    /* align-items: center; */
     gap: 0rem;
     border-left: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
@@ -13,11 +13,11 @@
     transform: translateX(0);
 }
 
-.moorhen__todo-container--visible {
-    transform: translateX(-300px);
+.moorhen__panel-container--visible {
+    transform: translateX(var(--side-panel-translate));
 }
 
-.moorhen__todo-container-toggle-button {
+.moorhen__panel-container-toggle-button {
     position: absolute;
     top: 50%;
     right: 0px;
@@ -25,6 +25,6 @@
     transform: translateX(0);
 }
 
-.moorhen__todo-container-toggle-button--visible {
-    transform: translateX(-300px);
+.moorhen__panel-container-toggle-button--visible {
+    transform: translateX(var(--side-panel-translate));
 }

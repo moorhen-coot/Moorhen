@@ -1,4 +1,3 @@
-import { RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
@@ -10,13 +9,13 @@ import { addMap } from "../../../store/mapsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertPxToRem, convertRemToPx } from "../../../utils/utils";
 import { doDownload } from "../../../utils/utils";
-import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider, MoorhenToggle } from "../../inputs";
+import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover } from "../../interface-base";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenMenuItem } from "../../interface-base/MenuItems/MenuItem";
-import { DeleteDisplayObject, RenameDisplayObject, ScaleMap, SetMapWeight } from "../../menu-item";
-import { MoleculeOrMapName } from "../cardUtils";
+import { DeleteDisplayObject, SetMapWeight } from "../../menu-item";
+import { ItemName } from "../utils/ItemName";
 import { MapColourSelector } from "./MapColourSelector";
 import { MapHistogramAccordion } from "./MapHistogramAccordion";
 import { MapSettingsAccordion } from "./MapSettingsAccordion";
@@ -103,33 +102,15 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         setLastCall(Date.now());
     };
 
-    const getLabelAndActionButtonSpace = () => {
-        const buttonToShow = 4;
-        let labelSpace = 0;
-        let actionButtonSpace = 120;
-        const labelLength = props.map.name.length;
-
-        if (props.modalWidth < buttonToShow * 50 + convertRemToPx(18) + 120 && labelLength > 16) {
-            labelSpace = convertRemToPx(18);
-            actionButtonSpace = props.modalWidth - labelSpace - 120;
-        } else {
-            actionButtonSpace = buttonToShow * 50;
-            labelSpace = props.modalWidth - actionButtonSpace - 100;
-        }
-
-        labelSpace = convertPxToRem(labelSpace) * 1.25;
-        return [labelSpace, actionButtonSpace];
-    };
-    const [labelSpace, actionButtonSpace] = getLabelAndActionButtonSpace();
-
     const cardTitle = useMemo(() => {
         return (
-            <MoorhenStack direction="line" align="center">
-                #{props.map.molNo}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
+                <span style={{ flexShrink: 0 }}>#{props.map.molNo}</span>
                 <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
-                &nbsp;&nbsp;
-                <MoleculeOrMapName item={props.map} />
-            </MoorhenStack>
+                <div style={{ minWidth: 0, flex: "1 1 0" }}>
+                    <ItemName item={props.map} />
+                </div>
+            </div>
         );
     }, [props.map]);
 
@@ -195,7 +176,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     return (
         <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
             <MoorhenStack direction="vertical" gap={1}>
-                <MoorhenStack direction="horizontal" gap={4} align="center">
+                <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}
                         style={{ minWidth: "6rem" }}
@@ -207,8 +188,9 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         {props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     </MoorhenButton>
                     <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
-                        <MoorhenStack direction="row" gap={3} justify="center" align="center">
+                        <MoorhenStack direction="row" justify="center" align="center">
                             <MoorhenPreciseInput
+                                style={{ justifyContent: "center" }}
                                 value={mapContourLevel}
                                 setValue={newVal => {
                                     handleContourLevelChange(+newVal);
@@ -222,6 +204,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             &nbsp;
                             {props.map.mapRmsd && (
                                 <MoorhenPreciseInput
+                                    style={{ justifyContent: "center" }}
                                     allowNegativeValues={true}
                                     value={mapContourLevel / props.map.mapRmsd}
                                     setValue={newVal => {

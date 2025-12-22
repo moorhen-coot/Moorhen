@@ -192,7 +192,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     return (
         <MoorhenAccordion title="Histogram" onChange={isExpanded => setShowHistogram(isExpanded)}>
             <MoorhenStack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
-                <div className="histogram-plot-div" style={{ width: "95%" }}>
+                <div style={{ width: "95%", aspectRatio: "2/1" }}>
                     <canvas id={`${props.map.molNo}-histogram`}></canvas>
                 </div>
                 <MoorhenStack

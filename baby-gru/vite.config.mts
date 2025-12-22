@@ -152,7 +152,11 @@ export default defineConfig({
         watch: {
             ignored: ["**/public/monomers/**", "**/public/**.wasm", "**/public/**.data", "**/public/pixmaps/**", "**/public/tutorials/**"],
         },
+        hmr: {
+            overlay: true,
+        },
     },
+    logLevel: "info", // can be 'info', 'warn', 'error', or 'silent'
     // Remove the lib build configuration for PWA mode
     build: {
         lib: {

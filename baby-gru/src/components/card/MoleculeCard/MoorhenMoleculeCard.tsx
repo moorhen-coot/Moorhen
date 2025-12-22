@@ -16,7 +16,7 @@ import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresent
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { MoorhenModifyColourRulesCard } from "../MoorhenModifyColourRulesCard";
 import { MoorhenMoleculeRepresentationSettingsCard } from "../MoorhenMoleculeRepresentationSettingsCard";
-import { MoleculeOrMapName } from "../cardUtils";
+import { ItemName } from "../utils/ItemName";
 import { CustomRepresentationChip, RepresentationCheckbox } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
@@ -831,7 +831,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         </MoorhenPopoverButton>,
     ];
 
-    const cardLabel = <MoleculeOrMapName item={props.molecule} />;
+    const cardLabel = <ItemName item={props.molecule} />;
 
     return (
         <MoorhenAccordion title={cardLabel} type="card" defaultOpen={true} extraControls={extraControls}>
