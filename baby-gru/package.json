@@ -40,7 +40,8 @@
         "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map --no-optimization-minimize --no-optimization-concatenate-modules && npm run dts-bundle && ./fix_old_namespace.sh",
         "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
         "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
-        "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components"
+        "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components",
+        "debug-hmr": "DEBUG=vite:hmr,vite:react-refresh npm run start"
     },
     "eslintConfig": {
         "extends": [
