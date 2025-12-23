@@ -31,7 +31,7 @@ export const SequenceViewerPanel = () => {
             : null;
     });
 
-    const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
+    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.sidePanelIsOpen);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
@@ -107,7 +107,7 @@ export const SequenceViewerPanel = () => {
             }
         };
         animation();
-    }, [sidePanelIsShown]);
+    }, [sidePanelIsOpen]);
 
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
     const displaySize = (expandLength - 1) * 26 + 76;
@@ -160,7 +160,7 @@ export const SequenceViewerPanel = () => {
                     onResiduesSelect={residueSelectionCallback}
                     onHoverResidue={handleHoverResidue}
                     className={`moorhen__edge-panel-sequence-viewer`}
-                    style={sidePanelIsShown ? { width: GlViewportWidth } : {}}
+                    style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
                     forceRedrawScrollBarKey={panelKeyRef}
                 />
             </div>

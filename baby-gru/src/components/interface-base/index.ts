@@ -5,3 +5,4 @@ export { MoorhenStack } from "./Stack/Stack";
 export { MoorhenMenuItemPopover } from "./Popovers/MenuItemPopover";
 export { MoorhenMenuItem } from "./MenuItems/MenuItem";
 export { MoorhenInfoCard } from "./Popovers/InfoCard";
+export { MoorhenTooltip } from "./Popovers/Tooltip";

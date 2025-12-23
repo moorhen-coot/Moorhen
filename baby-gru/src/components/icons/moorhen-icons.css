@@ -46,6 +46,11 @@
     transition: filter 0.15s ease-in;
 }
 
+.moorhen__icon__active.hover {
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+    transition: filter 0.15s ease-in;
+}
+
 .moorhen__icon__menu {
     width: 30px;
     height: 30px;

@@ -47,7 +47,7 @@
     --moorhen-shadow-shape: 2px 2px 4px 1px;
     --moorhen-focus-shadow: hsl(var(--base-accent-hue) 68% 50% / 0.25);
     --moorhen-error-shadow: hsl(var(--base-error-hue) 50% 42% / 0.25);
-    --moorhen-inactive-shadow: hsl(0 0% 0% / 0.1);
+    --moorhen-inactive-shadow: hsl(0 0% 0% / 0.2);
     --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 
     /* Icon brightness */

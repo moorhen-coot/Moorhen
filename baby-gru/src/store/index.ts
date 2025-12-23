@@ -74,11 +74,12 @@ export {
     setBusy,
     setTimeCapsuleBusy,
     setGlobalInstanceReady,
-    setShowSidePanel,
+    setSidePanelIsOpen,
     setShowBottomPanel,
     setSearchBarActive,
     setMainMenuOpen,
     setShortCutsBlocked,
+    setShownSidePanel,
 } from "./globalUISlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from "./hoveringStatesSlice";
 export { setValidationJson } from "./jsonValidation";

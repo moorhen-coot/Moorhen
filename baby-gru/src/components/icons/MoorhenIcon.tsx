@@ -11,6 +11,7 @@ type BaseIconProps = {
     ref?: React.Ref<HTMLSpanElement | HTMLImageElement>;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
+    hover?: boolean;
 };
 
 type MoorhenIconPropsType = BaseIconProps & ({ moorhenSVG: MoorhenSVG; src?: never } | { src: string; moorhenSVG?: never });
@@ -24,12 +25,19 @@ export const MoorhenIcon = ({
     className = "",
     style = null,
     ref,
+    hover,
     onMouseEnter,
     onMouseLeave,
 }: MoorhenIconPropsType) => {
-    const internalClassName = className
-        ? className
-        : `moorhen__icon__${size} ${isActive !== null ? (isActive ? "moorhen__icon__active" : "moorhen__icon__inactive") : ""}`;
+    let internalClassName = className ? className : `moorhen__icon__${size} `;
+
+    if (isActive !== null) {
+        internalClassName += isActive ? "moorhen__icon__active" : "moorhen__icon__inactive";
+    }
+
+    if (hover) {
+        internalClassName += " hover";
+    }
 
     if (moorhenSVG) {
         const SvgComponent = moorhenSVGs[moorhenSVG];

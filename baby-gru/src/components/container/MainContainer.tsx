@@ -179,7 +179,7 @@ const MoorhenContainer = (props: ContainerProps) => {
         aceDRGInstance = null,
     } = props;
 
-    const sidePanelWidth = 500;
+    const sidePanelWidth = 450;
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const glRef = props.glRef ? props.glRef : innerGlRef;
@@ -211,7 +211,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount);
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
 
-    const sidePanelIsShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
+    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.sidePanelIsOpen);
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -268,16 +268,17 @@ const MoorhenContainer = (props: ContainerProps) => {
 
     const setWindowDimensions = useCallback(() => {
         let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
+        console.log("width =", newWidth, "height =", newHeight);
         if (setMoorhenDimensions) {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
-        const GLviewWidth = newWidth - (sidePanelIsShown ? sidePanelWidth : 0);
+        const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [sidePanelIsShown, bottomPanelIsShown]);
+    }, [sidePanelIsOpen, bottomPanelIsShown]);
 
     useLayoutEffect(() => {
         setWindowDimensions();

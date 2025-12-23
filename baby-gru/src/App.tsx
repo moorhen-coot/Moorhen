@@ -1,3 +1,4 @@
+import "./app.css";
 import { MoorhenApp } from "./components/MoorhenApp";
 
 function App() {
