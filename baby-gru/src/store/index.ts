@@ -74,7 +74,6 @@ export {
     setBusy,
     setTimeCapsuleBusy,
     setGlobalInstanceReady,
-    setSidePanelIsOpen,
     setShowBottomPanel,
     setSearchBarActive,
     setMainMenuOpen,

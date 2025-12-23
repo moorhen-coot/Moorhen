@@ -458,7 +458,7 @@ const LightingPanel = () => {
     );
 };
 
-const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
+export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     return (
         <MoorhenStack direction={props.stackDirection}>

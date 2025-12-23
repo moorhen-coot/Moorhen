@@ -211,7 +211,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount);
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
 
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.sidePanelIsOpen);
+    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
     const containerRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,7 @@
 import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
+import { setShownSidePanel } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { ModalKey, showModal } from "../../store/modalsSlice";
@@ -78,21 +79,18 @@ export const MoorhenMainMenu = memo(() => {
             if (menu.label === "Dev tools" && !isDevMode) {
                 return null;
             }
-            return (
-                <MainMenuButton
-                    key={key}
-                    icon={menu.icon}
-                    label={menu.label}
-                    onClick={
-                        menu.type === "sub-menu" || menu.type === "jsx"
-                            ? () => handleClick(menu.label)
-                            : () => {
-                                  setActiveMenu(null);
-                                  dispatch(showModal(menu.modal as ModalKey));
-                              }
-                    }
-                />
-            );
+            const onClick = () => {
+                if (menu.type === "sub-menu" || menu.type === "jsx") {
+                    handleClick(menu.label);
+                } else if (menu.type === "modal") {
+                    setActiveMenu(null);
+                    dispatch(showModal(menu.modal as ModalKey));
+                } else if (menu.type === "panel") {
+                    setActiveMenu(null);
+                    dispatch(setShownSidePanel(menu.panel));
+                }
+            };
+            return <MainMenuButton key={key} icon={menu.icon} label={menu.label} onClick={onClick} />;
         });
 
         return <div className="moorhen__main-menu-buttons-container">{buttonsList}</div>;

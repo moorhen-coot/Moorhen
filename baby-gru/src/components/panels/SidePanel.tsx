@@ -1,22 +1,18 @@
 import { useDispatch, useSelector } from "react-redux";
-import { Activity, useRef, useState } from "react";
-import { RootState, setShownSidePanel, setSidePanelIsOpen } from "@/store";
-import { MapsPanel } from "./MapPanel/MapsPanel";
-import { ModelsPanel } from "./ModelsPanel/ModelsPanel";
+import React, { Activity, useCallback, useEffect, useRef, useState } from "react";
+import { RootState, setShownSidePanel } from "@/store";
+import { PanelIDs, PanelsList } from "./PanelList";
+import { TabsToggle } from "./TabsToggle";
 import "./side-panels.css";
-import { TabsToggle } from "./tabsToggle";
-
-export type PanelIDs = "model-panel" | "maps-panel";
 
 export const MoorhenSidePanel = (props: { width: number }) => {
     const { width } = props;
-    const dispatch = useDispatch();
     const height = useSelector((state: RootState) => state.sceneSettings.height);
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.sidePanelIsOpen);
     const [showHintLabel, setShowHintLabel] = useState<boolean>(null);
     const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
-
+    const sidePanelIsOpen = shownPanel !== null;
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [activePanels, setActivePanels] = useState<PanelIDs[]>([]);
 
     const handleMouseEnter = () => {
         timeoutRef.current = setTimeout(() => {
@@ -31,46 +27,44 @@ export const MoorhenSidePanel = (props: { width: number }) => {
         setShowHintLabel(false);
     };
 
-    const togglePanels = (shown: boolean, id: PanelIDs) => {
-        if (shown) {
-            dispatch(setShownSidePanel(id));
-        } else {
-            dispatch(setShownSidePanel(null));
+    const dispatch = useDispatch();
+
+    const handleRemoveActivePanel = useCallback(
+        (id: PanelIDs) => {
+            if (activePanels.length === 1) {
+                setShowHintLabel(false);
+            }
+            setActivePanels(prev => prev.filter(panelId => panelId !== id));
+            if (shownPanel === id) {
+                dispatch(setShownSidePanel(null));
+                setShowHintLabel(false);
+            }
+        },
+        [dispatch, shownPanel]
+    );
+
+    useEffect(() => {
+        if (shownPanel && !activePanels.includes(shownPanel)) {
+            setActivePanels(prev => [...prev, shownPanel]);
         }
-        dispatch(setSidePanelIsOpen(shown));
-    };
+    }, [shownPanel, activePanels]);
 
-    const toggles = (
-        <>
+    const toggles: React.JSX.Element[] = activePanels.map(id => {
+        return (
             <TabsToggle
-                isShown={shownPanel === "maps-panel"}
-                setIsShown={togglePanels}
-                icon="menuMaps"
-                label="Maps"
+                icon={PanelsList[id].icon}
+                label={PanelsList[id].label}
+                id={id}
+                key={id}
                 showHintLabel={showHintLabel}
-                id="maps-panel"
+                onDelete={handleRemoveActivePanel}
             />
-            <TabsToggle
-                isShown={shownPanel === "model-panel"}
-                setIsShown={togglePanels}
-                icon="menuModels"
-                label="Models"
-                showHintLabel={showHintLabel}
-                id="model-panel"
-            />{" "}
-        </>
-    );
+        );
+    });
 
-    const panels = (
-        <>
-            <Activity mode={shownPanel === "maps-panel" ? "visible" : "hidden"}>
-                <MapsPanel />
-            </Activity>
-            <Activity mode={shownPanel === "model-panel" ? "visible" : "hidden"}>
-                <ModelsPanel />
-            </Activity>
-        </>
-    );
+    const panels: React.JSX.Element[] = activePanels.map(id => {
+        return <Activity mode={shownPanel === id ? "visible" : "hidden"}>{PanelsList[id].panelContent}</Activity>;
+    });
 
     return (
         <>

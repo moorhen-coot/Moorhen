@@ -9,25 +9,25 @@
     fill: currentColor;
 }
 
-.moorhen__icon__small {
+.moorhen__icon.small {
     color: inherit;
     width: 22px;
     height: 22px;
 }
 
-.moorhen__icon__medium {
+.moorhen__icon.medium {
     color: inherit;
     width: 32px;
     height: 32px;
 }
 
-.moorhen__icon__large {
+.moorhen__icon.large {
     color: inherit;
     width: 64px;
     height: 64px;
 }
 
-.moorhen__icon__accordion {
+.moorhen__icon.accordion {
     color: inherit;
     width: 24px;
     height: 24px;
@@ -35,6 +35,7 @@
 
 .moorhen__icon__active {
     cursor: pointer;
+    transition: filter 0.15s ease-in;
 }
 
 .moorhen__icon__inactive {
@@ -43,7 +44,12 @@
 
 .moorhen__icon__active:hover {
     filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
-    transition: filter 0.15s ease-in;
+    /* transition: filter 0.15s ease-in; */
+}
+
+.moorhen__icon__active.danger:hover {
+    filter: drop-shadow(0 0 0.1rem red) drop-shadow(0 0 0.2rem red) !important;
+    transition: filter 0.15s ease-in !important;
 }
 
 .moorhen__icon__active.hover {

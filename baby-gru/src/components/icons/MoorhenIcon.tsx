@@ -12,6 +12,7 @@ type BaseIconProps = {
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
     hover?: boolean;
+    variant?: "" | "danger";
 };
 
 type MoorhenIconPropsType = BaseIconProps & ({ moorhenSVG: MoorhenSVG; src?: never } | { src: string; moorhenSVG?: never });
@@ -28,15 +29,23 @@ export const MoorhenIcon = ({
     hover,
     onMouseEnter,
     onMouseLeave,
+    variant,
 }: MoorhenIconPropsType) => {
-    let internalClassName = className ? className : `moorhen__icon__${size} `;
+    let internalClassName = className ? className : `moorhen__icon `;
 
+    if (size) {
+        internalClassName += size;
+    }
     if (isActive !== null) {
-        internalClassName += isActive ? "moorhen__icon__active" : "moorhen__icon__inactive";
+        internalClassName += isActive ? " moorhen__icon__active" : " moorhen__icon__inactive";
     }
 
     if (hover) {
         internalClassName += " hover";
+    }
+
+    if (variant === "danger") {
+        internalClassName += " danger";
     }
 
     if (moorhenSVG) {

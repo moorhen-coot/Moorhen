@@ -10,6 +10,7 @@ import type { ModalKey } from "../../store/modalsSlice";
 import { refinementSettings } from "../../store/refinementSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import * as MenuItems from "../menu-item";
+import { PanelIDs } from "../panels";
 
 // export type SubMenus = "file" | "calculate" | "edit" | "help" | "ligand" | "map-tool" | "validation" | "view" | "preferences";
 
@@ -35,6 +36,11 @@ export type MenuItem = BaseMenuItem & {
 export type MenuItemShowModal = BaseMenuItem & {
     type: "showModal";
     modal: ModalKey;
+};
+
+export type MenuItemShowSidePanel = BaseMenuItem & {
+    type: "showPanel";
+    panel: PanelIDs;
 };
 
 export type MenuItemCustomJSX = BaseMenuItem & {
@@ -70,6 +76,7 @@ export type MenuItemType =
     | MenuItemCustomJSX
     | PreferenceSwitch
     | MenuItemSubMenu
+    | MenuItemShowSidePanel
     | Separator;
 
 export type SubMenu = {
@@ -545,8 +552,8 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "scene-settings",
                 label: "Scene settings...",
-                type: "showModal",
-                modal: "scene-settings",
+                type: "showPanel",
+                panel: "sceneSettings",
             },
             {
                 id: "other-scene-settings",

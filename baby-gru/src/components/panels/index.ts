@@ -1,1 +1,1 @@
-export type { PanelIDs } from "./SidePanel";
+export type { PanelIDs } from "./PanelList";

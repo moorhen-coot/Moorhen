@@ -5,7 +5,6 @@ const initialState: {
     busy: boolean;
     isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
-    sidePanelIsOpen: boolean;
     bottomPanelIsShown: boolean;
     isMainMenuOpen: boolean;
     isSearchBarActive: boolean;
@@ -15,7 +14,6 @@ const initialState: {
     busy: false,
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
-    sidePanelIsOpen: false,
     bottomPanelIsShown: true,
     isMainMenuOpen: false,
     isSearchBarActive: false,
@@ -35,9 +33,6 @@ const globalUISlice = createSlice({
         },
         setTimeCapsuleBusy: (state, action: PayloadAction<boolean>) => {
             state.isTimeCapsuleBusy = action.payload;
-        },
-        setSidePanelIsOpen: (state, action: PayloadAction<boolean>) => {
-            state.sidePanelIsOpen = action.payload;
         },
         setShowBottomPanel: (state, action: PayloadAction<boolean>) => {
             state.bottomPanelIsShown = action.payload;
@@ -61,7 +56,6 @@ export const {
     setBusy,
     setTimeCapsuleBusy,
     setGlobalInstanceReady,
-    setSidePanelIsOpen,
     setShowBottomPanel,
     setSearchBarActive,
     setMainMenuOpen,

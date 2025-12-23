@@ -44,29 +44,29 @@
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
 }
-.moorhen_button-variant-danger {
+.moorhen__button__default.danger {
     background: var(--moorhen-danger);
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);
 }
 
-.moorhen_button-variant-secondary {
+.moorhen__button__default.secondary {
     background: var(--moorhen-button-background-secondary);
 }
 
-.moorhen_button-variant-outlined {
+.moorhen__button__default.outlined {
     color: var(--moorhen-primary);
     background: none;
     box-shadow: none;
 }
 
-.moorhen_button-variant-white {
+.moorhen__button__default.white {
     color: var(--moorhen-primary);
     background: none;
     box-shadow: none;
     border: none;
 }
 
-.moorhen_button-variant-text {
+.moorhen__button__default.text {
     color: var(--moorhen-primary);
     background: none;
     box-shadow: none;

@@ -15,7 +15,7 @@
     right: var(--side-panel-translate);
     display: flex;
     flex-direction: column;
-    /* align-items: center; */
+    overflow-x: auto;
     gap: 0rem;
     border-left: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);

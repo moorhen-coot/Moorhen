@@ -2,6 +2,7 @@ import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import React from "react";
+import { setShownSidePanel } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenToggle } from "../inputs";
@@ -64,6 +65,18 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                 return <hr key={key} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
                 return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={menuItem.id} />;
+            } else if (menuItem.type === "showPanel") {
+                return (
+                    <MoorhenMenuItem
+                        key={menuItem.label}
+                        onClick={() => {
+                            dispatch(setShownSidePanel(menuItem.panel));
+                            document.body.click();
+                        }}
+                    >
+                        {menuItem.label}
+                    </MoorhenMenuItem>
+                );
             }
         }
     });

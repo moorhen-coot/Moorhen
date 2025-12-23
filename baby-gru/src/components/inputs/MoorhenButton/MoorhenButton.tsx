@@ -27,6 +27,7 @@ type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
     type: "icon-only";
     size?: "small" | "medium" | "large" | "accordion";
     icon: MoorhenSVG;
+    variant?: "default" | "danger";
 };
 
 type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
@@ -76,7 +77,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
-    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `moorhen_button-variant-${variant}` : ""} ${className}`;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
 
     const button = (
         <button
@@ -92,7 +93,15 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             value={props.value}
         >
             <MoorhenStack direction="row" align="center" justify="center" style={{ ...style }}>
-                {icon && <MoorhenIcon moorhenSVG={icon} size={iconSize} isActive={!disabled} style={{ ...iconStyle }} />}
+                {icon && (
+                    <MoorhenIcon
+                        moorhenSVG={icon}
+                        size={iconSize}
+                        isActive={!disabled}
+                        style={{ ...iconStyle }}
+                        variant={variant as "" | "danger"}
+                    />
+                )}
                 {label}
                 {children}
             </MoorhenStack>

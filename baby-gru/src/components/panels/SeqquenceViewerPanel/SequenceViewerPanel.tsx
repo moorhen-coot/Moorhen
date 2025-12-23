@@ -31,7 +31,7 @@ export const SequenceViewerPanel = () => {
             : null;
     });
 
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.sidePanelIsOpen);
+    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
