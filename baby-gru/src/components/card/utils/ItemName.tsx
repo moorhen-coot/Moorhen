@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { MoorhenMap, MoorhenMolecule } from "../../../moorhen";
+import type { MoorhenMap } from "../../../utils/MoorhenMap";
+import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import { MoorhenButton, MoorhenTextInput } from "../../inputs";
 import { MoorhenPopover, MoorhenStack } from "../../interface-base";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";

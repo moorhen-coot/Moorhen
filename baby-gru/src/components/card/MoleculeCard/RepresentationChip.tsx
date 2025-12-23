@@ -3,16 +3,12 @@ import { Box, Chip, CircularProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
 import { usePaths } from "../../../InstanceManager";
-import {
-    type MoleculeRepresentation,
-    addGeneralRepresentation,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-} from "../../../moorhen";
 import { RootState } from "../../../store/MoorhenReduxStore";
+import { addGeneralRepresentation, removeCustomRepresentation, removeGeneralRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
+import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
 import { convertRemToPx } from "../../../utils/utils";
 import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresentationCard";
@@ -87,7 +83,7 @@ export const CustomRepresentationChip = (props: {
     );
 };
 
-export const RepresentationCheckbox = (props: { style: moorhen.RepresentationStyles; isVisible: boolean; molecule: MoorhenMolecule }) => {
+export const RepresentationCheckbox = (props: { style: RepresentationStyles; isVisible: boolean; molecule: MoorhenMolecule }) => {
     const [busyDrawingRepresentation, setBusyDrawingRepresentation] = useState<boolean>(false);
     const [isDisabled, setIsDisabled] = useState<boolean>(true);
     const [chipStyle, setChipStyle] = useState<any>({});
@@ -181,7 +177,7 @@ export const RepresentationCheckbox = (props: { style: moorhen.RepresentationSty
     );
 };
 
-export const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
+export const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = {};
 
     if (width) {

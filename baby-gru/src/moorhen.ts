@@ -239,5 +239,4 @@ export { default as jsonValidationReducer } from "./store/jsonValidation";
 export { default as mrParseSliceReducer } from "./store/mrParseSlice";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
 export { MoorhenWebComponent } from "./Wrappers/MoorhenWebComponent";
-export { MoorhenWebComponentNoReact } from "./Wrappers/MoorhenWebComponentNoReact";
 export { MoorhenHelper } from "./Wrappers/MoorhenHelper";

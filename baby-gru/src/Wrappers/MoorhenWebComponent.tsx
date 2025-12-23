@@ -1,63 +1,47 @@
 import { configureStore } from "@reduxjs/toolkit";
-import React from "react";
-// import { createRoot } from "react-dom/client";
-//import { Provider } from "react-redux";
-// import React, { createContext } from "react";
-import {
-    MoorhenContainer,
-    MoorhenInstance,
-    MoorhenMolecule,
-    //addMap,
-    //setActiveMap,
-    //MoorhenMap,
-    addMolecule,
-} from "../moorhen";
-import { MoorhenReduxStoreType, reducers } from "../store/MoorhenReduxStore";
-
-declare global {
-    interface Window {
-        React: any;
-        ReactDOM: any;
-        ReactRedux: any;
-    }
-}
+import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
+import React, { createContext } from "react";
+import type { MoorhenInstance } from "@/InstanceManager";
+import { MoorhenContainer } from "@/components/container";
+import { MoorhenMenuSystem } from "../components/menu-system/MenuSystem";
+import { reducers } from "../store/MoorhenReduxStore";
 
 export class MoorhenWebComponent extends HTMLElement {
     public moorhenInstanceRef: React.RefObject<null | MoorhenInstance>;
+    public moorhenMenuSystemRef: React.RefObject<null | MoorhenMenuSystem>;
+    public moorhenInstance: MoorhenInstance;
+    public moorhenMenuSystem: MoorhenMenuSystem;
     public setMoorhenDimensions: null | (() => [number, number]);
     public width: number | string;
     public height: number | string;
+    public urlPrefix: string;
+    public onInnit: () => void;
 
     static get observedAttributes() {
-        return ["width", "height", "pdb-id"];
+        return ["width", "height", "url-prefix"];
     }
     constructor() {
         super();
+        this.moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+        this.moorhenMenuSystemRef = React.createRef<null | MoorhenMenuSystem>();
         this.width = this.getAttribute("width") || 800;
         this.height = this.getAttribute("height") || this.width;
         this.setMoorhenDimensions = () => [+this.width, +this.height];
+        this.urlPrefix = this.getAttribute("url-prefix") || "";
     }
 
     public connectedCallback() {
-        const React = window.React;
-        const ReactDOM = window.ReactDOM;
-        const { Provider } = window.ReactRedux;
-        this.moorhenInstanceRef = window.React.createRef();
-
-        if (!React || !ReactDOM) {
-            console.error("React and ReactDOM must be available globally");
-            return;
-        }
-
         // shadow context
         const shadow = this.attachShadow({ mode: "open" });
         const rootElement = document.createElement("div");
+        //this.appendChild(rootElement);
         shadow.appendChild(rootElement);
 
         const loadStylesheets = async () => {
             const [moorhenRes, flatlyRes] = await Promise.all([
-                fetch(new URL("baby-gru/moorhen.css", window.location.href).href),
-                fetch(new URL("baby-gru/flatly.css", window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href),
+                fetch(new URL(`${this.urlPrefix}/flatly.css`, window.location.href).href),
             ]);
 
             const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);
@@ -79,7 +63,6 @@ export class MoorhenWebComponent extends HTMLElement {
         };
         loadStylesheets();
 
-        // Load both stylesheets concurrently and ensure they coexist
         const MoorhenReduxStore = configureStore({
             reducer: reducers,
             middleware: getDefaultMiddleware =>
@@ -88,22 +71,32 @@ export class MoorhenWebComponent extends HTMLElement {
                 }),
         });
 
-        const root = ReactDOM.createRoot(rootElement);
+        const root = createRoot(rootElement);
         root.render(
-            React.createElement(
-                "div",
-                {},
-                React.createElement(
-                    Provider,
-                    { store: MoorhenReduxStore },
-                    React.createElement(MoorhenContainer, {
-                        moorhenInstanceRef: this.moorhenInstanceRef,
-                        setMoorhenDimensions: this.setMoorhenDimensions,
-                    })
-                )
-            )
+            <div>
+                <Provider store={MoorhenReduxStore}>
+                    <MoorhenContainer
+                        moorhenInstanceRef={this.moorhenInstanceRef}
+                        moorhenMenuSystemRef={this.moorhenMenuSystemRef}
+                        setMoorhenDimensions={this.setMoorhenDimensions}
+                        urlPrefix={this.urlPrefix}
+                    />
+                </Provider>
+            </div>
         );
+
+        const checkRefsReady = () => {
+            if (this.moorhenInstanceRef?.current && this.moorhenMenuSystemRef?.current) {
+                clearInterval(refCheckInterval);
+                this.moorhenInstance = this.moorhenInstanceRef.current;
+                this.moorhenMenuSystem = this.moorhenMenuSystemRef.current;
+                this.onInnit();
+            }
+        };
+        const refCheckInterval = setInterval(checkRefsReady, 50);
     }
 }
 
-// customElements.define("moorhen-web-component", MoorhenWebComponent);
+if (!customElements.get("moorhen-web-component")) {
+    customElements.define("moorhen-web-component", MoorhenWebComponent);
+}

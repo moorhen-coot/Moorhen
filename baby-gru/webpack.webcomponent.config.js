@@ -226,6 +226,9 @@ module.exports = (env, argv) => {
                 fs: false,
             },
             extensions: [".ts", ".tsx", ".js", ".jsx"],
+            alias: {
+                "@": path.resolve(__dirname, "src"),
+            },
         },
     };
 };

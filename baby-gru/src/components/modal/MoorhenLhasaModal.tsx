@@ -131,8 +131,8 @@ const LhasaWrapper = (props: {
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
             dark_mode={isDark}
-            max_width={props.maxWidth}
-            max_height={props.maxHeight}
+            // max_width={props.maxWidth}
+            // max_height={props.maxHeight}
         />
     ) : null;
 };

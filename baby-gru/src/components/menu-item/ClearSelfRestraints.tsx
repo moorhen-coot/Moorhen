@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
-import { removeGeneralRepresentation } from "../../moorhen";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { removeGeneralRepresentation } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";

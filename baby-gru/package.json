@@ -31,7 +31,7 @@
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "start": "vite --config vite.config.mts",
         "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
-        "build": "vite build",
+        // "build": "vite build",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",

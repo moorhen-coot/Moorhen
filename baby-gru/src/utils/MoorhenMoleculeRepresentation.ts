@@ -17,6 +17,37 @@ import {
     guid,
 } from "./utils";
 
+export type RepresentationStyles =
+    | "VdwSpheres"
+    | "ligands"
+    | "CAs"
+    | "CBs"
+    | "CDs"
+    | "gaussian"
+    | "allHBonds"
+    | "rama"
+    | "rotamer"
+    | "CRs"
+    | "MolecularSurface"
+    | "DishyBases"
+    | "VdWSurface"
+    | "Calpha"
+    | "unitCell"
+    | "hover"
+    | "environment"
+    | "ligand_environment"
+    | "contact_dots"
+    | "chemical_features"
+    | "ligand_validation"
+    | "glycoBlocks"
+    | "restraints"
+    | "residueSelection"
+    | "MetaBalls"
+    | "adaptativeBonds"
+    | "StickBases"
+    | "residue_environment"
+    | "transformation";
+
 /**
  * Represents a molecule representation
  * @property {string} style - The style of this molecule representation instance

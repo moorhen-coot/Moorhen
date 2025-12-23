@@ -33,6 +33,7 @@
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": { "*.json": "jsonc" },
     "files.exclude": {
-        "tsDist/**": true
+        "**/tsDist/**": true,
+        "**/src/moorhen.tsx": true
     }
 }

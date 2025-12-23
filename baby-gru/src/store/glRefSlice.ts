@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { moorhen } from "../types/moorhen";
+import { MoorhenMolecule } from "@/utils";
 import { DisplayBuffer } from "../WebGLgComponents/displayBuffer";
-import { MoorhenMolecule } from "../moorhen";
+import { moorhen } from "../types/moorhen";
 
 const initialState: {
     origin: [number, number, number];

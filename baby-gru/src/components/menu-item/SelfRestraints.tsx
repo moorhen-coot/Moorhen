@@ -1,14 +1,16 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { addGeneralRepresentation } from "../../moorhen";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenSelect, MoorhenSlider } from "../inputs";
-import { MoorhenButton } from "../inputs";
-import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { MoorhenStack } from "../interface-base";
+import {
+    MoorhenButton,
+    MoorhenChainSelect,
+    MoorhenCidInputForm,
+    MoorhenMoleculeSelect,
+    MoorhenSelect,
+    MoorhenSlider,
+} from "@/components/inputs";
+import { MoorhenStack } from "@/components/interface-base";
+import { addGeneralRepresentation, triggerUpdate } from "@/store";
+import { moorhen } from "@/types/moorhen";
 
 export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

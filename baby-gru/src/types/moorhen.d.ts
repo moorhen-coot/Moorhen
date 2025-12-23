@@ -1,5 +1,5 @@
-import React from 'react';
-import { libcootApi } from './libcoot';
+import React from "react";
+import { libcootApi } from "./libcoot";
 
 /**
  * @deprecated This declarations file and the ambient `moorhen` namespace are deprecated and will be removed.
@@ -37,35 +37,36 @@ import { libcootApi } from './libcoot';
  * };
  */
 export namespace moorhen {
-    type Molecule = import('../utils/MoorhenMolecule').MoorhenMolecule;
-    type Map = import('../utils/MoorhenMap').MoorhenMap;
-    type CommandCentre = import('../InstanceManager/CommandCentre').CommandCentre;
-    type MoleculeRepresentation = import('../utils/MoorhenMoleculeRepresentation').MoleculeRepresentation;
-    type State = import('../store/MoorhenReduxStore').RootState;
-    type HoveredAtom = import('../store/hoveringStatesSlice').HoveredAtom;
-    type PreferencesValues = import('../components/managers/preferences').PreferencesValues;
-    type Sequence = import('../utils/MoorhenMolecule').Sequence;
-    type ResidueInfo = import('../utils/MoorhenMolecule').ResidueInfo;
-    type LigandInfo = import('../utils/MoorhenMolecule').LigandInfo;
-    type TimeCapsule = import('../utils/MoorhenTimeCapsule').MoorhenTimeCapsule;
-    type backupKey = import('../utils/MoorhenTimeCapsule').backupKey;
-    type backupSession = import('../utils/MoorhenTimeCapsule').backupSession;
-    type Preferences = import('../components/managers/preferences').Preferences;
-    type HistoryEntry = import('../utils/MoorhenHistory').HistoryEntry;
-    type moleculeSessionData = import('../utils/MoorhenTimeCapsule').moleculeSessionData;
-    type mapDataSession = import('../utils/MoorhenTimeCapsule').mapDataSession;
-    type viewDataSession = import('../utils/MoorhenTimeCapsule').viewDataSession;
-    type Shortcut = import('../components/managers/preferences/DefaultShortcuts').Shortcut;
-    type actionButtonSettings = import('../components/context-menu/MoorhenContextMenu').ActionButtonSettings;
-    type LocalStorageInstance = import('../components/managers/preferences/MoorhenPreferences').LocalStorageInstance;
-    type WorkerResponse<T = any> = import('../InstanceManager/CommandCentre').WorkerResponse;
-    type cootCommandKwargs = import('../InstanceManager/CommandCentre').cootCommandKwargs;
-    type ResidueSelection = import('../store/generalStatesSlice').ResidueSelection;
+    type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
+    type Map = import("../utils/MoorhenMap").MoorhenMap;
+    type CommandCentre = import("../InstanceManager/CommandCentre").CommandCentre;
+    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoleculeRepresentation;
+    type State = import("../store/MoorhenReduxStore").RootState;
+    type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
+    type PreferencesValues = import("../components/managers/preferences").PreferencesValues;
+    type Sequence = import("../utils/MoorhenMolecule").Sequence;
+    type ResidueInfo = import("../utils/MoorhenMolecule").ResidueInfo;
+    type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
+    type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
+    type backupKey = import("../utils/MoorhenTimeCapsule").backupKey;
+    type backupSession = import("../utils/MoorhenTimeCapsule").backupSession;
+    type Preferences = import("../components/managers/preferences").Preferences;
+    type HistoryEntry = import("../utils/MoorhenHistory").HistoryEntry;
+    type moleculeSessionData = import("../utils/MoorhenTimeCapsule").moleculeSessionData;
+    type mapDataSession = import("../utils/MoorhenTimeCapsule").mapDataSession;
+    type viewDataSession = import("../utils/MoorhenTimeCapsule").viewDataSession;
+    type Shortcut = import("../components/managers/preferences/DefaultShortcuts").Shortcut;
+    type actionButtonSettings = import("../components/context-menu/MoorhenContextMenu").ActionButtonSettings;
+    type LocalStorageInstance = import("../components/managers/preferences/MoorhenPreferences").LocalStorageInstance;
+    type WorkerResponse<T = any> = import("../InstanceManager/CommandCentre").WorkerResponse;
+    type cootCommandKwargs = import("../InstanceManager/CommandCentre").cootCommandKwargs;
+    type ResidueSelection = import("../store/generalStatesSlice").ResidueSelection;
+    type RepresentationStyles = import("../utils/MoorhenMoleculeRepresentation").RepresentationStyles;
 
     //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 
     type PAE = {
-        "predicted_aligned_error":number[][]
+        predicted_aligned_error: number[][];
     };
 
     type ResidueSpec = {
@@ -136,7 +137,7 @@ export namespace moorhen {
         cylindersStyleBallRadius: number;
         surfaceStyleProbeRadius: number;
         ballsStyleRadiusMultiplier: number;
-        nucleotideRibbonStyle: 'StickBases' | 'DishyBases';
+        nucleotideRibbonStyle: "StickBases" | "DishyBases";
         dishStyleAngularSampling: number;
         ssUsageScheme: number;
     };
@@ -163,9 +164,9 @@ export namespace moorhen {
         parentRepresentationUniqueId: string;
     };
 
-    type ColourRule = import('../utils/MoorhenColourRule').ColourRule;
+    type ColourRule = import("../utils/MoorhenColourRule").ColourRule;
 
-    type coorFormats = 'pdb' | 'mmcif' | 'unk' | 'mmjson' | 'xml';
+    type coorFormats = "pdb" | "mmcif" | "unk" | "mmjson" | "xml";
 
     type lskqbResidueRangeMatch = {
         refChainId: string;
@@ -174,38 +175,7 @@ export namespace moorhen {
         movResidueRange: [number, number];
     };
 
-    type RepresentationStyles =
-        | 'VdwSpheres'
-        | 'ligands'
-        | 'CAs'
-        | 'CBs'
-        | 'CDs'
-        | 'gaussian'
-        | 'allHBonds'
-        | 'rama'
-        | 'rotamer'
-        | 'CRs'
-        | 'MolecularSurface'
-        | 'DishyBases'
-        | 'VdWSurface'
-        | 'Calpha'
-        | 'unitCell'
-        | 'hover'
-        | 'environment'
-        | 'ligand_environment'
-        | 'contact_dots'
-        | 'chemical_features'
-        | 'ligand_validation'
-        | 'glycoBlocks'
-        | 'restraints'
-        | 'residueSelection'
-        | 'MetaBalls'
-        | 'adaptativeBonds'
-        | 'StickBases'
-        | 'residue_environment'
-        | 'transformation';
-
-    type History = import('../utils/MoorhenHistory').History;
+    type History = import("../utils/MoorhenHistory").History;
 
     type createCovLinkAtomInput = {
         selectedMolNo: number;
@@ -235,7 +205,7 @@ export namespace moorhen {
         calcStructFact?: any;
     };
 
-    type ScreenRecorder = import('../utils/MoorhenScreenRecorder').ScreenRecorder;
+    type ScreenRecorder = import("../utils/MoorhenScreenRecorder").ScreenRecorder;
 
     type mapHeaderInfo = {
         spacegroup: string;
@@ -329,7 +299,7 @@ export namespace moorhen {
         setZoomWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
         setShortCuts: React.Dispatch<React.SetStateAction<string>>;
         setDefaultUpdatingScores: React.Dispatch<{
-            action: 'Add' | 'Remove' | 'Overwrite';
+            action: "Add" | "Remove" | "Overwrite";
             item?: string;
             items?: string[];
         }>;

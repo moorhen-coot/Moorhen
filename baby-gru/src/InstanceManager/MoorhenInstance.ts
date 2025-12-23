@@ -1,8 +1,8 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
+import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
-import { MoorhenMap, MoorhenMolecule } from "../moorhen";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "../store/globalUISlice";
