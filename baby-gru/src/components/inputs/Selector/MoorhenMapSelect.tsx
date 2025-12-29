@@ -54,13 +54,13 @@ export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
         filteredMaps.forEach(map => {
             mapOptions.push(
                 <option key={map.molNo} value={map.molNo}>
-                    {map.molNo}: {map.name}
+                    {`${map.molNo}: ${map.name}`}
                 </option>
             );
         });
     } else {
         mapOptions.push(
-            <option disabled value={0}>
+            <option key="no-maps" disabled value={0}>
                 No maps available
             </option>
         );

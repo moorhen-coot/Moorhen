@@ -1,10 +1,10 @@
 import fetch from 'node-fetch'
-import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
+import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)

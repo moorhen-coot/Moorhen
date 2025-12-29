@@ -40,13 +40,13 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         if (filterFunction(option)) {
             return (
                 <option key={option.molNo} value={option.molNo as number}>
-                    {option.name}
+                    {`${option.molNo}: ${option.name}`}
                 </option>
             );
         }
     });
 
-    if (props.allowAny && options.length === 0) {
+    if (props.allowAny && options.length !== 0) {
         options.push(
             <option value={-999999} key={-999999}>
                 Any molecule
@@ -68,11 +68,17 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         if (onSelect) onSelect(parseInt(evt.target.value));
     };
 
+    const getDefaultValue = () => {
+        if (selected !== undefined) return selected;
+        if (allowAny && options.length > 0 && !disabled) return -999999;
+        return 0;
+    };
+
     return (
         <MoorhenSelect
             label={props.label === undefined ? "Select Molecule:" : props.label}
             disabled={disabled}
-            defaultValue={selected ? selected : 0}
+            defaultValue={getDefaultValue()}
             onChange={e => handleChange(e)}
             ref={props.ref}
         >

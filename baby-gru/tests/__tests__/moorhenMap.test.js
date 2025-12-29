@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
