@@ -545,9 +545,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
                         <MolSurfSettingsPanel {...molSurfSettingsProps} />
                     )}
                     {!useDefaultRepresentationSettings && representationStyle === "CRs" && <RibbonSettingsPanel {...ribbonSettingsProps} />}
-                    {!useDefaultRepresentationSettings && COOT_BOND_REPRESENTATIONS.includes(representationStyle) && (
-                        <BondSettingsPanel {...bondSettingsProps} />
-                    )}
+                    {!useDefaultRepresentationSettings &&
+                        representationStyle !== "MetaBalls" &&
+                        COOT_BOND_REPRESENTATIONS.includes(representationStyle) && <BondSettingsPanel {...bondSettingsProps} />}
                     {!useDefaultRepresentationSettings && representationStyle === "residue_environment" && (
                         <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
                     )}
