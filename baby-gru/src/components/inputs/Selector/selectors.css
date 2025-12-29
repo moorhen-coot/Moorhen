@@ -1,18 +1,20 @@
-@import '../../../colors.css';
+@import "../../../colors.css";
 
 .moorhen__selector-container {
     display: flex;
     flex-direction: column;
-    width: 12rem;
     gap: 0.2rem;
 }
 
 .moorhen__selector {
     border: 1px solid var(--moorhen-border);
-    background-color: var(--moorhen-background);
+    background-color: var(--moorhen-input-background);
+    color: var(--moorhen-primary);
     border-radius: 0.2rem;
-    width: 100%;
-    height: 2rem;
+    width: auto;
+    height: 2.2rem;
+    font-size: 1rem;
+    min-width: 2rem;
 }
 
 .moorhen__selector:hover {

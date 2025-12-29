@@ -3,7 +3,7 @@
 .moorhen__input__precise {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
-    margin-top: 0.25rem;
+    /* margin-top: 0.25rem; */
     box-sizing: border-box;
     width: 100%;
     border: 1px solid var(--moorhen-border);

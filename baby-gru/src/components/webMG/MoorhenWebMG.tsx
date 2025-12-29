@@ -1,5 +1,5 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
@@ -17,6 +17,8 @@ import { setQuat, setOrigin, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { RootState } from '../../store/MoorhenReduxStore';
+import { DrawHoverAtom } from './HoverAtom';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -46,6 +48,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const glRef = OldglRef as React.Ref<MGWebGL>
 
     const dispatch = useDispatch()
+    const store = useStore<RootState>()
 
     const { enqueueSnackbar } = useSnackbar()
 
@@ -137,6 +140,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
     const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
     const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
     useEffect(() => {
         const dispatchVectorsBuffers = async() => {
@@ -153,13 +157,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
 
-            const [objects,newLabelBuffers] = await getVectorsBuffers()
+            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
 
             let newBuffers = []
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, true);
+                const a = appendOtherData(object, store, true);
                 newBuffers = [...newBuffers,...a]
-                buildBuffers(a)
+                buildBuffers(a, store)
             })
 
             setVectorBuffers(newBuffers)
@@ -216,7 +220,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
        if (glRef !== null && typeof glRef !== 'function') {
-           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef())
+           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef(), store)
            moorhenGlobalInstance.setVideoRecorder(videoRecorder);
        }
     }, [])
@@ -644,7 +648,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
+        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms || shortcutsBlocked ) {
             return false
         }
         return moorhenKeyPress(
@@ -658,13 +662,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
                 videoRecorderRef,
                 commandCentre: commandCentre,
+                store: store,
                 ...props
             },
             JSON.parse(shortCuts as string),
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current])
+    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current, shortcutsBlocked])
 
 
     const getCanvasRef = (() => {
@@ -738,7 +743,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
+                    store={store}
+                    dispatch={dispatch} />
                     <Moorhen2DOverlay drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&
@@ -754,6 +761,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
+                <DrawHoverAtom />
             </>
 });
 

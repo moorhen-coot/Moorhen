@@ -1,14 +1,12 @@
-import { useState, useRef, useEffect } from "react";
-import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { useSelector, useDispatch } from "react-redux";
-import { moorhen } from "../../types/moorhen";
+import { Button, Card, Col, Modal, Row } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
 import { setShortCuts } from "../../store/shortCutsSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenButton } from "../inputs";
 import { Preferences } from "../managers/preferences/MoorhenPreferences";
 
-export const MoorhenShortcutConfigModal = (props: {
-    setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
-    showModal: boolean;
-}) => {
+export const MoorhenShortcutConfigModal = (props: { setShowModal: React.Dispatch<React.SetStateAction<boolean>>; showModal: boolean }) => {
     const dispatch = useDispatch();
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
     const shortCuts = JSON.parse(_shortCuts as string);
@@ -39,7 +37,7 @@ export const MoorhenShortcutConfigModal = (props: {
         if (evt.metaKey) modifiers.push("metaKey");
         if (evt.altKey) modifiers.push("altKey");
 
-        setStagedShortCuts((prev) => {
+        setStagedShortCuts(prev => {
             return {
                 ...prev,
                 [waitingNewShortCut as string]: {
@@ -84,7 +82,7 @@ export const MoorhenShortcutConfigModal = (props: {
                     <Modal.Title>Shortcuts</Modal.Title>
                 </Modal.Header>
                 <Modal.Body style={{ height: "65vh", overflowY: "scroll" }}>
-                    {Object.keys(stagedShortCuts).map((key) => {
+                    {Object.keys(stagedShortCuts).map(key => {
                         const modifiers = [];
                         if (stagedShortCuts[key].modifiers.includes("shiftKey")) modifiers.push("<Shift>");
                         if (stagedShortCuts[key].modifiers.includes("ctrlKey")) modifiers.push("<Ctrl>");
@@ -96,21 +94,17 @@ export const MoorhenShortcutConfigModal = (props: {
                                 <Card.Body style={{ padding: "0.5rem" }}>
                                     <Row className="align-items-center">
                                         <Col style={{ justifyContent: "left", display: "flex" }}>
-                                            <span style={{ fontWeight: "bold" }}>
-                                                {`${stagedShortCuts[key].label}`}
-                                            </span>
+                                            <span style={{ fontWeight: "bold" }}>{`${stagedShortCuts[key].label}`}</span>
                                             <i>{`: ${modifiers.join("-")} ${stagedShortCuts[key].keyPress} `}</i>
                                         </Col>
                                         <Col style={{ justifyContent: "right", display: "flex" }}>
-                                            <Button
+                                            <MoorhenButton
                                                 size="sm"
                                                 value={key}
-                                                onClick={(evt) =>
-                                                    setWaitingNewShortCut((evt.target as HTMLInputElement).value)
-                                                }
+                                                onClick={evt => setWaitingNewShortCut((evt.target as HTMLInputElement).value)}
                                             >
                                                 Change
-                                            </Button>
+                                            </MoorhenButton>
                                         </Col>
                                     </Row>
                                 </Card.Body>
@@ -119,15 +113,15 @@ export const MoorhenShortcutConfigModal = (props: {
                     })}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={restoreDefaults}>
+                    <MoorhenButton variant="secondary" onClick={restoreDefaults}>
                         Restore Defaults
-                    </Button>
-                    <Button variant="primary" onClick={handleSaveChanges}>
+                    </MoorhenButton>
+                    <MoorhenButton variant="primary" onClick={handleSaveChanges}>
                         Save Changes
-                    </Button>
-                    <Button variant="danger" onClick={cancelChanges}>
+                    </MoorhenButton>
+                    <MoorhenButton variant="danger" onClick={cancelChanges}>
                         Cancel
-                    </Button>
+                    </MoorhenButton>
                 </Modal.Footer>
             </Modal>
             <Modal

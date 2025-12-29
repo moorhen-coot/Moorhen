@@ -1,19 +1,18 @@
-import { useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Button } from "react-bootstrap";
 import { Stack } from "@mui/material";
 import { Chart, registerables } from "chart.js";
-import { moorhen } from "../../types/moorhen";
+import { useDispatch, useSelector } from "react-redux";
+import { useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
-import { usePersistent, usePersistentState, dispatchPersistentStates } from "../../store/menusSlice";
-import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenGradientPicker } from "../inputs";
+import { dispatchPersistentStates, usePersistent, usePersistentState } from "../../store/menusSlice";
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenButton, MoorhenGradientPicker } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-
+import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 Chart.register(...registerables);
 
@@ -24,13 +23,13 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const chartRef = useRef<Chart | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const commandCentre  = useCommandCentre();
+    const commandCentre = useCommandCentre();
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     //const [minMaxValue, setMinMaxValue] = useState<number> ([-1, 1])
-    const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1]);
+    const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1], false);
 
     const map1 = usePersistent<number>(menu, "map1", -999999);
     const map2 = usePersistent<number>(menu, "map2", -999999);
@@ -45,11 +44,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
     const mapSelectRef_1 = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef_2 = useRef<null | HTMLSelectElement>(null);
 
-    const handleDefaultColour = (_evt) => {
+    const handleDefaultColour = () => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
             return;
         }
-        const referenceMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const referenceMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
 
         if (!referenceMap) {
             return;
@@ -70,8 +69,8 @@ export const MoorhenColourMapByOtherMapModal = () => {
             return;
         }
 
-        const referenceMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const referenceMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
 
         if (!referenceMap || !colouringMap) {
             return;
@@ -100,11 +99,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
         if (!mapSelectRef_2 || !mapSelectRef_1.current) {
             return;
         }
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
         if (!colouringMap) {
             return;
         }
-        const colouredMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouredMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
         const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value));
         const min = Number(histogram.base.toPrecision(3));
         const max = Number((histogram.base + histogram.bin_width * histogram.counts.length).toPrecision(3));
@@ -129,11 +128,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
         if (!mapSelectRef_2 || !mapSelectRef_1.current) {
             return;
         }
-        const colouringMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_2.current.value));
+        const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
         if (!colouringMap) {
             return;
         }
-        const colouredMap = maps.find((map) => map.molNo === parseInt(mapSelectRef_1.current.value));
+        const colouredMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
         const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value), 500);
         function movingAverage(data: number[], windowSize: number): number[] {
             const result = [];
@@ -207,24 +206,24 @@ export const MoorhenColourMapByOtherMapModal = () => {
     };
 
     const panelContent = (
-        <Stack direction="column" style={{ margin: "0.5rem" }} gap={1}>
-            <Stack direction="column" style={{ margin: "0.5rem" }} gap={0}>
+        <MoorhenStack direction="column" style={{ margin: "0.5rem" }} gap={1}>
+            <MoorhenStack direction="column" style={{ margin: "0.5rem" }} gap={0}>
                 <MoorhenMapSelect maps={maps} ref={mapSelectRef_1} label="Colour this map..." defaultValue={map1 || null} />
                 <MoorhenMapSelect maps={maps} ref={mapSelectRef_2} label="By this map..." defaultValue={map2 || null} />
-            </Stack>
+            </MoorhenStack>
 
-            <Button variant="secondary" onClick={handleDefaultColour} style={{ marginLeft: "0.5rem" }}>
+            <MoorhenButton variant="secondary" onClick={handleDefaultColour} style={{ marginLeft: "0.5rem" }}>
                 Or reset to default colour
-            </Button>
+            </MoorhenButton>
 
             <span style={{ marginTop: "0.5rem" }}>Set min and max values for the colour map:</span>
             <MoorhenGradientPicker colourTable={colourTable} setColourTable={setColourTable} menu={menu} />
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" style={{ marginTop: "-1rem" }}>
+            <MoorhenStack direction="row" gap={1} align="center" justify="space-between" style={{ marginTop: "-1rem" }}>
                 <MoorhenPreciseInput
                     value={minMaxValue[0]}
                     decimalDigits={2}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         setMinMaxValue([+newVal, minMaxValue[1]]);
                     }}
                 />
@@ -242,31 +241,30 @@ export const MoorhenColourMapByOtherMapModal = () => {
                     minMax={[-10.0, 10.0]}
                     decimalDigits={2}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         setMinMaxValue([minMaxValue[0], +newVal]);
                     }}
                 />
-            </Stack>
+            </MoorhenStack>
 
-            <Stack direction="row" justifyContent="center" style={{ marginTop: "0.5rem" }}></Stack>
-            <Button variant="secondary" onClick={handleApplyColourTable} style={{ marginLeft: "0.5rem" }}>
+            <MoorhenButton variant="secondary" onClick={handleApplyColourTable} style={{ marginLeft: "0.5rem" }}>
                 Apply Colour Gradient
-            </Button>
-            <Stack direction="row" justifyContent="center" style={{ marginTop: "0.5rem" }}>
-                <Button variant="secondary" onClick={() => setMinMaxValue([-1, 1])} style={{ marginLeft: "0.5rem" }}>
+            </MoorhenButton>
+            <MoorhenStack direction="row" justify="center" style={{ marginTop: "0.5rem" }}>
+                <MoorhenButton variant="secondary" onClick={() => setMinMaxValue([-1, 1])} style={{ marginLeft: "0.5rem" }}>
                     Default values
-                </Button>
-                <Button variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
+                </MoorhenButton>
+                <MoorhenButton variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
                     Guess Values
-                </Button>
-                <Button variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
+                </MoorhenButton>
+                <MoorhenButton variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
                     Draw Histogram
-                </Button>
-            </Stack>
+                </MoorhenButton>
+            </MoorhenStack>
             <div className="histogram-plot-div" style={{ width: "95%" }}>
                 <canvas id={`histogram`}></canvas>
             </div>
-        </Stack>
+        </MoorhenStack>
     );
 
     return (

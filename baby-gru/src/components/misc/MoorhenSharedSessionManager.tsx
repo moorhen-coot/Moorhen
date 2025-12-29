@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Stack } from "react-bootstrap";
 import {
     CloseOutlined,
     LocationOffOutlined,
@@ -9,19 +7,21 @@ import {
     ShareOutlined,
     SwapVertOutlined,
 } from "@mui/icons-material";
-import { Box, Fade, IconButton, Popper, Badge, Slide, Avatar } from "@mui/material";
+import { Avatar, Badge, Box, Fade, IconButton, Popper, Slide } from "@mui/material";
+import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useCommandCentre } from "../../InstanceManager";
+import { setActiveMap } from "../../store/generalStatesSlice";
+import { addMap, emptyMaps } from "../../store/mapsSlice";
+import { addMolecule, emptyMolecules } from "../../store/moleculesSlice";
+import { setSharedSessionToken, setShowSharedSessionManager } from "../../store/sharedSessionSlice";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenFleetManager } from "../../utils/MoorhenFleetManager";
-import { setSharedSessionToken, setShowSharedSessionManager } from "../../store/sharedSessionSlice";
-import { addMolecule, emptyMolecules } from "../../store/moleculesSlice";
-import { addMap, emptyMaps } from "../../store/mapsSlice";
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { MoorhenMap } from "../../utils/MoorhenMap";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenNotification } from "./MoorhenNotification";
-import { useCommandCentre } from "../../InstanceManager";
 
 export const MoorhenSharedSessionManager = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -40,9 +40,7 @@ export const MoorhenSharedSessionManager = (props: {
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const sessionToken = useSelector((state: moorhen.State) => state.sharedSession.sharedSessionToken);
-    const showSharedSessionManager = useSelector(
-        (state: moorhen.State) => state.sharedSession.showSharedSessionManager
-    );
+    const showSharedSessionManager = useSelector((state: moorhen.State) => state.sharedSession.showSharedSessionManager);
 
     const [userCount, setUserCount] = useState<number>(0);
     const [showPopper, setShowPopper] = useState<boolean>(false);
@@ -77,7 +75,7 @@ export const MoorhenSharedSessionManager = (props: {
 
     useEffect(() => {
         const pushMoleculeUpdate = async (molNo: number) => {
-            const molecule = molecules.find((item) => item.molNo === molNo);
+            const molecule = molecules.find(item => item.molNo === molNo);
             if (molecule) {
                 moorhenFleetManagerRef.current.pushMoleculeUpdate(molecule);
             }
@@ -92,7 +90,7 @@ export const MoorhenSharedSessionManager = (props: {
             // If we are not the first in this session, then lets's sync our data to the current state...
             dispatch(emptyMaps());
             dispatch(emptyMolecules());
-            await Promise.all([...molecules.map((molecule) => molecule.delete()), ...maps.map((map) => map.delete())]);
+            await Promise.all([...molecules.map(molecule => molecule.delete()), ...maps.map(map => map.delete())]);
             await commandCentre.current?.cootCommand(
                 {
                     command: "clear",
@@ -104,19 +102,15 @@ export const MoorhenSharedSessionManager = (props: {
             try {
                 const moleculeMolNos = Array.from(moorhenFleetManagerRef.current.molecules.keys());
                 const mapMolNos = Array.from(moorhenFleetManagerRef.current.maps.keys());
-                const sortedMolNos = [
-                    ...moleculeMolNos.map((item) => parseInt(item)),
-                    ...mapMolNos.map((item) => parseInt(item)),
-                ].sort((a, b) => a - b);
+                const sortedMolNos = [...moleculeMolNos.map(item => parseInt(item)), ...mapMolNos.map(item => parseInt(item))].sort(
+                    (a, b) => a - b
+                );
                 // TODO: Before this loop we need a function to increase the imol to the desired current value...
                 for (const molNo of sortedMolNos) {
                     if (moleculeMolNos.includes(molNo.toString())) {
                         const molecule = new MoorhenMolecule(commandCentre, props.glRef, props.monomerLibrary);
                         const moleculeData = moorhenFleetManagerRef.current.molecules.get(molNo.toString());
-                        await molecule.loadToCootFromString(
-                            moleculeData.coordData,
-                            `${moleculeData.molName}.${moleculeData.format}`
-                        );
+                        await molecule.loadToCootFromString(moleculeData.coordData, `${moleculeData.molName}.${moleculeData.format}`);
                         molecule.name = moleculeData.molName;
                         if (molecule.molNo === molNo) {
                             await molecule.fetchIfDirtyAndDraw(molecule.atomCount >= 50000 ? "CRs" : "CBs");
@@ -124,9 +118,7 @@ export const MoorhenSharedSessionManager = (props: {
                             dispatch(addMolecule(molecule));
                         } else {
                             molecule.delete();
-                            throw new Error(
-                                `Failed to create molecule with desired imol ${molNo} when joining session...`
-                            );
+                            throw new Error(`Failed to create molecule with desired imol ${molNo} when joining session...`);
                         }
                     } else {
                         const map = new MoorhenMap(commandCentre, props.glRef);
@@ -151,8 +143,8 @@ export const MoorhenSharedSessionManager = (props: {
             }
         } else {
             // If we are the first in this session then we need to push the current state of molecules and maps
-            await Promise.all(molecules.map((molecule) => moorhenFleetManagerRef.current.pushMoleculeUpdate(molecule)));
-            await Promise.all(maps.map((map) => moorhenFleetManagerRef.current.pushMapUpdate(map)));
+            await Promise.all(molecules.map(molecule => moorhenFleetManagerRef.current.pushMoleculeUpdate(molecule)));
+            await Promise.all(maps.map(map => moorhenFleetManagerRef.current.pushMapUpdate(map)));
         }
     }, [maps, molecules]);
 
@@ -160,23 +152,19 @@ export const MoorhenSharedSessionManager = (props: {
         moorhenFleetManagerRef.current.joinSession(sessionToken);
 
         // Create event listeners
-        moorhenFleetManagerRef.current.locks.observe(
-            moorhenFleetManagerRef.current.handleLockUpdate.bind(moorhenFleetManagerRef.current)
-        );
+        moorhenFleetManagerRef.current.locks.observe(moorhenFleetManagerRef.current.handleLockUpdate.bind(moorhenFleetManagerRef.current));
         moorhenFleetManagerRef.current.molecules.observe(
             moorhenFleetManagerRef.current.handleMoleculeUpdates.bind(moorhenFleetManagerRef.current)
         );
         moorhenFleetManagerRef.current.hoveredAtoms.observe(
             moorhenFleetManagerRef.current.handleAtomHovering.bind(moorhenFleetManagerRef.current)
         );
-        moorhenFleetManagerRef.current.view.observe(
-            moorhenFleetManagerRef.current.handleViewUpdate.bind(moorhenFleetManagerRef.current)
-        );
-        moorhenFleetManagerRef.current.viewFollowers.observe((evt) => {
+        moorhenFleetManagerRef.current.view.observe(moorhenFleetManagerRef.current.handleViewUpdate.bind(moorhenFleetManagerRef.current));
+        moorhenFleetManagerRef.current.viewFollowers.observe(evt => {
             const viewFollowers = moorhenFleetManagerRef.current.viewFollowers.toArray();
             setViewFollowers(viewFollowers);
         });
-        moorhenFleetManagerRef.current.connectedClients.observe((evt) => {
+        moorhenFleetManagerRef.current.connectedClients.observe(evt => {
             const userCount = moorhenFleetManagerRef.current.handleUserUpdate(evt);
             setUserCount(userCount);
         });
@@ -220,19 +208,15 @@ export const MoorhenSharedSessionManager = (props: {
         <></>
     ) : (
         <MoorhenNotification width={20} maxHeight={20}>
-            <Stack ref={notificationDivRef} gap={1} direction="vertical">
-                <Stack
-                    gap={1}
-                    direction="horizontal"
-                    style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
-                >
+            <MoorhenStack ref={notificationDivRef} gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                     <div style={{ alignItems: "center", display: "flex", justifyContent: "center" }}>
                         <SwapVertOutlined
                             style={{ color: "red", borderRadius: "30px", borderWidth: 0, borderStyle: "hidden" }}
                             className="moorhen-recording-icon"
                         />
                     </div>
-                    <IconButton onClick={() => setShowUserPopper((prev) => !prev)}>
+                    <IconButton onClick={() => setShowUserPopper(prev => !prev)}>
                         <Badge color="info" badgeContent={userCount - 1}>
                             <PeopleAltOutlined />
                         </Badge>
@@ -243,13 +227,7 @@ export const MoorhenSharedSessionManager = (props: {
                     <IconButton onClick={handleDisconnect}>
                         <CloseOutlined />
                     </IconButton>
-                    <Popper
-                        id="transition-popper"
-                        open={showPopper}
-                        anchorEl={notificationDivRef.current}
-                        placement="bottom"
-                        transition
-                    >
+                    <Popper id="transition-popper" open={showPopper} anchorEl={notificationDivRef.current} placement="bottom" transition>
                         {({ TransitionProps }) => (
                             <Fade {...TransitionProps} timeout={350}>
                                 <Box
@@ -267,27 +245,21 @@ export const MoorhenSharedSessionManager = (props: {
                             </Fade>
                         )}
                     </Popper>
-                </Stack>
-                <div
-                    ref={connectedUsersDivRef}
-                    style={{ display: showUserPopper ? "flex" : "none", justifyContent: "center" }}
-                >
+                </MoorhenStack>
+                <div ref={connectedUsersDivRef} style={{ display: showUserPopper ? "flex" : "none", justifyContent: "center" }}>
                     <Slide in={showUserPopper} timeout={350} container={connectedUsersDivRef.current}>
                         <Box style={{ width: "100%" }}>
                             {moorhenFleetManagerRef.current?.connectedClients?.size > 1 ? (
-                                moorhenFleetManagerRef.current.getClientList().map((item) => {
+                                moorhenFleetManagerRef.current.getClientList().map(item => {
                                     return (
-                                        <Stack
+                                        <MoorhenStack
                                             key={item.id}
                                             gap={1}
                                             direction="horizontal"
                                             style={{ justifyContent: "space-between", width: "100%" }}
                                         >
-                                            <Stack gap={1} direction="horizontal" style={{ display: "flex" }}>
-                                                <Avatar
-                                                    sx={{ bgcolor: item.hexColor, height: "35px", width: "35px" }}
-                                                    key={item.id}
-                                                >
+                                            <MoorhenStack gap={1} direction="horizontal" style={{ display: "flex" }}>
+                                                <Avatar sx={{ bgcolor: item.hexColor, height: "35px", width: "35px" }} key={item.id}>
                                                     <img
                                                         style={{ width: "25px", height: "20px" }}
                                                         className="moorhen-navbar-menu-item-icon"
@@ -296,7 +268,7 @@ export const MoorhenSharedSessionManager = (props: {
                                                     />
                                                 </Avatar>
                                                 <span>{item.name}</span>
-                                            </Stack>
+                                            </MoorhenStack>
                                             {viewFollowers.includes(item.id) ? (
                                                 <ShareLocationOutlined
                                                     className="moorhen-blinking-icon"
@@ -311,16 +283,12 @@ export const MoorhenSharedSessionManager = (props: {
                                             ) : (
                                                 <IconButton
                                                     onClick={() => {
-                                                        setFollowClient((prev) => {
+                                                        setFollowClient(prev => {
                                                             if (prev === item.id) {
-                                                                moorhenFleetManagerRef.current.setFollowViewClient(
-                                                                    null
-                                                                );
+                                                                moorhenFleetManagerRef.current.setFollowViewClient(null);
                                                                 return null;
                                                             } else {
-                                                                moorhenFleetManagerRef.current.setFollowViewClient(
-                                                                    item.id
-                                                                );
+                                                                moorhenFleetManagerRef.current.setFollowViewClient(item.id);
                                                                 return item.id;
                                                             }
                                                         });
@@ -347,7 +315,7 @@ export const MoorhenSharedSessionManager = (props: {
                                                     )}
                                                 </IconButton>
                                             )}
-                                        </Stack>
+                                        </MoorhenStack>
                                     );
                                 })
                             ) : (
@@ -358,7 +326,7 @@ export const MoorhenSharedSessionManager = (props: {
                         </Box>
                     </Slide>
                 </div>
-            </Stack>
+            </MoorhenStack>
         </MoorhenNotification>
     );
 };

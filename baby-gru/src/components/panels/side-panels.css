@@ -1,10 +1,21 @@
-.moorhen__todo-container {
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.moorhen__panel-container {
     position: absolute;
     top: 0;
-    right: -295px;
+    right: var(--side-panel-translate);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    overflow-x: auto;
     gap: 0rem;
     border-left: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
@@ -13,18 +24,57 @@
     transform: translateX(0);
 }
 
-.moorhen__todo-container--visible {
-    transform: translateX(-300px);
+.moorhen__panel-container--visible {
+    transform: translateX(var(--side-panel-translate));
 }
 
-.moorhen__todo-container-toggle-button {
+.moorhen__side-panel-tabs-container {
     position: absolute;
-    top: 50%;
-    right: 0px;
+    display: flex;
+    flex-direction: column;
+    top: 4rem;
+    right: -1px;
+    z-index: 100;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateX(0);
 }
 
-.moorhen__todo-container-toggle-button--visible {
-    transform: translateX(-300px);
+.moorhen__side-panel-tabs-container.visible {
+    transform: translateX(var(--side-panel-translate));
+}
+
+.moorhen__panel-container-toggle-button {
+    border: 1px solid var(--moorhen-border);
+    background: var(--moorhen-background);
+    z-index: 100;
+    width: 2.2rem;
+    border-radius: 1rem 0 0 1rem;
+    cursor: pointer;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__panel-container-toggle-button.visible {
+    border-right: none;
+}
+
+.moorhen__panel-container-toggle-button-hint-label {
+    position: absolute;
+    z-index: 80;
+    right: 2.3rem;
+    font-size: 1.2rem;
+    background: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    padding: 0.2rem;
+    border-radius: 0.4rem;
+    animation: slideInFromRight 0.1s ease-out;
+}
+
+.moorhen__panel-container-toggle-button:hover {
+    box-shadow: var(--moorhen-focus-shadow) -5px 0px 5px;
+    /* rgba(240, 46, 170, 0.3) -10px 10px,
+        rgba(240, 46, 170, 0.2) -15px 15px,
+        rgba(240, 46, 170, 0.1) -20px 20px,
+        rgba(240, 46, 170, 0.05) -25px 25px; */
+    border-color: var(--moorhen-focus);
+    /* border-right: none; */
 }

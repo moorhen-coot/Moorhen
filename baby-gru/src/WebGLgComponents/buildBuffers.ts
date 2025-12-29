@@ -1,13 +1,13 @@
 import * as vec3 from 'gl-matrix/vec3';
-import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { guid } from '../utils/utils';
 import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
+import { MoorhenReduxStoreType, RootState } from '../store/MoorhenReduxStore';
 
-export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
+export const appendOtherData = (jsondata: any, store: MoorhenReduxStoreType, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
         const theseTexturedShapes = [];
@@ -60,7 +60,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                 }
             }
 
-            const theBuffer = createWebGLBuffers(jsondata,idat)
+            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
             theseBuffers.push(theBuffer);
 
             const displayBuffers = store.getState().glRef.displayBuffers
@@ -451,7 +451,7 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
 
     }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[]) : void => {
+export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth

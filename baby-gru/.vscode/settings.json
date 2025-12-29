@@ -5,6 +5,7 @@
         "Gemmi",
         "INDEXEDDB",
         "libcoot",
+        "mathjax",
         "molname",
         "molno",
         "notistack",
@@ -30,5 +31,9 @@
         "titleBar.activeForeground": "#FFFBFC"
     },
     "cmake.ignoreCMakeListsMissing": true,
-    "files.associations": { "*.json": "jsonc" }
+    "files.associations": { "*.json": "jsonc" },
+    "files.exclude": {
+        "**/tsDist/**": true,
+        "**/src/moorhen.tsx": true
+    }
 }

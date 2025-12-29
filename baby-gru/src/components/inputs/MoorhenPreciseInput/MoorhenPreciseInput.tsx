@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react';
-import '../../MoorhenStack.css';
-import './MoorhenPreciseInput.css';
+import { useDispatch } from "react-redux";
+import { useRef, useState } from "react";
+import { setShortCutsBlocked } from "../../../store/globalUISlice";
+import { MoorhenStack } from "../../interface-base";
+import "./MoorhenPreciseInput.css";
 
 type MoorhenPreciseInputPropsType = {
     value: number | null;
-    setValue: (newVal: string) => void;
+    setValue?: (newVal: string) => void;
+    onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
     decimalDigits?: number;
@@ -13,7 +16,8 @@ type MoorhenPreciseInputPropsType = {
     width?: string | number;
     minMax?: [number, number];
     type?: string;
-    labelPosition?: 'top' | 'left';
+    labelPosition?: "top" | "left";
+    style?: React.CSSProperties;
 };
 
 /**
@@ -57,19 +61,22 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     const {
         allowNegativeValues = true,
         decimalDigits = 2,
-        label = '',
+        label = "",
         disabled = false,
         width,
         waitReturn = false,
         minMax = null,
-        type = 'standard',
+        type = "standard",
+        labelPosition = "left",
+        style,
     } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
     const isValidRef = useRef<boolean>(true);
+    const dispatch = useDispatch();
 
-    let displayValue: string = '';
+    let displayValue: string = "";
     if (!isUserInteracting) {
         displayValue = props.value?.toFixed(decimalDigits);
     } else {
@@ -77,7 +84,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
     }
 
     const checkIsValidInput = (input: string) => {
-        if (input === '') {
+        if (input === "") {
             return false;
         }
         const value = Number(input);
@@ -99,32 +106,36 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
+        dispatch(setShortCutsBlocked(true));
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
+        props.onChange(evt);
     };
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
-        if (evt.key === 'Enter') {
+        if (evt.key === "Enter") {
             evt.preventDefault();
             if (checkIsValidInput(internalValue)) {
                 props.setValue?.(internalValue);
             }
             setIsUserInteracting(false);
+            dispatch(setShortCutsBlocked(false));
         }
     };
 
     const handleBlur = () => {
         setIsUserInteracting(false);
+        dispatch(setShortCutsBlocked(false));
     };
 
-    const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === 'text' ? 0 : 1.1)}rem`;
-    const formType = type === 'number' ? 'number' : type === 'numberForm' ? 'number' : 'text';
+    const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
+    const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <div className={`${props.labelPosition === 'top' ? 'moorhen__label__column' : 'moorhen__label__row'}`}>
+        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center" style={{ ...style }}>
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;
@@ -137,14 +148,15 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
                 disabled={disabled}
                 value={displayValue}
                 style={{ width: inputWidth }}
-                className={`moorhen__input ${'moorhen__input__precise'} 
-                ${type === 'numberForm' ? 'moorhen__input__number' : 'moorhen__input__compact'} 
-                ${isValidRef.current ? 'moorhen__input__valid' : 'moorhen__input__invalid'} 
-                ${disabled ? 'moorhen__input__disabled' : ''}`}
+                className={`moorhen__input ${"moorhen__input__precise"} 
+                ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
+                ${isValidRef.current ? "moorhen__input__valid" : "moorhen__input__invalid"} 
+                ${disabled ? "moorhen__input__disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}
+                onFocus={() => dispatch(setShortCutsBlocked(true))}
             />
-        </div>
+        </MoorhenStack>
     );
 };

@@ -1,4 +1,3 @@
-import { IconButton, Popover, Tooltip } from "@mui/material";
 import {
     AdsClickOutlined,
     AllOutOutlined,
@@ -12,13 +11,12 @@ import {
     SwapVertOutlined,
     SwipeRightAlt,
 } from "@mui/icons-material";
-import { batch, useDispatch, useSelector } from "react-redux";
-import { Button, Stack } from "react-bootstrap";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { HexColorInput, HexColorPicker } from "react-colorful";
+import { IconButton, Popover, Tooltip } from "@mui/material";
 import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack";
-import { cidToSpec } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
+import { Button, Stack } from "react-bootstrap";
+import { HexColorInput, HexColorPicker } from "react-colorful";
+import { batch, useDispatch, useSelector } from "react-redux";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import {
     clearResidueSelection,
     setIsDraggingAtoms,
@@ -26,14 +24,17 @@ import {
     setResidueSelection,
     setShowResidueSelection,
 } from "../../store/generalStatesSlice";
-import { addMolecule, removeMolecule } from "../../store/moleculesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { addMolecule, removeMolecule } from "../../store/moleculesSlice";
+import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
+import { cidToSpec } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
+import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: string }>((props, ref) => {
-    const notificationComponentRef = useRef(null);
     const changeColourAnchorRef = useRef(null);
     const cidAnchorRef = useRef(null);
     const cidFormRef = useRef(null);
@@ -67,12 +68,12 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         setShowCidEditForm(false);
         setShowColourPopover(false);
         setInvalidCid(false);
-        molecules.forEach((molecule) => molecule.clearBuffersOfStyle("residueSelection"));
+        molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
         closeSnackbar(props.id);
     }, [molecules]);
 
     useEffect(() => {
-        if (Object.keys(residueSelection).every((key) => !residueSelection[key])) {
+        if (Object.keys(residueSelection).every(key => !residueSelection[key])) {
             clearSelection();
         }
     }, [residueSelection, clearSelection]);
@@ -127,14 +128,10 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
     }, [residueSelection]);
 
     const handleRefinement = useCallback(async () => {
-        molecules.forEach((molecule) => molecule.clearBuffersOfStyle("residueSelection"));
+        molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
             if (animateRefine) {
-                await residueSelection.molecule.refineResiduesUsingAtomCidAnimated(
-                    residueSelection.cid.join("||"),
-                    activeMap,
-                    -1
-                );
+                await residueSelection.molecule.refineResiduesUsingAtomCidAnimated(residueSelection.cid.join("||"), activeMap, -1);
             } else {
                 await residueSelection.molecule.refineResiduesUsingAtomCid(residueSelection.cid.join("||"), "LITERAL");
             }
@@ -151,13 +148,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                     -1
                 );
             } else {
-                await residueSelection.molecule.refineResidueRange(
-                    startResSpec.chain_id,
-                    sortedResNums[0],
-                    sortedResNums[1],
-                    5000,
-                    true
-                );
+                await residueSelection.molecule.refineResidueRange(startResSpec.chain_id, sortedResNums[0], sortedResNums[1], 5000, true);
             }
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first);
@@ -276,14 +267,8 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         const newColourRules: moorhen.ColourRule[] = [];
 
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
-            residueSelection.cid.forEach((cid) => {
-                const newColourRule = new ColourRule(
-                    "cid",
-                    cid,
-                    selectedColour,
-                    residueSelection.molecule.commandCentre,
-                    false
-                );
+            residueSelection.cid.forEach(cid => {
+                const newColourRule = new ColourRule("cid", cid, selectedColour, residueSelection.molecule.commandCentre, false);
                 newColourRule.setArgs([cid, selectedColour]);
                 newColourRule.setParentMolecule(residueSelection.molecule);
                 newColourRules.push(newColourRule);
@@ -302,13 +287,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first);
             const cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`;
-            const newColourRule = new ColourRule(
-                "cid",
-                cid as string,
-                selectedColour,
-                residueSelection.molecule.commandCentre,
-                false
-            );
+            const newColourRule = new ColourRule("cid", cid as string, selectedColour, residueSelection.molecule.commandCentre, false);
             newColourRule.setArgs([cid as string, selectedColour]);
             newColourRule.setParentMolecule(residueSelection.molecule);
         }
@@ -361,7 +340,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         }
 
         if (cid) {
-            molecules.forEach((molecule) => molecule.clearBuffersOfStyle("residueSelection"));
+            molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
             dispatch(setHoveredAtom({ molecule: null, cid: null }));
             dispatch(setIsRotatingAtoms(true));
             enqueueSnackbar("accept-reject-rotate", {
@@ -387,7 +366,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         }
 
         if (cid) {
-            molecules.forEach((molecule) => molecule.clearBuffersOfStyle("residueSelection"));
+            molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
             batch(() => {
                 dispatch(setHoveredAtom({ molecule: null, cid: null }));
                 dispatch(setIsDraggingAtoms(true));
@@ -411,18 +390,14 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
             <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{ zIndex: 99 }}>
-                <Stack ref={notificationComponentRef} direction="vertical" gap={1}>
-                    <Stack
+                <MoorhenStack direction="vertical" gap={1}>
+                    <MoorhenStack
                         gap={0}
                         direction="horizontal"
                         style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
                     >
-                        <span
-                            style={{ paddingLeft: "2.2rem", width: "100%", display: "flex", justifyContent: "center" }}
-                        >{`${
-                            residueSelection.label?.length > 16
-                                ? residueSelection.label.substring(0, 12) + "..."
-                                : residueSelection.label
+                        <span style={{ paddingLeft: "2.2rem", width: "100%", display: "flex", justifyContent: "center" }}>{`${
+                            residueSelection.label?.length > 16 ? residueSelection.label.substring(0, 12) + "..." : residueSelection.label
                         }`}</span>
                         <IconButton
                             onClick={() => dispatch(clearResidueSelection())}
@@ -431,18 +406,10 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                         >
                             <CloseOutlined />
                         </IconButton>
-                    </Stack>
+                    </MoorhenStack>
                     <hr style={{ margin: 0, padding: 0 }}></hr>
-                    <Stack
-                        gap={2}
-                        direction="vertical"
-                        style={{ width: "100%", display: "flex", justifyContent: "center" }}
-                    >
-                        <Stack
-                            gap={2}
-                            direction="horizontal"
-                            style={{ width: "100%", display: "flex", justifyContent: "center" }}
-                        >
+                    <MoorhenStack gap={2} direction="vertical" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                             <IconButton
                                 disabled={activeMap === null}
                                 onClick={handleRefinement}
@@ -457,10 +424,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             >
                                 <AdsClickOutlined />
                             </IconButton>
-                            <IconButton
-                                onClick={handleSelectionCopy}
-                                onMouseEnter={() => setTooltipContents("Copy fragment")}
-                            >
+                            <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents("Copy fragment")}>
                                 <CopyAllOutlined />
                             </IconButton>
                             <IconButton
@@ -472,36 +436,27 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents("Delete")}>
                                 <DeleteOutlined />
                             </IconButton>
-                        </Stack>
-                        <Stack
-                            gap={2}
-                            direction="horizontal"
-                            style={{ width: "100%", display: "flex", justifyContent: "center" }}
-                        >
+                        </MoorhenStack>
+                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                             <IconButton
                                 ref={cidAnchorRef}
                                 onClick={() => {
-                                    setShowCidEditForm((prev) => !prev);
+                                    setShowCidEditForm(prev => !prev);
                                     setCidFormValue(null);
                                     setShowColourPopover(false);
                                     setInvalidCid(false);
                                 }}
                                 onMouseEnter={() => setTooltipContents("Edit selection")}
                             >
-                                <EditOutlined
-                                    style={{ height: "23px", width: "23px", padding: "0.05rem", marginLeft: "0.2rem" }}
-                                />
+                                <EditOutlined style={{ height: "23px", width: "23px", padding: "0.05rem", marginLeft: "0.2rem" }} />
                             </IconButton>
-                            <IconButton
-                                onClick={handleInvertSelection}
-                                onMouseEnter={() => setTooltipContents("Invert selection")}
-                            >
+                            <IconButton onClick={handleInvertSelection} onMouseEnter={() => setTooltipContents("Invert selection")}>
                                 <SwapVertOutlined />
                             </IconButton>
                             <IconButton
                                 ref={changeColourAnchorRef}
                                 onClick={() => {
-                                    setShowColourPopover((prev) => !prev);
+                                    setShowColourPopover(prev => !prev);
                                     setShowCidEditForm(false);
                                     setInvalidCid(false);
                                     setCidFormValue(null);
@@ -510,10 +465,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             >
                                 <FormatColorFillOutlined />
                             </IconButton>
-                            <IconButton
-                                onClick={handleRotateTranslate}
-                                onMouseEnter={() => setTooltipContents("Rotate/Translate")}
-                            >
+                            <IconButton onClick={handleRotateTranslate} onMouseEnter={() => setTooltipContents("Rotate/Translate")}>
                                 <Rotate90DegreesCw />
                             </IconButton>
                             <IconButton
@@ -523,8 +475,8 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             >
                                 <SwipeRightAlt />
                             </IconButton>
-                        </Stack>
-                    </Stack>
+                        </MoorhenStack>
+                    </MoorhenStack>
                     <Popover
                         onMouseEnter={() => setTooltipContents(null)}
                         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -540,31 +492,31 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             },
                         }}
                     >
-                        <Stack gap={3} direction="horizontal">
+                        <MoorhenStack gap={3} direction="horizontal">
                             <div style={{ width: "100%", textAlign: "center" }}>
                                 <HexColorPicker
                                     style={{ padding: "0.05rem" }}
                                     color={selectedColour}
-                                    onChange={(color) => setSelectedColour(color)}
+                                    onChange={color => setSelectedColour(color)}
                                 />
                                 <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                                     <div className="moorhen-hex-input-decorator">#</div>
                                     <HexColorInput
                                         className="moorhen-hex-input"
                                         color={selectedColour}
-                                        onChange={(color) => setSelectedColour(color)}
+                                        onChange={color => setSelectedColour(color)}
                                     />
                                 </div>
-                                <Button
+                                <MoorhenButton
                                     size="sm"
                                     variant="primary"
                                     style={{ width: "80%", margin: "0.25rem" }}
                                     onClick={handleColourChange}
                                 >
                                     Apply
-                                </Button>
+                                </MoorhenButton>
                             </div>
-                        </Stack>
+                        </MoorhenStack>
                     </Popover>
                     <Popover
                         onMouseEnter={() => setTooltipContents(null)}
@@ -584,27 +536,27 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
                             },
                         }}
                     >
-                        <Stack gap={3} direction="horizontal">
+                        <MoorhenStack gap={3} direction="horizontal">
                             <div style={{ padding: "0.2rem", textAlign: "center" }}>
                                 <MoorhenCidInputForm
                                     margin="0"
                                     width="100%"
-                                    onChange={(evt) => setCidFormValue(evt.target.value)}
+                                    onChange={evt => setCidFormValue(evt.target.value)}
                                     ref={cidFormRef}
                                     invalidCid={invalidCid}
                                 />
-                                <Button
+                                <MoorhenButton
                                     size="sm"
                                     variant="primary"
                                     style={{ width: "80%", margin: "0.25rem" }}
                                     onClick={handleResidueCidChange}
                                 >
                                     Apply
-                                </Button>
+                                </MoorhenButton>
                             </div>
-                        </Stack>
+                        </MoorhenStack>
                     </Popover>
-                </Stack>
+                </MoorhenStack>
             </Tooltip>
         </SnackbarContent>
     );

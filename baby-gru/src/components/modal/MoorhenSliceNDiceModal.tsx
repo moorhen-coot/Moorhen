@@ -1,21 +1,11 @@
-import { useDispatch, useSelector } from "react-redux";
-import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
-import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material";
-import { moorhen } from "../../types/moorhen";
-import {
-    convertViewtoPx,
-    findConsecutiveRanges,
-    getMultiColourRuleArgs,
-    hslToHex,
-    readTextFile,
-} from "../../utils/utils";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice";
-import { ColourRule } from "../../utils/MoorhenColourRule";
+import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material";
+import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCommandCentre } from "../../InstanceManager";
 import { hideModal } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
+import { addMolecule, hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import {
     setBFactorThreshold,
     setClusteringType,
@@ -27,8 +17,14 @@ import {
     setSlicingResults,
     setThresholdType,
 } from "../../store/sliceNDiceSlice";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { useCommandCentre } from "../../InstanceManager";
+import { moorhen } from "../../types/moorhen";
+import { ColourRule } from "../../utils/MoorhenColourRule";
+import { modalKeys } from "../../utils/enums";
+import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -46,11 +42,11 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
 
     const [residueMap, maxFragmentSize, themeColor] = useMemo(() => {
         const residueMap: { [chainID: string]: { size: number; cid: string }[] } = {};
-        props.fragmentMolecule.sequences.forEach((sequence) => {
+        props.fragmentMolecule.sequences.forEach(sequence => {
             const currentChainId = sequence.chain;
             residueMap[currentChainId] = [];
-            const residueRanges = findConsecutiveRanges(sequence.sequence.map((residue) => residue.resNum));
-            residueMap[currentChainId] = residueRanges.map((range) => {
+            const residueRanges = findConsecutiveRanges(sequence.sequence.map(residue => residue.resNum));
+            residueMap[currentChainId] = residueRanges.map(range => {
                 return {
                     size: range[1] - range[0] + 1,
                     cid: `//${currentChainId}/${range[0]}-${range[1]}`,
@@ -58,8 +54,8 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
             });
         });
         const maxFragmentSize = Math.max(
-            ...Object.keys(residueMap).map((chainId) => {
-                return Math.max(...residueMap[chainId].map((fragment) => fragment.size));
+            ...Object.keys(residueMap).map(chainId => {
+                return Math.max(...residueMap[chainId].map(fragment => fragment.size));
             })
         );
         const themeColor = props.fragmentMolecule.defaultColourRules[0]?.color;
@@ -72,13 +68,11 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
             isDirty.current = false;
             const toHideFragments = [];
             for (const chainId in residueMap) {
-                toHideFragments.push(
-                    ...residueMap[chainId].filter((fragment) => fragment.size < sizeThresholdRef.current)
-                );
+                toHideFragments.push(...residueMap[chainId].filter(fragment => fragment.size < sizeThresholdRef.current));
             }
             if (toHideFragments.length > 0) {
                 await props.fragmentMolecule.unhideAll(false);
-                await props.fragmentMolecule.hideCid(toHideFragments.map((fragment) => fragment.cid).join("||"));
+                await props.fragmentMolecule.hideCid(toHideFragments.map(fragment => fragment.cid).join("||"));
             } else {
                 await props.fragmentMolecule.unhideAll();
             }
@@ -89,10 +83,7 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
 
     const handleDownload = async () => {
         await deleteHiddenResidues(props.fragmentMolecule);
-        await props.fragmentMolecule.downloadAtoms(
-            props.fragmentMolecule.coordsFormat,
-            props.fragmentMolecule.name.replace(" #", "_")
-        );
+        await props.fragmentMolecule.downloadAtoms(props.fragmentMolecule.coordsFormat, props.fragmentMolecule.name.replace(" #", "_"));
     };
 
     return (
@@ -204,9 +195,7 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     useEffect(() => {
-        const selectedMolecule = molecules.find(
-            (molecule) => molecule.molNo === parseInt(moleculeSelectRef.current?.value)
-        );
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value));
         if (selectedMoleculeCopyRef.current?.molNo !== undefined && thresholdType && selectedMolecule) {
             setColourRule(selectedMoleculeCopyRef.current, thresholdType);
         }
@@ -223,13 +212,11 @@ export const MoorhenSliceNDiceModal = () => {
             dispatch(hideMolecule(molecule));
         };
 
-        const selectedMolecule = molecules.find(
-            (molecule) => molecule.molNo === parseInt(moleculeSelectRef.current?.value)
-        );
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current?.value));
         if (selectedMolecule) {
             const bFactors = selectedMolecule.getResidueBFactors();
-            const max = parseFloat(Math.max(...bFactors.map((residue) => residue.bFactor)).toFixed(1));
-            const min = parseFloat(Math.min(...bFactors.map((residue) => residue.bFactor)).toFixed(1));
+            const max = parseFloat(Math.max(...bFactors.map(residue => residue.bFactor)).toFixed(1));
+            const min = parseFloat(Math.min(...bFactors.map(residue => residue.bFactor)).toFixed(1));
             dispatch(setMoleculeBfactors(bFactors));
             dispatch(setMoleculeMaxBfactor(max));
             dispatch(setMoleculeMinBfactor(min));
@@ -240,30 +227,30 @@ export const MoorhenSliceNDiceModal = () => {
                 // @ts-ignore
                 selectedMoleculeCopyRef.current = 1;
                 copyMolecule(selectedMolecule)
-                    .then((_) => {
+                    .then(_ => {
                         isDirty.current = true;
                         trimBfactorThreshold(bFactors);
                     })
-                    .catch((err) => console.error(err));
+                    .catch(err => console.error(err));
             } else if (typeof selectedMoleculeCopyRef.current === "object") {
                 selectedMoleculeCopyRef.current.hide("CRs", "/*/*/*/*");
                 if (prevSelectedMoleculeRef.current) dispatch(showMolecule(prevSelectedMoleculeRef.current));
                 selectedMoleculeCopyRef.current
                     .delete()
-                    .then((_) => {
+                    .then(_ => {
                         if (slicingResults && slicingResults.length > 0) {
-                            return Promise.all(slicingResults.map((sliceMolecule) => sliceMolecule.delete()));
+                            return Promise.all(slicingResults.map(sliceMolecule => sliceMolecule.delete()));
                         }
                     })
-                    .then((_) => {
+                    .then(_ => {
                         if (slicingResults && slicingResults.length > 0) dispatch(setSlicingResults(null));
                         return copyMolecule(selectedMolecule);
                     })
-                    .then((_) => {
+                    .then(_ => {
                         isDirty.current = true;
                         trimBfactorThreshold(bFactors);
                     })
-                    .catch((err) => console.error(err));
+                    .catch(err => console.error(err));
             }
         }
     }, [selectedMolNo]);
@@ -274,19 +261,19 @@ export const MoorhenSliceNDiceModal = () => {
                 isBusy.current = true;
                 isDirty.current = false;
                 if (slicingResults?.length > 0) {
-                    await Promise.all(slicingResults.map((sliceMolecule) => sliceMolecule.delete()));
+                    await Promise.all(slicingResults.map(sliceMolecule => sliceMolecule.delete()));
                     dispatch(setSlicingResults(null));
                 }
                 if (typeof selectedMoleculeCopyRef.current === "object") {
                     let cidsToHide: string[];
                     if (thresholdTypeRef.current === "b-factor-norm") {
                         cidsToHide = (bFactors ?? moleculeBfactors)
-                            .filter((residue) => residue.bFactor > bFactorThresholdRef.current)
-                            .map((residue) => residue.cid);
+                            .filter(residue => residue.bFactor > bFactorThresholdRef.current)
+                            .map(residue => residue.cid);
                     } else {
                         cidsToHide = (bFactors ?? moleculeBfactors)
-                            .filter((residue) => residue.bFactor < bFactorThresholdRef.current)
-                            .map((residue) => residue.cid);
+                            .filter(residue => residue.bFactor < bFactorThresholdRef.current)
+                            .map(residue => residue.cid);
                     }
                     if (cidsToHide?.length > 0) {
                         await selectedMoleculeCopyRef.current.unhideAll(false);
@@ -305,16 +292,11 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const doSlice = useCallback(async () => {
-        if (
-            !moleculeSelectRef.current.value ||
-            (clusteringTypeSelectRef.current.value === "pae" && !paeFileContentsRef.current)
-        ) {
+        if (!moleculeSelectRef.current.value || (clusteringTypeSelectRef.current.value === "pae" && !paeFileContentsRef.current)) {
             return;
         }
 
-        let selectedMolecule = molecules.find(
-            (molecule) => molecule.molNo === parseInt(moleculeSelectRef.current.value)
-        );
+        let selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
         if (!selectedMolecule) {
             return;
         }
@@ -322,10 +304,7 @@ export const MoorhenSliceNDiceModal = () => {
         setBusy(true);
 
         let deleteSelectedMoleculeOnExit = false;
-        if (
-            selectedMoleculeCopyRef.current?.excludedSelections?.length > 0 &&
-            clusteringTypeSelectRef.current.value !== "pae"
-        ) {
+        if (selectedMoleculeCopyRef.current?.excludedSelections?.length > 0 && clusteringTypeSelectRef.current.value !== "pae") {
             deleteSelectedMoleculeOnExit = true;
             selectedMolecule = await selectedMolecule.copyFragmentUsingCid("//", false);
             selectedMolecule.excludedSelections = selectedMoleculeCopyRef.current.excludedSelections;
@@ -334,7 +313,7 @@ export const MoorhenSliceNDiceModal = () => {
         }
 
         if (slicingResults?.length > 0) {
-            await Promise.all(slicingResults.map((sliceMolecule) => sliceMolecule.delete()));
+            await Promise.all(slicingResults.map(sliceMolecule => sliceMolecule.delete()));
         }
 
         let commandArgs: (string | number)[];
@@ -381,14 +360,12 @@ export const MoorhenSliceNDiceModal = () => {
 
         selectedMoleculeCopyRef.current?.hide?.("CRs", "/*/*/*/*");
 
-        const slices = [
-            ...new Set(result.data.result.result.filter((item) => item.slice !== -1).map((item) => item.slice)),
-        ];
+        const slices = [...new Set(result.data.result.result.filter(item => item.slice !== -1).map(item => item.slice))];
         const newMolecules = await Promise.all(
             slices.map(async (slice: number, index: number) => {
                 const residueCids = result.data.result.result
-                    .filter((item) => item.slice === slice)
-                    .map((item) => item.residue)
+                    .filter(item => item.slice === slice)
+                    .map(item => item.residue)
                     .join("||");
                 const newMolecule = await selectedMolecule.copyFragmentUsingCid(residueCids, false);
                 newMolecule.name = `Slice #${slice + 1}`;
@@ -405,12 +382,12 @@ export const MoorhenSliceNDiceModal = () => {
                     let cidsToDelete: string[];
                     if (thresholdTypeRef.current === "b-factor-norm") {
                         cidsToDelete = bFactors
-                            .filter((residue) => residue.bFactor > bFactorThresholdRef.current)
-                            .map((residue) => residue.cid);
+                            .filter(residue => residue.bFactor > bFactorThresholdRef.current)
+                            .map(residue => residue.cid);
                     } else {
                         cidsToDelete = bFactors
-                            .filter((residue) => residue.bFactor < bFactorThresholdRef.current)
-                            .map((residue) => residue.cid);
+                            .filter(residue => residue.bFactor < bFactorThresholdRef.current)
+                            .map(residue => residue.cid);
                     }
                     if (cidsToDelete?.length > 0) {
                         const result = await newMolecule.deleteCid(cidsToDelete.join("||"), false);
@@ -433,7 +410,7 @@ export const MoorhenSliceNDiceModal = () => {
         dispatch(
             setSlicingResults(
                 newMolecules
-                    .filter((molecule) => molecule !== undefined)
+                    .filter(molecule => molecule !== undefined)
                     .sort((a, b) => {
                         return parseInt(a.name.replace("Slice #", "")) - parseInt(b.name.replace("Slice #", ""));
                     })
@@ -455,7 +432,7 @@ export const MoorhenSliceNDiceModal = () => {
                         dispatch(addMolecule(sliceMolecule));
                     }
                 } else {
-                    await Promise.all(slicingResults.map((sliceMolecule) => sliceMolecule.delete()));
+                    await Promise.all(slicingResults.map(sliceMolecule => sliceMolecule.delete()));
                 }
             } else if (selectedMoleculeCopyRef.current && saveToMoorhen) {
                 await deleteHiddenResidues(selectedMoleculeCopyRef.current);
@@ -466,9 +443,7 @@ export const MoorhenSliceNDiceModal = () => {
             await selectedMoleculeCopyRef.current?.delete?.();
 
             if (!saveToMoorhen) {
-                const selectedMolecule = molecules.find(
-                    (molecule) => molecule.molNo === parseInt(moleculeSelectRef.current.value)
-                );
+                const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
                 if (selectedMolecule) {
                     dispatch(showMolecule(selectedMolecule));
                 }
@@ -491,7 +466,7 @@ export const MoorhenSliceNDiceModal = () => {
         async (mergeSlices: boolean = false) => {
             if (slicingResults?.length > 0) {
                 await Promise.all(
-                    slicingResults.map((fragmentMolecule) => {
+                    slicingResults.map(fragmentMolecule => {
                         return deleteHiddenResidues(fragmentMolecule);
                     })
                 );
@@ -502,7 +477,7 @@ export const MoorhenSliceNDiceModal = () => {
                         commandArgs: [
                             moleculeCopy.molNo,
                             slicingResults
-                                .map((sliceMolecule) => sliceMolecule.molNo)
+                                .map(sliceMolecule => sliceMolecule.molNo)
                                 .slice(1)
                                 .join(":"),
                         ],
@@ -513,11 +488,8 @@ export const MoorhenSliceNDiceModal = () => {
                     await moleculeCopy.delete(true);
                 } else {
                     await Promise.all(
-                        slicingResults.map((sliceMolecule) =>
-                            sliceMolecule.downloadAtoms(
-                                sliceMolecule.coordsFormat,
-                                sliceMolecule.name.replace(" #", "_")
-                            )
+                        slicingResults.map(sliceMolecule =>
+                            sliceMolecule.downloadAtoms(sliceMolecule.coordsFormat, sliceMolecule.name.replace(" #", "_"))
                         )
                     );
                 }
@@ -540,7 +512,7 @@ export const MoorhenSliceNDiceModal = () => {
     };
 
     const handleClusteringTypeChange = useCallback(
-        (evt) => {
+        evt => {
             if (evt.target.value === "pae") {
                 paeFileContentsRef.current = paeFileContents.length > 0 ? paeFileContents[0].fileContents : null;
                 dispatch(setPaeFileIsUploaded(paeFileContents.length > 0));
@@ -552,23 +524,17 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const bodyContent = (
-        <Stack direction="vertical" gap={1}>
-            <Stack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
+        <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <MoorhenMoleculeSelect
-                    width="100%"
-                    molecules={molecules}
+                    style={{ width: "100%" }}
                     allowAny={false}
                     ref={moleculeSelectRef}
-                    onChange={(evt) => setSelectedMolNo(parseInt(evt.target.value))}
+                    onChange={evt => setSelectedMolNo(parseInt(evt.target.value))}
                 />
                 <Form.Group style={{ margin: "0.5rem", width: "100%" }}>
                     <Form.Label>Clustering algorithm...</Form.Label>
-                    <FormSelect
-                        size="sm"
-                        ref={clusteringTypeSelectRef}
-                        defaultValue={"birch"}
-                        onChange={handleClusteringTypeChange}
-                    >
+                    <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={"birch"} onChange={handleClusteringTypeChange}>
                         <option value={"birch"} key={"birch"}>
                             Birch
                         </option>
@@ -583,11 +549,11 @@ export const MoorhenSliceNDiceModal = () => {
                         </option>
                     </FormSelect>
                 </Form.Group>
-            </Stack>
-            <Stack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
+            </MoorhenStack>
+            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
                 <div style={{ margin: "0.5rem", padding: "0.2rem", width: "100%" }}>
-                    <Stack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
-                        <Form.Check
+                    <MoorhenStack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
+                        <MoorhenToggle
                             style={{ margin: 0 }}
                             type="radio"
                             checked={thresholdType === "af2-plddt"}
@@ -603,7 +569,7 @@ export const MoorhenSliceNDiceModal = () => {
                             }}
                             label="PLDDT"
                         />
-                        <Form.Check
+                        <MoorhenToggle
                             style={{ margin: 0 }}
                             type="radio"
                             checked={thresholdType === "b-factor-norm"}
@@ -619,12 +585,10 @@ export const MoorhenSliceNDiceModal = () => {
                             }}
                             label="B-Factor"
                         />
-                    </Stack>
+                    </MoorhenStack>
                     <Slider
                         aria-label="B-Factor threshold"
-                        getAriaValueText={(newVal: number) =>
-                            `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`
-                        }
+                        getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`}
                         valueLabelFormat={(newVal: number) =>
                             thresholdType === "b-factor-norm" ? (
                                 <span>
@@ -693,27 +657,25 @@ export const MoorhenSliceNDiceModal = () => {
                         />
                     </div>
                 )}
-            </Stack>
+            </MoorhenStack>
             {clusteringType === "pae" && (
                 <Form.Group style={{ margin: "0.5rem", padding: "0.2rem" }} controlId="uploadPAE">
                     <Form.Label>Upload PAE file</Form.Label>
                     <Tooltip title="Predicted Aligned Error (PAE) .json file" placement="top">
-                        <InfoOutlined
-                            style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }}
-                        />
+                        <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
                     </Tooltip>
                     {disableFileUploads ? (
                         <FormSelect
                             size="sm"
                             ref={paeFileSelectFormRef}
-                            onChange={(evt) => {
+                            onChange={evt => {
                                 if (evt.target.value) {
                                     paeFileContentsRef.current = evt.target.value;
                                     dispatch(setPaeFileIsUploaded(true));
                                 }
                             }}
                         >
-                            {paeFileContents.map((item) => {
+                            {paeFileContents.map(item => {
                                 return (
                                     <option key={item.fileName} value={item.fileContents}>
                                         {item.fileName}
@@ -739,7 +701,7 @@ export const MoorhenSliceNDiceModal = () => {
                 {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
                 {slicingResults?.length > 0 ? (
                     <div style={{ height: "100px", width: "100%" }}>
-                        {slicingResults?.map((fragmentMolecule) => {
+                        {slicingResults?.map(fragmentMolecule => {
                             return (
                                 <MoorhenSliceNDiceCard
                                     key={fragmentMolecule.molNo}
@@ -753,11 +715,11 @@ export const MoorhenSliceNDiceModal = () => {
                     <span>No results...</span>
                 )}
             </Row>
-        </Stack>
+        </MoorhenStack>
     );
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -768,17 +730,8 @@ export const MoorhenSliceNDiceModal = () => {
                 width: "100%",
             }}
         >
-            <Stack
-                gap={2}
-                direction="horizontal"
-                style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}
-            >
-                <SplitButton
-                    id="download-slice-n-dice"
-                    variant="primary"
-                    title="Download all"
-                    onClick={() => handleDownload()}
-                >
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+                <SplitButton id="download-slice-n-dice" variant="primary" title="Download all" onClick={() => handleDownload()}>
                     <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>
                         As individual files
                     </Dropdown.Item>
@@ -786,21 +739,12 @@ export const MoorhenSliceNDiceModal = () => {
                         As a single file
                     </Dropdown.Item>
                 </SplitButton>
-            </Stack>
-            <Stack
-                gap={2}
-                direction="horizontal"
-                style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}
-            >
-                <Button variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
+            </MoorhenStack>
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+                <MoorhenButton variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
                     Slice
-                </Button>
-                <SplitButton
-                    id="download-slice-n-dice"
-                    variant="info"
-                    title="Save & Close"
-                    onClick={() => handleClose(true)}
-                >
+                </MoorhenButton>
+                <SplitButton id="download-slice-n-dice" variant="info" title="Save & Close" onClick={() => handleClose(true)}>
                     <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>
                         Close and save changes to Moorhen
                     </Dropdown.Item>
@@ -808,8 +752,8 @@ export const MoorhenSliceNDiceModal = () => {
                         Close without saving
                     </Dropdown.Item>
                 </SplitButton>
-            </Stack>
-        </Stack>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 
     const spinnerContent = (
@@ -818,7 +762,7 @@ export const MoorhenSliceNDiceModal = () => {
                 display: "flex",
                 flexDirection: busy ? "row" : "column",
                 color: "#fff",
-                zIndex: (theme) => theme.zIndex.drawer + 1,
+                zIndex: theme => theme.zIndex.drawer + 1,
             }}
             open={busy || showError}
         >
@@ -837,21 +781,21 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const header = (
-        <Stack direction="horizontal" gap={1}>
+        <MoorhenStack direction="horizontal" gap={1}>
             <span>Slice-n-Dice</span>
             <Tooltip
                 title="This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A. et al. (2022) available at bioRxiv."
                 key={1}
             >
-                <Button
+                <MoorhenButton
                     variant="white"
                     style={{ margin: "0.1rem", padding: "0.1rem" }}
                     onClick={() => window.open("https://doi.org/10.1101/2022.06.30.497974")}
                 >
                     <InfoOutlined />
-                </Button>
+                </MoorhenButton>
             </Tooltip>
-        </Stack>
+        </MoorhenStack>
     );
 
     return (

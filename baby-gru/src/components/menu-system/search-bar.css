@@ -1,0 +1,77 @@
+@import "../../colors.css";
+
+.moorhen__search-bar-closed,
+.moorhen__search-bar-open {
+    position: absolute;
+    direction: ltr;
+    pointer-events: auto;
+    top: 1rem;
+    left: 8rem;
+    z-index: 1000;
+    border-radius: 2rem;
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    height: 2.8rem;
+    font-size: 1rem;
+    cursor: default;
+    display: flex;
+    padding-left: 0.5rem;
+    justify-content: left;
+    align-items: center;
+    border: none;
+    outline: none;
+}
+
+.moorhen__search-bar-closed {
+    animation: expandWidth 0.2s cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
+    color: var(--moorhen-primary);
+}
+
+.moorhen__search-bar-open {
+    justify-content: left;
+    border: 1px solid var(--moorhen-border);
+    padding-left: 0.5rem;
+    transition: width 0.2s;
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-active-shadow);
+    animation: expandWidth 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes expandWidth {
+    from {
+        width: 2.8rem;
+    }
+    to {
+        width: 15rem;
+    }
+}
+.moorhen__search-bar-input {
+    all: unset;
+    height: 1.5rem;
+    width: 12rem;
+    background-color: var(--moorhen-input-background);
+    border-radius: 2rem;
+}
+
+.moorhen__search-menu-container {
+    position: absolute;
+    direction: ltr;
+    pointer-events: auto;
+    left: 5rem;
+    top: 3rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    margin-top: 1.5rem;
+    padding: 0.5rem;
+    background-color: var(--moorhen-background);
+    z-index: 100;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+    min-width: 16rem;
+    width: max-content;
+    min-height: 2.5rem;
+    max-height: 42rem;
+    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
+    animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

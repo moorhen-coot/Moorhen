@@ -1608,7 +1608,7 @@ export class MoorhenMolecule {
      * @returns {string} The active atom CID
      */
     async getActiveAtom(): Promise<string> {
-        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre);
+        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre, this.store);
         return activeAtomCid;
     }
 
@@ -1659,7 +1659,7 @@ export class MoorhenMolecule {
             this.environmentRepresentation.cid = selectionCid;
             await this.environmentRepresentation.redraw();
         } else {
-            const [molecule, cid] = await getCentreAtom([this], this.commandCentre);
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.store);
             this.clearBuffersOfStyle("environment");
             if (molecule?.molNo === this.molNo && cid) {
                 this.environmentRepresentation.cid = cid;

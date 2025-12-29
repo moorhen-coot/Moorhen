@@ -1,0 +1,82 @@
+@import "../../../colors.css";
+
+.moorhen__menu-item-popover {
+    font-family: var(--moorhen-font-family);
+    color: var(--moorhen-primary);
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 550px;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--moorhen-border);
+    background: var(--moorhen-background);
+    z-index: 1000;
+}
+
+.moorhen__menu-item-popover::after {
+    content: "";
+    position: absolute;
+    top: var(--popover-arrow-top, 50%);
+    left: -0.7rem;
+    transform: translateY(-50%);
+    border-width: 0.7rem 0.7rem 0.7rem 0;
+    border-style: solid;
+    border-color: transparent var(--moorhen-border) transparent transparent;
+    display: block;
+}
+
+.moorhen__menu-item-popover.right-arrow::after {
+    left: auto;
+    right: -0.7rem;
+    border-width: 0.7rem 0 0.7rem 0.7rem;
+    border-color: transparent transparent transparent var(--moorhen-border);
+}
+
+.moorhen__menu-item-popover.top-arrow::after {
+    left: 50%;
+    top: -0.7rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0 0.7rem 0.7rem 0.7rem;
+    border-color: transparent transparent var(--moorhen-border) transparent;
+}
+
+.moorhen__menu-item-popover.bottom-arrow::after {
+    left: 50%;
+    top: auto;
+    bottom: -0.7rem;
+    right: auto;
+    transform: translateX(-50%);
+    border-width: 0.7rem 0.7rem 0 0.7rem;
+    border-color: var(--moorhen-border) transparent transparent transparent;
+}
+
+@keyframes tooltipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.moorhen__tooltip {
+    box-sizing: border-box;
+    position: fixed;
+    background: color-mix(in srgb, var(--moorhen-primary) 80%, transparent);
+    color: var(--moorhen-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    z-index: 1001;
+    font-family: var(--moorhen-font-family);
+    width: auto;
+    animation: tooltipSlideIn 0.2s ease-out;
+}

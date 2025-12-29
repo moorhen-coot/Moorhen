@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
 import { createRef } from 'react'
 import { MoorhenCidInputForm }  from '../../src/components/inputs/MoorhenCidInputForm'
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { setResidueSelection, setShowResidueSelection } from '../../src/store/generalStatesSlice'
 
 describe('Testing MoorhenCidIputForm', () => {

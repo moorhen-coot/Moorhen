@@ -1,21 +1,52 @@
 import { batch } from "react-redux";
-import { moorhen } from "../types/moorhen";
-import { webGL } from "../types/mgWebGL";
-import { libcootApi } from "../types/libcoot";
+import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice";
-import { buildBuffers, appendOtherData } from "../WebGLgComponents/buildBuffers";
+import { libcootApi } from "../types/libcoot";
+import { webGL } from "../types/mgWebGL";
+import { moorhen } from "../types/moorhen";
+import { ColourRule } from "./MoorhenColourRule";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
 import {
+    centreOnGemmiAtoms,
     cidToSpec,
+    copyStructureSelection,
+    countResiduesInSelection,
     gemmiAtomPairsToCylindersInfo,
     gemmiAtomsToCirclesSpheresInfo,
     getCubeLines,
     guid,
-    countResiduesInSelection,
-    copyStructureSelection,
-    centreOnGemmiAtoms,
 } from "./utils";
-import { ColourRule } from "./MoorhenColourRule";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
+
+export type RepresentationStyles =
+    | "VdwSpheres"
+    | "ligands"
+    | "CAs"
+    | "CBs"
+    | "CDs"
+    | "gaussian"
+    | "allHBonds"
+    | "rama"
+    | "rotamer"
+    | "CRs"
+    | "MolecularSurface"
+    | "DishyBases"
+    | "VdWSurface"
+    | "Calpha"
+    | "unitCell"
+    | "hover"
+    | "environment"
+    | "ligand_environment"
+    | "contact_dots"
+    | "chemical_features"
+    | "ligand_validation"
+    | "glycoBlocks"
+    | "restraints"
+    | "residueSelection"
+    | "MetaBalls"
+    | "adaptativeBonds"
+    | "StickBases"
+    | "residue_environment"
+    | "transformation";
 
 /**
  * Represents a molecule representation
@@ -76,11 +107,7 @@ export class MoleculeRepresentation {
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
 
-    constructor(
-        style: moorhen.RepresentationStyles,
-        cid: string,
-        commandCentre: React.RefObject<moorhen.CommandCentre>
-    ) {
+    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid();
         this.cid = cid;
         this.setStyle(style);
@@ -153,13 +180,13 @@ export class MoleculeRepresentation {
         if (typeof nonCustomOpacity !== "number") return;
         this.nonCustomOpacity = nonCustomOpacity;
         if (this.buffers) {
-            this.buffers.forEach((buffer) => {
+            this.buffers.forEach(buffer => {
                 if (nonCustomOpacity < 0.99) {
                     buffer.transparent = true;
                 } else {
                     buffer.transparent = false;
                 }
-                buffer.triangleColours.forEach((colbuffer) => {
+                buffer.triangleColours.forEach(colbuffer => {
                     for (let idx = 0; idx < colbuffer.length; idx += 4) {
                         colbuffer[idx + 3] = nonCustomOpacity;
                     }
@@ -167,7 +194,7 @@ export class MoleculeRepresentation {
                 buffer.isDirty = true;
                 buffer.alphaChanged = true;
             });
-            buildBuffers(this.buffers);
+            buildBuffers(this.buffers, this.parentMolecule.store);
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
@@ -255,7 +282,7 @@ export class MoleculeRepresentation {
         if (style === "ligands") {
             this.cid =
                 this.parentMolecule?.ligands?.length > 0
-                    ? this.parentMolecule.ligands.map((ligand) => ligand.cid).join("||")
+                    ? this.parentMolecule.ligands.map(ligand => ligand.cid).join("||")
                     : this.ligandsCid;
         }
         this.styleIsM2tRepresentation = M2T_REPRESENTATIONS.includes(this.style);
@@ -290,14 +317,7 @@ export class MoleculeRepresentation {
         applyColourToNonCarbonAtoms: boolean = false,
         label?: string
     ) {
-        const newColourRule = new ColourRule(
-            ruleType,
-            cid,
-            color,
-            this.commandCentre,
-            isMultiColourRule,
-            applyColourToNonCarbonAtoms
-        );
+        const newColourRule = new ColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms);
         newColourRule.setParentRepresentation(this);
         newColourRule.setArgs(args);
         if (label) {
@@ -319,7 +339,7 @@ export class MoleculeRepresentation {
     setColourRules(colourRules: moorhen.ColourRule[]) {
         if (colourRules && colourRules.length > 0) {
             this.colourRules = colourRules;
-            colourRules.forEach((rule) => rule.setParentRepresentation(this));
+            colourRules.forEach(rule => rule.setParentRepresentation(this));
             this.useDefaultColourRules = false;
         } else {
             this.useDefaultColourRules = true;
@@ -357,7 +377,7 @@ export class MoleculeRepresentation {
         if (this.style === "ligands") {
             this.cid =
                 this.parentMolecule?.ligands?.length > 0
-                    ? this.parentMolecule.ligands.map((ligand) => ligand.cid).join("||")
+                    ? this.parentMolecule.ligands.map(ligand => ligand.cid).join("||")
                     : this.ligandsCid;
         }
     }
@@ -371,11 +391,11 @@ export class MoleculeRepresentation {
         let newBuffers = [];
         if (objects.length > 0 && !this.parentMolecule.gemmiStructure?.isDeleted()) {
             objects
-                .filter((object) => typeof object !== "undefined" && object !== null)
-                .forEach((object) => {
-                    const a = appendOtherData(object, true);
+                .filter(object => typeof object !== "undefined" && object !== null)
+                .forEach(object => {
+                    const a = appendOtherData(object, this.parentMolecule.store, true);
                     newBuffers = [...newBuffers, ...a];
-                    buildBuffers(a);
+                    buildBuffers(a, this.parentMolecule.store);
                     if (this.buffers) {
                         this.buffers = this.buffers.concat(a);
                     } else {
@@ -383,7 +403,7 @@ export class MoleculeRepresentation {
                     }
                 });
         }
-        this.buffers.forEach((buf) => {
+        this.buffers.forEach(buf => {
             buf.multiViewGroup = this.parentMolecule.molNo;
         });
         this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
@@ -397,15 +417,12 @@ export class MoleculeRepresentation {
         await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.buildBuffers(objects);
-        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(
-            this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid,
-            true
-        );
+        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             this.setAtomBuffers(atomBuffers);
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
-        this.buffers.forEach((buf) => {
+        this.buffers.forEach(buf => {
             buf.origin = selectionCentre;
         });
     }
@@ -419,15 +436,12 @@ export class MoleculeRepresentation {
         const objects = await this.getBufferObjects();
         this.deleteBuffers();
         this.buildBuffers(objects);
-        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(
-            this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid,
-            true
-        );
+        const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             this.setAtomBuffers(atomBuffers);
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
-        this.buffers.forEach((buf) => {
+        this.buffers.forEach(buf => {
             if (buf.hasOwnProperty("origin")) {
                 buf.origin = selectionCentre;
             }
@@ -446,11 +460,11 @@ export class MoleculeRepresentation {
             newBuffers = displayBuffers;
         }
         if (this.buffers?.length > 0) {
-            this.buffers.forEach((buffer) => {
+            this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
-                    newBuffers = newBuffers.filter((glBuffer) => glBuffer !== buffer);
+                    newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
-                    newLabelBuffers = newLabelBuffers.filter((buf) => buf.uuid !== buffer.uuid);
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid);
                 }
             });
             this.buffers = [];
@@ -470,10 +484,10 @@ export class MoleculeRepresentation {
         try {
             this.visible = true;
             if (this.buffers && this.buffers.length > 0) {
-                this.buffers.forEach((buffer) => {
+                this.buffers.forEach(buffer => {
                     buffer.visible = true;
                     if ("labels" in buffer) {
-                        buffer.labels.forEach((label) => {
+                        buffer.labels.forEach(label => {
                             newLabelBuffers.push({ label: label, uuid: buffer.uuid });
                         });
                     }
@@ -495,12 +509,12 @@ export class MoleculeRepresentation {
         let newLabelBuffers = labelBuffers;
         try {
             this.visible = false;
-            this.buffers.forEach((buffer) => {
+            this.buffers.forEach(buffer => {
                 if (buffer.hasOwnProperty("visible")) {
                     buffer.visible = false;
                 }
                 if ("labels" in buffer) {
-                    newLabelBuffers = newLabelBuffers.filter((buf) => buf.uuid !== buffer.uuid);
+                    newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid);
                 }
             });
         } catch (err) {
@@ -608,9 +622,7 @@ export class MoleculeRepresentation {
             const iObjects = {};
             for (const key in bufferObj1[i]) {
                 if (!(key in bufferObj2[i])) {
-                    console.warn(
-                        `Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`
-                    );
+                    console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`);
                 } else {
                     iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key]);
                 }
@@ -707,7 +719,7 @@ export class MoleculeRepresentation {
             this.parentMolecule.excludedSelections = [...neighBoringResidues];
         } else {
             await Promise.all(
-                neighBoringResidues.map((i) => {
+                neighBoringResidues.map(i => {
                     this.commandCentre.current.cootCommand(
                         {
                             message: "coot_command",
@@ -737,7 +749,7 @@ export class MoleculeRepresentation {
             );
 
             await Promise.all(
-                this.parentMolecule.excludedSelections.map((i) => {
+                this.parentMolecule.excludedSelections.map(i => {
                     this.commandCentre.current.cootCommand(
                         {
                             message: "coot_command",
@@ -806,7 +818,7 @@ export class MoleculeRepresentation {
         const bumps = showContacts ? envDistances[0] : [];
         const hbonds = showHBonds ? envDistances[1] : [];
 
-        const bumpAtomsPairs = bumps.map((bump) => {
+        const bumpAtomsPairs = bumps.map(bump => {
             const start = bump.start;
             const end = bump.end;
 
@@ -830,7 +842,7 @@ export class MoleculeRepresentation {
 
         const originNeighboursBump = this.getGemmiAtomPairsBuffers(bumpAtomsPairs, [0.7, 0.4, 0.25, 1.0], labelled);
 
-        const hbondAtomsPairs = hbonds.map((hbond) => {
+        const hbondAtomsPairs = hbonds.map(hbond => {
             const start = hbond.start;
             const end = hbond.end;
 
@@ -890,8 +902,7 @@ export class MoleculeRepresentation {
                 break;
             case "ligands":
                 m2tStyle = "Cylinders";
-                m2tSelection =
-                    "(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,HOH)";
+                m2tSelection = "(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,HOH)";
                 break;
             default:
                 m2tStyle = "Ribbon";
@@ -932,24 +943,20 @@ export class MoleculeRepresentation {
     async applyM2tParams() {
         await Promise.all(
             Object.keys(this.m2tParams)
-                .filter((param) => param !== "nucleotideRibbonStyle")
-                .map((param) => {
+                .filter(param => param !== "nucleotideRibbonStyle")
+                .map(param => {
                     return this.commandCentre.current.cootCommand(
                         {
                             returnType: "status",
-                            command: [
-                                "ribbonStyleAxialSampling",
-                                "cylindersStyleAngularSampling",
-                                "dishStyleAngularSampling",
-                            ].includes(param)
+                            command: ["ribbonStyleAxialSampling", "cylindersStyleAngularSampling", "dishStyleAngularSampling"].includes(
+                                param
+                            )
                                 ? "M2T_updateIntParameter"
                                 : "M2T_updateFloatParameter",
                             commandArgs: [
                                 this.parentMolecule.molNo,
                                 param,
-                                this.useDefaultM2tParams
-                                    ? this.parentMolecule.defaultM2tParams[param]
-                                    : this.m2tParams[param],
+                                this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams[param] : this.m2tParams[param],
                             ],
                         },
                         false
@@ -973,11 +980,7 @@ export class MoleculeRepresentation {
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
-                    commandArgs: [
-                        this.parentMolecule.molNo,
-                        "cylindersStyleCylinderRadius",
-                        style === "StickBases" ? 0.35 : 0.2,
-                    ],
+                    commandArgs: [this.parentMolecule.molNo, "cylindersStyleCylinderRadius", style === "StickBases" ? 0.35 : 0.2],
                 },
                 false
             ),
@@ -985,11 +988,7 @@ export class MoleculeRepresentation {
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
-                    commandArgs: [
-                        this.parentMolecule.molNo,
-                        "cylindersStyleBallRadius",
-                        style === "StickBases" ? 0.5 : 0.2,
-                    ],
+                    commandArgs: [this.parentMolecule.molNo, "cylindersStyleBallRadius", style === "StickBases" ? 0.5 : 0.2],
                 },
                 false
             ),
@@ -1050,8 +1049,7 @@ export class MoleculeRepresentation {
 
         let colorStyle: string = "colorRampChainsScheme";
 
-        if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics")
-            colorStyle = "ByOwnPotential";
+        if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
 
         let ssUsageScheme;
         if (this.useDefaultM2tParams) {
@@ -1074,10 +1072,7 @@ export class MoleculeRepresentation {
         let resultBufferObjects: libcootApi.InstancedMeshJS[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
-            resultBufferObjects = MoleculeRepresentation.mergeBufferObjects(
-                nucleotideBufferObjects,
-                ribbonBufferObjects
-            );
+            resultBufferObjects = MoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects);
         } else {
             resultBufferObjects = ribbonBufferObjects;
         }
@@ -1111,9 +1106,7 @@ export class MoleculeRepresentation {
         } else {
             bondSettings.push(
                 name === "ligands" || name === "CAs" ? this.bondOptions.width * 1.5 : this.bondOptions.width,
-                name === "ligands" || name === "CAs"
-                    ? this.bondOptions.atomRadiusBondRatio * 1.5
-                    : this.bondOptions.atomRadiusBondRatio,
+                name === "ligands" || name === "CAs" ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
                 this.bondOptions.showAniso,
                 this.bondOptions.showOrtep,
                 this.bondOptions.showHs,
@@ -1136,9 +1129,7 @@ export class MoleculeRepresentation {
 
         if (name === "ligands") {
             this.cid =
-                this.parentMolecule.ligands.length > 0
-                    ? this.parentMolecule.ligands.map((ligand) => ligand.cid).join("||")
-                    : this.ligandsCid;
+                this.parentMolecule.ligands.length > 0 ? this.parentMolecule.ligands.map(ligand => ligand.cid).join("||") : this.ligandsCid;
         }
 
         if (typeof cid !== "string" || cid === "/*/*/*/*") {
@@ -1207,14 +1198,12 @@ export class MoleculeRepresentation {
 
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection);
         const atomColours = {};
-        selectedGemmiAtoms.forEach((atom) => {
+        selectedGemmiAtoms.forEach(atom => {
             atomColours[`${atom.serial}`] = colour;
         });
         const sphere_size = 0.3;
-        const objects = [
-            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours),
-        ];
-        objects.forEach((object) => {
+        const objects = [gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)];
+        objects.forEach(object => {
             object["clickTol"] = 1e-6;
             object["doStencil"] = true;
             object["isHoverBuffer"] = true;
@@ -1257,7 +1246,7 @@ export class MoleculeRepresentation {
         labelled: boolean = false
     ): libcootApi.InstancedMeshJS[] {
         const atomColours = {};
-        gemmiAtomPairs.forEach((atom) => {
+        gemmiAtomPairs.forEach(atom => {
             atomColours[`${atom[0].serial}`] = colour;
             atomColours[`${atom[1].serial}`] = colour;
         });
@@ -1304,7 +1293,7 @@ export class MoleculeRepresentation {
         );
         const hBonds = response.data.result.result;
 
-        const selectedGemmiAtomsPairs = hBonds.map((hbond) => {
+        const selectedGemmiAtomsPairs = hBonds.map(hbond => {
             const donor = hbond.donor;
             const acceptor = hbond.acceptor;
 
@@ -1451,11 +1440,9 @@ export class MoleculeRepresentation {
         try {
             const objects = [response.data.result.result];
             if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
-                const flippedNormalsObjects = objects.map((object) => {
+                const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
-                    flippedNormalsObject.idx_tri = object.idx_tri.map((element) =>
-                        element.map((subElement) => subElement.reverse())
-                    );
+                    flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
                     return flippedNormalsObject;
                 });
                 //Empty existing buffers of this type
@@ -1517,9 +1504,7 @@ export class MoleculeRepresentation {
         const lines = getCubeLines(unitCell);
         unitCell.delete();
 
-        const objects = [
-            gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false),
-        ];
+        const objects = [gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false)];
 
         return objects;
     }
@@ -1549,7 +1534,7 @@ export class MoleculeRepresentation {
         if (this.colourRules?.length > 0) {
             if (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation) {
                 const colourObjectList: { cid: string; rgba: number[]; applyColourToNonCarbonAtoms: boolean }[] = [];
-                this.colourRules.forEach((rule) => {
+                this.colourRules.forEach(rule => {
                     colourObjectList.push(...rule.getUserDefinedColours());
                 });
                 await this.commandCentre.current.cootCommand(
@@ -1559,11 +1544,7 @@ export class MoleculeRepresentation {
                         returnType: "status",
                         // FIXME: Here we just take applyColourToNonCarbonAtoms from the first colour rule but this needs
                         // to be done in a colour by colour basis.
-                        commandArgs: [
-                            this.parentMolecule.molNo,
-                            colourObjectList,
-                            colourObjectList[0].applyColourToNonCarbonAtoms,
-                        ],
+                        commandArgs: [this.parentMolecule.molNo, colourObjectList, colourObjectList[0].applyColourToNonCarbonAtoms],
                     },
                     false
                 );
@@ -1609,13 +1590,7 @@ export class MoleculeRepresentation {
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_obj",
-                    commandArgs: [
-                        this.parentMolecule.molNo,
-                        m2tSelection,
-                        "colorRampChainsScheme",
-                        m2tStyle,
-                        ssUsageScheme,
-                    ],
+                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
@@ -1634,7 +1609,7 @@ export class MoleculeRepresentation {
         await this.applyColourRules();
 
         let gltfData: ArrayBuffer;
-        if (!(this.style==="MetaBalls") && (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation)) {
+        if (!(this.style === "MetaBalls") && (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation)) {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
             const drawMissingLoops = state.sceneSettings.drawMissingLoops;
@@ -1647,7 +1622,7 @@ export class MoleculeRepresentation {
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
-        } else if (!(this.style==="MetaBalls") && (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation)) {
+        } else if (!(this.style === "MetaBalls") && (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation)) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid);
             let ssUsageScheme;
             if (this.useDefaultM2tParams) {
@@ -1659,25 +1634,17 @@ export class MoleculeRepresentation {
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_mesh_file",
-                    commandArgs: [
-                        this.parentMolecule.molNo,
-                        m2tSelection,
-                        "colorRampChainsScheme",
-                        m2tStyle,
-                        ssUsageScheme,
-                        fileType
-                    ],
+                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme, fileType],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
-        } else if(this.style==="MetaBalls") {
+        } else if (this.style === "MetaBalls") {
             const result = (await this.commandCentre.current.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_metaballs_as_mesh_file",
-                    commandArgs: [
-                        this.parentMolecule.molNo, this.cid, 0.2, 0.67, 1.8, fileType]
+                    commandArgs: [this.parentMolecule.molNo, this.cid, 0.2, 0.67, 1.8, fileType],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;

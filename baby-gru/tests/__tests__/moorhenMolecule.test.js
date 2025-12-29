@@ -1,9 +1,9 @@
 import fetch from 'node-fetch'
-import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
+import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
@@ -849,7 +849,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA pdb", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.pdb')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
@@ -857,7 +857,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA mmcif", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.cif')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.cif')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)

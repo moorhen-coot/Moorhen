@@ -5,7 +5,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { MoorhenReduxStore as store } from "../store/MoorhenReduxStore"
+import { MoorhenReduxStoreType} from "../store/MoorhenReduxStore"
 import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
 import { parseAtomInfoLabel, guid, get_grid , gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
@@ -103,6 +103,8 @@ import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQ
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
+import { Dispatch } from '@reduxjs/toolkit';
+import { Root } from 'react-dom/client';
 
 function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -157,6 +159,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         props: webGL.MGWebGLPropsInterface;
 
         //Other stuff
+        store: MoorhenReduxStoreType
+        dispatch: Dispatch<any>;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
         specularPower: number;
@@ -635,7 +639,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.canvas.width = Math.floor(getDeviceScale() * Math.floor(theWidth));
         this.canvas.height = Math.floor(getDeviceScale() * Math.floor(theHeight));
 
-        store.dispatch(setCanvasSize([this.canvas.width,this.canvas.height]))
+        this.dispatch(setCanvasSize([this.canvas.width,this.canvas.height]))
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
 
@@ -677,6 +681,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelRenderbufferColor = [];
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
+        this.store = props.store;
+        this.dispatch = props.dispatch
 
         setInterval(() => {
             if(!this.gl) return;
@@ -1039,6 +1045,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     componentDidMount() {
         this.canvas = this.canvasRef.current;
+
+
         const self = this;
         this.activeMolecule = null;
         this.draggableMolecule = null;
@@ -1223,8 +1231,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const glc = initGL(this.canvas);
         this.gl = glc.gl;
         this.WEBGL2 = glc.WEBGL2;
-        store.dispatch(setIsWebGL2(this.WEBGL2))
-        store.dispatch(setGLCtx(this.gl))
+        this.dispatch(setIsWebGL2(this.WEBGL2))
+        this.dispatch(setGLCtx(this.gl))
         this.currentViewport = [0,0, this.gl.viewportWidth, this.gl.viewportWidth];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
 
@@ -1461,9 +1469,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.buildBuffers();
 
-        this.measureText2DCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,768,2048);
-        this.measureTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
-        this.labelsTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048);
+        this.measureText2DCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,768,2048, this.store);
+        this.measureTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048, this.store);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this.gl,this.ext,this.instanced_ext,this.shaderProgramTextInstanced,1024,2048, this.store);
         this.texturedShapes = [];
 
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
@@ -1782,7 +1790,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     handleOriginUpdated(doDispatch: boolean) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         if(doDispatch){
             //FIXME - This might have to go ...
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
@@ -2432,7 +2440,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
         this.rttFramebuffer.height = this.rttFramebuffer.width;
-        store.dispatch(setRttFramebufferSize([this.rttFramebuffer.width,this.rttFramebuffer.height]))
+        this.dispatch(setRttFramebufferSize([this.rttFramebuffer.width,this.rttFramebuffer.height]))
 
         this.rttTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
@@ -2516,7 +2524,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     centreOn(idx) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         const self = this;
         if (displayBuffers[idx].atoms.length > 0) {
             let xtot = 0;
@@ -2679,7 +2687,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
         }
-        buildBuffers(this.displayBuffers)
+        buildBuffers(this.displayBuffers, this.store)
     }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:webGL.MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
@@ -3135,7 +3143,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult;
 
         let fb_scale = 1.0
@@ -3638,7 +3646,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     getMultiViewInfo() : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
 
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
 
         const multiViewOrigins = []
         let multiViewGroupsKeys = []
@@ -3694,7 +3702,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.renderToTexture&&(!this.screenshotBuffersReady))
             this.initTextureFramebuffer();
 
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
 
         let dirty = false
         const thisdisplayBufferslength = displayBuffers.length;
@@ -4697,8 +4705,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawTriangles(calculatingShadowMap, invMat) {
 
-        const displayBuffers = store.getState().glRef.displayBuffers
-        const hoverSize = store.getState().glRef.hoverSize
+        const displayBuffers = this.store.getState().glRef.displayBuffers
+        const hoverSize = this.store.getState().glRef.hoverSize
 
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
@@ -5504,7 +5512,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTexturedShapes(invMat) {
-        const texturedShapes = store.getState().glRef.texturedShapes
+        const texturedShapes = this.store.getState().glRef.texturedShapes
         const theShader = this.shaderProgramTextured;
         this.gl.useProgram(theShader);
         this.setMatrixUniforms(theShader);
@@ -5623,7 +5631,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doRightClick(event, self) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         if (self.activeMolecule === null) {
 
             const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
@@ -5641,7 +5649,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doClick(event, self) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         if (this.activeMolecule == null) {
             document.body.click()
         }
@@ -5692,7 +5700,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     updateLabels(){
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         let newBuffers = []
         const self = this;
         this.clearMeasureCylinderBuffers()
@@ -5782,9 +5790,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.0)
         ]
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-            const a = appendOtherData(object, true);
+            const a = appendOtherData(object, this.store, true);
             newBuffers = [...newBuffers,...a]
-            buildBuffers(a)
+            buildBuffers(a, this.store)
             self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
         })
         self.measuredAtoms.forEach(atoms => {
@@ -5806,7 +5814,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         })
 
         this.measureTextCanvasTexture.recreateBigTextureBuffers();
-        store.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
+        this.dispatch(setDisplayBuffers([...displayBuffers,...newBuffers]))
     }
 
     clearMeasureCylinderBuffers() : void {
@@ -5848,7 +5856,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     getAtomFomMouseXY(event, self) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         let x;
         let y;
         const e = event;
@@ -5997,18 +6005,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    private hoverDebounceTimeout: NodeJS.Timeout | null = null;
+
     doHover(event, self) {
-        const displayBuffers = store.getState().glRef.displayBuffers
-        if (this.props.onAtomHovered) {
-            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
-            if (minidx > -1) {
-                this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
-            }
-            else {
-                this.props.onAtomHovered(null)
-            }
-            self.drawScene();
+
+        if (this.hoverDebounceTimeout) {
+            clearTimeout(this.hoverDebounceTimeout);
         }
+        
+        this.hoverDebounceTimeout = setTimeout(() => {
+            const displayBuffers = this.store.getState().glRef.displayBuffers
+            if (this.props.onAtomHovered) {
+                const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+                if (minidx > -1) {
+                    this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
+                }
+                else {
+                    this.props.onAtomHovered(null)
+                }
+                self.drawScene();
+            }
+            this.hoverDebounceTimeout = null;
+        }, 15);
     }
 
     doWheel(event) {
@@ -6737,7 +6755,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseUp(event, self) {
-        const displayBuffers = store.getState().glRef.displayBuffers
+        const displayBuffers = this.store.getState().glRef.displayBuffers
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;

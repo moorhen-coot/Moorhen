@@ -1,98 +1,86 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store/MoorhenReduxStore';
-import { setShowSidePanel } from '../../store/globalUISlice';
-import './side-panels.css';
+import { useDispatch, useSelector } from "react-redux";
+import React, { Activity, useCallback, useEffect, useRef, useState } from "react";
+import { RootState, setShownSidePanel } from "@/store";
+import { PanelIDs, PanelsList } from "./PanelList";
+import { TabsToggle } from "./TabsToggle";
+import "./side-panels.css";
 
 export const MoorhenSidePanel = (props: { width: number }) => {
-    const dispatch = useDispatch();
+    const { width } = props;
     const height = useSelector((state: RootState) => state.sceneSettings.height);
-    const isShown = useSelector((state: RootState) => state.globalUI.sidePanelIsShown);
+    const [showHintLabel, setShowHintLabel] = useState<boolean>(null);
+    const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
+    const sidePanelIsOpen = shownPanel !== null;
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [activePanels, setActivePanels] = useState<PanelIDs[]>([]);
 
-    const toggle = (
-        <button
-            className={`moorhen__todo-container-toggle-button ${isShown ? 'moorhen__todo-container-toggle-button--visible' : ''}`}
-            onClick={() => {
-                dispatch(setShowSidePanel(!isShown));
-            }}
-        >
-            {isShown ? 'Hide' : 'Show'}
-        </button>
+    const handleMouseEnter = () => {
+        timeoutRef.current = setTimeout(() => {
+            setShowHintLabel(true);
+        }, 350);
+    };
+
+    const handleMouseLeave = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        setShowHintLabel(false);
+    };
+
+    const dispatch = useDispatch();
+
+    const handleRemoveActivePanel = useCallback(
+        (id: PanelIDs) => {
+            if (activePanels.length === 1) {
+                setShowHintLabel(false);
+            }
+            setActivePanels(prev => prev.filter(panelId => panelId !== id));
+            if (shownPanel === id) {
+                dispatch(setShownSidePanel(null));
+                setShowHintLabel(false);
+            }
+        },
+        [dispatch, shownPanel]
     );
+
+    useEffect(() => {
+        if (shownPanel && !activePanels.includes(shownPanel)) {
+            setActivePanels(prev => [...prev, shownPanel]);
+        }
+    }, [shownPanel, activePanels]);
+
+    const toggles: React.JSX.Element[] = activePanels.map(id => {
+        return (
+            <TabsToggle
+                icon={PanelsList[id].icon}
+                label={PanelsList[id].label}
+                id={id}
+                key={id}
+                showHintLabel={showHintLabel}
+                onDelete={handleRemoveActivePanel}
+            />
+        );
+    });
+
+    const panels: React.JSX.Element[] = activePanels.map(id => {
+        return <Activity mode={shownPanel === id ? "visible" : "hidden"}>{PanelsList[id].panelContent}</Activity>;
+    });
 
     return (
         <>
-            {toggle}
             <div
-                style={{ width: `${props.width}px`, height: height }}
-                className={`moorhen__todo-container ${isShown ? 'moorhen__todo-container--visible' : ''}`}
+                className={`moorhen__side-panel-tabs-container${sidePanelIsOpen ? " visible" : ""}`}
+                style={{ "--side-panel-translate": `${-width}px` } as React.CSSProperties}
+                onMouseEnter={() => handleMouseEnter()}
+                onMouseLeave={() => handleMouseLeave()}
             >
-                <div style={{ textAlign: 'center', fontWeight: 'bold', padding: '8px' }}>To-Do List</div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '0px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '8px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '8px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '8px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '8px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
-                <div
-                    style={{
-                        border: '1px solid var(--moorhen-border)',
-                        padding: '8px',
-                        borderRadius: '4rem',
-                        width: '90%',
-                        margin: '8px',
-                    }}
-                >
-                    Mock Todo Item
-                </div>
+                {toggles}
+            </div>
+            <div
+                style={{ width: width, height: height, "--side-panel-translate": `${-width}px` } as React.CSSProperties}
+                className={`moorhen__panel-container ${sidePanelIsOpen ? "moorhen__panel-container--visible" : ""}`}
+            >
+                {panels}
             </div>
         </>
     );

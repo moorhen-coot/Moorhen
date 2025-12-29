@@ -1,42 +1,39 @@
-import { useEffect, useRef, createRef, useCallback, useMemo } from "react";
-import { Form, Stack, Container, Button, Table } from "react-bootstrap";
-import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
-import { useSelector, useDispatch, useStore } from "react-redux";
 import {
     CenterFocusWeakOutlined,
+    DownloadOutlined,
     ExpandMoreOutlined,
     VisibilityOffOutlined,
     VisibilityOutlined,
-    DownloadOutlined,
 } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import Fasta from "biojs-io-fasta";
-import { useCommandCentre, usePaths  } from "../../InstanceManager";
-import { moorhen } from "../../types/moorhen";
-import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
-import { modalKeys } from "../../utils/enums";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import { Button, Container, Form, Stack, Table } from "react-bootstrap";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import {
-    setTargetSequence,
-    setAfJson,
-    setEsmJson,
-    setHomologsJson,
-    setAfSortField,
-    setHomologsSortField,
-    setAfSortReversed,
-    setHomologsSortReversed,
     setAFDisplaySettings,
+    setAfJson,
+    setAfSortField,
+    setAfSortReversed,
+    setEsmJson,
     setHomologsDisplaySettings,
+    setHomologsJson,
+    setHomologsSortField,
+    setHomologsSortReversed,
+    setTargetSequence,
 } from "../../store/mrParseSlice";
+import { moorhen } from "../../types/moorhen";
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
-import {
-    MoorhenSequenceViewer,
-    stringToSeqViewer,
-    moorhenSequenceToSeqViewer,
-    MoorhenSequenceViewerSequence,
-} from "../sequence-viewer";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { modalKeys } from "../../utils/enums";
+import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -175,18 +172,14 @@ export const MoorhenMrParseModal = () => {
     const HomologsDisplaySettings = useSelector((state: moorhen.State) => state.mrParse.HomologsDisplaySettings);
 
     const homologsSequencesLists = useMemo(() => {
-        const homologDisplaySequence = stringToSeqViewer(
-            HomologsDisplaySettings.displaySequence,
-            HomologsDisplaySettings.start
-        );
+        const homologDisplaySequence = stringToSeqViewer(HomologsDisplaySettings.displaySequence, HomologsDisplaySettings.start);
         homologDisplaySequence.displayName = "Query";
         const list: MoorhenSequenceViewerSequence[] = [];
         list.push(homologDisplaySequence);
 
-        homologsJson?.forEach((el) => {
+        homologsJson?.forEach(el => {
             const foundModel = mrParseModels.find(
-                (mod) =>
-                    "models/" + mod.name + ".pdb" === el.pdb_file || "homologs/" + mod.name + ".pdb" === el.pdb_file
+                mod => "models/" + mod.name + ".pdb" === el.pdb_file || "homologs/" + mod.name + ".pdb" === el.pdb_file
             );
             if (foundModel) {
                 const seq = foundModel.sequences[0];
@@ -198,13 +191,12 @@ export const MoorhenMrParseModal = () => {
                 seqElement.blockAlternateColour = true;
                 seqElement.missingAs = "none";
                 seqElement.hideResCode = true;
-                seqElement.residues.forEach((residue) => {
+                seqElement.residues.forEach(residue => {
                     if (homologDisplaySequence.residues[residue.resNum + seqElement.residuesDisplayOffset]) {
                         if (
                             residue.resCode ===
-                            homologDisplaySequence.residues.find(
-                                (r) => r.resNum === residue.resNum + seqElement.residuesDisplayOffset
-                            ).resCode
+                            homologDisplaySequence.residues.find(r => r.resNum === residue.resNum + seqElement.residuesDisplayOffset)
+                                .resCode
                         ) {
                             residue.colour = "rgb(205, 0, 0)";
                         }
@@ -227,14 +219,12 @@ export const MoorhenMrParseModal = () => {
     ) => {
         const newSeqElement: MoorhenSequenceViewerSequence = {
             ...seqElement,
-            residues: seqElement.residues.map((res) => ({ ...res })),
+            residues: seqElement.residues.map(res => ({ ...res })),
         };
         for (const [regionType, regionsArray] of Object.entries(plddt_regions)) {
-            regionsArray.forEach((region) => {
+            regionsArray.forEach(region => {
                 for (let ires = region[0]; ires <= region[1]; ires++) {
-                    const res = newSeqElement.residues.find(
-                        (r) => r.resNum + seqElement.residuesDisplayOffset === ires
-                    );
+                    const res = newSeqElement.residues.find(r => r.resNum + seqElement.residuesDisplayOffset === ires);
                     if (res) {
                         switch (regionType) {
                             case "v_low":
@@ -263,8 +253,8 @@ export const MoorhenMrParseModal = () => {
         const list: MoorhenSequenceViewerSequence[] = [];
         list.push(afDisplaySequence);
 
-        afJson?.forEach((afModel) => {
-            const foundModel = mrParseModels.find((mod) => "models/" + mod.name + ".pdb" === afModel.pdb_file);
+        afJson?.forEach(afModel => {
+            const foundModel = mrParseModels.find(mod => "models/" + mod.name + ".pdb" === afModel.pdb_file);
             if (foundModel) {
                 const seq = foundModel.sequences[0];
                 const seqElement = moorhenSequenceToSeqViewer(seq, foundModel.name, foundModel.molNo);
@@ -284,7 +274,7 @@ export const MoorhenMrParseModal = () => {
 
     const handleClickResidue = useCallback(
         (molIndex: number, molName: string, chain: string, resNum: number) => {
-            const foundModel = mrParseModels.find((mod) => mod.name === molName);
+            const foundModel = mrParseModels.find(mod => mod.name === molName);
             foundModel?.centreOn(`/*/${chain}/${resNum}-${resNum}/*`);
         },
         [mrParseModels]
@@ -340,8 +330,8 @@ export const MoorhenMrParseModal = () => {
 
         const allSelectedResiduesTrackData = [];
 
-        homologsJson.forEach((res) => {
-            const foundModel = mrParseModels.find((mod) => "homologs/" + mod.name + ".pdb" === res.pdb_file);
+        homologsJson.forEach(res => {
+            const foundModel = mrParseModels.find(mod => "homologs/" + mod.name + ".pdb" === res.pdb_file);
             if (Object.hasOwn(res, "query_start") && res.query_start < minRes) {
                 minRes = res.query_start;
             }
@@ -395,13 +385,13 @@ export const MoorhenMrParseModal = () => {
             }
             if (HomologsSelectedResiduesTrackRef[i].current) {
                 HomologsSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick);
-                HomologsSelectedResiduesTrackRef[i].current.removeEventListener("change", (e) => {
+                HomologsSelectedResiduesTrackRef[i].current.removeEventListener("change", e => {
                     handleChange(e, el.chain_id, el.pdb_file, el.query_start);
                 });
                 HomologsSelectedResiduesTrackRef[i].current.removeEventListener("dblclick", disableDoubleClick, true);
                 HomologsSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i];
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick);
-                HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {
+                HomologsSelectedResiduesTrackRef[i].current.addEventListener("change", e => {
                     handleChange(e, el.chain_id, el.pdb_file, el.query_start);
                 });
                 HomologsSelectedResiduesTrackRef[i].current.addEventListener("dblclick", disableDoubleClick, true);
@@ -414,22 +404,14 @@ export const MoorhenMrParseModal = () => {
             setTimeout(() => {
                 if (evt && evt.detail && (evt.detail.eventtype === "mouseover" || evt.detail.eventtype === "click")) {
                     if (evt.detail.feature) {
-                        if (
-                            evt.detail.feature &&
-                            evt.detail.feature.locations &&
-                            evt.detail.feature.locations.length > 0
-                        ) {
-                            if (
-                                evt.detail.feature.locations[0].fragments &&
-                                evt.detail.feature.locations[0].fragments.length > 0
-                            ) {
+                        if (evt.detail.feature && evt.detail.feature.locations && evt.detail.feature.locations.length > 0) {
+                            if (evt.detail.feature.locations[0].fragments && evt.detail.feature.locations[0].fragments.length > 0) {
                                 const frag = evt.detail.feature.locations[0].fragments[0];
                                 if (Object.hasOwn(frag, "start") && Object.hasOwn(frag, "end")) {
                                     if (frag.start === frag.end) {
                                         const foundModel = mrParseModels.find(
-                                            (mod) =>
-                                                "models/" + mod.name + ".pdb" === model_id ||
-                                                "homologs/" + mod.name + ".pdb" === model_id
+                                            mod =>
+                                                "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
                                         );
                                         if (foundModel) {
                                             if (
@@ -469,8 +451,8 @@ export const MoorhenMrParseModal = () => {
 
         const allSelectedResiduesTrackData = [];
 
-        afJson.forEach((res) => {
-            const foundModel = mrParseModels.find((mod) => "models/" + mod.name + ".pdb" === res.pdb_file);
+        afJson.forEach(res => {
+            const foundModel = mrParseModels.find(mod => "models/" + mod.name + ".pdb" === res.pdb_file);
             if (Object.hasOwn(res, "query_start") && res.query_start < minRes) {
                 minRes = res.query_start;
             }
@@ -488,7 +470,7 @@ export const MoorhenMrParseModal = () => {
                         const loc = r.resNum - baseNum + res.query_start;
                         let color = null;
                         if (Object.hasOwn(res.plddt_regions, "v_low")) {
-                            res.plddt_regions.v_low.forEach((region) => {
+                            res.plddt_regions.v_low.forEach(region => {
                                 for (let ires = region[0]; ires <= region[1]; ires++) {
                                     if (ires + 1 === loc) {
                                         color = "#FF7D45";
@@ -498,7 +480,7 @@ export const MoorhenMrParseModal = () => {
                             });
                         }
                         if (!color && Object.hasOwn(res.plddt_regions, "low")) {
-                            res.plddt_regions.low.forEach((region) => {
+                            res.plddt_regions.low.forEach(region => {
                                 for (let ires = region[0]; ires <= region[1]; ires++) {
                                     if (ires + 1 === loc) {
                                         color = "#FFDB13";
@@ -508,7 +490,7 @@ export const MoorhenMrParseModal = () => {
                             });
                         }
                         if (!color && Object.hasOwn(res.plddt_regions, "confident")) {
-                            res.plddt_regions.confident.forEach((region) => {
+                            res.plddt_regions.confident.forEach(region => {
                                 for (let ires = region[0]; ires <= region[1]; ires++) {
                                     if (ires + 1 === loc) {
                                         color = "#65CBF3";
@@ -518,7 +500,7 @@ export const MoorhenMrParseModal = () => {
                             });
                         }
                         if (!color && Object.hasOwn(res.plddt_regions, "v_high")) {
-                            res.plddt_regions.v_high.forEach((region) => {
+                            res.plddt_regions.v_high.forEach(region => {
                                 for (let ires = region[0]; ires <= region[1]; ires++) {
                                     if (ires + 1 === loc) {
                                         color = "#0053D6";
@@ -561,13 +543,13 @@ export const MoorhenMrParseModal = () => {
             }
             if (AFSelectedResiduesTrackRef[i].current) {
                 AFSelectedResiduesTrackRef[i].current.removeEventListener("click", handleClick);
-                AFSelectedResiduesTrackRef[i].current.removeEventListener("change", (e) => {
+                AFSelectedResiduesTrackRef[i].current.removeEventListener("change", e => {
                     handleChange(e, "A", el.pdb_file, el.query_start);
                 });
                 AFSelectedResiduesTrackRef[i].current.removeEventListener("dblclick", disableDoubleClick, true);
                 AFSelectedResiduesTrackRef[i].current.data = allSelectedResiduesTrackData[i];
                 AFSelectedResiduesTrackRef[i].current.addEventListener("click", handleClick);
-                AFSelectedResiduesTrackRef[i].current.addEventListener("change", (e) => {
+                AFSelectedResiduesTrackRef[i].current.addEventListener("change", e => {
                     handleChange(e, "A", el.pdb_file, el.query_start);
                 });
                 AFSelectedResiduesTrackRef[i].current.addEventListener("dblclick", disableDoubleClick, true);
@@ -601,7 +583,7 @@ export const MoorhenMrParseModal = () => {
         return { fastaContents, afModelContents, esmModelContents, homologsContents };
     };
 
-    const parseJSONAndGetModelFiles = (json_contents) => {
+    const parseJSONAndGetModelFiles = json_contents => {
         const fastaContents = json_contents.fastaContents;
         const afModelContents = json_contents.afModelContents;
         const esmModelContents = json_contents.esmModelContents;
@@ -659,7 +641,7 @@ export const MoorhenMrParseModal = () => {
         return modelFiles;
     };
 
-    const loadMrParseJsonUrl = async (urlBase) => {
+    const loadMrParseJsonUrl = async urlBase => {
         let fastaContents = "";
         let afModelContents = "";
         let esmModelContents = "";
@@ -685,7 +667,7 @@ export const MoorhenMrParseModal = () => {
         return { fastaContents, afModelContents, esmModelContents, homologsContents };
     };
 
-    const handlePDBSortingChange = (key) => {
+    const handlePDBSortingChange = key => {
         if (key === homologsSortField) {
             dispatch(setHomologsSortReversed(!homologsSortReversed));
         } else {
@@ -694,7 +676,7 @@ export const MoorhenMrParseModal = () => {
         dispatch(setHomologsSortField(key));
     };
 
-    const handleAFSortingChange = (key) => {
+    const handleAFSortingChange = key => {
         if (key === afSortField) {
             dispatch(setAfSortReversed(!afSortReversed));
         } else {
@@ -707,19 +689,11 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(
-            urlBase,
-            commandCentre,
-            monomerLibraryPath,
-            backgroundColor,
-            defaultBondSmoothness,
-            store,
-            dispatch
-        );
+        loadMrParseUrl(urlBase, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness, store, dispatch);
     };
 
     const footerContent = (
-        <Stack
+        <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
@@ -730,18 +704,12 @@ export const MoorhenMrParseModal = () => {
                 width: "100%",
             }}
         >
-            <Stack
-                gap={2}
-                direction="horizontal"
-                style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}
-            >
-                <Form.Group
-                    style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }}
-                    controlId="uploadMrParse"
-                    className="mb-3"
-                >
-{/* @ts-expect-error */}
-                    <Form.Control ref={filesRef} type="file" multiple={true} directory="" webkitdirectory="true"
+            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+                <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
+                    <Form.Control
+                        ref={filesRef}
+                        type="file"
+                        multiple={true}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             loadMrParseFiles(
                                 Array.from(e.target.files),
@@ -755,9 +723,9 @@ export const MoorhenMrParseModal = () => {
                         }}
                     />
                 </Form.Group>
-            </Stack>
-            {false && <Button onClick={handleLoadFromUrlExample}>Load from URL example</Button>}
-        </Stack>
+            </MoorhenStack>
+            {false && <MoorhenButton onClick={handleLoadFromUrlExample}>Load from URL example</MoorhenButton>}
+        </MoorhenStack>
     );
 
     const pdbArrow = homologsSortReversed ? <>&darr;</> : <>&uarr;</>;
@@ -765,9 +733,7 @@ export const MoorhenMrParseModal = () => {
 
     let bodyContent = (
         <>
-            <div style={{ verticalAlign: "center" }}>
-                Use the button below to browse for an MrParse results directory
-            </div>
+            <div style={{ verticalAlign: "center" }}>Use the button below to browse for an MrParse results directory</div>
         </>
     );
 
@@ -781,17 +747,14 @@ export const MoorhenMrParseModal = () => {
                     elevation={0}
                     style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}
                 >
-                    <AccordionSummary
-                        style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}
-                        expandIcon={<ExpandMoreOutlined />}
-                    >
+                    <AccordionSummary style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }} expandIcon={<ExpandMoreOutlined />}>
                         Experimental structures from the PDB
                     </AccordionSummary>
                     <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}>
                         <Table style={{ backgroundColor: isDark ? "#3d3d3d" : "white" }}>
                             <thead>
                                 <tr>
-                                    {pdbHeaders.map((head) => (
+                                    {pdbHeaders.map(head => (
                                         <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>
                                             {head.label} {head.key === homologsSortField ? pdbArrow : <></>}
                                         </th>
@@ -805,9 +768,7 @@ export const MoorhenMrParseModal = () => {
                                 {homologsJson.toSorted(homologsSortFun).map((homEl, i) => {
                                     const model_id = homEl.pdb_file;
                                     const foundModel = mrParseModels.find(
-                                        (mod) =>
-                                            "models/" + mod.name + ".pdb" === model_id ||
-                                            "homologs/" + mod.name + ".pdb" === model_id
+                                        mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
                                     );
                                     if (foundModel) {
                                         const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
@@ -833,30 +794,15 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{homEl.rmsd}</td>
                                                 <td>{homEl.seq_ident.toFixed(2)}</td>
                                                 <td>
-                                                    <Button
-                                                        key={1}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleVisibility}
-                                                    >
+                                                    <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                    </Button>
-                                                    <Button
-                                                        key={2}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleCentering}
-                                                    >
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
                                                         <CenterFocusWeakOutlined />
-                                                    </Button>
-                                                    <Button
-                                                        key={3}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleDownload}
-                                                    >
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
-                                                    </Button>
+                                                    </MoorhenButton>
                                                 </td>
                                             </tr>
                                         );
@@ -866,9 +812,7 @@ export const MoorhenMrParseModal = () => {
                                 })}
                             </tbody>
                         </Table>
-                        <Container
-                            style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}
-                        >
+                        <Container style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}>
                             <MoorhenSequenceViewer
                                 sequences={homologsSequencesLists}
                                 onResidueClick={handleClickResidue}
@@ -887,17 +831,14 @@ export const MoorhenMrParseModal = () => {
                     elevation={0}
                     style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}
                 >
-                    <AccordionSummary
-                        style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }}
-                        expandIcon={<ExpandMoreOutlined />}
-                    >
+                    <AccordionSummary style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }} expandIcon={<ExpandMoreOutlined />}>
                         Structure predictions from the EBI AlphaFold database
                     </AccordionSummary>
                     <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}>
                         <Table style={{ backgroundColor: isDark ? "#3d3d3d" : "white" }}>
                             <thead>
                                 <tr>
-                                    {afHeaders.map((head) => (
+                                    {afHeaders.map(head => (
                                         <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>
                                             {head.label} {head.key === afSortField ? afArrow : <></>}
                                         </th>
@@ -911,9 +852,7 @@ export const MoorhenMrParseModal = () => {
                                 {afJson.toSorted(afSortFun).map((afEl, i) => {
                                     const model_id = afEl.pdb_file;
                                     const foundModel = mrParseModels.find(
-                                        (mod) =>
-                                            "models/" + mod.name + ".pdb" === model_id ||
-                                            "homologs/" + mod.name + ".pdb" === model_id
+                                        mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
                                     );
                                     if (foundModel) {
                                         const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
@@ -936,30 +875,15 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{afEl.h_score}</td>
                                                 <td>{afEl.seq_ident.toFixed(2)}</td>
                                                 <td>
-                                                    <Button
-                                                        key={1}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleVisibility}
-                                                    >
+                                                    <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                    </Button>
-                                                    <Button
-                                                        key={2}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleCentering}
-                                                    >
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
                                                         <CenterFocusWeakOutlined />
-                                                    </Button>
-                                                    <Button
-                                                        key={3}
-                                                        size="sm"
-                                                        variant="outlined"
-                                                        onClick={handleDownload}
-                                                    >
+                                                    </MoorhenButton>
+                                                    <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
-                                                    </Button>
+                                                    </MoorhenButton>
                                                 </td>
                                             </tr>
                                         );
@@ -969,9 +893,7 @@ export const MoorhenMrParseModal = () => {
                                 })}
                             </tbody>
                         </Table>
-                        <Container
-                            style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}
-                        >
+                        <Container style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}>
                             <MoorhenSequenceViewer
                                 sequences={afSequencesLists}
                                 onResidueClick={handleClickResidue}

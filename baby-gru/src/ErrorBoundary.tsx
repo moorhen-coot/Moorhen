@@ -1,10 +1,11 @@
-import { Button, Modal } from 'react-bootstrap';
-import React, { ErrorInfo } from 'react';
-import { MoorhenInstance } from './InstanceManager';
-import { moorhen } from './types/moorhen';
-import { MoorhenMolecule } from './utils/MoorhenMolecule';
-import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
-import { doDownload } from './utils/utils';
+import { Button, Modal } from "react-bootstrap";
+import React, { ErrorInfo } from "react";
+import { MoorhenInstance } from "./InstanceManager";
+import { MoorhenButton } from "./components/inputs";
+import { moorhen } from "./types/moorhen";
+import { MoorhenMolecule } from "./utils/MoorhenMolecule";
+import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
+import { doDownload } from "./utils/utils";
 
 type ErrorBoundaryPropsType = {
     urlPrefix: string;
@@ -24,7 +25,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
 
     static getDerivedStateFromError(error: Error) {
         // Update state so the next render will show the fallback UI.
-        console.log('Error boundary triggered ');
+        console.log("Error boundary triggered ");
         return { hasError: true };
     }
 
@@ -42,7 +43,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
 
     async handleBackupDownload() {
         const timeCapsule = new MoorhenTimeCapsule(null, null, null, null);
-        timeCapsule.storageInstance = MoorhenInstance.createLocalStorageInstance('Moorhen-TimeCapsule');
+        timeCapsule.storageInstance = MoorhenInstance.createLocalStorageInstance("Moorhen-TimeCapsule");
         await timeCapsule.init();
         const backup = (await timeCapsule.retrieveLastBackup()) as string;
         const sessionData: moorhen.backupSession = JSON.parse(backup);
@@ -57,11 +58,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
         // If there is an error render custom fallback UI otherwise render children
         if (this.state.hasError) {
             const head = document.head;
-            const style: any = document.createElement('link');
+            const style: any = document.createElement("link");
             style.href = `${this.props.urlPrefix}/flatly.css`;
-            style.rel = 'stylesheet';
+            style.rel = "stylesheet";
             style.async = true;
-            style.type = 'text/css';
+            style.type = "text/css";
             head.appendChild(style);
 
             return (
@@ -71,9 +72,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
                     </Modal.Header>
                     <Modal.Body>An error has occurred in Moorhen. You will need to refresh the page to re-start the app.</Modal.Body>
                     <Modal.Footer>
-                        <Button variant="primary" onClick={this.handleBackupDownload.bind(this)}>
+                        <MoorhenButton variant="primary" onClick={this.handleBackupDownload.bind(this)}>
                             Download last molecule backup
-                        </Button>
+                        </MoorhenButton>
                     </Modal.Footer>
                 </Modal>
             );
@@ -83,4 +84,4 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     }
 }
 
-ErrorBoundary.defaultProps = { urlPrefix: '.' };
+ErrorBoundary.defaultProps = { urlPrefix: "." };

@@ -1,11 +1,11 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { useStateWithRef } from '../../hooks/useStateWithRef';
-import { clickedResidueType } from '../card/MoorhenMoleculeCard';
-import { MoorhenButton } from '../inputs';
-import { CustomHorizontalScrollbar } from './CustomHorizontalScrollbar';
-import type { ResiduesSelection, SeqElement } from './MoorhenSeqViewTypes';
-import './MoorhenSequenceViewer.css';
-import { SequenceRow } from './SequenceRow';
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useStateWithRef } from "../../hooks/useStateWithRef";
+import { clickedResidueType } from "../card/MoleculeCard/MoorhenMoleculeCard";
+import { MoorhenButton } from "../inputs";
+import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
+import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
+import "./MoorhenSequenceViewer.css";
+import { SequenceRow } from "./SequenceRow";
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];
@@ -297,13 +297,13 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     if (i < firstResi) {
                         residues.push(null);
                     } else if (i < lastResi) {
-                        if (seqObj.missingAs === 'none') {
+                        if (seqObj.missingAs === "none") {
                             residues.push(null);
                         } else {
                             residues.push({
                                 resNum: i,
-                                resCode: seqObj.missingAs ? seqObj.missingAs : '-',
-                                resCID: '',
+                                resCode: seqObj.missingAs ? seqObj.missingAs : "-",
+                                resCID: "",
                                 selected: false,
                                 hovered: false,
                             });
@@ -364,9 +364,9 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             const n = (6 - mod) % 5;
             ticks.push(
                 <div
-                    key={'start tick'}
+                    key={"start tick"}
                     className={`moorhen__seqviewer__tick-mark`}
-                    style={{ maxWidth: columnWidth * n + 'rem', minWidth: columnWidth * n + 'rem' }}
+                    style={{ maxWidth: columnWidth * n + "rem", minWidth: columnWidth * n + "rem" }}
                 ></div>
             );
             startVal += n;
@@ -376,12 +376,12 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             const left = maxVal - i;
             ticks.push(
                 <div
-                    key={'tick ' + i}
+                    key={"tick " + i}
                     className={`moorhen__seqviewer__tick-mark`}
                     style={
                         left < 5
-                            ? { maxWidth: left * columnWidth + 'rem', minWidth: left * columnWidth + 'rem' }
-                            : { maxWidth: columnWidth * 5 + 'rem', minWidth: columnWidth * 5 + 'rem' }
+                            ? { maxWidth: left * columnWidth + "rem", minWidth: left * columnWidth + "rem" }
+                            : { maxWidth: columnWidth * 5 + "rem", minWidth: columnWidth * 5 + "rem" }
                     }
                 >
                     {i}
@@ -504,7 +504,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         <>
             <div
                 className={`moorhen__seqviewer-container ${className}`}
-                style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + 'px' }}
+                style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
                     setMouseIsHovering(true);
@@ -519,16 +519,16 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                             <div>
                                 {hoveredResidue
                                     ? `Chain: ${hoveredResidue.chain} Res: ${hoveredResidue.resNum} ${hoveredResidue.resCode}`
-                                    : 'Chain: - Res: -'}
+                                    : "Chain: - Res: -"}
                             </div>
                         </div>
                     )}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                <div style={{ display: "flex", flexDirection: "row" }}>
                     {leftButtonsBar}
                     <CustomHorizontalScrollbar
                         key={scrollbarKey}
-                        style={{ width: seqLength > displayHeight ? 'calc(100% - 40px)' : '100%' }}
+                        style={{ width: seqLength > displayHeight ? "calc(100% - 40px)" : "100%" }}
                         onDraggingChange={setIsScrolling}
                         forceRedrawScrollBarKey={props.forceRedrawScrollBarKey}
                     >
@@ -543,4 +543,4 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         </>
     );
 });
-MoorhenSequenceViewer.displayName = 'MoorhenSequenceViewer';
+MoorhenSequenceViewer.displayName = "MoorhenSequenceViewer";

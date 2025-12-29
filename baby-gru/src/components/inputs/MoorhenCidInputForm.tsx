@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
+import { MoorhenStack } from "../interface-base";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -13,11 +14,12 @@ type MoorhenCidInputFormPropsType = {
     invalidCid?: boolean;
     allowUseCurrentSelection?: boolean;
     ref?: React.Ref<HTMLInputElement>;
+    inline?: boolean
 };
 
 export const MoorhenCidInputForm = ({
     height = "4rem",
-    width = "20rem",
+    width = "16rem",
     margin = "0.1rem",
     label = "Atom selection",
     placeholder = "",
@@ -26,6 +28,7 @@ export const MoorhenCidInputForm = ({
     allowUseCurrentSelection = false,
     onChange,
     ref: cidFormRef,
+    inline = true,
 }: MoorhenCidInputFormPropsType) => {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
@@ -34,7 +37,7 @@ export const MoorhenCidInputForm = ({
         if (onChange) {
             onChange(evt);
         }
-        if (cidFormRef && typeof cidFormRef === 'object' && 'current' in cidFormRef && cidFormRef.current) {
+        if (cidFormRef && typeof cidFormRef === "object" && "current" in cidFormRef && cidFormRef.current) {
             cidFormRef.current.value = evt.target.value;
         }
     };
@@ -43,7 +46,8 @@ export const MoorhenCidInputForm = ({
         if (evt.target.checked) {
             if (residueSelection.cid) {
                 // @ts-expect-error - Creating synthetic event object for handleChange
-                handleChange({ target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") } });
+                handleChange({target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") },
+                });
             }
         } else {
             // @ts-expect-error - Creating synthetic event object for handleChange
@@ -53,7 +57,7 @@ export const MoorhenCidInputForm = ({
 
     return (
         <>
-            <div style={{ width: width, margin: margin, height: height }}>
+            <MoorhenStack  direction={inline? "line" : null} style={{ width: width, margin: margin, height: height }}>
                 {label && <label style={{ display: "block", marginBottom: "0.25rem" }}>{label}</label>}
                 <input
                     type="text"
@@ -63,7 +67,7 @@ export const MoorhenCidInputForm = ({
                     onChange={handleChange}
                     ref={cidFormRef}
                 />
-            </div>
+            </MoorhenStack>
             {allowUseCurrentSelection && showResidueSelection && (
                 <div style={{ width: width, margin: margin, display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <input type="checkbox" id="useCurrentSelection" onChange={handleFillCurrentSelection} />

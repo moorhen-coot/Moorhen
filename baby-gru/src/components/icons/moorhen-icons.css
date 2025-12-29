@@ -1,32 +1,74 @@
-@import '../../colors.css';
-.moorhen__icon__small {
-    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+@import "../../colors.css";
+
+.moorhen__icon,
+.moorhen__icon-spinner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: currentColor;
+}
+
+.moorhen__icon.small {
+    color: inherit;
     width: 22px;
     height: 22px;
 }
 
-.moorhen__icon__medium {
-    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+.moorhen__icon.medium {
+    color: inherit;
     width: 32px;
     height: 32px;
 }
 
-.moorhen__icon__large {
-    filter: invert(1) brightness(var(--moorhen-icon-brightness));
+.moorhen__icon.large {
+    color: inherit;
     width: 64px;
     height: 64px;
 }
 
+.moorhen__icon.accordion {
+    color: inherit;
+    width: 24px;
+    height: 24px;
+}
+
 .moorhen__icon__active {
     cursor: pointer;
+    transition: filter 0.15s ease-in;
 }
 
 .moorhen__icon__inactive {
-    filter: invert(1) brightness(0.5);
+    color: var(--moorhen-inactive);
+}
+
+.moorhen__icon__active.danger:hover {
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-warning)) drop-shadow(0 0 0.2rem red);
+}
+
+.moorhen__icon__active.hover {
+    /**this a hover class copying the :hover style */
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
 }
 
 .moorhen__icon__active:hover {
-    filter: invert(1) brightness(var(--moorhen-icon-brightness)) drop-shadow(0 0 0.1rem var(--moorhen-focus))
-        drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
-    transition: filter 0.15s ease-in;
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+}
+
+.moorhen__icon.menu {
+    width: 30px;
+    height: 30px;
+}
+
+.moorhen__icon-spinner {
+    animation: moorhen-spinner-spin 1s linear infinite;
+}
+
+@keyframes moorhen-spinner-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

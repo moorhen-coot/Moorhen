@@ -1,22 +1,22 @@
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
-        "Droid Sans", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 /* font */
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-.root {
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-}
-
-.App {
+/* .App {
     text-align: center;
-}
+} */
 
 .App-logo {
     height: 40vmin;
@@ -110,6 +110,9 @@ div.darkly text.end-label {
 .scene-settings-panel,
 .scene-settings-panel-flex-between,
 .scene-settings-panel-flex-center {
+    display: flex;
+    flex-direction: vertical;
+    gap: 1;
     width: 100%;
     height: 100%;
     padding: 0.5rem;
@@ -123,11 +126,6 @@ div.darkly text.end-label {
     justify-content: space-between;
     display: flex;
     flex-direction: column;
-}
-
-.scene-settings-panel-flex-center {
-    justify-content: center;
-    display: flex;
 }
 
 .tab-content {
@@ -186,7 +184,10 @@ div.darkly text.end-label {
 
 .stop-scrolling {
     scrollbar-width: none;
-    height: 100%;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
 }
 
@@ -227,7 +228,9 @@ div.darkly text.end-label {
 }
 
 .moorhen-notification-div {
-    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0px 6px 10px 0px rgba(0, 0, 0, 0.14),
         0px 1px 18px 0px rgba(0, 0, 0, 0.12);
     width: 14rem;
     min-height: 3rem;
@@ -248,7 +251,9 @@ div.darkly text.end-label {
 }
 
 .moorhen-sidebar-div {
-    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0px 6px 10px 0px rgba(0, 0, 0, 0.14),
         0px 1px 18px 0px rgba(0, 0, 0, 0.12);
     width: 14rem;
     min-height: 3rem;
@@ -278,17 +283,23 @@ div.darkly text.end-label {
 }
 
 .moorhen-draggable-card {
-    box-shadow: 0px 2px 2px -1px rgba(0, 0, 0, 0.2), 0px 3px 5px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 2px 2px -1px rgba(0, 0, 0, 0.2),
+        0px 3px 5px 0px rgba(0, 0, 0, 0.14),
         0px 1px 9px 0px rgba(0, 0, 0, 0.12);
 }
 
 .moorhen-draggable-card-focused {
-    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0px 6px 10px 0px rgba(0, 0, 0, 0.14),
         0px 1px 18px 0px rgba(0, 0, 0, 0.12);
 }
 
 .moorhen-context-button {
-    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0px 6px 10px 0px rgba(0, 0, 0, 0.14),
         0px 1px 18px 0px rgba(0, 0, 0, 0.12);
     width: 4rem;
     height: 4rem;
@@ -339,7 +350,9 @@ img.moorhen-context-button__icon {
     justify-content: left !important;
     display: flex !important;
     border-radius: 2rem !important;
-    box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+        0px 1px 1px 0px rgba(0, 0, 0, 0.14),
         0px 1px 3px 0px rgba(0, 0, 0, 0.12);
 }
 
@@ -348,7 +361,9 @@ img.moorhen-context-button__icon {
     margin-left: 1.5rem;
     overflow-x: auto;
     border-radius: 1.5rem;
-    box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14),
+    box-shadow:
+        0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+        0px 1px 1px 0px rgba(0, 0, 0, 0.14),
         0px 1px 3px 0px rgba(0, 0, 0, 0.12);
 }
 

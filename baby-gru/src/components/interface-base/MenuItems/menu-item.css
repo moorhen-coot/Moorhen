@@ -1,0 +1,31 @@
+@import "../../../colors.css";
+
+.moorhen__menu-item,
+.moorhen__menu-item-disabled {
+    all: unset;
+    /* font-family: "Roboto", "Helvetica", "Arial", sans-serif; */
+    min-height: 2.4rem;
+    height: fit-content;
+    text-align: left;
+    padding-left: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--moorhen-background);
+}
+
+.moorhen__menu-item-disabled {
+    color: var(--moorhen-disabled);
+}
+
+.moorhen__menu-item-selected {
+    background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
+    border: 1px solid var(--moorhen-border);
+}
+
+.moorhen__menu-item:hover {
+    background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
+    border: 1px solid var(--moorhen-border);
+}
+
+.moorhen_menu-custom-left-margin {
+    margin-left: 1rem;
+}

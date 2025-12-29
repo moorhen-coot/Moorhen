@@ -1,20 +1,21 @@
-import localforage from 'localforage';
-import { Dispatch, Store, UnknownAction } from 'redux';
-import React from 'react';
-import { Preferences } from '../components/managers/preferences/MoorhenPreferences';
-import { MoorhenMap, MoorhenMolecule } from '../moorhen';
-import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
-import { setBusy, setGlobalInstanceReady } from '../store/globalUISlice';
-import { moorhen } from '../types/moorhen';
-import { ScreenRecorder } from '../utils/MoorhenScreenRecorder';
-import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { CommandCentre } from './CommandCentre';
-import { CootCommandWrapper } from './CommandCentre/CootCommandWrapper';
+import localforage from "localforage";
+import { Dispatch, Store, UnknownAction } from "redux";
+import React from "react";
+import { MoorhenMap, MoorhenMolecule } from "@/utils";
+import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
+import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
+import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "../store/generalStatesSlice";
+import { setBusy, setGlobalInstanceReady } from "../store/globalUISlice";
+import { moorhen } from "../types/moorhen";
+import { ScreenRecorder } from "../utils/MoorhenScreenRecorder";
+import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
+import { CommandCentre } from "./CommandCentre";
+import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 
 //import { CommandCentre } from './CommandCentre/MoorhenCommandCentre';
 
 export class MoorhenInstance {
-    public dispatch: Dispatch<UnknownAction>;
+    private dispatch!: Dispatch<UnknownAction>;
     private commandCentre!: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
@@ -22,6 +23,7 @@ export class MoorhenInstance {
     private videoRecorder: ScreenRecorder;
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
+    private containerRef: React.RefObject<HTMLDivElement> = null;
     private store: Store;
     private preferences: Preferences;
     private maps: MoorhenMap[] = [];
@@ -30,21 +32,22 @@ export class MoorhenInstance {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand!: CootCommandWrapper;
 
-    constructor() {
+    constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this.containerRef = containerRef;
     }
 
     public paths: {
         urlPrefix: string;
         monomerLibraryPath: string;
     } = {
-        urlPrefix: '',
-        monomerLibraryPath: '',
+        urlPrefix: "",
+        monomerLibraryPath: "",
     };
 
     public setCommandCentre(commandCentre: CommandCentre): void {
@@ -57,7 +60,7 @@ export class MoorhenInstance {
         return this.commandCentre;
     }
 
-    public getCommandCentreRef(): React.RefObject<CommandCentre | null> {
+    public getCommandCentreRef(): React.RefObject<CommandCentre> {
         return this.commandCentreRef;
     }
 
@@ -70,7 +73,7 @@ export class MoorhenInstance {
         return this.timeCapsule;
     }
 
-    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule | null> {
+    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule> {
         return this.timeCapsuleRef;
     }
 
@@ -83,7 +86,7 @@ export class MoorhenInstance {
         return this.videoRecorder;
     }
 
-    public getVideoRecorderRef(): React.RefObject<ScreenRecorder | null> {
+    public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
         return this.videoRecorderRef;
     }
 
@@ -102,6 +105,18 @@ export class MoorhenInstance {
 
     public getAceDRGInstance(): moorhen.AceDRGInstance | null {
         return this.aceDRGInstance;
+    }
+
+    public getStore(): MoorhenReduxStoreType {
+        return this.store;
+    }
+
+    public getDispatch(): Dispatch<UnknownAction> {
+        return this.dispatch;
+    }
+
+    public getContainerRef() {
+        return this.containerRef;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
@@ -139,7 +154,7 @@ export class MoorhenInstance {
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
         const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
             ? timeCapsuleConfig.providedBackupStorageInstance
-            : MoorhenInstance.createLocalStorageInstance('Moorhen-TimeCapsule');
+            : MoorhenInstance.createLocalStorageInstance("Moorhen-TimeCapsule");
         newTimeCapsule.storageInstance = backupStorageInstance;
         if (timeCapsuleConfig?.maxBackupCount) {
             newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount;
@@ -178,6 +193,11 @@ export class MoorhenInstance {
     }
 
     public cleanup(): void {
-        this.commandCentre.close();
+        if (this.commandCentre) {
+            this.commandCentre.close();
+            this.commandCentre = undefined;
+            this.timeCapsule = undefined;
+            this.videoRecorder = undefined;
+        }
     }
 }

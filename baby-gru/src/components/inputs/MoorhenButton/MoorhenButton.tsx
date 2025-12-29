@@ -1,44 +1,127 @@
-import { MoorhenIcon } from '../../icons/MoorhenIcon';
-import './moorhen-button.css';
+import { Tooltip } from "@mui/material";
+import { JSX } from "react";
+import { MoorhenSVG } from "../../icons";
+import { MoorhenIcon } from "../../icons/MoorhenIcon";
+import { MoorhenStack } from "../../interface-base";
+import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
+import "./moorhen-button.css";
 
-type MoorhenButtonPropsType = {
-    type?: 'icon-only';
+type MoorhenButtonPropsTypeBase = {
     label?: string;
-    onClick?: () => void;
-    onMouseDown?: () => void;
+    onClick?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
+    onMouseDown?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     onMouseUp?: () => void;
     onMouseLeave?: () => void;
     disabled?: boolean;
-    size?: 'small' | 'medium' | 'large';
-    icon?: string; // Optional icon name
     ref?: React.Ref<HTMLButtonElement>;
+    style?: React.CSSProperties;
+    className?: string;
+    children?: React.ReactNode;
+    value?: string | number;
+    id?: string;
+    tooltip?: string | JSX.Element;
+    iconStyle?: React.CSSProperties;
 };
-export const MoorhenButton = (props: MoorhenButtonPropsType) => {
+
+type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
+    type: "icon-only";
+    size?: "small" | "medium" | "large" | "accordion";
+    icon: MoorhenSVG;
+    variant?: "default" | "danger";
+};
+
+type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
+    type?: "default";
+    size?: "small" | "medium" | "large" | "sm" | "lg" | "md";
+    variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light";
+    icon?: MoorhenSVG;
+};
+
+type MoorhenButtonToggleProps = MoorhenButtonPropsTypeBase & {
+    type: "toggle";
+    checked: boolean;
+    size?: "small" | "medium" | "large";
+    icon?: MoorhenSVG;
+};
+
+export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps | MoorhenButtonToggleProps) => {
     const {
-        type = 'icon-only',
+        type = "default",
         label,
         onClick,
         onMouseDown,
         onMouseUp,
         onMouseLeave,
         disabled = false,
-        size = 'medium',
         icon,
         ref,
+        className = "",
+        style = {},
+        children,
+        tooltip = null,
+        iconStyle = null,
     } = props;
 
-    return (
+    let size = props.size ? props.size : "medium";
+    if (size === "lg" || "large") {
+        size = "large";
+    }
+    if (size === "md" || "medium") {
+        size = "medium";
+    }
+    if (size === "sm" || "small") {
+        size = "small";
+    }
+
+    let variant: string | null = null;
+    if ("variant" in props) {
+        if (type === "default") {
+            variant = props.variant as string;
+        } else if (type === "icon-only") {
+            if (props.variant !== "danger") {
+                variant = "";
+            } else {
+                variant = props.variant;
+            }
+        }
+    }
+
+    const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
+    const iconSize = type === "toggle" ? "medium" : size;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
+
+    const button = (
         <button
-            className={`moorhen__button__${type}`}
+            id={props.id}
+            className={resultClassName}
             onClick={onClick}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseLeave}
             disabled={disabled}
             ref={ref}
+            style={{ ...props.style }}
+            value={props.value}
         >
-            {icon && <MoorhenIcon name={icon} size={size} isActive={!disabled} />}
-            {label}
+            <MoorhenStack direction="row" align="center" justify="center" style={{ ...style }}>
+                {icon && (
+                    <MoorhenIcon
+                        moorhenSVG={icon}
+                        size={iconSize}
+                        isActive={!disabled}
+                        style={{ ...iconStyle }}
+                        variant={variant as "" | "danger"}
+                    />
+                )}
+                {label}
+                {children}
+            </MoorhenStack>
         </button>
     );
+
+    if (tooltip) {
+        return <MoorhenTooltip tooltip={tooltip}>{button}</MoorhenTooltip>;
+    } else {
+        return button;
+    }
 };
