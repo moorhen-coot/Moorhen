@@ -849,7 +849,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA pdb", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.pdb')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
@@ -857,7 +857,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA mmcif", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.cif')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.cif')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
