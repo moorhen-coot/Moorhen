@@ -42,22 +42,20 @@
     color: var(--moorhen-inactive);
 }
 
-.moorhen__icon__active:hover {
-    filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
-    /* transition: filter 0.15s ease-in; */
-}
-
 .moorhen__icon__active.danger:hover {
-    filter: drop-shadow(0 0 0.1rem red) drop-shadow(0 0 0.2rem red) !important;
-    transition: filter 0.15s ease-in !important;
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-warning)) drop-shadow(0 0 0.2rem red);
 }
 
 .moorhen__icon__active.hover {
+    /**this a hover class copying the :hover style */
     filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
-    transition: filter 0.15s ease-in;
 }
 
-.moorhen__icon__menu {
+.moorhen__icon__active:hover {
+    filter: drop-shadow(0 0 0.1rem var(--moorhen-focus)) drop-shadow(0 0 0.2rem var(--moorhen-focus-shadow));
+}
+
+.moorhen__icon.menu {
     width: 30px;
     height: 30px;
 }

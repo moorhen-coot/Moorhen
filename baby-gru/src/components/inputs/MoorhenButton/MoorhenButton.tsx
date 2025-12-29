@@ -62,18 +62,29 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         iconStyle = null,
     } = props;
 
-    let size = props.size
-        ? props.size === "lg"
-            ? "large"
-            : props.size === "sm"
-              ? "small"
-              : props.size === "md"
-                ? "medium"
-                : props.size
-        : "medium";
+    let size = props.size ? props.size : "medium";
+    if (size === "lg" || "large") {
+        size = "large";
+    }
+    if (size === "md" || "medium") {
+        size = "medium";
+    }
+    if (size === "sm" || "small") {
+        size = "small";
+    }
 
     let variant: string | null = null;
-    if (type === "default" && "variant" in props) variant = props.variant as string;
+    if ("variant" in props) {
+        if (type === "default") {
+            variant = props.variant as string;
+        } else if (type === "icon-only") {
+            if (props.variant !== "danger") {
+                variant = "";
+            } else {
+                variant = props.variant;
+            }
+        }
+    }
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;

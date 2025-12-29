@@ -110,12 +110,12 @@ export const MoorhenMainMenu = memo(() => {
             <div className="moorhen__main-menu">
                 <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                     {isOpen ? (
-                        <MoorhenIcon moorhenSVG={`MUISymbolClose`} className="moorhen__icon__menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MUISymbolClose`} className="moorhen__icon menu" alt="Menu" />
                     ) : (
-                        <MoorhenIcon moorhenSVG={`MUISymbolMenu`} className="moorhen__icon__menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MUISymbolMenu`} className="moorhen__icon menu" alt="Menu" />
                     )}
                     &nbsp;&nbsp;
-                    <MoorhenIcon moorhenSVG={`MoorhenLogo`} size="medium" alt="Maps" className="moorhen__main-logo" />
+                    <MoorhenIcon moorhenSVG={`MoorhenLogo`} alt="Maps" className="moorhen__main-logo" />
                 </button>
                 <div className="moorhen__main-menu-container">
                     {menu}
@@ -130,7 +130,7 @@ MoorhenMainMenu.displayName = "MoorhenMainMenu";
 const MainMenuButton = (props: { icon: MoorhenSVG; label: string; onClick: () => void }) => {
     return (
         <button className="moorhen__main-menu-button" onClick={props.onClick}>
-            <MoorhenIcon moorhenSVG={props.icon} className="moorhen__icon__menu" alt={props.icon} />
+            <MoorhenIcon moorhenSVG={props.icon} className="moorhen__icon menu" alt={props.icon} />
             &nbsp;&nbsp;
             {props.label}
         </button>
