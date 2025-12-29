@@ -206,7 +206,7 @@ export default [
     rules: {
       // Jest specific rules
       ...pluginJest.configs.recommended.rules,
-      "jest/no-disabled-tests": "warn",
+      "jest/no-disabled-tests": "off",
       "jest/no-focused-tests": "error",
       "jest/no-identical-title": "error",
       "jest/prefer-to-have-length": "warn",
@@ -224,7 +224,7 @@ export default [
       "jest/expect-expect": "warn",
       "jest/prefer-to-be": "warn",
       "jest/prefer-to-contain": "warn",
-      "jest/prefer-strict-equal": "warn",
+      "jest/prefer-strict-equal": "off",
       
       // Relax some general rules for test files
       "max-lines": "off",
