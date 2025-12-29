@@ -20,6 +20,7 @@ type MoorhenButtonPropsTypeBase = {
     value?: string | number;
     id?: string;
     tooltip?: string | JSX.Element;
+    tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
 };
 
@@ -60,6 +61,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         children,
         tooltip = null,
         iconStyle = null,
+        tooltipPlacement,
     } = props;
 
     let size = props.size ? props.size : "medium";

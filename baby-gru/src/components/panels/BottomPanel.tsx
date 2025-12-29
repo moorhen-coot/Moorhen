@@ -1,5 +1,5 @@
-import { SequenceViewerPanel } from './SeqquenceViewerPanel/SequenceViewerPanel';
-import './side-panels.css';
+import { SequenceViewerPanel } from "./SequenceViewerPanel/SequenceViewerPanel";
+import "./side-panels.css";
 
 export const BottomPanelContainer = () => {
     return <SequenceViewerPanel />;

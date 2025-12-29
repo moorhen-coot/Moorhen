@@ -51,6 +51,10 @@
     border-radius: 1rem 0 0 1rem;
     cursor: pointer;
     color: var(--moorhen-primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .moorhen__panel-container-toggle-button.visible {
@@ -71,10 +75,5 @@
 
 .moorhen__panel-container-toggle-button:hover {
     box-shadow: var(--moorhen-focus-shadow) -5px 0px 5px;
-    /* rgba(240, 46, 170, 0.3) -10px 10px,
-        rgba(240, 46, 170, 0.2) -15px 15px,
-        rgba(240, 46, 170, 0.1) -20px 20px,
-        rgba(240, 46, 170, 0.05) -25px 25px; */
     border-color: var(--moorhen-focus);
-    /* border-right: none; */
 }

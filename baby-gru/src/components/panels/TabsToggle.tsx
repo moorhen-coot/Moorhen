@@ -19,12 +19,6 @@ export const TabsToggle = (props: TabsToggleProps) => {
     const dispatch = useDispatch();
     const isShown = useSelector((state: RootState) => state.globalUI.shownSidePanel === id);
     const [hovered, setHovered] = useState(false);
-    const verticalLabel = label?.split("").map((char, index) => (
-        <React.Fragment key={index}>
-            {char}
-            {index < label.length - 1 && <br />}
-        </React.Fragment>
-    ));
 
     return (
         <div className={`moorhen__panel-container-toggle-button ${isShown ? "visible" : ""}`}>

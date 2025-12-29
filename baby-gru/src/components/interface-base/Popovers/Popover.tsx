@@ -65,7 +65,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
                     calculatePosition("top");
                     setPopoverPlacement("top");
                     return;
-                } else if (placement === "right" && left - popoverRect.width < window.innerWidth) {
+                } else if (placement === "right" && left + popoverRect.width > window.innerWidth) {
                     calculatePosition("left");
                     setPopoverPlacement("left");
                     return;

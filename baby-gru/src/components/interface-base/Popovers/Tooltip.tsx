@@ -26,7 +26,7 @@ export const MoorhenTooltip = (props: ToolTipProps) => {
     };
 
     const popoverLink = (
-        <div style={{ all: "inherit" }} ref={linkRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div ref={linkRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             {children}
         </div>
     );
