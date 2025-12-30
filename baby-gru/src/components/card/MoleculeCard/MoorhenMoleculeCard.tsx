@@ -874,37 +874,33 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             icon="MUISymbolColors"
                             closeButton
                         >
-                            <MoorhenModifyColourRulesCard
-                                anchorEl={addColourRulesAnchorDivRef}
-                                urlPrefix={urlPrefix}
-                                commandCentre={commandCentre}
+                            <MoorhenModifyColourRulesCard molecule={props.molecule} />
+                        </MoorhenPopoverButton>
+                        <MoorhenPopoverButton
+                            style={{ height: "100%" }}
+                            type="default"
+                            popoverPlacement="left"
+                            closeButton
+                            icon="MUISymbolTune"
+                        >
+                            <MoorhenMoleculeRepresentationSettingsCard
+                                residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
+                                cylinderSettingsProps={cylinderSettingsProps}
+                                molSurfSettingsProps={molSurfSettingsProps}
+                                ribbonSettingsProps={ribbonSettingsProps}
+                                symmetrySettingsProps={symmetrySettingsProps}
+                                gaussianSettingsProps={gaussianSettingsProps}
+                                bondSettingsProps={bondSettingsProps}
                                 molecule={props.molecule}
-                                showColourRulesToast={showColourRulesModal}
-                                setShowColourRulesToast={setShowColourRulesModal}
                             />
                         </MoorhenPopoverButton>
-                        <MoorhenButton
-                            style={{ height: "100%" }}
-                            variant="light"
-                            onClick={() =>
-                                setShowCreateRepresentationSettingsModal(prev => {
-                                    return !prev;
-                                })
-                            }
-                        >
-                            <TuneOutlined />
-                        </MoorhenButton>
-                        <MoorhenButton
-                            style={{ height: "100%" }}
-                            variant="light"
-                            onClick={() =>
-                                setShowCreateCustomRepresentation(prev => {
-                                    return !prev;
-                                })
-                            }
-                        >
-                            <AddOutlined />
-                        </MoorhenButton>
+                        <MoorhenPopoverButton style={{ height: "100%" }} type="default" icon="MUISymbolAdd" popoverPlacement="left">
+                            <MoorhenAddCustomRepresentationCard
+                                setBusy={setBusyDrawingCustomRepresentation}
+                                urlPrefix={urlPrefix}
+                                molecule={props.molecule}
+                            />
+                        </MoorhenPopoverButton>
                     </div>
                 </div>
                 <MoorhenHeaderInfoCard
@@ -912,28 +908,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     molecule={props.molecule}
                     show={showHeaderInfo}
                     setShow={setShowHeaderInfo}
-                />
-                <MoorhenMoleculeRepresentationSettingsCard
-                    residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
-                    cylinderSettingsProps={cylinderSettingsProps}
-                    molSurfSettingsProps={molSurfSettingsProps}
-                    ribbonSettingsProps={ribbonSettingsProps}
-                    symmetrySettingsProps={symmetrySettingsProps}
-                    gaussianSettingsProps={gaussianSettingsProps}
-                    bondSettingsProps={bondSettingsProps}
-                    urlPrefix={urlPrefix}
-                    molecule={props.molecule}
-                    anchorEl={addColourRulesAnchorDivRef}
-                    show={showCreateRepresentationSettingsModal}
-                    setShow={setShowCreateRepresentationSettingsModal}
-                />
-                <MoorhenAddCustomRepresentationCard
-                    setBusy={setBusyDrawingCustomRepresentation}
-                    urlPrefix={urlPrefix}
-                    molecule={props.molecule}
-                    anchorEl={addColourRulesAnchorDivRef}
-                    show={showCreateCustomRepresentation}
-                    setShow={setShowCreateCustomRepresentation}
                 />
                 <div>
                     <MoorhenSequencesAccordion

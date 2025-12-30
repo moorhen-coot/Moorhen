@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 32 32">
-  <!-- Generator: Adobe Illustrator 29.7.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 8)  -->
-  <rect x="12.91" y=".89" width="5.87" height="29.72" rx="2.94" ry="2.94" style="fill: none; stroke: #231f20; stroke-miterlimit: 10;"/>
-  <path d="M21.43,25.94c0,3.05-2.43,5.53-5.43,5.53s-5.43-2.48-5.43-5.53c0-1.81.92-3.55,2.36-4.56.31-.22,1.49-1.02,3.07-.97,2.43.09,5.43,2.17,5.43,5.53Z" style="fill: #f14029ff; stroke: #231f20; stroke-miterlimit: 10;"/>
-  <rect x="13.89" y="10.75" width="3.89" height="12.85" style="fill: #f14029ff; stroke: #f14029ff; stroke-miterlimit: 10;"/>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" version="1.1" viewBox="0 0 32 32">
+  
+  <rect x="12.91" y=".89" width="5.87" height="29.72" rx="2.94" ry="2.94" style="fill: none; stroke: stroke-miterlimit: 10" />
+  <path d="M21.43,25.94c0,3.05-2.43,5.53-5.43,5.53s-5.43-2.48-5.43-5.53c0-1.81.92-3.55,2.36-4.56.31-.22,1.49-1.02,3.07-.97,2.43.09,5.43,2.17,5.43,5.53Z" style="fill: #f14029ff; stroke-miterlimit: 10" />
+  <rect x="13.89" y="10.75" width="3.89" height="12.85" style="fill: #f14029ff; stroke: #f14029ff; stroke-miterlimit: 10" />
 </svg>

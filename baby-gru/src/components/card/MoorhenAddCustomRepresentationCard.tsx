@@ -26,9 +26,6 @@ const customRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurfac
 
 export const MoorhenAddCustomRepresentationCard = memo(
     (props: {
-        setShow: React.Dispatch<React.SetStateAction<boolean>>;
-        show: boolean;
-        anchorEl: React.RefObject<HTMLDivElement>;
         molecule: moorhen.Molecule;
         urlPrefix: string;
         mode?: "add" | "edit";
@@ -397,8 +394,6 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     representation.setNonCustomOpacity(nonCustomAlpha);
                 }
             }
-
-            props.setShow(false);
             props.setBusy?.(false);
         };
 
@@ -437,35 +432,126 @@ export const MoorhenAddCustomRepresentationCard = memo(
         };
 
         return (
-            <Popover
-                onClose={() => props.setShow(false)}
-                open={props.show}
-                anchorEl={props.anchorEl.current}
-                anchorOrigin={{ vertical: "center", horizontal: "center" }}
-                transformOrigin={{ vertical: "center", horizontal: "center" }}
-                sx={{
-                    "& .MuiPaper-root": {
-                        backgroundColor: isDark ? "grey" : "white",
-                        marginTop: "0.1rem",
-                        borderRadius: "1rem",
-                        borderStyle: "solid",
-                        borderColor: "grey",
-                        borderWidth: "1px",
-                    },
-                }}
-            >
-                <MoorhenStack style={{ width: "25rem", margin: "0.5rem" }}>
-                    <MoorhenStack inputGrid>
-                        <MoorhenSelect
-                            ref={styleSelectRef}
-                            value={representationStyle}
-                            label={"Style"}
-                            onChange={evt => {
-                                setRepresentationStyle(evt.target.value as moorhen.RepresentationStyles);
-                                if (evt.target.value === "residue_environment") setRuleType("cid");
+            <MoorhenStack style={{ width: "25rem", margin: "0.5rem" }}>
+                <MoorhenStack inputGrid>
+                    <MoorhenSelect
+                        ref={styleSelectRef}
+                        value={representationStyle}
+                        label={"Style"}
+                        onChange={evt => {
+                            setRepresentationStyle(evt.target.value as moorhen.RepresentationStyles);
+                            if (evt.target.value === "residue_environment") setRuleType("cid");
+                        }}
+                    >
+                        {customRepresentations.map(key => {
+                            return (
+                                <option value={key} key={key}>
+                                    {representationLabelMapping[key]}
+                                </option>
+                            );
+                        })}
+                    </MoorhenSelect>
+                    <MoorhenSelect
+                        label={"Residue selection"}
+                        ref={ruleSelectRef}
+                        defaultValue={ruleType}
+                        onChange={val => setRuleType(val.target.value)}
+                    >
+                        {representationStyle === "residue_environment" ? (
+                            <>
+                                <option value={"cid"} key={"cid"}>
+                                    Atom selection
+                                </option>
+                            </>
+                        ) : (
+                            <>
+                                <option value={"molecule"} key={"molecule"}>
+                                    All molecule
+                                </option>
+                                <option value={"chain"} key={"chain"}>
+                                    Chain
+                                </option>
+                                <option value={"residue-range"} key={"residue-range"}>
+                                    Residue range
+                                </option>
+                                <option value={"cid"} key={"cid"}>
+                                    Atom selection
+                                </option>
+                            </>
+                        )}
+                    </MoorhenSelect>
+
+                    {ruleType === "cid" && (
+                        <MoorhenCidInputForm
+                            ref={cidFormRef}
+                            label="Atom selection"
+                            defaultValue={props.representation?.cid ?? ""}
+                            allowUseCurrentSelection={true}
+                        />
+                    )}
+                    {(ruleType === "chain" || ruleType === "residue-range") && (
+                        <MoorhenChainSelect
+                            molecules={molecules}
+                            onChange={evt => setSelectedChain(evt.target.value)}
+                            selectedCoordMolNo={props.molecule.molNo}
+                            ref={chainSelectRef}
+                            allowedTypes={[1, 2, 3, 4, 5]}
+                        />
+                    )}
+                </MoorhenStack>
+                {ruleType === "residue-range" ? (
+                    <>
+                        <MoorhenSequenceViewer
+                            style={{ marginTop: "1rem" }}
+                            sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
+                            onResiduesSelect={selection => {
+                                handleResiduesRangeSelection(selection);
                             }}
+                        />
+                    </>
+                ) : null}
+                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
+                    <MoorhenToggle
+                        ref={useDefaultRepresentationSettingsSwitchRef}
+                        type="switch"
+                        label={`Apply general representation settings`}
+                        checked={useDefaultRepresentationSettings}
+                        onChange={() => setUseDefaultRepresentationSettings(prev => !prev)}
+                    />
+                )}
+                {!useDefaultRepresentationSettings && representationStyle === "MolecularSurface" && (
+                    <MolSurfSettingsPanel {...molSurfSettingsProps} />
+                )}
+                {!useDefaultRepresentationSettings && representationStyle === "CRs" && <RibbonSettingsPanel {...ribbonSettingsProps} />}
+                {!useDefaultRepresentationSettings &&
+                    representationStyle !== "MetaBalls" &&
+                    COOT_BOND_REPRESENTATIONS.includes(representationStyle) && <BondSettingsPanel {...bondSettingsProps} />}
+                {!useDefaultRepresentationSettings && representationStyle === "residue_environment" && (
+                    <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
+                )}
+                {representationStyle === "residue_environment" && !useDefaultRepresentationSettings && (
+                    <MoorhenStack
+                        gap={1}
+                        direction="horizontal"
+                        style={{
+                            marginLeft: "0.1rem",
+                            marginRight: "0.1rem",
+                            paddingLeft: "1rem",
+                            paddingRight: "1rem",
+                            paddingTop: "0.5rem",
+                            paddingBottom: "0.5rem",
+                            borderStyle: "solid",
+                            borderWidth: "1px",
+                            borderColor: "grey",
+                            borderRadius: "1.5rem",
+                        }}
+                    >
+                        <MoorhenSelect
+                            ref={focusStyleSelectRef}
+                            defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? "CBs"}
+                            label={"Focus Style"}
                         >
-                            {customRepresentations.map(key => {
+                            {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
                                 return (
                                     <option value={key} key={key}>
                                         {representationLabelMapping[key]}
@@ -474,366 +560,257 @@ export const MoorhenAddCustomRepresentationCard = memo(
                             })}
                         </MoorhenSelect>
                         <MoorhenSelect
-                            label={"Residue selection"}
-                            ref={ruleSelectRef}
-                            defaultValue={ruleType}
-                            onChange={val => setRuleType(val.target.value)}
+                            ref={backgroundStyleSelectRef}
+                            defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? "CRs"}
+                            label={"Background Style"}
                         >
-                            {representationStyle === "residue_environment" ? (
-                                <>
-                                    <option value={"cid"} key={"cid"}>
-                                        Atom selection
+                            {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
+                                return (
+                                    <option value={key} key={key}>
+                                        {representationLabelMapping[key]}
                                     </option>
-                                </>
-                            ) : (
-                                <>
-                                    <option value={"molecule"} key={"molecule"}>
-                                        All molecule
-                                    </option>
-                                    <option value={"chain"} key={"chain"}>
-                                        Chain
-                                    </option>
-                                    <option value={"residue-range"} key={"residue-range"}>
-                                        Residue range
-                                    </option>
-                                    <option value={"cid"} key={"cid"}>
-                                        Atom selection
-                                    </option>
-                                </>
-                            )}
+                                );
+                            })}
                         </MoorhenSelect>
-
-                        {ruleType === "cid" && (
-                            <MoorhenCidInputForm
-                                ref={cidFormRef}
-                                label="Atom selection"
-                                defaultValue={props.representation?.cid ?? ""}
-                                allowUseCurrentSelection={true}
-                            />
-                        )}
-                        {(ruleType === "chain" || ruleType === "residue-range") && (
-                            <MoorhenChainSelect
-                                molecules={molecules}
-                                onChange={evt => setSelectedChain(evt.target.value)}
-                                selectedCoordMolNo={props.molecule.molNo}
-                                ref={chainSelectRef}
-                                allowedTypes={[1, 2, 3, 4, 5]}
-                            />
-                        )}
                     </MoorhenStack>
-                    {ruleType === "residue-range" ? (
-                        <>
-                            <MoorhenSequenceViewer
-                                style={{ marginTop: "1rem" }}
-                                sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                                onResiduesSelect={selection => {
-                                    handleResiduesRangeSelection(selection);
-                                }}
-                            />
-                        </>
-                    ) : null}
-                    {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
-                        <MoorhenToggle
-                            ref={useDefaultRepresentationSettingsSwitchRef}
-                            type="switch"
-                            label={`Apply general representation settings`}
-                            checked={useDefaultRepresentationSettings}
-                            onChange={() => setUseDefaultRepresentationSettings(prev => !prev)}
-                        />
-                    )}
-                    {!useDefaultRepresentationSettings && representationStyle === "MolecularSurface" && (
-                        <MolSurfSettingsPanel {...molSurfSettingsProps} />
-                    )}
-                    {!useDefaultRepresentationSettings && representationStyle === "CRs" && <RibbonSettingsPanel {...ribbonSettingsProps} />}
-                    {!useDefaultRepresentationSettings &&
-                        representationStyle !== "MetaBalls" &&
-                        COOT_BOND_REPRESENTATIONS.includes(representationStyle) && <BondSettingsPanel {...bondSettingsProps} />}
-                    {!useDefaultRepresentationSettings && representationStyle === "residue_environment" && (
-                        <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
-                    )}
-                    {representationStyle === "residue_environment" && !useDefaultRepresentationSettings && (
-                        <MoorhenStack
-                            gap={1}
-                            direction="horizontal"
-                            style={{
-                                marginLeft: "0.1rem",
-                                marginRight: "0.1rem",
-                                paddingLeft: "1rem",
-                                paddingRight: "1rem",
-                                paddingTop: "0.5rem",
-                                paddingBottom: "0.5rem",
-                                borderStyle: "solid",
-                                borderWidth: "1px",
-                                borderColor: "grey",
-                                borderRadius: "1.5rem",
-                            }}
-                        >
-                            <MoorhenSelect
-                                ref={focusStyleSelectRef}
-                                defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? "CBs"}
-                                label={"Focus Style"}
-                            >
-                                {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
-                                    return (
-                                        <option value={key} key={key}>
-                                            {representationLabelMapping[key]}
-                                        </option>
-                                    );
-                                })}
-                            </MoorhenSelect>
-                            <MoorhenSelect
-                                ref={backgroundStyleSelectRef}
-                                defaultValue={props.representation?.residueEnvironmentOptions.backgroundRepresentation ?? "CRs"}
-                                label={"Background Style"}
-                            >
-                                {["CBs", "CAs", "CRs", "MolecularSurface", "VdwSpheres"].map(key => {
-                                    return (
-                                        <option value={key} key={key}>
-                                            {representationLabelMapping[key]}
-                                        </option>
-                                    );
-                                })}
-                            </MoorhenSelect>
-                        </MoorhenStack>
-                    )}
+                )}
+                <MoorhenToggle
+                    ref={useDefaultColoursSwitchRef}
+                    type="switch"
+                    label="Apply general colour settings"
+                    checked={useDefaultColours}
+                    onChange={() => {
+                        setUseDefaultColours(prev => {
+                            return !prev;
+                        });
+                    }}
+                />
+                {["MetaBalls", "CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
                     <MoorhenToggle
-                        ref={useDefaultColoursSwitchRef}
+                        ref={applyColourToNonCarbonAtomsSwitchRef}
                         type="switch"
-                        label="Apply general colour settings"
-                        checked={useDefaultColours}
+                        label="Apply colour to non-carbon atoms also"
+                        checked={applyColourToNonCarbonAtoms}
                         onChange={() => {
-                            setUseDefaultColours(prev => {
+                            setApplyColourToNonCarbonAtoms(prev => {
                                 return !prev;
                             });
                         }}
                     />
-                    {["MetaBalls", "CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
-                        <MoorhenToggle
-                            ref={applyColourToNonCarbonAtomsSwitchRef}
-                            type="switch"
-                            label="Apply colour to non-carbon atoms also"
-                            checked={applyColourToNonCarbonAtoms}
-                            onChange={() => {
-                                setApplyColourToNonCarbonAtoms(prev => {
-                                    return !prev;
-                                });
-                            }}
-                        />
-                    )}
-                    {!useDefaultColours && (
-                        <>
-                            <MoorhenSelect ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
-                                <>
-                                    <option value={"custom"} key={"custom"}>
-                                        User defined colour
-                                    </option>
-                                    <option value={"secondary-structure"} key={"secondary-structure"}>
-                                        Secondary structure
-                                    </option>
-                                    <option value={"jones-rainbow"} key={"jones-rainbow"}>
-                                        Jones' rainbow
-                                    </option>
-                                    <option value={"b-factor"} key={"b-factor"}>
-                                        B-Factor
-                                    </option>
-                                    <option value={"b-factor-norm"} key={"b-factor-norm"}>
-                                        B-Factor (normalised)
-                                    </option>
-                                    <option value={"af2-plddt"} key={"af2-plddt"}>
-                                        AF2 PLDDT
-                                    </option>
-                                    <option value={"mol-symm"} key={"mol-symm"}>
-                                        Mol. Symmetry
-                                    </option>
-                                </>
-                                {representationStyle === "MolecularSurface" && (
-                                    <option value={"electrostatics"} key={"electrostatics"}>
-                                        Electrostatics
-                                    </option>
-                                )}
-                            </MoorhenSelect>
+                )}
+                {!useDefaultColours && (
+                    <>
+                        <MoorhenSelect ref={colourModeSelectRef} defaultValue={colourMode} onChange={handleColourModeChange}>
                             <>
-                                {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/temperature.svg`}
-                                        alt="b-factor"
+                                <option value={"custom"} key={"custom"}>
+                                    User defined colour
+                                </option>
+                                <option value={"secondary-structure"} key={"secondary-structure"}>
+                                    Secondary structure
+                                </option>
+                                <option value={"jones-rainbow"} key={"jones-rainbow"}>
+                                    Jones' rainbow
+                                </option>
+                                <option value={"b-factor"} key={"b-factor"}>
+                                    B-Factor
+                                </option>
+                                <option value={"b-factor-norm"} key={"b-factor-norm"}>
+                                    B-Factor (normalised)
+                                </option>
+                                <option value={"af2-plddt"} key={"af2-plddt"}>
+                                    AF2 PLDDT
+                                </option>
+                                <option value={"mol-symm"} key={"mol-symm"}>
+                                    Mol. Symmetry
+                                </option>
+                            </>
+                            {representationStyle === "MolecularSurface" && (
+                                <option value={"electrostatics"} key={"electrostatics"}>
+                                    Electrostatics
+                                </option>
+                            )}
+                        </MoorhenSelect>
+                        <>
+                            {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/temperature.svg`}
+                                    alt="b-factor"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            ) : colourMode === "secondary-structure" ? (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`}
+                                    alt="ss2"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            ) : colourMode === "electrostatics" ? (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/esurf.svg`}
+                                    alt="Electrostatic surface"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            ) : colourMode === "jones-rainbow" ? (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/jones_rainbow.svg`}
+                                    alt="ss2"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            ) : colourMode === "mol-symm" ? (
+                                mode === "edit" ? (
+                                    <NcsColourSwatch
                                         style={{
-                                            width: "30px",
-                                            height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
-                                            padding: 0,
-                                        }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
-                                    />
-                                ) : colourMode === "secondary-structure" ? (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/secondary-structure-grey.svg`}
-                                        alt="ss2"
-                                        style={{
-                                            width: "30px",
-                                            height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
-                                            padding: 0,
-                                        }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
-                                    />
-                                ) : colourMode === "electrostatics" ? (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/esurf.svg`}
-                                        alt="Electrostatic surface"
-                                        style={{
-                                            width: "30px",
-                                            height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
-                                            padding: 0,
-                                        }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
-                                    />
-                                ) : colourMode === "jones-rainbow" ? (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/jones_rainbow.svg`}
-                                        alt="ss2"
-                                        style={{
-                                            width: "30px",
-                                            height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
-                                            padding: 0,
-                                        }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
-                                    />
-                                ) : colourMode === "mol-symm" ? (
-                                    mode === "edit" ? (
-                                        <NcsColourSwatch
-                                            style={{
-                                                cursor: "pointer",
-                                                height: "30px",
-                                                width: "30px",
-                                                padding: "0px",
-                                                borderStyle: "solid",
-                                                borderColor: "#ced4da",
-                                                borderWidth: "3px",
-                                                borderRadius: "8px",
-                                            }}
-                                            rule={ncsColourRuleRef?.current}
-                                            applyColourChange={applyNcsColourChange}
-                                        />
-                                    ) : (
-                                        <GrainOutlined
-                                            style={{
-                                                height: "30px",
-                                                width: "30px",
-                                                padding: 0,
-                                                borderStyle: "solid",
-                                                borderColor: "#ced4da",
-                                                borderWidth: "3px",
-                                                borderRadius: "8px",
-                                            }}
-                                        />
-                                    )
-                                ) : colourMode === "custom" ? (
-                                    <div
-                                        style={{
-                                            display: colourMode === "custom" ? "flex" : "none",
-                                            width: "28px",
-                                            height: "28px",
-                                            borderRadius: "8px",
-                                            border: "3px solid #fff",
-                                            boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
                                             cursor: "pointer",
-                                            backgroundColor: colour,
+                                            height: "30px",
+                                            width: "30px",
+                                            padding: "0px",
+                                            borderStyle: "solid",
+                                            borderColor: "#ced4da",
+                                            borderWidth: "3px",
+                                            borderRadius: "8px",
                                         }}
-                                        onClick={() => setShowColourPicker(true)}
-                                        ref={colourSwatchRef}
+                                        rule={ncsColourRuleRef?.current}
+                                        applyColourChange={applyNcsColourChange}
                                     />
                                 ) : (
-                                    <img
-                                        className="colour-rule-icon"
-                                        src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`}
-                                        alt="ss2"
+                                    <GrainOutlined
                                         style={{
-                                            width: "30px",
                                             height: "30px",
-                                            borderRadius: "3px",
-                                            border: "1px solid #c9c9c9",
+                                            width: "30px",
                                             padding: 0,
+                                            borderStyle: "solid",
+                                            borderColor: "#ced4da",
+                                            borderWidth: "3px",
+                                            borderRadius: "8px",
                                         }}
-                                        ref={alphaSwatchRef}
-                                        onClick={() => setShowAlphaSlider(true)}
                                     />
-                                )}
-                            </>
-                            <Popover
-                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                open={!useDefaultColours && showAlphaSlider}
-                                onClose={() => setShowAlphaSlider(false)}
-                                anchorEl={alphaSwatchRef.current}
-                                sx={{
-                                    "& .MuiPaper-root": {
-                                        overflowY: "hidden",
+                                )
+                            ) : colourMode === "custom" ? (
+                                <div
+                                    style={{
+                                        display: colourMode === "custom" ? "flex" : "none",
+                                        width: "28px",
+                                        height: "28px",
                                         borderRadius: "8px",
-                                    },
-                                }}
-                            >
-                                <MoorhenSlider
-                                    minVal={0.0}
-                                    maxVal={1.0}
-                                    showButtons={false}
-                                    decimalPlaces={2}
-                                    logScale={false}
-                                    sliderTitle="Opacity"
-                                    externalValue={nonCustomOpacity}
-                                    setExternalValue={(newVal: number) => handleOpacityChange(newVal)}
+                                        border: "3px solid #fff",
+                                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
+                                        cursor: "pointer",
+                                        backgroundColor: colour,
+                                    }}
+                                    onClick={() => setShowColourPicker(true)}
+                                    ref={colourSwatchRef}
                                 />
-                            </Popover>
-                            <Popover
-                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                open={!useDefaultColours && showColourPicker}
-                                onClose={() => setShowColourPicker(false)}
-                                anchorEl={colourSwatchRef.current}
-                                sx={{
-                                    "& .MuiPaper-root": {
-                                        overflowY: "hidden",
-                                        borderRadius: "8px",
-                                    },
-                                }}
-                            >
-                                <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
-                                    <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
-                                        <HexAlphaColorPicker color={colour} onChange={color => setColour(color)} />
-                                    </div>
-                                    <div
-                                        style={{
-                                            padding: 0,
-                                            margin: 0,
-                                            justifyContent: "center",
-                                            display: "flex",
-                                            marginBottom: "2px",
-                                        }}
-                                    >
-                                        <div className="moorhen-hex-input-decorator">#</div>
-                                        <HexColorInput className="moorhen-hex-input" color={colour} onChange={color => setColour(color)} />
-                                    </div>
-                                </MoorhenStack>
-                            </Popover>
+                            ) : (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/alphafold_rainbow.svg`}
+                                    alt="ss2"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            )}
                         </>
-                    )}
-                    <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>
-                </MoorhenStack>
-            </Popover>
+                        <Popover
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                            transformOrigin={{ vertical: "top", horizontal: "left" }}
+                            open={!useDefaultColours && showAlphaSlider}
+                            onClose={() => setShowAlphaSlider(false)}
+                            anchorEl={alphaSwatchRef.current}
+                            sx={{
+                                "& .MuiPaper-root": {
+                                    overflowY: "hidden",
+                                    borderRadius: "8px",
+                                },
+                            }}
+                        >
+                            <MoorhenSlider
+                                minVal={0.0}
+                                maxVal={1.0}
+                                showButtons={false}
+                                decimalPlaces={2}
+                                logScale={false}
+                                sliderTitle="Opacity"
+                                externalValue={nonCustomOpacity}
+                                setExternalValue={(newVal: number) => handleOpacityChange(newVal)}
+                            />
+                        </Popover>
+                        <Popover
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                            transformOrigin={{ vertical: "top", horizontal: "left" }}
+                            open={!useDefaultColours && showColourPicker}
+                            onClose={() => setShowColourPicker(false)}
+                            anchorEl={colourSwatchRef.current}
+                            sx={{
+                                "& .MuiPaper-root": {
+                                    overflowY: "hidden",
+                                    borderRadius: "8px",
+                                },
+                            }}
+                        >
+                            <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
+                                <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
+                                    <HexAlphaColorPicker color={colour} onChange={color => setColour(color)} />
+                                </div>
+                                <div
+                                    style={{
+                                        padding: 0,
+                                        margin: 0,
+                                        justifyContent: "center",
+                                        display: "flex",
+                                        marginBottom: "2px",
+                                    }}
+                                >
+                                    <div className="moorhen-hex-input-decorator">#</div>
+                                    <HexColorInput className="moorhen-hex-input" color={colour} onChange={color => setColour(color)} />
+                                </div>
+                            </MoorhenStack>
+                        </Popover>
+                    </>
+                )}
+                <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>
+            </MoorhenStack>
         );
     }
 );

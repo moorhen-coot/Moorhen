@@ -1,4 +1,4 @@
-import { IconButton, Popover, Slider } from "@mui/material";
+import { Slider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { setRequestDrawScene } from "../../store/glRefSlice";
@@ -635,11 +635,7 @@ export const ResidueEnvironmentSettingsPanel = (props: {
 };
 
 export const MoorhenMoleculeRepresentationSettingsCard = (props: {
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    show: boolean;
-    anchorEl: React.RefObject<HTMLDivElement>;
     molecule: moorhen.Molecule;
-    urlPrefix: string;
     symmetrySettingsProps: {
         symmetryRadius: number;
         setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
@@ -718,44 +714,26 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     return (
-        <Popover
-            onClose={() => props.setShow(false)}
-            open={props.show}
-            anchorEl={props.anchorEl.current}
-            anchorOrigin={{ vertical: "center", horizontal: "center" }}
-            transformOrigin={{ vertical: "center", horizontal: "center" }}
-            sx={{
-                "& .MuiPaper-root": {
-                    backgroundColor: isDark ? "grey" : "white",
-                    marginTop: "0.1rem",
-                    borderRadius: "1rem",
-                    borderStyle: "solid",
-                    borderColor: "grey",
-                    borderWidth: "1px",
-                },
-            }}
-        >
-            <MoorhenStack gap={1} direction="horizontal">
-                <MoorhenStack
-                    gap={1}
-                    direction="vertical"
-                    style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
-                >
-                    <BondSettingsPanel {...props.bondSettingsProps} />
-                    <SurfaceSettingsPanel {...props.gaussianSettingsProps} />
-                    <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} />
-                    <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps} />
-                </MoorhenStack>
-                <MoorhenStack
-                    gap={1}
-                    direction="vertical"
-                    style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
-                >
-                    <RibbonSettingsPanel {...props.ribbonSettingsProps} />
-                    <MolSurfSettingsPanel {...props.molSurfSettingsProps} />
-                    <CylinderSettingsPanel {...props.cylinderSettingsProps} />
-                </MoorhenStack>
+        <MoorhenStack gap={1} direction="horizontal">
+            <MoorhenStack
+                gap={1}
+                direction="vertical"
+                style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
+            >
+                <BondSettingsPanel {...props.bondSettingsProps} />
+                <SurfaceSettingsPanel {...props.gaussianSettingsProps} />
+                <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} />
+                <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps} />
             </MoorhenStack>
-        </Popover>
+            <MoorhenStack
+                gap={1}
+                direction="vertical"
+                style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
+            >
+                <RibbonSettingsPanel {...props.ribbonSettingsProps} />
+                <MolSurfSettingsPanel {...props.molSurfSettingsProps} />
+                <CylinderSettingsPanel {...props.cylinderSettingsProps} />
+            </MoorhenStack>
+        </MoorhenStack>
     );
 };

@@ -16,6 +16,7 @@ type MoorhenColourPickerBase = {
     onOpen?: () => void;
     tooltip?: string;
     onApply?: (colour: RGBAColour) => void;
+    style?: React.CSSProperties;
 };
 
 type MoorhenColourPickerSingle = MoorhenColourPickerBase & {
@@ -60,7 +61,6 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                     setShowColourPicker(true);
                 }}
                 style={{
-                    marginLeft: "0.5rem",
                     width: "25px",
                     height: "25px",
                     minWidth: "25px",
@@ -73,6 +73,7 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                     backgroundImage: colour2
                         ? `linear-gradient(135deg, rgb(${colour[0]}, ${colour[1]}, ${colour[2]}) 49%, white 49%, white 51%, rgb(${colour2[0]}, ${colour2[1]}, ${colour2[2]}) 51%)`
                         : "none",
+                    ...props.style,
                 }}
             />
         </MoorhenTooltip>

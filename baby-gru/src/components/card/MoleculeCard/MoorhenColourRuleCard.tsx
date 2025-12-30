@@ -109,11 +109,10 @@ export const MoorhenColourRuleCard = (props: {
     molecule: moorhen.Molecule;
     index: number;
     rule: ColourRule;
-    urlPrefix: string;
     setRuleList: any;
     reversedOrder: boolean;
 }) => {
-    const { index, molecule, rule, urlPrefix, setRuleList, reversedOrder } = props;
+    const { index, molecule, rule, setRuleList, reversedOrder } = props;
 
     const busyRedrawing = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
@@ -151,14 +150,9 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} />
-                    ) : rule.ruleType === "secondary-structure" ? (
-                        <img
-                            className="colour-rule-icon"
-                            src={`${urlPrefix}/pixmaps/secondary-structure-grey.svg`}
-                            alt="ss2"
-                            style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
-                        />
+                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                    ) : rule.propertyType === "secondary-structure" ? (
+                        <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (
                         <>
                             <div

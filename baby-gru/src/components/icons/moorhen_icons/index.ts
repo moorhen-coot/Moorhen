@@ -12,6 +12,7 @@ import MUISymbolFileOpen from "./MUISymbolFileOpen.svg"
 import temperature from "./temperature.svg"
 import MoorhenLogo from "./MoorhenLogo.svg"
 import MUISymbolVisibility from "./MUISymbolVisibility.svg"
+import SecondaryStructure from "./SecondaryStructure.svg"
 import MUISymbolKeyboardArrowDown from "./MUISymbolKeyboardArrowDown.svg"
 import minus from "./minus.svg"
 import MUISymbolRedo from "./MUISymbolRedo.svg"
@@ -41,6 +42,7 @@ import MUISymbolClose from "./MUISymbolClose.svg"
 import MUISymbolColors from "./MUISymbolColors.svg"
 import resizable from "./resizable.svg"
 import MUISymbolFactCheck from "./MUISymbolFactCheck.svg"
+import MUISymbolTune from "./MUISymbolTune.svg"
 import MUISymbolToggle from "./MUISymbolToggle.svg"
 import MUISymbolExpand from "./MUISymbolExpand.svg"
 import MUISymbolVisibilityOff from "./MUISymbolVisibilityOff.svg"
@@ -65,6 +67,7 @@ export const moorhenSVGs = {"MUISymbolTiltShiftFilter": MUISymbolTiltShiftFilter
  "temperature": temperature,
  "MoorhenLogo": MoorhenLogo,
  "MUISymbolVisibility": MUISymbolVisibility,
+ "SecondaryStructure": SecondaryStructure,
  "MUISymbolKeyboardArrowDown": MUISymbolKeyboardArrowDown,
  "minus": minus,
  "MUISymbolRedo": MUISymbolRedo,
@@ -94,6 +97,7 @@ export const moorhenSVGs = {"MUISymbolTiltShiftFilter": MUISymbolTiltShiftFilter
  "MUISymbolColors": MUISymbolColors,
  "resizable": resizable,
  "MUISymbolFactCheck": MUISymbolFactCheck,
+ "MUISymbolTune": MUISymbolTune,
  "MUISymbolToggle": MUISymbolToggle,
  "MUISymbolExpand": MUISymbolExpand,
  "MUISymbolVisibilityOff": MUISymbolVisibilityOff,
@@ -119,6 +123,7 @@ export type MoorhenSVG = "MUISymbolTiltShiftFilter" |
  "temperature" |
  "MoorhenLogo" |
  "MUISymbolVisibility" |
+ "SecondaryStructure" |
  "MUISymbolKeyboardArrowDown" |
  "minus" |
  "MUISymbolRedo" |
@@ -148,6 +153,7 @@ export type MoorhenSVG = "MUISymbolTiltShiftFilter" |
  "MUISymbolColors" |
  "resizable" |
  "MUISymbolFactCheck" |
+ "MUISymbolTune" |
  "MUISymbolToggle" |
  "MUISymbolExpand" |
  "MUISymbolVisibilityOff" |
