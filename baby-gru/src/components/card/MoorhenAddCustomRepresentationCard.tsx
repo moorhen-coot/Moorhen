@@ -14,7 +14,7 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
-import { NcsColourSwatch } from "./MoorhenColourRuleCard";
+import { NcsColourSwatch } from "./MoleculeCard/MoorhenColourRuleCard";
 import {
     BondSettingsPanel,
     MolSurfSettingsPanel,

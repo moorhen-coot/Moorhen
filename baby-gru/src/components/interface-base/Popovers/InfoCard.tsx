@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { JSX, useRef, useState } from "react";
 import { MoorhenPopover } from "..";
 import { MoorhenIcon } from "../../icons";
 
-type InfoCardProps = { infoText: string; popoverPlacement?: "left" | "right" | "top" | "bottom" };
+type InfoCardProps = { infoText: string | JSX.Element; popoverPlacement?: "left" | "right" | "top" | "bottom" };
 
 export const MoorhenInfoCard = (props: InfoCardProps) => {
     const { popoverPlacement = "top" } = props;

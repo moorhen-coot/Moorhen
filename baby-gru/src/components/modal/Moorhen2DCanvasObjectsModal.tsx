@@ -937,13 +937,12 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         <MoorhenStack direction="line">
                             <label>Colour</label>
                             <MoorhenColourPicker
-                                colour={existingColour !== null ? existingColour : [1, 0, 0]}
-                                setColourWithAlpha={color => {
+                                colour={existingColour !== null ? existingColour : [1, 0, 0, selectedAlpha]}
+                                setColour={color => {
                                     setSelectedAlpha(color[3]);
                                     handleColorChange(rgbToHex(color[0], color[1], color[2]) + componentToHex(Math.floor(color[3] * 255)));
                                 }}
                                 useAlpha={true}
-                                alpha={selectedAlpha}
                                 position="bottom"
                                 tooltip="Change colour"
                             />
@@ -976,7 +975,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                         <label></label>
                                         <MoorhenColourPicker
                                             colour={col}
-                                            setColourWithAlpha={color => {
+                                            setColour={color => {
                                                 updateObject(
                                                     {
                                                         gradientStops: [
@@ -1001,7 +1000,6 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                    */
                                             }}
                                             useAlpha={true}
-                                            alpha={alpha}
                                             position="bottom"
                                             tooltip="Change colour"
                                         />

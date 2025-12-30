@@ -2,6 +2,7 @@ import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { MoorhenButton } from "@/components/inputs";
 import { useMoorhenInstance } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
@@ -18,9 +19,10 @@ type MoorhenPopoverType = {
     setIsShown: (arg0: boolean) => void;
     overridePopoverSize?: { width: number; height: number };
     allowAutoFlip?: boolean;
+    closeButton?: boolean;
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
-    const { popoverContent = null, isShown, type = "default", overridePopoverSize = null, allowAutoFlip = true } = props;
+    const { popoverContent = null, isShown, type = "default", overridePopoverSize = null, allowAutoFlip = true, closeButton } = props;
 
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverStyle, setPopoverStyle] = useState({});
@@ -101,19 +103,25 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     const containerRef = useMoorhenInstance().getContainerRef();
 
-    const popover = (
+    const container = (
+        <div
+            className={type === "tooltip" ? "moorhen__tooltip" : `moorhen__menu-item-popover ${arrow}`}
+            style={popoverStyle}
+            ref={popoverRef}
+            data-theme={isDark ? "dark" : "light"}
+        >
+            {closeButton && (
+                <MoorhenButton type="icon-only" onClick={() => props.setIsShown(false)} icon="MUISymbolClose" variant="danger" />
+            )}
+            {popoverContent || props.children}
+        </div>
+    );
+    const popover = closeButton ? (
+        createPortal(container, containerRef.current)
+    ) : (
         <>
             {createPortal(
-                <ClickAwayListener onClickAway={() => props.setIsShown(false)}>
-                    <div
-                        className={type === "tooltip" ? "moorhen__tooltip" : `moorhen__menu-item-popover ${arrow}`}
-                        style={popoverStyle}
-                        ref={popoverRef}
-                        data-theme={isDark ? "dark" : "light"}
-                    >
-                        {popoverContent || props.children}
-                    </div>
-                </ClickAwayListener>,
+                <ClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</ClickAwayListener>,
                 containerRef.current
             )}
         </>

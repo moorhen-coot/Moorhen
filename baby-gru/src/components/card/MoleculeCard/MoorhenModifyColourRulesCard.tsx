@@ -1,17 +1,16 @@
-import { Popover } from "@mui/material";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector } from "react-redux";
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../../utils/MoorhenColourRule";
-import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
+import { useCommandCentre } from "../../../InstanceManager";
+import { moorhen } from "../../../types/moorhen";
+import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../../utils/utils";
+import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../../inputs";
+import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
+import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
+import { MoorhenColorSwatch } from "../../misc/MoorhenColorSwatch";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
 import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard";
 
 type colourRuleChange = {
@@ -91,6 +90,7 @@ export const MoorhenModifyColourRulesCard = memo(
         const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
         const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+        const [reverseListOrder, setReverseListOrder] = useState<boolean>(true);
 
         const handleChainChange = evt => {
             setSelectedChain(evt.target.value);
@@ -194,6 +194,7 @@ export const MoorhenModifyColourRulesCard = memo(
                 newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre, true);
                 newRule.setParentMolecule(props.molecule);
                 newRule.setArgs([ruleArgs]);
+                newRule.propertyType = colourProperty;
                 newRule.setLabel(
                     `${
                         colourProperty === "secondary-structure"
@@ -248,161 +249,150 @@ export const MoorhenModifyColourRulesCard = memo(
             "#795548",
             "#607d8b",
         ];
+
+        const colourRuleCards = ruleList.map((rule, index) => (
+            <MoorhenColourRuleCard
+                key={rule.uniqueId}
+                molecule={props.molecule}
+                urlPrefix={props.urlPrefix}
+                rule={rule}
+                index={index}
+                setRuleList={setRuleList}
+                reversedOrder={reverseListOrder}
+            />
+        ));
         return (
-            <Popover
-                onClose={() => props.setShowColourRulesToast(false)}
-                open={props.showColourRulesToast}
-                anchorEl={props.anchorEl.current}
-                anchorOrigin={{ vertical: "center", horizontal: "center" }}
-                transformOrigin={{ vertical: "center", horizontal: "center" }}
-                sx={{
-                    "& .MuiPaper-root": {
-                        backgroundColor: isDark ? "grey" : "white",
-                        borderRadius: "1rem",
-                        marginTop: "0.1rem",
-                        borderStyle: "solid",
-                        borderColor: "grey",
-                        borderWidth: "1px",
-                    },
-                }}
-            >
-                <MoorhenStack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem" }}>
-                    <MoorhenStack gap={2} direction="horizontal" style={{ margin: 0, padding: 0 }}>
-                        <MoorhenStack
-                            gap={2}
-                            direction="vertical"
-                            style={{
-                                margin: 0,
-                                padding: 0,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
-                                <option value={"molecule"} key={"molecule"}>
-                                    By molecule
-                                </option>
-                                <option value={"chain"} key={"chain"}>
-                                    By chain
-                                </option>
-                                <option value={"residue-range"} key={"residue-range"}>
-                                    By residue range
-                                </option>
-                                <option value={"cid"} key={"cid"}>
-                                    By atom selection
-                                </option>
-                                <option value={"property"} key={"property"}>
-                                    By property
-                                </option>
-                            </MoorhenSelect>
-                            {(ruleType === "chain" || ruleType === "residue-range") && (
-                                <MoorhenChainSelect
-                                    width="100%"
-                                    margin={"0px"}
-                                    molecules={molecules}
-                                    onChange={handleChainChange}
-                                    selectedCoordMolNo={props.molecule.molNo}
-                                />
-                            )}
-                            {ruleType === "cid" && (
-                                <MoorhenCidInputForm
-                                    allowUseCurrentSelection={true}
-                                    margin={"0px"}
-                                    width="100%"
-                                    onChange={handleResidueCidChange}
-                                    ref={cidFormRef}
-                                />
-                            )}
-                            {ruleType === "property" && (
-                                <MoorhenSelect
-                                    label={"Property"}
-                                    defaultValue={"b-factor"}
-                                    onChange={val => setColourProperty(val.target.value)}
-                                >
-                                    <option value={"mol-symm"} key={"mol-symm"}>
-                                        Mol. Symmetry
-                                    </option>
-                                    <option value={"secondary-structure"} key={"secondary-structure"}>
-                                        Secondary structure
-                                    </option>
-                                    <option value={"jones-rainbow"} key={"jones-rainbow"}>
-                                        Jones' rainbow
-                                    </option>
-                                    <option value={"b-factor"} key={"b-factor"}>
-                                        B-Factor
-                                    </option>
-                                    <option value={"b-factor-norm"} key={"b-factor-norm"}>
-                                        B-Factor (normalised)
-                                    </option>
-                                    <option value={"af2-plddt"} key={"af2-plddt"}>
-                                        AF2 PLDDT
-                                    </option>
-                                </MoorhenSelect>
-                            )}
-                            <MoorhenButton onClick={createRule} style={{ margin: "0px", width: "100%" }}>
-                                Add rule
-                            </MoorhenButton>
-                        </MoorhenStack>
-                        {ruleType !== "property" && (
-                            <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
-                                <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
-                                    <HexAlphaColorPicker color={selectedColour} onChange={handleColorChange} />
-                                </div>
-                                <div
-                                    style={{
-                                        padding: "0.5rem",
-                                        margin: 0,
-                                        justifyContent: "center",
-                                        display: "flex",
-                                        backgroundColor: "#e3e1e1",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <MoorhenColorSwatch cols={swatchCols} size={13} columns={9} onClick={handleColourCircleClick} />
-                                </div>
-                                <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
-                                    <div className="moorhen-hex-input-decorator">#</div>
-                                    <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={handleColorChange} />
-                                </div>
-                            </MoorhenStack>
-                        )}
-                    </MoorhenStack>
-                    {ruleType === "residue-range" && (
-                        <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
-                            <MoorhenSequenceViewer
-                                sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                                onResiduesSelect={selection => handleResiduesSelection(selection)}
-                                maxDisplayHeight={1}
-                            />
-                        </div>
-                    )}
-                    <hr style={{ width: "100%" }}></hr>
-                    <div
-                        className="hide-scrolling"
+            <MoorhenStack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem", width: "450px" }}>
+                <MoorhenStack gap={"0.5rem"} direction="horizontal" style={{ margin: 0, padding: 0 }}>
+                    <MoorhenStack
+                        gap={"0.5rem"}
+                        direction="vertical"
+                        inputGrid
                         style={{
-                            width: "100%",
-                            padding: "0.2rem",
-                            maxHeight: convertViewtoPx(20, height),
-                            overflowY: "auto",
-                            textAlign: "center",
+                            margin: 0,
+                            padding: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
                         }}
                     >
-                        {ruleList.length === 0
-                            ? "No rules created yet"
-                            : ruleList.map((rule, index) => (
-                                  <MoorhenColourRuleCard
-                                      key={index}
-                                      molecule={props.molecule}
-                                      urlPrefix={props.urlPrefix}
-                                      rule={rule}
-                                      index={index}
-                                      setRuleList={setRuleList}
-                                  />
-                              ))}
-                    </div>
+                        <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
+                            <option value={"molecule"} key={"molecule"}>
+                                By molecule
+                            </option>
+                            <option value={"chain"} key={"chain"}>
+                                By chain
+                            </option>
+                            <option value={"residue-range"} key={"residue-range"}>
+                                By residue range
+                            </option>
+                            <option value={"cid"} key={"cid"}>
+                                By atom selection
+                            </option>
+                            <option value={"property"} key={"property"}>
+                                By property
+                            </option>
+                        </MoorhenSelect>
+                        {(ruleType === "chain" || ruleType === "residue-range") && (
+                            <MoorhenChainSelect
+                                width="100%"
+                                margin={"0px"}
+                                molecules={molecules}
+                                onChange={handleChainChange}
+                                selectedCoordMolNo={props.molecule.molNo}
+                            />
+                        )}
+                        {ruleType === "cid" && (
+                            <MoorhenCidInputForm
+                                allowUseCurrentSelection={true}
+                                margin={"0px"}
+                                width="100%"
+                                onChange={handleResidueCidChange}
+                                ref={cidFormRef}
+                            />
+                        )}
+                        {ruleType === "property" && (
+                            <MoorhenSelect
+                                label={"Property"}
+                                defaultValue={"b-factor"}
+                                onChange={val => setColourProperty(val.target.value)}
+                            >
+                                <option value={"mol-symm"} key={"mol-symm"}>
+                                    Mol. Symmetry
+                                </option>
+                                <option value={"secondary-structure"} key={"secondary-structure"}>
+                                    Secondary structure
+                                </option>
+                                <option value={"jones-rainbow"} key={"jones-rainbow"}>
+                                    Jones' rainbow
+                                </option>
+                                <option value={"b-factor"} key={"b-factor"}>
+                                    B-Factor
+                                </option>
+                                <option value={"b-factor-norm"} key={"b-factor-norm"}>
+                                    B-Factor (normalised)
+                                </option>
+                                <option value={"af2-plddt"} key={"af2-plddt"}>
+                                    AF2 PLDDT
+                                </option>
+                            </MoorhenSelect>
+                        )}
+                        <MoorhenButton onClick={createRule} style={{ margin: "0px", width: "100%" }}>
+                            Add rule
+                        </MoorhenButton>
+                    </MoorhenStack>
+                    {ruleType !== "property" && (
+                        <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
+                            <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
+                                <HexAlphaColorPicker color={selectedColour} onChange={handleColorChange} />
+                            </div>
+                            <div
+                                style={{
+                                    padding: "0.5rem",
+                                    margin: 0,
+                                    justifyContent: "center",
+                                    display: "flex",
+                                    backgroundColor: "#e3e1e1",
+                                    borderRadius: "8px",
+                                }}
+                            >
+                                <MoorhenColorSwatch cols={swatchCols} size={13} columns={9} onClick={handleColourCircleClick} />
+                            </div>
+                            <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
+                                <div className="moorhen-hex-input-decorator">#</div>
+                                <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={handleColorChange} />
+                            </div>
+                        </MoorhenStack>
+                    )}
                 </MoorhenStack>
-            </Popover>
+                {ruleType === "residue-range" && (
+                    <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
+                        <MoorhenSequenceViewer
+                            sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
+                            onResiduesSelect={selection => handleResiduesSelection(selection)}
+                            maxDisplayHeight={1}
+                        />
+                    </div>
+                )}
+                <hr style={{ width: "100%" }}></hr>
+                <MoorhenStack direction="row" align="center" justify="flex-start" gap={"0.5rem"}>
+                    {"Colour Rules List"}
+                    <MoorhenInfoCard
+                        infoText={
+                            <span>
+                                List of colour rules.
+                                <br /> Colour rules are applied in order: a rule that cover the whole object in a singular color applied
+                                last will overwrite every over rules, applied first it will be the background colour of the molecule. <br />{" "}
+                                Reverse Show the last applied or most important rule first.
+                            </span>
+                        }
+                    />
+                    <MoorhenToggle label={"Reverse"} checked={reverseListOrder} onChange={() => setReverseListOrder(!reverseListOrder)} />
+                </MoorhenStack>
+                <MoorhenStack direction="column" style={{ width: "90%", maxHeight: "20rem", overflow: "auto" }}>
+                    {ruleList.length === 0 ? "No rules created yet" : reverseListOrder ? colourRuleCards.reverse() : colourRuleCards}
+                </MoorhenStack>
+            </MoorhenStack>
         );
     }
 );

@@ -11,20 +11,25 @@ type MoorhenPopoverButtonType = {
     popoverPlacement?: "left" | "right" | "top" | "bottom";
     children?: React.ReactNode;
     tooltip?: string;
+    type?: "icon-only" | "default";
+    style?: React.CSSProperties;
+    closeButton?: boolean;
 };
+
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     const [popoverIsShown, setPopOverIsShown] = useState<boolean>(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
-    const { tooltip = null } = props;
+    const { tooltip = null, type = "icon-only", style, popoverPlacement = "top", closeButton = false } = props;
 
     const popOverLink = (
         <MoorhenButton
-            type="icon-only"
+            type={type}
             icon={props.icon ? props.icon : "MUISymbolSettings"}
             size={props.size}
             ref={buttonRef}
             onClick={() => setPopOverIsShown(!popoverIsShown)}
             tooltip={tooltip}
+            style={style}
         />
     );
 
@@ -34,8 +39,9 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             linkRef={buttonRef}
             isShown={popoverIsShown}
             popoverContent={props.children}
-            popoverPlacement={props.popoverPlacement}
+            popoverPlacement={popoverPlacement}
             setIsShown={setPopOverIsShown}
+            closeButton={closeButton}
         />
     );
 };

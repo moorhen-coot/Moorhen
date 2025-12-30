@@ -2,92 +2,13 @@ import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined, GrainOutlin
 import { Popover } from "@mui/material";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useRef, useState } from "react";
-import { moorhen } from "../../types/moorhen";
-import type { ColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
-import { MoorhenStack } from "../interface-base";
-
-const ColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void }) => {
-    const colourSwatchRef = useRef<null | HTMLDivElement>(null);
-    const newHexValueRef = useRef<string>("");
-
-    const { rule, applyColourChange } = props;
-
-    const [hex, setHex] = useState<string>(rule.color);
-    const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
-
-    const handleClick = () => {
-        try {
-            rule.color = newHexValueRef.current;
-            if (!rule.isMultiColourRule) rule.args[1] = rule.color;
-            applyColourChange();
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
-
-    const handleColorChange = (color: string) => {
-        try {
-            newHexValueRef.current = color;
-            setHex(color);
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
-
-    return (
-        <>
-            <div
-                ref={colourSwatchRef}
-                onClick={() => setShowColourPicker(true)}
-                style={{
-                    marginLeft: "0.5rem",
-                    marginRight: "0.5rem",
-                    width: "23px",
-                    height: "23px",
-                    borderRadius: "8px",
-                    border: "3px solid #fff",
-                    boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
-                    cursor: "pointer",
-                    backgroundColor: `${rule.color}`,
-                }}
-            />
-            <Popover
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                open={showColourPicker}
-                onClose={() => setShowColourPicker(false)}
-                anchorEl={colourSwatchRef.current}
-                sx={{
-                    "& .MuiPaper-root": {
-                        overflowY: "hidden",
-                        borderRadius: "8px",
-                    },
-                }}
-            >
-                <div
-                    style={{
-                        padding: "0.5rem",
-                        width: "100%",
-                        margin: 0,
-                        justifyContent: "center",
-                        display: "flex",
-                        flexDirection: "column",
-                    }}
-                >
-                    <HexAlphaColorPicker color={hex} onChange={handleColorChange} />
-                    <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                        <div className="moorhen-hex-input-decorator">#</div>
-                        <HexColorInput className="moorhen-hex-input" color={hex} onChange={handleColorChange} />
-                    </div>
-                    <MoorhenButton style={{ marginTop: "0.2rem" }} onClick={handleClick}>
-                        Apply
-                    </MoorhenButton>
-                </div>
-            </Popover>
-        </>
-    );
-};
+import { MoorhenIcon } from "@/components/icons";
+import { hexToRGB, rgbToHex } from "@/utils/utils";
+import { moorhenSVGs } from "../../../../tsDist/src/components/icons/moorhen_icons/index";
+import { moorhen } from "../../../types/moorhen";
+import type { ColourRule } from "../../../utils/MoorhenColourRule";
+import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect } from "../../inputs";
+import { MoorhenPopover, MoorhenStack } from "../../interface-base";
 
 export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
     const ncsSwatchRef = useRef(null);
@@ -118,41 +39,10 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
 
     return (
         <>
-            <GrainOutlined
-                ref={ncsSwatchRef}
-                onClick={() => {
-                    setShowColourPicker(true);
-                    const hex = (rule.args[0] as string).split("|")[0].split("^")[1];
-                    setHex(hex);
-                }}
-                style={
-                    props.style
-                        ? props.style
-                        : {
-                              cursor: "pointer",
-                              height: "23px",
-                              width: "23px",
-                              marginLeft: "0.5rem",
-                              marginRight: "0.5rem",
-                              borderStyle: "solid",
-                              borderColor: "#ced4da",
-                              borderWidth: "3px",
-                              borderRadius: "8px",
-                          }
-                }
-            />
-            <Popover
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
-                open={showColourPicker}
-                onClose={() => setShowColourPicker(false)}
-                anchorEl={ncsSwatchRef.current}
-                sx={{
-                    "& .MuiPaper-root": {
-                        overflowY: "hidden",
-                        borderRadius: "8px",
-                    },
-                }}
+            <MoorhenPopoverButton
+                popoverPlacement="top"
+                icon="MUISymbolGrain"
+                style={{ border: "1px solid var(--moorhen-border)", borderRadius: "0.5rem" }}
             >
                 <div
                     style={{
@@ -210,7 +100,7 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
                         Apply
                     </MoorhenButton>
                 </div>
-            </Popover>
+            </MoorhenPopoverButton>
         </>
     );
 };
@@ -221,11 +111,13 @@ export const MoorhenColourRuleCard = (props: {
     rule: ColourRule;
     urlPrefix: string;
     setRuleList: any;
+    reversedOrder: boolean;
 }) => {
+    const { index, molecule, rule, urlPrefix, setRuleList, reversedOrder } = props;
+
     const busyRedrawing = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
-
-    const { index, molecule, rule, urlPrefix, setRuleList } = props;
+    const [colour, setColour] = useState(hexToRGB(rule.color));
 
     const redrawIfDirty = () => {
         if (isDirty.current) {
@@ -238,6 +130,18 @@ export const MoorhenColourRuleCard = (props: {
         }
     };
 
+    const handleColourChangeDefault = (color: [number, number, number]) => {
+        console.log(rule.color);
+        rule.color = rgbToHex(color[0], color[1], color[2]);
+        console.log(rule.color);
+        if (!rule.isMultiColourRule) rule.args[1] = rule.color;
+        isDirty.current = true;
+        if (!busyRedrawing.current) {
+            redrawIfDirty();
+        }
+        setColour(color);
+    };
+
     return (
         <>
             <MoorhenStack align="center" inputGrid>
@@ -247,15 +151,7 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <ColourSwatch
-                            rule={rule}
-                            applyColourChange={() => {
-                                isDirty.current = true;
-                                if (!busyRedrawing.current) {
-                                    redrawIfDirty();
-                                }
-                            }}
-                        />
+                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} />
                     ) : rule.ruleType === "secondary-structure" ? (
                         <img
                             className="colour-rule-icon"
@@ -263,7 +159,7 @@ export const MoorhenColourRuleCard = (props: {
                             alt="ss2"
                             style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
                         />
-                    ) : rule.ruleType === "jones-rainbow" ? (
+                    ) : rule.propertyType === "jones-rainbow" ? (
                         <>
                             <div
                                 style={{
@@ -310,7 +206,7 @@ export const MoorhenColourRuleCard = (props: {
                                 }}
                             />
                         </>
-                    ) : rule.ruleType === "mol-symm" ? (
+                    ) : rule.propertyType === "mol-symm" ? (
                         <NcsColourSwatch
                             rule={rule}
                             applyColourChange={() => {
@@ -320,13 +216,8 @@ export const MoorhenColourRuleCard = (props: {
                                 }
                             }}
                         />
-                    ) : rule.ruleType === "b-factor" || rule.ruleType === "b-factor-norm" ? (
-                        <img
-                            className="colour-rule-icon"
-                            src={`${urlPrefix}/pixmaps/temperature.svg`}
-                            alt="b-factor"
-                            style={{ height: "28px", width: "`12px", margin: "0.1rem" }}
-                        />
+                    ) : rule.propertyType === "b-factor" || rule.ruleType === "b-factor-norm" ? (
+                        <MoorhenIcon moorhenSVG="temperature" size="medium" />
                     ) : (
                         <>
                             <div
@@ -379,7 +270,7 @@ export const MoorhenColourRuleCard = (props: {
                         size="sm"
                         style={{ margin: "0.1rem" }}
                         onClick={() => {
-                            setRuleList({ action: "MoveUp", item: rule });
+                            setRuleList({ action: reversedOrder ? "MoveDown" : "MoveUp", item: rule });
                         }}
                         tooltip="Move Up"
                     >
@@ -389,7 +280,7 @@ export const MoorhenColourRuleCard = (props: {
                         size="sm"
                         style={{ margin: "0.1rem" }}
                         onClick={() => {
-                            setRuleList({ action: "MoveDown", item: rule });
+                            setRuleList({ action: reversedOrder ? "MoveUp" : "MoveDown", item: rule });
                         }}
                         tooltip="Move Down"
                     >

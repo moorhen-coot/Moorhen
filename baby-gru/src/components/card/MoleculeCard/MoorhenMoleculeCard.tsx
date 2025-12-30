@@ -14,9 +14,9 @@ import { MoorhenAccordion, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresentationCard";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
-import { MoorhenModifyColourRulesCard } from "../MoorhenModifyColourRulesCard";
 import { MoorhenMoleculeRepresentationSettingsCard } from "../MoorhenMoleculeRepresentationSettingsCard";
 import { ItemName } from "../utils/ItemName";
+import { MoorhenModifyColourRulesCard } from "./MoorhenModifyColourRulesCard";
 import { CustomRepresentationChip, RepresentationCheckbox } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
@@ -867,17 +867,22 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         </div>
                     </MoorhenStack>
                     <div className="moorhen__molecule_card_representation-buttons">
-                        <MoorhenButton
+                        <MoorhenPopoverButton
+                            type="default"
                             style={{ height: "100%" }}
-                            variant="light"
-                            onClick={() =>
-                                setShowColourRulesModal(prev => {
-                                    return !prev;
-                                })
-                            }
+                            popoverPlacement="left"
+                            icon="MUISymbolColors"
+                            closeButton
                         >
-                            <FormatColorFillOutlined />
-                        </MoorhenButton>
+                            <MoorhenModifyColourRulesCard
+                                anchorEl={addColourRulesAnchorDivRef}
+                                urlPrefix={urlPrefix}
+                                commandCentre={commandCentre}
+                                molecule={props.molecule}
+                                showColourRulesToast={showColourRulesModal}
+                                setShowColourRulesToast={setShowColourRulesModal}
+                            />
+                        </MoorhenPopoverButton>
                         <MoorhenButton
                             style={{ height: "100%" }}
                             variant="light"
@@ -921,14 +926,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     anchorEl={addColourRulesAnchorDivRef}
                     show={showCreateRepresentationSettingsModal}
                     setShow={setShowCreateRepresentationSettingsModal}
-                />
-                <MoorhenModifyColourRulesCard
-                    anchorEl={addColourRulesAnchorDivRef}
-                    urlPrefix={urlPrefix}
-                    commandCentre={commandCentre}
-                    molecule={props.molecule}
-                    showColourRulesToast={showColourRulesModal}
-                    setShowColourRulesToast={setShowColourRulesModal}
                 />
                 <MoorhenAddCustomRepresentationCard
                     setBusy={setBusyDrawingCustomRepresentation}
