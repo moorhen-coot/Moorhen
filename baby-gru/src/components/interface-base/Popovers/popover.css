@@ -34,7 +34,7 @@
 }
 
 .moorhen__menu-item-popover.top-arrow::after {
-    left: 50%;
+    left: var(--popover-arrow-left, 50%);
     top: -0.7rem;
     right: auto;
     transform: translateX(-50%);
@@ -43,7 +43,7 @@
 }
 
 .moorhen__menu-item-popover.bottom-arrow::after {
-    left: 50%;
+    left: var(--popover-arrow-left, 50%);
     top: auto;
     bottom: -0.7rem;
     right: auto;

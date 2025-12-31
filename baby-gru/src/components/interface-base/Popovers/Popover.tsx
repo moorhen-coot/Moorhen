@@ -71,17 +71,24 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
                     calculatePosition("left");
                     setPopoverPlacement("left");
                     return;
+                } else if (placement === "left" && left < 0) {
+                    calculatePosition("right");
+                    setPopoverPlacement("right");
+                    return;
                 }
             }
 
-            const clampedTop = Math.max(0, top);
-            const arrowPos = top < 0 ? `calc(50% + ${top}px)` : `50%`;
+            const clampedTop = Math.min(Math.max(0, top), window.innerHeight - popoverRect.height);
+            const clampedLeft = Math.min(Math.max(0, left), window.innerWidth - popoverRect.width);
+            const arrowTopPos = `calc(50% + ${top - clampedTop}px)`;
+            const arrowLeftPos = `calc(50% + ${left - clampedLeft}px`;
             setPopoverStyle({
                 position: "absolute",
                 top: clampedTop,
-                left: left,
+                left: clampedLeft,
                 zIndex: 10999,
-                "--popover-arrow-top": arrowPos,
+                "--popover-arrow-top": arrowTopPos,
+                "--popover-arrow-left": arrowLeftPos,
             });
         }
     };
