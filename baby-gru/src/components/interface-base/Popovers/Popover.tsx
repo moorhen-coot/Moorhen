@@ -58,7 +58,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             }
 
             // Flip the popover to the other side if it's out of screen
-            if (!overridePosition && allowAutoFlip) {
+            if (overridePosition === null && allowAutoFlip) {
                 if (placement === "top" && top < 0) {
                     calculatePosition("bottom");
                     setPopoverPlacement("bottom");

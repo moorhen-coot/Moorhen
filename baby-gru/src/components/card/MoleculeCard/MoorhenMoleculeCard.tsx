@@ -910,13 +910,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     setShow={setShowHeaderInfo}
                 />
                 <div>
-                    <MoorhenSequencesAccordion
+                    {/* <MoorhenSequencesAccordion
                         setBusy={setBusyLoadingSequences}
                         molecule={props.molecule}
                         clickedResidue={clickedResidue}
                         setClickedResidue={setClickedResidue}
                         setSelectedResidues={setSelectedResidues}
-                    />
+                    /> */}
                     {/* TODO: add the loading spinners */}
                     <MoorhenAccordion title="Ligands">
                         <MoorhenLigandList
