@@ -1,165 +1,168 @@
-import MUISymbolTiltShiftFilter from "./MUISymbolTiltShiftFilter.svg"
-import MUISymbolCheckedBox from "./MUISymbolCheckedBox.svg"
-import MUISymbolLockOpen from "./MUISymbolLockOpen.svg"
-import MUISymbolExperiment from "./MUISymbolExperiment.svg"
-import MUISymbolSearch from "./MUISymbolSearch.svg"
-import MUISymbolHelp from "./MUISymbolHelp.svg"
+import MatSymHistory from "./MatSymHistory.svg"
+import MatSymTiltShiftFilter from "./MatSymTiltShiftFilter.svg"
+import MatSymFileDownload from "./MatSymFileDownload.svg"
+import MatSymConstruction from "./MatSymConstruction.svg"
+import MatSymLockOpen from "./MatSymLockOpen.svg"
+import MatSymExpand from "./MatSymExpand.svg"
 import vanillin from "./vanillin.svg"
-import MUISymbolCollapse from "./MUISymbolCollapse.svg"
-import MUISymbolRadioButtonUnchecked from "./MUISymbolRadioButtonUnchecked.svg"
+import MatSymFilterFocus from "./MatSymFilterFocus.svg"
+import MatSymClose from "./MatSymClose.svg"
+import MatSymExperiment from "./MatSymExperiment.svg"
+import MatSymSearch from "./MatSymSearch.svg"
 import menuMaps from "./menuMaps.svg"
-import MUISymbolFileOpen from "./MUISymbolFileOpen.svg"
+import MatSymArrowRight from "./MatSymArrowRight.svg"
+import MatSymSettings from "./MatSymSettings.svg"
+import MatSymCheckedBox from "./MatSymCheckedBox.svg"
+import MatSymToggle from "./MatSymToggle.svg"
 import temperature from "./temperature.svg"
+import MatSymColors from "./MatSymColors.svg"
+import MatSymGrain from "./MatSymGrain.svg"
 import MoorhenLogo from "./MoorhenLogo.svg"
-import MUISymbolVisibility from "./MUISymbolVisibility.svg"
+import MatSymArrowDownward from "./MatSymArrowDownward.svg"
 import SecondaryStructure from "./SecondaryStructure.svg"
-import MUISymbolKeyboardArrowDown from "./MUISymbolKeyboardArrowDown.svg"
+import MatSymKeyboardArrowDown from "./MatSymKeyboardArrowDown.svg"
+import MatSymVisibility from "./MatSymVisibility.svg"
+import MatSymFactCheck from "./MatSymFactCheck.svg"
+import MatSymCheckBox from "./MatSymCheckBox.svg"
 import minus from "./minus.svg"
-import MUISymbolRedo from "./MUISymbolRedo.svg"
-import MUISymbolFilterFocus from "./MUISymbolFilterFocus.svg"
-import MUISymbolDoubleArrowDown from "./MUISymbolDoubleArrowDown.svg"
-import MUISymbolArrowRight from "./MUISymbolArrowRight.svg"
-import MUISymbolGrain from "./MUISymbolGrain.svg"
-import MUISymbolUndo from "./MUISymbolUndo.svg"
-import MUISymbolSettings from "./MUISymbolSettings.svg"
-import MUISymbolRadioButtonChecked from "./MUISymbolRadioButtonChecked.svg"
-import MUISymbolAdd from "./MUISymbolAdd.svg"
-import MUISymbolRemove from "./MUISymbolRemove.svg"
-import MUISymbolProgressActivity from "./MUISymbolProgressActivity.svg"
+import MatSymRadioButtonChecked from "./MatSymRadioButtonChecked.svg"
+import MatSymCalculate from "./MatSymCalculate.svg"
+import MatSymCollapse from "./MatSymCollapse.svg"
+import MatSymUndo from "./MatSymUndo.svg"
+import MatSymHelp from "./MatSymHelp.svg"
+import MatSymAdd from "./MatSymAdd.svg"
+import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
+import MatSymMenu from "./MatSymMenu.svg"
+import MatSymProgressActivity from "./MatSymProgressActivity.svg"
+import MatSymLockClose from "./MatSymLockClose.svg"
+import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
+import MatSymTune from "./MatSymTune.svg"
+import MatSymDoubleArrowDown from "./MatSymDoubleArrowDown.svg"
+import MatSymEdit from "./MatSymEdit.svg"
 import ligand from "./ligand.svg"
-import MUISymbolMenu from "./MUISymbolMenu.svg"
+import MatSymArrowLeft from "./MatSymArrowLeft.svg"
+import MatSymDelete from "./MatSymDelete.svg"
 import plus from "./plus.svg"
-import MUISymbolArrowLeft from "./MUISymbolArrowLeft.svg"
-import MUISymbolConstruction from "./MUISymbolConstruction.svg"
-import MUISymbolFileDownload from "./MUISymbolFileDownload.svg"
-import MUISymbolCalculate from "./MUISymbolCalculate.svg"
-import MUISymbolEdit from "./MUISymbolEdit.svg"
-import MUISymbolArrowDownward from "./MUISymbolArrowDownward.svg"
-import MUISymbolHistory from "./MUISymbolHistory.svg"
+import MatSymDoubleArrowUp from "./MatSymDoubleArrowUp.svg"
 import menuModels from "./menuModels.svg"
-import MUISymbolDownload from "./MUISymbolDownload.svg"
-import MUISymbolClose from "./MUISymbolClose.svg"
-import MUISymbolColors from "./MUISymbolColors.svg"
 import resizable from "./resizable.svg"
-import MUISymbolFactCheck from "./MUISymbolFactCheck.svg"
-import MUISymbolTune from "./MUISymbolTune.svg"
-import MUISymbolToggle from "./MUISymbolToggle.svg"
-import MUISymbolExpand from "./MUISymbolExpand.svg"
-import MUISymbolVisibilityOff from "./MUISymbolVisibilityOff.svg"
-import MUISymbolArrowUpward from "./MUISymbolArrowUpward.svg"
-import MUISymbolInfo from "./MUISymbolInfo.svg"
-import MUISymbolDoubleArrowUp from "./MUISymbolDoubleArrowUp.svg"
-import MUISymbolLockClose from "./MUISymbolLockClose.svg"
-import MUISymbolCheckBox from "./MUISymbolCheckBox.svg"
+import MatSymInfo from "./MatSymInfo.svg"
+import MatSymArrowUpward from "./MatSymArrowUpward.svg"
+import MatSymFileOpen from "./MatSymFileOpen.svg"
+import MatSymRedo from "./MatSymRedo.svg"
+import MatSymRemove from "./MatSymRemove.svg"
+import MatSymDownload from "./MatSymDownload.svg"
 import menuLigands from "./menuLigands.svg"
 
-export const moorhenSVGs = {"MUISymbolTiltShiftFilter": MUISymbolTiltShiftFilter,
- "MUISymbolCheckedBox": MUISymbolCheckedBox,
- "MUISymbolLockOpen": MUISymbolLockOpen,
- "MUISymbolExperiment": MUISymbolExperiment,
- "MUISymbolSearch": MUISymbolSearch,
- "MUISymbolHelp": MUISymbolHelp,
+export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
+ "MatSymTiltShiftFilter": MatSymTiltShiftFilter,
+ "MatSymFileDownload": MatSymFileDownload,
+ "MatSymConstruction": MatSymConstruction,
+ "MatSymLockOpen": MatSymLockOpen,
+ "MatSymExpand": MatSymExpand,
  "vanillin": vanillin,
- "MUISymbolCollapse": MUISymbolCollapse,
- "MUISymbolRadioButtonUnchecked": MUISymbolRadioButtonUnchecked,
+ "MatSymFilterFocus": MatSymFilterFocus,
+ "MatSymClose": MatSymClose,
+ "MatSymExperiment": MatSymExperiment,
+ "MatSymSearch": MatSymSearch,
  "menuMaps": menuMaps,
- "MUISymbolFileOpen": MUISymbolFileOpen,
+ "MatSymArrowRight": MatSymArrowRight,
+ "MatSymSettings": MatSymSettings,
+ "MatSymCheckedBox": MatSymCheckedBox,
+ "MatSymToggle": MatSymToggle,
  "temperature": temperature,
+ "MatSymColors": MatSymColors,
+ "MatSymGrain": MatSymGrain,
  "MoorhenLogo": MoorhenLogo,
- "MUISymbolVisibility": MUISymbolVisibility,
+ "MatSymArrowDownward": MatSymArrowDownward,
  "SecondaryStructure": SecondaryStructure,
- "MUISymbolKeyboardArrowDown": MUISymbolKeyboardArrowDown,
+ "MatSymKeyboardArrowDown": MatSymKeyboardArrowDown,
+ "MatSymVisibility": MatSymVisibility,
+ "MatSymFactCheck": MatSymFactCheck,
+ "MatSymCheckBox": MatSymCheckBox,
  "minus": minus,
- "MUISymbolRedo": MUISymbolRedo,
- "MUISymbolFilterFocus": MUISymbolFilterFocus,
- "MUISymbolDoubleArrowDown": MUISymbolDoubleArrowDown,
- "MUISymbolArrowRight": MUISymbolArrowRight,
- "MUISymbolGrain": MUISymbolGrain,
- "MUISymbolUndo": MUISymbolUndo,
- "MUISymbolSettings": MUISymbolSettings,
- "MUISymbolRadioButtonChecked": MUISymbolRadioButtonChecked,
- "MUISymbolAdd": MUISymbolAdd,
- "MUISymbolRemove": MUISymbolRemove,
- "MUISymbolProgressActivity": MUISymbolProgressActivity,
+ "MatSymRadioButtonChecked": MatSymRadioButtonChecked,
+ "MatSymCalculate": MatSymCalculate,
+ "MatSymCollapse": MatSymCollapse,
+ "MatSymUndo": MatSymUndo,
+ "MatSymHelp": MatSymHelp,
+ "MatSymAdd": MatSymAdd,
+ "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
+ "MatSymMenu": MatSymMenu,
+ "MatSymProgressActivity": MatSymProgressActivity,
+ "MatSymLockClose": MatSymLockClose,
+ "MatSymVisibilityOff": MatSymVisibilityOff,
+ "MatSymTune": MatSymTune,
+ "MatSymDoubleArrowDown": MatSymDoubleArrowDown,
+ "MatSymEdit": MatSymEdit,
  "ligand": ligand,
- "MUISymbolMenu": MUISymbolMenu,
+ "MatSymArrowLeft": MatSymArrowLeft,
+ "MatSymDelete": MatSymDelete,
  "plus": plus,
- "MUISymbolArrowLeft": MUISymbolArrowLeft,
- "MUISymbolConstruction": MUISymbolConstruction,
- "MUISymbolFileDownload": MUISymbolFileDownload,
- "MUISymbolCalculate": MUISymbolCalculate,
- "MUISymbolEdit": MUISymbolEdit,
- "MUISymbolArrowDownward": MUISymbolArrowDownward,
- "MUISymbolHistory": MUISymbolHistory,
+ "MatSymDoubleArrowUp": MatSymDoubleArrowUp,
  "menuModels": menuModels,
- "MUISymbolDownload": MUISymbolDownload,
- "MUISymbolClose": MUISymbolClose,
- "MUISymbolColors": MUISymbolColors,
  "resizable": resizable,
- "MUISymbolFactCheck": MUISymbolFactCheck,
- "MUISymbolTune": MUISymbolTune,
- "MUISymbolToggle": MUISymbolToggle,
- "MUISymbolExpand": MUISymbolExpand,
- "MUISymbolVisibilityOff": MUISymbolVisibilityOff,
- "MUISymbolArrowUpward": MUISymbolArrowUpward,
- "MUISymbolInfo": MUISymbolInfo,
- "MUISymbolDoubleArrowUp": MUISymbolDoubleArrowUp,
- "MUISymbolLockClose": MUISymbolLockClose,
- "MUISymbolCheckBox": MUISymbolCheckBox,
+ "MatSymInfo": MatSymInfo,
+ "MatSymArrowUpward": MatSymArrowUpward,
+ "MatSymFileOpen": MatSymFileOpen,
+ "MatSymRedo": MatSymRedo,
+ "MatSymRemove": MatSymRemove,
+ "MatSymDownload": MatSymDownload,
  "menuLigands": menuLigands,
  }
 
-export type MoorhenSVG = "MUISymbolTiltShiftFilter" |
- "MUISymbolCheckedBox" |
- "MUISymbolLockOpen" |
- "MUISymbolExperiment" |
- "MUISymbolSearch" |
- "MUISymbolHelp" |
+export type MoorhenSVG = "MatSymHistory" |
+ "MatSymTiltShiftFilter" |
+ "MatSymFileDownload" |
+ "MatSymConstruction" |
+ "MatSymLockOpen" |
+ "MatSymExpand" |
  "vanillin" |
- "MUISymbolCollapse" |
- "MUISymbolRadioButtonUnchecked" |
+ "MatSymFilterFocus" |
+ "MatSymClose" |
+ "MatSymExperiment" |
+ "MatSymSearch" |
  "menuMaps" |
- "MUISymbolFileOpen" |
+ "MatSymArrowRight" |
+ "MatSymSettings" |
+ "MatSymCheckedBox" |
+ "MatSymToggle" |
  "temperature" |
+ "MatSymColors" |
+ "MatSymGrain" |
  "MoorhenLogo" |
- "MUISymbolVisibility" |
+ "MatSymArrowDownward" |
  "SecondaryStructure" |
- "MUISymbolKeyboardArrowDown" |
+ "MatSymKeyboardArrowDown" |
+ "MatSymVisibility" |
+ "MatSymFactCheck" |
+ "MatSymCheckBox" |
  "minus" |
- "MUISymbolRedo" |
- "MUISymbolFilterFocus" |
- "MUISymbolDoubleArrowDown" |
- "MUISymbolArrowRight" |
- "MUISymbolGrain" |
- "MUISymbolUndo" |
- "MUISymbolSettings" |
- "MUISymbolRadioButtonChecked" |
- "MUISymbolAdd" |
- "MUISymbolRemove" |
- "MUISymbolProgressActivity" |
+ "MatSymRadioButtonChecked" |
+ "MatSymCalculate" |
+ "MatSymCollapse" |
+ "MatSymUndo" |
+ "MatSymHelp" |
+ "MatSymAdd" |
+ "MatSymRadioButtonUnchecked" |
+ "MatSymMenu" |
+ "MatSymProgressActivity" |
+ "MatSymLockClose" |
+ "MatSymVisibilityOff" |
+ "MatSymTune" |
+ "MatSymDoubleArrowDown" |
+ "MatSymEdit" |
  "ligand" |
- "MUISymbolMenu" |
+ "MatSymArrowLeft" |
+ "MatSymDelete" |
  "plus" |
- "MUISymbolArrowLeft" |
- "MUISymbolConstruction" |
- "MUISymbolFileDownload" |
- "MUISymbolCalculate" |
- "MUISymbolEdit" |
- "MUISymbolArrowDownward" |
- "MUISymbolHistory" |
+ "MatSymDoubleArrowUp" |
  "menuModels" |
- "MUISymbolDownload" |
- "MUISymbolClose" |
- "MUISymbolColors" |
  "resizable" |
- "MUISymbolFactCheck" |
- "MUISymbolTune" |
- "MUISymbolToggle" |
- "MUISymbolExpand" |
- "MUISymbolVisibilityOff" |
- "MUISymbolArrowUpward" |
- "MUISymbolInfo" |
- "MUISymbolDoubleArrowUp" |
- "MUISymbolLockClose" |
- "MUISymbolCheckBox" |
+ "MatSymInfo" |
+ "MatSymArrowUpward" |
+ "MatSymFileOpen" |
+ "MatSymRedo" |
+ "MatSymRemove" |
+ "MatSymDownload" |
  "menuLigands"

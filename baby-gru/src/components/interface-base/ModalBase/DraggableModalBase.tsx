@@ -382,11 +382,11 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         {collapse ? null : additionalHeaderButtons?.map(button => button)}
                         <MoorhenButton
                             type="icon-only"
-                            icon={collapse ? "MUISymbolAdd" : "MUISymbolRemove"}
+                            icon={collapse ? "MatSymAdd" : "MatSymRemove"}
                             size="small"
                             onClick={() => setCollapse(!collapse)}
                         />
-                        {showCloseButton && <MoorhenButton type="icon-only" icon="MUISymbolClose" size="small" onClick={handleClose} />}
+                        {showCloseButton && <MoorhenButton type="icon-only" icon="MatSymClose" size="small" onClick={handleClose} />}
                     </div>
                 </div>
                 <div

@@ -38,14 +38,14 @@ export const TabsToggle = (props: TabsToggleProps) => {
                     <MoorhenIcon
                         size="medium"
                         isActive={true}
-                        moorhenSVG={!isShown ? "MUISymbolArrowLeft" : "MUISymbolArrowRight"}
+                        moorhenSVG={!isShown ? "MatSymArrowLeft" : "MatSymArrowRight"}
                         hover={hovered}
                     />
                     {icon && <MoorhenIcon size="medium" isActive={true} moorhenSVG={icon} hover={hovered} />}
                     {showHintLabel && <div className="moorhen__panel-container-toggle-button-hint-label">{label}</div>}
                 </MoorhenStack>
             </button>
-            <MoorhenButton type="icon-only" size="medium" icon="MUISymbolClose" onClick={() => props.onDelete(id)} variant="danger" />
+            <MoorhenButton type="icon-only" size="medium" icon="MatSymClose" onClick={() => props.onDelete(id)} variant="danger" />
         </div>
     );
 };

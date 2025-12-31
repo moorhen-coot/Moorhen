@@ -103,7 +103,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             handleOriginLockClick();
                         }}
                         disabled={!props.mapIsVisible}
-                        icon={isOriginLocked ? "MUISymbolLockClose" : "MUISymbolLockOpen"}
+                        icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
                     >
                         <span
                             style={{

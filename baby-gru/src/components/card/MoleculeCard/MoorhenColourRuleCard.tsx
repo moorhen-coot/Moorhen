@@ -41,7 +41,7 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
         <>
             <MoorhenPopoverButton
                 popoverPlacement="top"
-                icon="MUISymbolGrain"
+                icon="MatSymGrain"
                 style={{ border: "1px solid var(--moorhen-border)", borderRadius: "0.5rem" }}
             >
                 <div

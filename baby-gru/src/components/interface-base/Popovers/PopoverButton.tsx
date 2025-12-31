@@ -24,7 +24,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     const popOverLink = (
         <MoorhenButton
             type={type}
-            icon={props.icon ? props.icon : "MUISymbolSettings"}
+            icon={props.icon ? props.icon : "MatSymSettings"}
             size={props.size}
             ref={buttonRef}
             onClick={() => setPopOverIsShown(!popoverIsShown)}

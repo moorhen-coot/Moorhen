@@ -12,7 +12,7 @@ export const PanelsList: Partial<Record<PanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
     models: { icon: "menuModels", label: "Models", panelContent: <ModelsPanel /> },
     sceneSettings: {
-        icon: "MUISymbolVisibility",
+        icon: "MatSymVisibility",
         label: "SceneSettings",
         panelContent: <MoorhenSceneSettings stackDirection="vertical" />,
     },

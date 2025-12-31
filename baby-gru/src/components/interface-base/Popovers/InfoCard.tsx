@@ -10,7 +10,7 @@ export const MoorhenInfoCard = (props: InfoCardProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const popOverLink = (
         <MoorhenIcon
-            moorhenSVG="MUISymbolInfo"
+            moorhenSVG="MatSymInfo"
             size="small"
             ref={buttonRef}
             onMouseEnter={() => setPopOverIsShown(true)}

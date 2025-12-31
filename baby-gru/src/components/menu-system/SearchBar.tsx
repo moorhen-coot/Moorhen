@@ -67,7 +67,7 @@ export const MoorhenSearchBar = () => {
     if (!open) {
         return (
             <div className={`moorhen__search-bar-closed`}>
-                <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} size="medium" />
+                <MoorhenButton type="icon-only" icon="MatSymSearch" onClick={handleClick} size="medium" />
             </div>
         );
     }
@@ -75,7 +75,7 @@ export const MoorhenSearchBar = () => {
         <ClickAwayListener onClickAway={handleClick}>
             <div>
                 <div className={`moorhen__search-bar-open`}>
-                    <MoorhenButton type="icon-only" icon="MUISymbolSearch" onClick={handleClick} size="medium" />
+                    <MoorhenButton type="icon-only" icon="MatSymSearch" onClick={handleClick} size="medium" />
                     {open && (
                         <input
                             ref={inputRef}

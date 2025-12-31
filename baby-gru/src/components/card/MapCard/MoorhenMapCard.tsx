@@ -144,7 +144,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const extraControls: React.JSX.Element[] = [
         <MoorhenButton
             key="visibility"
-            icon={`${mapIsVisible ? "MUISymbolVisibility" : "MUISymbolVisibilityOff"}`}
+            icon={`${mapIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}`}
             onClick={handleVisibility}
             type="icon-only"
             size="accordion"
@@ -153,7 +153,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         <MoorhenButton
             key="centre on map"
             type="icon-only"
-            icon={`MUISymbolTiltShiftFilter`}
+            icon={`MatSymTiltShiftFilter`}
             onClick={() => {
                 props.map.centreOnMap();
             }}
@@ -163,7 +163,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         <MoorhenButton
             key="download"
             type="icon-only"
-            icon={`MUISymbolDownload`}
+            icon={`MatSymDownload`}
             onClick={handleDownload}
             size="accordion"
             tooltip="Save model file"
@@ -183,7 +183,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         type="toggle"
                         checked={props.map === activeMap}
                         onClick={() => dispatch(setActiveMap(props.map))}
-                        icon={props.map === activeMap ? "MUISymbolRadioButtonChecked" : "MUISymbolRadioButtonUnchecked"}
+                        icon={props.map === activeMap ? "MatSymRadioButtonChecked" : "MatSymRadioButtonUnchecked"}
                     >
                         {props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     </MoorhenButton>

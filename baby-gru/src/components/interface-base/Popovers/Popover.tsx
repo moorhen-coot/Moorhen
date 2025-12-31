@@ -110,9 +110,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             ref={popoverRef}
             data-theme={isDark ? "dark" : "light"}
         >
-            {closeButton && (
-                <MoorhenButton type="icon-only" onClick={() => props.setIsShown(false)} icon="MUISymbolClose" variant="danger" />
-            )}
+            {closeButton && <MoorhenButton type="icon-only" onClick={() => props.setIsShown(false)} icon="MatSymClose" variant="danger" />}
             {popoverContent || props.children}
         </div>
     );

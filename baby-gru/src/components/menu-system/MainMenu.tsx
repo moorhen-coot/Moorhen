@@ -110,9 +110,9 @@ export const MoorhenMainMenu = memo(() => {
             <div className="moorhen__main-menu">
                 <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                     {isOpen ? (
-                        <MoorhenIcon moorhenSVG={`MUISymbolClose`} className="moorhen__icon menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MatSymClose`} className="moorhen__icon menu" alt="Menu" />
                     ) : (
-                        <MoorhenIcon moorhenSVG={`MUISymbolMenu`} className="moorhen__icon menu" alt="Menu" />
+                        <MoorhenIcon moorhenSVG={`MatSymMenu`} className="moorhen__icon menu" alt="Menu" />
                     )}
                     &nbsp;&nbsp;
                     <MoorhenIcon moorhenSVG={`MoorhenLogo`} alt="Maps" className="moorhen__main-logo" />

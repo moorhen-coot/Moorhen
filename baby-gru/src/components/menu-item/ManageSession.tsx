@@ -111,7 +111,7 @@ export const ManageSession = () => {
                     setText={setSessionName}
                     button={true}
                     onClick={getSession}
-                    icon="MUISymbolFileDownload"
+                    icon="MatSymFileDownload"
                     style={{ width: "85%", marginLeft: "0", paddingLeft: "0" }}
                     id="text-input-session"
                 />

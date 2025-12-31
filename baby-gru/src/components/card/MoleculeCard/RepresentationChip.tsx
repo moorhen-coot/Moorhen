@@ -2,7 +2,8 @@ import { DeleteOutlined, EditOutlined } from "@mui/icons-material";
 import { Box, Chip, CircularProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
-import { MoorhenPopoverButton } from "@/components/inputs";
+import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
+import { MoorhenStack } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { addGeneralRepresentation, removeCustomRepresentation, removeGeneralRepresentation } from "../../../store/moleculesSlice";
@@ -63,8 +64,8 @@ export const CustomRepresentationChip = (props: {
                     representation.cid.length > 21 ? `${representation.cid.slice(0, 20)} ...` : representation.cid
                 }`}
                 deleteIcon={
-                    <div>
-                        <MoorhenPopoverButton icon="MUISymbolEdit">
+                    <MoorhenStack align="center" direction="row">
+                        <MoorhenPopoverButton icon="MatSymEdit">
                             <MoorhenAddCustomRepresentationCard
                                 mode="edit"
                                 urlPrefix={urlPrefix}
@@ -72,8 +73,8 @@ export const CustomRepresentationChip = (props: {
                                 representation={props.representation}
                             />
                         </MoorhenPopoverButton>
-                        <DeleteOutlined style={{ color: isDark ? "white" : "#696969" }} onClick={handleDelete} />
-                    </div>
+                        <MoorhenButton type="icon-only" icon="MatSymDelete" size="medium" onClick={handleDelete} />
+                    </MoorhenStack>
                 }
                 onClick={handleVisibility}
                 onDelete={() => {}}

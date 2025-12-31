@@ -468,13 +468,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     const leftButtonsBar =
         seqLength > displayHeight ? (
             <div className="moorhen__seqviewer-updown-buttons-bar">
-                <MoorhenButton type="icon-only" icon="MUISymbolArrowUpward" onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} />
-                <MoorhenButton
-                    type="icon-only"
-                    icon="MUISymbolArrowDownward"
-                    onMouseDown={() => startScrollUp(+1)}
-                    onMouseUp={stopScroll}
-                />
+                <MoorhenButton type="icon-only" icon="MatSymArrowUpward" onMouseDown={() => startScrollUp(-1)} onMouseUp={stopScroll} />
+                <MoorhenButton type="icon-only" icon="MatSymArrowDownward" onMouseDown={() => startScrollUp(+1)} onMouseUp={stopScroll} />
                 {/* {seqLength > 1 ? (
                 <>
                     <div onClick={() => handleChangeDisplaySize(1)}>

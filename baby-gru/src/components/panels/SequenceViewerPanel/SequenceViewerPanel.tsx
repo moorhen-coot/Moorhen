@@ -136,7 +136,7 @@ export const SequenceViewerPanel = () => {
                     (sequenceList.length > 1 ? (
                         <MoorhenButton
                             type="icon-only"
-                            icon={expand ? "MUISymbolDoubleArrowDown" : "MUISymbolDoubleArrowUp"}
+                            icon={expand ? "MatSymDoubleArrowDown" : "MatSymDoubleArrowUp"}
                             size="small"
                             onClick={handleExpand}
                         />

@@ -51,7 +51,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
                     className="moorhen__button__default moorhen__input-files-button"
                     style={{ cursor: "pointer", height: "2.2rem" }}
                 >
-                    <MoorhenIcon size="medium" moorhenSVG="MUISymbolFileOpen" />
+                    <MoorhenIcon size="medium" moorhenSVG="MatSymFileOpen" />
                      Browse... 
                     <input
                         id="upload-form"

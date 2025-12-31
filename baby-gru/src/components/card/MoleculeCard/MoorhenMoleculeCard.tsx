@@ -805,23 +805,23 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             size="accordion"
             onClick={handleVisibility}
             type="icon-only"
-            icon={isVisible ? `MUISymbolVisibility` : `MUISymbolVisibilityOff`}
+            icon={isVisible ? `MatSymVisibility` : `MatSymVisibilityOff`}
             tooltip="Toggle visibility"
         />,
-        <MoorhenButton key="undo" size="accordion" onClick={handleUndo} type="icon-only" icon="MUISymbolUndo" tooltip="Undo" />,
-        <MoorhenButton key="redo" size="accordion" onClick={handleRedo} type="icon-only" icon="MUISymbolRedo" tooltip="Redo" />,
+        <MoorhenButton key="undo" size="accordion" onClick={handleUndo} type="icon-only" icon="MatSymUndo" tooltip="Undo" />,
+        <MoorhenButton key="redo" size="accordion" onClick={handleRedo} type="icon-only" icon="MatSymRedo" tooltip="Redo" />,
         <MoorhenButton
             key="center"
             size="accordion"
             onClick={handleCentering}
             type="icon-only"
-            icon="MUISymbolFilterFocus"
+            icon="MatSymFilterFocus"
             tooltip="Center on molecule"
         />,
         <MoorhenButton
             key="download"
             type="icon-only"
-            icon={`MUISymbolDownload`}
+            icon={`MatSymDownload`}
             onClick={handleDownload}
             size="accordion"
             tooltip="Save molecule"
@@ -871,7 +871,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             type="default"
                             style={{ height: "100%" }}
                             popoverPlacement="left"
-                            icon="MUISymbolColors"
+                            icon="MatSymColors"
                             closeButton
                         >
                             <MoorhenModifyColourRulesCard molecule={props.molecule} />
@@ -881,7 +881,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             type="default"
                             popoverPlacement="left"
                             closeButton
-                            icon="MUISymbolTune"
+                            icon="MatSymTune"
                         >
                             <MoorhenMoleculeRepresentationSettingsCard
                                 residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
@@ -894,7 +894,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 molecule={props.molecule}
                             />
                         </MoorhenPopoverButton>
-                        <MoorhenPopoverButton style={{ height: "100%" }} type="default" icon="MUISymbolAdd" popoverPlacement="left">
+                        <MoorhenPopoverButton style={{ height: "100%" }} type="default" icon="MatSymAdd" popoverPlacement="left">
                             <MoorhenAddCustomRepresentationCard
                                 setBusy={setBusyDrawingCustomRepresentation}
                                 urlPrefix={urlPrefix}
