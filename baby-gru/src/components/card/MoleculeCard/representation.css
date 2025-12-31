@@ -1,0 +1,8 @@
+@import "../../../colors.css";
+
+.moorhen__representation-chip {
+    padding: 0.5rem;
+    border: 2px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+    min-width: 160px;
+}
