@@ -1,14 +1,12 @@
-import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined, GrainOutlined } from "@mui/icons-material";
-import { Popover } from "@mui/material";
+import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined } from "@mui/icons-material";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
 import { hexToRGB, rgbToHex } from "@/utils/utils";
-import { moorhenSVGs } from "../../../../tsDist/src/components/icons/moorhen_icons/index";
 import { moorhen } from "../../../types/moorhen";
 import type { ColourRule } from "../../../utils/MoorhenColourRule";
 import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect } from "../../inputs";
-import { MoorhenPopover, MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base";
 
 export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
     const ncsSwatchRef = useRef(null);
