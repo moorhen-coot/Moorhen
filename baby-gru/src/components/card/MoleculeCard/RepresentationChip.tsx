@@ -49,22 +49,22 @@ export const CustomRepresentationChip = (props: {
         dispatch(removeCustomRepresentation(representation));
     }, [molecule, representation]);
 
-    const getChipColor = () => {
-        const colourRules = representation.colourRules;
-    };
-
+    const selectionName = representation.cid === "//*" ? "All Molecule" : representation.cid;
     return (
-        <div className="moorhen__representation-chip">
-            {`${representationLabelMapping[representation.style]}`}
-            <br />
-            {`${representation.cid.length > 21 ? `${representation.cid.slice(0, 20)} ...` : representation.cid}`}
-            <MoorhenStack align="center" direction="row" justify="center" gap="0.5rem">
+        <div className="moorhen__representation-chip" style={chipStyle}>
+            <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
+                <div style={{ flexGrow: 1, textAlign: "left" }}>
+                    <b>{`${representationLabelMapping[representation.style]}`}</b>
+                    <br />
+                    {selectionName}
+                </div>
                 <MoorhenButton
                     onClick={handleVisibility}
                     type="icon-only"
                     icon={representationIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                    size="accordion"
                 ></MoorhenButton>
-                <MoorhenPopoverButton icon="MatSymEdit">
+                <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
                     <MoorhenAddCustomRepresentationCard
                         mode="edit"
                         urlPrefix={urlPrefix}
@@ -72,7 +72,7 @@ export const CustomRepresentationChip = (props: {
                         representation={props.representation}
                     />
                 </MoorhenPopoverButton>
-                <MoorhenButton type="icon-only" icon="MatSymDelete" size="medium" onClick={handleDelete} />
+                <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
             </MoorhenStack>
         </div>
     );
@@ -147,28 +147,29 @@ export const RepresentationCheckbox = (props: { style: RepresentationStyles; isV
     }, [showState, isDisabled, props, busyDrawingRepresentation]);
 
     return (
-        <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
-            <Chip
-                disabled={busyDrawingRepresentation}
-                style={chipStyle}
-                variant={"outlined"}
-                label={`${representationLabelMapping[props.style]}`}
-                onClick={handleClick}
-            />
-            {busyDrawingRepresentation && (
-                <CircularProgress
-                    size={"1.5rem"}
-                    disableShrink={true}
-                    sx={{
-                        color: chipStyle["borderColor"],
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        margin: "-0.74rem",
-                    }}
-                />
-            )}
-        </Box>
+        // <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
+        //     <Chip
+        //         disabled={busyDrawingRepresentation}
+        //         style={chipStyle}
+        //         variant={"outlined"}
+        //         label={`${representationLabelMapping[props.style]}`}
+        //         onClick={handleClick}
+        //     />
+        //     {busyDrawingRepresentation && (
+        //         <CircularProgress
+        //             size={"1.5rem"}
+        //             disableShrink={true}
+        //             sx={{
+        //                 color: chipStyle["borderColor"],
+        //                 position: "absolute",
+        //                 top: "50%",
+        //                 left: "50%",
+        //                 margin: "-0.74rem",
+        //             }}
+        //         />
+        //     )}
+        // </Box>
+        <div />
     );
 };
 
