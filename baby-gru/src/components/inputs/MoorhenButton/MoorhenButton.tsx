@@ -65,13 +65,11 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     } = props;
 
     let size = props.size ? props.size : "medium";
-    if (size === "lg" || "large") {
+    if (size === "lg" || size === "large") {
         size = "large";
-    }
-    if (size === "md" || "medium") {
+    } else if (size === "md" || size === "medium") {
         size = "medium";
-    }
-    if (size === "sm" || "small") {
+    } else if (size === "sm" || size === "small") {
         size = "small";
     }
 
