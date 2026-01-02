@@ -8,8 +8,8 @@ import { addCustomRepresentation } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../utils/enums";
-import { getMultiColourRuleArgs } from "../../utils/utils";
-import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../utils/utils";
+import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
@@ -31,6 +31,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
         mode?: "add" | "edit";
         representation?: moorhen.MoleculeRepresentation;
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
+        onApply?: () => void;
     }) => {
         console.log("MoorhenAddCustomRepresentationCard", props.mode, props.representation?.style);
 
@@ -153,6 +154,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
             props.representation?.residueEnvironmentOptions?.showContacts ?? props.molecule.defaultResidueEnvironmentOptions.showContacts
         );
 
+        const [notHOH, setNotHOH] = useState<boolean>(false);
+        const [notH, setNotH] = useState<boolean>(false);
+
         const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
@@ -224,10 +228,23 @@ export const MoorhenAddCustomRepresentationCard = memo(
             let cidSelection: string;
             switch (ruleSelectRef.current.value) {
                 case "molecule":
-                    cidSelection = "//*";
+                    cidSelection = "//*/";
+                    if (representationStyle === "CBs" && notHOH) {
+                        cidSelection += "(!HOH)";
+                    }
+                    if (representationStyle === "CBs" && notH) {
+                        cidSelection += "/[!H]";
+                    }
+
                     break;
                 case "chain":
-                    cidSelection = `//${chainSelectRef.current.value}`;
+                    cidSelection = `//${chainSelectRef.current.value}/`;
+                    if (representationStyle === "CBs" && notHOH) {
+                        cidSelection += "(!HOH)";
+                    }
+                    if (representationStyle === "CBs" && notH) {
+                        cidSelection += "/[!H]";
+                    }
                     break;
                 case "residue-range":
                     const selectedResidues = sequenceResidueRange;
@@ -395,6 +412,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                 }
             }
             props.setBusy?.(false);
+            props.onApply?.();
         };
 
         const handleCreateRepresentation = async () => {
@@ -497,6 +515,12 @@ export const MoorhenAddCustomRepresentationCard = memo(
                             ref={chainSelectRef}
                             allowedTypes={[1, 2, 3, 4, 5]}
                         />
+                    )}
+                    {(ruleType === "chain" || ruleType === "molecule") && representationStyle === "CBs" && (
+                        <>
+                            <MoorhenToggle label="Hide Waters" checked={notHOH} onChange={() => setNotHOH(!notHOH)} />
+                            <MoorhenToggle label="Hide Hydrogens" checked={notH} onChange={() => setNotH(!notH)} />
+                        </>
                     )}
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
@@ -630,7 +654,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                 </option>
                             )}
                         </MoorhenSelect>
-                        <>
+                        <MoorhenStack direction="row" addMargin align="center">
                             {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
                                 <img
                                     className="colour-rule-icon"
@@ -721,19 +745,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     />
                                 )
                             ) : colourMode === "custom" ? (
-                                <div
-                                    style={{
-                                        display: colourMode === "custom" ? "flex" : "none",
-                                        width: "28px",
-                                        height: "28px",
-                                        borderRadius: "8px",
-                                        border: "3px solid #fff",
-                                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
-                                        cursor: "pointer",
-                                        backgroundColor: colour,
-                                    }}
-                                    onClick={() => setShowColourPicker(true)}
-                                    ref={colourSwatchRef}
+                                <MoorhenColourPicker
+                                    colour={hexToRGB(colour)}
+                                    setColour={color => setColour(rgbToHex(color[0], color[1], color[2]))}
                                 />
                             ) : (
                                 <img
@@ -751,20 +765,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                     onClick={() => setShowAlphaSlider(true)}
                                 />
                             )}
-                        </>
-                        <Popover
-                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                            transformOrigin={{ vertical: "top", horizontal: "left" }}
-                            open={!useDefaultColours && showAlphaSlider}
-                            onClose={() => setShowAlphaSlider(false)}
-                            anchorEl={alphaSwatchRef.current}
-                            sx={{
-                                "& .MuiPaper-root": {
-                                    overflowY: "hidden",
-                                    borderRadius: "8px",
-                                },
-                            }}
-                        >
+
                             <MoorhenSlider
                                 minVal={0.0}
                                 maxVal={1.0}
@@ -775,38 +776,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                 externalValue={nonCustomOpacity}
                                 setExternalValue={(newVal: number) => handleOpacityChange(newVal)}
                             />
-                        </Popover>
-                        <Popover
-                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                            transformOrigin={{ vertical: "top", horizontal: "left" }}
-                            open={!useDefaultColours && showColourPicker}
-                            onClose={() => setShowColourPicker(false)}
-                            anchorEl={colourSwatchRef.current}
-                            sx={{
-                                "& .MuiPaper-root": {
-                                    overflowY: "hidden",
-                                    borderRadius: "8px",
-                                },
-                            }}
-                        >
-                            <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
-                                <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
-                                    <HexAlphaColorPicker color={colour} onChange={color => setColour(color)} />
-                                </div>
-                                <div
-                                    style={{
-                                        padding: 0,
-                                        margin: 0,
-                                        justifyContent: "center",
-                                        display: "flex",
-                                        marginBottom: "2px",
-                                    }}
-                                >
-                                    <div className="moorhen-hex-input-decorator">#</div>
-                                    <HexColorInput className="moorhen-hex-input" color={colour} onChange={color => setColour(color)} />
-                                </div>
-                            </MoorhenStack>
-                        </Popover>
+                        </MoorhenStack>
                     </>
                 )}
                 <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>

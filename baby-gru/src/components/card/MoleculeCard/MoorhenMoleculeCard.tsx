@@ -873,6 +873,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             popoverPlacement="left"
                             icon="MatSymColors"
                             closeButton
+                            size="medium"
                         >
                             <MoorhenModifyColourRulesCard molecule={props.molecule} />
                         </MoorhenPopoverButton>
@@ -899,6 +900,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                 setBusy={setBusyDrawingCustomRepresentation}
                                 urlPrefix={urlPrefix}
                                 molecule={props.molecule}
+                                onApply={() => document.body.click()}
                             />
                         </MoorhenPopoverButton>
                     </div>

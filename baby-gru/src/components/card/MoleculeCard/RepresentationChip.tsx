@@ -22,6 +22,7 @@ export const CustomRepresentationChip = (props: {
     const { representation, molecule } = props;
     const urlPrefix = usePaths().urlPrefix;
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true);
+    const [reload, setReload] = useState<boolean>(false);
 
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
@@ -70,6 +71,7 @@ export const CustomRepresentationChip = (props: {
                         urlPrefix={urlPrefix}
                         molecule={props.molecule}
                         representation={props.representation}
+                        onApply={() => setReload(!reload)}
                     />
                 </MoorhenPopoverButton>
                 <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
@@ -147,29 +149,29 @@ export const RepresentationCheckbox = (props: { style: RepresentationStyles; isV
     }, [showState, isDisabled, props, busyDrawingRepresentation]);
 
     return (
-        // <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
-        //     <Chip
-        //         disabled={busyDrawingRepresentation}
-        //         style={chipStyle}
-        //         variant={"outlined"}
-        //         label={`${representationLabelMapping[props.style]}`}
-        //         onClick={handleClick}
-        //     />
-        //     {busyDrawingRepresentation && (
-        //         <CircularProgress
-        //             size={"1.5rem"}
-        //             disableShrink={true}
-        //             sx={{
-        //                 color: chipStyle["borderColor"],
-        //                 position: "absolute",
-        //                 top: "50%",
-        //                 left: "50%",
-        //                 margin: "-0.74rem",
-        //             }}
-        //         />
-        //     )}
-        // </Box>
-        <div />
+        <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
+            <Chip
+                disabled={busyDrawingRepresentation}
+                style={chipStyle}
+                variant={"outlined"}
+                label={`${representationLabelMapping[props.style]}`}
+                onClick={handleClick}
+            />
+            {busyDrawingRepresentation && (
+                <CircularProgress
+                    size={"1.5rem"}
+                    disableShrink={true}
+                    sx={{
+                        color: chipStyle["borderColor"],
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        margin: "-0.74rem",
+                    }}
+                />
+            )}
+        </Box>
+        // <div />
     );
 };
 
