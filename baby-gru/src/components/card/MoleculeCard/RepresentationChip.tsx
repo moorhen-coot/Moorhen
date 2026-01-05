@@ -54,27 +54,29 @@ export const CustomRepresentationChip = (props: {
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
-                <div style={{ flexGrow: 1, textAlign: "left" }}>
+                <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden" }}>
                     <b>{`${representationLabelMapping[representation.style]}`}</b>
                     <br />
-                    {selectionName}
+                    <span>{selectionName}</span>
                 </div>
-                <MoorhenButton
-                    onClick={handleVisibility}
-                    type="icon-only"
-                    icon={representationIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
-                    size="accordion"
-                ></MoorhenButton>
-                <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
-                    <MoorhenAddCustomRepresentationCard
-                        mode="edit"
-                        urlPrefix={urlPrefix}
-                        molecule={props.molecule}
-                        representation={props.representation}
-                        onApply={() => setReload(!reload)}
-                    />
-                </MoorhenPopoverButton>
-                <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
+                <div style={{ flexShrink: "0" }}>
+                    <MoorhenButton
+                        onClick={handleVisibility}
+                        type="icon-only"
+                        icon={representationIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                        size="accordion"
+                    ></MoorhenButton>
+                    <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
+                        <MoorhenAddCustomRepresentationCard
+                            mode="edit"
+                            urlPrefix={urlPrefix}
+                            molecule={props.molecule}
+                            representation={props.representation}
+                            onApply={() => setReload(!reload)}
+                        />
+                    </MoorhenPopoverButton>
+                    <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
+                </div>
             </MoorhenStack>
         </div>
     );
