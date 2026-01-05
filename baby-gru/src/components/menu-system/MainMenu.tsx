@@ -1,13 +1,13 @@
 import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
+import { useMoorhenInstance } from "@/InstanceManager";
 import { setShownSidePanel } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { ModalKey, showModal } from "../../store/modalsSlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
 import { MenuFromItems } from "./MenuFromItems ";
-import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
 
@@ -25,7 +25,8 @@ export const MoorhenMainMenu = memo(() => {
     const isDevMode = useSelector((state: RootState) => state.generalStates.devMode);
     const GLViewportHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const dispatch = useDispatch();
-    const menuSystem = useMoorhenMenuSystem();
+    const moorhenInstance = useMoorhenInstance();
+    const menuSystem = moorhenInstance.getMenuSystem();
 
     const handleMainMenuToggle = () => {
         if (isOpen) {

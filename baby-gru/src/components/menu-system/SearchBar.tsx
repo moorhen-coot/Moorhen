@@ -2,11 +2,11 @@ import { ClickAwayListener } from "@mui/material";
 import Fuse from "fuse.js";
 import { useDispatch, useSelector } from "react-redux";
 import { useLayoutEffect, useRef, useState } from "react";
+import { useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenButton } from "../inputs";
 import { MenuFromItems } from "./MenuFromItems ";
-import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import "./search-bar.css";
 import { MenuItemType } from "./subMenuConfig";
 
@@ -15,8 +15,8 @@ export const MoorhenSearchBar = () => {
     const dispatch = useDispatch();
     const [query, setQuery] = useState<string>("");
     const inputRef = useRef<HTMLInputElement>(null);
-
-    const menuSystem = useMoorhenMenuSystem();
+    const moorhenInstance = useMoorhenInstance();
+    const menuSystem = moorhenInstance.getMenuSystem();
 
     // Set up Fuse.js options for label, keywords, description (priority order)
     const fuseOptions = {

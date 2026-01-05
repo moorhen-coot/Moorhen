@@ -41,7 +41,6 @@ import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager"
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
-import { MoorhenMenuSystemProvider, useMoorhenMenuSystem } from "../menu-system/MenuSystemContext";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
@@ -166,7 +165,7 @@ interface ContainerOptionalProps {
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
 
-const MoorhenContainer = (props: ContainerProps) => {
+export const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/baby-gru",
         monomerLibraryPath = "./baby-gru/monomers",
@@ -230,7 +229,7 @@ const MoorhenContainer = (props: ContainerProps) => {
     const dispatch = useDispatch();
     const store: Store = useStore();
     const moorhenInstance = useMoorhenInstance();
-    const moorhenMenuSystem = useMoorhenMenuSystem();
+    const moorhenMenuSystem = moorhenInstance.getMenuSystem();
 
     useEffect(() => {
         if (props.moorhenInstanceRef) {
@@ -527,14 +526,3 @@ const MoorhenContainer = (props: ContainerProps) => {
         </>
     );
 };
-
-const MoorhenContainerWrapper = (props: ContainerProps) => {
-    return (
-        <MoorhenInstanceProvider>
-            <MoorhenMenuSystemProvider>
-                <MoorhenContainer {...props} />
-            </MoorhenMenuSystemProvider>
-        </MoorhenInstanceProvider>
-    );
-};
-export { MoorhenContainerWrapper as MoorhenContainer };

@@ -2,12 +2,12 @@ import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import React from "react";
+import { useMoorhenInstance } from "@/InstanceManager";
 import { setShownSidePanel } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenToggle } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
-import { useMoorhenMenuSystem } from "./MenuSystemContext";
 import type { MenuItemType } from "./subMenuConfig";
 
 export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: string }): React.JSX.Element => {
@@ -108,7 +108,8 @@ const PreferenceChecker = (props: {
 };
 
 const SubMenuPopover = (props: { menu: string; label: string }) => {
-    const menuSystem = useMoorhenMenuSystem();
+    const moorhenInstance = useMoorhenInstance();
+    const menuSystem = moorhenInstance.getMenuSystem();
     const items = menuSystem.getItems(props.menu);
     return (
         <MoorhenMenuItemPopover menuItemText={props.label}>

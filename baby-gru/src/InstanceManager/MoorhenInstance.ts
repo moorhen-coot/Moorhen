@@ -1,6 +1,7 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
+import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { Preferences } from "../components/managers/preferences/MoorhenPreferences";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
@@ -31,6 +32,7 @@ export class MoorhenInstance {
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand!: CootCommandWrapper;
+    private menuSystem: MoorhenMenuSystem;
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -40,6 +42,7 @@ export class MoorhenInstance {
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
         this.containerRef = containerRef;
+        this.menuSystem = new MoorhenMenuSystem();
     }
 
     public paths: {
@@ -117,6 +120,10 @@ export class MoorhenInstance {
 
     public getContainerRef() {
         return this.containerRef;
+    }
+
+    public getMenuSystem() {
+        return this.menuSystem;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
