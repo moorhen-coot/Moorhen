@@ -1,4 +1,3 @@
-import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import { moorhen } from "../../types/moorhen";

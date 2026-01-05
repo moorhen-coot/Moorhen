@@ -45,17 +45,6 @@ export default [
       "import/default": "off", // TypeScript handles this
       "import/no-named-as-default-member": "off", // TypeScript handles this
       "import/no-duplicates": "error",
-      "import/order": ["warn", {
-        "groups": [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index"
-        ],
-        "newlines-between": "never"
-      }],
       "import/newline-after-import": "warn",
       "import/no-useless-path-segments": "warn",
     },
