@@ -14,8 +14,8 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 
 export class MoorhenInstance {
-    private dispatch!: Dispatch<UnknownAction>;
-    private commandCentre!: CommandCentre;
+    private dispatch: Dispatch<UnknownAction>;
+    private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
@@ -29,8 +29,8 @@ export class MoorhenInstance {
     private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    public cootCommand!: CootCommandWrapper;
-    private menuSystem: MoorhenMenuSystem;
+    public cootCommand: CootCommandWrapper;
+    private menuSystem: MoorhenMenuSystem | null = null;
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -120,10 +120,10 @@ export class MoorhenInstance {
     }
 
     public getMenuSystem() {
+        if (!this.menuSystem) {
+            console.error("Moorhen menu system need to be initialized before it can be used. by running start instance");
+        }
         return this.menuSystem;
-    }
-    public setMenuSystem(menuSystem: MoorhenMenuSystem) {
-        this.menuSystem = menuSystem;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
