@@ -12,6 +12,7 @@ export const GoTo = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [cid, setCid] = useState<string>("");
+
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const { enqueueSnackbar } = useSnackbar();

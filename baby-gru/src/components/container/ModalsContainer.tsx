@@ -2,7 +2,6 @@ import { useSelector } from "react-redux";
 import React, { memo, useMemo } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { ModalKey } from "../../store/modalsSlice";
-import { modalKeys } from "../../utils/enums";
 import { Moorhen2DCanvasObjectsModal } from "../modal/Moorhen2DCanvasObjectsModal";
 import { MoorhenCarbohydrateValidationModal } from "../modal/MoorhenCarbohydrateValidationModal";
 import { MoorhenColourMapByOtherMapModal } from "../modal/MoorhenColourMapByOtherMapModal";

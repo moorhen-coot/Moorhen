@@ -3,9 +3,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
-import { buffer } from "stream/consumers";
-import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from "react";
-import { MoorhenInstance, MoorhenInstanceProvider, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
 import { useWindowEventListener } from "../../hooks/useWindowEventListener";
@@ -60,7 +59,6 @@ import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
 import { MoorhenSnackBarManager } from "../snack-bar/MoorhenSnackBarManager";
 import { MoorhenTomogramSnackBar } from "../snack-bar/MoorhenTomogramSnackBar";
 import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
-import { DrawHoverAtom } from "../webMG/HoverAtom";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
@@ -229,16 +227,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const dispatch = useDispatch();
     const store: Store = useStore();
     const moorhenInstance = useMoorhenInstance();
-    const moorhenMenuSystem = moorhenInstance.getMenuSystem();
 
     useEffect(() => {
         if (props.moorhenInstanceRef) {
             props.moorhenInstanceRef.current = moorhenInstance;
         }
-        if (props.moorhenMenuSystemRef) {
-            props.moorhenMenuSystemRef.current = moorhenMenuSystem;
-        }
-    }, [props.moorhenInstanceRef, props.moorhenMenuSystemRef]);
+    }, [props.moorhenInstanceRef]);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -361,8 +355,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 timeCapsuleMoleculeRef,
                 timeCapsuleMapRef,
                 store,
+                new MoorhenMenuSystem(),
                 props.commandCentre,
                 props.timeCapsuleRef,
+
                 {
                     providedBackupStorageInstance: props.backupStorageInstance,
                     maxBackupCount: maxBackupCount,

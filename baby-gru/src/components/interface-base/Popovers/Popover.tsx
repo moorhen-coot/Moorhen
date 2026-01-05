@@ -2,8 +2,8 @@ import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { MoorhenButton } from "@/components/inputs";
-import { useMoorhenInstance } from "../../../InstanceManager";
+import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
+import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
 

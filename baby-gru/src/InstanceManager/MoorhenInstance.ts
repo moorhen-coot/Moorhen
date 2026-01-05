@@ -40,7 +40,6 @@ export class MoorhenInstance {
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
         this.containerRef = containerRef;
-        this.menuSystem = new MoorhenMenuSystem();
     }
 
     public paths: {
@@ -123,6 +122,9 @@ export class MoorhenInstance {
     public getMenuSystem() {
         return this.menuSystem;
     }
+    public setMenuSystem(menuSystem: MoorhenMenuSystem) {
+        this.menuSystem = menuSystem;
+    }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
@@ -141,6 +143,7 @@ export class MoorhenInstance {
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         store: Store,
+        menuSystem: MoorhenMenuSystem,
         externalCommandCentreRef?: React.RefObject<CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>,
         timeCapsuleConfig?: {
@@ -153,7 +156,7 @@ export class MoorhenInstance {
         this.store = store;
         this.moleculesRef = moleculesRef;
         this.mapsRef = mapsRef;
-
+        this.menuSystem = menuSystem;
         // == Init Time capsule ==
         const activeMapRef = React.createRef<moorhen.Map>();
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
