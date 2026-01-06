@@ -58,8 +58,8 @@ module.exports = (env, argv) => {
                 process: { env: {} },
             }),
             new MiniCssExtractPlugin({
-                filename: "public/baby-gru/moorhen.css",
-                chunkFilename: "public/baby-gru/[id].css",
+                filename: "public/MoorhenAssets/moorhen.css",
+                chunkFilename: "public/MoorhenAssets/[id].css",
                 ignoreOrder: false,
             }),
             new TerserPlugin({
@@ -73,7 +73,7 @@ module.exports = (env, argv) => {
                 patterns: [
                     {
                         from: paths.public,
-                        to: paths.dist + "/public/",
+                        to: paths.dist + "/public/MoorhenAssets/",
                         toType: "dir",
                         globOptions: {
                             ignore: ["**/monomers/**"],
@@ -87,7 +87,7 @@ module.exports = (env, argv) => {
                     ...paths.minimalMonomerLib.map(monomer => {
                         return {
                             from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
-                            to: path.resolve(paths.dist, "public", "baby-gru", "monomers", monomer.charAt(0).toLowerCase()),
+                            to: path.resolve(paths.dist, "public", "MoorhenAssets", "monomers", monomer.charAt(0).toLowerCase()),
                             toType: "dir",
                         };
                     }),
