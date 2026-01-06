@@ -26,7 +26,7 @@
         "transpile-graphql-codegen": "if ! test -r src/utils/__graphql__/gql.ts; then  npx graphql-codegen; fi",
         "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
-        "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak '/export {}/d' public/CootWorker.js && rm public/CootWorker.js.bak",
+        "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck public/CootWorker.ts && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/CootWorker.js && sed -i.bak '/importScripts.*;/d' public/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/CootWorker.js && rm public/CootWorker.js.bak",
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "start": "vite --config vite.config.mts",
@@ -39,7 +39,7 @@
         "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./fix_old_namespace.sh",
         "build-release-dev": "npm run prebuild && webpack --mode development --devtool inline-source-map --no-optimization-minimize --no-optimization-concatenate-modules && npm run dts-bundle && ./fix_old_namespace.sh",
         "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
-        "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && ln -sf ./public/ ./baby-gru && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+        "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
         "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components",
         "debug-hmr": "DEBUG=vite:hmr,vite:react-refresh npm run start"
     },
