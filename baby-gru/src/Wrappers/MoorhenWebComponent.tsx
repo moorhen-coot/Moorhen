@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import React, { createContext } from "react";
 import type { MoorhenInstance } from "@/InstanceManager";
+import { MoorhenProvider } from "@/components/MoorhenProvider";
 import { MoorhenContainer } from "@/components/container";
 import { MoorhenMenuSystem } from "../components/menu-system/MenuSystem";
 import { reducers } from "../store/MoorhenReduxStore";
@@ -75,12 +76,14 @@ export class MoorhenWebComponent extends HTMLElement {
         root.render(
             <div>
                 <Provider store={MoorhenReduxStore}>
-                    <MoorhenContainer
-                        moorhenInstanceRef={this.moorhenInstanceRef}
-                        moorhenMenuSystemRef={this.moorhenMenuSystemRef}
-                        setMoorhenDimensions={this.setMoorhenDimensions}
-                        urlPrefix={this.urlPrefix}
-                    />
+                    <MoorhenProvider>
+                        <MoorhenContainer
+                            moorhenInstanceRef={this.moorhenInstanceRef}
+                            moorhenMenuSystemRef={this.moorhenMenuSystemRef}
+                            setMoorhenDimensions={this.setMoorhenDimensions}
+                            urlPrefix={this.urlPrefix}
+                        />
+                    </MoorhenProvider>
                 </Provider>
             </div>
         );

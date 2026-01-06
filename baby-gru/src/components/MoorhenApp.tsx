@@ -16,17 +16,6 @@ export const MoorhenExitMenu = (props: { exitCallback: () => void }) => {
 };
 
 export const MoorhenApp = () => {
-    const exitDialActionRef = useRef(null);
-
-    const extraNavBarMenus: ExtraNavBarMenus[] = [
-        {
-            icon: (<LogoutOutlined />) as React.JSX.Element,
-            name: "Exit",
-            ref: exitDialActionRef,
-            JSXElement: <MoorhenExitMenu key={"exit"} exitCallback={() => console.log("Exit clicked")} />,
-        },
-    ];
-
     const MoorhenReduxStore = configureStore({
         reducer: reducers,
         middleware: getDefaultMiddleware =>
