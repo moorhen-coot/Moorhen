@@ -40,24 +40,19 @@ export class MoorhenWebComponent extends HTMLElement {
         shadow.appendChild(rootElement);
 
         const loadStylesheets = async () => {
-            const [moorhenRes, flatlyRes] = await Promise.all([
-                fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href),
-                fetch(new URL(`${this.urlPrefix}/flatly.css`, window.location.href).href),
-            ]);
+            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/baby-gru/moorhen.css`, window.location.href).href);
 
-            const [moorhenCss, flatlyCss] = await Promise.all([moorhenRes.text(), flatlyRes.text()]);
+            const moorhenCss = await moorhenRes.text();
 
             if ("adoptedStyleSheets" in shadow) {
                 const moorhenSheet = new CSSStyleSheet();
                 const flatlySheet = new CSSStyleSheet();
                 moorhenSheet.replaceSync(moorhenCss);
-                flatlySheet.replaceSync(flatlyCss);
                 shadow.adoptedStyleSheets = [moorhenSheet, flatlySheet];
             } else {
                 const moorhenStyle = document.createElement("style");
                 const flatlyStyle = document.createElement("style");
                 moorhenStyle.textContent = moorhenCss;
-                flatlyStyle.textContent = flatlyCss;
                 (shadow as ShadowRoot).appendChild(moorhenStyle);
                 (shadow as ShadowRoot).appendChild(flatlyStyle);
             }
