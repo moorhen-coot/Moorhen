@@ -101,7 +101,7 @@ export class CommandCentre {
         this.isClosed = false;
         this.cootWorker = new Worker(`${this.urlPrefix}/wasm/CootWorker.js`);
         this.cootWorker.onmessage = this.handleMessage.bind(this);
-        const fileResponse = await fetch(`${this.urlPrefix}/../baby-gru/data.tar.gz`);
+        const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
         await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
         if (this.onCootInitialized) {

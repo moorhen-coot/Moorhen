@@ -225,16 +225,16 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
 }
 
 clearall() {
@@ -490,13 +490,13 @@ else
 fi
 
 if test x"${MEMORY64}" = x"1"; then
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
 else
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
@@ -869,6 +869,6 @@ if [ $BUILD_MOORHEN = true ]; then
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
     npm run transpile-graphql-codegen
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
