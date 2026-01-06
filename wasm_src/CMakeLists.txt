@@ -665,17 +665,17 @@ add_custom_target(create_tar ALL COMMAND
     ${CMAKE_COMMAND} -E tar "cfvz" "data.tar.gz" ${CMAKE_CURRENT_BINARY_DIR}/data)
 add_dependencies(create_tar moorhen)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
-DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public)
+DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/wasm)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
 ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
 
-install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/src/LhasaReact/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/pixmaps/lhasa_icons)
+install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/src/LhasaReact/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
