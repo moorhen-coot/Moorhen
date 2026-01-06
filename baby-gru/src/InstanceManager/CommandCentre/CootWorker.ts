@@ -1,7 +1,7 @@
-import { libcootApi } from "../src/types/libcoot"
-import { emscriptem } from "../src/types/emscriptem"
-import { privateer } from "../src/types/privateer";
-import { gemmi } from "../src/types/gemmi";
+import { libcootApi } from "../../types/libcoot"
+import { emscriptem } from "../../types/emscriptem"
+import { privateer } from "../../types/privateer";
+import { gemmi } from "../../types/gemmi";
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;

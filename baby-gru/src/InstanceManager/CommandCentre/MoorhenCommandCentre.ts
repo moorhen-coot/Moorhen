@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
-import { webGL } from '../../types/mgWebGL';
-import { moorhen } from '../../types/moorhen';
-import { History } from '../../utils/MoorhenHistory';
+import { v4 as uuidv4 } from "uuid";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
+import { History } from "../../utils/MoorhenHistory";
 
 export type WorkerResponse<T = any> = {
     data: WorkerResult<T>;
@@ -99,11 +99,11 @@ export class CommandCentre {
 
     async init() {
         this.isClosed = false;
-        this.cootWorker = new Worker(`${this.urlPrefix}/../CootWorker.js`);
+        this.cootWorker = new Worker(`${this.urlPrefix}/wasm/CootWorker.js`);
         this.cootWorker.onmessage = this.handleMessage.bind(this);
         const fileResponse = await fetch(`${this.urlPrefix}/../baby-gru/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
-        await this.postMessage({ message: 'CootInitialize', data: { cootData: new Uint8Array(fileData) } });
+        await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
         if (this.onCootInitialized) {
             this.onCootInitialized();
         }
@@ -112,11 +112,11 @@ export class CommandCentre {
     async close() {
         if (!this.isClosed) {
             this.isClosed = true;
-            await this.postMessage({ message: 'close', data: {} });
-            this.cootWorker.removeEventListener('message', this.handleMessage);
+            await this.postMessage({ message: "close", data: {} });
+            this.cootWorker.removeEventListener("message", this.handleMessage);
             this.cootWorker.terminate();
         } else {
-            console.warn('Command centre already closed, doing nothing...');
+            console.warn("Command centre already closed, doing nothing...");
         }
     }
 
@@ -139,8 +139,8 @@ export class CommandCentre {
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
-        const message = 'coot_command';
-        console.log('In cootCommand', kwargs.command);
+        const message = "coot_command";
+        console.log("In cootCommand", kwargs.command);
         if (this.onCommandStart) {
             this.onCommandStart({ ...kwargs, doJournal });
         }
@@ -155,8 +155,8 @@ export class CommandCentre {
     }
 
     async cootCommandList(commandList: cootCommandKwargs[], doJournal: boolean = true): Promise<WorkerResponse> {
-        const message = 'coot_command_list';
-        console.log('In cootCommandList', commandList);
+        const message = "coot_command_list";
+        console.log("In cootCommandList", commandList);
         if (this.onCommandStart) {
             commandList.forEach(commandKwargs => this.onCommandStart(commandKwargs));
         }

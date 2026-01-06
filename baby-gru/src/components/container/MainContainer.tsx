@@ -165,8 +165,8 @@ export interface ContainerProps extends Partial<ContainerRefs>, Partial<Containe
 
 export const MoorhenContainer = (props: ContainerProps) => {
     const {
-        urlPrefix = "/baby-gru",
-        monomerLibraryPath = "./baby-gru/monomers",
+        urlPrefix = "/MoorhenAssets",
+        monomerLibraryPath = "./MoorhenAssets/monomers",
         setMoorhenDimensions = null,
         disableFileUploads = false,
         allowScripting = true,
@@ -335,8 +335,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     useEffect(() => {
         function startupEffect() {
-            if (!window.cootModule) windowCootCCP4Loader(".");
-            if (!window.MathJax) loadMathjax(".");
+            if (!window.cootModule) windowCootCCP4Loader(`${urlPrefix}/wasm/`);
+            if (!window.MathJax) loadMathjax(`${urlPrefix}`);
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
             dispatch(setDisableFileUpload(disableFileUploads));
