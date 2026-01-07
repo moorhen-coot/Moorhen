@@ -1034,7 +1034,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setFogClipOffset(fogClipOffset: number) {
-        this.fogClipOffset = fogClipOffset
+        this.fogClipOffset = 0.0;//fogClipOffset
     }
 
     componentDidMount() {
@@ -1043,7 +1043,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.activeMolecule = null;
         this.draggableMolecule = null;
         this.currentlyDraggedAtom = null;
-        this.fogClipOffset = 250;
+        this.fogClipOffset = 0.0;
         this.doPerspectiveProjection = false;
 
         this.shinyBack = true;
@@ -2610,6 +2610,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const offy = -this.atom_span+(this.fogClipOffset+this.gl_clipPlane0[3])
             this.gl.uniform4fv(program.clipPlane0, [0, 0, -1, offy]);
         }else{
+            //console.log(this.gl_clipPlane0[3],this.gl_clipPlane1[3])
             this.gl.uniform4fv(program.clipPlane0, this.gl_clipPlane0);
         }
         this.gl.uniform4fv(program.clipPlane1, this.gl_clipPlane1);
@@ -3359,7 +3360,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100, 1270.0);
                 } else {
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    const f = this.gl_clipPlane0[3];
                     mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
                 }
             }
@@ -4401,11 +4402,46 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             f = 100
             b = 270
         }
+
+        if(!this.atom_span||Math.abs(1000.0-this.atom_span)<1e-4){
+            const displayBuffers = store.getState().glRef.displayBuffers
+            let min_x =  1e5;
+            let max_x = -1e5;
+            let min_y =  1e5;
+            let max_y = -1e5;
+            let min_z =  1e5;
+            let max_z = -1e5;
+
+            displayBuffers.forEach(buffer => {
+                if (buffer.visible) {
+                    buffer.atoms.forEach(atom => {
+                        if(atom.x>max_x) max_x = atom.x;
+                        if(atom.x<min_x) min_x = atom.x;
+                        if(atom.y>max_y) max_y = atom.y;
+                        if(atom.y<min_y) min_y = atom.y;
+                        if(atom.z>max_z) max_z = atom.z;
+                        if(atom.z<min_z) min_z = atom.z;
+                    })
+                }
+            })
+            //console.log(min_x,min_y,min_z,max_x,max_y,max_z)
+            let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+            atom_span = Math.min(1000.0,atom_span);
+            this.atom_span = atom_span;
+            
+        }
+
         //console.log("In blur",f,b,this.blurDepth)
-        const absDepth = this.blurDepth * (1000 - -1000) - 1000;
-        let fracDepth = (absDepth-f)/(b - f);
-        fracDepth = this.blurDepth * 1000 / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
-        //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
+        let fracDepth = this.blurDepth*1000.0/(b-f)
+        const normFrac = (this.blurDepth * 2.0) - 1.0
+        const depthPos = normFrac * this.atom_span
+        //console.log("normFrac",normFrac.toFixed(2))
+        //console.log("depthPos",depthPos.toFixed(2))
+        //console.log("f + normFrac * (b-f)",(f + normFrac * (b-f)).toFixed(2))
+        fracDepth = (depthPos - f) / (b-f)
+
+        //console.log(fracDepth.toFixed(2));
+
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
 

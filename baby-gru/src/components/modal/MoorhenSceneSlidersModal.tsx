@@ -62,7 +62,7 @@ const ClipFogBlurOptionsPanel = () => {
 
     return (
         <div className="scene-settings-panel-flex-between">
-            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
+            <InputGroup className="moorhen-input-group-check">
                 <Form.Check
                     type="switch"
                     checked={resetClippingFogging}
@@ -73,16 +73,6 @@ const ClipFogBlurOptionsPanel = () => {
                 />
                 <Form.Check
                     type="switch"
-                    checked={clipCap}
-                    onChange={() => {
-                        dispatch(setClipCap(!clipCap));
-                    }}
-                    label="'Clip-cap' perfect spheres"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="switch"
                     checked={useOffScreenBuffers}
                     onChange={() => {
                         dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
@@ -90,28 +80,6 @@ const ClipFogBlurOptionsPanel = () => {
                     label="Depth Blur"
                 />
             </InputGroup>
-            <MoorhenSlider
-                isDisabled={!useOffScreenBuffers}
-                minVal={0.4}
-                maxVal={0.6}
-                logScale={false}
-                sliderTitle="Blur depth"
-                externalValue={depthBlurDepth}
-                setExternalValue={(val) => dispatch(setDepthBlurDepth(val))}
-                stepButtons={0.0001}
-                decimalPlaces={4}
-            />
-            <MoorhenSlider
-                isDisabled={!useOffScreenBuffers}
-                minVal={2}
-                maxVal={16}
-                logScale={false}
-                sliderTitle="Blur radius"
-                externalValue={depthBlurRadius}
-                setExternalValue={(val) => dispatch(setDepthBlurRadius(val))}
-                stepButtons={1}
-                decimalPlaces={0}
-            />
         </div>
     );
 };
@@ -170,7 +138,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const plotWidth = 450
-    const plotHeight = 400
+    const plotHeight = 300
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
@@ -181,6 +149,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
+    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
@@ -583,19 +552,22 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.lineTo(fogEndPos,canvas.height)
         ctx.stroke()
 
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Blur depth"
-        } else {
-            ctx.strokeStyle = "lightblue"
-            ctx.lineWidth = 3
+        if(useOffScreenBuffers){
+            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
+                ctx.strokeStyle = "white"
+                ctx.lineWidth = 4
+                hovering = true
+                drawText = "Blur depth"
+            } else {
+                ctx.strokeStyle = "lightblue"
+                ctx.lineWidth = 3
+            }
+
+            ctx.beginPath()
+            ctx.moveTo(depthBlurDepthPos,0)
+            ctx.lineTo(depthBlurDepthPos,canvas.height)
+            ctx.stroke()
         }
-        ctx.beginPath()
-        ctx.moveTo(depthBlurDepthPos,0)
-        ctx.lineTo(depthBlurDepthPos,canvas.height)
-        ctx.stroke()
 
         if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
             ctx.strokeStyle = "white"
@@ -713,7 +685,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             setGrabbed(GrabHandle.FOG_START)
         } else if(Math.abs(x-fogEndPos)<5){
             setGrabbed(GrabHandle.FOG_END)
-        } else if(Math.abs(x-depthBlurDepthPos)<5){
+        } else if(Math.abs(x-depthBlurDepthPos)<5 && useOffScreenBuffers){
             setGrabbed(GrabHandle.BLUR_DEPTH)
         } else {
             setGrabbed(GrabHandle.NONE)
@@ -745,8 +717,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
             dispatch(setFogEnd(newValue + fogClipOffset))
         } else if(grabbed===GrabHandle.BLUR_DEPTH){
-            const newValue = x / plotWidth
-            dispatch(setDepthBlurDepth(newValue))
+            if(useOffScreenBuffers){
+                const newValue = x / plotWidth
+                dispatch(setDepthBlurDepth(newValue))
+            }
         }
 
         setMoveX(x)
