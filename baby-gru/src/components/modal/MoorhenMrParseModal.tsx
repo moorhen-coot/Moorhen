@@ -423,7 +423,7 @@ export const MoorhenMrParseModal = () => {
                                                 if (evt.detail.eventtype === "click") {
                                                     foundModel.centreOn(cid);
                                                 } else if (evt.detail.eventtype === "mouseover") {
-                                                    dispatch(setHoveredAtom({ molecule: foundModel, cid: cid }));
+                                                    dispatch(setHoveredAtom({ molecule: foundModel, cid: cid, atomInfo: null }));
                                                 }
                                             }
                                         }

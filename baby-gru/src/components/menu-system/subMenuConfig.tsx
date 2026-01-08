@@ -1,13 +1,22 @@
 import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
-import { enqueueSnackbar, useSnackbar } from "notistack";
 import React from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
+import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import type { ModalKey } from "../../store/modalsSlice";
-import { refinementSettings } from "../../store/refinementSettingsSlice";
+import {
+    setDoPerspectiveProjection,
+    setDoSpin,
+    setDrawAxes,
+    setDrawCrosshairs,
+    setDrawEnvBOcc,
+    setDrawFPS,
+    setDrawMissingLoops,
+    setDrawScaleBar,
+} from "../../store/sceneSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import * as MenuItems from "../menu-item";
 import { PanelIDs } from "../panels";
@@ -793,6 +802,81 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["references", "citations"],
                 description: "Moorhen references",
                 content: MenuItems.References,
+            },
+        ],
+    },
+    "other-scene-settings": {
+        label: "Other Scene Settings",
+        items: [
+            {
+                id: "draw-fps-switch",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.drawFPS,
+                action: setDrawFPS,
+                label: "Show frames per second counter",
+            },
+            {
+                id: "enable-atom-hovering",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.hoveringStates.enableAtomHovering,
+                action: setEnableAtomHovering,
+                label: "Enable atom hovering",
+                // extraOnChange: (dispatch: any, enableAtomHovering: boolean) => {
+                //     if (enableAtomHovering) {
+                //         dispatch(setHoveredAtom({ molecule: null, cid: null }));
+                //     }
+                // },
+            },
+            {
+                id: "show-crosshair",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.drawCrosshairs,
+                action: setDrawCrosshairs,
+                label: "Show crosshairs",
+            },
+            {
+                id: "show-scale-bar",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.drawScaleBar,
+                action: setDrawScaleBar,
+                label: "Show scale bar",
+            },
+            {
+                id: "show-axes",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.drawAxes,
+                action: setDrawAxes,
+                label: "Show axes",
+            },
+            {
+                id: "show-missing-loops",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.drawMissingLoops,
+                action: setDrawMissingLoops,
+                label: "Show missing loops",
+            },
+            {
+                id: "show-b-occupancy",
+                type: "preferenceSwitch",
+                keywords: ["b factors", "b-factors", "occupancy"],
+                selector: (state: RootState) => state.sceneSettings.drawEnvBOcc,
+                action: setDrawEnvBOcc,
+                label: "Show env. temp factors and occ.",
+                description: "Display on screen B factors and occupancies values",
+            },
+            {
+                id: "perspective-projection",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
+                action: setDoPerspectiveProjection,
+                label: "Perspective projection",
+            },
+            {
+                id: "spin-view",
+                type: "preferenceSwitch",
+                selector: (state: RootState) => state.sceneSettings.doSpin,
+                action: setDoSpin,
+                label: "Spin view",
             },
         ],
     },

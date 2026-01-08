@@ -104,7 +104,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
                 fragmentMolecule.current = newMolecule;
             }, 1);
 
-            dispatch(setHoveredAtom({ molecule: null, cid: null }));
+            dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             dispatch(setIsChangingRotamers(true));
 
             setRotamerName(rotamerInfo.data.result.result.name);

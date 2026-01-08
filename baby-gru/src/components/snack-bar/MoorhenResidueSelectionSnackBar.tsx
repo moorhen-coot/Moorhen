@@ -341,7 +341,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
 
         if (cid) {
             molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
-            dispatch(setHoveredAtom({ molecule: null, cid: null }));
+            dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             dispatch(setIsRotatingAtoms(true));
             enqueueSnackbar("accept-reject-rotate", {
                 variant: "acceptRejectRotateTranslateAtoms",
@@ -368,7 +368,7 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         if (cid) {
             molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
             batch(() => {
-                dispatch(setHoveredAtom({ molecule: null, cid: null }));
+                dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
                 dispatch(setIsDraggingAtoms(true));
                 enqueueSnackbar("accept-reject-dragging-atoms", {
                     onClose: () => residueSelection.molecule.drawResidueSelection(cid.join("||")),

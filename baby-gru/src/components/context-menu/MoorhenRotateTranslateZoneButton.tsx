@@ -1,10 +1,10 @@
-import { useRef } from "react";
-import { useDispatch, batch } from "react-redux";
 import { useSnackbar } from "notistack";
-import { moorhen } from "../../types/moorhen";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { batch, useDispatch } from "react-redux";
+import { useRef } from "react";
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
-import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { moorhen } from "../../types/moorhen";
+import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null);
@@ -17,11 +17,7 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
 
     const rotateTranslateModes = ["ATOM", "RESIDUE", "CHAIN", "MOLECULE"];
 
-    const nonCootCommand = async (
-        molecule: moorhen.Molecule,
-        chosenAtom: moorhen.ResidueSpec,
-        selectedMode: string
-    ) => {
+    const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
         chosenMolecule.current = molecule;
         switch (selectedMode) {
             case "ATOM":
@@ -55,7 +51,7 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
         props.setOpacity(1);
         props.setShowContextMenu(false);
         batch(() => {
-            dispatch(setHoveredAtom({ molecule: null, cid: null }));
+            dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             dispatch(setIsRotatingAtoms(true));
         });
         enqueueSnackbar("accept-reject-translate", {
@@ -68,13 +64,7 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
 
     return (
         <MoorhenContextButtonBase
-            icon={
-                <img
-                    alt="rotate/translate"
-                    className="moorhen-context-button__icon"
-                    src={`${props.urlPrefix}/pixmaps/rtz.svg`}
-                />
-            }
+            icon={<img alt="rotate/translate" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rtz.svg`} />}
             toolTipLabel="Rotate/Translate zone"
             nonCootCommand={nonCootCommand}
             popoverSettings={{

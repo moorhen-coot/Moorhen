@@ -1,9 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { moorhen } from "@/types/moorhen";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 
 export type HoveredAtom = {
     molecule: MoorhenMolecule | null;
     cid: string | null;
+    atomInfo: moorhen.AtomInfo;
 };
 
 const initialState: {
@@ -35,7 +37,6 @@ export const hoveringStatesSlice = createSlice({
     },
 });
 
-export const { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } =
-    hoveringStatesSlice.actions;
+export const { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } = hoveringStatesSlice.actions;
 
 export default hoveringStatesSlice.reducer;

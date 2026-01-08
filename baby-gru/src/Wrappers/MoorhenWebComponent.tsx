@@ -23,9 +23,9 @@ export class MoorhenWebComponent extends HTMLElement {
     constructor() {
         super();
         this.moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
-        this.width = this.getAttribute("width") || 800;
+        this.width = this.getAttribute("width") || 1;
         this.height = this.getAttribute("height") || this.width;
-        this.setMoorhenDimensions = () => [+this.width, +this.height];
+        this.setMoorhenDimensions = this.width !== 1 ? () => [+this.width, +this.height] : null;
         this.urlPrefix = this.getAttribute("url-prefix") || "MoorhenAssets";
     }
 

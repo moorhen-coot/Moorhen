@@ -360,7 +360,7 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
             if (selectedModel !== null) {
                 const selectedMoleculeIndex = molecules.findIndex(molecule => molecule.molNo === selectedModel);
                 if (selectedMoleculeIndex !== -1 && molecules[selectedMoleculeIndex]) {
-                    dispatch(setHoveredAtom({ molecule: molecules[selectedMoleculeIndex], cid: cid }));
+                    dispatch(setHoveredAtom({ molecule: molecules[selectedMoleculeIndex], cid: cid, atomInfo: null }));
                 }
             }
         },

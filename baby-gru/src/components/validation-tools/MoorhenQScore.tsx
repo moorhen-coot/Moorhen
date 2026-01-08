@@ -92,6 +92,7 @@ export const MoorhenQScore = () => {
                             setHoveredAtom({
                                 molecule: selectedMolecule,
                                 cid: `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`,
+                                atomInfo: null,
                             })
                         );
                         return `${clickedResidue.seqNum} (${residueCodesOneToThree[clickedResidue.resCode]})`;

@@ -33,7 +33,7 @@ export const MoorhenScreenshotSnackBar = forwardRef<
     const { closeSnackbar } = useSnackbar();
 
     const handleScreenShot = async () => {
-        dispatch(setHoveredAtom({ molecule: null, cid: null }));
+        dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
         dispatch(setDrawCrosshairs(false));
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("hover"));
         const _pictureName = pictureName !== "" ? pictureName : "moorhen_screenshot";

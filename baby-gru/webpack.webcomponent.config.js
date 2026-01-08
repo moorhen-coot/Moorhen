@@ -73,7 +73,7 @@ module.exports = (env, argv) => {
                 patterns: [
                     {
                         from: paths.public,
-                        to: paths.dist + "/public/MoorhenAssets/",
+                        to: paths.dist + "/public/",
                         toType: "dir",
                         globOptions: {
                             ignore: ["**/monomers/**"],

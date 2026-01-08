@@ -73,7 +73,7 @@ export const SequenceViewerPanel = () => {
 
     const handleHoverResidue = useCallback(
         (molName, chain, resNum, resCode, resCID) => {
-            dispatch(setHoveredAtom({ molecule: molecule, cid: resCID }));
+            dispatch(setHoveredAtom({ molecule: molecule, cid: resCID, atomInfo: null }));
         },
         [dispatch, molecule]
     );

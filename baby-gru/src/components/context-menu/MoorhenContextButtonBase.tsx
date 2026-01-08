@@ -140,7 +140,7 @@ export const MoorhenContextButtonBase = (props: {
     const dispatch = useDispatch();
 
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
-        dispatch(setHoveredAtom({ molecule: null, cid: null }));
+        dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
         props.setShowContextMenu(false);
 
         const cootResult = await commandCentre.current.cootCommand(cootCommandInput, true);

@@ -1,4 +1,3 @@
-import { OtherSceneSettingsMenu } from "../menu-item/OtherSceneSettings";
 import { MainMenu, MainMenuMap, MainMenuType } from "./mainMenuConfig";
 import { MenuItem, MenuItemType, SubMenu, SubMenuMap, subMenuMap } from "./subMenuConfig";
 
@@ -13,7 +12,6 @@ export class MoorhenMenuSystem {
 
     private createSubMenu = () => {
         this.addSubmenu(subMenuMap);
-        this.addSubmenu(OtherSceneSettingsMenu);
     };
 
     public cleanup() {

@@ -57,7 +57,7 @@ export const MoorhenResidueStepsSnackBar = forwardRef<
 
     const init = async () => {
         await props.onStart?.();
-        dispatch(setHoveredAtom({ molecule: null, cid: null }));
+        dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
         if (disableTimeCapsule) timeCapsuleRef.current.disableBackups = true;
     };
 

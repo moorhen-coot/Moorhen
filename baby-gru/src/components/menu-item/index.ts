@@ -42,7 +42,6 @@ export { MouseSensitivitySettings } from "./MouseSensitivitySettings";
 export { MoveMoleculeHere } from "./MoveMoleculeHere";
 export { MultiplyBfactor } from "./MultiplyBfactor";
 export { OpenLhasa } from "./OpenLhasa";
-export { OtherSceneSettings } from "./OtherSceneSettings";
 export { RandomJiggleBlur } from "./RandomJiggleBlur";
 export { References } from "./References";
 export { RefinementSettings } from "./RefinementSettings";

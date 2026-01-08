@@ -21,7 +21,7 @@ import { MoorhenReduxStoreType } from '../store/MoorhenReduxStore';
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
     molecule.redraw()
-    dispatch( setHoveredAtom({ molecule: null, cid: null }) )
+    dispatch( setHoveredAtom({ molecule: null, cid: null,  atomInfo: null }) )
     dispatch( triggerUpdate(molecule.molNo) )
 }
 

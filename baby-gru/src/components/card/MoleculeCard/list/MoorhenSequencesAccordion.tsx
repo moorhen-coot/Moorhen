@@ -63,7 +63,7 @@ export const MoorhenSequencesAccordion = (props: {
 
     const handleHoverResidue = useCallback(
         (molName, chain, resNum, resCode, resCID) => {
-            dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID }));
+            dispatch(setHoveredAtom({ molecule: props.molecule, cid: resCID, atomInfo: null }));
         },
         [dispatch, props.molecule]
     );

@@ -246,12 +246,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
             if (identifier == null) {
-                dispatch(setHoveredAtom({ molecule: null, cid: null }));
+                dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             } else {
                 molecules.forEach(molecule => {
                     if (molecule.buffersInclude(identifier.buffer)) {
                         const newCid = parseAtomInfoLabel(identifier.atom);
-                        dispatch(setHoveredAtom({ molecule: molecule, cid: newCid }));
+                        dispatch(setHoveredAtom({ molecule: molecule, cid: newCid, atomInfo: identifier.atom }));
                     }
                 });
             }
@@ -261,7 +261,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const setWindowDimensions = useCallback(() => {
         let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
-        console.log("width =", newWidth, "height =", newHeight);
         if (setMoorhenDimensions) {
             [newWidth, newHeight] = setMoorhenDimensions();
         }
