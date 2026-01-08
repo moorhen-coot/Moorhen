@@ -1,5 +1,5 @@
-import { memo } from 'react'
-import type { moorhen } from "../../types/moorhen";
+import { memo } from "react";
+import { RootState } from "@/store";
 import { useSelectorEffect } from "../../hooks/useSelectorEffect";
 
 /**
@@ -13,10 +13,7 @@ import { useSelectorEffect } from "../../hooks/useSelectorEffect";
  *
  * @returns null - This component does not render any UI.
  */
-export const SelectorEffect = memo(<T = unknown>(props: { 
-    selector: (state: moorhen.State) => T; 
-    effect: ((selectedState: T) => void) 
-}) => {
+export const SelectorEffect = memo(<T = unknown,>(props: { selector: (state: RootState) => T; effect: (selectedState: T) => void }) => {
     useSelectorEffect<T>(props.selector, props.effect);
     return null;
 });

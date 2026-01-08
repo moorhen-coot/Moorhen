@@ -102,13 +102,13 @@ export const MainMenu: MainMenuMap = {
         menu: "map-tools",
         align: 12,
     },
-    10: {
-        type: "jsx",
-        label: "History",
-        icon: `MatSymHistory`,
-        component: <MoorhenHistoryMenu />,
-        align: -2,
-    },
+    // 10: {
+    //     type: "jsx",
+    //     label: "History",
+    //     icon: `MatSymHistory`,
+    //     component: <MoorhenHistoryMenu />,
+    //     align: -2,
+    // },
     11: {
         type: "sub-menu",
         label: "Preferences",
