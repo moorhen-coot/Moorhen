@@ -47,7 +47,7 @@ export const MoorhenMapsModal = () => {
                 map={map}
                 initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
                 initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
-                isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
+                //isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
                 onCollapseToggle={key => handleCollapseToggle(key)}
                 modalWidth={modalWidth}
             />

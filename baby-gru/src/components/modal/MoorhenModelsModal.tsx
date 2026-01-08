@@ -31,7 +31,6 @@ export const MoorhenModelsModal = () => {
     const displayData = molecules.map((molecule, index) => {
         return (
             <MoorhenMoleculeCard
-                ref={el => (cardListRef.current[index] = el)}
                 showSideBar={true}
                 busy={false}
                 dropdownId={1}

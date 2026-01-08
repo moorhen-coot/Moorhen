@@ -15,7 +15,7 @@ const initialState: {
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
     bottomPanelIsShown: true,
-    isMainMenuOpen: false,
+    isMainMenuOpen: true,
     isSearchBarActive: false,
     areShortcutsBlocked: false,
     shownSidePanel: null,

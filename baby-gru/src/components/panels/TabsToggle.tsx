@@ -19,6 +19,7 @@ export const TabsToggle = (props: TabsToggleProps) => {
     const dispatch = useDispatch();
     const isShown = useSelector((state: RootState) => state.globalUI.shownSidePanel === id);
     const [hovered, setHovered] = useState(false);
+    const iconColor = isShown ? "inherit" : "var(--moorhen-disabled)";
 
     return (
         <div className={`moorhen__panel-container-toggle-button ${isShown ? "visible" : ""}`}>
@@ -40,12 +41,20 @@ export const TabsToggle = (props: TabsToggleProps) => {
                         isActive={true}
                         moorhenSVG={!isShown ? "MatSymArrowLeft" : "MatSymArrowRight"}
                         hover={hovered}
+                        style={{ color: iconColor }}
                     />
-                    {icon && <MoorhenIcon size="medium" isActive={true} moorhenSVG={icon} hover={hovered} />}
+                    {icon && <MoorhenIcon size="medium" isActive={true} moorhenSVG={icon} hover={hovered} style={{ color: iconColor }} />}
                     {showHintLabel && <div className="moorhen__panel-container-toggle-button-hint-label">{label}</div>}
                 </MoorhenStack>
             </button>
-            <MoorhenButton type="icon-only" size="medium" icon="MatSymClose" onClick={() => props.onDelete(id)} variant="danger" />
+            <MoorhenButton
+                type="icon-only"
+                size="medium"
+                icon="MatSymClose"
+                onClick={() => props.onDelete(id)}
+                variant="danger"
+                style={{ color: iconColor }}
+            />
         </div>
     );
 };

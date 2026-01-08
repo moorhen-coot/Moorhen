@@ -26,8 +26,8 @@ type MoorhenMapCardPropsInterface = {
     initialContour?: number;
     initialRadius?: number;
     modalWidth?: number;
-    isCollapsed?: boolean;
-    onCollapseToggle?: (key: number) => void;
+    isOpen?: boolean;
+    onCollapseToggle?: (key: number, isOpen: boolean) => void;
 };
 
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
@@ -71,12 +71,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             return 1.0;
         }
     });
-
-    const handleCollapseToggle = () => {
-        if (props.onCollapseToggle) {
-            props.onCollapseToggle(props.map.molNo);
-        }
-    };
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
@@ -174,7 +168,14 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     ];
 
     return (
-        <MoorhenAccordion title={cardTitle} type="card" defaultOpen={true} extraControls={extraControls}>
+        <MoorhenAccordion
+            title={cardTitle}
+            type="card"
+            defaultOpen={true}
+            extraControls={extraControls}
+            onChange={isOpen => (props.onCollapseToggle ? props.onCollapseToggle(props.map.molNo, isOpen) : () => {})}
+            open={props.isOpen}
+        >
             <MoorhenStack direction="vertical" gap={1}>
                 <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton

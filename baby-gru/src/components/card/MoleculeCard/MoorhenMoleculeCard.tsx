@@ -41,7 +41,7 @@ const allRepresentations: moorhen.RepresentationStyles[] = [
     "environment",
 ];
 
-interface MoorhenMoleculeCardPropsInterface {
+interface MoorhenMoleculeCardProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
@@ -53,6 +53,8 @@ interface MoorhenMoleculeCardPropsInterface {
     molecule: moorhen.Molecule;
     currentDropdownMolNo: number;
     setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
+    open?: boolean | null;
+    onCollapseToggle?: (key, isOpen) => void;
 }
 
 export type clickedResidueType = {
@@ -62,7 +64,7 @@ export type clickedResidueType = {
     seqNum: number;
 };
 
-export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
+export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -176,16 +178,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const generalRepresentationsList: moorhen.RepresentationStyles[] = useMemo(() => {
         return JSON.parse(generalRepresentationString);
     }, [generalRepresentationString]);
-
-    useImperativeHandle(
-        cardRef,
-        () => ({
-            forceIsCollapsed: (value: boolean) => {
-                setIsCollapsed(value);
-            },
-        }),
-        [setIsCollapsed]
-    );
 
     const bondSettingsProps = {
         bondWidth,
@@ -834,7 +826,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const cardLabel = <ItemName item={props.molecule} />;
 
     return (
-        <MoorhenAccordion title={cardLabel} type="card" defaultOpen={true} extraControls={extraControls}>
+        <MoorhenAccordion
+            title={cardLabel}
+            type="card"
+            defaultOpen={true}
+            extraControls={extraControls}
+            open={props.open}
+            onChange={isOpen => (props.onCollapseToggle ? props.onCollapseToggle(props.molecule.molNo, isOpen) : () => {})}
+        >
             <MoorhenStack gap={2} direction="vertical">
                 <div className="moorhen__molecule_card_representation">
                     <MoorhenStack direction="vertical" card>
@@ -940,5 +939,4 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             </MoorhenStack>
         </MoorhenAccordion>
     );
-});
-MoorhenMoleculeCard.displayName = "MoorhenMoleculeCard";
+};

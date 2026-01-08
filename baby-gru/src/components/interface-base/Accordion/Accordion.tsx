@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { MoorhenButton } from "../../inputs";
 import "./accordion.css";
 
@@ -12,11 +12,19 @@ export type MoorhenAccordionType = {
     onChange?: (isExpanded: boolean) => void;
     onOpen?: () => void;
     onClose?: () => void;
+    open?: boolean;
 };
 
 export const MoorhenAccordion = (props: MoorhenAccordionType) => {
     const { title, children, disabled = false, defaultOpen = false, extraControls = null, type = "default" } = props;
     const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
+
+    useEffect(() => {
+        if (props.open !== null && props.open !== undefined) {
+            setIsOpen(props.open);
+            console.log(props.open);
+        }
+    }, [props.open]);
 
     const handleChange = useCallback(() => {
         if (isOpen) {
@@ -42,6 +50,7 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
                         icon="MatSymKeyboardArrowDown"
                         onClick={handleChange}
                         className={`moorhen__accordion-toggle-${isOpen ? "open" : "close"}`}
+                        tooltip={isOpen ? "Collapse" : "Expand"}
                     />
                 </div>
             </div>

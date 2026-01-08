@@ -23,7 +23,6 @@ type MoorhenPopoverType = {
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const { popoverContent = null, isShown, type = "default", overridePopoverSize = null, allowAutoFlip = true, closeButton } = props;
-
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverStyle, setPopoverStyle] = useState({});
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
@@ -95,7 +94,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     useLayoutEffect(() => {
         calculatePosition();
-    }, [isShown, popoverPlacement]);
+    }, [isShown]);
 
     let arrow: string;
     if (popoverPlacement === "left") {
