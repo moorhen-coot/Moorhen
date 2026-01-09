@@ -3,6 +3,7 @@ import { MoorhenSVG } from "../icons";
 import { MoorhenSceneSettings } from "../modal/MoorhenSceneSettingsModal";
 import { MapsPanel } from "./MapPanel/MapsPanel";
 import { ModelsPanel } from "./ModelsPanel/ModelsPanel";
+import { PanelContainer } from "./PanelContainer";
 
 export type PanelIDs = "models" | "maps" | "sceneSettings";
 
@@ -14,6 +15,10 @@ export const PanelsList: Partial<Record<PanelIDs, MoorhenPanel>> = {
     sceneSettings: {
         icon: "MatSymVisibility",
         label: "SceneSettings",
-        panelContent: <MoorhenSceneSettings stackDirection="vertical" />,
+        panelContent: (
+            <PanelContainer title="Scene Settings">
+                <MoorhenSceneSettings stackDirection="vertical" />
+            </PanelContainer>
+        ),
     },
 };

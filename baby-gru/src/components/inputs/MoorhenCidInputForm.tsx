@@ -2,6 +2,8 @@ import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
 import { MoorhenStack } from "../interface-base";
+import { MoorhenToggle } from "./MoorhenToggle/Toggle";
+import { useState } from "react";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -32,28 +34,29 @@ export const MoorhenCidInputForm = ({
 }: MoorhenCidInputFormPropsType) => {
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
+    const [selection, setSelection] = useState<string>("")
+    const [useSelection, setUseSelection] = useState(false)
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
-            onChange(evt);
+            onChange(evt);     
         }
-        if (cidFormRef && typeof cidFormRef === "object" && "current" in cidFormRef && cidFormRef.current) {
-            cidFormRef.current.value = evt.target.value;
-        }
+        setSelection(evt.target.value)
     };
 
     const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        if (evt.target.checked) {
-            if (residueSelection.cid) {
-                // @ts-expect-error - Creating synthetic event object for handleChange
-                handleChange({target: { value: typeof residueSelection.cid === "string" ? residueSelection.cid : residueSelection.cid.join("||") },
-                });
+        console.log(residueSelection)
+        if (!useSelection) {
+            if (residueSelection) {
+                if (residueSelection.cid === null) {
+                    setSelection(residueSelection.first)
+                } else {
+                setSelection(Array.isArray(residueSelection.cid) ? residueSelection.cid[0] : residueSelection.cid)}
             }
         } else {
-            // @ts-expect-error - Creating synthetic event object for handleChange
-            handleChange({ target: { value: "" } });
+            setSelection("")
         }
-    };
+        setUseSelection(!useSelection)}
 
     return (
         <>
@@ -63,16 +66,16 @@ export const MoorhenCidInputForm = ({
                     type="text"
                     className={`${"moorhen__input"} ${invalidCid ? "moorhen__input.invalid" : ""}`}
                     placeholder={placeholder}
-                    defaultValue={defaultValue}
                     onChange={handleChange}
                     ref={cidFormRef}
+                    value={selection}
                 />
             </MoorhenStack>
             {allowUseCurrentSelection && showResidueSelection && (
-                <div style={{ width: width, margin: margin, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <input type="checkbox" id="useCurrentSelection" onChange={handleFillCurrentSelection} />
-                    <label htmlFor="useCurrentSelection">Use current selection?</label>
-                </div>
+                <MoorhenToggle
+                    label="Use Current Selection"
+                    onChange={handleFillCurrentSelection} 
+                    checked={useSelection}/>
             )}
         </>
     );

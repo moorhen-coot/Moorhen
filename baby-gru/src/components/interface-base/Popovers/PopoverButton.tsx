@@ -13,13 +13,15 @@ type MoorhenPopoverButtonType = {
     tooltip?: string;
     type?: "icon-only" | "default";
     style?: React.CSSProperties;
+    popoverStyle?: React.CSSProperties;
     closeButton?: boolean;
+    label?: string;
 };
 
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
     const [popoverIsShown, setPopOverIsShown] = useState<boolean>(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
-    const { tooltip = null, type = "icon-only", style, popoverPlacement = "top", closeButton = false } = props;
+    const { tooltip = null, type = "icon-only", style, popoverPlacement = "top", closeButton = false, label, popoverStyle } = props;
 
     const popOverLink = (
         <MoorhenButton
@@ -30,6 +32,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             onClick={() => setPopOverIsShown(!popoverIsShown)}
             tooltip={tooltip}
             style={style}
+            label={label}
         />
     );
 
@@ -42,6 +45,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             popoverPlacement={popoverPlacement}
             setIsShown={setPopOverIsShown}
             closeButton={closeButton}
+            style={popoverStyle}
         />
     );
 };

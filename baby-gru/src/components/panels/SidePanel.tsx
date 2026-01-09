@@ -55,7 +55,7 @@ export const MoorhenSidePanel = (props: { width: number }) => {
                 icon={PanelsList[id].icon}
                 label={PanelsList[id].label}
                 id={id}
-                key={id}
+                key={`${id}-tab-toggle`}
                 showHintLabel={showHintLabel}
                 onDelete={handleRemoveActivePanel}
             />
@@ -63,7 +63,11 @@ export const MoorhenSidePanel = (props: { width: number }) => {
     });
 
     const panels: React.JSX.Element[] = activePanels.map(id => {
-        return <Activity mode={shownPanel === id ? "visible" : "hidden"}>{PanelsList[id].panelContent}</Activity>;
+        return (
+            <Activity mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
+                {PanelsList[id].panelContent}
+            </Activity>
+        );
     });
 
     return (

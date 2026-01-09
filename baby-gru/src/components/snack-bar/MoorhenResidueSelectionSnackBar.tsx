@@ -13,10 +13,9 @@ import {
 } from "@mui/icons-material";
 import { IconButton, Popover, Tooltip } from "@mui/material";
 import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack";
-import { Button, Stack } from "react-bootstrap";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 import { batch, useDispatch, useSelector } from "react-redux";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
     clearResidueSelection,
     setIsDraggingAtoms,

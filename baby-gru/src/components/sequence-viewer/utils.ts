@@ -1,10 +1,10 @@
-import { useSelector } from 'react-redux';
-import { useMemo } from 'react';
-import { RootState } from '../../store/MoorhenReduxStore';
-import { type ResidueSelection, setResidueSelection } from '../../store/generalStatesSlice';
-import type { MoorhenMolecule, Sequence } from '../../utils/MoorhenMolecule';
-import { cidToSpec, sequenceIsValid } from '../../utils/utils';
-import type { ResiduesSelection, SeqElement } from './MoorhenSeqViewTypes';
+import { useSelector } from "react-redux";
+import { useMemo } from "react";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { type ResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
+import type { MoorhenMolecule, Sequence } from "../../utils/MoorhenMolecule";
+import { cidToSpec, sequenceIsValid } from "../../utils/utils";
+import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 
 export const stringToSeqViewer = (
     seqAsString: string,
@@ -15,10 +15,10 @@ export const stringToSeqViewer = (
     chain?: string
 ): SeqElement => {
     const sequence: SeqElement = {
-        molName: molName ? molName : '',
-        chain: chain ? chain : '',
+        molName: molName ? molName : "",
+        chain: chain ? chain : "",
         molNo: molNo ? molNo : 0,
-        displayName: name ? name : '',
+        displayName: name ? name : "",
         residues: [],
     };
     let resNum = start ? start : 1;
@@ -26,7 +26,7 @@ export const stringToSeqViewer = (
         sequence.residues.push({
             resNum: resNum++,
             resCode: res,
-            resCID: '/' + sequence.molNo + '/' + sequence.chain + '/' + resNum,
+            resCID: "/" + sequence.molNo + "/" + sequence.chain + "/" + resNum,
         });
     }
     return sequence;
@@ -62,7 +62,7 @@ export function MoleculeToSeqViewerSequences(molecule: MoorhenMolecule | null, g
         if (!getColors) {
             return newSeq;
         }
-        const seqColour = molecule.representations[0].colourRules.find(rule => rule.cid === '//' + newSeq.chain)?.color;
+        const seqColour = molecule.representations[0].colourRules.find(rule => rule.cid === "//" + newSeq.chain)?.color;
         newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null;
         return newSeq;
     });
@@ -73,12 +73,12 @@ export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection):
     const selection: ResiduesSelection | null = residueSelection.molecule
         ? {
               molNo: residueSelection.molecule.molNo,
-              chain: residueSelection.first.split('/')[2],
+              chain: residueSelection.first.split("/")[2],
               range: [
-                  parseInt(residueSelection.first.split('/')[3]),
+                  parseInt(residueSelection.first.split("/")[3]),
                   residueSelection.second
-                      ? parseInt(residueSelection.second.split('/')[3])
-                      : parseInt(residueSelection.first.split('/')[3]),
+                      ? parseInt(residueSelection.second.split("/")[3])
+                      : parseInt(residueSelection.first.split("/")[3]),
               ],
           }
         : null;
@@ -91,15 +91,15 @@ export const handleResiduesSelection = (selection: ResiduesSelection, molecule: 
     const second = Math.max(selection.range[0], selection.range[1]);
     const newSelection: ResidueSelection = {
         molecule: molecule,
-        first: '/1/' + selection.chain + '/' + first + '/CA',
-        second: '/1/' + selection.chain + '/' + second + '/CA',
-        cid: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+        first: "/1/" + selection.chain + "/" + first + "/CA",
+        second: "/1/" + selection.chain + "/" + second + "/CA",
+        cid: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
         isMultiCid: false,
-        label: '/*/' + selection.chain + '/' + first + '-' + second + '/*',
+        label: "/*/" + selection.chain + "/" + first + "-" + second + "/*",
     };
     dispatch(setResidueSelection(newSelection));
     molecule.drawResidueSelection(newSelection.cid as string);
-    enqueueSnackbar('residue-selection', { variant: 'residueSelection', persist: true });
+    enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
 };
 
 export const useHoveredResidue = (): {

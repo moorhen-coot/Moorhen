@@ -1,11 +1,10 @@
 import { LinearProgress } from "@mui/material";
-import { Col, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { MoorhenStack } from "@/components/interface-base";
 import { useCommandCentre } from "../../../../InstanceManager";
 import { moorhen } from "../../../../types/moorhen";
 import { LigandInfo } from "../../../../utils/MoorhenMolecule";
-import { modalKeys } from "../../../../utils/enums";
 import { MoorhenLigandCard } from "../../MoorhenLigandCard";
 
 export const MoorhenLigandList = (props: {
@@ -16,7 +15,6 @@ export const MoorhenLigandList = (props: {
 }) => {
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
-    const showModelsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.MODELS));
     const commandCentre = useCommandCentre();
 
     const [ligandList, setLigandList] = useState<LigandInfo[]>(null);
@@ -67,17 +65,7 @@ export const MoorhenLigandList = (props: {
     }
 
     useEffect(() => {
-        if (showModelsModal) {
-            updateLigandList();
-        } else {
-            setLigandList(null);
-        }
-    }, [showModelsModal]);
-
-    useEffect(() => {
-        if (props.molecule?.molNo === updateMolNo && showModelsModal) {
-            updateLigandList();
-        }
+        updateLigandList();
     }, [updateSwitch]);
 
     return (
@@ -85,21 +73,13 @@ export const MoorhenLigandList = (props: {
             {ligandList === null ? (
                 <LinearProgress variant="indeterminate" />
             ) : ligandList.length > 0 ? (
-                <>
-                    <Row style={{ maxHeight: props.height ?? "30vh", overflowY: "auto" }}>
-                        <Col style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
-                            {ligandList.map(ligand => {
-                                return (
-                                    <MoorhenLigandCard
-                                        key={`${ligand.cid}-${props.molecule.molNo}`}
-                                        ligand={ligand}
-                                        molecule={props.molecule}
-                                    />
-                                );
-                            })}
-                        </Col>
-                    </Row>
-                </>
+                <MoorhenStack>
+                    {ligandList.map(ligand => {
+                        return (
+                            <MoorhenLigandCard key={`${ligand.cid}-${props.molecule.molNo}`} ligand={ligand} molecule={props.molecule} />
+                        );
+                    })}
+                </MoorhenStack>
             ) : (
                 <div>
                     <b>No ligands</b>

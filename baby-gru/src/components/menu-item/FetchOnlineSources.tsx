@@ -21,6 +21,8 @@ export const FetchOnlineSources = () => {
         downloadMaps: true,
     };
 
+    const notes = "ligand test 5hes, glyco test 5fjj";
+
     const { sources, downloadMaps } = { ...defaultProps };
 
     const store = useStore();

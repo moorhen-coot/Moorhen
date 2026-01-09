@@ -20,6 +20,7 @@ type MoorhenPopoverType = {
     overridePopoverSize?: { width: number; height: number };
     allowAutoFlip?: boolean;
     closeButton?: boolean;
+    style?: React.CSSProperties;
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const { popoverContent = null, isShown, type = "default", overridePopoverSize = null, allowAutoFlip = true, closeButton } = props;
@@ -112,7 +113,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const container = (
         <div
             className={type === "tooltip" ? "moorhen__tooltip" : `moorhen__menu-item-popover ${arrow}`}
-            style={popoverStyle}
+            style={{ ...popoverStyle, ...props.style }}
             ref={popoverRef}
             data-theme={isDark ? "dark" : "light"}
         >
