@@ -50,7 +50,8 @@ export const CustomRepresentationChip = (props: {
         dispatch(removeCustomRepresentation(representation));
     }, [molecule, representation]);
 
-    const selectionName = representation.cid === "//*" ? "All Molecule" : representation.cid;
+    let selectionName = representation.cid;
+    if (representation.cid === "//*//:*") selectionName = "All Molecule";
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">

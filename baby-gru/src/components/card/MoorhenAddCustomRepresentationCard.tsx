@@ -156,6 +156,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
 
         const [notHOH, setNotHOH] = useState<boolean>(false);
         const [notH, setNotH] = useState<boolean>(false);
+        const [sideChainOnly, setSideChainOnly] = useState<boolean>(false);
 
         const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -232,9 +233,15 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     if (representationStyle === "CBs" && notHOH) {
                         cidSelection += "(!HOH)";
                     }
-                    if (representationStyle === "CBs" && notH) {
-                        cidSelection += "/[!H]";
+                    cidSelection += "/";
+                    if (representationStyle === "CBs" && sideChainOnly) {
+                        cidSelection += "!O,C,N";
                     }
+
+                    if (representationStyle === "CBs" && notH) {
+                        cidSelection += "[!H]";
+                    }
+                    cidSelection += ":*";
 
                     break;
                 case "chain":
@@ -242,9 +249,15 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     if (representationStyle === "CBs" && notHOH) {
                         cidSelection += "(!HOH)";
                     }
-                    if (representationStyle === "CBs" && notH) {
-                        cidSelection += "/[!H]";
+                    cidSelection += "/";
+                    if (representationStyle === "CBs" && sideChainOnly) {
+                        cidSelection += "!O,C,N";
                     }
+
+                    if (representationStyle === "CBs" && notH) {
+                        cidSelection += "[!H]";
+                    }
+                    cidSelection += ":*";
                     break;
                 case "residue-range":
                     const selectedResidues = sequenceResidueRange;
@@ -520,6 +533,11 @@ export const MoorhenAddCustomRepresentationCard = memo(
                         <>
                             <MoorhenToggle label="Hide Waters" checked={notHOH} onChange={() => setNotHOH(!notHOH)} />
                             <MoorhenToggle label="Hide Hydrogens" checked={notH} onChange={() => setNotH(!notH)} />
+                            <MoorhenToggle
+                                label="Side Chain Only"
+                                checked={sideChainOnly}
+                                onChange={() => setSideChainOnly(!sideChainOnly)}
+                            />
                         </>
                     )}
                 </MoorhenStack>

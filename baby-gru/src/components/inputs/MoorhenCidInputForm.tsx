@@ -19,7 +19,8 @@ type MoorhenCidInputFormPropsType = {
     inline?: boolean
 };
 
-export const MoorhenCidInputForm = ({
+export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
+    const {
     height = "4rem",
     width = "16rem",
     margin = "0.1rem",
@@ -31,10 +32,10 @@ export const MoorhenCidInputForm = ({
     onChange,
     ref: cidFormRef,
     inline = true,
-}: MoorhenCidInputFormPropsType) => {
+} = props
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
-    const [selection, setSelection] = useState<string>("")
+    const [selection, setSelection] = useState<string>(defaultValue)
     const [useSelection, setUseSelection] = useState(false)
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
