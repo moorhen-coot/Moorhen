@@ -59,7 +59,7 @@ const MoorhenPopoverOptions = (props: {
 
     return (
         <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
-            <MoorhenStack direction="vertical" gap={2}>
+            <MoorhenStack direction="vertical" card style={{ background: "var(--moorhen-background)" }}>
                 <MoorhenSelect label={props.label} key={props.label} ref={selectRef} defaultValue={defaultValue}>
                     {props.options.map(optionName => {
                         return (
