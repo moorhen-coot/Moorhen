@@ -75,7 +75,11 @@ export const CustomRepresentationChip = (props: {
                             onApply={() => setReload(!reload)}
                         />
                     </MoorhenPopoverButton>
-                    <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
+                    <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" size="accordion">
+                        <MoorhenButton variant="danger" onClick={handleDelete}>
+                            Delete Representation
+                        </MoorhenButton>
+                    </MoorhenPopoverButton>
                 </div>
             </MoorhenStack>
         </div>

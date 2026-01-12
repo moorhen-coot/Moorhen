@@ -15,7 +15,7 @@ export const ActivityIndicator = () => {
     const residueNumber = cidAsArray[3]?.split(`(`)[0];
     const reformatedCid = `${cidAsArray[2]} - ${residueName} ${residueNumber} - ${cidAsArray[4]}`;
     const bFactorNOccupancy = hoveredAtom.atomInfo
-        ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(0)} Occ: ${hoveredAtom.atomInfo.occupancy}`
+        ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(0)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";
     const busyIndicator = busy ? (
         <>
