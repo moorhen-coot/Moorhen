@@ -32,10 +32,22 @@ export const ActivityIndicator = () => {
         <div className="moorhen__activity-indicator">
             {busyIndicator}
             {showHoverInfo && hoveredAtom.cid && (
-                <MoorhenStack>
+                <MoorhenStack style={{ minWidth: "0" }}>
                     <span>{reformatedCid}</span>
                     <span style={{ fontSize: "0.8em" }}>{bFactorNOccupancy}</span>
-                    <span style={{ fontSize: "0.8em", textOverflow: "ellipsis" }}>{hoveredAtom.molecule.name}</span>
+                    <span
+                        style={{
+                            fontSize: "0.8em",
+                            textOverflow: "ellipsis",
+                            display: "block",
+                            minWidth: 0,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            border: "none",
+                        }}
+                    >
+                        {hoveredAtom.molecule.name}
+                    </span>
                 </MoorhenStack>
             )}
             {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: "black" }} />}

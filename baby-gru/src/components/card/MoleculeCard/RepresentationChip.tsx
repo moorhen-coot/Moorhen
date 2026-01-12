@@ -11,7 +11,7 @@ import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
 import { convertRemToPx } from "../../../utils/utils";
-import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresentationCard";
+import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard";
 import "./representation.css";
 
 export const CustomRepresentationChip = (props: {
@@ -30,13 +30,13 @@ export const CustomRepresentationChip = (props: {
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
     if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
 
-    useEffect(() => {
-        if (!isMoleculeVisible) {
-            representation.hide();
-        } else if (representationIsVisible) {
-            representation.show();
-        }
-    }, [isMoleculeVisible]);
+    // useEffect(() => { //this seem to just be a bug
+    //     if (!isMoleculeVisible) {
+    //         representation.hide();
+    //     } else if (representationIsVisible) {
+    //         representation.show();
+    //     }
+    // }, [isMoleculeVisible]);
 
     const handleVisibility = useCallback(() => {
         if (isMoleculeVisible) {
@@ -55,7 +55,7 @@ export const CustomRepresentationChip = (props: {
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
-                <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden" }}>
+                <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                     <b>{`${representationLabelMapping[representation.style]}`}</b>
                     <br />
                     <span>{selectionName}</span>

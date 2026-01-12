@@ -9,7 +9,7 @@ export const SidePanelContainer = (props: {
 }) => {
     const { title, extraControls, children } = props;
     return (
-        <MoorhenStack>
+        <MoorhenStack style={{ minWidth: "0" }}>
             <div className="moorhen__panel-inner-container-title-bar">
                 <span style={{ flex: "1" }}>{title}</span>
                 <div>{extraControls}</div>

@@ -1,26 +1,24 @@
 import { GrainOutlined } from "@mui/icons-material";
-import { Popover } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useRef, useState } from "react";
-import { addCustomRepresentation } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../../utils/MoorhenColourRule";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../utils/enums";
-import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../sequence-viewer";
-import { NcsColourSwatch } from "./MoleculeCard/MoorhenColourRuleCard";
+import { addCustomRepresentation } from "../../../store/moleculesSlice";
+import { moorhen } from "../../../types/moorhen";
+import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
+import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils";
+import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
+import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../../interface-base";
+import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
 import {
     BondSettingsPanel,
     MolSurfSettingsPanel,
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
-} from "./MoorhenMoleculeRepresentationSettingsCard";
+} from "../MoorhenMoleculeRepresentationSettingsCard";
+import { NcsColourSwatch } from "./MoorhenColourRuleCard";
 
 const customRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres", "MetaBalls", "residue_environment"];
 
@@ -49,7 +47,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
 
-        const [ruleType, setRuleType] = useState<string>(props.representation ? "cid" : "molecule");
+        const [ruleType, setRuleType] = useState<string>(
+            props.representation ? (props.representation.cid === "//*//:*" ? "molecule" : "cid") : "molecule"
+        );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
@@ -154,9 +154,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
             props.representation?.residueEnvironmentOptions?.showContacts ?? props.molecule.defaultResidueEnvironmentOptions.showContacts
         );
 
-        const [notHOH, setNotHOH] = useState<boolean>(false);
-        const [notH, setNotH] = useState<boolean>(false);
-        const [sideChainOnly, setSideChainOnly] = useState<boolean>(false);
+        const [notHOH, setNotHOH] = useState<boolean>(props.representation?.cid?.includes("(!HOH)") ? true : false);
+        const [notH, setNotH] = useState<boolean>(props.representation?.cid?.includes("[!H]") ? true : false);
+        const [sideChainOnly, setSideChainOnly] = useState<boolean>(props.representation?.cid?.includes("!O,C,N") ? true : false);
 
         const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -310,7 +310,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     case "af2-plddt":
                         colourRule = new ColourRule(
                             colourModeSelectRef.current.value,
-                            "/*/*/*/*",
+                            "/*/*/*/*:*",
                             "#ffffff",
                             props.molecule.commandCentre,
                             true,
