@@ -2,8 +2,8 @@ import { useSelector } from "react-redux";
 import { useMemo, useState } from "react";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenMapCard } from "../../card/MapCard/MoorhenMapCard";
-import { PanelContainer } from "../PanelContainer";
-import { CollapseAllCardsToggle } from "../utils/CollapseAllCardsToggle";
+import { CollapseAllCardsToggle } from "./utils/CollapseAllCardsToggle";
+import { SidePanelContainer } from "./utils/SidePanelContainer";
 
 export const MapsPanel = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
@@ -33,8 +33,8 @@ export const MapsPanel = () => {
     const sortedDisplayData = [...displayData].sort((a, b) => (a.props.index > b.props.index ? 1 : b.props.index > a.props.index ? -1 : 0));
 
     return (
-        <PanelContainer title="Maps" extraControls={extraControl}>
+        <SidePanelContainer title="Maps" extraControls={extraControl}>
             {maps.length === 0 ? <span>No maps loaded</span> : sortedDisplayData}
-        </PanelContainer>
+        </SidePanelContainer>
     );
 };

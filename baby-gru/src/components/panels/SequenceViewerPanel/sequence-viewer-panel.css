@@ -13,7 +13,7 @@
     width: calc(100% - 300px);
 }
 
-.moorhen__bottom-panel-container {
+.moorhen__sequence-panel-container {
     position: absolute;
     height: 77px;
     bottom: 0;
@@ -30,7 +30,7 @@
     user-select: none;
 }
 
-.moorhen__bottom-panel-tab {
+.moorhen__sequence-panel-tab {
     position: absolute;
     bottom: 76px;
     width: 10rem;
@@ -52,7 +52,7 @@
     justify-content: center;
 }
 
-.moorhen__bottom-panel-button {
+.moorhen__sequence-panel-button {
     border: none;
     border-radius: 1rem;
     background: none;
@@ -62,9 +62,9 @@
     color: var(--moorhen-primary);
 }
 
-.moorhen__bottom-panel-button:hover {
+.moorhen__sequence-panel-button:hover {
     box-shadow: 0px 0px 0px 4px var(--moorhen-focus-shadow);
 }
-.moorhen__bottom-panel-tab-panel-is-hidden {
+.moorhen__sequence-panel-tab-panel-is-hidden {
     transform: translateY(75px);
 }

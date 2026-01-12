@@ -1,5 +1,4 @@
 import { LinearProgress } from "@mui/material";
-import { Col, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { moorhen } from "../../../../types/moorhen";
@@ -32,12 +31,8 @@ export const MoorhenCarbohydrateList = (props: {
     }, [updateSwitch]);
 
     useEffect(() => {
-        if (showModelsModal) {
-            validate();
-        } else {
-            setCarbohydrateList(null);
-        }
-    }, [showModelsModal]);
+        validate();
+    }, []);
 
     return (
         <>
@@ -45,15 +40,9 @@ export const MoorhenCarbohydrateList = (props: {
                 <LinearProgress variant="indeterminate" />
             ) : carbohydrateList.length > 0 ? (
                 <>
-                    <Row style={{ maxHeight: props.height ?? "30vh", overflowY: "auto" }}>
-                        <Col style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
-                            {carbohydrateList.map(carbohydrate => {
-                                return (
-                                    <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />
-                                );
-                            })}
-                        </Col>
-                    </Row>
+                    {carbohydrateList.map(carbohydrate => {
+                        return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />;
+                    })}
                 </>
             ) : (
                 <div>

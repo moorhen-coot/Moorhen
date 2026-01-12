@@ -10,6 +10,7 @@ const initialState: {
     isSearchBarActive: boolean;
     areShortcutsBlocked: boolean;
     shownSidePanel: PanelIDs | null;
+    sidePanelWidth: number;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -19,6 +20,7 @@ const initialState: {
     isSearchBarActive: false,
     areShortcutsBlocked: false,
     shownSidePanel: null,
+    sidePanelWidth: 450,
 };
 
 const globalUISlice = createSlice({
@@ -49,6 +51,9 @@ const globalUISlice = createSlice({
         setShownSidePanel: (state, action: PayloadAction<PanelIDs | null>) => {
             state.shownSidePanel = action.payload;
         },
+        setSidePanelWidth: (state, action: PayloadAction<number>) => {
+            state.sidePanelWidth = action.payload;
+        },
     },
 });
 
@@ -61,5 +66,6 @@ export const {
     setMainMenuOpen,
     setShortCutsBlocked,
     setShownSidePanel,
+    setSidePanelWidth,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

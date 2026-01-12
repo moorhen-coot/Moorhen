@@ -41,7 +41,7 @@ import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPref
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanel";
-import { MoorhenSidePanel } from "../panels/SidePanel";
+import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
 import { MoorhenAcceptRejectRotateTranslateSnackBar } from "../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar";
@@ -176,8 +176,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         aceDRGInstance = null,
     } = props;
 
-    const sidePanelWidth = 450;
-
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
     const glRef = props.glRef ? props.glRef : innerGlRef;
     //const innerLastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
@@ -208,6 +206,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const maxBackupCount = useSelector((state: moorhen.State) => state.backupSettings.maxBackupCount);
     const modificationCountBackupThreshold = useSelector((state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold);
 
+    const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
@@ -270,7 +269,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [sidePanelIsOpen, bottomPanelIsShown]);
+    }, [sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
@@ -515,7 +514,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
-                    <MoorhenSidePanel width={sidePanelWidth} />
+                    <MoorhenSidePanel />
                 </SnackbarProvider>
             </div>
         </>

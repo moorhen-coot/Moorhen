@@ -1,9 +1,9 @@
 import React from "react";
-import { MoorhenSVG } from "../icons";
-import { MoorhenSceneSettings } from "../modal/MoorhenSceneSettingsModal";
-import { MapsPanel } from "./MapPanel/MapsPanel";
-import { ModelsPanel } from "./ModelsPanel/ModelsPanel";
-import { PanelContainer } from "./PanelContainer";
+import { MoorhenSVG } from "../../icons";
+import { MoorhenSceneSettings } from "../../modal/MoorhenSceneSettingsModal";
+import { MapsPanel } from "./MapsPanel";
+import { ModelsPanel } from "./ModelsPanel";
+import { SidePanelContainer } from "./utils/SidePanelContainer";
 
 export type PanelIDs = "models" | "maps" | "sceneSettings";
 
@@ -16,9 +16,9 @@ export const PanelsList: Partial<Record<PanelIDs, MoorhenPanel>> = {
         icon: "MatSymVisibility",
         label: "SceneSettings",
         panelContent: (
-            <PanelContainer title="Scene Settings">
+            <SidePanelContainer title="Scene Settings">
                 <MoorhenSceneSettings stackDirection="vertical" />
-            </PanelContainer>
+            </SidePanelContainer>
         ),
     },
 };

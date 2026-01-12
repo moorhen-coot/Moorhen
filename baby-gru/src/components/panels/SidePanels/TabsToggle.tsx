@@ -1,11 +1,11 @@
 import { useDispatch, useSelector } from "react-redux";
 import React, { useState } from "react";
 import { RootState, setShownSidePanel } from "@/store";
-import { MoorhenSVG } from "../icons";
-import { MoorhenIcon } from "../icons/MoorhenIcon";
-import { MoorhenButton } from "../inputs";
-import { MoorhenStack } from "../interface-base/Stack/Stack";
-import { PanelIDs } from "./PanelList";
+import { MoorhenSVG } from "../../icons";
+import { MoorhenIcon } from "../../icons/MoorhenIcon";
+import { MoorhenButton } from "../../inputs";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
+import { PanelIDs } from "./SidePanelList";
 
 type TabsToggleProps = {
     label: string;

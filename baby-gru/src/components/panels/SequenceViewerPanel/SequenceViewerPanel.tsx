@@ -119,17 +119,17 @@ export const SequenceViewerPanel = () => {
     return (
         <>
             <div
-                className={`moorhen__bottom-panel-tab ${
+                className={`moorhen__sequence-panel-tab ${
                     bottomPanelIsShown
                         ? expand
-                            ? "moorhen__bottom-panel-tab-panel-is-expanded"
+                            ? "moorhen__sequence-panel-tab-panel-is-expanded"
                             : ""
-                        : "moorhen__bottom-panel-tab-panel-is-hidden"
+                        : "moorhen__sequence-panel-tab-panel-is-hidden"
                 }`}
                 style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
             >
                 {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-                <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
+                <button className="moorhen__sequence-panel-button" onClick={toggleBottomPanel}>
                     &nbsp;&nbsp;Sequences&nbsp;&nbsp;
                 </button>
                 {bottomPanelIsShown &&
@@ -145,8 +145,8 @@ export const SequenceViewerPanel = () => {
                     ))}
             </div>
             <div
-                className={`moorhen__bottom-panel-container ${bottomPanelIsShown ? "" : "moorhen__bottom-panel-tab-panel-is-hidden"}`}
-                style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
+                className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
+                // style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
             >
                 <MoorhenSequenceViewer
                     key={seqViewerKey}

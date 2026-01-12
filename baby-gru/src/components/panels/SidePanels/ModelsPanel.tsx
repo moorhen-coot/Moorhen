@@ -4,8 +4,8 @@ import { MoorhenMoleculeCard } from "@/components/card/MoleculeCard/MoorhenMolec
 import { MoorhenButton } from "@/components/inputs";
 import { RootState } from "@/store";
 import { convertRemToPx } from "@/utils/utils";
-import { PanelContainer } from "../PanelContainer";
-import { CollapseAllCardsToggle } from "../utils/CollapseAllCardsToggle";
+import { CollapseAllCardsToggle } from "./utils/CollapseAllCardsToggle";
+import { SidePanelContainer } from "./utils/SidePanelContainer";
 
 export const ModelsPanel = () => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1);
@@ -44,8 +44,8 @@ export const ModelsPanel = () => {
     displayData.sort((a, b) => (a.props.index > b.props.index ? 1 : b.props.index > a.props.index ? -1 : 0));
 
     return (
-        <PanelContainer title="Molecules" extraControls={extraControl}>
+        <SidePanelContainer title="Molecules" extraControls={extraControl}>
             {displayData.length === 0 ? <span>No models loaded</span> : displayData}
-        </PanelContainer>
+        </SidePanelContainer>
     );
 };
