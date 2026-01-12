@@ -1,4 +1,3 @@
-import { DeleteOutlined, EditOutlined } from "@mui/icons-material";
 import { Box, Chip, CircularProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
@@ -7,13 +6,13 @@ import { MoorhenStack } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { addGeneralRepresentation, removeCustomRepresentation, removeGeneralRepresentation } from "../../../store/moleculesSlice";
-import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
 import { convertRemToPx } from "../../../utils/utils";
 import { MoorhenAddCustomRepresentationCard } from "../MoorhenAddCustomRepresentationCard";
+import "./representation.css";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -23,63 +22,63 @@ export const CustomRepresentationChip = (props: {
     const { representation, molecule } = props;
     const urlPrefix = usePaths().urlPrefix;
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true);
-    const [showEditRepresentation, setShowEditRepresentation] = useState<boolean>(false);
+    const [reload, setReload] = useState<boolean>(false);
 
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
-    const isVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
-
-    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isVisible, isDark);
-    if (!isVisible) chipStyle["opacity"] = "0.3";
+    const isMoleculeVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
+    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
+    if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
 
     useEffect(() => {
-        if (!isVisible) {
+        if (!isMoleculeVisible) {
             representation.hide();
         } else if (representationIsVisible) {
             representation.show();
         }
-    }, [isVisible]);
-
-    useEffect(() => {
-        representationIsVisible ? representation.show() : representation.hide();
-    }, [representationIsVisible]);
+    }, [isMoleculeVisible]);
 
     const handleVisibility = useCallback(() => {
-        if (isVisible) {
+        if (isMoleculeVisible) {
+            !representationIsVisible ? representation.show() : representation.hide();
             setRepresentationIsVisible(!representationIsVisible);
         }
-    }, [isVisible, representationIsVisible]);
+    }, [isMoleculeVisible, representationIsVisible]);
 
     const handleDelete = useCallback(() => {
         molecule.removeRepresentation(representation.uniqueId);
         dispatch(removeCustomRepresentation(representation));
     }, [molecule, representation]);
 
+    const selectionName = representation.cid === "//*" ? "All Molecule" : representation.cid;
     return (
-        <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
-            <Chip
-                style={chipStyle}
-                variant={"outlined"}
-                label={`${representationLabelMapping[representation.style]} ${
-                    representation.cid.length > 21 ? `${representation.cid.slice(0, 20)} ...` : representation.cid
-                }`}
-                deleteIcon={
-                    <MoorhenStack align="center" direction="row">
-                        <MoorhenPopoverButton icon="MatSymEdit">
-                            <MoorhenAddCustomRepresentationCard
-                                mode="edit"
-                                urlPrefix={urlPrefix}
-                                molecule={props.molecule}
-                                representation={props.representation}
-                            />
-                        </MoorhenPopoverButton>
-                        <MoorhenButton type="icon-only" icon="MatSymDelete" size="medium" onClick={handleDelete} />
-                    </MoorhenStack>
-                }
-                onClick={handleVisibility}
-                onDelete={() => {}}
-            />
-        </Box>
+        <div className="moorhen__representation-chip" style={chipStyle}>
+            <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
+                <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden" }}>
+                    <b>{`${representationLabelMapping[representation.style]}`}</b>
+                    <br />
+                    <span>{selectionName}</span>
+                </div>
+                <div style={{ flexShrink: "0" }}>
+                    <MoorhenButton
+                        onClick={handleVisibility}
+                        type="icon-only"
+                        icon={representationIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                        size="accordion"
+                    ></MoorhenButton>
+                    <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
+                        <MoorhenAddCustomRepresentationCard
+                            mode="edit"
+                            urlPrefix={urlPrefix}
+                            molecule={props.molecule}
+                            representation={props.representation}
+                            onApply={() => setReload(!reload)}
+                        />
+                    </MoorhenPopoverButton>
+                    <MoorhenButton type="icon-only" icon="MatSymDelete" size="accordion" onClick={handleDelete} />
+                </div>
+            </MoorhenStack>
+        </div>
     );
 };
 
@@ -174,6 +173,7 @@ export const RepresentationCheckbox = (props: { style: RepresentationStyles; isV
                 />
             )}
         </Box>
+        // <div />
     );
 };
 

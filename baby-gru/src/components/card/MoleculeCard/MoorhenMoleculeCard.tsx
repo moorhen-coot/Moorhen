@@ -872,6 +872,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
                             popoverPlacement="left"
                             icon="MatSymColors"
                             closeButton
+                            size="medium"
                         >
                             <MoorhenModifyColourRulesCard molecule={props.molecule} />
                         </MoorhenPopoverButton>
@@ -898,6 +899,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
                                 setBusy={setBusyDrawingCustomRepresentation}
                                 urlPrefix={urlPrefix}
                                 molecule={props.molecule}
+                                onApply={() => document.body.click()}
                             />
                         </MoorhenPopoverButton>
                     </div>
