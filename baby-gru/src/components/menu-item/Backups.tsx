@@ -1,16 +1,17 @@
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCommandAndCapsule, useTimeCapsule } from "../../InstanceManager";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
 export const Backups = (props: { disabled: boolean; loadSession: (sessionDataString: string) => Promise<void> }) => {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null);
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
+    const timeCapsule = useTimeCapsule();
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const retrieveSession = useCallback(async () => {
+    const retrieveSession = async () => {
         if (backupSelectRef.current.value) {
             try {
                 const key = backupSelectRef.current.value;
@@ -24,14 +25,21 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
         }
 
         document.body.click();
-    }, [props.loadSession, timeCapsuleRef]);
+    };
 
     return (
         <MoorhenStack gap="1rem">
             <MoorhenBackupSelect ref={backupSelectRef} width="100%" label="Select backup" />
             <MoorhenButton variant="primary" onClick={retrieveSession}>
-                OK
+                Load
             </MoorhenButton>
+
+            <MoorhenPopoverButton type="default" label="Clear all backup" icon="MatSymDelete">
+                <MoorhenButton variant="danger" onClick={() => timeCapsule.current.dropAllBackups()}>
+                    {" "}
+                    Confirm Delete All Backups
+                </MoorhenButton>
+            </MoorhenPopoverButton>
         </MoorhenStack>
     );
 };

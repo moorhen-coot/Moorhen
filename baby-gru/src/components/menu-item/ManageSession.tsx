@@ -4,7 +4,7 @@ import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../Inst
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { usePersistentState } from "../../store/menusSlice";
-import type { backupKey } from "../../utils/MoorhenTimeCapsule";
+import { MoorhenTimeCapsule, type backupKey } from "../../utils/MoorhenTimeCapsule";
 import { doDownload, guid, readDataFile } from "../../utils/utils";
 import { MoorhenButton, MoorhenTextInput } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
@@ -60,7 +60,7 @@ export const ManageSession = () => {
         };
         const keyString = JSON.stringify({
             ...key,
-            label: timeCapsule.current.getBackupLabel(key),
+            label: MoorhenTimeCapsule.getBackupLabel(key),
         });
         return timeCapsule.current.createBackup(keyString, sessionString);
     };
@@ -70,7 +70,7 @@ export const ManageSession = () => {
             commandCentre.current.history.reset();
             let status = -1;
             if (typeof session === "string") {
-                status = await timeCapsule.current.loadSessionFromJsonString(
+                status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
                     monomerLibraryPath,
                     molecules,
@@ -81,7 +81,7 @@ export const ManageSession = () => {
                     dispatch
                 );
             } else {
-                status = await timeCapsule.current.loadSessionFromProtoMessage(
+                status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
                     monomerLibraryPath,
                     molecules,
@@ -118,9 +118,9 @@ export const ManageSession = () => {
             </label>
             <hr className="moorhen_menu-hr"></hr>
             <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
-                Save backup
+                Save in-browser backup
             </MoorhenMenuItem>
-            <MoorhenMenuItemPopover menuItemText="Load Backup">
+            <MoorhenMenuItemPopover menuItemText="Load in-browser Backup">
                 <Backups disabled={!enableTimeCapsule} loadSession={loadSession} />
             </MoorhenMenuItemPopover>
         </>

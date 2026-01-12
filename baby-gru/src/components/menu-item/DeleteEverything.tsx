@@ -1,4 +1,6 @@
+import { time } from "node:console";
 import { batch, useDispatch, useSelector } from "react-redux";
+import { useTimeCapsule } from "@/InstanceManager";
 import { emptyMaps } from "../../store/mapsSlice";
 import { emptyMolecules } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
