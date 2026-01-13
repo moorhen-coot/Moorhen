@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
@@ -240,7 +240,7 @@ const BackgroundColorPanel = () => {
                     className="moorhen-hex-input"
                     color={rgbToHex(innerBackgroundColor.r, innerBackgroundColor.g, innerBackgroundColor.b)}
                     onChange={(hex) => {
-                        const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
+                        const [r, g, b, _a] = ColourRule.parseHexToRgba(hex);
                         handleColorChange({ r, g, b });
                     }}
                 />
@@ -375,9 +375,6 @@ const ClipFogPanel = () => {
 };
 
 const LightingPanel = () => {
-    const busyLighting = useRef<boolean>(false);
-    const newLightPosition = useRef<[number, number, number]>(null);
-    const isSetLightPosIsDirty = useRef<boolean>(false);
 
     const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition);
     const ambient = useSelector((state: moorhen.State) => state.glRef.ambient);
