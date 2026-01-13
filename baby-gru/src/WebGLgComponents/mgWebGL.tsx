@@ -3341,7 +3341,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     //FIXME - with  multiviews
                     mat4.perspective(this.pMatrix, 1.0, 1.0, 100, 1270.0);
                 } else {
-                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    const f = this.gl_clipPlane0[3];
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
                     if(this.currentViewport[2] > this.currentViewport[3]){
                         if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
