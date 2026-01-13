@@ -58,8 +58,8 @@ module.exports = (env, argv) => {
                 process: { env: {} },
             }),
             new MiniCssExtractPlugin({
-                filename: "public/baby-gru/moorhen.css",
-                chunkFilename: "public/baby-gru/[id].css",
+                filename: "public/MoorhenAssets/moorhen.css",
+                chunkFilename: "public/MoorhenAssets/[id].css",
                 ignoreOrder: false,
             }),
             new TerserPlugin({
@@ -87,7 +87,7 @@ module.exports = (env, argv) => {
                     ...paths.minimalMonomerLib.map(monomer => {
                         return {
                             from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
-                            to: path.resolve(paths.dist, "public", "baby-gru", "monomers", monomer.charAt(0).toLowerCase()),
+                            to: path.resolve(paths.dist, "public", "MoorhenAssets", "monomers", monomer.charAt(0).toLowerCase()),
                             toType: "dir",
                         };
                     }),
@@ -155,8 +155,36 @@ module.exports = (env, argv) => {
                     ],
                 },
                 {
-                    test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,
-                    loader: "file-loader",
+                    test: /\.svg$/,
+                    use: [
+                        {
+                            loader: "@svgr/webpack",
+                            options: {
+                                exportType: "default",
+                                dimensions: false,
+                                svgoConfig: {
+                                    plugins: [
+                                        {
+                                            name: "preset-default",
+                                            params: {
+                                                overrides: {
+                                                    removeViewBox: false,
+                                                    cleanupIds: false,
+                                                },
+                                            },
+                                        },
+                                        "removeDimensions",
+                                        "removeComments",
+                                        "removeMetadata",
+                                        "removeUselessDefs",
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                },
+                {
+                    test: /\.(?:ico|gif|png|jpg|jpeg|xpm)$/,
                     type: "asset/resource",
                 },
                 {
@@ -192,6 +220,7 @@ module.exports = (env, argv) => {
             react: "react",
             "react-dom": "react-dom",
             "react-redux": "react-redux",
+            "@reduxjs/toolkit": "@reduxjs/toolkit",
         },
     };
 };

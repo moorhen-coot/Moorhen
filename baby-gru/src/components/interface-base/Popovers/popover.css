@@ -1,5 +1,5 @@
 @import "../../../colors.css";
-@import "../../z-indexes.css";
+@import "../../../z-indexes.css";
 
 .moorhen__menu-item-popover {
     font-family: var(--moorhen-font-family);
