@@ -507,7 +507,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
-        ctx.fillStyle = "#77222244"
+        ctx.fillStyle = "#00222244"
         ctx.fillRect(0,0,clipStartPos,canvas.height)
         ctx.fillRect(clipEndPos,0,canvas.width-clipStartPos,canvas.height)
 
@@ -524,11 +524,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         let hovering = false
         let drawText = ""
 
+        canvas.style.cursor = "auto"
         if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
             ctx.strokeStyle = "white"
             ctx.lineWidth = 4
             hovering = true
-            drawText = "Front fog"
+            drawText = "Front fog " + fogStart.toFixed(2)
         } else {
             ctx.strokeStyle = "yellow"
             ctx.lineWidth = 3
@@ -542,7 +543,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 4
             hovering = true
-            drawText = "Back fog"
+            drawText = "Back fog " + fogEnd.toFixed(2)
         } else {
             ctx.strokeStyle = "yellow"
             ctx.lineWidth = 3
@@ -557,7 +558,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
-                drawText = "Blur depth"
+                drawText = "Blur depth "+depthBlurDepth.toFixed(2)
             } else {
                 ctx.strokeStyle = "lightblue"
                 ctx.lineWidth = 3
@@ -573,7 +574,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 4
             hovering = true
-            drawText = "Front clip"
+            drawText = "Front clip " + clipStart.toFixed(2)
         } else {
             ctx.strokeStyle = "red"
             ctx.lineWidth = 3
@@ -587,7 +588,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             ctx.strokeStyle = "white"
             ctx.lineWidth = 4
             hovering = true
-            drawText = "Back clip"
+            drawText = "Back clip " + clipEnd.toFixed(2)
         } else {
             ctx.strokeStyle = "red"
             ctx.lineWidth = 3
@@ -628,11 +629,15 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         ctx.stroke()
 
         if(drawText.length>0){
-        ctx.fillStyle = "black"
             ctx.font = "11pt Arial"
+            ctx.fillStyle = "white"
+            const tm = ctx.measureText(drawText)
+            ctx.fillRect(3,20-tm.actualBoundingBoxDescent-tm.actualBoundingBoxAscent-2,tm.width+4,tm.fontBoundingBoxAscent + tm.fontBoundingBoxDescent+4)
+            ctx.fillStyle = "black"
             ctx.fillText(drawText,5,20)
         }
 
+        if(hovering) canvas.style.cursor = "ew-resize"
         ctx.restore()
         drawGL(canvas.width,canvas.height)
 
