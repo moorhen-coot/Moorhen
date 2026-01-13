@@ -1,7 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
-import { Provider } from "react-redux";
-import { useEffect, useRef } from "react";
-import { reducers } from "../store/MoorhenReduxStore";
+import { useEffect } from "react";
 import { MoorhenProvider } from "./MoorhenProvider";
 import { MoorhenContainer } from "./container/MainContainer";
 
@@ -14,19 +11,9 @@ export const MoorhenExitMenu = (props: { exitCallback: () => void }) => {
 };
 
 export const MoorhenApp = () => {
-    const MoorhenReduxStore = configureStore({
-        reducer: reducers,
-        middleware: getDefaultMiddleware =>
-            getDefaultMiddleware({
-                serializableCheck: false,
-            }),
-    });
-
     return (
-        <Provider store={MoorhenReduxStore}>
-            <MoorhenProvider>
-                <MoorhenContainer />
-            </MoorhenProvider>
-        </Provider>
+        <MoorhenProvider>
+            <MoorhenContainer />
+        </MoorhenProvider>
     );
 };

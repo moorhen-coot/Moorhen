@@ -233,6 +233,7 @@ export {
     setElementsIndicesRestrict,
 } from "./store/glRefSlice";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
+export { _MoorhenReduxStore as MoorhenReduxStoreSingleton } from "./store";
 export { default as overlaysReducer } from "./store/overlaysSlice";
 export { default as menusReducer } from "./store/menusSlice";
 export { default as atomInfoCardsReducer } from "./store/atomInfoCardsSlice";

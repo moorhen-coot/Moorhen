@@ -219,8 +219,8 @@ module.exports = (env, argv) => {
         externals: {
             react: "react",
             "react-dom": "react-dom",
-            "react-redux": "react-redux",
-            "@reduxjs/toolkit": "@reduxjs/toolkit",
+            // "react-redux": "react-redux", adding those as external seem to not work
+            // "@reduxjs/toolkit": "@reduxjs/toolkit",
         },
     };
 };
