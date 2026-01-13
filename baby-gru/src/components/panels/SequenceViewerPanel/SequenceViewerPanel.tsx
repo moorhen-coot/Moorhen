@@ -6,7 +6,7 @@ import { setShowBottomPanel } from "../../../store/globalUISlice";
 import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import { convertRemToPx } from "../../../utils/utils";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenPreciseInput } from "../../inputs";
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "../../inputs";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../../sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
@@ -82,7 +82,7 @@ export const SequenceViewerPanel = () => {
         <div>
             <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />
             <p></p>
-            <MoorhenPreciseInput
+            <MoorhenNumberInput
                 label="Max lines"
                 labelPosition="left"
                 minMax={[1, 10]}

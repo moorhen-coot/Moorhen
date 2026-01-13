@@ -8,8 +8,8 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton, MoorhenGradientPicker } from "../inputs";
+import { MoorhenNumberInput } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -219,7 +219,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
             <span style={{ marginTop: "0.5rem" }}>Set min and max values for the colour map:</span>
             <MoorhenGradientPicker colourTable={colourTable} setColourTable={setColourTable} menu={menu} />
             <MoorhenStack direction="row" gap={1} align="center" justify="space-between" style={{ marginTop: "-1rem" }}>
-                <MoorhenPreciseInput
+                <MoorhenNumberInput
                     value={minMaxValue[0]}
                     decimalDigits={2}
                     type="number"
@@ -236,7 +236,7 @@ export const MoorhenColourMapByOtherMapModal = () => {
                         </span>
                     );
                 })}
-                <MoorhenPreciseInput
+                <MoorhenNumberInput
                     value={minMaxValue[1]}
                     minMax={[-10.0, 10.0]}
                     decimalDigits={2}

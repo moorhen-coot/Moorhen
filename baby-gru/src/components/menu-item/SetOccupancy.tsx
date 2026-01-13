@@ -4,7 +4,7 @@ import { useCommandCentre } from "../../InstanceManager";
 import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton, MoorhenPreciseInput, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
@@ -133,7 +133,7 @@ export const SetOccupancy = () => {
                         allowUseCurrentSelection={true}
                     />
                 )}
-                <MoorhenPreciseInput label="Occupancy" type="number" value={Number(occupancy)} setValue={setOccupancy} minMax={[0, 1]} />
+                <MoorhenNumberInput label="Occupancy" type="number" value={Number(occupancy)} setValue={setOccupancy} minMax={[0, 1]} />
             </MoorhenStack>
             <p />
             <MoorhenButton variant="primary" onClick={set_occupancy}>

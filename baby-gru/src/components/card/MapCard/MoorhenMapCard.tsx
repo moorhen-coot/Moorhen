@@ -9,7 +9,7 @@ import { addMap } from "../../../store/mapsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertPxToRem, convertRemToPx } from "../../../utils/utils";
 import { doDownload } from "../../../utils/utils";
-import { MoorhenPopoverButton, MoorhenPreciseInput, MoorhenSlider } from "../../inputs";
+import { MoorhenNumberInput, MoorhenPopoverButton, MoorhenSlider } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover } from "../../interface-base";
 import { MoorhenStack } from "../../interface-base";
@@ -190,7 +190,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     </MoorhenButton>
                     <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
                         <MoorhenStack direction="row" justify="center" align="center">
-                            <MoorhenPreciseInput
+                            <MoorhenNumberInput
                                 style={{ justifyContent: "center" }}
                                 value={mapContourLevel}
                                 setValue={newVal => {
@@ -204,7 +204,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             />
                             &nbsp;
                             {props.map.mapRmsd && (
-                                <MoorhenPreciseInput
+                                <MoorhenNumberInput
                                     style={{ justifyContent: "center" }}
                                     allowNegativeValues={true}
                                     value={mapContourLevel / props.map.mapRmsd}

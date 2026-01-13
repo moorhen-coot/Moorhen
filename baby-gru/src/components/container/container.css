@@ -1,8 +1,10 @@
 @import "../../colors.css";
+@import "../../z-indexes.css";
+
 .moorhen__activity-indicator {
     text-align: center;
     position: absolute;
-    z-index: 1000;
+    z-index: var(--z-window-base);
     top: 0.1rem;
     right: 10px;
     border-radius: 2rem;

@@ -24,7 +24,7 @@
     --moorhen-primary: hsl(var(--base-neutral-hue) 11% 15%);
     --moorhen-secondary: hsl(var(--base-neutral-hue) 11% 98%);
     --moorhen-background: hsl(var(--base-neutral-hue) 0% 97%);
-    --moorhen-background-shadded: hsl(var(--base-neutral-hue) 0% 85%);
+    --moorhen-background-shaded: hsl(var(--base-neutral-hue) 0% 85%);
     --moorhen-background-header: hsl(var(--base-neutral-hue) 0% 90%);
     --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 0% 76%);
     --moorhen-border: hsl(var(--base-neutral-hue) 7% 59%);

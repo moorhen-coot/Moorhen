@@ -6,7 +6,7 @@ import useStateWithRef from "../../hooks/useStateWithRef";
 import { usePersistentState } from "../../store/menusSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenPreciseInput } from "../inputs";
+import { MoorhenNumberInput } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
@@ -47,7 +47,7 @@ export const AddWaters = () => {
         <>
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
-            <MoorhenPreciseInput label="RMSD cutoff" type="number" value={sigmaMap} setValue={val => setSigmaMap(+val)} />
+            <MoorhenNumberInput label="RMSD cutoff" type="number" value={sigmaMap} setValue={val => setSigmaMap(+val)} />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
         </>
     );

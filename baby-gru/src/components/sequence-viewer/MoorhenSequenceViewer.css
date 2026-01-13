@@ -1,4 +1,4 @@
-@import '../../colors.css';
+@import "../../colors.css";
 
 .moorhen__seqviewer-container {
     padding: 0.5rem;
@@ -86,7 +86,7 @@
 }
 
 .moorhen__seqviewer__tick-mark::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     bottom: 0;
@@ -98,7 +98,6 @@
 .moorhen__seqviewer__sticky-tick-marks {
     position: sticky;
     top: 0;
-    z-index: 2;
     color: var(--moorhen-primary);
     background: var(--moorhen-background);
     display: flex;
@@ -110,7 +109,6 @@
 .moorhen__seqviewer__sticky-left-column {
     position: absolute;
     left: 0;
-    z-index: 1;
     overflow-x: hidden;
     color: var(--moorhen-primary);
     background: var(--moorhen-background);
@@ -125,7 +123,6 @@
 
 .moorhen__seqviewer__left-column-spacer {
     left: 0;
-    z-index: 1;
     margin-bottom: 2px;
     margin-left: 0px;
     min-height: 1.5rem;

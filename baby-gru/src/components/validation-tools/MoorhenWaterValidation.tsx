@@ -6,7 +6,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput/MoorhenPreciseInput";
+import { MoorhenNumberInput } from "../inputs/";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
@@ -171,7 +171,7 @@ export const MoorhenWaterValidation = () => {
         <>
             <Row>
                 <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="B-Factor"
                         labelPosition="top"
                         value={bFactorLim}
@@ -183,7 +183,7 @@ export const MoorhenWaterValidation = () => {
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Sigma"
                         labelPosition="top"
                         value={sigmaLevel}
@@ -195,7 +195,7 @@ export const MoorhenWaterValidation = () => {
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Min. dist."
                         labelPosition="top"
                         value={minDist}
@@ -207,7 +207,7 @@ export const MoorhenWaterValidation = () => {
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Max. dist."
                         labelPosition="top"
                         value={maxDist}

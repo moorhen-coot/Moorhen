@@ -6,7 +6,7 @@ import type { MoorhenVector, VectorsArrowMode, VectorsCoordMode, VectorsDrawMode
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenMoleculeSelect, MoorhenPreciseInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
+import { MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenButton, MoorhenColourPicker } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -324,7 +324,7 @@ export const MoorhenVectorsModal = () => {
                 <MoorhenStack card gap="0.5rem">
                     <div>From point:</div>
                     <MoorhenStack inputGrid gridWidth={3}>
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.xFrom}
                             type="number"
                             label="x:"
@@ -335,7 +335,7 @@ export const MoorhenVectorsModal = () => {
                                 } catch (e) {}
                             }}
                         />
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.yFrom}
                             type="number"
                             label="y:"
@@ -346,7 +346,7 @@ export const MoorhenVectorsModal = () => {
                                 } catch (e) {}
                             }}
                         />
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.zFrom}
                             type="number"
                             label="z:"
@@ -364,7 +364,7 @@ export const MoorhenVectorsModal = () => {
                 <MoorhenStack card>
                     <div>To point</div>
                     <MoorhenStack inputGrid gridWidth={3}>
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.xTo}
                             type="number"
                             label="x:"
@@ -376,7 +376,7 @@ export const MoorhenVectorsModal = () => {
                             }}
                         />
 
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.yTo}
                             type="number"
                             label="y:"
@@ -388,7 +388,7 @@ export const MoorhenVectorsModal = () => {
                             }}
                         />
 
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             value={theVector.zTo}
                             type="number"
                             label="z:"

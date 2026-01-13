@@ -1,4 +1,5 @@
 @import "../../../colors.css";
+@import "../../z-indexes.css";
 
 .moorhen__menu-item-popover {
     font-family: var(--moorhen-font-family);
@@ -11,7 +12,7 @@
     border-radius: 1rem;
     border: 1px solid var(--moorhen-border);
     background: var(--moorhen-background);
-    z-index: 1000;
+    z-index: var(--z-popover);
 }
 
 .moorhen__menu-item-popover::after {
@@ -75,7 +76,7 @@
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     pointer-events: none;
-    z-index: 1001;
+    z-index: var(--z-tooltip);
     font-family: var(--moorhen-font-family);
     width: auto;
     animation: tooltipSlideIn 0.2s ease-out;

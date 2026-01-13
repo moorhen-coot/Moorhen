@@ -1,4 +1,5 @@
 @import "../../colors.css";
+@import "../../z-indexes.css";
 
 .moorhen__search-bar-closed,
 .moorhen__search-bar-open {
@@ -7,7 +8,7 @@
     pointer-events: auto;
     top: 1rem;
     left: 8rem;
-    z-index: 1000;
+    z-index: var(--z-window-base);
     border-radius: 2rem;
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
@@ -65,7 +66,7 @@
     margin-top: 1.5rem;
     padding: 0.5rem;
     background-color: var(--moorhen-background);
-    z-index: 100;
+    z-index: var(--z-menu);
     border: 1px solid var(--moorhen-border);
     border-radius: 0.5rem;
     min-width: 16rem;

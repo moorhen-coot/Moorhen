@@ -1,3 +1,5 @@
+@import "./z-indexes.css";
+
 body {
     margin: 0;
     -webkit-font-smoothing: antialiased;
@@ -270,7 +272,7 @@ div.darkly text.end-label {
 
 .moorhen-tooltip {
     display: flex;
-    z-index: 9999;
+    z-index: var(--z-tooltip);
     padding: 2px 10px;
     border-radius: 3;
 }

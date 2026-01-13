@@ -4,7 +4,7 @@
  **
 
 import { useMemo, useState } from "react";
-import { MoorhenPreciseInput } from "../MoorhenPreciseInput";
+import { MoorhenNumberInput } from "../MoorhenNumberInput";
 import { PlusMinusButton } from "../PlusMinusButton";
 import { toFixedNoZero } from "../../misc/helpers";
 import "./MoorhenSlider.css";
@@ -157,7 +157,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             if (!isRange) {
                 return (
                     <label className={"moorhen__slider__label"} htmlFor="slider">
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
                             label={sliderTitle}
                             value={props.externalValue as number}
@@ -173,7 +173,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
             } else {
                 return (
                     <div>
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
                             value={props.externalValue[0]}
                             setValue={(newVal) => {
@@ -187,7 +187,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                             minMax={piMinMax}
                         />
                         <span style={{ margin: "0 5px" }}>{sliderTitle}:</span>
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
                             value={props.externalValue[1]}
                             setValue={(newVal) => {

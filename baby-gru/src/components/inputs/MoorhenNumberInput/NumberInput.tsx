@@ -2,9 +2,9 @@ import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { MoorhenStack } from "../../interface-base";
-import "./MoorhenPreciseInput.css";
+import "./NumberInput.css";
 
-type MoorhenPreciseInputPropsType = {
+type MoorhenNumberInputProps = {
     value: number | null;
     setValue?: (newVal: string) => void;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
@@ -21,7 +21,7 @@ type MoorhenPreciseInputPropsType = {
 };
 
 /**
- * MoorhenPreciseInput component props
+ * MoorhenNumberInput component props
  *
  * @prop {number | null | undefined} value
  *   The current value of the input. Can be a number, null, or undefined.
@@ -57,7 +57,7 @@ type MoorhenPreciseInputPropsType = {
  * @returns {JSX.Element}
  *   A React component that renders a precise input field with validation and optional label.
  */
-export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
+export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const {
         allowNegativeValues = true,
         decimalDigits = 2,
@@ -112,7 +112,7 @@ export const MoorhenPreciseInput = (props: MoorhenPreciseInputPropsType) => {
         if (_isValid && !waitReturn) {
             props.setValue?.(evt.target.value);
         }
-        props.onChange(evt);
+        if (props.onChange) props.onChange(evt);
     };
 
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {

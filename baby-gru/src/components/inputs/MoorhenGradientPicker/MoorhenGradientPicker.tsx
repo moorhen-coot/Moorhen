@@ -1,9 +1,9 @@
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
 import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
+import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
@@ -101,7 +101,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
     return (
         <MoorhenStack direction="column" style={{ margin: "0.5rem" }} gap={2}>
             <MoorhenStack direction="row" gap={1} align="center" justify="center">
-                <MoorhenPreciseInput
+                <MoorhenNumberInput
                     value={nOfPoints}
                     minMax={[2, 7]}
                     decimalDigits={0}

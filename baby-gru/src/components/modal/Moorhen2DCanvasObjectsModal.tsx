@@ -24,7 +24,7 @@ import type {
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenPreciseInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
@@ -741,7 +741,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             }}
                             isInvalid={!checkPositionText()}
                         />
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             type="number"
                             label="Size"
                             value={
@@ -817,7 +817,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             }}
                             isInvalid={!checkPositionText()}
                         />
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             type="number"
                             label="Width"
                             value={theOverlayObject.width}
@@ -828,7 +828,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 } catch (e) {}
                             }}
                         />
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             label="Height"
                             type="number"
                             value={theOverlayObject.height}
@@ -920,7 +920,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     (drawModeRef.current.value === "text" ||
                         drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath") && (
-                        <MoorhenPreciseInput
+                        <MoorhenNumberInput
                             label="Line Width"
                             type="number"
                             value={theOverlayObject.lineWidth}
@@ -1005,7 +1005,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                         />
                                         {alpha < 0.99 && <div>(Opacity {alpha.toFixed(2)})</div>}
                                         {alpha >= 0.99 && <div></div>}
-                                        <MoorhenPreciseInput
+                                        <MoorhenNumberInput
                                             type="number"
                                             minMax={[0.0, 1.0]}
                                             decimalDigits={2}

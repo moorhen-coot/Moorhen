@@ -2,7 +2,7 @@ export { MoorhenButton } from "./MoorhenButton/MoorhenButton";
 export { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 export { MoorhenColourPicker } from "./MoorhenColourPicker/MoorhenColourPicker";
 export { MoorhenGradientPicker } from "./MoorhenGradientPicker/MoorhenGradientPicker";
-export { MoorhenPreciseInput } from "./MoorhenPreciseInput/MoorhenPreciseInput";
+export { MoorhenNumberInput } from "./MoorhenNumberInput/NumberInput";
 export { MoorhenSlider } from "./MoorhenSlider/MoorhenSlider";
 export { MoorhenPopoverButton } from "../interface-base/Popovers/PopoverButton";
 export { MoorhenMoleculeSelect } from "./Selector/MoleculeSelector";
