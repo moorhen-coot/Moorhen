@@ -1,7 +1,7 @@
 import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
 import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance";
 import { RootState } from "../../../store/MoorhenReduxStore";
@@ -21,15 +21,25 @@ type MoorhenPopoverType = {
     allowAutoFlip?: boolean;
     closeButton?: boolean;
     style?: React.CSSProperties;
+    dynamicPosition?: boolean;
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
-    const { popoverContent = null, isShown, type = "default", overridePopoverSize = null, allowAutoFlip = true, closeButton } = props;
+    const {
+        popoverContent = null,
+        isShown,
+        type = "default",
+        overridePopoverSize = null,
+        allowAutoFlip = true,
+        closeButton,
+        dynamicPosition = true,
+    } = props;
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverStyle, setPopoverStyle] = useState({});
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const [popoverPlacement, setPopoverPlacement] = useState<"top" | "bottom" | "left" | "right">(
         props.popoverPlacement ? props.popoverPlacement : "top"
     );
+    const positionRef = useRef<{ left: number; top: number }>(null);
 
     const calculatePosition = (overridePosition: "top" | "bottom" | "left" | "right" = null) => {
         if (isShown && props.linkRef.current && popoverRef.current) {
@@ -80,8 +90,19 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
             const clampedTop = Math.min(Math.max(0, top), window.innerHeight - popoverRect.height);
             const clampedLeft = Math.min(Math.max(0, left), window.innerWidth - popoverRect.width);
+
+            if (positionRef.current !== null) {
+                if (Math.abs(clampedLeft - positionRef.current.left) <= 25 && Math.abs(clampedTop - positionRef.current.top) <= 25) {
+                    console.log("didn't move");
+                    return;
+                }
+            }
+
+            positionRef.current = { left: clampedLeft, top: clampedTop };
+
             const arrowTopPos = `calc(50% + ${top - clampedTop}px)`;
             const arrowLeftPos = `calc(50% + ${left - clampedLeft}px`;
+            console.log("do move");
             setPopoverStyle({
                 position: "absolute",
                 top: clampedTop,
@@ -96,6 +117,15 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     useLayoutEffect(() => {
         calculatePosition();
     }, [isShown]);
+
+    useEffect(() => {
+        if (dynamicPosition) {
+            const interval = setInterval(() => {
+                calculatePosition();
+            }, 100);
+            return () => clearInterval(interval);
+        }
+    });
 
     let arrow: string;
     if (popoverPlacement === "left") {
