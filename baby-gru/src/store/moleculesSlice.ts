@@ -73,10 +73,15 @@ export const moleculesSlice = createSlice({
                     action.payload.style === "VdwSpheres" ||
                     action.payload.style === "ligands")
             ) {
-                if (state.customRepresentations && !state.customRepresentations.some(item => item.style === action.payload.style)) {
+                if (
+                    state.customRepresentations &&
+                    !state.customRepresentations.some(
+                        item => item.style === action.payload.style && item.parentMolecule === action.payload.parentMolecule
+                    )
+                ) {
                     if (action.payload.cid === "/*/*/*/*") {
                         action.payload.cid = "//*//:*";
-                    }
+                    } /* convert to better cid that recognise secondary conformation */
                     state = { ...state, customRepresentations: [...state.customRepresentations, action.payload] };
                 }
             } else {

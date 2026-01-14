@@ -467,6 +467,8 @@ export const AddCustomRepresentationCard = memo(
             setSequenceResidueRange(selection.range[0] < selection.range[1] ? selection.range : [selection.range[1], selection.range[0]]);
         };
 
+        const isThereLigand: boolean = props.molecule.ligands.length > 0;
+
         return (
             <MoorhenStack style={{ width: "25rem", margin: "0.5rem" }}>
                 <MoorhenStack inputGrid>
@@ -510,9 +512,11 @@ export const AddCustomRepresentationCard = memo(
                                 <option value={"residue-range"} key={"residue-range"}>
                                     Residue range
                                 </option>
-                                <option value={"ligands"} key={"ligands"}>
-                                    Ligands
-                                </option>
+                                {isThereLigand && (
+                                    <option value={"ligands"} key={"ligands"}>
+                                        Ligands
+                                    </option>
+                                )}
                                 <option value={"cid"} key={"cid"}>
                                     Atom selection
                                 </option>

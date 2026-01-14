@@ -1,4 +1,4 @@
-import { ChangeEvent, forwardRef, useState } from "react";
+import { ChangeEvent } from "react";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect } from "./Select";
 
@@ -27,7 +27,6 @@ export const MoorhenLigandSelect = (props: MoorhenLigandSelectProps) => {
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt);
         props.setValue?.(evt.target.value);
-
         if (ref !== null && typeof ref !== "function") {
             ref.current.value = evt.target.value;
         }
