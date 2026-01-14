@@ -31,14 +31,14 @@ export const modalKeys = Object.freeze({
 });
 
 export const representationLabelMapping = Object.freeze({
-    rama: "Rama. Balls",
-    rotamer: "Rota. Dodec.",
+    rama: "Ramachandran Balls",
+    rotamer: "Rotamer Dodec.",
     CBs: "Bonds",
     CAs: "C-Alpha",
     CRs: "Ribbons",
-    CDs: "Cont. dots",
-    MolecularSurface: "Mol Surf.",
-    gaussian: "Gauss. Surf.",
+    CDs: "Contact dots",
+    MolecularSurface: "Mol Surface",
+    gaussian: "Gaussian Surface",
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",
@@ -46,9 +46,9 @@ export const representationLabelMapping = Object.freeze({
     glycoBlocks: "Glyco-Blocks",
     restraints: "Restraints",
     MetaBalls: "MetaBalls",
-    adaptativeBonds: "Adapt. Bonds",
+    adaptativeBonds: "Adaptive Bonds",
     residue_environment: "Res. Environment",
-    environment: "Env.",
+    environment: "Environment",
 });
 
 export const COOT_BOND_REPRESENTATIONS = ["MetaBalls", "CBs", "VdwSpheres", "CAs", "ligands"];

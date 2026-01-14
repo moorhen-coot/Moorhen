@@ -68,8 +68,6 @@ export type ExtraDraggableModals = React.JSX.Element[];
 
 export const MoorhenModalsContainer = memo((props: { extraDraggableModals: ExtraDraggableModals }) => {
     const activeModals = useSelector((state: RootState) => state.modals.activeModals);
-    const showModelsModal = useSelector((state: RootState) => state.modals.activeModals.includes("models"));
-
     const displayModals = activeModals.map(modalKey => {
         const ModalComponent = modalsMap[modalKey];
         return ModalComponent ? <ModalComponent key={modalKey} /> : null;

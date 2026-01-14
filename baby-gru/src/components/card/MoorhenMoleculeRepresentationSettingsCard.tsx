@@ -36,18 +36,7 @@ export const BondSettingsPanel = (props: {
     } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Bond width"
                 externalValue={bondWidth}
@@ -76,6 +65,7 @@ export const BondSettingsPanel = (props: {
             <span>Bond Smoothness</span>
             <Slider
                 aria-label="Smoothness"
+                style={{ width: "80%", marginLeft: "2rem" }}
                 value={bondSmoothness}
                 onChange={(evt, value: number) => {
                     setBondSmoothness(value);
@@ -108,7 +98,7 @@ export const BondSettingsPanel = (props: {
                     { value: 100, label: "Smooth" },
                 ]}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -138,18 +128,7 @@ const SurfaceSettingsPanel = (props: {
     } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Sigma"
                 externalValue={surfaceSigma}
@@ -205,7 +184,7 @@ const SurfaceSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={0}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -268,18 +247,7 @@ const SymmetrySettingsPanel = (props: {
     assemblies.delete();
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenToggle
                 type="switch"
                 checked={showUnitCell}
@@ -320,7 +288,7 @@ const SymmetrySettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={0}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -366,18 +334,7 @@ export const RibbonSettingsPanel = (props: {
     } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Ribbon Coil Thickness"
                 externalValue={ribbonCoilThickness}
@@ -473,7 +430,7 @@ export const RibbonSettingsPanel = (props: {
                 <option value={"StickBases"}>Sticks</option>
                 <option value={"DishyBases"}>Dishes</option>
             </MoorhenSelect>
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -486,18 +443,7 @@ export const MolSurfSettingsPanel = (props: {
     const { surfaceStyleProbeRadius, setSurfaceStyleProbeRadius, ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Mol. Surf. Probe Radius"
                 externalValue={surfaceStyleProbeRadius}
@@ -520,7 +466,7 @@ export const MolSurfSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={2}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -542,18 +488,7 @@ const CylinderSettingsPanel = (props: {
     } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Cylinder Angular Sampling"
                 externalValue={cylindersStyleAngularSampling}
@@ -587,7 +522,7 @@ const CylinderSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={2}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -604,18 +539,7 @@ export const ResidueEnvironmentSettingsPanel = (props: {
     const { maxDist, setMaxDist, showContacts, setShowContacts, showHBonds, setShowHBonds, labelled, setLabelled } = props;
 
     return (
-        <div
-            style={{
-                paddingLeft: "2rem",
-                paddingRight: "2rem",
-                paddingTop: "0.5rem",
-                paddingBottom: "0.5rem",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "grey",
-                borderRadius: "1.5rem",
-            }}
-        >
+        <MoorhenStack card>
             <MoorhenToggle type="switch" checked={labelled} onChange={() => setLabelled(prev => !prev)} label="Show labels" />
             <MoorhenToggle type="switch" checked={showHBonds} onChange={() => setShowHBonds(prev => !prev)} label="Show H bonds" />
             <MoorhenToggle type="switch" checked={showContacts} onChange={() => setShowContacts(prev => !prev)} label="Show contacts" />
@@ -630,7 +554,7 @@ export const ResidueEnvironmentSettingsPanel = (props: {
                 logScale={false}
                 decimalPlaces={2}
             />
-        </div>
+        </MoorhenStack>
     );
 };
 
@@ -714,26 +638,14 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     return (
-        <MoorhenStack gap={1} direction="horizontal">
-            <MoorhenStack
-                gap={1}
-                direction="vertical"
-                style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
-            >
-                <BondSettingsPanel {...props.bondSettingsProps} />
-                <SurfaceSettingsPanel {...props.gaussianSettingsProps} />
-                <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} />
-                <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps} />
-            </MoorhenStack>
-            <MoorhenStack
-                gap={1}
-                direction="vertical"
-                style={{ width: "23rem", margin: "0.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}
-            >
-                <RibbonSettingsPanel {...props.ribbonSettingsProps} />
-                <MolSurfSettingsPanel {...props.molSurfSettingsProps} />
-                <CylinderSettingsPanel {...props.cylinderSettingsProps} />
-            </MoorhenStack>
+        <MoorhenStack direction="vertical" style={{ overflowY: "auto", maxHeight: "80vh" }}>
+            <BondSettingsPanel {...props.bondSettingsProps} />
+            <SurfaceSettingsPanel {...props.gaussianSettingsProps} />
+            <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} />
+            <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps} />
+            <RibbonSettingsPanel {...props.ribbonSettingsProps} />
+            <MolSurfSettingsPanel {...props.molSurfSettingsProps} />
+            <CylinderSettingsPanel {...props.cylinderSettingsProps} />
         </MoorhenStack>
     );
 };

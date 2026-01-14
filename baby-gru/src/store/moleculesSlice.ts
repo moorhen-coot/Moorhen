@@ -70,7 +70,8 @@ export const moleculesSlice = createSlice({
                     action.payload.style === "CRs" ||
                     action.payload.style === "MolecularSurface" ||
                     action.payload.style === "gaussian" ||
-                    action.payload.style === "VdwSpheres")
+                    action.payload.style === "VdwSpheres" ||
+                    action.payload.style === "ligands")
             ) {
                 if (state.customRepresentations && !state.customRepresentations.some(item => item.style === action.payload.style)) {
                     if (action.payload.cid === "/*/*/*/*") {
@@ -90,7 +91,8 @@ export const moleculesSlice = createSlice({
                 action.payload.style === "CRs" ||
                 action.payload.style === "MolecularSurface" ||
                 action.payload.style === "gaussian" ||
-                action.payload.style === "VdwSpheres"
+                action.payload.style === "VdwSpheres" ||
+                action.payload.style === "ligands"
             ) {
                 state = {
                     ...state,

@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useStateWithRef } from "../../hooks/useStateWithRef";
-import { clickedResidueType } from "../card/MoleculeCard/MoorhenMoleculeCard";
+import { clickedResidueType } from "../card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "../inputs";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";

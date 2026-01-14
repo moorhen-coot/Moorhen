@@ -15,8 +15,8 @@ import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../.
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { MoorhenMoleculeRepresentationSettingsCard } from "../MoorhenMoleculeRepresentationSettingsCard";
 import { ItemName } from "../utils/ItemName";
-import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard";
-import { MoorhenModifyColourRulesCard } from "./MoorhenModifyColourRulesCard";
+import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
+import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import { CustomRepresentationChip, RepresentationCheckbox } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
@@ -28,7 +28,7 @@ const allRepresentations: moorhen.RepresentationStyles[] = [
     "adaptativeBonds",
     // "CAs",
     // "CRs",
-    "ligands",
+    // "ligands",
     // "gaussian",
     // "MolecularSurface",
     // "VdwSpheres",
@@ -41,7 +41,7 @@ const allRepresentations: moorhen.RepresentationStyles[] = [
     "environment",
 ];
 
-interface MoorhenMoleculeCardProps {
+interface MoleculeCardProps {
     dropdownId: number;
     accordionDropdownId: number;
     setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
@@ -64,11 +64,10 @@ export type clickedResidueType = {
     seqNum: number;
 };
 
-export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
+export const MoleculeCard = (props: MoleculeCardProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
@@ -874,7 +873,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
                             tooltip="Add New representation"
                             style={{ minHeight: "5rem" }}
                         >
-                            <MoorhenAddCustomRepresentationCard
+                            <AddCustomRepresentationCard
                                 setBusy={setBusyDrawingCustomRepresentation}
                                 urlPrefix={urlPrefix}
                                 molecule={props.molecule}
@@ -899,6 +898,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardProps) => {
                             icon="MatSymTune"
                             tooltip="Edit default representation"
                             style={{ minHeight: "5rem" }}
+                            popoverStyle={{ maxHeight: "100%" }}
                         >
                             <MoorhenMoleculeRepresentationSettingsCard
                                 residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}

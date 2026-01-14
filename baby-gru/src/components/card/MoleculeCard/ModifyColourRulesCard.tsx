@@ -11,7 +11,7 @@ import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { MoorhenColorSwatch } from "../../misc/MoorhenColorSwatch";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
-import { MoorhenColourRuleCard } from "./MoorhenColourRuleCard";
+import { MoorhenColourRuleCard } from "./ColourRuleCard";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";

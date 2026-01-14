@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { MoorhenMoleculeCard } from "@/components/card/MoleculeCard/MoorhenMoleculeCard";
+import { MoleculeCard } from "@/components/card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "@/components/inputs";
 import { RootState } from "@/store";
 import { convertRemToPx } from "@/utils/utils";
@@ -24,7 +24,7 @@ export const ModelsPanel = () => {
 
     const displayData = molecules.map((molecule, index) => {
         return (
-            <MoorhenMoleculeCard
+            <MoleculeCard
                 showSideBar={true}
                 busy={false}
                 dropdownId={1}

@@ -11,7 +11,7 @@ import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
 import { convertRemToPx } from "../../../utils/utils";
-import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard";
+import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import "./representation.css";
 
 export const CustomRepresentationChip = (props: {
@@ -68,7 +68,7 @@ export const CustomRepresentationChip = (props: {
                         size="accordion"
                     ></MoorhenButton>
                     <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
-                        <MoorhenAddCustomRepresentationCard
+                        <AddCustomRepresentationCard
                             mode="edit"
                             urlPrefix={urlPrefix}
                             molecule={props.molecule}

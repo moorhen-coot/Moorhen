@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenMoleculeCard } from "../card/MoleculeCard/MoorhenMoleculeCard";
+import { MoleculeCard } from "../card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "../inputs";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
@@ -30,7 +30,7 @@ export const MoorhenModelsModal = () => {
 
     const displayData = molecules.map((molecule, index) => {
         return (
-            <MoorhenMoleculeCard
+            <MoleculeCard
                 showSideBar={true}
                 busy={false}
                 dropdownId={1}

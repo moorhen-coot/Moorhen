@@ -2,6 +2,7 @@ import { GrainOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useRef, useState } from "react";
+import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
@@ -18,11 +19,11 @@ import {
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
 } from "../MoorhenMoleculeRepresentationSettingsCard";
-import { NcsColourSwatch } from "./MoorhenColourRuleCard";
+import { NcsColourSwatch } from "./ColourRuleCard";
 
 const customRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres", "MetaBalls", "residue_environment"];
 
-export const MoorhenAddCustomRepresentationCard = memo(
+export const AddCustomRepresentationCard = memo(
     (props: {
         molecule: moorhen.Molecule;
         urlPrefix: string;
@@ -38,6 +39,7 @@ export const MoorhenAddCustomRepresentationCard = memo(
         const useDefaultRepresentationSettingsSwitchRef = useRef<HTMLInputElement | null>(null);
         const ruleSelectRef = useRef<HTMLSelectElement | null>(null);
         const cidFormRef = useRef<HTMLInputElement | null>(null);
+        const ligandFormRef = useRef<HTMLSelectElement | null>(null);
         const styleSelectRef = useRef<HTMLSelectElement | null>(null);
         const focusStyleSelectRef = useRef<HTMLSelectElement | null>(null);
         const backgroundStyleSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -269,6 +271,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
                     break;
                 case "cid":
                     cidSelection = cidFormRef.current.value;
+                    break;
+                case "ligands":
+                    cidSelection = ligandFormRef.current.value;
                     break;
                 default:
                     console.warn("Unrecognised residue selection for the custom representation");
@@ -505,6 +510,9 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                 <option value={"residue-range"} key={"residue-range"}>
                                     Residue range
                                 </option>
+                                <option value={"ligands"} key={"ligands"}>
+                                    Ligands
+                                </option>
                                 <option value={"cid"} key={"cid"}>
                                     Atom selection
                                 </option>
@@ -537,6 +545,16 @@ export const MoorhenAddCustomRepresentationCard = memo(
                                 label="Side Chain Only"
                                 checked={sideChainOnly}
                                 onChange={() => setSideChainOnly(!sideChainOnly)}
+                            />
+                        </>
+                    )}
+                    {ruleType === "ligands" && (
+                        <>
+                            <MoorhenLigandSelect
+                                selectedCoordMolNo={props.molecule.molNo}
+                                molecules={[props.molecule]}
+                                allowAll
+                                ref={ligandFormRef}
                             />
                         </>
                     )}
@@ -802,5 +820,3 @@ export const MoorhenAddCustomRepresentationCard = memo(
         );
     }
 );
-
-MoorhenAddCustomRepresentationCard.displayName = "MoorhenAddCustomRepresentationCard";

@@ -13,6 +13,8 @@
     border: 1px solid var(--moorhen-border);
     background: var(--moorhen-background);
     z-index: var(--z-popover);
+    max-height: 100vh;
+    max-width: 100vw;
 }
 
 .moorhen__menu-item-popover::after {
