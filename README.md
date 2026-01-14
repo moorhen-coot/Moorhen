@@ -65,7 +65,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 4.0.15, the 17th September 2025 release.)
+(Moorhen is known to build successfully with emscripten version 4.0.23 - the 10th January 2026 release, and several earlier versions.)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
