@@ -61,15 +61,18 @@ const ClipFogBlurOptionsPanel = () => {
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     return (
-        <div className="scene-settings-panel-flex-between">
-            <InputGroup className="moorhen-input-group-check">
+        <Stack
+            gap={2}
+            direction={"vertical"}
+            style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
+        >
                 <Form.Check
                     type="switch"
                     checked={resetClippingFogging}
                     onChange={() => {
                         dispatch(setResetClippingFogging(!resetClippingFogging));
                     }}
-                    label="Reset clipping and fogging on zoom"
+                    label="Reset clip and fog on zoom"
                 />
                 <Form.Check
                     type="switch"
@@ -79,8 +82,7 @@ const ClipFogBlurOptionsPanel = () => {
                     }}
                     label="Depth Blur"
                 />
-            </InputGroup>
-        </div>
+            </Stack>
     );
 };
 
@@ -137,8 +139,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const dispatch = useDispatch();
 
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
-    const plotWidth = 450
-    const plotHeight = 300
+    const plotWidth = 250
+    const plotHeight = 150
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
@@ -797,9 +799,6 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
             direction={props.stackDirection}
             style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
         >
-            <Stack gap={2} direction="vertical">
-                <ClipFogBlurOptionsPanel />
-            </Stack>
             <Stack gap={1} direction="vertical">
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
@@ -807,6 +806,9 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
                 </figure>
                 </div>
+            </Stack>
+            <Stack gap={2} direction="vertical">
+                <ClipFogBlurOptionsPanel />
             </Stack>
         </Stack>
         </>
@@ -828,11 +830,11 @@ export const MoorhenSceneSlidersModal = () => {
             top={height / 6}
             headerTitle="Fog/clip/blur"
             minHeight={convertViewtoPx(40, height)}
-            minWidth={convertRemToPx(40)}
+            minWidth={convertRemToPx(30)}
             maxHeight={convertViewtoPx(75, height)}
             maxWidth={convertRemToPx(60)}
             enforceMaxBodyDimensions={true}
-            body={<MoorhenSlidersSettings stackDirection="horizontal" />}
+            body={<MoorhenSlidersSettings stackDirection="vertical" />}
             footer={null}
             additionalHeaderButtons={[
                 <Tooltip title={"Move to side panel"} key={1}>
