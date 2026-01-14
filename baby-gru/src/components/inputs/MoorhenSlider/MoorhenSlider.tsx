@@ -11,6 +11,7 @@ type MoorhenSliderProps = {
     minVal?: number;
     maxVal?: number;
     sliderTitle?: string;
+    sliderPrecision?: number;
     decimalPlaces?: number;
     showMinMaxVal?: boolean;
     showButtons?: boolean;
@@ -98,6 +99,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         logScale = false,
         decimalPlaces = 0,
         sliderTitle = "",
+        sliderPrecision = null,
         showMinMaxVal = true,
         isDisabled = false,
         usePreciseInput = false,
@@ -107,7 +109,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         piMinMax = [minVal, maxVal],
     } = props;
 
-    const precision = Math.pow(10, -decimalPlaces);
+    const precision = sliderPrecision ?? Math.pow(10, -decimalPlaces);
 
     const stepButtons = useMemo(
         function getStepButtons() {

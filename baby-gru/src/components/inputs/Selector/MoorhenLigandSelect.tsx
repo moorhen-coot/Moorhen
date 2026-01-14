@@ -21,15 +21,12 @@ export const MoorhenLigandSelect = (props: MoorhenLigandSelectProps) => {
     const { disabled, selectedCoordMolNo, label, ref, allowAll } = { ...defaultProps, ...props };
 
     const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo);
-    const allLigands = selectedMolecule.ligands.map(ligand => ligand.cid).join("||");
-    const noLigand: boolean = allLigands.length === 0;
+    const allLigands = selectedMolecule?.ligands?.map(ligand => ligand.cid).join("||");
+    const noLigand: boolean = !allLigands || allLigands?.length === 0;
 
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt);
         props.setValue?.(evt.target.value);
-        if (ref !== null && typeof ref !== "function") {
-            ref.current.value = evt.target.value;
-        }
     };
 
     const getLigandOptions = (selectedCoordMolNo: number): React.JSX.Element[] => {
@@ -44,7 +41,7 @@ export const MoorhenLigandSelect = (props: MoorhenLigandSelectProps) => {
         }
 
         if (selectedMolecule) {
-            options = selectedMolecule.ligands.map(ligand => {
+            options = selectedMolecule.ligands?.map(ligand => {
                 return (
                     <option value={ligand.cid} key={ligand.cid}>
                         {ligand.cid}

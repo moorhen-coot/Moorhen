@@ -312,7 +312,7 @@ const ClipFogPanel = () => {
                 setExternalValue={newValue => {
                     dispatch(setClipStart(newValue));
                 }}
-                decimalPlaces={1}
+                decimalPlaces={2}
             />
             <MoorhenSlider
                 minVal={0.1}
@@ -323,7 +323,7 @@ const ClipFogPanel = () => {
                 setExternalValue={newValue => {
                     dispatch(setClipEnd(newValue));
                 }}
-                decimalPlaces={1}
+                decimalPlaces={2}
             />
             <MoorhenSlider
                 minVal={0.1}
@@ -334,7 +334,7 @@ const ClipFogPanel = () => {
                 setExternalValue={newValue => {
                     dispatch(setFogStart(fogClipOffset - newValue));
                 }}
-                decimalPlaces={1}
+                decimalPlaces={2}
             />
             <MoorhenSlider
                 minVal={0.1}
@@ -345,7 +345,7 @@ const ClipFogPanel = () => {
                 setExternalValue={newValue => {
                     dispatch(setFogEnd(newValue + fogClipOffset));
                 }}
-                decimalPlaces={1}
+                decimalPlaces={2}
             />
             <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
                 <MoorhenToggle

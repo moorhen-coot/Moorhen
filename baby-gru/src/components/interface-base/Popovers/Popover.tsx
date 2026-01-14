@@ -1,17 +1,18 @@
 import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
 import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
 
+type PlacementType = "left" | "right" | "top" | "bottom";
 type MoorhenPopoverType = {
     popoverContent?: React.JSX.Element | React.ReactNode;
     children?: React.JSX.Element | React.ReactNode;
     disabled?: boolean;
-    popoverPlacement?: "left" | "right" | "top" | "bottom";
+    popoverPlacement?: PlacementType;
     link: React.JSX.Element;
     linkRef: React.RefObject<HTMLDivElement | HTMLButtonElement>;
     isShown: boolean;
@@ -33,85 +34,97 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         closeButton,
         dynamicPosition = true,
     } = props;
+
     const popoverRef = useRef<HTMLDivElement>(null);
-    const [popoverStyle, setPopoverStyle] = useState({});
+    const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
-    const [popoverPlacement, setPopoverPlacement] = useState<"top" | "bottom" | "left" | "right">(
-        props.popoverPlacement ? props.popoverPlacement : "top"
-    );
-    const positionRef = useRef<{ left: number; top: number }>(null);
 
-    const calculatePosition = (overridePosition: "top" | "bottom" | "left" | "right" = null) => {
-        if (isShown && props.linkRef.current && popoverRef.current) {
-            const buttonRect = props.linkRef.current.getBoundingClientRect();
-            const popoverRect = !overridePopoverSize ? popoverRef.current.getBoundingClientRect() : overridePopoverSize;
-            const extraSpace = type === "default" ? 10 : 0;
+    const [popoverPlacement, setPopoverPlacement] = useState<PlacementType>(props.popoverPlacement ?? "top");
 
-            const placement = overridePosition ? overridePosition : popoverPlacement;
+    const containerRef = useMoorhenInstance().getContainerRef();
+    const positionRef = useRef<{ left: number; top: number } | null>(null);
+    const isFlippingRef = useRef(false);
 
-            let left;
-            if (placement === "left") {
-                left = buttonRect.left + window.scrollX - popoverRect.width - extraSpace;
-            } else if (placement === "right") {
-                left = buttonRect.right + window.scrollX + extraSpace;
-            } else {
-                left = buttonRect.right - buttonRect.width / 2 + window.scrollX - popoverRect.width / 2;
-            }
-
-            let top;
-            if (placement === "bottom") {
-                top = buttonRect.bottom + window.scrollY + extraSpace;
-            } else if (placement === "top") {
-                top = buttonRect.top + window.scrollY - popoverRect.height - extraSpace;
-            } else {
-                top = buttonRect.top + window.scrollY + buttonRect.height / 2 - popoverRect.height / 2;
-            }
-
-            // Flip the popover to the other side if it's out of screen
-            if (overridePosition === null && allowAutoFlip) {
-                if (placement === "top" && top < 0) {
-                    calculatePosition("bottom");
-                    setPopoverPlacement("bottom");
-                    return;
-                } else if (placement === "bottom" && top + popoverRect.height > window.innerHeight) {
-                    calculatePosition("top");
-                    setPopoverPlacement("top");
-                    return;
-                } else if (placement === "right" && left + popoverRect.width > window.innerWidth) {
-                    calculatePosition("left");
-                    setPopoverPlacement("left");
-                    return;
-                } else if (placement === "left" && left < 0) {
-                    calculatePosition("right");
-                    setPopoverPlacement("right");
-                    return;
-                }
-            }
-
-            const clampedTop = Math.min(Math.max(0, top), window.innerHeight - popoverRect.height);
-            const clampedLeft = Math.min(Math.max(0, left), window.innerWidth - popoverRect.width);
-
-            if (positionRef.current !== null) {
-                if (Math.abs(clampedLeft - positionRef.current.left) <= 25 && Math.abs(clampedTop - positionRef.current.top) <= 25) {
-                    console.log("didn't move");
-                    return;
-                }
-            }
-
-            positionRef.current = { left: clampedLeft, top: clampedTop };
-
-            const arrowTopPos = `calc(50% + ${top - clampedTop}px)`;
-            const arrowLeftPos = `calc(50% + ${left - clampedLeft}px`;
-            console.log("do move");
-            setPopoverStyle({
-                position: "absolute",
-                top: clampedTop,
-                left: clampedLeft,
-                zIndex: 10999,
-                "--popover-arrow-top": arrowTopPos,
-                "--popover-arrow-left": arrowLeftPos,
-            });
+    const calculatePosition = (overridePosition: PlacementType = null) => {
+        if (!isShown || !props.linkRef.current || !popoverRef.current) {
+            return;
         }
+        if (isFlippingRef.current) {
+            return;
+        }
+
+        const buttonRect = props.linkRef.current.getBoundingClientRect();
+        const popoverRect = !overridePopoverSize ? popoverRef.current.getBoundingClientRect() : overridePopoverSize;
+        const extraSpace = type === "default" ? 10 : 0;
+
+        const placement = overridePosition ? overridePosition : popoverPlacement;
+
+        let left: number;
+        if (placement === "left") {
+            left = buttonRect.left + window.scrollX - popoverRect.width - extraSpace;
+        } else if (placement === "right") {
+            left = buttonRect.right + window.scrollX + extraSpace;
+        } else {
+            left = buttonRect.right - buttonRect.width / 2 + window.scrollX - popoverRect.width / 2;
+        }
+
+        let top: number;
+        if (placement === "bottom") {
+            top = buttonRect.bottom + window.scrollY + extraSpace;
+        } else if (placement === "top") {
+            top = buttonRect.top + window.scrollY - popoverRect.height - extraSpace;
+        } else {
+            top = buttonRect.top + window.scrollY + buttonRect.height / 2 - popoverRect.height / 2;
+        }
+
+        // Flip the popover to the other side if it's out of screen
+        if (overridePosition === null && allowAutoFlip && !isFlippingRef.current) {
+            let newPlacement: PlacementType | null = null;
+
+            if (placement === "top" && top < 0) {
+                newPlacement = "bottom";
+            } else if (placement === "bottom" && top + popoverRect.height > window.innerHeight) {
+                newPlacement = "top";
+            } else if (placement === "right" && left + popoverRect.width > window.innerWidth) {
+                newPlacement = "left";
+            } else if (placement === "left" && left < 0) {
+                newPlacement = "right";
+            }
+
+            if (newPlacement !== null) {
+                isFlippingRef.current = true;
+                setPopoverPlacement(newPlacement);
+                requestAnimationFrame(() => {
+                    isFlippingRef.current = false;
+                    calculatePosition(newPlacement);
+                });
+                return;
+            }
+        }
+
+        const clampedTop = Math.min(Math.max(0, top), window.innerHeight - popoverRect.height);
+        const clampedLeft = Math.min(Math.max(0, left), window.innerWidth - popoverRect.width);
+
+        if (positionRef.current !== null) {
+            if (Math.abs(clampedLeft - positionRef.current.left) <= 25 && Math.abs(clampedTop - positionRef.current.top) <= 25) {
+                console.log("didn't move");
+                return;
+            }
+        }
+
+        positionRef.current = { left: clampedLeft, top: clampedTop };
+
+        const arrowTopPos = `calc(50% + ${top - clampedTop}px)`;
+        const arrowLeftPos = `calc(50% + ${left - clampedLeft}px`;
+        console.log("do move");
+        setPopoverStyle({
+            position: "absolute",
+            top: clampedTop,
+            left: clampedLeft,
+            zIndex: 10999,
+            "--popover-arrow-top": arrowTopPos,
+            "--popover-arrow-left": arrowLeftPos,
+        } as React.CSSProperties);
     };
 
     useLayoutEffect(() => {
@@ -119,13 +132,16 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     }, [isShown]);
 
     useEffect(() => {
-        if (dynamicPosition) {
-            const interval = setInterval(() => {
-                calculatePosition();
-            }, 100);
-            return () => clearInterval(interval);
+        if (!dynamicPosition || !isShown) {
+            return;
         }
-    });
+
+        const interval = setInterval(() => {
+            calculatePosition();
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [dynamicPosition, isShown]);
 
     let arrow: string;
     if (popoverPlacement === "left") {
@@ -137,8 +153,6 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     } else if (popoverPlacement === "bottom") {
         arrow = `top-arrow`;
     }
-
-    const containerRef = useMoorhenInstance().getContainerRef();
 
     const container = (
         <div
