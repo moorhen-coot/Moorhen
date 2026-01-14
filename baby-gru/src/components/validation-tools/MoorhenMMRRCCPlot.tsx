@@ -1,6 +1,5 @@
 import { Chart, TooltipItem, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { Button, Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -13,6 +12,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -304,34 +304,23 @@ export const MoorhenMMRRCCPlot = () => {
     }, [plotData, backgroundColor, isDark, height, width]);
 
     return (
-        <Fragment>
-            <Form style={{ padding: "0", margin: "0" }}>
-                <Form.Group>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
-                        </Col>
-                        <Col>
-                            <MoorhenChainSelect
-                                width=""
-                                onChange={handleChainChange}
-                                molecules={molecules}
-                                selectedCoordMolNo={selectedModel}
-                                allowedTypes={[1, 2]}
-                                ref={chainSelectRef}
-                            />
-                        </Col>
-                        <Col>
-                            <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
-                        </Col>
-                        <Col style={{ display: "flex", alignItems: "center", alignContent: "center", verticalAlign: "center" }}>
-                            <MoorhenButton variant="secondary" size="lg" onClick={fetchData} style={{ width: "80%", marginTop: "10%" }}>
-                                Plot
-                            </MoorhenButton>
-                        </Col>
-                    </Row>
-                </Form.Group>
-            </Form>
+        <>
+            <MoorhenStack inputGrid gridWidth={3}>
+                <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
+                <MoorhenChainSelect
+                    width=""
+                    onChange={handleChainChange}
+                    molecules={molecules}
+                    selectedCoordMolNo={selectedModel}
+                    allowedTypes={[1, 2]}
+                    ref={chainSelectRef}
+                />
+
+                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
+                <MoorhenButton variant="secondary" size="lg" onClick={fetchData}>
+                    Plot
+                </MoorhenButton>
+            </MoorhenStack>
             <div ref={chartCardRef} className="validation-plot-div">
                 <div ref={chartBoxRef} style={{ height: "100%" }} className="chartBox" id="mmrrcc-chart-box">
                     <div ref={containerRef} className="validation-plot-container" style={{ height: "100%", overflowX: "auto" }}>
@@ -347,6 +336,6 @@ export const MoorhenMMRRCCPlot = () => {
                 </div>
                 <canvas id="mmrrcc-chart-axis"></canvas>
             </div>
-        </Fragment>
+        </>
     );
 };

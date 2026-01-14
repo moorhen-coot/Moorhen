@@ -19,7 +19,7 @@ export const MoorhenSidePanel = () => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const lastMousePos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     //const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
-    const minWidth = 450;
+    const minWidth = 150;
     const maxWidth = 900;
     const [width, setWidth, widthRef] = useStateWithRef(450);
     const [noAnimation, setNoAnimation] = useState(false);
@@ -100,16 +100,16 @@ export const MoorhenSidePanel = () => {
         evt.preventDefault();
         evt.stopPropagation();
         const deltaX = evt.pageX - lastMousePos.current.x;
-        const deltaY = evt.pageY - lastMousePos.current.y;
         lastMousePos.current = { x: evt.pageX, y: evt.pageY };
-        let _width = width - deltaX;
-        // if (_width < minWidth) {
-        //     _width = minWidth;
-        // } else if (width > maxWidth) {
-        //     _width = maxWidth;
-        // }
-
-        setWidth(prev => prev - deltaX);
+        setWidth(prev => {
+            let _width = prev - deltaX;
+            if (_width < minWidth) {
+                _width = minWidth;
+            } else if (_width > maxWidth) {
+                _width = maxWidth;
+            }
+            return _width;
+        });
     };
 
     const toggles: React.JSX.Element[] = activePanels.map(id => {
