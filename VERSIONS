@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rdkit_release="Release_2025_09_1"
+rdkit_release="Release_2025_09_2"
 libccp4_release="8.0.0"
 clipper_release="20240123"
 ssm_release="1.4.0"

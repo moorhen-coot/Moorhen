@@ -1,7 +1,7 @@
 project(coot)
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
@@ -632,6 +632,7 @@ target_link_libraries(moorhen
     RDKit::RDGeneral
     RDKit::DataStructs
     RDKit::GenericGroups
+    RDKit::RDInchiLib
     Boost::thread
     Boost::serialization
     freetype
