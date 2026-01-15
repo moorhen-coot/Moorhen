@@ -4428,18 +4428,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         atom_span = Math.min(1000.0,atom_span);
         this.atom_span = atom_span;
 
-        //console.log("In blur",f,b,this.blurDepth)
+        //console.log("In blur",f.toFixed(2),b.toFixed(2),this.blurDepth.toFixed(2))
         let fracDepth
         const midOffset = (b+f-2*this.fogClipOffset) * 0.75 / (b-f)
+        const fudge = ((f+b-2*this.fogClipOffset)/2.)/(1.5*atom_span)
+        //console.log("Fudge?",fudge)
         const normFrac = (this.blurDepth * 2.0) - 1.0
         const depthPos = normFrac * this.atom_span
         //console.log("normFrac",normFrac.toFixed(2))
         //console.log("(depthPos - f) / (b-f)",((depthPos - f) / (b-f)).toFixed(2))
         //console.log("midOffset",midOffset.toFixed(2))
         //console.log("f + normFrac * (b-f)",(f + normFrac * (b-f)).toFixed(2))
-        fracDepth = (this.blurDepth-0.5) * 2 + 0.5 - midOffset //(depthPos - f) / (b-f)
+        fracDepth = (this.blurDepth-0.5) * 2 + 0.5 - midOffset + fudge
+        //
 
-        //console.log(fracDepth.toFixed(2));
+        //console.log("atom_span",atom_span.toFixed(2));
+        //console.log("fracDepth",fracDepth.toFixed(2));
 
         if(fracDepth > 1.0) fracDepth = 1.0;
         if(fracDepth < 0.0) fracDepth = 0.0;
