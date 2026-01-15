@@ -4429,24 +4429,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.atom_span = atom_span;
 
         //console.log("In blur",f.toFixed(2),b.toFixed(2),this.blurDepth.toFixed(2))
-        let fracDepth
-        const midOffset = (b+f-2*this.fogClipOffset) * 0.75 / (b-f)
-        const fudge = ((f+b-2*this.fogClipOffset)/2.)/(1.5*atom_span)
-        //console.log("Fudge?",fudge)
-        const normFrac = (this.blurDepth * 2.0) - 1.0
-        const depthPos = normFrac * this.atom_span
-        //console.log("normFrac",normFrac.toFixed(2))
-        //console.log("(depthPos - f) / (b-f)",((depthPos - f) / (b-f)).toFixed(2))
-        //console.log("midOffset",midOffset.toFixed(2))
-        //console.log("f + normFrac * (b-f)",(f + normFrac * (b-f)).toFixed(2))
-        fracDepth = (this.blurDepth-0.5) * 2 + 0.5 - midOffset + fudge
-        //
-
-        //console.log("atom_span",atom_span.toFixed(2));
-        //console.log("fracDepth",fracDepth.toFixed(2));
-
-        if(fracDepth > 1.0) fracDepth = 1.0;
-        if(fracDepth < 0.0) fracDepth = 0.0;
+        const fPrime = f-this.fogClipOffset
+        const bPrime = b-this.fogClipOffset
+        //NB The 1.5 scaling is because it is 2 * 0.75 where 0.75 is scaling in the new widget.
+        const fPrimeFrac = fPrime/(1.5*atom_span)+0.5
+        const bPrimeFrac = bPrime/(1.5*atom_span)+0.5
+        const fracDepth = (this.blurDepth-fPrimeFrac)/(bPrimeFrac-fPrimeFrac)
 
         this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);

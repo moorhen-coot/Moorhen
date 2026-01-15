@@ -144,6 +144,8 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
+    const spanScaling = 0.75
+
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
     const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
     const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
@@ -242,7 +244,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -atomSpan * 0.75, atomSpan * 0.75, -atomSpan * 0.75 * height/width, atomSpan * 0.75 * height/width, 0.1, 1000.0);
+        mat4.ortho(pMatrix, -atomSpan * spanScaling, atomSpan * spanScaling, -atomSpan * spanScaling * height/width, atomSpan * spanScaling * height/width, 0.1, 1000.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -494,7 +496,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atomSpan * 0.75
+        const scale = atomSpan * spanScaling
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -674,7 +676,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         setMouseHeldDown(true)
 
-        const scale = atomSpan * 0.75
+        const scale = atomSpan * spanScaling
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
@@ -709,7 +711,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const [x,y] = getXY(evt)
 
-        const scale = atomSpan * 0.75
+        const scale = atomSpan * spanScaling
 
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
