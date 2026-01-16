@@ -13,7 +13,7 @@ import { MoorhenButton, MoorhenPopoverButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
-import { MoorhenMoleculeRepresentationSettingsCard } from "../MoorhenMoleculeRepresentationSettingsCard";
+import { MoorhenMoleculeRepresentationSettingsCard, SymmetrySettingsPanel } from "../MoorhenMoleculeRepresentationSettingsCard";
 import { ItemName } from "../utils/ItemName";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
@@ -35,7 +35,7 @@ const allRepresentations: moorhen.RepresentationStyles[] = [
     "rama",
     "rotamer",
     "CDs",
-    "allHBonds",
+    //"allHBonds",
     //"glycoBlocks",
     "restraints",
     "environment",
@@ -769,7 +769,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     }, []);
 
     const dropDownMenu: React.JSX.Element = (
-        <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
+        <MoorhenStack>
             <MoorhenMenuItem
                 key={6}
                 onClick={() => {
@@ -787,10 +787,13 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     <GenerateAssembly key="assembly" setPopoverIsShown={() => {}} setCurrentName={handleRename} item={props.molecule} />
                 </MoorhenMenuItemPopover>
             ) : null}
+            <MoorhenMenuItemPopover menuItemText="Cell and Symmetry">
+                <SymmetrySettingsPanel {...symmetrySettingsProps} molecule={props.molecule} />
+            </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Delete Molecule" style={{ color: "var(--moorhen-danger)" }}>
                 <DeleteDisplayObject key="deleteDisplayObjectMenuItem" item={props.molecule} />
             </MoorhenMenuItemPopover>
-        </div>
+        </MoorhenStack>
     );
 
     const extraControls: React.JSX.Element[] = [

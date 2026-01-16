@@ -51,7 +51,7 @@ export const CustomRepresentationChip = (props: {
     }, [molecule, representation]);
 
     let selectionName = representation.cid;
-    if (representation.cid === "//*//:*") selectionName = "All Molecule";
+    if (representation.cid === "//*//:*" || representation.cid === "/*/*/*/*:*") selectionName = "All Molecule";
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
@@ -66,8 +66,9 @@ export const CustomRepresentationChip = (props: {
                         type="icon-only"
                         icon={representationIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
                         size="accordion"
+                        tooltip={representationIsVisible ? "Hide Representation" : "Show Representation"}
                     ></MoorhenButton>
-                    <MoorhenPopoverButton icon="MatSymEdit" size="accordion">
+                    <MoorhenPopoverButton icon="MatSymEdit" size="accordion" tooltip="Edit Representation">
                         <AddCustomRepresentationCard
                             mode="edit"
                             urlPrefix={urlPrefix}
@@ -76,7 +77,7 @@ export const CustomRepresentationChip = (props: {
                             onApply={() => setReload(!reload)}
                         />
                     </MoorhenPopoverButton>
-                    <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" size="accordion">
+                    <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" size="accordion" tooltip="delete Representation">
                         <MoorhenButton variant="danger" onClick={handleDelete}>
                             Delete Representation
                         </MoorhenButton>

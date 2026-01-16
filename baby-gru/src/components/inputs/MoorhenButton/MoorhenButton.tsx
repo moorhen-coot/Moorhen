@@ -1,5 +1,5 @@
 import { Tooltip } from "@mui/material";
-import { JSX } from "react";
+import { JSX, useRef } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenStack } from "../../interface-base";
@@ -19,7 +19,7 @@ type MoorhenButtonPropsTypeBase = {
     children?: React.ReactNode;
     value?: string | number;
     id?: string;
-    tooltip?: string | JSX.Element;
+    tooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
 };
@@ -64,6 +64,8 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         tooltipPlacement,
     } = props;
 
+    const tooltipRef = useRef<HTMLDivElement>(null);
+
     let size = props.size ? props.size : "medium";
     if (size === "lg" || size === "large") {
         size = "large";
@@ -103,7 +105,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             style={{ ...props.style }}
             value={props.value}
         >
-            <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
+            <MoorhenStack ref={tooltipRef} direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}
@@ -120,7 +122,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     );
 
     if (tooltip) {
-        return <MoorhenTooltip tooltip={tooltip}>{button}</MoorhenTooltip>;
+        return <MoorhenTooltip tooltip={tooltip} link={button} linkRef={tooltipRef} />;
     } else {
         return button;
     }

@@ -21,7 +21,17 @@ import {
 } from "../MoorhenMoleculeRepresentationSettingsCard";
 import { NcsColourSwatch } from "./ColourRuleCard";
 
-const customRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres", "MetaBalls", "residue_environment"];
+const customRepresentations = [
+    "CBs",
+    "CAs",
+    "CRs",
+    "gaussian",
+    "MolecularSurface",
+    "VdwSpheres",
+    "MetaBalls",
+    "residue_environment",
+    "allHBonds",
+];
 
 export const AddCustomRepresentationCard = memo(
     (props: {
@@ -33,7 +43,6 @@ export const AddCustomRepresentationCard = memo(
         onApply?: () => void;
     }) => {
         const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null);
-        const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null);
         const useDefaultRepresentationSettingsSwitchRef = useRef<HTMLInputElement | null>(null);
         const ruleSelectRef = useRef<HTMLSelectElement | null>(null);
         const cidFormRef = useRef<HTMLInputElement | null>(null);
@@ -283,7 +292,7 @@ export const AddCustomRepresentationCard = memo(
             }
 
             let colourRule: ColourRule;
-            if (!useDefaultColoursSwitchRef.current.checked) {
+            if (!useDefaultColours) {
                 const colourRuleCid = styleSelectRef.current.value === "residue_environment" ? "//*" : cidSelection;
                 switch (colourModeSelectRef.current.value) {
                     case "custom":
@@ -635,17 +644,18 @@ export const AddCustomRepresentationCard = memo(
                         </MoorhenSelect>
                     </MoorhenStack>
                 )}
-                <MoorhenToggle
-                    ref={useDefaultColoursSwitchRef}
-                    type="switch"
-                    label="Apply general colour settings"
-                    checked={useDefaultColours}
-                    onChange={() => {
-                        setUseDefaultColours(prev => {
-                            return !prev;
-                        });
-                    }}
-                />
+                {representationStyle !== "allHBonds" && (
+                    <MoorhenToggle
+                        type="switch"
+                        label="Apply general colour settings"
+                        checked={useDefaultColours}
+                        onChange={() => {
+                            setUseDefaultColours(prev => {
+                                return !prev;
+                            });
+                        }}
+                    />
+                )}
                 {["MetaBalls", "CBs", "VdwSpheres", "ligands"].includes(representationStyle) && !useDefaultColours && (
                     <MoorhenToggle
                         ref={applyColourToNonCarbonAtomsSwitchRef}

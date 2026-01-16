@@ -22,7 +22,6 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
     useEffect(() => {
         if (props.open !== null && props.open !== undefined) {
             setIsOpen(props.open);
-            console.log(props.open);
         }
     }, [props.open]);
 

@@ -188,7 +188,7 @@ const SurfaceSettingsPanel = (props: {
     );
 };
 
-const SymmetrySettingsPanel = (props: {
+export const SymmetrySettingsPanel = (props: {
     symmetryRadius: number;
     setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
     molecule: moorhen.Molecule;
@@ -247,7 +247,7 @@ const SymmetrySettingsPanel = (props: {
     assemblies.delete();
 
     return (
-        <MoorhenStack card>
+        <MoorhenStack gap={"0.5rem"} addMargin>
             <MoorhenToggle
                 type="switch"
                 checked={showUnitCell}
@@ -635,13 +635,11 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setShowContacts: React.Dispatch<React.SetStateAction<boolean>>;
     };
 }) => {
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-
     return (
         <MoorhenStack direction="vertical" style={{ overflowY: "auto", maxHeight: "80vh" }}>
             <BondSettingsPanel {...props.bondSettingsProps} />
             <SurfaceSettingsPanel {...props.gaussianSettingsProps} />
-            <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} />
+            {/* <SymmetrySettingsPanel {...props.symmetrySettingsProps} molecule={props.molecule} /> */}
             <ResidueEnvironmentSettingsPanel {...props.residueEnvironmentSettingsProps} />
             <RibbonSettingsPanel {...props.ribbonSettingsProps} />
             <MolSurfSettingsPanel {...props.molSurfSettingsProps} />

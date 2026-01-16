@@ -363,10 +363,15 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                 <MoorhenInfoCard
                     infoText={
                         <span>
-                            List of colour rules.
-                            <br /> Colour rules are applied in order: a rule that cover the whole object in a singular color applied last
-                            will overwrite every over rules, applied first it will be the background colour of the molecule. <br /> Reverse
-                            Show the last applied or most important rule first.
+                            <b>Color rules</b>
+                            <br /> Rules are applied in order, from top to bottom. Later rules override earlier ones. A rule that colors the
+                            entire object will override all others if applied last. If applied first, it sets the background color of the
+                            molecule.
+                            <b>
+                                <br />
+                                Reverse
+                            </b>
+                            <br /> Shows the most recently applied (highest-priority) rules first.
                         </span>
                     }
                 />

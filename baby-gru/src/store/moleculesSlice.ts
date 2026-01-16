@@ -71,7 +71,8 @@ export const moleculesSlice = createSlice({
                     action.payload.style === "MolecularSurface" ||
                     action.payload.style === "gaussian" ||
                     action.payload.style === "VdwSpheres" ||
-                    action.payload.style === "ligands")
+                    action.payload.style === "ligands" ||
+                    action.payload.style === "allHBonds")
             ) {
                 if (
                     state.customRepresentations &&
@@ -81,7 +82,7 @@ export const moleculesSlice = createSlice({
                 ) {
                     if (action.payload.cid === "/*/*/*/*") {
                         action.payload.cid = "//*//:*";
-                    } /* convert to better cid that recognise secondary conformation */
+                    } /* convert to better cid that recognise alt conformation */
                     state = { ...state, customRepresentations: [...state.customRepresentations, action.payload] };
                 }
             } else {
@@ -97,7 +98,8 @@ export const moleculesSlice = createSlice({
                 action.payload.style === "MolecularSurface" ||
                 action.payload.style === "gaussian" ||
                 action.payload.style === "VdwSpheres" ||
-                action.payload.style === "ligands"
+                action.payload.style === "ligands" ||
+                action.payload.style === "allHBonds"
             ) {
                 state = {
                     ...state,
