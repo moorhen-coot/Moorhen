@@ -1467,7 +1467,7 @@ export class MoorhenMolecule {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
             } else {
-                if (!cid) cid = "/*/*/*/*";
+                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1492,7 +1492,7 @@ export class MoorhenMolecule {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
             } else {
-                if (!cid) cid = "/*/*/*/*";
+                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {

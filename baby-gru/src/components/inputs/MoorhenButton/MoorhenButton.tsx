@@ -103,7 +103,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             style={{ ...props.style }}
             value={props.value}
         >
-            <MoorhenStack direction="row" align="center" justify="center" style={{ ...style }}>
+            <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}

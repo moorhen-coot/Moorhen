@@ -32,8 +32,6 @@ export const AddCustomRepresentationCard = memo(
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
         onApply?: () => void;
     }) => {
-        console.log("MoorhenAddCustomRepresentationCard", props.mode, props.representation?.style);
-
         const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null);
         const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null);
         const useDefaultRepresentationSettingsSwitchRef = useRef<HTMLInputElement | null>(null);
@@ -87,7 +85,6 @@ export const AddCustomRepresentationCard = memo(
 
         const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain || "");
         const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null);
-        console.log(sequenceResidueRange);
 
         const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(
             props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio

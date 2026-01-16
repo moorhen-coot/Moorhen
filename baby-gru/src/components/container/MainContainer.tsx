@@ -375,8 +375,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         startupEffect();
     }, [userPreferencesMounted]);
 
-    console.log("execute container");
-
     useEffect(() => {
         dispatch(setRequestDrawScene(true));
     }, [width, height]);

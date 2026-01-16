@@ -36,7 +36,7 @@ const allRepresentations: moorhen.RepresentationStyles[] = [
     "rotamer",
     "CDs",
     "allHBonds",
-    "glycoBlocks",
+    //"glycoBlocks",
     "restraints",
     "environment",
 ];
@@ -180,8 +180,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             rep.style !== "gaussian" &&
             rep.style !== "VdwSpheres"
     );
-
-    console.log(generalRepresentationsList);
 
     const bondSettingsProps = {
         bondWidth,
@@ -938,13 +936,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     </MoorhenAccordion>
                     {/* TODO: add the loading spinners {busyLoadingCarbohydrates ? <Spinner animation="border" /> : <ExpandMoreOutlined />}*/}
                     {props.molecule.hasGlycans && (
-                        <MoorhenAccordion title="Carbohydrates">
-                            <MoorhenCarbohydrateList
-                                setBusy={setBusyLoadingCarbohydrates}
-                                molecule={props.molecule}
-                                height={convertViewtoPx(40, height)}
-                            />
-                        </MoorhenAccordion>
+                        <MoorhenCarbohydrateList
+                            setBusy={setBusyLoadingCarbohydrates}
+                            molecule={props.molecule}
+                            height={convertViewtoPx(40, height)}
+                        />
                     )}
                 </div>
             </MoorhenStack>

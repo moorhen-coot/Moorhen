@@ -103,11 +103,12 @@ export const moleculesSlice = createSlice({
                     ...state,
                     customRepresentations: state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
                 };
+            } else {
+                state = {
+                    ...state,
+                    generalRepresentations: state.generalRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
+                };
             }
-            state = {
-                ...state,
-                generalRepresentations: state.generalRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
             return state;
         },
     },

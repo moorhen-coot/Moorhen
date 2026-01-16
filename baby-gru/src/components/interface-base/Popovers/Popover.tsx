@@ -107,7 +107,6 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         if (positionRef.current !== null) {
             if (Math.abs(clampedLeft - positionRef.current.left) <= 25 && Math.abs(clampedTop - positionRef.current.top) <= 25) {
-                console.log("didn't move");
                 return;
             }
         }
@@ -116,7 +115,6 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         const arrowTopPos = `calc(50% + ${top - clampedTop}px)`;
         const arrowLeftPos = `calc(50% + ${left - clampedLeft}px`;
-        console.log("do move");
         setPopoverStyle({
             position: "absolute",
             top: clampedTop,
