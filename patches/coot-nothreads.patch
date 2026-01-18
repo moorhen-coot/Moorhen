@@ -29,76 +29,6 @@ index 30d59ba28..eb3abc2d3 100644
  
        if (is_dynamically_transformed_map_flag) {
           for (unsigned int ii=0; ii<draw_vector_sets.size(); ii++) {
-diff --git a/api/coot-molecule-refine.cc b/api/coot-molecule-refine.cc
-index 611a7842d..c087a3db1 100644
---- a/api/coot-molecule-refine.cc
-+++ b/api/coot-molecule-refine.cc
-@@ -407,9 +407,11 @@ coot::molecule_t::minimize(const std::string &atom_selection_cid,
-       if (do_torsion_restraints) flags = TYPICAL_RESTRAINTS_WITH_TORSIONS;
-       pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-       int n_threads = 4; // coot::get_max_number_of_threads();
-       ctpl::thread_pool thread_pool(n_threads);
-       restraints.thread_pool(&thread_pool, n_threads);
-+#endif
- 
-       int imol = imol_no;
-       bool do_auto_helix_restraints = true;
-diff --git a/api/coot-molecule-validation.cc b/api/coot-molecule-validation.cc
-index 08e580d37..270d64953 100644
---- a/api/coot-molecule-validation.cc
-+++ b/api/coot-molecule-validation.cc
-@@ -396,9 +396,11 @@ coot::molecule_t::geometric_distortions_from_mol(const atom_selection_container_
-                   if (with_nbcs)
-                      flags = coot::BONDS_ANGLES_PLANES_NON_BONDED_AND_CHIRALS;
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-                   unsigned int n_threads = coot::get_max_number_of_threads();
-                   if (n_threads > 0)
-                      restraints.thread_pool(&static_thread_pool, n_threads);
-+#endif
-                   short int do_residue_internal_torsions = 0;
- 
-                   //                if (do_torsion_restraints) {
-@@ -580,9 +582,11 @@ coot::molecule_t::simple_geometric_distortions_from_mol(const std::string &ligan
-                         if (with_nbcs)
-                            flags = coot::BONDS_ANGLES_PLANES_NON_BONDED_AND_CHIRALS;
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-                         unsigned int n_threads = coot::get_max_number_of_threads();
-                         if (n_threads > 0)
-                            restraints.thread_pool(&static_thread_pool, n_threads);
-+#endif
-                         short int do_residue_internal_torsions = 0;
- 
-                         //                if (do_torsion_restraints) {
-diff --git a/api/coot-molecule.cc b/api/coot-molecule.cc
-index 79510c9cf..6a0a22d48 100644
---- a/api/coot-molecule.cc
-+++ b/api/coot-molecule.cc
-@@ -2627,8 +2627,10 @@ coot::molecule_t::refine_direct(std::vector<mmdb::Residue *> rv, const std::stri
-    pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
- 
-    int n_threads = max_number_of_threads;
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-    ctpl::thread_pool thread_pool(n_threads);
-    restraints.thread_pool(&thread_pool, n_threads);
-+#endif
- 
-    int imol = imol_no;
-    bool do_auto_helix_restraints = true;
-@@ -4503,8 +4505,10 @@ coot::molecule_t::init_all_molecule_refinement(int imol_ref_mol, coot::protein_g
-    flags = coot::TYPICAL_RESTRAINTS;
-    coot::pseudo_restraint_bond_type pseudos = coot::NO_PSEUDO_BONDS;
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-    unsigned int n_threads = 8;
-    last_restraints->thread_pool(thread_pool, n_threads);
-+#endif
- 
-    // user-defined LIG diction ahve been assigned to imol_ref_mol, not this one (this one
-    // is a temporary molecule used only for refinement).
 diff --git a/api/molecules-container-maps.cc b/api/molecules-container-maps.cc
 index 03398d50d..836d8fdf6 100644
 --- a/api/molecules-container-maps.cc
@@ -118,7 +48,7 @@ index 03398d50d..836d8fdf6 100644
     }
     return hi;
 diff --git a/api/molecules-container.cc b/api/molecules-container.cc
-index 6de073bc3..ad4e2c711 100644
+index 6de073bc3..6dfbdf919 100644
 --- a/api/molecules-container.cc
 +++ b/api/molecules-container.cc
 @@ -66,7 +66,8 @@ molecules_container_t::~molecules_container_t() {
@@ -155,19 +85,7 @@ index 6de073bc3..ad4e2c711 100644
  
     int status = 0;
     if (is_valid_model_molecule(imol)) {
-@@ -3648,9 +3657,11 @@ molecules_container_t::make_last_restraints(const std::vector<std::pair<bool,mmd
-    if (use_map_flag)
-       last_restraints->add_map(geometry_vs_map_weight);
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-    unsigned int n_threads = coot::get_max_number_of_threads();
-    if (n_threads > 0)
-       last_restraints->thread_pool(&thread_pool, n_threads);
-+#endif
- 
-    all_atom_pulls_off();
-    particles_have_been_shown_already_for_this_round_flag = false;
-@@ -5549,7 +5560,9 @@ molecules_container_t::get_hb_type(const std::string &compound_id, int imol_enc,
+@@ -5549,7 +5558,9 @@ molecules_container_t::get_hb_type(const std::string &compound_id, int imol_enc,
  void
  molecules_container_t::set_max_number_of_threads(unsigned int n_threads) {
     coot::set_max_number_of_threads(n_threads);
@@ -177,7 +95,7 @@ index 6de073bc3..ad4e2c711 100644
  }
  
  // call the above function
-@@ -5617,6 +5630,7 @@ molecules_container_t::test_launching_threads(unsigned int n_threads_per_batch,
+@@ -5617,6 +5628,7 @@ molecules_container_t::test_launching_threads(unsigned int n_threads_per_batch,
  double
  molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
  
@@ -185,7 +103,7 @@ index 6de073bc3..ad4e2c711 100644
     auto sum = [] (unsigned int thread_index, unsigned int i, unsigned int j, std::atomic<unsigned int> &done_count_for_threads) {
        done_count_for_threads++;
        return i+j;
-@@ -5636,6 +5650,9 @@ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
+@@ -5636,6 +5648,9 @@ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
     auto d10 = std::chrono::duration_cast<std::chrono::microseconds>(tp_1 - tp_0).count();
     t = d10;
     return t;
@@ -304,76 +222,32 @@ index 7025c6fbd..b41a53062 100644
                              };
  
  
-diff --git a/ideal/chirals.cc b/ideal/chirals.cc
-index bd3d8429e..196052a55 100644
---- a/ideal/chirals.cc
-+++ b/ideal/chirals.cc
-@@ -766,9 +766,11 @@ coot::distorted_chiral_volumes(int imol, mmdb::Manager *mol, protein_geometry *g
-    bool do_link_restraints = false;
-    bool do_flank_restraints = false;
-    pseudo_restraint_bond_type pseudos = coot::NO_PSEUDO_BONDS;
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-    int n_threads = 1;
-    ctpl::thread_pool tp(n_threads);
-    restraints.thread_pool(&tp, n_threads);
-+#endif
- 
-    // this is making nbc restraints I think - stop it.
-    int n_restraints = restraints.make_restraints(imol, *geom_p, flags, 1, do_trans_peptide_restraints,
-diff --git a/ideal/crankshaft.cc b/ideal/crankshaft.cc
-index 10fa8f8f8..762faf084 100644
---- a/ideal/crankshaft.cc
-+++ b/ideal/crankshaft.cc
-@@ -1572,7 +1572,9 @@ coot::crankshaft::refine_and_score_mol(mmdb::Manager *mol,
-       auto tp_0 = std::chrono::high_resolution_clock::now();
- 
-       restraints_container_t restraints(refine_residues, links, geom, mol, fixed_atom_specs, &xmap);
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-       restraints.thread_pool(thread_pool_p, n_threads_in);
-+#endif
-       restraints.set_quiet_reporting();
-       restraints.add_map(map_weight);
-       restraints.set_rama_type(restraints_rama_type);
 diff --git a/ideal/make-restraints.cc b/ideal/make-restraints.cc
-index c15a6edea..0925177be 100644
+index c15a6edea..226e193ef 100644
 --- a/ideal/make-restraints.cc
 +++ b/ideal/make-restraints.cc
-@@ -78,7 +78,7 @@ coot::restraints_container_t::make_restraints(int imol,
+@@ -78,8 +78,7 @@ coot::restraints_container_t::make_restraints(int imol,
  					      bool do_flank_restraints) {
  
  
 -#if 1
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
- 
+-
++   // make_restraints_ng now works in both threaded and single-threaded builds
     make_restraints_ng(imol, geom, flags_in, do_residue_internal_torsions, do_trans_peptide_restraints,
  		      rama_plot_target_weight, do_rama_plot_restraints,
-@@ -88,7 +88,7 @@ coot::restraints_container_t::make_restraints(int imol,
+ 		      do_auto_helix_restraints,
+@@ -88,8 +87,8 @@ coot::restraints_container_t::make_restraints(int imol,
  		      sec_struct_pseudo_bonds, do_link_restraints, do_flank_restraints);
  
     return size();
 -#endif
-+#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
  
++   // Dead code below - kept for reference but never executed since we always return above
     // if a peptide is trans, add a restraint to penalize non-trans configuration
     // (currently a torsion restraint on peptide w of 180)
-diff --git a/ideal/model-bond-deltas.cc b/ideal/model-bond-deltas.cc
-index 5f47f825d..7fc3790f8 100644
---- a/ideal/model-bond-deltas.cc
-+++ b/ideal/model-bond-deltas.cc
-@@ -98,9 +98,11 @@ coot::model_bond_deltas::resolve() {
- 
- 	 restraints_container_t restraints(residues, *geom_p, mol, &dummy_xmap);
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
- 	 int n_threads = 2;
- 	 ctpl::thread_pool thread_pool(n_threads);
- 	 restraints.thread_pool(&thread_pool, n_threads);
-+#endif
- 
- 	 restraint_usage_Flags flags = coot::BONDS;
- 	 pseudo_restraint_bond_type pseudos = coot::NO_PSEUDO_BONDS;
+    //
 diff --git a/ideal/ng.cc b/ideal/ng.cc
-index 724e39d3b..1ed4cc115 100644
+index 724e39d3b..b43f232cc 100644
 --- a/ideal/ng.cc
 +++ b/ideal/ng.cc
 @@ -27,17 +27,17 @@
@@ -392,19 +266,60 @@ index 724e39d3b..1ed4cc115 100644
  extern logging logger;
  
 -
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
++// make_restraints_ng now works in both threaded and single-threaded builds
  int
  coot::restraints_container_t::make_restraints_ng(int imol,
                                                   const coot::protein_geometry &geom,
-@@ -212,6 +212,7 @@ coot::restraints_container_t::make_restraints_ng(int imol,
-       restraints_vec[i].restraint_index = i;
-    return size();
- }
-+#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+@@ -60,12 +60,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
  
+    bool console_output_for_restraints_generation_timings = false;
  
- void
-@@ -540,6 +541,7 @@ coot::restraints_container_t::make_flanking_atoms_restraints_ng(const coot::prot
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    if (! thread_pool_p) {
+          std::cout << "ERROR:: " << __FUNCTION__ << " --- thread pool was not set! ---------"
+                    << std::endl;
+          std::cout << "ERROR:: make_restraints_ng() stops before it starts" << std::endl;
+          return -1;
+    }
++#endif
+ 
+    auto tp_0 = std::chrono::high_resolution_clock::now();
+    restraints_usage_flag = flags_in;
+@@ -145,15 +147,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
+       // the non-threaded version has a different limit on the
+       // non_bonded_contacts_atom_indices (so, out of range if you use it?)
+ 
+-      if (! thread_pool_p) {
+-         std::cout << "ERROR:: ------- " << __FUNCTION__ << " - thread pool was not set! ---------"
+-                   << std::endl;
+-         // and yet we continue... that's bad news.
+-         std::cout << "ERROR:: Bad things will now happen" << std::endl;
+-      }
+-
+-      if (! just_chirals)
++      if (! just_chirals) {
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          make_non_bonded_contact_restraints_using_threads_ng(imol, geom);
++#else
++         // Single-threaded fallback: use non-threaded NBC function
++         make_non_bonded_contact_restraints_ng(imol, geom);
++#endif
++      }
+ 
+       auto tp_5 = std::chrono::high_resolution_clock::now();
+ 
+@@ -195,8 +196,10 @@ coot::restraints_container_t::make_restraints_ng(int imol,
+             make_base_pairing_and_stacking_restraints_ng(imol, geom);
+       }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+       make_df_restraints_indices();
+       make_distortion_electron_density_ranges();
++#endif
+ 
+       // Now we don't do this here - we do it after all the restraints have been added -
+       // called from graphics-info-modelling.cc
+@@ -540,6 +543,7 @@ coot::restraints_container_t::make_flanking_atoms_restraints_ng(const coot::prot
     // flank_restraints.report();
  }
  
@@ -412,7 +327,7 @@ index 724e39d3b..1ed4cc115 100644
  // static
  void
  coot::restraints_container_t::make_non_bonded_contact_restraints_workpackage_ng(int ithread,
-@@ -1139,6 +1141,7 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_using_threads_n
+@@ -1139,6 +1143,7 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_using_threads_n
                  << " adding NBCs to restraints " << d65 << std::endl;
  
  }
@@ -420,89 +335,86 @@ index 724e39d3b..1ed4cc115 100644
  
  
  unsigned int
-@@ -1461,9 +1464,11 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_ng(int imol,
+@@ -1461,9 +1466,10 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_ng(int imol,
        }
     }
  
 +#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
     make_df_restraints_indices();
-    // is the following needed? I doubt.
+-   // is the following needed? I doubt.
     make_distortion_electron_density_ranges();
 +#endif
  
     return n_nbc_restraints;
  
-diff --git a/ideal/regularize-minimol.cc b/ideal/regularize-minimol.cc
-index b265a3771..e6ee3d345 100644
---- a/ideal/regularize-minimol.cc
-+++ b/ideal/regularize-minimol.cc
-@@ -89,10 +89,14 @@ coot::refine_minimol_fragment(coot::minimol::fragment &frag,
-    }
- 
-    if (! residues.empty()) {
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-       int n_threads = 1; // needs optimizing
-       ctpl::thread_pool tp(n_threads);
-+#endif
-       coot::restraints_container_t restraints(residues, geom, mol, &xmap);
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-       restraints.thread_pool(&tp, n_threads);
-+#endif
- 
-       coot::restraint_usage_Flags flags = coot::TYPICAL_RESTRAINTS; // include GM
-       bool do_residue_internal_torsions = false;
-@@ -166,6 +170,7 @@ coot::regularize_minimol_molecule(const coot::minimol::molecule &molin,
-       coot::restraints_container_t restraints(residues, geom, mol, &dummy_xmap);
-       restraints.set_quiet_reporting();
- 
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-       int n_threads_max = get_max_number_of_threads();
-       int n_threads = n_threads_max -1;
-       if (n_threads < 1) n_threads = 1;
-@@ -177,6 +182,7 @@ coot::regularize_minimol_molecule(const coot::minimol::molecule &molin,
-       ctpl::thread_pool tp(n_threads);
-       // std::cout << "set thread pool " << n_threads << std::endl;
-       restraints.thread_pool(&tp, n_threads);
-+#endif
- 
-       coot::restraint_usage_Flags flags = coot::BONDS_ANGLES_TORSIONS_NON_BONDED_CHIRALS_AND_PLANES;
-       bool do_residue_internal_torsions = false;
 diff --git a/ideal/simple-restraint.cc b/ideal/simple-restraint.cc
-index 926ee9f21..f55cf9aec 100644
+index 926ee9f21..334f3a12f 100644
 --- a/ideal/simple-restraint.cc
 +++ b/ideal/simple-restraint.cc
-@@ -4919,9 +4919,11 @@ coot::simple_refine(mmdb::Residue *residue_p,
- 	 pseudo_restraint_bond_type pseudos = coot::NO_PSEUDO_BONDS;
- 	 bool do_internal_torsions = true;
- 	 bool do_trans_peptide_restraints = true;
-+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-          int n_threads = coot::get_max_number_of_threads();
-          ctpl::thread_pool thread_pool(n_threads);
-          restraints.thread_pool(&thread_pool, n_threads);
-+#endif
- 	 restraints.make_restraints(imol, geom, flags, do_internal_torsions,
- 				    do_trans_peptide_restraints, 0, 0, true, true, false, pseudos);
- 
-diff --git a/ligand/multi-peptide.cc b/ligand/multi-peptide.cc
-index 62e2c1d97..5aa275cc5 100644
---- a/ligand/multi-peptide.cc
-+++ b/ligand/multi-peptide.cc
-@@ -1429,6 +1429,7 @@ coot::multi_build_terminal_residue_addition::refine_end(coot::minimol::fragment
-       }
+@@ -2488,7 +2488,22 @@ coot::electron_density_score_from_restraints(const gsl_vector *v,
     }
-    restraints_container_t restraints(residues, links, geom, mol, fixed_atom_specs, &xmap);
+ 
+ #else
+-   std::cout << __FUNCTION__ << " no thread pool" << std::endl;
++   // Single-threaded fallback: calculate electron density score directly
++   if (restraints_p->include_map_terms() == 1) {
++      unsigned int n_atoms = restraints_p->get_n_atoms();
++      for (unsigned int iat=0; iat<n_atoms; iat++) {
++         if (restraints_p->use_map_gradient_for_atom[iat]) {
++            int idx = 3 * iat;
++            clipper::Coord_orth ao(gsl_vector_get(v,idx),
++                                   gsl_vector_get(v,idx+1),
++                                   gsl_vector_get(v,idx+2));
++            score += restraints_p->Map_weight() *
++               restraints_p->atom_z_occ_weight[iat] *
++               restraints_p->electron_density_score_at_point(ao);
++         }
++      }
++      score = -score;
++   }
+ #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    return score;
+ }
+diff --git a/ideal/simple-restraint.hh b/ideal/simple-restraint.hh
+index c39ac7abd..eab68f9ec 100644
+--- a/ideal/simple-restraint.hh
++++ b/ideal/simple-restraint.hh
+@@ -1231,9 +1231,7 @@ namespace coot {
+ 
+ #ifndef __NVCC__
+          restraints_lock = false; // not locked
+-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          thread_pool_p = 0; // null pointer
+-#endif
+ #endif // __NVCC__
+       }
+ 
+@@ -2725,8 +2723,7 @@ namespace coot {
+       // I think so - for example crankshaft
+       //
+       unsigned int n_threads;
+-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+-      // thread pool!
++      // thread pool - uses stub implementation when HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined
+       //
+       ctpl::thread_pool *thread_pool_p;
+       // std::atomic<unsigned int> &done_count_for_threads;
+@@ -2743,6 +2740,7 @@ namespace coot {
+       //
+       // ctpl::thread_pool another_thread_pool;
+ 
 +#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-    restraints.thread_pool(thread_pool_p, n_threads);
+       void make_df_restraints_indices();
+       void make_distortion_electron_density_ranges();
+       void clear_df_by_thread_results();
+@@ -2754,7 +2752,6 @@ namespace coot {
+       std::vector<std::vector<std::size_t> > df_by_thread_atom_indices; // for electron density
+       // pull restraints are dynamically added to the end of restraints_indices
+       std::vector<std::vector<std::size_t> > restraints_indices;
+-
+ #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
  
-    // Does this make things slower? (seems so, try passing the thread pool
-@@ -1436,6 +1437,7 @@ coot::multi_build_terminal_residue_addition::refine_end(coot::minimol::fragment
-    //
-    ctpl::thread_pool thread_pool(coot::get_max_number_of_threads());
-    restraints.thread_pool(&thread_pool, get_max_number_of_threads());
-+#endif
- 
-    pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
-    bool do_internal_torsions = false;
+       void clear();
 diff --git a/utils/ctpl.h b/utils/ctpl.h
 index 4ade8e1a0..ec8d50d24 100644
 --- a/utils/ctpl.h
@@ -530,101 +442,42 @@ index 4ade8e1a0..ec8d50d24 100644
  #endif // __ctpl_thread_pool_H__
  
 
-diff --git a/utils/ctpl_stub.h b/utils/ctpl_stub.h
-new file mode 100644
---- /dev/null
-+++ b/utils/ctpl_stub.h
-@@ -0,0 +1,      93 @@
-+
-+/*********************************************************
-+ *
-+ *  Stub thread pool for single-threaded builds.
-+ *  Provides the same interface as ctpl::thread_pool but
-+ *  executes all tasks synchronously on the calling thread.
-+ *
-+ *********************************************************/
-+
-+#ifndef __ctpl_stub_thread_pool_H__
-+#define __ctpl_stub_thread_pool_H__
-+
-+#include <functional>
-+#include <future>
-+#include <memory>
-+
-+namespace ctpl {
-+
-+    // Stub thread_pool that executes tasks synchronously
-+    // Used when HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined
-+    class thread_pool {
-+
-+    public:
-+
-+        thread_pool() {}
-+        thread_pool(int nThreads, int queueSize = 100) {
-+            // Ignore thread count - we execute everything synchronously
-+            (void)nThreads;
-+            (void)queueSize;
-+        }
-+
-+        ~thread_pool() {}
-+
-+        // Always report 1 "thread" (the main thread)
-+        int size() { return 1; }
-+
-+        // No idle threads in stub
-+        int n_idle() { return 0; }
-+
-+        // Change thread count - no-op in stub
-+        void resize(int nThreads) {
-+            (void)nThreads;
-+        }
-+
-+        // Clear queue - no-op since we execute immediately
-+        void clear_queue() {}
-+
-+        // Pop - returns empty function since queue is always empty
-+        std::function<void(int)> pop() {
-+            return std::function<void(int)>();
-+        }
-+
-+        // Stop - no-op in stub
-+        void stop(bool isWait = false) {
-+            (void)isWait;
-+        }
-+
-+        // Push with additional arguments - execute synchronously and return future
-+        template<typename F, typename... Rest>
-+        auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))> {
-+            // Create a packaged task
-+            auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
-+                std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
-+            );
-+
-+            // Execute immediately with thread id 0
-+            (*pck)(0);
-+
-+            return pck->get_future();
-+        }
-+
-+        // Push simple function - execute synchronously and return future
-+        template<typename F>
-+        auto push(F && f) -> std::future<decltype(f(0))> {
-+            auto pck = std::make_shared<std::packaged_task<decltype(f(0))(int)>>(std::forward<F>(f));
-+
-+            // Execute immediately with thread id 0
-+            (*pck)(0);
-+
-+            return pck->get_future();
-+        }
-+
-+    private:
-+        // Deleted copy/move constructors and assignment operators
-+        thread_pool(const thread_pool &) = delete;
-+        thread_pool(thread_pool &&) = delete;
-+        thread_pool & operator=(const thread_pool &) = delete;
-+        thread_pool & operator=(thread_pool &&) = delete;
-+    };
-+
-+}
-+
-+#endif // __ctpl_stub_thread_pool_H__
+diff --git a/coot-utils/contacts-by-bricks.cc b/coot-utils/contacts-by-bricks.cc
+index 50e2a6881..d6ed78c5e 100644
+--- a/coot-utils/contacts-by-bricks.cc
++++ b/coot-utils/contacts-by-bricks.cc
+@@ -26,7 +26,9 @@
+ 
+ #include <iostream>
+ #include <chrono>
++#ifdef HAVE_CXX_THREAD
+ #include <thread>
++#endif
+ 
+ #include "utils/coot-utils.hh"
+ #include "utils/split-indices.hh"
+@@ -268,6 +270,7 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
+    int brick_index_max = range[0] * range[1] * range[2];
+    float dist_max_sqrd = dist_nbc_max * dist_nbc_max;
+ 
++#ifdef HAVE_CXX_THREAD
+    std::vector<std::thread> threads;
+ 
+    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
+@@ -279,6 +282,16 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
+    }
+    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++)
+       threads[ii].join();
++#else
++   // Single-threaded fallback: call workpackage directly for each index set
++   for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
++      const std::vector<unsigned int> &index_set = thread_index_sets[ii];
++      find_the_contacts_between_bricks_multi_thread_workpackage(
++         vec_p, index_set, atoms_in_bricks,
++         fixed_flags, range, atoms, brick_index_max, dist_nbc_max,
++         only_between_different_residues_flag);
++   }
++#endif
+ 
+    if (false) {
+       auto tp_1 = std::chrono::high_resolution_clock::now();
