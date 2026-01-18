@@ -24,6 +24,7 @@ fi
 
 
 MEMORY64=0
+SINGLE_THREADED=0
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
@@ -31,6 +32,12 @@ if [ x"$1" = x"--64bit" ]; then
    MEMORY64=1
    BUILD_DIR=${PWD}/CCP4_WASM_BUILD_64
    INSTALL_DIR=${PWD}/install64
+   shift
+fi
+if [ x"$1" = x"--single-threaded" ]; then
+   SINGLE_THREADED=1
+   BUILD_DIR=${PWD}/CCP4_WASM_BUILD_ST
+   INSTALL_DIR=${PWD}/install_st
    shift
 fi
 if [ x"$1" = x"--clear" ]; then
@@ -326,25 +333,40 @@ echo "Installing in ${INSTALL_DIR}"
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c  -pthread -sMEMORY64=1 -Wno-experimental
-emcc silly.c  -pthread
+if test x"${SINGLE_THREADED}" = x"1"; then
+    emcc silly.c -sMEMORY64=1 -Wno-experimental
+    emcc silly.c
+else
+    emcc silly.c  -pthread -sMEMORY64=1 -Wno-experimental
+    emcc silly.c  -pthread
+fi
 rm -f silly.c
 rm -f a.out.js
 rm -f a.out.wasm
 rm -f a.out.worker.js
 
-if test x"${MEMORY64}" = x"1"; then
+if test x"${SINGLE_THREADED}" = x"1"; then
+    echo "##################################################"
+    echo "Building ** single-threaded ** version of Moorhen"
+    echo "(No SharedArrayBuffer/pthreads - Safari compatible)"
+    echo "##################################################"
+    echo
+    MOORHEN_CMAKE_FLAGS="-fwasm-exceptions"
+    THREADING_DEFINES=""
+elif test x"${MEMORY64}" = x"1"; then
     echo "#######################################################"
     echo "Building ** 64-bit ** (large memory) version of Moorhen"
     echo "#######################################################"
     echo
     MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread -fwasm-exceptions"
+    THREADING_DEFINES="-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DHAVE_CXX_THREAD"
 else
     echo "########################################"
     echo "Building ** 32-bit ** version of Moorhen"
     echo "########################################"
     echo
     MOORHEN_CMAKE_FLAGS="-pthread -fwasm-exceptions"
+    THREADING_DEFINES="-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DHAVE_CXX_THREAD"
 fi
 
 BUILD_GSL=false
@@ -641,9 +663,25 @@ if [ $BUILD_BOOST = true ]; then
     getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="-DBOOST_STACKTRACE_LIBCXX_RUNTIME_MAY_CAUSE_MEMORY_LEAK ${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        # Single-threaded: exclude thread-dependent libraries (but keep spirit - it's header-only and needed by serialization)
+        BOOST_EXCLUDE="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process;thread;wave;contract;locale;type_erasure"
+    else
+        BOOST_EXCLUDE="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
+    fi
+    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="-DBOOST_STACKTRACE_LIBCXX_RUNTIME_MAY_CAUSE_MEMORY_LEAK ${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="${BOOST_EXCLUDE}"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing boost, giving up."
+    # For single-threaded builds, remove boost_thread dependency from spirit config
+    # (Spirit is header-only and we don't use its thread-dependent features)
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        # Remove the entire if/endif block for boost_thread (3 lines)
+        sed -i.bak '/boost_thread_FOUND/,/endif()/d' ${INSTALL_DIR}/lib/cmake/boost_spirit-*/boost_spirit-config.cmake
+        rm -f ${INSTALL_DIR}/lib/cmake/boost_spirit-*/boost_spirit-config.cmake.bak
+        # Also remove Boost::thread from spirit-targets.cmake INTERFACE_LINK_LIBRARIES
+        sed -i.bak 's/;Boost::thread//g' ${INSTALL_DIR}/lib/cmake/boost_spirit-*/boost_spirit-targets.cmake
+        rm -f ${INSTALL_DIR}/lib/cmake/boost_spirit-*/boost_spirit-targets.cmake.bak
+    fi
 fi
 
 #RDKit
@@ -652,9 +690,22 @@ if [ $BUILD_RDKIT = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    # For single-threaded builds, disable ChemDraw support (requires boost::locale which depends on threads)
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        RDKIT_CHEMDRAW_FLAG="-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF"
+    else
+        RDKIT_CHEMDRAW_FLAG=""
+    fi
+    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake ${RDKIT_CHEMDRAW_FLAG}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
+    # For single-threaded builds, remove RDChemDrawLib references from rdkit-targets.cmake
+    # (ChemDraw support is disabled but the targets file still references it)
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        sed -i.bak 's/;RDChemDrawLib//g' ${INSTALL_DIR}/lib/cmake/rdkit/rdkit-targets.cmake
+        sed -i.bak 's/;RDChemDrawLib_static//g' ${INSTALL_DIR}/lib/cmake/rdkit/rdkit-targets.cmake
+        rm -f ${INSTALL_DIR}/lib/cmake/rdkit/rdkit-targets.cmake.bak
+    fi
     # Manually copy coordgen and maeparser headers
     mkdir -p ${INSTALL_DIR}/include/coordgen
     mkdir -p ${INSTALL_DIR}/include/maeparser
@@ -746,13 +797,23 @@ fi
 if [ $BUILD_GRAPHENE = true ]; then
     getgraphene
     cd ${MOORHEN_SOURCE_DIR}/checkout/graphene-$graphene_release/
-    CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
-        --prefix=${INSTALL_DIR} \
-        --cross-file=$MESON_CROSS \
-        --default-library=static \
-        --buildtype=release \
-        -Dtests=false && \
-        meson install -C ${BUILD_DIR}/graphene_build || fail "Error installing graphene, giving up."
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        CFLAGS="$MOORHEN_CMAKE_FLAGS" LDFLAGS="$MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
+            --prefix=${INSTALL_DIR} \
+            --cross-file=$MESON_CROSS \
+            --default-library=static \
+            --buildtype=release \
+            -Dtests=false && \
+            meson install -C ${BUILD_DIR}/graphene_build || fail "Error installing graphene, giving up."
+    else
+        CFLAGS="-s USE_PTHREADS $MOORHEN_CMAKE_FLAGS" LDFLAGS=" -lpthread $MOORHEN_CMAKE_FLAGS" meson setup ${BUILD_DIR}/graphene_build \
+            --prefix=${INSTALL_DIR} \
+            --cross-file=$MESON_CROSS \
+            --default-library=static \
+            --buildtype=release \
+            -Dtests=false && \
+            meson install -C ${BUILD_DIR}/graphene_build || fail "Error installing graphene, giving up."
+    fi
     cd ${BUILD_DIR}
 fi
 
@@ -760,18 +821,33 @@ fi
 if [ $BUILD_LIBSIGCPP = true ]; then
     getsigcpp
     cd ${MOORHEN_SOURCE_DIR}/checkout/libsigcplusplus-$libsigcpp_release/
-    meson setup ${BUILD_DIR}/libsigcplusplus_build \
-        --prefix=${INSTALL_DIR} \
-        --libdir=lib \
-        --cross-file=$MESON_CROSS \
-        --default-library=static \
-        -Dc_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
-        -Dcpp_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
-        -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
-        --buildtype=release \
-        -Dbuild-tests=false \
-        -Dbuild-examples=false && \
-        meson install -C ${BUILD_DIR}/libsigcplusplus_build || fail "Error installing sigc++, giving up."
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        meson setup ${BUILD_DIR}/libsigcplusplus_build \
+            --prefix=${INSTALL_DIR} \
+            --libdir=lib \
+            --cross-file=$MESON_CROSS \
+            --default-library=static \
+            -Dc_link_args="$MOORHEN_CMAKE_FLAGS" \
+            -Dcpp_link_args="$MOORHEN_CMAKE_FLAGS" \
+            -Dcpp_args="$MOORHEN_CMAKE_FLAGS" \
+            --buildtype=release \
+            -Dbuild-tests=false \
+            -Dbuild-examples=false && \
+            meson install -C ${BUILD_DIR}/libsigcplusplus_build || fail "Error installing sigc++, giving up."
+    else
+        meson setup ${BUILD_DIR}/libsigcplusplus_build \
+            --prefix=${INSTALL_DIR} \
+            --libdir=lib \
+            --cross-file=$MESON_CROSS \
+            --default-library=static \
+            -Dc_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+            -Dcpp_link_args="-pthread $MOORHEN_CMAKE_FLAGS" \
+            -Dcpp_args="-s USE_PTHREADS=1 $MOORHEN_CMAKE_FLAGS" \
+            --buildtype=release \
+            -Dbuild-tests=false \
+            -Dbuild-examples=false && \
+            meson install -C ${BUILD_DIR}/libsigcplusplus_build || fail "Error installing sigc++, giving up."
+    fi
     cd ${BUILD_DIR}
 fi
 
@@ -863,7 +939,12 @@ if [ $BUILD_MOORHEN = true ]; then
     getmonomers
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
-    emcmake cmake -DMEMORY64=${MEMORY64} -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
+    if test x"${SINGLE_THREADED}" = x"1"; then
+        SINGLE_THREADED_FLAG="-DSINGLE_THREADED=ON"
+    else
+        SINGLE_THREADED_FLAG=""
+    fi
+    emcmake cmake -DMEMORY64=${MEMORY64} ${SINGLE_THREADED_FLAG} -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
