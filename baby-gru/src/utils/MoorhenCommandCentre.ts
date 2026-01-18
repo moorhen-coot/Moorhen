@@ -69,7 +69,10 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         this.cootWorker.onmessage = this.handleMessage.bind(this)
         const fileResponse = await fetch(`${this.urlPrefix}/../baby-gru/data.tar.gz`)
         const fileData = await fileResponse.arrayBuffer()
-        await this.postMessage({ message: 'CootInitialize', data: {cootData:new Uint8Array(fileData)} })
+        // Check URL params for single-threaded mode override
+        const urlParams = new URLSearchParams(window.location.search)
+        const forceSingleThreaded = urlParams.get('singleThreaded') === 'true'
+        await this.postMessage({ message: 'CootInitialize', data: {cootData:new Uint8Array(fileData), forceSingleThreaded} })
         if (this.onCootInitialized) {
             this.onCootInitialized()
         }

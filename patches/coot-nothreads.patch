@@ -1,3 +1,34 @@
+diff --git a/api/coot-molecule-maps.cc b/api/coot-molecule-maps.cc
+index 30d59ba28..eb3abc2d3 100644
+--- a/api/coot-molecule-maps.cc
++++ b/api/coot-molecule-maps.cc
+@@ -259,6 +259,7 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
+    if (!xmap.is_null()) {
+ 
+       clear_draw_vecs();
++#ifdef HAVE_CXX_THREAD
+       std::vector<std::thread> threads;
+       int n_reams = coot::get_max_number_of_threads() - 1;
+       if (n_reams < 1) n_reams = 1;
+@@ -285,6 +286,18 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
+             threads[ii].join();
+ 
+       }
++#else
++      // Single-threaded fallback: call directly with n_reams=1
++      gensurf_and_add_vecs_threaded_workpackage(&xmap, contour_level, dy_radius, centre,
++                                                isample_step, 0, 1, is_em_map,
++                                                &draw_vector_sets);
++      if (xmap_is_diff_map) {
++         clear_diff_map_draw_vecs();
++         gensurf_and_add_vecs_threaded_workpackage(&xmap, -contour_level, dy_radius, centre,
++                                                   isample_step, 0, 1, is_em_map,
++                                                   &draw_diff_map_vector_sets);
++      }
++#endif
+ 
+       if (is_dynamically_transformed_map_flag) {
+          for (unsigned int ii=0; ii<draw_vector_sets.size(); ii++) {
 diff --git a/api/coot-molecule-refine.cc b/api/coot-molecule-refine.cc
 index 611a7842d..c087a3db1 100644
 --- a/api/coot-molecule-refine.cc
@@ -68,11 +99,63 @@ index 79510c9cf..6a0a22d48 100644
  
     // user-defined LIG diction ahve been assigned to imol_ref_mol, not this one (this one
     // is a temporary molecule used only for refinement).
+diff --git a/api/molecules-container-maps.cc b/api/molecules-container-maps.cc
+index 03398d50d..836d8fdf6 100644
+--- a/api/molecules-container-maps.cc
++++ b/api/molecules-container-maps.cc
+@@ -723,8 +723,13 @@ molecules_container_t::get_map_vertices_histogram(int imol, int imol_map_for_sam
+       if (is_valid_map_molecule(imol_map_for_sampling)) {
+ 	 clipper::Coord_orth p(position_x, position_y, position_z);
+ 	 const clipper::Xmap<float> &other_xmap = molecules[imol_map_for_sampling].xmap;
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+ 	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
+ 							 map_is_contoured_using_thread_pool_flag, &thread_pool, n_bins);
++#else
++	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
++							 false, nullptr, n_bins);
++#endif
+       }
+    }
+    return hi;
 diff --git a/api/molecules-container.cc b/api/molecules-container.cc
-index 6de073bc3..e6159b0e1 100644
+index 6de073bc3..ad4e2c711 100644
 --- a/api/molecules-container.cc
 +++ b/api/molecules-container.cc
-@@ -3648,9 +3648,11 @@ molecules_container_t::make_last_restraints(const std::vector<std::pair<bool,mmd
+@@ -66,7 +66,8 @@ molecules_container_t::~molecules_container_t() {
+ // verbose is an optional arg, default true
+ molecules_container_t::molecules_container_t(bool verbose) :
+    ramachandrans_container(ramachandrans_container_t()),
+-   thread_pool(8) {
++   thread_pool(8)  // Uses stub implementation when threading disabled
++{
+    if (! verbose) geom.set_verbose(false);
+    init();
+ }
+@@ -2174,7 +2175,11 @@ molecules_container_t::get_map_contours_mesh(int imol, double position_x, double
+             update_updating_maps(updating_maps_info.imol_model);
+          }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, map_is_contoured_using_thread_pool_flag, &thread_pool);
++#else
++         mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, false, nullptr);
++#endif
+       } else {
+          std::cout << "WARNING:: get_map_contours_mesh() Not a valid map molecule " << imol << std::endl;
+       }
+@@ -2954,7 +2959,11 @@ molecules_container_t::refine_direct(int imol, std::vector<mmdb::Residue *> rv,
+                 << std::endl;
+ 
+    // this is not stored in molecules_container!
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    unsigned int max_number_of_threads = thread_pool.size();
++#else
++   unsigned int max_number_of_threads = 1;
++#endif
+ 
+    int status = 0;
+    if (is_valid_model_molecule(imol)) {
+@@ -3648,9 +3657,11 @@ molecules_container_t::make_last_restraints(const std::vector<std::pair<bool,mmd
     if (use_map_flag)
        last_restraints->add_map(geometry_vs_map_weight);
  
@@ -84,6 +167,47 @@ index 6de073bc3..e6159b0e1 100644
  
     all_atom_pulls_off();
     particles_have_been_shown_already_for_this_round_flag = false;
+@@ -5549,7 +5560,9 @@ molecules_container_t::get_hb_type(const std::string &compound_id, int imol_enc,
+ void
+ molecules_container_t::set_max_number_of_threads(unsigned int n_threads) {
+    coot::set_max_number_of_threads(n_threads);
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    thread_pool.resize(n_threads);
++#endif
+ }
+ 
+ // call the above function
+@@ -5617,6 +5630,7 @@ molecules_container_t::test_launching_threads(unsigned int n_threads_per_batch,
+ double
+ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    auto sum = [] (unsigned int thread_index, unsigned int i, unsigned int j, std::atomic<unsigned int> &done_count_for_threads) {
+       done_count_for_threads++;
+       return i+j;
+@@ -5636,6 +5650,9 @@ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
+    auto d10 = std::chrono::duration_cast<std::chrono::microseconds>(tp_1 - tp_0).count();
+    t = d10;
+    return t;
++#else
++   return 0.0;
++#endif
+ 
+ }
+ 
+diff --git a/api/molecules-container.hh b/api/molecules-container.hh
+index 5e5685ce0..825b97531 100644
+--- a/api/molecules-container.hh
++++ b/api/molecules-container.hh
+@@ -144,7 +144,7 @@ class molecules_container_t {
+    bool use_torsion_restraints;
+    float torsion_restraints_weight;
+ 
+-   ctpl::thread_pool thread_pool;
++   ctpl::thread_pool thread_pool;  // Uses stub implementation when threading disabled
+    bool show_timings;
+ 
+    coot::restraints_container_t *last_restraints;
 diff --git a/coot-utils/atom-overlaps.cc b/coot-utils/atom-overlaps.cc
 index 7ed48dc56..bf5da401e 100644
 --- a/coot-utils/atom-overlaps.cc
@@ -128,6 +252,58 @@ index 7ed48dc56..bf5da401e 100644
  
           if (false) {
              for (unsigned int i_thread=0; i_thread<n_threads; i_thread++) {
+diff --git a/coot-utils/slurp-map.cc b/coot-utils/slurp-map.cc
+index 7025c6fbd..b41a53062 100644
+--- a/coot-utils/slurp-map.cc
++++ b/coot-utils/slurp-map.cc
+@@ -414,6 +414,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                unsigned int grid_offset = c_u * gs.nu() * gs.nv() + c_v * gs.nv() + c_w;
+                const float f = *reinterpret_cast<const float *>(map_data + 4 * offset + 4 * grid_offset);
+ 
++#ifdef HAVE_CXX_THREAD
+                if (true) { // debugging
+                   bool unlocked = false;
+                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -423,6 +424,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                   std::cout << " " << iw.coord().format() << " " << f << std::endl;
+                   print_lock = false;
+                }
++#endif
+ 
+                (*xmap)[iw] = f;
+                c_w++;
+@@ -448,6 +450,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                clipper::Xmap<float>::Map_reference_coord mrc(*xmap);
+                                // this is unsigned int because split_indices returns unsigned int pairs.
+ 
++#ifdef HAVE_CXX_THREAD
+                                if (false) { // debugging
+                                   bool unlocked = false;
+                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -460,6 +463,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                             << std::endl;
+                                   print_lock = false;
+                                }
++#endif
+ 
+                                for (unsigned int isec = start_stop_section_index.first; isec < start_stop_section_index.second; isec++ ) {
+ 
+@@ -487,6 +491,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                   }
+                                }
+ 
++#ifdef HAVE_CXX_THREAD
+                                if (false) { // debugging
+                                   bool unlocked = false;
+                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -497,6 +502,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                             << start_stop_section_index.second << "\n";
+                                   print_lock = false;
+                                }
++#endif
+                             };
+ 
+ 
 diff --git a/ideal/chirals.cc b/ideal/chirals.cc
 index bd3d8429e..196052a55 100644
 --- a/ideal/chirals.cc
@@ -327,3 +503,128 @@ index 62e2c1d97..5aa275cc5 100644
  
     pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
     bool do_internal_torsions = false;
+diff --git a/utils/ctpl.h b/utils/ctpl.h
+index 4ade8e1a0..ec8d50d24 100644
+--- a/utils/ctpl.h
++++ b/utils/ctpl.h
+@@ -21,6 +21,13 @@
+ #ifndef __ctpl_thread_pool_H__
+ #define __ctpl_thread_pool_H__
+ 
++// When HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined, use stub implementation
++#ifndef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
++
++#include "ctpl_stub.h"
++
++#else // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is defined - use full threaded implementation
++
+ #include <functional>
+ #include <thread>
+ #include <atomic>
+@@ -236,5 +243,7 @@ namespace ctpl {
+ 
+ }
+ 
++#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
++
+ #endif // __ctpl_thread_pool_H__
+ 
+
+diff --git a/utils/ctpl_stub.h b/utils/ctpl_stub.h
+new file mode 100644
+--- /dev/null
++++ b/utils/ctpl_stub.h
+@@ -0,0 +1,      93 @@
++
++/*********************************************************
++ *
++ *  Stub thread pool for single-threaded builds.
++ *  Provides the same interface as ctpl::thread_pool but
++ *  executes all tasks synchronously on the calling thread.
++ *
++ *********************************************************/
++
++#ifndef __ctpl_stub_thread_pool_H__
++#define __ctpl_stub_thread_pool_H__
++
++#include <functional>
++#include <future>
++#include <memory>
++
++namespace ctpl {
++
++    // Stub thread_pool that executes tasks synchronously
++    // Used when HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined
++    class thread_pool {
++
++    public:
++
++        thread_pool() {}
++        thread_pool(int nThreads, int queueSize = 100) {
++            // Ignore thread count - we execute everything synchronously
++            (void)nThreads;
++            (void)queueSize;
++        }
++
++        ~thread_pool() {}
++
++        // Always report 1 "thread" (the main thread)
++        int size() { return 1; }
++
++        // No idle threads in stub
++        int n_idle() { return 0; }
++
++        // Change thread count - no-op in stub
++        void resize(int nThreads) {
++            (void)nThreads;
++        }
++
++        // Clear queue - no-op since we execute immediately
++        void clear_queue() {}
++
++        // Pop - returns empty function since queue is always empty
++        std::function<void(int)> pop() {
++            return std::function<void(int)>();
++        }
++
++        // Stop - no-op in stub
++        void stop(bool isWait = false) {
++            (void)isWait;
++        }
++
++        // Push with additional arguments - execute synchronously and return future
++        template<typename F, typename... Rest>
++        auto push(F && f, Rest&&... rest) -> std::future<decltype(f(0, rest...))> {
++            // Create a packaged task
++            auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
++                std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
++            );
++
++            // Execute immediately with thread id 0
++            (*pck)(0);
++
++            return pck->get_future();
++        }
++
++        // Push simple function - execute synchronously and return future
++        template<typename F>
++        auto push(F && f) -> std::future<decltype(f(0))> {
++            auto pck = std::make_shared<std::packaged_task<decltype(f(0))(int)>>(std::forward<F>(f));
++
++            // Execute immediately with thread id 0
++            (*pck)(0);
++
++            return pck->get_future();
++        }
++
++    private:
++        // Deleted copy/move constructors and assignment operators
++        thread_pool(const thread_pool &) = delete;
++        thread_pool(thread_pool &&) = delete;
++        thread_pool & operator=(const thread_pool &) = delete;
++        thread_pool & operator=(thread_pool &&) = delete;
++    };
++
++}
++
++#endif // __ctpl_stub_thread_pool_H__
