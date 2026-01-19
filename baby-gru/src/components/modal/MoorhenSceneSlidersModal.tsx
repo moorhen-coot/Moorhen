@@ -2,7 +2,7 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Form, InputGroup, Stack } from "react-bootstrap";
+import { Button, Form, Stack } from "react-bootstrap";
 import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
@@ -13,13 +13,10 @@ import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
-    setClipCap,
     setDepthBlurDepth,
-    setDepthBlurRadius,
     setResetClippingFogging,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
-import { MoorhenSlider } from "../inputs";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { modalKeys } from "../../utils/enums";
 import { hideModal } from "../../store/modalsSlice";
@@ -50,41 +47,6 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 
     return { top: Math.round(top), left: Math.round(left) }
 }
-
-const ClipFogBlurOptionsPanel = () => {
-    const dispatch = useDispatch();
-
-    const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
-    const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
-    const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
-
-    return (
-        <Stack
-            gap={2}
-            direction={"vertical"}
-            style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
-        >
-                <Form.Check
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clip and fog on zoom"
-                />
-                <Form.Check
-                    type="switch"
-                    checked={useOffScreenBuffers}
-                    onChange={() => {
-                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
-                    }}
-                    label="Depth Blur"
-                />
-            </Stack>
-    );
-};
 
 enum GrabHandle
 {
@@ -137,8 +99,65 @@ interface SideOnProgramInstanced extends WebGLProgram {
 const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
 
     const dispatch = useDispatch();
+    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
-    const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
+    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
+    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
+
+    const [useFog, setUseFog] = useState<boolean>(true);
+    const [backupFogNear, setBackupFogNear] = useState<number>(500.0);
+    const [backupFogFar, setBackupFogFar] = useState<number>(500.0);
+
+    const fogOffNear = 998.0
+    const fogOffFar = 999.0
+
+    const ClipFogBlurOptionsPanel = () => {
+
+
+        return (
+            <Stack
+                gap={2}
+                direction={"vertical"}
+                style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
+            >
+                <Form.Check
+                    type="switch"
+                    checked={resetClippingFogging}
+                    onChange={() => {
+                        dispatch(setResetClippingFogging(!resetClippingFogging));
+                    }}
+                    label="Reset clip and fog on zoom"
+                />
+                <Form.Check
+                    type="switch"
+                    checked={useOffScreenBuffers}
+                    onChange={() => {
+                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                    }}
+                    label="Depth Blur"
+                />
+                <Form.Check
+                    type="switch"
+                    checked={useFog}
+                    onChange={(e) => {
+                        if(useFog){
+                            setBackupFogNear(gl_fog_start)
+                            setBackupFogFar(gl_fog_end)
+                            dispatch(setFogStart(fogOffNear));
+                            dispatch(setFogEnd(fogOffFar));
+                        } else {
+                            dispatch(setFogStart(backupFogNear));
+                            dispatch(setFogEnd(backupFogFar));
+                        }
+                        setUseFog(e.target.checked)
+                    }}
+                    label="Fog"
+                />
+            </Stack>
+        );
+    };
+
     const plotWidth = 250
     const plotHeight = 150
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -147,13 +166,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
     const spanScaling = 0.75
 
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
-    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
-    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
