@@ -410,7 +410,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
                         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
                         gl.vertexAttribPointer(sphereProgramRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, imageBuffersRef.current.triangleVertexIndexBuffer[j]);
-                        gl.drawElementsInstanced(gl.TRIANGLES, imageBuffersRef.current.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
+                        gl.drawElementsInstanced(gl.TRIANGLE_FAN, imageBuffersRef.current.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
                     }
                 }
             }

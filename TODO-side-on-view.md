@@ -2,7 +2,7 @@
 Side on view
 
 ### For x.y.z
-- [ ] Spheres should be circles, not Pac-Man shapes.
+- [x] Spheres should be circles, not Pac-Man shapes.
 - [x] Lines
 - [x] Blur slider on same scale as everything else
 - [x] Widget layout/menu
