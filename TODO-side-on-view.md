@@ -10,5 +10,5 @@ Side on view
 - [x] Instanced triangles
 - [x] Turn on/off fog.
 - [x] Put sliders at extremities if off scale.
-- [ ] Do not allow front/back to become flipped.
+- [x] Do not allow front/back to become flipped.
 - [ ] Possibly allow for rescaling.

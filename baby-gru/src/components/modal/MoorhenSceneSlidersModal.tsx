@@ -732,18 +732,25 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const scale = atomSpan * spanScaling
 
+        const fogStart = fogClipOffset - gl_fog_start
+        const fogEnd = gl_fog_end - fogClipOffset
+        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
+        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
+        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
+        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
+
         if(grabbed===GrabHandle.CLIP_START){
             const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
-            dispatch(setClipStart(newValue))
+            if(x<clipEndPos) dispatch(setClipStart(newValue))
         } else if(grabbed===GrabHandle.CLIP_END){
             const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            dispatch(setClipEnd(newValue))
+            if(x>clipStartPos) dispatch(setClipEnd(newValue))
         } else if(grabbed===GrabHandle.FOG_START){
             const newValue = (plotWidth * 0.5 -x) * scale / plotWidth / 0.5
-            dispatch(setFogStart(fogClipOffset - newValue));
+            if(x<fogEndPos) dispatch(setFogStart(fogClipOffset - newValue))
         } else if(grabbed===GrabHandle.FOG_END){
             const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            dispatch(setFogEnd(newValue + fogClipOffset))
+            if(x>fogStartPos) dispatch(setFogEnd(newValue + fogClipOffset))
         } else if(grabbed===GrabHandle.BLUR_DEPTH){
             if(useOffScreenBuffers){
                 const newValue = x / plotWidth
