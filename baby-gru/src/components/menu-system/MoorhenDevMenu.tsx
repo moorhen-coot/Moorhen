@@ -4,6 +4,7 @@ import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useRef, useState } from "react";
+import { setShownSidePanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
@@ -20,6 +21,7 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenToggle } from "../inputs";
+import { MoorhenMenuItem } from "../interface-base";
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
@@ -312,6 +314,7 @@ export const MoorhenDevMenu = () => {
                     label="Load example 2D overlays"
                 />
             </InputGroup>
+            <MoorhenMenuItem onClick={() => dispatch(setShownSidePanel("validation"))}>Test Validation Panel</MoorhenMenuItem>
         </>
     );
 };

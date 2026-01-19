@@ -1,0 +1,19 @@
+@import "../../../../colors.css";
+
+.moorhen__validation-chip-container {
+    display: flex;
+    padding: 0.5rem;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+    width: 100%;
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
+    max-width: 320px;
+    max-height: 60px;
+}
+
+.moorhen__validation-chip-description {
+    flex: 1;
+}
+
+.moorhen__validation-chip-buttons-bar {
+}
