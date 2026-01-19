@@ -516,12 +516,12 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = plotWidth * .5 - clipStart / scale * plotWidth * .5
-        const clipEndPos = plotWidth * .5 + clipEnd / scale * plotWidth * .5
-        const fogStartPos = plotWidth * .5 - fogStart / scale * plotWidth * .5
-        const fogEndPos = plotWidth * .5 + fogEnd / scale * plotWidth * .5
+        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
+        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
+        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
+        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
         const depthBlurDepthPos = depthBlurDepth * plotWidth
-
+        
         ctx.save()
 
         ctx.clearRect(0,0,canvas.width,canvas.height)
@@ -545,33 +545,36 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         let drawText = ""
 
         canvas.style.cursor = "auto"
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Front fog " + fogStart.toFixed(2)
-        } else {
-            ctx.strokeStyle = "yellow"
-            ctx.lineWidth = 3
-        }
-        ctx.beginPath()
-        ctx.moveTo(fogStartPos,0)
-        ctx.lineTo(fogStartPos,canvas.height)
-        ctx.stroke()
 
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_END)&&Math.abs(moveX-fogEndPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Back fog " + fogEnd.toFixed(2)
-        } else {
-            ctx.strokeStyle = "yellow"
-            ctx.lineWidth = 3
+        if(useFog){
+            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
+                ctx.strokeStyle = "white"
+                ctx.lineWidth = 4
+                hovering = true
+                drawText = "Front fog " + fogStart.toFixed(2)
+            } else {
+                ctx.strokeStyle = "yellow"
+                ctx.lineWidth = 3
+            }
+            ctx.beginPath()
+            ctx.moveTo(fogStartPos,0)
+            ctx.lineTo(fogStartPos,canvas.height)
+            ctx.stroke()
+
+            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_END)&&Math.abs(moveX-fogEndPos)<5&&!hovering){
+                ctx.strokeStyle = "white"
+                ctx.lineWidth = 4
+                hovering = true
+                drawText = "Back fog " + fogEnd.toFixed(2)
+            } else {
+                ctx.strokeStyle = "yellow"
+                ctx.lineWidth = 3
+            }
+            ctx.beginPath()
+            ctx.moveTo(fogEndPos,0)
+            ctx.lineTo(fogEndPos,canvas.height)
+            ctx.stroke()
         }
-        ctx.beginPath()
-        ctx.moveTo(fogEndPos,0)
-        ctx.lineTo(fogEndPos,canvas.height)
-        ctx.stroke()
 
         if(useOffScreenBuffers){
             if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
@@ -696,10 +699,10 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
 
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = plotWidth * .5 - clipStart / scale * plotWidth * .5
-        const clipEndPos = plotWidth * .5 + clipEnd / scale * plotWidth * .5
-        const fogStartPos = plotWidth * .5 - fogStart / scale * plotWidth * .5
-        const fogEndPos = plotWidth * .5 + fogEnd / scale * plotWidth * .5
+        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
+        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
+        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
+        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
         const depthBlurDepthPos = depthBlurDepth * plotWidth
 
         if(Math.abs(x-clipStartPos)<5){
