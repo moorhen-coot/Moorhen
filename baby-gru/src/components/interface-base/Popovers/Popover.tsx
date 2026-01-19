@@ -43,13 +43,9 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     const containerRef = useMoorhenInstance().getContainerRef();
     const positionRef = useRef<{ left: number; top: number } | null>(null);
-    const isFlippingRef = useRef(false);
 
     const calculatePosition = (overridePosition: PlacementType = null) => {
         if (!isShown || !props.linkRef.current || !popoverRef.current) {
-            return;
-        }
-        if (isFlippingRef.current) {
             return;
         }
 
@@ -78,7 +74,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         }
 
         // Flip the popover to the other side if it's out of screen
-        if (overridePosition === null && allowAutoFlip && !isFlippingRef.current) {
+        if (overridePosition === null && allowAutoFlip) {
             let newPlacement: PlacementType | null = null;
 
             if (placement === "top" && top < 0) {
@@ -92,12 +88,8 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             }
 
             if (newPlacement !== null) {
-                isFlippingRef.current = true;
                 setPopoverPlacement(newPlacement);
-                requestAnimationFrame(() => {
-                    isFlippingRef.current = false;
-                    calculatePosition(newPlacement);
-                });
+                calculatePosition(newPlacement);
                 return;
             }
         }
