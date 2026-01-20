@@ -3,7 +3,13 @@ import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
-import { addCustomRepresentation } from "../../../store/moleculesSlice";
+import type {
+    MoleculeRepresentation,
+    RepresentationStyles,
+    m2tParameters,
+    residueEnvironmentOptions,
+} from "@/utils/MoorhenMoleculeRepresentation";
+import { addCustomRepresentation, addGeneralRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
@@ -31,6 +37,7 @@ const customRepresentations = [
     "MetaBalls",
     "residue_environment",
     "allHBonds",
+    "adaptativeBonds",
 ];
 
 export const AddCustomRepresentationCard = memo(
@@ -38,21 +45,18 @@ export const AddCustomRepresentationCard = memo(
         molecule: moorhen.Molecule;
         urlPrefix: string;
         mode?: "add" | "edit";
-        representation?: moorhen.MoleculeRepresentation;
+        representation?: MoleculeRepresentation;
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
         onApply?: () => void;
     }) => {
         const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null);
         const useDefaultRepresentationSettingsSwitchRef = useRef<HTMLInputElement | null>(null);
-        const ruleSelectRef = useRef<HTMLSelectElement | null>(null);
-        const cidFormRef = useRef<HTMLInputElement | null>(null);
         const ligandFormRef = useRef<HTMLSelectElement | null>(null);
         const styleSelectRef = useRef<HTMLSelectElement | null>(null);
         const focusStyleSelectRef = useRef<HTMLSelectElement | null>(null);
         const backgroundStyleSelectRef = useRef<HTMLSelectElement | null>(null);
         const chainSelectRef = useRef<HTMLSelectElement | null>(null);
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
-        const colourSwatchRef = useRef<HTMLDivElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
 
@@ -78,7 +82,6 @@ export const AddCustomRepresentationCard = memo(
         const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(
             props.representation?.nonCustomOpacity ? props.representation.nonCustomOpacity : 1.0
         );
-        const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
         const [showAlphaSlider, setShowAlphaSlider] = useState<boolean>(false);
         const [colour, setColour] = useState<string>(
             props.representation && !props.representation?.useDefaultColourRules && !props.representation?.colourRules[0]?.isMultiColourRule
@@ -162,11 +165,14 @@ export const AddCustomRepresentationCard = memo(
             props.representation?.residueEnvironmentOptions?.showContacts ?? props.molecule.defaultResidueEnvironmentOptions.showContacts
         );
 
+        const [cid, setCid] = useState<string>("//*/:*");
+        const [adaptBondOOF, setAdaptBondOOF] = useState<RepresentationStyles>("CRs");
+        const [adaptDist, setadaptDist] = useState<number>(8.0);
+
         const [notHOH, setNotHOH] = useState<boolean>(props.representation?.cid?.includes("(!HOH)") ? true : false);
         const [notH, setNotH] = useState<boolean>(props.representation?.cid?.includes("[!H]") ? true : false);
         const [sideChainOnly, setSideChainOnly] = useState<boolean>(props.representation?.cid?.includes("!O,C,N") ? true : false);
 
-        const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
         const dispatch = useDispatch();
@@ -235,7 +241,7 @@ export const AddCustomRepresentationCard = memo(
             props.setBusy?.(true);
 
             let cidSelection: string;
-            switch (ruleSelectRef.current.value) {
+            switch (ruleType) {
                 case "molecule":
                     cidSelection = "//*/";
                     if (representationStyle === "CBs" && notHOH) {
@@ -276,7 +282,7 @@ export const AddCustomRepresentationCard = memo(
                             : null;
                     break;
                 case "cid":
-                    cidSelection = cidFormRef.current.value;
+                    cidSelection = cid;
                     break;
                 case "ligands":
                     cidSelection = ligandFormRef.current.value;
@@ -297,7 +303,7 @@ export const AddCustomRepresentationCard = memo(
                 switch (colourModeSelectRef.current.value) {
                     case "custom":
                         colourRule = new ColourRule(
-                            ruleSelectRef.current.value,
+                            ruleType,
                             colourRuleCid,
                             colour,
                             props.molecule.commandCentre,
@@ -371,7 +377,7 @@ export const AddCustomRepresentationCard = memo(
                 };
             }
 
-            let m2tParams: moorhen.m2tParameters;
+            let m2tParams: m2tParameters;
             if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && M2T_REPRESENTATIONS.includes(styleSelectRef.current.value)) {
                 m2tParams = {
                     ...props.molecule.defaultM2tParams,
@@ -387,7 +393,7 @@ export const AddCustomRepresentationCard = memo(
                 };
             }
 
-            let residueEnvSettings: moorhen.residueEnvironmentOptions;
+            let residueEnvSettings: residueEnvironmentOptions;
             if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && styleSelectRef.current.value === "residue_environment") {
                 residueEnvSettings = {
                     ...props.molecule.defaultResidueEnvironmentOptions,
@@ -410,17 +416,22 @@ export const AddCustomRepresentationCard = memo(
                     ? nonCustomOpacity
                     : null;
             if (mode === "add") {
-                const representation = await props.molecule.addRepresentation(
-                    styleSelectRef.current.value as moorhen.RepresentationStyles,
-                    cidSelection,
-                    true,
-                    colourRule ? [colourRule] : null,
-                    bondOptions,
-                    m2tParams,
-                    residueEnvSettings,
-                    nonCustomAlpha
-                );
-                dispatch(addCustomRepresentation(representation));
+                if (styleSelectRef.current.value === "adaptativeBonds") {
+                    props.molecule.setDrawAdaptativeBonds(true);
+                    dispatch(addCustomRepresentation(props.molecule.adaptativeBondsRepresentation));
+                } else {
+                    const representation = await props.molecule.addRepresentation(
+                        styleSelectRef.current.value as moorhen.RepresentationStyles,
+                        cidSelection,
+                        true,
+                        colourRule ? [colourRule] : null,
+                        bondOptions,
+                        m2tParams,
+                        residueEnvSettings,
+                        nonCustomAlpha
+                    );
+                    dispatch(addCustomRepresentation(representation));
+                }
             } else if (mode === "edit" && props.representation.uniqueId) {
                 const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId);
                 if (representation) {
@@ -434,6 +445,13 @@ export const AddCustomRepresentationCard = memo(
                     await representation.redraw();
                     representation.setNonCustomOpacity(nonCustomAlpha);
                 }
+            }
+            if (styleSelectRef.current.value === "adaptativeBonds") {
+                props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.backgroundRepresentation = adaptBondOOF;
+                props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.maxDist = adaptDist;
+            }
+            if (mode === "edit") {
+                props.representation.redraw();
             }
             props.setBusy?.(false);
             props.onApply?.();
@@ -495,44 +513,50 @@ export const AddCustomRepresentationCard = memo(
                             );
                         })}
                     </MoorhenSelect>
-                    <MoorhenSelect
-                        label={"Residue selection"}
-                        ref={ruleSelectRef}
-                        defaultValue={ruleType}
-                        onChange={val => setRuleType(val.target.value)}
-                    >
-                        {representationStyle === "residue_environment" ? (
-                            <>
-                                <option value={"cid"} key={"cid"}>
-                                    Atom selection
-                                </option>
-                            </>
-                        ) : (
-                            <>
-                                <option value={"molecule"} key={"molecule"}>
-                                    All molecule
-                                </option>
-                                <option value={"chain"} key={"chain"}>
-                                    Chain
-                                </option>
-                                <option value={"residue-range"} key={"residue-range"}>
-                                    Residue range
-                                </option>
-                                {isThereLigand && (
-                                    <option value={"ligands"} key={"ligands"}>
-                                        Ligands
+                    {representationStyle === "adaptativeBonds" ? (
+                        <MoorhenSelect label="Out of Focus Style" setValue={setAdaptBondOOF}>
+                            <option value="CRs" key="CRs">
+                                Ribbons
+                            </option>
+                            <option value="CAs" key="CAs">
+                                C-alpha
+                            </option>
+                        </MoorhenSelect>
+                    ) : (
+                        <MoorhenSelect label={"Residue selection"} defaultValue={ruleType} setValue={setRuleType}>
+                            {representationStyle === "residue_environment" ? (
+                                <>
+                                    <option value={"cid"} key={"cid"}>
+                                        Atom selection
                                     </option>
-                                )}
-                                <option value={"cid"} key={"cid"}>
-                                    Atom selection
-                                </option>
-                            </>
-                        )}
-                    </MoorhenSelect>
+                                </>
+                            ) : (
+                                <>
+                                    <option value={"molecule"} key={"molecule"}>
+                                        All molecule
+                                    </option>
+                                    <option value={"chain"} key={"chain"}>
+                                        Chain
+                                    </option>
+                                    <option value={"residue-range"} key={"residue-range"}>
+                                        Residue range
+                                    </option>
+                                    {isThereLigand && (
+                                        <option value={"ligands"} key={"ligands"}>
+                                            Ligands
+                                        </option>
+                                    )}
+                                    <option value={"cid"} key={"cid"}>
+                                        Atom selection
+                                    </option>
+                                </>
+                            )}
+                        </MoorhenSelect>
+                    )}
 
-                    {ruleType === "cid" && (
+                    {ruleType === "cid" && representationStyle !== "adaptativeBonds" && (
                         <MoorhenCidInputForm
-                            ref={cidFormRef}
+                            setCid={setCid}
                             label="Atom selection"
                             defaultValue={props.representation?.cid ?? ""}
                             allowUseCurrentSelection={true}
@@ -600,22 +624,7 @@ export const AddCustomRepresentationCard = memo(
                     <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
                 )}
                 {representationStyle === "residue_environment" && !useDefaultRepresentationSettings && (
-                    <MoorhenStack
-                        gap={1}
-                        direction="horizontal"
-                        style={{
-                            marginLeft: "0.1rem",
-                            marginRight: "0.1rem",
-                            paddingLeft: "1rem",
-                            paddingRight: "1rem",
-                            paddingTop: "0.5rem",
-                            paddingBottom: "0.5rem",
-                            borderStyle: "solid",
-                            borderWidth: "1px",
-                            borderColor: "grey",
-                            borderRadius: "1.5rem",
-                        }}
-                    >
+                    <MoorhenStack direction="horizontal">
                         <MoorhenSelect
                             ref={focusStyleSelectRef}
                             defaultValue={props.representation?.residueEnvironmentOptions.focusRepresentation ?? "CBs"}
@@ -644,7 +653,22 @@ export const AddCustomRepresentationCard = memo(
                         </MoorhenSelect>
                     </MoorhenStack>
                 )}
-                {representationStyle !== "allHBonds" && (
+                {representationStyle === "adaptativeBonds" && (
+                    <MoorhenStack card>
+                        <MoorhenSlider
+                            sliderTitle="Neighbouring Res. Dist."
+                            externalValue={adaptDist}
+                            setExternalValue={setadaptDist}
+                            showMinMaxVal={false}
+                            stepButtons={0.5}
+                            minVal={1}
+                            maxVal={15}
+                            logScale={false}
+                            decimalPlaces={2}
+                        />
+                    </MoorhenStack>
+                )}
+                {!["allHBonds", "adaptativeBonds"].includes(representationStyle) && (
                     <MoorhenToggle
                         type="switch"
                         label="Apply general colour settings"

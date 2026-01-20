@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -116,8 +116,8 @@ export class MoorhenMolecule {
     gaussianSurfaceSettings: moorhen.gaussianSurfSettings;
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
-    defaultM2tParams: moorhen.m2tParameters;
-    defaultResidueEnvironmentOptions: moorhen.residueEnvironmentOptions;
+    defaultM2tParams: m2tParameters;
+    defaultResidueEnvironmentOptions: residueEnvironmentOptions;
     displayObjectsTransformation: { origin: [number, number, number]; quat: any; centre: [number, number, number] };
     uniqueId: string;
     monomerLibraryPath: string;
@@ -1424,8 +1424,8 @@ export class MoorhenMolecule {
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
         bondOptions?: moorhen.cootBondOptions,
-        m2tParams?: moorhen.m2tParameters,
-        residueEnvOptions?: moorhen.residueEnvironmentOptions,
+        m2tParams?: m2tParameters,
+        residueEnvOptions?: residueEnvironmentOptions,
         nonCustomOpacity?: number
     ) {
         if (!this.defaultColourRules) {

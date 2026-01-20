@@ -125,32 +125,6 @@ export namespace moorhen {
         bFactor: number;
     };
 
-    type m2tParameters = {
-        ribbonStyleCoilThickness: number;
-        ribbonStyleHelixWidth: number;
-        ribbonStyleStrandWidth: number;
-        ribbonStyleArrowWidth: number;
-        ribbonStyleDNARNAWidth: number;
-        ribbonStyleAxialSampling: number;
-        cylindersStyleAngularSampling: number;
-        cylindersStyleCylinderRadius: number;
-        cylindersStyleBallRadius: number;
-        surfaceStyleProbeRadius: number;
-        ballsStyleRadiusMultiplier: number;
-        nucleotideRibbonStyle: "StickBases" | "DishyBases";
-        dishStyleAngularSampling: number;
-        ssUsageScheme: number;
-    };
-
-    type residueEnvironmentOptions = {
-        maxDist: number;
-        backgroundRepresentation: RepresentationStyles;
-        focusRepresentation: RepresentationStyles;
-        labelled: boolean;
-        showHBonds: boolean;
-        showContacts: boolean;
-    };
-
     type ColourRuleObject = {
         cid: string;
         color: string;

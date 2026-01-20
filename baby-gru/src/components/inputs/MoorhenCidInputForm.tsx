@@ -3,7 +3,7 @@ import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle } from "./MoorhenToggle/Toggle";
-import { useState } from "react";
+import React, { useState } from "react";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -17,6 +17,7 @@ type MoorhenCidInputFormPropsType = {
     allowUseCurrentSelection?: boolean;
     ref?: React.Ref<HTMLInputElement>;
     inline?: boolean
+    setCid?: React.Dispatch<React.SetStateAction<string>>
 };
 
 export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
@@ -43,6 +44,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
             onChange(evt);     
         }
         setSelection(evt.target.value)
+        props.setCid?.(evt.target.value)
     };
 
     const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {

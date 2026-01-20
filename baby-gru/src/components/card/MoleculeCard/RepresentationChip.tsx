@@ -1,11 +1,16 @@
 import { Box, Chip, CircularProgress } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
 import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
-import { addGeneralRepresentation, removeCustomRepresentation, removeGeneralRepresentation } from "../../../store/moleculesSlice";
+import {
+    addCustomRepresentation,
+    addGeneralRepresentation,
+    removeCustomRepresentation,
+    removeGeneralRepresentation,
+} from "../../../store/moleculesSlice";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
@@ -46,6 +51,10 @@ export const CustomRepresentationChip = (props: {
     }, [isMoleculeVisible, representationIsVisible]);
 
     const handleDelete = useCallback(() => {
+        if (representation.style === "adaptativeBonds") {
+            props.molecule.setDrawAdaptativeBonds(false);
+            removeCustomRepresentation(representation);
+        }
         molecule.removeRepresentation(representation.uniqueId);
         dispatch(removeCustomRepresentation(representation));
     }, [molecule, representation]);
@@ -88,101 +97,6 @@ export const CustomRepresentationChip = (props: {
     );
 };
 
-export const RepresentationCheckbox = (props: { style: RepresentationStyles; isVisible: boolean; molecule: MoorhenMolecule }) => {
-    const [busyDrawingRepresentation, setBusyDrawingRepresentation] = useState<boolean>(false);
-    const [isDisabled, setIsDisabled] = useState<boolean>(true);
-    const [chipStyle, setChipStyle] = useState<any>({});
-
-    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
-    const showState = useSelector((state: RootState) =>
-        state.molecules.generalRepresentations.some(
-            item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === props.style && !item.isCustom
-        )
-    );
-    const updateSwitch = useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate.switch);
-
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        setIsDisabled(
-            !props.isVisible ||
-                (props.style === "ligands" && props.molecule.ligands.length === 0) ||
-                (props.style === "glycoBlocks" && !props.molecule.hasGlycans) ||
-                (props.style === "restraints" && props.molecule.restraints.length === 0) ||
-                (["rama", "rotamer"].includes(props.style) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))
-        );
-    }, [props.style, props.isVisible, props.molecule, updateSwitch]);
-
-    useEffect(() => {
-        setChipStyle({
-            ...getChipStyle(props.molecule.defaultColourRules, showState, isDark, `${convertRemToPx(9.5)}px`),
-            opacity: isDisabled ? 0.3 : 1.0,
-        });
-    }, [showState, isDark, isDisabled, props.molecule.defaultColourRules]);
-
-    const handleClick = useCallback(() => {
-        if (!isDisabled) {
-            setBusyDrawingRepresentation(true);
-            if (props.style === "adaptativeBonds") {
-                props.molecule.setDrawAdaptativeBonds(!showState).then(_ => {
-                    dispatch(
-                        showState
-                            ? removeGeneralRepresentation(props.molecule.adaptativeBondsRepresentation)
-                            : addGeneralRepresentation(props.molecule.adaptativeBondsRepresentation)
-                    );
-                    setBusyDrawingRepresentation(false);
-                });
-            } else if (props.style === "environment") {
-                if (showState) {
-                    props.molecule.environmentRepresentation?.hide();
-                    dispatch(removeGeneralRepresentation(props.molecule.environmentRepresentation));
-                    setBusyDrawingRepresentation(false);
-                } else {
-                    props.molecule.drawEnvironment().then(_ => {
-                        dispatch(addGeneralRepresentation(props.molecule.environmentRepresentation));
-                        setBusyDrawingRepresentation(false);
-                    });
-                }
-            } else if (showState) {
-                const representation = props.molecule.hide(props.style);
-                dispatch(removeGeneralRepresentation(representation));
-                setBusyDrawingRepresentation(false);
-            } else {
-                props.molecule.show(props.style).then(representation => {
-                    dispatch(addGeneralRepresentation(representation));
-                    setBusyDrawingRepresentation(false);
-                });
-            }
-        }
-    }, [showState, isDisabled, props, busyDrawingRepresentation]);
-
-    return (
-        <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
-            <Chip
-                disabled={busyDrawingRepresentation}
-                style={chipStyle}
-                variant={"outlined"}
-                label={`${representationLabelMapping[props.style]}`}
-                onClick={handleClick}
-            />
-            {busyDrawingRepresentation && (
-                <CircularProgress
-                    size={"1.5rem"}
-                    disableShrink={true}
-                    sx={{
-                        color: chipStyle["borderColor"],
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        margin: "-0.74rem",
-                    }}
-                />
-            )}
-        </Box>
-        // <div />
-    );
-};
-
 export const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = {};
 
@@ -212,3 +126,100 @@ export const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, i
 
     return chipStyle;
 };
+
+// export const RepresentationCheckbox = (props: { style: RepresentationStyles; isVisible: boolean; molecule: MoorhenMolecule }) => {
+//     const [busyDrawingRepresentation, setBusyDrawingRepresentation] = useState<boolean>(false);
+//     const [isDisabled, setIsDisabled] = useState<boolean>(true);
+//     const [chipStyle, setChipStyle] = useState<any>({});
+
+//     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
+//     const showState = useSelector((state: RootState) =>
+//         state.molecules.customRepresentations.some(
+//             item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === props.style && !item.isCustom
+//         )
+//     );
+
+//     console.log("chip", useStore<RootState>().getState().molecules.customRepresentations);
+//     const updateSwitch = useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate.switch);
+
+//     const dispatch = useDispatch();
+
+//     useEffect(() => {
+//         setIsDisabled(
+//             !props.isVisible ||
+//                 (props.style === "ligands" && props.molecule.ligands.length === 0) ||
+//                 (props.style === "glycoBlocks" && !props.molecule.hasGlycans) ||
+//                 (props.style === "restraints" && props.molecule.restraints.length === 0) ||
+//                 (["rama", "rotamer"].includes(props.style) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))
+//         );
+//     }, [props.style, props.isVisible, props.molecule, updateSwitch]);
+
+//     useEffect(() => {
+//         setChipStyle({
+//             ...getChipStyle(props.molecule.defaultColourRules, showState, isDark, `${convertRemToPx(9.5)}px`),
+//             opacity: isDisabled ? 0.3 : 1.0,
+//         });
+//     }, [showState, isDark, isDisabled, props.molecule.defaultColourRules]);
+
+//     const handleClick = useCallback(() => {
+//         if (!isDisabled) {
+//             setBusyDrawingRepresentation(true);
+//             if (props.style === "adaptativeBonds") {
+//                 props.molecule.setDrawAdaptativeBonds(!showState).then(_ => {
+//                     dispatch(
+//                         showState
+//                             ? removeCustomRepresentation(props.molecule.adaptativeBondsRepresentation)
+//                             : addCustomRepresentation(props.molecule.adaptativeBondsRepresentation)
+//                     );
+//                     setBusyDrawingRepresentation(false);
+//                 });
+//             } else if (props.style === "environment") {
+//                 if (showState) {
+//                     props.molecule.environmentRepresentation?.hide();
+//                     dispatch(removeGeneralRepresentation(props.molecule.environmentRepresentation));
+//                     setBusyDrawingRepresentation(false);
+//                 } else {
+//                     props.molecule.drawEnvironment().then(_ => {
+//                         dispatch(addGeneralRepresentation(props.molecule.environmentRepresentation));
+//                         setBusyDrawingRepresentation(false);
+//                     });
+//                 }
+//             } else if (showState) {
+//                 const representation = props.molecule.hide(props.style);
+//                 dispatch(removeGeneralRepresentation(representation));
+//                 setBusyDrawingRepresentation(false);
+//             } else {
+//                 props.molecule.show(props.style).then(representation => {
+//                     dispatch(addGeneralRepresentation(representation));
+//                     setBusyDrawingRepresentation(false);
+//                 });
+//             }
+//         }
+//     }, [showState, isDisabled, props, busyDrawingRepresentation]);
+
+//     return (
+//         <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
+//             <Chip
+//                 disabled={busyDrawingRepresentation}
+//                 style={chipStyle}
+//                 variant={"outlined"}
+//                 label={`${representationLabelMapping[props.style]}`}
+//                 onClick={handleClick}
+//             />
+//             {busyDrawingRepresentation && (
+//                 <CircularProgress
+//                     size={"1.5rem"}
+//                     disableShrink={true}
+//                     sx={{
+//                         color: chipStyle["borderColor"],
+//                         position: "absolute",
+//                         top: "50%",
+//                         left: "50%",
+//                         margin: "-0.74rem",
+//                     }}
+//                 />
+//             )}
+//         </Box>
+//         // <div />
+//     );
+// };

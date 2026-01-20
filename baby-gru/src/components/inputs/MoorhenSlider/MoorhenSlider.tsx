@@ -6,7 +6,7 @@ import { PlusMinusButton } from "./PlusMinusButton";
 
 type MoorhenSliderProps = {
     externalValue: number; // value passed from parent
-    setExternalValue: (value: number) => void;
+    setExternalValue: ((value: number) => void) | React.Dispatch<React.SetStateAction<number>>;
     logScale?: boolean;
     minVal?: number;
     maxVal?: number;

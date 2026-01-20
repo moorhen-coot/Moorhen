@@ -2,43 +2,48 @@ import { AddOutlined, FormatColorFillOutlined, TuneOutlined } from "@mui/icons-m
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
-import { RootState } from "../../../store/MoorhenReduxStore";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
-import { addGeneralRepresentation, addMolecule, hideMolecule, showMolecule } from "../../../store/moleculesSlice";
+import {
+    addGeneralRepresentation,
+    addMolecule,
+    hideMolecule,
+    removeGeneralRepresentation,
+    showMolecule,
+} from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
-import { MoorhenButton, MoorhenPopoverButton } from "../../inputs";
-import { MoorhenAccordion, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
+import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../../inputs";
+import { MoorhenAccordion, MoorhenInfoCard, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { MoorhenMoleculeRepresentationSettingsCard, SymmetrySettingsPanel } from "../MoorhenMoleculeRepresentationSettingsCard";
 import { ItemName } from "../utils/ItemName";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
-import { CustomRepresentationChip, RepresentationCheckbox } from "./RepresentationChip";
+import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
-import { MoorhenSequencesAccordion } from "./list/MoorhenSequencesAccordion";
 import "./molecule-card.css";
 
 const allRepresentations: moorhen.RepresentationStyles[] = [
     // "CBs",
-    "adaptativeBonds",
+    //"adaptativeBonds",
     // "CAs",
     // "CRs",
     // "ligands",
     // "gaussian",
     // "MolecularSurface",
     // "VdwSpheres",
-    "rama",
-    "rotamer",
-    "CDs",
+    //"rama",
+    //"rotamer",
+    //"CDs",
     //"allHBonds",
     //"glycoBlocks",
-    "restraints",
-    "environment",
+    //"restraints",
+    //"environment",
 ];
 
 interface MoleculeCardProps {
@@ -86,6 +91,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 .map(item => item.uniqueId)
         );
     });
+
     const generalRepresentationString = useSelector((state: moorhen.State) => {
         return JSON.stringify(
             state.molecules.generalRepresentations
@@ -104,7 +110,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const innerDrawMissingLoopsRef = useRef<boolean>(null);
 
     const [busyDrawingCustomRepresentation, setBusyDrawingCustomRepresentation] = useState<boolean>(false);
-    const [busyLoadingSequences, setBusyLoadingSequences] = useState<boolean>(false);
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false);
     const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false);
 
@@ -112,7 +117,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
 
     const [cylindersStyleAngularSampling, setCylindersStyleAngularSampling] = useState<number>(
         props.molecule.defaultM2tParams.cylindersStyleAngularSampling
@@ -162,14 +166,38 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const [labelledEnv, setLabelledEnv] = useState<boolean>(props.molecule.defaultResidueEnvironmentOptions.labelled);
     const [showEnvHBonds, setShowEnvHBonds] = useState<boolean>(props.molecule.defaultResidueEnvironmentOptions.showHBonds);
     const [showEnvContacts, setShowEnvContacts] = useState<boolean>(props.molecule.defaultResidueEnvironmentOptions.showContacts);
-
     const [symmetryRadius, setSymmetryRadius] = useState<number>(props.molecule.symmetryRadius);
 
-    const customRepresentationList: moorhen.MoleculeRepresentation[] = useMemo(() => {
-        return JSON.parse(customRepresentationsString).map(representationId => {
-            return props.molecule.representations.find(item => item.uniqueId === representationId);
+    const customRepresentationList = useSelector((state: RootState) => state.molecules.customRepresentations);
+
+    const displayEnvironment = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "environment";
         });
-    }, [customRepresentationsString]);
+    });
+
+    const displayRamaBalls = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "rama";
+        });
+    });
+
+    const displayRotaDodec = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "rotamer";
+        });
+    });
+    const displayRestraints = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "restraints";
+        });
+    });
+
+    const displayContactDots = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "CDs";
+        });
+    });
 
     const generalRepresentationsList: moorhen.RepresentationStyles[] = JSON.parse(generalRepresentationString).filter(
         rep =>
@@ -830,6 +858,31 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const cardLabel = <ItemName item={props.molecule} />;
 
+    const handleToolsToggle = (value, rep) => {
+        console.log(value);
+        if (value === true) {
+            props.molecule.show(rep).then(representation => {
+                dispatch(addGeneralRepresentation(representation));
+            });
+        } else {
+            const representation = props.molecule.hide(rep);
+            dispatch(removeGeneralRepresentation(representation));
+        }
+    };
+
+    const handleEnvironmentToggle = value => {
+        if (!value) {
+            props.molecule.environmentRepresentation?.hide();
+            dispatch(removeGeneralRepresentation(props.molecule.environmentRepresentation));
+            // setBusyDrawingRepresentation(false);
+        } else {
+            props.molecule.drawEnvironment().then(_ => {
+                dispatch(addGeneralRepresentation(props.molecule.environmentRepresentation));
+                // setBusyDrawingRepresentation(false);
+            });
+        }
+    };
+
     return (
         <MoorhenAccordion
             title={cardLabel}
@@ -839,81 +892,176 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             open={props.open}
             onChange={isOpen => (props.onCollapseToggle ? props.onCollapseToggle(props.molecule.molNo, isOpen) : () => {})}
         >
-            <MoorhenStack gap={2} direction="vertical">
-                <div className="moorhen__molecule_card_representation">
-                    <MoorhenStack direction="vertical" card>
-                        <div className="moorhen__molecule_card_representation-chip-container">
-                            <>
-                                {customRepresentationList
-                                    .filter(representation => representation !== undefined)
-                                    .map(representation => {
-                                        return (
-                                            <CustomRepresentationChip
-                                                key={representation.uniqueId}
-                                                addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
-                                                molecule={props.molecule}
-                                                representation={representation}
-                                            />
-                                        );
-                                    })}
-                            </>
-                            {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
-                        </div>
-                        <hr style={{ margin: "0.5rem" }}></hr>
-                        <div className="moorhen__molecule_card_representation-chip-container" ref={addColourRulesAnchorDivRef}>
-                            {allRepresentations.map(key => (
-                                <RepresentationCheckbox key={key} style={key} molecule={props.molecule} isVisible={isVisible} />
-                            ))}
-                        </div>
-                    </MoorhenStack>
-                    <div className="moorhen__molecule_card_representation-buttons">
-                        <MoorhenPopoverButton
-                            type="default"
-                            icon="MatSymAdd"
-                            popoverPlacement="left"
-                            tooltip="Add New representation"
-                            style={{ minHeight: "5rem" }}
-                        >
-                            <AddCustomRepresentationCard
-                                setBusy={setBusyDrawingCustomRepresentation}
-                                urlPrefix={urlPrefix}
-                                molecule={props.molecule}
-                                onApply={() => document.body.click()}
-                            />
-                        </MoorhenPopoverButton>
-                        <MoorhenPopoverButton
-                            type="default"
-                            popoverPlacement="left"
-                            icon="MatSymColors"
-                            closeButton
-                            size="medium"
-                            tooltip="Edit general color rules"
-                            style={{ minHeight: "5rem" }}
-                        >
-                            <MoorhenModifyColourRulesCard molecule={props.molecule} />
-                        </MoorhenPopoverButton>
-                        <MoorhenPopoverButton
-                            type="default"
-                            popoverPlacement="left"
-                            closeButton
-                            icon="MatSymTune"
-                            tooltip="Edit default representation"
-                            style={{ minHeight: "5rem" }}
-                            popoverStyle={{ maxHeight: "100%" }}
-                        >
-                            <MoorhenMoleculeRepresentationSettingsCard
-                                residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
-                                cylinderSettingsProps={cylinderSettingsProps}
-                                molSurfSettingsProps={molSurfSettingsProps}
-                                ribbonSettingsProps={ribbonSettingsProps}
-                                symmetrySettingsProps={symmetrySettingsProps}
-                                gaussianSettingsProps={gaussianSettingsProps}
-                                bondSettingsProps={bondSettingsProps}
-                                molecule={props.molecule}
-                            />
-                        </MoorhenPopoverButton>
+            <MoorhenStack direction="vertical">
+                <MoorhenStack direction="row" justify="center">
+                    <MoorhenPopoverButton
+                        type="default"
+                        icon="MatSymAdd"
+                        popoverPlacement="left"
+                        tooltip="Add New representation"
+                        style={{ width: "5rem" }}
+                    >
+                        <AddCustomRepresentationCard
+                            setBusy={setBusyDrawingCustomRepresentation}
+                            urlPrefix={urlPrefix}
+                            molecule={props.molecule}
+                            onApply={() => document.body.click()}
+                        />
+                    </MoorhenPopoverButton>
+                    <MoorhenPopoverButton
+                        type="default"
+                        popoverPlacement="left"
+                        icon="MatSymColors"
+                        closeButton
+                        size="medium"
+                        tooltip="Edit general color rules"
+                        style={{ width: "5rem" }}
+                    >
+                        <MoorhenModifyColourRulesCard molecule={props.molecule} />
+                    </MoorhenPopoverButton>
+                    <MoorhenPopoverButton
+                        type="default"
+                        popoverPlacement="left"
+                        closeButton
+                        icon="MatSymTune"
+                        tooltip="Edit default representation"
+                        style={{ width: "5rem" }}
+                        popoverStyle={{ maxHeight: "100%" }}
+                    >
+                        <MoorhenMoleculeRepresentationSettingsCard
+                            residueEnvironmentSettingsProps={residueEnvironmentSettingsProps}
+                            cylinderSettingsProps={cylinderSettingsProps}
+                            molSurfSettingsProps={molSurfSettingsProps}
+                            ribbonSettingsProps={ribbonSettingsProps}
+                            symmetrySettingsProps={symmetrySettingsProps}
+                            gaussianSettingsProps={gaussianSettingsProps}
+                            bondSettingsProps={bondSettingsProps}
+                            molecule={props.molecule}
+                        />
+                    </MoorhenPopoverButton>
+                </MoorhenStack>
+                {/* <div className="moorhen__molecule_card_representation"> */}
+                <MoorhenStack direction="vertical" card>
+                    <div className="moorhen__molecule_card_representation-chip-container">
+                        <>
+                            {customRepresentationList
+                                .filter(representation => representation !== undefined)
+                                .map(representation => {
+                                    return (
+                                        <CustomRepresentationChip
+                                            key={representation.uniqueId}
+                                            addColourRulesAnchorDivRef={addColourRulesAnchorDivRef}
+                                            molecule={props.molecule}
+                                            representation={representation}
+                                        />
+                                    );
+                                })}
+                        </>
+                        {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
                     </div>
-                </div>
+                    {/* <hr style={{ margin: "0.5rem" }}></hr> */}
+                </MoorhenStack>
+                {/* <div className="moorhen__molecule_card_representation-chip-container" ref={addColourRulesAnchorDivRef}>
+                    {allRepresentations.map(key => (
+                        <RepresentationCheckbox key={key} style={key} molecule={props.molecule} isVisible={isVisible} />
+                    ))}
+                </div> */}
+                <MoorhenAccordion title="Tools">
+                    <MoorhenStack>
+                        <MoorhenToggle
+                            onChange={e => handleEnvironmentToggle(e.target.checked)}
+                            checked={displayEnvironment}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    Environment distances&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>Ramachandran Balls</b>
+                                                <br />
+                                                Display colored balls indicating the quality of the Ramachadran for each residue
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                        <MoorhenToggle
+                            onChange={e => handleToolsToggle(e.target.checked, "rama")}
+                            checked={displayRamaBalls}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    Ramachandran Balls&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>Ramachandran Balls</b>
+                                                <br />
+                                                Display colored balls indicating the quality of the Ramachadran for each residue
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                        <MoorhenToggle
+                            onChange={e => handleToolsToggle(e.target.checked, "rotamer")}
+                            checked={displayRotaDodec}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    Rotamer Dodecahedron&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>Rotamer Dodecahedrons</b>
+                                                <br />
+                                                Display colored dodecahedrons indicating the quality of the rotamer for each residue
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                        <MoorhenToggle
+                            onChange={e => handleToolsToggle(e.target.checked, "CDs")}
+                            checked={displayContactDots}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    Contact Dots&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>Contact Dots</b>
+                                                <br />
+                                                Show atoms to atoms contacts
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                        <MoorhenToggle
+                            onChange={e => handleToolsToggle(e.target.checked, "restraints")}
+                            checked={displayRestraints}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    Restraints&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>Restraints</b>
+                                                <br />
+                                                Display the self restraints
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                    </MoorhenStack>
+                </MoorhenAccordion>
+                {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}
+                {/* </div> */}
                 <MoorhenHeaderInfoCard
                     anchorEl={cardHeaderDivRef}
                     molecule={props.molecule}

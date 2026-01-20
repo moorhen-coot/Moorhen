@@ -74,6 +74,33 @@ export type RepresentationStyles =
  *    await representation.draw()
  * }
  */
+
+export type m2tParameters = {
+    ribbonStyleCoilThickness: number;
+    ribbonStyleHelixWidth: number;
+    ribbonStyleStrandWidth: number;
+    ribbonStyleArrowWidth: number;
+    ribbonStyleDNARNAWidth: number;
+    ribbonStyleAxialSampling: number;
+    cylindersStyleAngularSampling: number;
+    cylindersStyleCylinderRadius: number;
+    cylindersStyleBallRadius: number;
+    surfaceStyleProbeRadius: number;
+    ballsStyleRadiusMultiplier: number;
+    nucleotideRibbonStyle: "StickBases" | "DishyBases";
+    dishStyleAngularSampling: number;
+    ssUsageScheme: number;
+};
+
+export type residueEnvironmentOptions = {
+    maxDist: number;
+    backgroundRepresentation: RepresentationStyles;
+    focusRepresentation: RepresentationStyles;
+    labelled: boolean;
+    showHBonds: boolean;
+    showContacts: boolean;
+};
+
 export class MoleculeRepresentation {
     uniqueId: string;
     style: moorhen.RepresentationStyles;
@@ -96,9 +123,9 @@ export class MoleculeRepresentation {
     useDefaultResidueEnvironmentOptions: boolean;
     useDefaultM2tParams: boolean;
     bondOptions: moorhen.cootBondOptions;
-    m2tParams: moorhen.m2tParameters;
+    m2tParams: m2tParameters;
     nonCustomOpacity: number;
-    residueEnvironmentOptions: moorhen.residueEnvironmentOptions;
+    residueEnvironmentOptions: residueEnvironmentOptions;
     ligandsCid: string;
     hoverColor: number[];
     residueSelectionColor: number[];
@@ -162,9 +189,9 @@ export class MoleculeRepresentation {
 
     /**
      * A method to set M2T style parameters for this molecule representation
-     * @param {moorhen.m2tParameters} m2tParams - The new M2T parameters
+     * @param {m2tParameters} m2tParams - The new M2T parameters
      */
-    setM2tParams(m2tParams: moorhen.m2tParameters) {
+    setM2tParams(m2tParams: m2tParameters) {
         if (m2tParams) {
             this.useDefaultM2tParams = false;
             this.m2tParams = m2tParams;
@@ -216,7 +243,7 @@ export class MoleculeRepresentation {
      * A method to set res. env. options for this molecule representation
      * @param {moorhen.residueEnvironmentOptions} newOptions - The new res. env. options
      */
-    setResidueEnvOptions(newOptions: moorhen.residueEnvironmentOptions) {
+    setResidueEnvOptions(newOptions: residueEnvironmentOptions) {
         if (newOptions) {
             this.useDefaultResidueEnvironmentOptions = false;
             this.residueEnvironmentOptions = newOptions;
@@ -597,7 +624,11 @@ export class MoleculeRepresentation {
                 objects = await this.getMetaBallBuffers(_cid);
                 break;
             case "adaptativeBonds":
-                objects = await this.getAdaptativeBondBuffers(_cid);
+                objects = await this.getAdaptativeBondBuffers(
+                    _cid,
+                    this.residueEnvironmentOptions.focusRepresentation,
+                    this.residueEnvironmentOptions.backgroundRepresentation
+                );
                 break;
             default:
                 console.log(`Unrecognised style ${_style}...`);

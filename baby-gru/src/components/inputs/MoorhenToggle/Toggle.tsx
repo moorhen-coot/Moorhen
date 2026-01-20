@@ -1,9 +1,10 @@
+import { JSX } from "react";
 import "./moorhen-toggle.css";
 
 type MoorhenToggleProps = {
     checked?: boolean;
     onChange?: ((e: React.ChangeEvent<HTMLInputElement>) => void) | (() => void);
-    label: string;
+    label: string | JSX.Element;
     className?: string;
     id?: string;
     style?: React.CSSProperties;
