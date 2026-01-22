@@ -622,8 +622,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         >
             <div>
                 <Backdrop sx={{ color: "#fff", zIndex: (_theme) => _theme.zIndex.drawer + 1 }} open={!cootInitialized}>
-                    <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                     <span>Starting moorhen...</span>
+                    <img style={{height:"200px"}} src={`${urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt='Moorhen' />
                 </Backdrop>
                 <MoorhenNavBar {...collectedProps} />
             </div>
