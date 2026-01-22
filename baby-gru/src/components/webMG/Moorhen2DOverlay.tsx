@@ -763,7 +763,7 @@ export const Moorhen2DOverlay = ((props) => {
            <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
            <div style={{zIndex:5, position: "absolute", bottom: 50, right:50}} >
            <img style={{height:"75px"}} src={`${props.urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt='Moorhen' />
-           <br/><a href="https://www.york.ac.uk/about/legal-statements/">Legal statements</a>
+           <br/><a target="_blank" href="https://www.york.ac.uk/about/legal-statements/">Legal statements</a>
            </div>
             </>
 });
