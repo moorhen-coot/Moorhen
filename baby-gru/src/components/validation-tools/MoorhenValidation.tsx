@@ -33,19 +33,22 @@ const colourPalettes = {
 
 const metricInfoScaling = {
     density_correlation_analysis: value => {
-        return value;
+        return Math.min(Math.max(value, 0), 1);
     },
     density_fit_analysis: value => {
-        return 1 / value;
+        return value;
     },
     rotamer_analysis: value => {
-        return 1 / value;
+        // ??
+        return (Math.min(Math.max(value, 50), 80) - 50) / 30;
     },
     ramachandran_analysis: value => {
-        return Math.log(value);
+        // probability density turned into a score...
+        return Math.min(1 / value, 50) / 50;
     },
     peptide_omega_analysis: value => {
-        return value - 180;
+        // deviation from ideal 180 peptide omega angle
+        return value;
     },
 };
 
