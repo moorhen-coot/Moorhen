@@ -761,7 +761,10 @@ export const Moorhen2DOverlay = ((props) => {
            <canvas style={{zIndex:2, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef2} height={width} width={height} />
            <canvas style={{zIndex:3, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef3} height={width} width={height} />
            <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
-           <img style={{height:"75px", zIndex:5, pointerEvents: "none", position: "absolute", bottom: 50, right:50}} src={`${props.urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt='Moorhen' />
+           <div style={{zIndex:5, position: "absolute", bottom: 50, right:50}} >
+           <img style={{height:"75px"}} src={`${props.urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt='Moorhen' />
+           <br/><a href="https://www.york.ac.uk/about/legal-statements/">Legal statements</a>
+           </div>
             </>
 });
 
