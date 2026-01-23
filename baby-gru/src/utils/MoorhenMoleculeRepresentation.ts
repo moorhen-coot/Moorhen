@@ -101,6 +101,14 @@ export type residueEnvironmentOptions = {
     showContacts: boolean;
 };
 
+export type gaussianSurfSettings = {
+    sigma: number;
+    countourLevel: number;
+    boxRadius: number;
+    gridScale: number;
+    bFactor: number;
+};
+
 export class MoleculeRepresentation {
     uniqueId: string;
     style: moorhen.RepresentationStyles;
@@ -122,6 +130,8 @@ export class MoleculeRepresentation {
     useDefaultColourRules: boolean;
     useDefaultResidueEnvironmentOptions: boolean;
     useDefaultM2tParams: boolean;
+    gaussianSurfaceSettings: gaussianSurfSettings;
+    useDefaultGaussianSurfaceSettings: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: m2tParameters;
     nonCustomOpacity: number;
@@ -156,6 +166,14 @@ export class MoleculeRepresentation {
             showAniso: false,
             showOrtep: false,
             showHs: true,
+        };
+        this.useDefaultGaussianSurfaceSettings = true;
+        this.gaussianSurfaceSettings = {
+            sigma: 4,
+            countourLevel: 4,
+            boxRadius: 5,
+            gridScale: 0.7,
+            bFactor: 100,
         };
         this.m2tParams = {
             ribbonStyleCoilThickness: 0.3,
@@ -450,7 +468,9 @@ export class MoleculeRepresentation {
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         this.buffers.forEach(buf => {
-            buf.origin = selectionCentre;
+            if (buf.hasOwnProperty("origin")) {
+                buf.origin = selectionCentre;
+            }
         });
     }
 
@@ -825,6 +845,7 @@ export class MoleculeRepresentation {
      */
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid);
+        console.log(`Getting environment buffers for residue ${cid}...`, "resSpec:", resSpec);
 
         const response = await this.commandCentre.current.cootCommand(
             {
@@ -1453,18 +1474,12 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootGaussianSurfaceBuffers(): Promise<libcootApi.InstancedMeshJS[]> {
+        const args = this.useDefaultGaussianSurfaceSettings ? this.parentMolecule.gaussianSurfaceSettings : this.gaussianSurfaceSettings;
         const response = (await this.commandCentre.current.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_gaussian_surface",
-                commandArgs: [
-                    this.parentMolecule.molNo,
-                    this.parentMolecule.gaussianSurfaceSettings.sigma,
-                    this.parentMolecule.gaussianSurfaceSettings.countourLevel,
-                    this.parentMolecule.gaussianSurfaceSettings.boxRadius,
-                    this.parentMolecule.gaussianSurfaceSettings.gridScale,
-                    this.parentMolecule.gaussianSurfaceSettings.bFactor,
-                ],
+                commandArgs: [this.parentMolecule.molNo, args.sigma, args.countourLevel, args.boxRadius, args.gridScale, args.bFactor],
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;

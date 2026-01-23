@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -113,7 +113,7 @@ export class MoorhenMolecule {
     biomolOn: boolean;
     symmetryRadius: number;
     symmetryMatrices: number[][][];
-    gaussianSurfaceSettings: moorhen.gaussianSurfSettings;
+    gaussianSurfaceSettings: gaussianSurfSettings;
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: m2tParameters;
@@ -1420,6 +1420,21 @@ export class MoorhenMolecule {
      */
     async addRepresentation(
         style: moorhen.RepresentationStyles,
+        cid?: string,
+        isCustom?: boolean,
+        colourRules?: moorhen.ColourRule[],
+        bondOptions?: moorhen.cootBondOptions,
+        m2tParams?: m2tParameters,
+        residueEnvOptions?: residueEnvironmentOptions,
+        nonCustomOpacity?: number
+    ): Promise<moorhen.MoleculeRepresentation>;
+    /**
+     * Add a representation to the molecule
+     * @param {moorhen.MoleculeRepresentation} representation - A pre-configured molecule representation
+     */
+    async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
+    async addRepresentation(
+        styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
         cid: string = "/*/*/*/*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
@@ -1431,15 +1446,26 @@ export class MoorhenMolecule {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
         }
-        const representation = new MoleculeRepresentation(style, cid, this.commandCentre);
-        representation.isCustom = isCustom;
+
+        let representation: moorhen.MoleculeRepresentation;
+
+        // Check if the first argument is a MoleculeRepresentation instance
+        if (styleOrRepresentation instanceof MoleculeRepresentation) {
+            representation = styleOrRepresentation;
+        } else {
+            // Create a new representation from individual parameters
+            const style = styleOrRepresentation as moorhen.RepresentationStyles;
+            representation = new MoleculeRepresentation(style, cid, this.commandCentre);
+            representation.isCustom = isCustom;
+            representation.setColourRules(colourRules);
+            representation.setBondOptions(bondOptions);
+            representation.setM2tParams(m2tParams);
+            representation.setResidueEnvOptions(residueEnvOptions);
+            representation.setNonCustomOpacity(nonCustomOpacity);
+        }
+
         representation.setParentMolecule(this);
-        representation.setColourRules(colourRules);
-        representation.setBondOptions(bondOptions);
-        representation.setM2tParams(m2tParams);
-        representation.setResidueEnvOptions(residueEnvOptions);
         await representation.draw();
-        representation.setNonCustomOpacity(nonCustomOpacity);
         this.representations.push(representation);
         await this.drawSymmetry(false);
         this.drawBiomolecule(false);

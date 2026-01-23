@@ -36,7 +36,6 @@ baby-gru/public/baby-gru/CootWorker.js
 /public/MoorhenAssets/wasm/*
 /public/MoorhenAssets/data.tar.gz
 /public/MoorhenAssets/Components-inchikey.ich
-/public/MoorhenAssets/moorhen.css
 /public/MoorhenAssets/pixmaps/lhasa_icons
 
 # Ignore PWA related files

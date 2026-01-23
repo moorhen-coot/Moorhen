@@ -117,14 +117,6 @@ export namespace moorhen {
         showHs: boolean;
     };
 
-    type gaussianSurfSettings = {
-        sigma: number;
-        countourLevel: number;
-        boxRadius: number;
-        gridScale: number;
-        bFactor: number;
-    };
-
     type ColourRuleObject = {
         cid: string;
         color: string;

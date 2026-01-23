@@ -2,8 +2,10 @@ import { GrainOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useRef, useState } from "react";
+import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
-import type {
+import { CommandCentre } from "@/moorhen";
+import {
     MoleculeRepresentation,
     RepresentationStyles,
     m2tParameters,
@@ -19,13 +21,13 @@ import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
+import { NcsColourSwatch } from "./ColourRuleCard";
 import {
     BondSettingsPanel,
     MolSurfSettingsPanel,
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
-} from "../MoorhenMoleculeRepresentationSettingsCard";
-import { NcsColourSwatch } from "./ColourRuleCard";
+} from "./MoleculeRepresentationSettingsCard";
 
 const customRepresentations = [
     "CBs",
@@ -59,11 +61,11 @@ export const AddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
-
         const [ruleType, setRuleType] = useState<string>(
             props.representation ? (props.representation.cid === "//*//:*" ? "molecule" : "cid") : "molecule"
         );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
+
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
                 if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
@@ -98,73 +100,6 @@ export const AddCustomRepresentationCard = memo(
         const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain || "");
         const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null);
 
-        const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(
-            props.representation?.bondOptions?.atomRadiusBondRatio ?? props.molecule.defaultBondOptions.atomRadiusBondRatio
-        );
-        const [showAniso, setShowAniso] = useState<boolean>(
-            props.representation?.bondOptions?.showAniso ?? props.molecule.defaultBondOptions.showAniso
-        );
-        const [showOrtep, setShowOrtep] = useState<boolean>(
-            props.representation?.bondOptions?.showOrtep ?? props.molecule.defaultBondOptions.showOrtep
-        );
-        const [showHs, setShowHs] = useState<boolean>(
-            props.representation?.bondOptions?.showHs ?? props.molecule.defaultBondOptions.showHs
-        );
-        const [bondWidth, setBondWidth] = useState<number>(
-            props.representation?.bondOptions?.width ?? props.molecule.defaultBondOptions.width
-        );
-        const [bondSmoothness, setBondSmoothness] = useState<number>(
-            props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100
-        );
-
-        const [ribbonCoilThickness, setRibbonCoilThickness] = useState<number>(
-            props.representation?.m2tParams.ribbonStyleCoilThickness ?? props.molecule.defaultM2tParams.ribbonStyleCoilThickness
-        );
-        const [ribbonHelixWidth, setRibbonHelixWidth] = useState<number>(
-            props.representation?.m2tParams.ribbonStyleHelixWidth ?? props.molecule.defaultM2tParams.ribbonStyleHelixWidth
-        );
-        const [ribbonStrandWidth, setRibbonStrandWidth] = useState<number>(
-            props.representation?.m2tParams?.ribbonStyleStrandWidth ?? props.molecule.defaultM2tParams.ribbonStyleStrandWidth
-        );
-        const [ribbonArrowWidth, setRibbonArrowWidth] = useState<number>(
-            props.representation?.m2tParams?.ribbonStyleArrowWidth ?? props.molecule.defaultM2tParams.ribbonStyleArrowWidth
-        );
-        const [ribbonDNARNAWidth, setRibbonDNARNAWidth] = useState<number>(
-            props.representation?.m2tParams?.ribbonStyleDNARNAWidth ?? props.molecule.defaultM2tParams.ribbonStyleDNARNAWidth
-        );
-        const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases">(
-            props.representation?.m2tParams?.nucleotideRibbonStyle ?? props.molecule.defaultM2tParams.nucleotideRibbonStyle
-        );
-        const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(
-            props.representation?.m2tParams?.ribbonStyleAxialSampling ?? props.molecule.defaultM2tParams.ribbonStyleAxialSampling
-        );
-        const [dishStyleAngularSampling, setDishStyleAngularSampling] = useState<number>(
-            props.representation?.m2tParams?.dishStyleAngularSampling ?? props.molecule.defaultM2tParams.dishStyleAngularSampling
-        );
-        const [ssUsageScheme, setSsUsageScheme] = useState<number>(
-            props.representation?.m2tParams?.ssUsageScheme ?? props.molecule.defaultM2tParams.ssUsageScheme
-        );
-
-        const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(
-            props.representation?.m2tParams.surfaceStyleProbeRadius ?? props.molecule.defaultM2tParams.surfaceStyleProbeRadius
-        );
-        const [ballsStyleRadiusMultiplier, setBallsStyleRadiusMultiplier] = useState<number>(
-            props.representation?.m2tParams.ballsStyleRadiusMultiplier ?? props.molecule.defaultM2tParams.ballsStyleRadiusMultiplier
-        );
-
-        const [maxEnvDist, setMaxEnvDist] = useState<number>(
-            props.representation?.residueEnvironmentOptions?.maxDist ?? props.molecule.defaultResidueEnvironmentOptions.maxDist
-        );
-        const [labelledEnv, setLabelledEnv] = useState<boolean>(
-            props.representation?.residueEnvironmentOptions?.labelled ?? props.molecule.defaultResidueEnvironmentOptions.labelled
-        );
-        const [showEnvHBonds, setShowEnvHBonds] = useState<boolean>(
-            props.representation?.residueEnvironmentOptions?.showHBonds ?? props.molecule.defaultResidueEnvironmentOptions.showHBonds
-        );
-        const [showEnvContacts, setShowEnvContacts] = useState<boolean>(
-            props.representation?.residueEnvironmentOptions?.showContacts ?? props.molecule.defaultResidueEnvironmentOptions.showContacts
-        );
-
         const [cid, setCid] = useState<string>("//*/:*");
         const [adaptBondOOF, setAdaptBondOOF] = useState<RepresentationStyles>("CRs");
         const [adaptDist, setadaptDist] = useState<number>(8.0);
@@ -181,61 +116,27 @@ export const AddCustomRepresentationCard = memo(
 
         const mode = props.mode ?? "add";
 
-        const ribbonSettingsProps = {
-            ribbonCoilThickness,
-            setRibbonCoilThickness,
-            ribbonHelixWidth,
-            setRibbonHelixWidth,
-            ribbonStrandWidth,
-            setRibbonStrandWidth,
-            ribbonArrowWidth,
-            setRibbonArrowWidth,
-            ribbonDNARNAWidth,
-            setRibbonDNARNAWidth,
-            ribbonAxialSampling,
-            setRibbonAxialSampling,
-            nucleotideRibbonStyle,
-            setNucleotideRibbonStyle,
-            dishStyleAngularSampling,
-            setDishStyleAngularSampling,
-            ssUsageScheme,
-            setSsUsageScheme,
-        };
-
-        const bondSettingsProps = {
-            bondWidth,
-            setBondWidth,
-            atomRadiusBondRatio,
-            setAtomRadiusBondRatio,
-            bondSmoothness,
-            setBondSmoothness,
-            showAniso,
-            setShowAniso,
-            showOrtep,
-            setShowOrtep,
-            showHs,
-            setShowHs,
-        };
-
-        const molSurfSettingsProps = {
-            surfaceStyleProbeRadius,
-            setSurfaceStyleProbeRadius,
-            ballsStyleRadiusMultiplier,
-            setBallsStyleRadiusMultiplier,
-        };
-
-        const residueEnvironmentSettingsProps = {
-            maxDist: maxEnvDist,
-            setMaxDist: setMaxEnvDist,
-            labelled: labelledEnv,
-            setLabelled: setLabelledEnv,
-            showHBonds: showEnvHBonds,
-            setShowHBonds: setShowEnvHBonds,
-            showContacts: showEnvContacts,
-            setShowContacts: setShowEnvContacts,
-        };
+        const commandCentre = useCommandCentre();
+        const representationRef = useRef<MoleculeRepresentation>(
+            props.representation ?? new MoleculeRepresentation(representationStyle, "//*/:*", commandCentre)
+        );
 
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
+
+        const handleDefaultRepresentationSettingsChange = () => {
+            setUseDefaultRepresentationSettings(!useDefaultRepresentationSettings);
+
+            if (M2T_REPRESENTATIONS.includes(representationStyle)) {
+                representationRef.current.useDefaultM2tParams = !useDefaultRepresentationSettings;
+            } else if (COOT_BOND_REPRESENTATIONS.includes(representationStyle)) {
+                representationRef.current.useDefaultBondOptions = !useDefaultRepresentationSettings;
+            } else if (representationStyle === "residue_environment") {
+                representationRef.current.useDefaultResidueEnvironmentOptions = !useDefaultRepresentationSettings;
+            }
+            if (mode === "edit" && !useDefaultRepresentationSettings) {
+                representationRef.current.redraw();
+            }
+        };
 
         const createRepresentation = async () => {
             props.setBusy?.(true);
@@ -362,50 +263,6 @@ export const AddCustomRepresentationCard = memo(
                 }
             }
 
-            let bondOptions: moorhen.cootBondOptions;
-            if (
-                !useDefaultRepresentationSettingsSwitchRef.current?.checked &&
-                COOT_BOND_REPRESENTATIONS.includes(styleSelectRef.current.value)
-            ) {
-                bondOptions = {
-                    width: bondWidth,
-                    smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
-                    atomRadiusBondRatio: atomRadiusBondRatio,
-                    showAniso: showAniso,
-                    showOrtep: showOrtep,
-                    showHs: showHs,
-                };
-            }
-
-            let m2tParams: m2tParameters;
-            if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && M2T_REPRESENTATIONS.includes(styleSelectRef.current.value)) {
-                m2tParams = {
-                    ...props.molecule.defaultM2tParams,
-                    ribbonStyleArrowWidth: ribbonArrowWidth,
-                    ribbonStyleAxialSampling: ribbonAxialSampling,
-                    ribbonStyleCoilThickness: ribbonCoilThickness,
-                    ribbonStyleDNARNAWidth: ribbonDNARNAWidth,
-                    ribbonStyleHelixWidth: ribbonHelixWidth,
-                    ribbonStyleStrandWidth: ribbonStrandWidth,
-                    nucleotideRibbonStyle: nucleotideRibbonStyle as "DishyBases" | "StickBases",
-                    surfaceStyleProbeRadius: surfaceStyleProbeRadius,
-                    ballsStyleRadiusMultiplier: ballsStyleRadiusMultiplier,
-                };
-            }
-
-            let residueEnvSettings: residueEnvironmentOptions;
-            if (!useDefaultRepresentationSettingsSwitchRef.current?.checked && styleSelectRef.current.value === "residue_environment") {
-                residueEnvSettings = {
-                    ...props.molecule.defaultResidueEnvironmentOptions,
-                    maxDist: maxEnvDist,
-                    labelled: labelledEnv,
-                    showContacts: showEnvContacts,
-                    showHBonds: showEnvHBonds,
-                    focusRepresentation: focusStyleSelectRef.current.value as moorhen.RepresentationStyles,
-                    backgroundRepresentation: backgroundStyleSelectRef.current.value as moorhen.RepresentationStyles,
-                };
-            }
-
             const nonCustomAlpha =
                 colourMode === "b-factor" ||
                 colourMode === "b-factor-norm" ||
@@ -420,17 +277,23 @@ export const AddCustomRepresentationCard = memo(
                     props.molecule.setDrawAdaptativeBonds(true);
                     dispatch(addCustomRepresentation(props.molecule.adaptativeBondsRepresentation));
                 } else {
-                    const representation = await props.molecule.addRepresentation(
-                        styleSelectRef.current.value as moorhen.RepresentationStyles,
-                        cidSelection,
-                        true,
-                        colourRule ? [colourRule] : null,
-                        bondOptions,
-                        m2tParams,
-                        residueEnvSettings,
-                        nonCustomAlpha
-                    );
-                    dispatch(addCustomRepresentation(representation));
+                    representationRef.current.cid = cidSelection;
+                    representationRef.current.setStyle(representationStyle);
+                    representationRef.current.setUseDefaultColourRules(useDefaultColours);
+                    representationRef.current.setColourRules(colourRule ? [colourRule] : null);
+                    representationRef.current.nonCustomOpacity = nonCustomAlpha;
+                    //  = await props.molecule.addRepresentation(
+                    //     styleSelectRef.current.value as moorhen.RepresentationStyles,
+                    //     cidSelection,
+                    //     true,
+                    //     colourRule ? [colourRule] : null,
+                    //     bondOptions,
+                    //     m2tParams,
+                    //     residueEnvSettings,
+                    //     nonCustomAlpha
+                    // );
+                    props.molecule.addRepresentation(representationRef.current);
+                    dispatch(addCustomRepresentation(representationRef.current));
                 }
             } else if (mode === "edit" && props.representation.uniqueId) {
                 const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId);
@@ -439,9 +302,6 @@ export const AddCustomRepresentationCard = memo(
                     representation.setStyle(styleSelectRef.current.value as moorhen.RepresentationStyles);
                     representation.setUseDefaultColourRules(!colourRule);
                     representation.setColourRules(colourRule ? [colourRule] : null);
-                    representation.setBondOptions(bondOptions);
-                    representation.setM2tParams(m2tParams);
-                    representation.setResidueEnvOptions(residueEnvSettings);
                     await representation.redraw();
                     representation.setNonCustomOpacity(nonCustomAlpha);
                 }
@@ -610,18 +470,22 @@ export const AddCustomRepresentationCard = memo(
                         type="switch"
                         label={`Apply general representation settings`}
                         checked={useDefaultRepresentationSettings}
-                        onChange={() => setUseDefaultRepresentationSettings(prev => !prev)}
+                        onChange={handleDefaultRepresentationSettingsChange}
                     />
                 )}
                 {!useDefaultRepresentationSettings && representationStyle === "MolecularSurface" && (
-                    <MolSurfSettingsPanel {...molSurfSettingsProps} />
+                    <MolSurfSettingsPanel representation={representationRef.current} />
                 )}
-                {!useDefaultRepresentationSettings && representationStyle === "CRs" && <RibbonSettingsPanel {...ribbonSettingsProps} />}
+                {!useDefaultRepresentationSettings && representationStyle === "CRs" && (
+                    <RibbonSettingsPanel representation={representationRef.current} />
+                )}
                 {!useDefaultRepresentationSettings &&
                     representationStyle !== "MetaBalls" &&
-                    COOT_BOND_REPRESENTATIONS.includes(representationStyle) && <BondSettingsPanel {...bondSettingsProps} />}
+                    COOT_BOND_REPRESENTATIONS.includes(representationStyle) && (
+                        <BondSettingsPanel representation={representationRef.current} />
+                    )}
                 {!useDefaultRepresentationSettings && representationStyle === "residue_environment" && (
-                    <ResidueEnvironmentSettingsPanel {...residueEnvironmentSettingsProps} />
+                    <ResidueEnvironmentSettingsPanel representation={representationRef.current} />
                 )}
                 {representationStyle === "residue_environment" && !useDefaultRepresentationSettings && (
                     <MoorhenStack direction="horizontal">

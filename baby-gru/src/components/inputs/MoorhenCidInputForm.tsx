@@ -47,18 +47,20 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
         props.setCid?.(evt.target.value)
     };
 
-    const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        console.log(residueSelection)
+    const handleFillCurrentSelection = () => {
+        let cid: string = ""
         if (!useSelection) {
             if (residueSelection) {
                 if (residueSelection.cid === null) {
-                    setSelection(residueSelection.first)
+                    cid = residueSelection.first
                 } else {
-                setSelection(Array.isArray(residueSelection.cid) ? residueSelection.cid[0] : residueSelection.cid)}
+                cid = Array.isArray(residueSelection.cid) ? residueSelection.cid[0] : residueSelection.cid}
             }
         } else {
-            setSelection("")
+            cid = ""
         }
+        setSelection(cid)
+        handleChange({ target: { value: cid }} as React.ChangeEvent<HTMLInputElement>)
         setUseSelection(!useSelection)}
 
     return (

@@ -1,21 +1,14 @@
-import { Box, Chip, CircularProgress } from "@mui/material";
-import { useDispatch, useSelector, useStore } from "react-redux";
-import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useState } from "react";
 import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
-import {
-    addCustomRepresentation,
-    addGeneralRepresentation,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-} from "../../../store/moleculesSlice";
+import { removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import type { MoleculeRepresentation, RepresentationStyles } from "../../../utils/MoorhenMoleculeRepresentation";
+import type { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
-import { convertRemToPx } from "../../../utils/utils";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import "./representation.css";
 
@@ -35,14 +28,6 @@ export const CustomRepresentationChip = (props: {
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
     if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
 
-    // useEffect(() => { //this seem to just be a bug
-    //     if (!isMoleculeVisible) {
-    //         representation.hide();
-    //     } else if (representationIsVisible) {
-    //         representation.show();
-    //     }
-    // }, [isMoleculeVisible]);
-
     const handleVisibility = useCallback(() => {
         if (isMoleculeVisible) {
             !representationIsVisible ? representation.show() : representation.hide();
@@ -53,10 +38,11 @@ export const CustomRepresentationChip = (props: {
     const handleDelete = useCallback(() => {
         if (representation.style === "adaptativeBonds") {
             props.molecule.setDrawAdaptativeBonds(false);
-            removeCustomRepresentation(representation);
+        } else {
+            molecule.removeRepresentation(representation.uniqueId);
         }
-        molecule.removeRepresentation(representation.uniqueId);
         dispatch(removeCustomRepresentation(representation));
+        props.molecule.clearBuffersOfStyle("environment");
     }, [molecule, representation]);
 
     let selectionName = representation.cid;
