@@ -200,29 +200,27 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 minVal={0.01}
                 maxVal={10}
                 logScale={false}
-                decimalPlaces={0}
+                decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Contour Level"
                 externalValue={surfaceLevel}
                 setExternalValue={value => setSurfaceLevel(value)}
                 showMinMaxVal={false}
-                stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
                 logScale={false}
-                decimalPlaces={0}
+                decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Box Radius"
                 externalValue={surfaceRadius}
                 setExternalValue={value => setSurfaceRadius(value)}
                 showMinMaxVal={false}
-                stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
                 logScale={false}
-                decimalPlaces={0}
+                decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Grid Scale"
@@ -240,7 +238,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 externalValue={surfaceBFactor}
                 setExternalValue={value => setSurfaceBFactor(value)}
                 showMinMaxVal={false}
-                stepButtons={10}
+                stepButtons={1}
                 minVal={0}
                 maxVal={100}
                 logScale={false}
