@@ -7,7 +7,7 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { ModalKey, showModal } from "../../store/modalsSlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
-import { MenuFromItems } from "./MenuFromItems ";
+import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
 

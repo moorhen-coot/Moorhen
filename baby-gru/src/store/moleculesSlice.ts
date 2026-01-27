@@ -81,7 +81,8 @@ export const moleculesSlice = createSlice({
                     )
                 ) {
                     if (action.payload.cid === "/*/*/*/*") {
-                        action.payload.cid = "//*//:*";
+                        action.payload.cid = "/*/*/*/*:*";
+                        action.payload.interfaceOption.selectionType = "molecule";
                     } /* convert to better cid that recognise alt conformation */
                     state = { ...state, customRepresentations: [...state.customRepresentations, action.payload] };
                 }

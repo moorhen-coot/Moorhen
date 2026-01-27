@@ -94,6 +94,7 @@ export type m2tParameters = {
 
 export type residueEnvironmentOptions = {
     maxDist: number;
+    adaptiveDist: number;
     backgroundRepresentation: RepresentationStyles;
     focusRepresentation: RepresentationStyles;
     labelled: boolean;
@@ -143,6 +144,7 @@ export class MoleculeRepresentation {
         bufferObj1: libcootApi.InstancedMeshJS[],
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
+    interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" };
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid();
@@ -192,7 +194,8 @@ export class MoleculeRepresentation {
             ssUsageScheme: 2,
         };
         this.residueEnvironmentOptions = {
-            maxDist: 8,
+            maxDist: 3.5,
+            adaptiveDist: 8.0,
             backgroundRepresentation: "CRs",
             focusRepresentation: "CBs",
             labelled: true,
@@ -203,6 +206,7 @@ export class MoleculeRepresentation {
             "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)";
         this.hoverColor = [1.0, 0.5, 0.0, 0.35];
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
+        this.interfaceOption = { visible: undefined, selectionType: "cid" };
     }
 
     /**
@@ -531,8 +535,10 @@ export class MoleculeRepresentation {
         try {
             this.visible = true;
             if (this.buffers && this.buffers.length > 0) {
-                this.buffers.forEach(buffer => {
-                    buffer.visible = true;
+                this.buffers?.forEach(buffer => {
+                    if (buffer.hasOwnProperty("visible")) {
+                        buffer.visible = true;
+                    }
                     if ("labels" in buffer) {
                         buffer.labels.forEach(label => {
                             newLabelBuffers.push({ label: label, uuid: buffer.uuid });
@@ -556,7 +562,7 @@ export class MoleculeRepresentation {
         let newLabelBuffers = labelBuffers;
         try {
             this.visible = false;
-            this.buffers.forEach(buffer => {
+            this.buffers?.forEach(buffer => {
                 if (buffer.hasOwnProperty("visible")) {
                     buffer.visible = false;
                 }
@@ -717,8 +723,8 @@ export class MoleculeRepresentation {
         }
 
         const maxDist = this.useDefaultResidueEnvironmentOptions
-            ? this.parentMolecule.defaultResidueEnvironmentOptions.maxDist
-            : this.residueEnvironmentOptions.maxDist;
+            ? this.parentMolecule.defaultResidueEnvironmentOptions.adaptiveDist
+            : this.residueEnvironmentOptions.adaptiveDist;
         let neighBoringResidues = await this.parentMolecule.getNeighborResiduesCids(cid, maxDist);
         let focusCids = neighBoringResidues.join("||");
 
@@ -845,13 +851,19 @@ export class MoleculeRepresentation {
      */
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid);
-        console.log(`Getting environment buffers for residue ${cid}...`, "resSpec:", resSpec);
+        console.log(this.residueEnvironmentOptions.maxDist);
 
         const response = await this.commandCentre.current.cootCommand(
             {
                 returnType: "generic_3d_lines_bonds_box",
                 command: "make_exportable_environment_bond_box",
-                commandArgs: [this.parentMolecule.molNo, resSpec.chain_id, resSpec.res_no, resSpec.alt_conf],
+                commandArgs: [
+                    this.parentMolecule.molNo,
+                    resSpec.chain_id,
+                    resSpec.res_no,
+                    resSpec.alt_conf,
+                    this.residueEnvironmentOptions.maxDist,
+                ],
             },
             false
         );

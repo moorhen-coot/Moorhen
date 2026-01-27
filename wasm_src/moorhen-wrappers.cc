@@ -699,9 +699,9 @@ class molecules_container_js : public molecules_container_t {
             remove_file(file_name);
         }
 
-        generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
+        generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc, float distanceCutoff) {
             coot::residue_spec_t resSpec(chainID,resNo,altLoc);
-            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec,3.5);
+            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec,distanceCutoff);
         }
 
         std::vector<std::pair<int, int>> get_consecutive_ranges(const std::vector<int> &numbers) {

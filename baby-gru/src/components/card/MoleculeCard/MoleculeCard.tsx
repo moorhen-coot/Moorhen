@@ -1,7 +1,6 @@
-import { AddOutlined, FormatColorFillOutlined, TuneOutlined } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
@@ -22,29 +21,15 @@ import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
-import { MoorhenMoleculeRepresentationSettingsCard, SymmetrySettingsPanel } from "./MoleculeRepresentationSettingsCard";
+import {
+    MoorhenMoleculeRepresentationSettingsCard,
+    ResidueEnvironmentSettingsPanel,
+    SymmetrySettingsPanel,
+} from "./MoleculeRepresentationSettingsCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
 import "./molecule-card.css";
-
-const allRepresentations: moorhen.RepresentationStyles[] = [
-    // "CBs",
-    //"adaptativeBonds",
-    // "CAs",
-    // "CRs",
-    // "ligands",
-    // "gaussian",
-    // "MolecularSurface",
-    // "VdwSpheres",
-    //"rama",
-    //"rotamer",
-    //"CDs",
-    //"allHBonds",
-    //"glycoBlocks",
-    //"restraints",
-    //"environment",
-];
 
 interface MoleculeCardProps {
     dropdownId: number;
@@ -74,7 +59,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-    const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.generalStates.defaultExpandDisplayCards);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
@@ -113,7 +97,9 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const [symmetryRadius, setSymmetryRadius] = useState<number>(props.molecule.symmetryRadius);
 
-    const customRepresentationList = useSelector((state: RootState) => state.molecules.customRepresentations);
+    const customRepresentationList = useSelector((state: RootState) =>
+        state.molecules.customRepresentations.filter(rep => rep.parentMolecule.molNo === props.molecule.molNo)
+    );
 
     const displayEnvironment = useSelector((state: RootState) => {
         return state.molecules.generalRepresentations.some(rep => {
@@ -144,16 +130,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         });
     });
 
-    const generalRepresentationsList: moorhen.RepresentationStyles[] = JSON.parse(generalRepresentationString).filter(
-        rep =>
-            rep.style !== "CAs" &&
-            rep.style !== "CBs" &&
-            rep.style !== "CRs" &&
-            rep.style !== "MolecularSurface" &&
-            rep.style !== "gaussian" &&
-            rep.style !== "VdwSpheres"
-    );
-
     const symmetrySettingsProps = {
         symmetryRadius,
         setSymmetryRadius,
@@ -171,37 +147,43 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
-    const redrawOriginRepresentations = useCallback(async () => {
-        if (isDirty.current) {
-            busyRedrawing.current = true;
-            isDirty.current = false;
-            if (props.molecule.adaptativeBondsEnabled || drawInteractions) {
-                const [molecule, cid] = await getCentreAtom(molecules, commandCentre, store);
-                if (molecule.molNo === props.molecule.molNo) {
-                    if (props.molecule.adaptativeBondsEnabled) {
-                        await props.molecule.redrawAdaptativeBonds(cid);
-                    }
-                    if (drawInteractions) {
-                        await props.molecule.drawEnvironment(cid);
-                    }
-                } else {
-                    props.molecule.clearBuffersOfStyle("environment");
-                }
-            } else {
-                props.molecule.clearBuffersOfStyle("environment");
-            }
-            await props.molecule.drawSymmetry();
-            busyRedrawing.current = false;
-            await redrawOriginRepresentations();
-        }
-    }, [molecules, props.molecule, drawInteractions, commandCentre]);
+    // const redrawOriginRepresentations = useCallback(async () => {
+    //     if (isDirty.current) {
+    //         busyRedrawing.current = true;
+    //         isDirty.current = false;
+    //         if (props.molecule.adaptativeBondsEnabled || drawInteractions) {
+    //             const [molecule, cid] = await getCentreAtom(molecules, commandCentre, store);
+    //             if (molecule.molNo === props.molecule.molNo) {
+    //                 if (props.molecule.adaptativeBondsEnabled) {
+    //                     await props.molecule.redrawAdaptativeBonds(cid);
+    //                 }
+    //                 if (drawInteractions) {
+    //                     await props.molecule.drawEnvironment(cid);
+    //                 }
+    //             } else {
+    //                 props.molecule.clearBuffersOfStyle("environment");
+    //             }
+    //         } else {
+    //             props.molecule.clearBuffersOfStyle("environment");
+    //         }
+    //         await props.molecule.drawSymmetry();
+    //         busyRedrawing.current = false;
+    //         await redrawOriginRepresentations();
+    //     }
+    // }, [molecules, props.molecule, drawInteractions, commandCentre]);
 
-    const handleOriginUpdate = useCallback(() => {
-        isDirty.current = true;
-        if (!busyRedrawing.current && isVisible) {
-            redrawOriginRepresentations();
-        }
-    }, [redrawOriginRepresentations, isVisible]);
+    // const handleOriginUpdate = useCallback(() => {
+    //     isDirty.current = true;
+    //     if (!busyRedrawing.current && isVisible) {
+    //         redrawOriginRepresentations();
+    //     }
+    // }, [redrawOriginRepresentations, isVisible]);
+    // useEffect(() => {
+    //     document.addEventListener("originUpdate", handleOriginUpdate);
+    //     return () => {
+    //         document.removeEventListener("originUpdate", handleOriginUpdate);
+    //     };
+    // }, [handleOriginUpdate]);
 
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
@@ -264,29 +246,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             });
     }, []);
 
-    useEffect(() => {
-        if (isVisible) {
-            props.molecule.representations.forEach(item => (generalRepresentationsList.includes(item.style) ? item.show() : null));
-        } else {
-            props.molecule.representations.forEach(item => (generalRepresentationsList.includes(item.style) ? item.hide() : null));
-        }
-    }, [isVisible]);
-
-    useEffect(() => {
-        if (!clickedResidue) {
-            return;
-        }
-
-        props.molecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`);
-    }, [clickedResidue]);
-
-    useEffect(() => {
-        document.addEventListener("originUpdate", handleOriginUpdate);
-        return () => {
-            document.removeEventListener("originUpdate", handleOriginUpdate);
-        };
-    }, [handleOriginUpdate]);
-
     const handleDownload = async () => {
         await props.molecule.downloadAtoms();
         props.setCurrentDropdownMolNo(-1);
@@ -303,24 +262,20 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         if (clickedResidue && selectedResidues) {
             createNewFragmentMolecule();
         }
-        props.setCurrentDropdownMolNo(-1);
     };
 
     const handleUndo = async () => {
         await props.molecule.undo();
-        props.setCurrentDropdownMolNo(-1);
         dispatch(triggerUpdate(props.molecule.molNo));
     };
 
     const handleRedo = async () => {
         await props.molecule.redo();
-        props.setCurrentDropdownMolNo(-1);
         dispatch(triggerUpdate(props.molecule.molNo));
     };
 
     const handleCentering = () => {
         props.molecule.centreOn();
-        props.setCurrentDropdownMolNo(-1);
     };
 
     const handleShowInfo = () => {
@@ -328,8 +283,16 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     };
 
     const handleVisibility = useCallback(() => {
+        props.molecule.representations.forEach(rep => (isVisible ? rep.hide() : rep.interfaceOption.visible ? rep.show() : null));
         dispatch(isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule));
-        props.setCurrentDropdownMolNo(-1);
+        if (isVisible) {
+            props.molecule.environmentRepresentation?.hide();
+        } else {
+            if (displayEnvironment) {
+                props.molecule.environmentRepresentation?.show();
+                props.molecule.environmentRepresentation?.redraw();
+            }
+        }
     }, [isVisible]);
 
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
@@ -536,27 +499,36 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 </div> */}
                 <MoorhenAccordion title="Tools">
                     <MoorhenStack>
-                        <MoorhenToggle
-                            onChange={e => handleEnvironmentToggle(e.target.checked)}
-                            checked={displayEnvironment}
-                            label={
-                                <MoorhenStack direction="row" align="center">
-                                    Environment distances&nbsp;
-                                    <MoorhenInfoCard
-                                        infoText={
-                                            <>
-                                                <b>Ramachandran Balls</b>
-                                                <br />
-                                                Display colored balls indicating the quality of the Ramachadran for each residue
-                                            </>
-                                        }
-                                    />
-                                </MoorhenStack>
-                            }
-                        />
+                        <MoorhenStack direction="row" align="center">
+                            <MoorhenToggle
+                                onChange={e => handleEnvironmentToggle(e.target.checked)}
+                                checked={displayEnvironment}
+                                disabled={isVisible ? false : true}
+                                label={
+                                    <MoorhenStack direction="row" align="center">
+                                        Environment distances&nbsp;
+                                        <MoorhenInfoCard
+                                            infoText={
+                                                <>
+                                                    <b>Environment Distances</b>
+                                                    <br />
+                                                    Display H-bonds an other interactions between the center residue and its environment
+                                                </>
+                                            }
+                                        />
+                                    </MoorhenStack>
+                                }
+                            />
+
+                            <MoorhenPopoverButton tooltip={"Environment settings"} disabled={isVisible ? false : true}>
+                                <ResidueEnvironmentSettingsPanel molecule={props.molecule} />
+                            </MoorhenPopoverButton>
+                        </MoorhenStack>
+
                         <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "rama")}
                             checked={displayRamaBalls}
+                            disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
                                     Ramachandran Balls&nbsp;
@@ -575,6 +547,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "rotamer")}
                             checked={displayRotaDodec}
+                            disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
                                     Rotamer Dodecahedron&nbsp;
@@ -593,6 +566,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "CDs")}
                             checked={displayContactDots}
+                            disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
                                     Contact Dots&nbsp;
@@ -611,6 +585,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "restraints")}
                             checked={displayRestraints}
+                            disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
                                     Restraints&nbsp;

@@ -33,6 +33,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             tooltip={tooltip}
             style={style}
             label={label}
+            disabled={props.disabled}
         />
     );
 

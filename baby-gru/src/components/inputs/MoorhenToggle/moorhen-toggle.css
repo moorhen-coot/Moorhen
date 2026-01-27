@@ -7,6 +7,11 @@
     margin: 0.5rem;
 }
 
+.moorhen__toggle-container.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .moorhen__toggle-container-large {
     display: flex;
     align-items: center;

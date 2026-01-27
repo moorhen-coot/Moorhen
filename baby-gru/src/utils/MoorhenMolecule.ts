@@ -201,7 +201,8 @@ export class MoorhenMolecule {
             ssUsageScheme: 2,
         };
         this.defaultResidueEnvironmentOptions = {
-            maxDist: 8,
+            maxDist: 3.5,
+            adaptiveDist: 8.0,
             backgroundRepresentation: "CRs",
             focusRepresentation: "CBs",
             labelled: true,

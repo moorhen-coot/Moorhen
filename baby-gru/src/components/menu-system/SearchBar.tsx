@@ -6,7 +6,7 @@ import { useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenButton } from "../inputs";
-import { MenuFromItems } from "./MenuFromItems ";
+import { MenuFromItems } from "./MenuFromItems";
 import "./search-bar.css";
 import { MenuItemType } from "./subMenuConfig";
 

@@ -37,6 +37,7 @@ import { loadMathjax } from "../../utils/mathJaxLoader";
 import { parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
+import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
@@ -495,6 +496,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         <MoorhenSnackBarManager />
                         <MoorhenUpdatingMapsManager />
                         <MoorhenMapsHeadManager />
+                        <MoleculesOriginListener />
 
                         <MoorhenDroppable
                             monomerLibraryPath={monomerLibraryPath}
