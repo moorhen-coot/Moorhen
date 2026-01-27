@@ -12,12 +12,16 @@ type MoorhenToggleProps = {
     ref?: React.Ref<HTMLInputElement>;
     name?: string;
     inline?: boolean;
+    disabled?: boolean;
 };
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
     return (
-        <div className={`moorhen__toggle-container ${props.className ? props.className : ""}`} style={{ ...props.style }}>
-            <label className="moorhen__toggle-switch">
+        <div
+            className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
+            style={{ ...props.style }}
+        >
+            <label className={`moorhen__toggle-switch`}>
                 <input
                     id={props.id}
                     className="moorhen__toggle-input"
@@ -26,6 +30,7 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                     onChange={props.onChange}
                     ref={props.ref}
                     name={props.name}
+                    disabled={props.disabled}
                 />
                 <span className="moorhen__toggle-slider"></span>
             </label>

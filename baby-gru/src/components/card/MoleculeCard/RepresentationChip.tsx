@@ -19,7 +19,10 @@ export const CustomRepresentationChip = (props: {
 }) => {
     const { representation, molecule } = props;
     const urlPrefix = usePaths().urlPrefix;
-    const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true);
+    if (representation.interfaceOption.visible === undefined) {
+        representation.interfaceOption.visible = representation.visible;
+    }
+    const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(representation.interfaceOption.visible);
     const [reload, setReload] = useState<boolean>(false);
 
     const dispatch = useDispatch();
@@ -31,6 +34,7 @@ export const CustomRepresentationChip = (props: {
     const handleVisibility = useCallback(() => {
         if (isMoleculeVisible) {
             !representationIsVisible ? representation.show() : representation.hide();
+            representation.interfaceOption.visible = !representationIsVisible;
             setRepresentationIsVisible(!representationIsVisible);
         }
     }, [isMoleculeVisible, representationIsVisible]);
@@ -45,8 +49,40 @@ export const CustomRepresentationChip = (props: {
         props.molecule.clearBuffersOfStyle("environment");
     }, [molecule, representation]);
 
-    let selectionName = representation.cid;
-    if (representation.cid === "//*//:*" || representation.cid === "/*/*/*/*:*") selectionName = "All Molecule";
+    let selectionName = <>{representation.cid}</>;
+    if (representation.style === "adaptativeBonds") {
+        selectionName = <>Adaptative Bonds</>;
+    } else {
+        if (
+            representation.cid === "//*//:*" ||
+            representation.cid === "/*/*/*/*:*" ||
+            representation.interfaceOption.selectionType === "molecule"
+        )
+            selectionName = <>All Molecule</>;
+
+        if (representation.cid.includes("!O,C,N")) {
+            selectionName = <>Side Chains</>;
+        }
+
+        if (representation.cid.includes("(!HOH)")) {
+            selectionName = (
+                <>
+                    {selectionName}&nbsp;
+                    <div className="moorhen__representation-chip-strike-box">HOH</div>
+                </>
+            );
+        }
+
+        if (representation.cid.includes("[!H]")) {
+            selectionName = (
+                <>
+                    {selectionName}&nbsp;
+                    <div className="moorhen__representation-chip-strike-box">H</div>
+                </>
+            );
+        }
+    }
+
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">

@@ -1209,7 +1209,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl_clipPlane7 = new Float32Array(4);
         this.clipCapPerfectSpheres = false;
         this.drawEnvBOcc = false;
-        this.environmentRadius = 8.0;
+        this.environmentRadius = 3.5;
         this.environmentAtoms = [];
         this.labelledAtoms = [];
         this.measuredAtoms = [];

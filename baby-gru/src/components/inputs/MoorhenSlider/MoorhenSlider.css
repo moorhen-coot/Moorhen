@@ -4,7 +4,7 @@
     display: grid;
     grid-template-columns: 24px auto 24px;
     grid-template-rows: 0.2fr 1fr;
-    margin-bottom: 0.5rem;
+    margin: 0.5rem;
 }
 
 .moorhen__slider__label {
