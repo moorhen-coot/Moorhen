@@ -75,6 +75,7 @@ export const ImportMapCoefficients = () => {
                     dispatch(setActiveMap(newMap));
                 });
                 setCalcStructFact(false);
+                document.body.click();
             } catch (err) {
                 enqueueSnackbar("Error reading mtz file", { variant: "warning" });
                 console.log(`Cannot read file`);

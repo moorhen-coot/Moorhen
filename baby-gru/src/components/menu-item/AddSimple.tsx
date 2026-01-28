@@ -43,7 +43,6 @@ export const AddSimple = () => {
         if (selectedMolecule) {
             await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value);
             dispatch(triggerUpdate(selectedMolecule.molNo));
-            document.body.click();
         }
     }, [molecules]);
 

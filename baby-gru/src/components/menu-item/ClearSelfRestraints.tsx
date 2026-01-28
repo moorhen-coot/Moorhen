@@ -27,6 +27,7 @@ export const ClearSelfRestraints = () => {
         if (restraintsRepresenation) {
             selectedMolecule.removeRepresentation(restraintsRepresenation.uniqueId);
         }
+        document.body.click();
     };
     return (
         <>

@@ -285,6 +285,7 @@ export const GetMonomer = () => {
         } else {
             await defaultGetMonomer();
         }
+        document.body.click();
     }, [molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule]);
 
     const menuItemText = "Get monomer...";

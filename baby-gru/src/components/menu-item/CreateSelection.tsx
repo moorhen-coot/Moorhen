@@ -53,7 +53,6 @@ export const CreateSelection = () => {
         await molecule.drawResidueSelection(selectedCid);
         dispatch(setResidueSelection(newSelection));
         enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
-        document.body.click();
     };
 
     return (

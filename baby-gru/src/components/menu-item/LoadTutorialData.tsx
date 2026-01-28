@@ -71,6 +71,7 @@ export const LoadTutorialData = () => {
         dispatch(addMolecule(newMolecule));
         dispatch(addMapList([newMap, newDiffMap]));
         dispatch(setActiveMap(newMap));
+        document.body.click();
     };
 
     return (

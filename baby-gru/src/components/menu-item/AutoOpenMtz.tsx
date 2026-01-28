@@ -29,6 +29,7 @@ export const AutoOpenMtz = () => {
             } else {
                 dispatch(addMapList(newMaps));
                 dispatch(setActiveMap(newMaps[0]));
+                document.body.click();
             }
         } catch (err) {
             console.warn(err);

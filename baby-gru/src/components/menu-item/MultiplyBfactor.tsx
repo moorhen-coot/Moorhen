@@ -168,7 +168,6 @@ export const MultiplyBfactor = () => {
                     ref={cidFormRef}
                     label="Atom selection"
                     margin="0.5rem"
-                    // defaultValue={props.initialCid}
                     onChange={evt => setCid(evt.target.value)}
                     invalidCid={invalidCid}
                     allowUseCurrentSelection={true}

@@ -34,6 +34,7 @@ export const AutoLoadFiles = () => {
             );
         }
         setIsLoading(false);
+        document.body.click();
     };
 
     return (

@@ -35,11 +35,11 @@ export const AddWaters = () => {
         const result = await moorhenInstance.cootCommand.add_water(moleculeMolNo, mapMolNo);
         const added = result.data.result.result;
         enqueueSnackbar(`Added ${added} water molecules`, { variant: "success" });
+        document.body.click();
 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === moleculeMolNo);
         selectedMolecule.setAtomsDirty(true);
         await selectedMolecule.redraw();
-
         dispatch(triggerUpdate(moleculeMolNo));
     };
 

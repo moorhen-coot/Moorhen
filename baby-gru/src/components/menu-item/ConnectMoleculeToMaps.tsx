@@ -107,6 +107,7 @@ export const ConnectMoleculeToMaps = () => {
     };
 
     const onCompleted = async () => {
+        document.body.click();
         return await connectMap();
     };
 
