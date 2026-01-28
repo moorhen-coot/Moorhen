@@ -142,7 +142,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         handleChange(newSliderValue);
     };
 
-    const handleSetValue = (newVal: string) => {
+    const handleSetValue = (newVal: number) => {
         props.setExternalValue(+newVal);
     };
 

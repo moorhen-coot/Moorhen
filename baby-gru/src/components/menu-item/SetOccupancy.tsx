@@ -24,7 +24,7 @@ export const SetOccupancy = () => {
     const [invalidCid, setInvalidCid] = useState<boolean>(false);
     const [selectionType, setSelectionType] = useState<string>("ligand");
     const [selectedModel, setSelectedModel] = useState<number | number>(null);
-    const [occupancy, setOccupancy] = useState<string>("1.0");
+    const [occupancy, setOccupancy] = useState<number>(1.0);
     const commandCentre = useCommandCentre();
 
     const menuItemText = "Set occupancy...";

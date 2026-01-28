@@ -177,8 +177,8 @@ export const MoorhenWaterValidation = () => {
                         value={bFactorLim}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setBFactorLim(+newVal);
+                        setValue={newVal => {
+                            setBFactorLim(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
@@ -189,8 +189,8 @@ export const MoorhenWaterValidation = () => {
                         value={sigmaLevel}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setSigmaLevel(parseFloat(newVal));
+                        setValue={newVal => {
+                            setSigmaLevel(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
@@ -201,8 +201,8 @@ export const MoorhenWaterValidation = () => {
                         value={minDist}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setMinDist(parseFloat(newVal));
+                        setValue={newVal => {
+                            setMinDist(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
@@ -213,8 +213,8 @@ export const MoorhenWaterValidation = () => {
                         value={maxDist}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setMaxDist(parseFloat(newVal));
+                        setValue={newVal => {
+                            setMaxDist(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}

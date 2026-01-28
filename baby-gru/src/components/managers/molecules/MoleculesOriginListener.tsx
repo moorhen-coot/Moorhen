@@ -43,7 +43,7 @@ export const MoleculesOriginListener = () => {
     (useEffect(() => {
         const intervalId = setInterval(async () => {
             drawOriginRepresentations();
-        }, 200);
+        }, 500);
         return () => {
             clearInterval(intervalId);
         };

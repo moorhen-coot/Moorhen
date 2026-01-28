@@ -5,7 +5,6 @@
     padding-right: 0.5rem;
     /* margin-top: 0.25rem; */
     box-sizing: border-box;
-    width: 100%;
     border: 1px solid var(--moorhen-border);
 }
 
