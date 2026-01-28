@@ -13,6 +13,7 @@ type MoorhenStackType = {
     gridWidth?: 1 | 2 | 3 | 4;
     addMargin?: boolean;
     ref?: React.RefObject<HTMLDivElement>;
+    flex?: 1 | 0;
 };
 
 export const MoorhenStack = ({
@@ -28,6 +29,7 @@ export const MoorhenStack = ({
     gridWidth = 1,
     addMargin = false,
     ref = null,
+    flex = 1,
 }: MoorhenStackType) => {
     let mainClass = inputGrid
         ? "moorhen__input-grid"
@@ -48,7 +50,8 @@ export const MoorhenStack = ({
             className={mainClass}
             style={{
                 ...(inputGrid && { gridTemplateColumns: `repeat(${gridWidth}, auto 1fr)` }),
-                gap,
+                gap: gap,
+                flex: flex,
                 justifyContent: justify,
                 alignItems: align,
                 ...style,

@@ -89,7 +89,7 @@ export const SequenceViewerPanel = () => {
                 type="numberForm"
                 decimalDigits={0}
                 value={numberOfLines}
-                setValue={val => setNumberOfLines(parseInt(val))}
+                setValue={val => setNumberOfLines(val)}
                 width="4rem"
             />
         </div>

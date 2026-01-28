@@ -39,7 +39,7 @@ export const LoadTutorialData = () => {
         const newMap = new MoorhenMap(commandCentre, store);
         const newDiffMap = new MoorhenMap(commandCentre, store);
         await newMolecule.loadToCootFromURL(
-            `${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`,
+            `${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.ent`,
             `mol-${tutorialNumber}`
         );
         await newMolecule.fetchIfDirtyAndDraw("CBs");
