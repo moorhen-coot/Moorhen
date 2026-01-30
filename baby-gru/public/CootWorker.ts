@@ -1392,10 +1392,39 @@ onmessage = function (e) {
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
         const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
-        if (memory64&&!isChromeLinux) {
+
+        // Check if we should use single-threaded version:
+        // 1. If crossOriginIsolated is false (SharedArrayBuffer won't work for pthreads)
+        // 2. If forceSingleThreaded is passed in the initialization data
+        // 3. If URL has ?singleThreaded=true parameter
+        const urlParams = new URLSearchParams(self.location.search)
+        const forceSingleThreaded = e.data.data?.forceSingleThreaded || urlParams.get('singleThreaded') === 'true'
+        // @ts-ignore
+        const useSingleThreaded = forceSingleThreaded || !self.crossOriginIsolated
+
+        if (useSingleThreaded) {
+            try {
+                // @ts-ignore
+                importScripts('./moorhen_st.js')
+                // @ts-ignore
+                mod = createCootModuleST
+                scriptName = "moorhen_st.js"
+                console.log("Successfully loaded single-threaded libcoot in worker thread")
+            } catch (e: any) {
+                console.error("Failed to load single-threaded module:", e)
+                // Fall back to regular 32-bit (may fail if SharedArrayBuffer not available)
+                // @ts-ignore
+                importScripts('./moorhen.js')
+                // @ts-ignore
+                mod = createCootModule
+                scriptName = "moorhen.js"
+                console.log("Fallback to 32-bit libcoot in worker thread")
+            }
+        } else if (memory64&&!isChromeLinux) {
             try {
                 // @ts-ignore
                 importScripts('./moorhen64.js')
+                // @ts-ignore
                 mod = createCoot64Module
                 scriptName = "moorhen64.js"
                 console.log("Successfully loaded 64-bit libcoot in worker thread")
@@ -1409,6 +1438,7 @@ onmessage = function (e) {
                 memory64 = false
                 // @ts-ignore
                 importScripts('./moorhen.js')
+                // @ts-ignore
                 mod = createCootModule
                 scriptName = "moorhen.js"
                 console.log("Successfully loaded 32-bit libcoot in worker thread")
@@ -1416,6 +1446,7 @@ onmessage = function (e) {
         } else {
             // @ts-ignore
             importScripts('./moorhen.js')
+            // @ts-ignore
             mod = createCootModule
             scriptName = "moorhen.js"
             console.log("Successfully loaded 32-bit libcoot in worker thread")

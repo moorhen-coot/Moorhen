@@ -1,0 +1,483 @@
+diff --git a/api/coot-molecule-maps.cc b/api/coot-molecule-maps.cc
+index 30d59ba28..eb3abc2d3 100644
+--- a/api/coot-molecule-maps.cc
++++ b/api/coot-molecule-maps.cc
+@@ -259,6 +259,7 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
+    if (!xmap.is_null()) {
+ 
+       clear_draw_vecs();
++#ifdef HAVE_CXX_THREAD
+       std::vector<std::thread> threads;
+       int n_reams = coot::get_max_number_of_threads() - 1;
+       if (n_reams < 1) n_reams = 1;
+@@ -285,6 +286,18 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
+             threads[ii].join();
+ 
+       }
++#else
++      // Single-threaded fallback: call directly with n_reams=1
++      gensurf_and_add_vecs_threaded_workpackage(&xmap, contour_level, dy_radius, centre,
++                                                isample_step, 0, 1, is_em_map,
++                                                &draw_vector_sets);
++      if (xmap_is_diff_map) {
++         clear_diff_map_draw_vecs();
++         gensurf_and_add_vecs_threaded_workpackage(&xmap, -contour_level, dy_radius, centre,
++                                                   isample_step, 0, 1, is_em_map,
++                                                   &draw_diff_map_vector_sets);
++      }
++#endif
+ 
+       if (is_dynamically_transformed_map_flag) {
+          for (unsigned int ii=0; ii<draw_vector_sets.size(); ii++) {
+diff --git a/api/molecules-container-maps.cc b/api/molecules-container-maps.cc
+index 03398d50d..836d8fdf6 100644
+--- a/api/molecules-container-maps.cc
++++ b/api/molecules-container-maps.cc
+@@ -723,8 +723,13 @@ molecules_container_t::get_map_vertices_histogram(int imol, int imol_map_for_sam
+       if (is_valid_map_molecule(imol_map_for_sampling)) {
+ 	 clipper::Coord_orth p(position_x, position_y, position_z);
+ 	 const clipper::Xmap<float> &other_xmap = molecules[imol_map_for_sampling].xmap;
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+ 	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
+ 							 map_is_contoured_using_thread_pool_flag, &thread_pool, n_bins);
++#else
++	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
++							 false, nullptr, n_bins);
++#endif
+       }
+    }
+    return hi;
+diff --git a/api/molecules-container.cc b/api/molecules-container.cc
+index 6de073bc3..6dfbdf919 100644
+--- a/api/molecules-container.cc
++++ b/api/molecules-container.cc
+@@ -66,7 +66,8 @@ molecules_container_t::~molecules_container_t() {
+ // verbose is an optional arg, default true
+ molecules_container_t::molecules_container_t(bool verbose) :
+    ramachandrans_container(ramachandrans_container_t()),
+-   thread_pool(8) {
++   thread_pool(8)  // Uses stub implementation when threading disabled
++{
+    if (! verbose) geom.set_verbose(false);
+    init();
+ }
+@@ -2174,7 +2175,11 @@ molecules_container_t::get_map_contours_mesh(int imol, double position_x, double
+             update_updating_maps(updating_maps_info.imol_model);
+          }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, map_is_contoured_using_thread_pool_flag, &thread_pool);
++#else
++         mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, false, nullptr);
++#endif
+       } else {
+          std::cout << "WARNING:: get_map_contours_mesh() Not a valid map molecule " << imol << std::endl;
+       }
+@@ -2954,7 +2959,11 @@ molecules_container_t::refine_direct(int imol, std::vector<mmdb::Residue *> rv,
+                 << std::endl;
+ 
+    // this is not stored in molecules_container!
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    unsigned int max_number_of_threads = thread_pool.size();
++#else
++   unsigned int max_number_of_threads = 1;
++#endif
+ 
+    int status = 0;
+    if (is_valid_model_molecule(imol)) {
+@@ -5549,7 +5558,9 @@ molecules_container_t::get_hb_type(const std::string &compound_id, int imol_enc,
+ void
+ molecules_container_t::set_max_number_of_threads(unsigned int n_threads) {
+    coot::set_max_number_of_threads(n_threads);
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    thread_pool.resize(n_threads);
++#endif
+ }
+ 
+ // call the above function
+@@ -5617,6 +5628,7 @@ molecules_container_t::test_launching_threads(unsigned int n_threads_per_batch,
+ double
+ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    auto sum = [] (unsigned int thread_index, unsigned int i, unsigned int j, std::atomic<unsigned int> &done_count_for_threads) {
+       done_count_for_threads++;
+       return i+j;
+@@ -5636,6 +5648,9 @@ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
+    auto d10 = std::chrono::duration_cast<std::chrono::microseconds>(tp_1 - tp_0).count();
+    t = d10;
+    return t;
++#else
++   return 0.0;
++#endif
+ 
+ }
+ 
+diff --git a/api/molecules-container.hh b/api/molecules-container.hh
+index 5e5685ce0..825b97531 100644
+--- a/api/molecules-container.hh
++++ b/api/molecules-container.hh
+@@ -144,7 +144,7 @@ class molecules_container_t {
+    bool use_torsion_restraints;
+    float torsion_restraints_weight;
+ 
+-   ctpl::thread_pool thread_pool;
++   ctpl::thread_pool thread_pool;  // Uses stub implementation when threading disabled
+    bool show_timings;
+ 
+    coot::restraints_container_t *last_restraints;
+diff --git a/coot-utils/atom-overlaps.cc b/coot-utils/atom-overlaps.cc
+index 7ed48dc56..bf5da401e 100644
+--- a/coot-utils/atom-overlaps.cc
++++ b/coot-utils/atom-overlaps.cc
+@@ -1878,7 +1878,9 @@ coot::atom_overlaps_container_t::all_atom_contact_dots_internal_multi_thread(dou
+ 
+          unsigned int n_threads = get_max_number_of_threads();
+          n_threads = 1;
++#ifdef HAVE_CXX_THREAD
+          std::vector<std::thread> threads;
++#endif
+          unsigned int n_per_thread = n_selected_atoms/n_threads;
+          // std::cout << "n per thread " << n_per_thread << std::endl;
+          std::vector<atom_overlaps_dots_container_t> results_container_vec(n_threads);
+@@ -1898,17 +1900,29 @@ coot::atom_overlaps_container_t::all_atom_contact_dots_internal_multi_thread(dou
+             // 20230814-PE I saw a crash here today. It seems to be crashing on the creation
+             // of the thread - I don't know what that means.
+             //
++#ifdef HAVE_CXX_THREAD
+             threads.push_back(std::thread(contacts_for_atoms, iat_start, iat_end,
+                                           atom_selection, contact_map, bonded_map,
+                                           neighb_atom_radius, udd_h_bond_type_handle,
+                                           molecule_has_hydrogens, probe_radius,
+                                           dot_density_in, clash_spike_length, make_vdw_surface,
+                                           &results_container_vec[i_thread]));
++#else
++            // Single-threaded: call directly
++            contacts_for_atoms(iat_start, iat_end,
++                              atom_selection, contact_map, bonded_map,
++                              neighb_atom_radius, udd_h_bond_type_handle,
++                              molecule_has_hydrogens, probe_radius,
++                              dot_density_in, clash_spike_length, make_vdw_surface,
++                              &results_container_vec[i_thread]);
++#endif
+ 
+          }
+ 
++#ifdef HAVE_CXX_THREAD
+          for (unsigned int i_thread=0; i_thread<n_threads; i_thread++)
+             threads.at(i_thread).join();
++#endif
+ 
+          if (false) {
+             for (unsigned int i_thread=0; i_thread<n_threads; i_thread++) {
+diff --git a/coot-utils/slurp-map.cc b/coot-utils/slurp-map.cc
+index 7025c6fbd..b41a53062 100644
+--- a/coot-utils/slurp-map.cc
++++ b/coot-utils/slurp-map.cc
+@@ -414,6 +414,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                unsigned int grid_offset = c_u * gs.nu() * gs.nv() + c_v * gs.nv() + c_w;
+                const float f = *reinterpret_cast<const float *>(map_data + 4 * offset + 4 * grid_offset);
+ 
++#ifdef HAVE_CXX_THREAD
+                if (true) { // debugging
+                   bool unlocked = false;
+                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -423,6 +424,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                   std::cout << " " << iw.coord().format() << " " << f << std::endl;
+                   print_lock = false;
+                }
++#endif
+ 
+                (*xmap)[iw] = f;
+                c_w++;
+@@ -448,6 +450,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                clipper::Xmap<float>::Map_reference_coord mrc(*xmap);
+                                // this is unsigned int because split_indices returns unsigned int pairs.
+ 
++#ifdef HAVE_CXX_THREAD
+                                if (false) { // debugging
+                                   bool unlocked = false;
+                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -460,6 +463,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                             << std::endl;
+                                   print_lock = false;
+                                }
++#endif
+ 
+                                for (unsigned int isec = start_stop_section_index.first; isec < start_stop_section_index.second; isec++ ) {
+ 
+@@ -487,6 +491,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                   }
+                                }
+ 
++#ifdef HAVE_CXX_THREAD
+                                if (false) { // debugging
+                                   bool unlocked = false;
+                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
+@@ -497,6 +502,7 @@ coot::util::slurp_parse_xmap_data(char *data,
+                                             << start_stop_section_index.second << "\n";
+                                   print_lock = false;
+                                }
++#endif
+                             };
+ 
+ 
+diff --git a/ideal/make-restraints.cc b/ideal/make-restraints.cc
+index c15a6edea..226e193ef 100644
+--- a/ideal/make-restraints.cc
++++ b/ideal/make-restraints.cc
+@@ -78,8 +78,7 @@ coot::restraints_container_t::make_restraints(int imol,
+ 					      bool do_flank_restraints) {
+ 
+ 
+-#if 1
+-
++   // make_restraints_ng now works in both threaded and single-threaded builds
+    make_restraints_ng(imol, geom, flags_in, do_residue_internal_torsions, do_trans_peptide_restraints,
+ 		      rama_plot_target_weight, do_rama_plot_restraints,
+ 		      do_auto_helix_restraints,
+@@ -88,8 +87,8 @@ coot::restraints_container_t::make_restraints(int imol,
+ 		      sec_struct_pseudo_bonds, do_link_restraints, do_flank_restraints);
+ 
+    return size();
+-#endif
+ 
++   // Dead code below - kept for reference but never executed since we always return above
+    // if a peptide is trans, add a restraint to penalize non-trans configuration
+    // (currently a torsion restraint on peptide w of 180)
+    //
+diff --git a/ideal/ng.cc b/ideal/ng.cc
+index 724e39d3b..b43f232cc 100644
+--- a/ideal/ng.cc
++++ b/ideal/ng.cc
+@@ -27,17 +27,17 @@
+ #include <iomanip>
+ 
+ #include "compat/coot-sysdep.h"
++#include "simple-restraint.hh"
+ 
+ #include "coot-utils/bonded-pairs.hh"
+ #include "geometry/residue-and-atom-specs.hh"
+-#include "simple-restraint.hh"
+ #include "coot-utils/contacts-by-bricks.hh"
+ #include "coot-utils/stack-and-pair.hh"
+ 
+ #include "utils/logging.hh"
+ extern logging logger;
+ 
+-
++// make_restraints_ng now works in both threaded and single-threaded builds
+ int
+ coot::restraints_container_t::make_restraints_ng(int imol,
+                                                  const coot::protein_geometry &geom,
+@@ -60,12 +60,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
+ 
+    bool console_output_for_restraints_generation_timings = false;
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    if (! thread_pool_p) {
+          std::cout << "ERROR:: " << __FUNCTION__ << " --- thread pool was not set! ---------"
+                    << std::endl;
+          std::cout << "ERROR:: make_restraints_ng() stops before it starts" << std::endl;
+          return -1;
+    }
++#endif
+ 
+    auto tp_0 = std::chrono::high_resolution_clock::now();
+    restraints_usage_flag = flags_in;
+@@ -145,15 +147,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
+       // the non-threaded version has a different limit on the
+       // non_bonded_contacts_atom_indices (so, out of range if you use it?)
+ 
+-      if (! thread_pool_p) {
+-         std::cout << "ERROR:: ------- " << __FUNCTION__ << " - thread pool was not set! ---------"
+-                   << std::endl;
+-         // and yet we continue... that's bad news.
+-         std::cout << "ERROR:: Bad things will now happen" << std::endl;
+-      }
+-
+-      if (! just_chirals)
++      if (! just_chirals) {
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          make_non_bonded_contact_restraints_using_threads_ng(imol, geom);
++#else
++         // Single-threaded fallback: use non-threaded NBC function
++         make_non_bonded_contact_restraints_ng(imol, geom);
++#endif
++      }
+ 
+       auto tp_5 = std::chrono::high_resolution_clock::now();
+ 
+@@ -195,8 +196,10 @@ coot::restraints_container_t::make_restraints_ng(int imol,
+             make_base_pairing_and_stacking_restraints_ng(imol, geom);
+       }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+       make_df_restraints_indices();
+       make_distortion_electron_density_ranges();
++#endif
+ 
+       // Now we don't do this here - we do it after all the restraints have been added -
+       // called from graphics-info-modelling.cc
+@@ -540,6 +543,7 @@ coot::restraints_container_t::make_flanking_atoms_restraints_ng(const coot::prot
+    // flank_restraints.report();
+ }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+ // static
+ void
+ coot::restraints_container_t::make_non_bonded_contact_restraints_workpackage_ng(int ithread,
+@@ -1139,6 +1143,7 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_using_threads_n
+                 << " adding NBCs to restraints " << d65 << std::endl;
+ 
+ }
++#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+ 
+ 
+ unsigned int
+@@ -1461,9 +1466,10 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_ng(int imol,
+       }
+    }
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    make_df_restraints_indices();
+-   // is the following needed? I doubt.
+    make_distortion_electron_density_ranges();
++#endif
+ 
+    return n_nbc_restraints;
+ 
+diff --git a/ideal/simple-restraint.cc b/ideal/simple-restraint.cc
+index 926ee9f21..334f3a12f 100644
+--- a/ideal/simple-restraint.cc
++++ b/ideal/simple-restraint.cc
+@@ -2488,7 +2488,22 @@ coot::electron_density_score_from_restraints(const gsl_vector *v,
+    }
+ 
+ #else
+-   std::cout << __FUNCTION__ << " no thread pool" << std::endl;
++   // Single-threaded fallback: calculate electron density score directly
++   if (restraints_p->include_map_terms() == 1) {
++      unsigned int n_atoms = restraints_p->get_n_atoms();
++      for (unsigned int iat=0; iat<n_atoms; iat++) {
++         if (restraints_p->use_map_gradient_for_atom[iat]) {
++            int idx = 3 * iat;
++            clipper::Coord_orth ao(gsl_vector_get(v,idx),
++                                   gsl_vector_get(v,idx+1),
++                                   gsl_vector_get(v,idx+2));
++            score += restraints_p->Map_weight() *
++               restraints_p->atom_z_occ_weight[iat] *
++               restraints_p->electron_density_score_at_point(ao);
++         }
++      }
++      score = -score;
++   }
+ #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+    return score;
+ }
+diff --git a/ideal/simple-restraint.hh b/ideal/simple-restraint.hh
+index c39ac7abd..eab68f9ec 100644
+--- a/ideal/simple-restraint.hh
++++ b/ideal/simple-restraint.hh
+@@ -1231,9 +1231,7 @@ namespace coot {
+ 
+ #ifndef __NVCC__
+          restraints_lock = false; // not locked
+-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+          thread_pool_p = 0; // null pointer
+-#endif
+ #endif // __NVCC__
+       }
+ 
+@@ -2725,8 +2723,7 @@ namespace coot {
+       // I think so - for example crankshaft
+       //
+       unsigned int n_threads;
+-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+-      // thread pool!
++      // thread pool - uses stub implementation when HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined
+       //
+       ctpl::thread_pool *thread_pool_p;
+       // std::atomic<unsigned int> &done_count_for_threads;
+@@ -2743,6 +2740,7 @@ namespace coot {
+       //
+       // ctpl::thread_pool another_thread_pool;
+ 
++#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+       void make_df_restraints_indices();
+       void make_distortion_electron_density_ranges();
+       void clear_df_by_thread_results();
+@@ -2754,7 +2752,6 @@ namespace coot {
+       std::vector<std::vector<std::size_t> > df_by_thread_atom_indices; // for electron density
+       // pull restraints are dynamically added to the end of restraints_indices
+       std::vector<std::vector<std::size_t> > restraints_indices;
+-
+ #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+ 
+       void clear();
+diff --git a/utils/ctpl.h b/utils/ctpl.h
+index 4ade8e1a0..ec8d50d24 100644
+--- a/utils/ctpl.h
++++ b/utils/ctpl.h
+@@ -21,6 +21,13 @@
+ #ifndef __ctpl_thread_pool_H__
+ #define __ctpl_thread_pool_H__
+ 
++// When HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined, use stub implementation
++#ifndef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
++
++#include "ctpl_stub.h"
++
++#else // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is defined - use full threaded implementation
++
+ #include <functional>
+ #include <thread>
+ #include <atomic>
+@@ -236,5 +243,7 @@ namespace ctpl {
+ 
+ }
+ 
++#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
++
+ #endif // __ctpl_thread_pool_H__
+ 
+
+diff --git a/coot-utils/contacts-by-bricks.cc b/coot-utils/contacts-by-bricks.cc
+index 50e2a6881..d6ed78c5e 100644
+--- a/coot-utils/contacts-by-bricks.cc
++++ b/coot-utils/contacts-by-bricks.cc
+@@ -26,7 +26,9 @@
+ 
+ #include <iostream>
+ #include <chrono>
++#ifdef HAVE_CXX_THREAD
+ #include <thread>
++#endif
+ 
+ #include "utils/coot-utils.hh"
+ #include "utils/split-indices.hh"
+@@ -268,6 +270,7 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
+    int brick_index_max = range[0] * range[1] * range[2];
+    float dist_max_sqrd = dist_nbc_max * dist_nbc_max;
+ 
++#ifdef HAVE_CXX_THREAD
+    std::vector<std::thread> threads;
+ 
+    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
+@@ -279,6 +282,16 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
+    }
+    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++)
+       threads[ii].join();
++#else
++   // Single-threaded fallback: call workpackage directly for each index set
++   for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
++      const std::vector<unsigned int> &index_set = thread_index_sets[ii];
++      find_the_contacts_between_bricks_multi_thread_workpackage(
++         vec_p, index_set, atoms_in_bricks,
++         fixed_flags, range, atoms, brick_index_max, dist_nbc_max,
++         only_between_different_residues_flag);
++   }
++#endif
+ 
+    if (false) {
+       auto tp_1 = std::chrono::high_resolution_clock::now();
