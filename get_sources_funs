@@ -83,6 +83,7 @@ getmmdb2() {
         tar xf mmdb2-$mmdb_release.tar.gz
         rm -f mmdb2
         ln -s mmdb2-$mmdb_release mmdb2
+        patch -p0 < ../patches/mmdb-emsdk500.patch
     fi
     echo
 }
