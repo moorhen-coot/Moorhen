@@ -1,12 +1,11 @@
 /* Main entry point */
 // @ts-strict
 import "./app.css";
-
 // customElements.define("moorhen-helper", MoorhenHelper);
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
-export { MoorhenReduxStoreType } from "./store";
+export { MoorhenReduxStoreType } from "@/store/index";
 export { MoorhenProvider } from "./components/MoorhenProvider";
 export { MoorhenContainer } from "./components/container/MainContainer";
 export { MoorhenDraggableModalBase } from "./components/interface-base/ModalBase/DraggableModalBase";
@@ -18,7 +17,6 @@ export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";
 export { CommandCentre } from "./InstanceManager/CommandCentre";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
-export { Preferences } from "./components/managers/preferences/MoorhenPreferences";
 export { MoorhenMoleculeSelect } from "./components/inputs";
 export { MoorhenMapSelect } from "./components/inputs/Selector/MoorhenMapSelect";
 export { MoorhenSlider } from "./components/inputs";
@@ -36,209 +34,13 @@ export { MoorhenUnmodelledBlobs } from "./components/validation-tools/MoorhenUnm
 export { MoorhenValidation } from "./components/validation-tools/MoorhenValidation";
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
 export { autoOpenFiles } from "./utils/MoorhenFileLoading";
-export {
-    default as sceneSettingsReducer,
-    setDefaultBackgroundColor,
-    setDrawCrosshairs,
-    setDrawFPS,
-    setDrawMissingLoops,
-    setDefaultBondSmoothness,
-    setDoSSAO,
-    setSsaoRadius,
-    setSsaoBias,
-    setResetClippingFogging,
-    setClipCap,
-    setEdgeDetectNormalScale,
-    resetSceneSettings,
-    setUseOffScreenBuffers,
-    setDoShadowDepthDebug,
-    setDoShadow,
-    setDoSpin,
-    setDoOutline,
-    setDepthBlurRadius,
-    setDrawScaleBar,
-    setDepthBlurDepth,
-    setDrawAxes,
-    setDoPerspectiveProjection,
-    setHeight,
-    setWidth,
-    setIsDark,
-    setBackgroundColor,
-    setDoEdgeDetect,
-    setEdgeDetectDepthThreshold,
-    setEdgeDetectNormalThreshold,
-    setEdgeDetectDepthScale,
-    setDoAnaglyphStereo,
-    setDoCrossEyedStereo,
-    setDoSideBySideStereo,
-    setDoThreeWayView,
-    setDoMultiView,
-    setMultiViewColumns,
-    setMultiViewRows,
-    setSpecifyMultiViewRowsColumns,
-    setThreeWayViewOrder,
-} from "./store/sceneSettingsSlice";
-export {
-    default as backupSettingsReducer,
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-    resetBackupSettings,
-} from "./store/backupSettingsSlice";
-export {
-    default as generalStatesReducer,
-    setActiveMap,
-    setCootInitialized,
-    setAppTittle,
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setUserPreferencesMounted,
-    setDevMode,
-    setTheme,
-    setViewOnly,
-    resetGeneralStates,
-    setUseGemmi,
-    setShowHoverInfo,
-} from "./store/generalStatesSlice";
-export { default as mapsReducer, addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
-export {
-    default as hoveringStatesReducer,
-    setCursorStyle,
-    setEnableAtomHovering,
-    setHoveredAtom,
-    resetHoveringStates,
-} from "./store/hoveringStatesSlice";
-export {
-    default as labelSettingsReducer,
-    addAvailableFontList,
-    setAtomLabelDepthMode,
-    setGLLabelsFontFamily,
-    setGLLabelsFontSize,
-    resetLabelSettings,
-} from "./store/labelSettingsSlice";
-export {
-    default as mapContourSettingsReducer,
-    showMap,
-    hideMap,
-    setPositiveMapColours,
-    setNegativeMapColours,
-    setMapAlpha,
-    setMapColours,
-    setMapRadius,
-    setMapStyle,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setContourLevel,
-    resetMapContourSettings,
-} from "./store/mapContourSettingsSlice";
-export {
-    default as sliceNDiceReducer,
-    setBFactorThreshold,
-    setClusteringType,
-    setMoleculeBfactors,
-    setMoleculeMaxBfactor,
-    resetSliceNDiceSlice,
-    setMoleculeMinBfactor,
-    setNClusters,
-    setPaeFileIsUploaded,
-    setSlicingResults,
-    setThresholdType,
-    setPAEFileContents,
-} from "./store/sliceNDiceSlice";
-export {
-    default as refinementSettingsReducer,
-    setEnableRefineAfterMod,
-    setUseRamaRefinementRestraints,
-    setuseTorsionRefinementRestraints,
-    setAnimateRefine,
-    resetRefinementSettings,
-} from "./store/refinementSettingsSlice";
-export {
-    default as moleculesReducer,
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    removeCustomRepresentation,
-    addGeneralRepresentation,
-    removeGeneralRepresentation,
-} from "./store/moleculesSlice";
-export {
-    default as mouseSettingsReducer,
-    setContourWheelSensitivityFactor,
-    setZoomWheelSensitivityFactor,
-    setMouseSensitivity,
-    resetDefaultMouseSettings,
-} from "./store/mouseSettings";
-export {
-    default as shortcutSettingsReducer,
-    setShowShortcutToast,
-    setShortcutOnHoveredAtom,
-    setShortCuts,
-    resetShortcutSettings,
-} from "./store/shortCutsSlice";
-export {
-    default as moleculeMapUpdateReducer,
-    setShowScoresToast,
-    addMapUpdatingScore,
-    removeMapUpdatingScore,
-    overwriteMapUpdatingScores,
-    resetMoleculeMapUpdates,
-} from "./store/moleculeMapUpdateSlice";
-export {
-    default as lhasaReducer,
-    resetLhasaSettings,
-    addRdkitMoleculePickle,
-    removeRdkitMoleculePickle,
-    emptyRdkitMoleculePickleList,
-} from "./store/lhasaSlice";
-export { default as modalsReducer, resetActiveModals, focusOnModal, unFocusModal } from "./store/modalsSlice";
-export { default as sharedSessionReducer, resetSharedSession } from "./store/sharedSessionSlice";
-export {
-    default as glRefSliceReducer,
-    setOrigin,
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setLightPosition,
-    setAmbient,
-    setSpecular,
-    setDiffuse,
-    setSpecularPower,
-    setZoom,
-    setQuat,
-    setFogClipOffset,
-    setFogStart,
-    setFogEnd,
-    setClipStart,
-    setClipEnd,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-} from "./store/glRefSlice";
-export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
-export { _MoorhenReduxStore as MoorhenReduxStoreSingleton } from "./store";
-export { default as overlaysReducer } from "./store/overlaysSlice";
-export { default as menusReducer } from "./store/menusSlice";
-export { default as atomInfoCardsReducer } from "./store/atomInfoCardsSlice";
-export { setBusy } from "./store/globalUISlice";
-export { default as jsonValidationReducer } from "./store/jsonValidation";
-export { default as mrParseSliceReducer } from "./store/mrParseSlice";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
 export { MoorhenWebComponent } from "./Wrappers/MoorhenWebComponent";
+export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
+export type { RootState as MoorhenStoreRootState } from "./store/MoorhenReduxStore";
+export { useCommandCentre, useCommandAndCapsule, useMoorhenInstance } from '@/InstanceManager';
+export { Preferences as MoorhenPreferences } from '@/components/managers/preferences/MoorhenPreferences';
+
+// Export Redux store actions are auto-generated by scripts/CreateStoreExport.py
+export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession, emptyAvailableFonts, addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings, setValidationJson, setBusy, setTimeCapsuleBusy, setGlobalInstanceReady, setShowBottomPanel, setSearchBarActive, setMainMenuOpen, setShortCutsBlocked, setShownSidePanel, setSidePanelWidth, addMolecule, removeMolecule, emptyMolecules, addMoleculeList, addGeneralRepresentation, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation, removeGeneralRepresentation, setConnectedMolecule, enableUpdatingMaps, disableUpdatingMaps, setReflectionMap, setFoFcMap, setTwoFoFcMap, setReflectionMapMolNo, overwriteMapUpdatingScores, setCurrentScores, setConnectedMoleculeMolNo, setFoFcMapMolNo, setTwoFoFcMapMolNo, removeMapUpdatingScore, setShowScoresToast, addMapUpdatingScore, triggerUpdate, resetMoleculeMapUpdates, resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList, addVector, removeVector, emptyVectors, addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays, addCallback, addLatexOverlay, removeImageOverlay, removeLatexOverlay, removeTextOverlay, removeSvgPathOverlay, removeFracPathOverlay, setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates, attachModalToSideBar, showModal, hideModal, detachModalFromSideBar, focusOnModal, unFocusModal, resetActiveModals, collapseSideBarModal, expandSideBarModal, showMap, hideMap, setContourLevel, setMapRadius, setMapFastRadius, setMapAlpha, setMapStyle, changeMapRadius, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setMapColours, setNegativeMapColours, setPositiveMapColours, changeContourLevel, setReContourMapOnlyOnMouseUp, resetMapContourSettings, setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings, setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings, setMenuSetting, resetMenuSetting, resetMenu, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings, setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale, setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor, setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setGlViewportHeight, setGlViewportWidth, setIsDark, setEdgeDetectDepthScale, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo, setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewRows, setMultiViewColumns, setSpecifyMultiViewRowsColumns, setThreeWayViewOrder, setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms, setAppTittle, setUserPreferencesMounted, setDevMode, setCootInitialized, setStopResidueSelection, setStartResidueSelection, clearResidueSelection, setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection, setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection, toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory, resetGeneralStates, setIsShowingTomograms, setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, setUseGemmi, setShowHoverInfo, setAllowScripting, setAllowAddNewFittedLigand, setAllowMergeFittedLigand, setDisableFileUpload, resetSliceNDiceSlice, setPaeFileIsUploaded, setThresholdType, setMoleculeBfactors, setSlicingResults, setMoleculeMaxBfactor, setMoleculeMinBfactor, setBFactorThreshold, setNClusters, setClusteringType, setPAEFileContents, setMrParseModels, setTargetSequence, setAfJson, setEsmJson, setHomologsJson, setAfSortField, setHomologsSortField, setAfSortReversed, setHomologsSortReversed, setAFDisplaySettings, setHomologsDisplaySettings, setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings, setAtomInfoIds, addMap, removeMap, emptyMaps, addMapList, setOrigin, setRequestDrawScene, setIsWebGL2, setActiveMolecule, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setZoom, setQuat, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setCursorPosition, setShortCutHelp, setDraggableMolecule, triggerRedrawEnv, triggerClearLabels, setGLCtx, setDisplayBuffers, setHoverSize, setLabelBuffers, setTexturedShapes, setRttFramebufferSize, setCanvasSize, setElementsIndicesRestrict } from "@/store";
+// do not edit below this line it will be overwritten by scripts/CreateStoreExport.py

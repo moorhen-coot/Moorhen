@@ -8,7 +8,7 @@ import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../..
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
 import { useWindowEventListener } from "../../hooks/useWindowEventListener";
-import { RootState } from "../../store/MoorhenReduxStore";
+import { MoorhenReduxStoreType, RootState } from "../../store/MoorhenReduxStore";
 import {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,
@@ -142,6 +142,7 @@ interface ContainerRefs {
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
     moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
+    onInitialisationCompleted?: () => void;
 }
 
 interface ContainerOptionalProps {
@@ -152,11 +153,9 @@ interface ContainerOptionalProps {
     extraDraggableModals?: React.JSX.Element[];
     monomerLibraryPath?: string;
     setMoorhenDimensions?: null | (() => [number, number]);
-    extraFileMenuItems?: React.JSX.Element[];
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
     aceDRGInstance?: moorhen.AceDRGInstance | null;
-    includeNavBarMenuNames?: string[];
     store?: Store;
     allowAddNewFittedLigand?: boolean;
     allowMergeFittedLigand?: boolean;
@@ -225,7 +224,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
     timeCapsuleMoleculeRef.current = molecules;
 
     const dispatch = useDispatch();
-    const store: Store = useStore();
+    const store = useStore<RootState>();
+
     const moorhenInstance = useMoorhenInstance();
 
     useEffect(() => {
@@ -333,7 +333,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }, [drawMissingLoops]);
 
     useEffect(() => {
-        function startupEffect() {
+        const startupEffect = async () => {
             if (!window.cootModule) windowCootCCP4Loader(`${urlPrefix}/wasm/`);
             if (!window.MathJax) loadMathjax(`${urlPrefix}`);
             setWindowDimensions();
@@ -372,8 +372,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
             dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
-        }
-        startupEffect();
+        };
+        startupEffect().then(() => {
+            if (props.onInitialisationCompleted) {
+                props.onInitialisationCompleted();
+            }
+        });
     }, [userPreferencesMounted]);
 
     useEffect(() => {
