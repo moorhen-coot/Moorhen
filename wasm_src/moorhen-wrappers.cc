@@ -416,28 +416,79 @@ class molecules_container_js : public molecules_container_t {
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
         }
 
-        coot::validation_information_t  get_validation(int imol){
+        coot::validation_information_t get_validation(int imol){
             mmdb::Manager *mol = get_mol(imol);
             auto st = gemmi::copy_from_mmdb(mol);
-            for (gemmi::Model& model : st.models){
-                for (gemmi::Chain& chain : model.chains){
-                    for (gemmi::Residue& res : chain.residues){
-                        for (gemmi::Atom& atom : res.atoms){
-                            atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
-                        }
+            size_t model_index = 0;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs;
+            for (gemmi::Chain& chain : st.models[model_index].chains) {
+                for (gemmi::Residue& res : chain.residues) {
+                    for (gemmi::Atom& atom : res.atoms) {
+                        atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        atom_zs[&atom] = std::vector<double>();
                     }
                 }
             }
-
-            coot::validation_information_t validation;
-            //return "{\"name\":"+std::to_string(st.models[0].num)+"}";
             gemmi::MonLib monlib;
-            auto mon_lib_path = std::filesystem::path(getenv("CCP4_LIB")) / "data" / "monomers";
-            //monlib.read_monomer_cif();
+            std::filesystem::path ccp4_lib(std::getenv("CCP4_LIB"));
+            auto monomer_dir = ccp4_lib / "data" / "monomers";
+            auto resnames = st.models[model_index].get_all_residue_names();
             gemmi::Logger logger;
-            std::vector<std::string> resVec = st.models[0].get_all_residue_names();//{"ALA","LYS","GLY"};
-            monlib.read_monomer_lib(mon_lib_path,resVec,logger);
-            auto topo = gemmi::prepare_topology(st,monlib,0,gemmi::HydrogenChange::NoChange,false);
+            monlib.read_monomer_lib(monomer_dir, resnames, logger);
+            auto hchange = gemmi::HydrogenChange::NoChange;
+            auto reorder = false;
+            auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
+            for (const auto& bond : topo->bonds) {
+                double z = bond.calculate_z();
+                atom_zs[bond.atoms[0]].push_back(z);
+                atom_zs[bond.atoms[1]].push_back(z);
+            }
+            for (const auto& angle : topo->angles) {
+                double z = angle.calculate_z();
+                atom_zs[angle.atoms[0]].push_back(z);
+                atom_zs[angle.atoms[1]].push_back(z);
+                atom_zs[angle.atoms[2]].push_back(z);
+            }
+            for (const auto& torsion : topo->torsions) {
+                // Some torsions are only restrained with planes so check esd
+                if (torsion.restr->esd > 0.0) {
+                    double z = torsion.calculate_z();
+                    atom_zs[torsion.atoms[0]].push_back(z);
+                    atom_zs[torsion.atoms[1]].push_back(z);
+                    atom_zs[torsion.atoms[2]].push_back(z);
+                    atom_zs[torsion.atoms[3]].push_back(z);
+                }
+            }
+            for (const auto& plane : topo->planes) {
+                const auto abcd = gemmi::find_best_plane(plane.atoms);
+                for (const auto &atom : plane.atoms)
+                {
+                    const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
+                    atom_zs[atom].push_back(dist / plane.restr->esd);
+                }
+            }
+            for (const auto& chir : topo->chirs) {
+                static const double esd = 0.1;
+                const double ideal = topo->ideal_chiral_abs_volume(chir);
+                const double z = chir.calculate_z(ideal, esd);
+                atom_zs[chir.atoms[0]].push_back(z);
+                atom_zs[chir.atoms[1]].push_back(z);
+                atom_zs[chir.atoms[2]].push_back(z);
+                atom_zs[chir.atoms[3]].push_back(z);
+            }
+            for (auto& chain : st.models[model_index].chains) {
+                for (auto& res : chain.residues) {
+                    std::vector<double> res_zs;
+                    for (auto& atom : res.atoms) {
+                        auto& zs = atom_zs[&atom];
+                        res_zs.insert(res_zs.end(), zs.begin(), zs.end());
+                    }
+                    auto stats = gemmi::calculate_data_statistics(res_zs);
+                    double z = stats.rms;
+                    double p = std::erfc(M_SQRT1_2 * std::abs(z));
+                }
+            }
+            coot::validation_information_t validation;
             return validation;
         }
 
