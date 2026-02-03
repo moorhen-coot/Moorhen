@@ -45,7 +45,6 @@ export const ResidueBox = memo((props: ResidueBoxProps) => {
                   .map(([, value]) => (Array.isArray(value) ? value[0] : value))
             : [])
     );
-    console.log("geoValue", geoValue);
 
     if (!residue) {
         return (

@@ -1,24 +1,26 @@
+import { add } from "@dnd-kit/utilities";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
+    addValidationDataToSeqViewerSequences,
     handleResiduesSelection,
     useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
-import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
+import { RootState, setHoveredAtom, setShowBottomPanel, setShowValidationPanel } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { convertRemToPx } from "@/utils/utils";
 import "./sequence-viewer-panel.css";
 
-export const SequenceViewerPanel = () => {
+export const ValidationPanel = () => {
     const dispatch = useDispatch();
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
-    const [expand, setExpand] = useState<boolean>(true);
+    const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
     const { enqueueSnackbar } = useSnackbar();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
@@ -32,25 +34,75 @@ export const SequenceViewerPanel = () => {
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
+    const showValidationPanel = useSelector((state: RootState) => state.globalUI.showValidationPanel);
+
+    // const showValidationPanel = true;
+
+    const expand = showValidationPanel || sequencesExpand;
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
     const toggleBottomPanel = () => {
-        if (expand) {
-            setExpand(false);
+        if (sequencesExpand) {
+            setSequencesExpand(false);
         }
         dispatch(setShowBottomPanel(!bottomPanelIsShown));
     };
     const handleExpand = () => {
-        setExpand(!expand);
+        setSequencesExpand(!sequencesExpand);
     };
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
     }, [residueSelection]);
 
+    const getValidationDataForAllResidues = () => {
+        if (!molecule) {
+            return [];
+        }
+        // Mock function to generate random validation data for demonstration purposes
+        const data = molecule.sequences.flatMap(sequence => {
+            return [
+                {
+                    chain: sequence.chain,
+                    label: "Ramachandran",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Rotamer",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Bonds",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Angle",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Peptide Omega",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: [Math.random(), 10] as [number, number] })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "1",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: 1 })),
+                },
+            ];
+        });
+        return data;
+    };
+
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         const sequences = MoleculeToSeqViewerSequences(molecule);
+        const validationData = getValidationDataForAllResidues();
+
+        addValidationDataToSeqViewerSequences(sequences, validationData);
         return sequences;
     }, [selectedMolecule, molecule?.sequences]);
 
@@ -77,22 +129,7 @@ export const SequenceViewerPanel = () => {
         [dispatch, molecule]
     );
 
-    const configPanel = (
-        <div>
-            <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />
-            <p></p>
-            <MoorhenNumberInput
-                label="Max lines"
-                labelPosition="left"
-                minMax={[1, 10]}
-                type="numberForm"
-                decimalDigits={0}
-                value={numberOfLines}
-                setValue={val => setNumberOfLines(val)}
-                width="4rem"
-            />
-        </div>
-    );
+    const configPanel = <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />;
 
     useEffect(() => {
         const animation = () => {
@@ -109,8 +146,8 @@ export const SequenceViewerPanel = () => {
     }, [sidePanelIsOpen]);
 
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
-    // const displaySize = (expandLength - 1) * 26 + 76;
-    const displaySize = 4 * 26 + 16;
+    const displaySize = showValidationPanel ? 2 * 26 + 76 : (expandLength - 1) * 26 + 76;
+    //const displaySize = 6 * 26 + 16;
 
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
@@ -137,28 +174,40 @@ export const SequenceViewerPanel = () => {
                     ) : (
                         <span>&nbsp;&nbsp;</span>
                     ))}
+                {bottomPanelIsShown && (
+                    <MoorhenToggle
+                        label={"Validation"}
+                        checked={showValidationPanel}
+                        onChange={() => {
+                            setPanelKeyRef(current => current + 1);
+                            dispatch(setShowValidationPanel(!showValidationPanel));
+                        }}
+                    />
+                )}
             </div>
             <div
                 className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
                 style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
             >
-                <MoorhenSequenceViewer
-                    key={seqViewerKey}
-                    sequences={sequenceList}
-                    selectedResidues={sequenceSelection}
-                    hoveredResidue={hoveredResidue}
-                    maxDisplayHeight={4}
-                    displayHeight={expand ? numberOfLines : 1}
-                    // displayHeight={1}
-                    showTitleBar={false}
-                    onResidueClick={handleClick}
-                    onResiduesSelect={residueSelectionCallback}
-                    onHoverResidue={handleHoverResidue}
-                    className={`moorhen__edge-panel-sequence-viewer`}
-                    style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
-                    forceRedrawScrollBarKey={panelKeyRef}
-                    showValidationData={false}
-                />
+                {bottomPanelIsShown && (
+                    <MoorhenSequenceViewer
+                        key={seqViewerKey}
+                        sequences={sequenceList}
+                        selectedResidues={sequenceSelection}
+                        hoveredResidue={hoveredResidue}
+                        maxDisplayHeight={4}
+                        displayHeight={sequencesExpand ? numberOfLines : 1}
+                        // displayHeight={1}
+                        showTitleBar={false}
+                        onResidueClick={handleClick}
+                        onResiduesSelect={residueSelectionCallback}
+                        onHoverResidue={handleHoverResidue}
+                        className={`moorhen__edge-panel-sequence-viewer`}
+                        style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
+                        forceRedrawScrollBarKey={panelKeyRef}
+                        showValidationData={showValidationPanel}
+                    />
+                )}
             </div>
         </>
     );

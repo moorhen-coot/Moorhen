@@ -450,6 +450,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     handleResidueMouseOver={handleResidueMouseOver}
                     handleResidueMouseDown={handleResidueMouseDown}
                     handleResidueMouseUp={handleResidueMouseUp}
+                    showValidationData={showValidationData}
                 />
             );
         });

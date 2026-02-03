@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { SequenceViewerPanel } from "./SequenceViewerPanel/SequenceViewerPanel";
+import { ValidationPanel } from "./SequenceViewerPanel/ValidationPanel";
 import "./bottom-panel.css";
 
 export const BottomPanelContainer = () => {
@@ -10,7 +11,8 @@ export const BottomPanelContainer = () => {
     const showValidationPanel = useSelector((state: RootState) => state.globalUI.showValidationPanel);
     return (
         <div className="moorhen__bottom-panel-container" style={{ width: "100%" }}>
-            <SequenceViewerPanel />
+            {/* <SequenceViewerPanel /> */}
+            <ValidationPanel />
         </div>
     );
 };

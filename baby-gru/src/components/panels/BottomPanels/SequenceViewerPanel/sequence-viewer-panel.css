@@ -3,16 +3,16 @@
 
 .moorhen__edge-panel-sequence-viewer {
     border: none;
-    /* border-radius: 0rem;
+    border-radius: 0rem;
     background-color: var(--moorhen-background);
-    box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow);
+    /* box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow); */
     width: 100%;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); */
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.moorhen__edge-panel-sequence-viewer--side-panel-visible {
+/* .moorhen__edge-panel-sequence-viewer--side-panel-visible {
     width: calc(100% - 300px);
-}
+} */
 
 .moorhen__sequence-panel-container {
     position: absolute;
@@ -34,7 +34,7 @@
 .moorhen__sequence-panel-tab {
     position: absolute;
     bottom: 76px;
-    width: 10rem;
+    min-width: 10rem;
     padding: 0.5rem;
     height: 2rem;
     border: 1px solid var(--moorhen-border);
