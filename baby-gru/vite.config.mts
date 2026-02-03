@@ -156,7 +156,13 @@ export default defineConfig({
             "Cross-Origin-Embedder-Policy": "require-corp",
         },
         watch: {
-            ignored: ["**/public/monomers/**", "**/public/**.wasm", "**/public/**.data", "**/public/pixmaps/**", "**/public/tutorials/**"],
+            ignored: [
+                "**/public/monomers/MoorhenAssets/**",
+                "**/public/MoorhenAssets/wasm/**",
+                "**/public/MoorhenAssets/data.tar.gz",
+                "**/public/pixmaps/**",
+                "**/public/MoorhenAssets/tutorials/**",
+            ],
         },
         hmr: {
             overlay: true,
