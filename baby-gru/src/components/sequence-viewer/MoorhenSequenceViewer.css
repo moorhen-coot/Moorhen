@@ -20,6 +20,62 @@
     margin-bottom: 2px;
     color: black;
 }
+.moorhen__seqviewer__residue-validation-box-top,
+.moorhen__seqviewer__residue-validation-box-bottom {
+    cursor: pointer;
+    min-width: var(--column-width, 1rem);
+    max-width: var(--column-width, 1rem);
+    min-height: 1.5rem;
+    max-height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-size: 1rem;
+    margin-bottom: 2px;
+    border: 1px solid var(--moorhen-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.moorhen__seqviewer__residue-validation-box-top::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--bar-height, 50%);
+    background-color: var(--bar-color, rgba(100, 150, 200, 0.6));
+    pointer-events: none;
+}
+
+.moorhen__seqviewer__residue-validation-box-bottom::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--bar-height, 50%);
+    background-color: var(--bar-color, rgba(200, 100, 150, 0.6));
+    pointer-events: none;
+}
+
+.moorhen__seqviewer__residue-validation-popup-bar {
+    width: 4rem;
+    height: 0.8rem;
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+    border: 1px solid var(--moorhen-border);
+    padding: 0;
+}
+
+.moorhen__seqviewer__residue-validation-popup-bar::after {
+    content: "";
+    display: block;
+    width: var(--bar-length, 50%);
+    height: 100%;
+    background-color: var(--bar-color, rgba(200, 100, 150, 0.6));
+}
 
 .moorhen__seqviewer-no-sequence {
     width: 100%;

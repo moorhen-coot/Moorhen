@@ -27,6 +27,7 @@ type MoorhenSequenceViewerPropsType = {
     displayHeight?: number;
     forceRedrawScrollBarKey?: string | number;
     style?: React.CSSProperties;
+    showValidationData?: boolean;
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -38,6 +39,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         showTitleBar = true,
         className,
         onHoverResidue,
+        showValidationData = false,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;

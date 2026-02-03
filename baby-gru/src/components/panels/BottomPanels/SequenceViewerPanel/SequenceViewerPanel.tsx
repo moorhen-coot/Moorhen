@@ -1,26 +1,26 @@
+import { add } from "@dnd-kit/utilities";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RootState } from "../../../store/MoorhenReduxStore";
-import { setShowBottomPanel } from "../../../store/globalUISlice";
-import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
-import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import { convertRemToPx } from "../../../utils/utils";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "../../inputs";
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "../../sequence-viewer";
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
+    addValidationDataToSeqViewerSequences,
     handleResiduesSelection,
     useHoveredResidue,
-} from "../../sequence-viewer/utils";
+} from "@/components/sequence-viewer/utils";
+import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
+import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { convertRemToPx } from "@/utils/utils";
 import "./sequence-viewer-panel.css";
 
 export const SequenceViewerPanel = () => {
     const dispatch = useDispatch();
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
-    const [expand, setExpand] = useState<boolean>(false);
+    const [_expand, setExpand] = useState<boolean>(true);
     const { enqueueSnackbar } = useSnackbar();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
@@ -31,6 +31,7 @@ export const SequenceViewerPanel = () => {
             : null;
     });
 
+    const expand = true;
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
@@ -51,8 +52,54 @@ export const SequenceViewerPanel = () => {
         return MoorhenSelectionToSeqViewer(residueSelection);
     }, [residueSelection]);
 
+    const getValidationDataForAllResidues = () => {
+        if (!molecule) {
+            return [];
+        }
+        // Mock function to generate random validation data for demonstration purposes
+        const data = molecule.sequences.flatMap(sequence => {
+            return [
+                {
+                    chain: sequence.chain,
+                    label: "Ramachandran",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Rotamer",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Bonds",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Angle",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: Math.random() })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "Peptide Omega",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: [Math.random(), 10] as [number, number] })),
+                },
+                {
+                    chain: sequence.chain,
+                    label: "1",
+                    data: sequence.sequence.map(residue => ({ resNum: residue.resNum, score: 1 })),
+                },
+            ];
+        });
+        return data;
+    };
+
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
-        return MoleculeToSeqViewerSequences(molecule);
+        const sequences = MoleculeToSeqViewerSequences(molecule);
+        const validationData = getValidationDataForAllResidues();
+
+        addValidationDataToSeqViewerSequences(sequences, validationData);
+        return sequences;
     }, [selectedMolecule, molecule?.sequences]);
 
     const handleClick = useCallback(
@@ -110,7 +157,8 @@ export const SequenceViewerPanel = () => {
     }, [sidePanelIsOpen]);
 
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
-    const displaySize = (expandLength - 1) * 26 + 76;
+    // const displaySize = (expandLength - 1) * 26 + 76;
+    const displaySize = 6 * 26 + 16;
 
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
@@ -148,7 +196,8 @@ export const SequenceViewerPanel = () => {
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
                     maxDisplayHeight={4}
-                    displayHeight={expand ? numberOfLines : 1}
+                    // displayHeight={expand ? numberOfLines : 1}
+                    displayHeight={1}
                     showTitleBar={false}
                     onResidueClick={handleClick}
                     onResiduesSelect={residueSelectionCallback}
@@ -156,6 +205,7 @@ export const SequenceViewerPanel = () => {
                     className={`moorhen__edge-panel-sequence-viewer`}
                     style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
                     forceRedrawScrollBarKey={panelKeyRef}
+                    showValidationData={true}
                 />
             </div>
         </>

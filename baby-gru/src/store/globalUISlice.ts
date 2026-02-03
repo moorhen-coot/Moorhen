@@ -11,6 +11,7 @@ const initialState: {
     areShortcutsBlocked: boolean;
     shownSidePanel: PanelIDs | null;
     sidePanelWidth: number;
+    showValidationPanel: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -21,6 +22,7 @@ const initialState: {
     areShortcutsBlocked: false,
     shownSidePanel: null,
     sidePanelWidth: 450,
+    showValidationPanel: false,
 };
 
 const globalUISlice = createSlice({
@@ -54,6 +56,9 @@ const globalUISlice = createSlice({
         setSidePanelWidth: (state, action: PayloadAction<number>) => {
             state.sidePanelWidth = action.payload;
         },
+        setShowValidationPanel: (state, action: PayloadAction<boolean>) => {
+            state.showValidationPanel = action.payload;
+        },
     },
 });
 
@@ -67,5 +72,6 @@ export const {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShowValidationPanel,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

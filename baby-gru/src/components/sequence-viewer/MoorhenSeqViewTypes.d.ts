@@ -10,6 +10,7 @@ export type Residue = {
     resCID: string;
     selected?: boolean;
     colour?: string;
+    validationData?: { [key: string]: number | [number, number] };
 };
 
 export type SeqElement = {
