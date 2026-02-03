@@ -56,6 +56,7 @@ export const AssociateReflectionsToMap = () => {
         }
 
         await selectedMap.associateToReflectionData(selectedColumns, reflectionDataRef.current);
+        document.body.click();
     };
 
     return (

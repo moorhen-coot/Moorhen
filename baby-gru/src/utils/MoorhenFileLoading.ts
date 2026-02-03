@@ -1,6 +1,7 @@
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import Fasta from "biojs-io-fasta";
 import { Store } from "redux";
+import { hideMap } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
@@ -420,12 +421,18 @@ export const autoOpenFiles = async (
     const maps = store.getState().maps;
 
     let isMrParse = false;
-    for (const file of files) {
-        if (file.name.endsWith("input.fasta")) {
-            isMrParse = true;
-            break;
-        }
+    let isRelionLocresFolder = false;
+    const fileNames = files.map(file => file.name);
+
+    // Check for MrParse directory
+    if (fileNames.some(name => name.endsWith("input.fasta"))) {
+        isMrParse = true;
     }
+    // Check for RELION local resolution maps
+    else if (fileNames.some(name => name.endsWith("_locres.mrc")) && fileNames.some(name => name.endsWith("_locres_filtered.mrc"))) {
+        isRelionLocresFolder = true;
+    }
+
     if (isMrParse) {
         console.log("I think this is an MrParse directory....");
         dispatch(showModal(modalKeys.MRPARSE));
@@ -485,6 +492,7 @@ export const autoOpenFiles = async (
             }
         }
     }
+
     for (const file of files) {
         if (
             file.name.endsWith(".mrc") ||
@@ -493,37 +501,34 @@ export const autoOpenFiles = async (
             file.name.endsWith(".mrc.gz") ||
             file.name.endsWith(".map.gz")
         ) {
-            const newMaps = [];
             try {
-                for (const file of files) {
-                    const newMap = new MoorhenMap(commandCentre, store);
-                    const isDiff = file.name.endsWith("_fofc.mrc");
-                    try {
-                        await newMap.loadToCootFromMapFile(file, isDiff);
-                    } catch (err) {
-                        // Try again if this is a compressed file...
-                        if (file.name.includes(".gz")) {
-                            await newMap.loadToCootFromMapFile(file, isDiff, true);
-                        } else {
-                            console.warn(err);
-                            throw new Error("Cannot read the fetched map...");
-                        }
+                const newMap = new MoorhenMap(commandCentre, store);
+                const isDiff = file.name.endsWith("_fofc.mrc");
+                const isLocres = file.name.endsWith("_locres.mrc");
+                try {
+                    await newMap.loadToCootFromMapFile(file, isDiff);
+                } catch (err) {
+                    // Try again if this is a compressed file...
+                    if (file.name.includes(".gz")) {
+                        await newMap.loadToCootFromMapFile(file, isDiff, true);
+                    } else {
+                        console.warn(err);
+                        throw new Error("Cannot read the fetched map...");
                     }
-                    if (newMap.molNo === -1) {
-                        throw new Error("Cannot read the map file!");
-                    }
-                    newMaps.push(newMap);
+                }
+                if (newMap.molNo === -1) {
+                    throw new Error("Cannot read the map file!");
                 }
 
-                if (molecules.length === 0 && maps.length === 0 && newMaps.length > 0) {
-                    await newMaps[0].centreOnMap();
+                if (molecules.length === 0 && !isLocres) {
+                    await newMap.centreOnMap();
                 }
-
-                newMaps.forEach(map => {
-                    dispatch(addMap(map));
-                });
-                if (newMaps.length > 0) {
-                    dispatch(setActiveMap(newMaps[0]));
+                if (isLocres) {
+                    newMap.showOnLoad = false;
+                }
+                dispatch(addMap(newMap));
+                if (!isLocres) {
+                    dispatch(setActiveMap(newMap));
                 }
             } catch (err) {
                 console.warn(err);
@@ -533,5 +538,8 @@ export const autoOpenFiles = async (
                 document.body.click();
             }
         }
+    }
+    if (isRelionLocresFolder) {
+        dispatch(showModal("colour-map-by-map"));
     }
 };

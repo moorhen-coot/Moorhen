@@ -2,7 +2,6 @@ import React from "react";
 import { ModalKey } from "../../store/modalsSlice";
 import { MoorhenSVG } from "../icons";
 import { PanelIDs } from "../panels";
-import { MoorhenHistoryMenu } from "./HistoryMenu";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import "./main-menu.css";
 

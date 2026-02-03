@@ -271,7 +271,9 @@ def convert_svg_styles_to_inline(filepath, dry_run=False, remove_black=False):
 
 def generate_index(auto_convert=False, remove_black=False):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
+    # Navigate to the moorhen_icons directory from scripts
+    icons_dir = os.path.join(script_dir, "..", "src", "components", "icons", "moorhen_icons")
+    os.chdir(icons_dir)
     files = [f for f in os.listdir(".") if f.endswith(".svg")]
     svg_names = [n.split(".")[0] for n in files]
     

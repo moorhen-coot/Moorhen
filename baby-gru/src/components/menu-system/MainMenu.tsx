@@ -11,14 +11,6 @@ import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
 
-export type ExtraNavBarMenus = {
-    icon: React.JSX.Element;
-    name: string;
-    ref?: React.RefObject<HTMLDivElement>;
-    JSXElement: React.JSX.Element;
-    align?: number;
-};
-
 export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);

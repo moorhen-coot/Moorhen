@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/MoorhenReduxStore";
-import { doDownload, guid, make3MFZipFile, readDataFile } from "../../utils/utils";
+import { doDownload, make3MFZipFile } from "../../utils/utils";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 export const ExportMenuItem = () => {

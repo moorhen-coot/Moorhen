@@ -34,6 +34,7 @@ export const GenerateAssembly = (props: {
         props.setPopoverIsShown(false);
         const newMolecule = await props.item.generateAssembly(ruleSelectRef.current.value);
         dispatch(addMolecule(newMolecule));
+        document.body.click();
     }, []);
 
     return (

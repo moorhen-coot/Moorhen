@@ -56,6 +56,7 @@ export const FlipMapHand = () => {
                 dispatch(addMap(newMap));
             });
         }
+        document.body.click();
     };
 
     return (

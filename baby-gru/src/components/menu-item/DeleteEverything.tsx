@@ -1,16 +1,14 @@
-import { time } from "node:console";
-import { batch, useDispatch, useSelector } from "react-redux";
-import { useTimeCapsule } from "@/InstanceManager";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store";
 import { emptyMaps } from "../../store/mapsSlice";
 import { emptyMolecules } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
 export const DeleteEverything = () => {
     const dispatch = useDispatch();
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const maps = useSelector((state: moorhen.State) => state.maps);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const maps = useSelector((state: RootState) => state.maps);
 
     const onCompleted = () => {
         maps.forEach(map => {
@@ -19,10 +17,10 @@ export const DeleteEverything = () => {
         molecules.forEach(molecule => {
             molecule.delete();
         });
-        batch(() => {
-            dispatch(emptyMolecules());
-            dispatch(emptyMaps());
-        });
+
+        dispatch(emptyMolecules());
+        dispatch(emptyMaps());
+        document.body.click();
     };
 
     return (

@@ -46,6 +46,7 @@
     display: inline-block;
     white-space: nowrap;
     width: auto !important;
+    min-width: 0;
     color: var(--moorhen-primary);
     padding-right: 0rem;
     margin-right: 0rem;

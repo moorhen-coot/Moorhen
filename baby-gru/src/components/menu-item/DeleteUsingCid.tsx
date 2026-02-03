@@ -1,9 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
+import { RootState } from "@/store";
 import { clearResidueSelection } from "../../store/generalStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
@@ -19,8 +19,8 @@ export const DeleteUsingCid = () => {
     const menuItemText = "Delete atom selection...";
 
     const dispatch = useDispatch();
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
 
     const deleteSelection = useCallback(async () => {
         const selectedCid = cidFormRef.current?.value;

@@ -6,7 +6,7 @@ import "./NumberInput.css";
 
 type MoorhenNumberInputProps = {
     value: number | null;
-    setValue?: (newVal: string) => void;
+    setValue?: (newVal: number) => void;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
@@ -110,7 +110,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         setInternalValue(evt.target.value);
         const _isValid = checkIsValidInput(evt.target.value);
         if (_isValid && !waitReturn) {
-            props.setValue?.(evt.target.value);
+            props.setValue?.(Number(evt.target.value));
         }
         if (props.onChange) props.onChange(evt);
     };
@@ -119,7 +119,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
             if (checkIsValidInput(internalValue)) {
-                props.setValue?.(internalValue);
+                props.setValue?.(Number(internalValue));
             }
             setIsUserInteracting(false);
             dispatch(setShortCutsBlocked(false));
@@ -135,7 +135,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     return (
-        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center" style={{ ...style }}>
+        <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center" style={{ flex: 0, ...style }}>
             {label ? (
                 <label className="moorhen__input__label" htmlFor="input">
                     {label}&nbsp;

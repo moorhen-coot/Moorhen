@@ -9,6 +9,7 @@ import MatSymFilterFocus from "./MatSymFilterFocus.svg"
 import MatSymClose from "./MatSymClose.svg"
 import MatSymExperiment from "./MatSymExperiment.svg"
 import MatSymSearch from "./MatSymSearch.svg"
+import MatSymLogout from "./MatSymLogout.svg"
 import menuMaps from "./menuMaps.svg"
 import MatSymArrowRight from "./MatSymArrowRight.svg"
 import MatSymSettings from "./MatSymSettings.svg"
@@ -65,6 +66,7 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymClose": MatSymClose,
  "MatSymExperiment": MatSymExperiment,
  "MatSymSearch": MatSymSearch,
+ "MatSymLogout": MatSymLogout,
  "menuMaps": menuMaps,
  "MatSymArrowRight": MatSymArrowRight,
  "MatSymSettings": MatSymSettings,
@@ -122,6 +124,7 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymClose" |
  "MatSymExperiment" |
  "MatSymSearch" |
+ "MatSymLogout" |
  "menuMaps" |
  "MatSymArrowRight" |
  "MatSymSettings" |
