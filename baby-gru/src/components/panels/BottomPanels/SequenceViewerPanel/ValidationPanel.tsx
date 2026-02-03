@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
+import { useCommandCentre } from "@/InstanceManager";
 import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
@@ -18,6 +19,7 @@ import "./sequence-viewer-panel.css";
 
 export const ValidationPanel = () => {
     const dispatch = useDispatch();
+    const commandCentre = useCommandCentre();
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
@@ -101,6 +103,23 @@ export const ValidationPanel = () => {
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         const sequences = MoleculeToSeqViewerSequences(molecule);
         const validationData = getValidationDataForAllResidues();
+
+        const getNewValidationData = async () => {
+            const newValidationData = await commandCentre.current.cootCommand(
+                {
+                    command: "get_validation",
+                    commandArgs: [molecule.molNo as number],
+                    returnType: "validation_data",
+                },
+                false
+            );
+            return newValidationData
+        }
+        const newValidationData = getNewValidationData().then(data => {
+                const myObject = data.data.result.result // JSON.parse(data.data.result.result)
+                console.log("My new validation JSON is",myObject)
+            }
+        )
 
         addValidationDataToSeqViewerSequences(sequences, validationData);
         return sequences;

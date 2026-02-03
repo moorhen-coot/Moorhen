@@ -28,6 +28,7 @@
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
+#include <gemmi/topo.hpp>
 
 
 #include "slicendice_cpp/kmeans.h"
@@ -413,6 +414,31 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        coot::validation_information_t  get_validation(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            for (gemmi::Model& model : st.models){
+                for (gemmi::Chain& chain : model.chains){
+                    for (gemmi::Residue& res : chain.residues){
+                        for (gemmi::Atom& atom : res.atoms){
+                            atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        }
+                    }
+                }
+            }
+
+            coot::validation_information_t validation;
+            //return "{\"name\":"+std::to_string(st.models[0].num)+"}";
+            gemmi::MonLib monlib;
+            auto mon_lib_path = std::filesystem::path(getenv("CCP4_LIB")) / "data" / "monomers";
+            //monlib.read_monomer_cif();
+            gemmi::Logger logger;
+            std::vector<std::string> resVec = st.models[0].get_all_residue_names();//{"ALA","LYS","GLY"};
+            monlib.read_monomer_lib(mon_lib_path,resVec,logger);
+            auto topo = gemmi::prepare_topology(st,monlib,0,gemmi::HydrogenChange::NoChange,false);
+            return validation;
         }
 
         std::string molecule_to_mmCIF_string_with_gemmi(int imol){
@@ -2148,6 +2174,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
+    .function("get_validation",&molecules_container_js::get_validation)
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
