@@ -109,7 +109,7 @@ export const ValidationPanel = () => {
                 {
                     command: "get_validation",
                     commandArgs: [molecule.molNo as number],
-                    returnType: "validation_data",
+                    returnType: "string",
                 },
                 false
             );

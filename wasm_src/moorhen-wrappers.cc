@@ -37,6 +37,8 @@
 #include "slicendice_cpp/pae_igraph.h"
 #include "Eigen/Dense"
 
+#include "json/json.h"
+
 #include <math.h>
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -416,16 +418,26 @@ class molecules_container_js : public molecules_container_t {
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
         }
 
-        coot::validation_information_t get_validation(int imol){
+        std::string get_validation(int imol){
             mmdb::Manager *mol = get_mol(imol);
             auto st = gemmi::copy_from_mmdb(mol);
             size_t model_index = 0;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_bonds;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_angles;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_torsions;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_chirals;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_planes;
             for (gemmi::Chain& chain : st.models[model_index].chains) {
                 for (gemmi::Residue& res : chain.residues) {
                     for (gemmi::Atom& atom : res.atoms) {
                         atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
                         atom_zs[&atom] = std::vector<double>();
+                        atom_zs_bonds[&atom] = std::vector<double>();
+                        atom_zs_angles[&atom] = std::vector<double>();
+                        atom_zs_torsions[&atom] = std::vector<double>();
+                        atom_zs_chirals[&atom] = std::vector<double>();
+                        atom_zs_planes[&atom] = std::vector<double>();
                     }
                 }
             }
@@ -442,12 +454,17 @@ class molecules_container_js : public molecules_container_t {
                 double z = bond.calculate_z();
                 atom_zs[bond.atoms[0]].push_back(z);
                 atom_zs[bond.atoms[1]].push_back(z);
+                atom_zs_bonds[bond.atoms[0]].push_back(z);
+                atom_zs_bonds[bond.atoms[1]].push_back(z);
             }
             for (const auto& angle : topo->angles) {
                 double z = angle.calculate_z();
                 atom_zs[angle.atoms[0]].push_back(z);
                 atom_zs[angle.atoms[1]].push_back(z);
                 atom_zs[angle.atoms[2]].push_back(z);
+                atom_zs_angles[angle.atoms[0]].push_back(z);
+                atom_zs_angles[angle.atoms[1]].push_back(z);
+                atom_zs_angles[angle.atoms[2]].push_back(z);
             }
             for (const auto& torsion : topo->torsions) {
                 // Some torsions are only restrained with planes so check esd
@@ -457,6 +474,10 @@ class molecules_container_js : public molecules_container_t {
                     atom_zs[torsion.atoms[1]].push_back(z);
                     atom_zs[torsion.atoms[2]].push_back(z);
                     atom_zs[torsion.atoms[3]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[0]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[1]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[2]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[3]].push_back(z);
                 }
             }
             for (const auto& plane : topo->planes) {
@@ -465,6 +486,7 @@ class molecules_container_js : public molecules_container_t {
                 {
                     const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
                     atom_zs[atom].push_back(dist / plane.restr->esd);
+                    atom_zs_planes[atom].push_back(dist / plane.restr->esd);
                 }
             }
             for (const auto& chir : topo->chirs) {
@@ -475,21 +497,74 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs[chir.atoms[1]].push_back(z);
                 atom_zs[chir.atoms[2]].push_back(z);
                 atom_zs[chir.atoms[3]].push_back(z);
+                atom_zs_chirals[chir.atoms[0]].push_back(z);
+                atom_zs_chirals[chir.atoms[1]].push_back(z);
+                atom_zs_chirals[chir.atoms[2]].push_back(z);
+                atom_zs_chirals[chir.atoms[3]].push_back(z);
             }
+
+            Json::Value root;
+
             for (auto& chain : st.models[model_index].chains) {
+                Json::Value chain_json;
+                int res_idx = 0;
                 for (auto& res : chain.residues) {
+                    Json::Value res_json;
+                    res_json["name"] = res.name;
+                    res_json["seqNum"] = res.seqid.num.value;
+                    res_json["insCode"] = std::string{res.seqid.icode};
                     std::vector<double> res_zs;
+                    std::vector<double> res_zs_bonds;
+                    std::vector<double> res_zs_angles;
+                    std::vector<double> res_zs_chirals;
+                    std::vector<double> res_zs_planes;
+                    std::vector<double> res_zs_torsions;
                     for (auto& atom : res.atoms) {
                         auto& zs = atom_zs[&atom];
                         res_zs.insert(res_zs.end(), zs.begin(), zs.end());
+
+                        auto& zs_bonds = atom_zs_bonds[&atom];
+                        res_zs_bonds.insert(res_zs_bonds.end(), zs_bonds.begin(), zs_bonds.end());
+
+                        auto& zs_angles = atom_zs_angles[&atom];
+                        res_zs_angles.insert(res_zs_angles.end(), zs_angles.begin(), zs_angles.end());
+
+                        auto& zs_chirals = atom_zs_chirals[&atom];
+                        res_zs_chirals.insert(res_zs_chirals.end(), zs_chirals.begin(), zs_chirals.end());
+
+                        auto& zs_planes = atom_zs_planes[&atom];
+                        res_zs_planes.insert(res_zs_planes.end(), zs_planes.begin(), zs_planes.end());
+
+                        auto& zs_torsions = atom_zs_torsions[&atom];
+                        res_zs_torsions.insert(res_zs_torsions.end(), zs_torsions.begin(), zs_torsions.end());
+
                     }
-                    auto stats = gemmi::calculate_data_statistics(res_zs);
-                    double z = stats.rms;
+
+                    double z = gemmi::calculate_data_statistics(res_zs).rms;
                     double p = std::erfc(M_SQRT1_2 * std::abs(z));
+
+                    double z_bonds = gemmi::calculate_data_statistics(res_zs_bonds).rms;
+                    double z_angles = gemmi::calculate_data_statistics(res_zs_angles).rms;
+                    double z_chirals = gemmi::calculate_data_statistics(res_zs_chirals).rms;
+                    double z_planes = gemmi::calculate_data_statistics(res_zs_planes).rms;
+                    double z_torsions = gemmi::calculate_data_statistics(res_zs_torsions).rms;
+
+                    res_json["badness"] = 1.0-p;
+                    res_json["z"] = z;
+                    res_json["z_bonds"] = z_bonds;
+                    res_json["z_angles"] = z_angles;
+                    res_json["z_chirals"] = z_chirals;
+                    res_json["z_planes"] = z_planes;
+                    res_json["z_torsions"] = z_torsions;
+                    chain_json[res_idx++] = res_json;
                 }
+                root[chain.name] = chain_json;
             }
-            coot::validation_information_t validation;
-            return validation;
+            
+            Json::StreamWriterBuilder builder;
+            const std::string json_string = Json::writeString(builder, root);
+            
+            return json_string;
         }
 
         std::string molecule_to_mmCIF_string_with_gemmi(int imol){
