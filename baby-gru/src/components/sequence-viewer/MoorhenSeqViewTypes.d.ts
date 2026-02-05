@@ -1,3 +1,5 @@
+import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
+
 export type ResiduesSelection = {
     molNo: number;
     chain: string;
@@ -10,7 +12,14 @@ export type Residue = {
     resCID: string;
     selected?: boolean;
     colour?: string;
-    validationData?: { [key: string]: number | [number, number] };
+    validationData?: {
+        [key: string]: {
+            value: number | [number, number];
+            reverseGradient?: boolean;
+            gradientPreset?: keyof typeof gradientPresets;
+            category?: string;
+        };
+    };
 };
 
 export type SeqElement = {

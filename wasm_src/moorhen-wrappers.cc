@@ -541,7 +541,6 @@ class molecules_container_js : public molecules_container_t {
                     }
 
                     double z = gemmi::calculate_data_statistics(res_zs).rms;
-                    double p = std::erfc(M_SQRT1_2 * std::abs(z));
 
                     double z_bonds = gemmi::calculate_data_statistics(res_zs_bonds).rms;
                     double z_angles = gemmi::calculate_data_statistics(res_zs_angles).rms;
@@ -549,13 +548,12 @@ class molecules_container_js : public molecules_container_t {
                     double z_planes = gemmi::calculate_data_statistics(res_zs_planes).rms;
                     double z_torsions = gemmi::calculate_data_statistics(res_zs_torsions).rms;
 
-                    res_json["badness"] = 1.0-p;
-                    res_json["z"] = z;
-                    res_json["z_bonds"] = z_bonds;
-                    res_json["z_angles"] = z_angles;
-                    res_json["z_chirals"] = z_chirals;
-                    res_json["z_planes"] = z_planes;
-                    res_json["z_torsions"] = z_torsions;
+                    res_json["Overall RMSZ"] = z;
+                    res_json["Bond RMSZ"] = z_bonds;
+                    res_json["Angle RMSZ"] = z_angles;
+                    res_json["Chiral RMSZ"] = z_chirals;
+                    res_json["Plane RMSZ"] = z_planes;
+                    res_json["Torsion RMSZ"] = z_torsions;
                     chain_json[res_idx++] = res_json;
                 }
                 root[chain.name] = chain_json;

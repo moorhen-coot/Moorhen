@@ -5,9 +5,10 @@ import { NormalizeVec3, vec3Cross, vec3Create  } from './mgMaths.js';
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { MoorhenReduxStoreType, RootState } from '../store/MoorhenReduxStore';
+import {  RootState } from '../store/MoorhenReduxStore';
+import { Store } from '@reduxjs/toolkit';
 
-export const appendOtherData = (jsondata: any, store: MoorhenReduxStoreType, skipRebuild?: boolean, name?: string) : any => {
+export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
         const theseTexturedShapes = [];
@@ -451,7 +452,7 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
 
     }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType) : void => {
+export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth

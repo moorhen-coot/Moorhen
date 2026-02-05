@@ -9,6 +9,7 @@ type MoorhenMapSelectPropsType = {
     maps: moorhen.Map[];
     filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+    onSelect?: (arg0: number) => void;
     defaultValue?: number | null;
     ref?: React.Ref<HTMLSelectElement>;
     disabled?: boolean;
@@ -44,6 +45,7 @@ export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
 
     const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(evt);
+        props.onSelect?.(parseInt(evt.target.value));
     };
 
     const filteredMaps = maps ? maps.filter(filterFunction) : [];

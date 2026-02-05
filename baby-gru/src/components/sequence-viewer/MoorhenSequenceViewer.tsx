@@ -6,6 +6,7 @@ import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 import "./MoorhenSequenceViewer.css";
 import { SequenceRow } from "./SequenceRow";
+import { ValidationTracks } from "./ValidationTracks";
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];

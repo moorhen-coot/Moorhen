@@ -56,6 +56,10 @@ export const gradientPresets = {
         [0.8, [252, 166, 53]],
         [1.0, [239, 248, 33]],
     ],
+    "test gradient": [
+        [0.0, [144, 221, 233]],
+        [1.0, [255, 140, 0]],
+    ],
 };
 
 export type GradientPreset = keyof typeof gradientPresets;

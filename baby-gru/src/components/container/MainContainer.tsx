@@ -8,7 +8,7 @@ import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../..
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
 import { useWindowEventListener } from "../../hooks/useWindowEventListener";
-import { MoorhenReduxStoreType, RootState } from "../../store/MoorhenReduxStore";
+import { RootState } from "../../store/MoorhenReduxStore";
 import {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,

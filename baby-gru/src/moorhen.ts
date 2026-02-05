@@ -5,7 +5,7 @@ import "./app.css";
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
-export { MoorhenReduxStoreType } from "@/store/index";
+export type { MoorhenReduxStoreType } from "@/store/index";
 export { MoorhenProvider } from "./components/MoorhenProvider";
 export { MoorhenContainer } from "./components/container/MainContainer";
 export { MoorhenDraggableModalBase } from "./components/interface-base/ModalBase/DraggableModalBase";

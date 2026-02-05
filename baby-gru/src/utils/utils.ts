@@ -1,9 +1,10 @@
 import { hexToRgb } from "@mui/material";
+import { Store } from "@reduxjs/toolkit";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
+import { RootState } from "@/store/MoorhenReduxStore";
 import { Shortcut } from "../components/managers/preferences";
-import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
@@ -89,7 +90,7 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 export const getCentreAtom = async (
     molecules: moorhen.Molecule[],
     commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: MoorhenReduxStoreType
+    store: Store<RootState>
 ): Promise<[moorhen.Molecule, string]> => {
     const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible());
     const originState = store.getState().glRef.origin;

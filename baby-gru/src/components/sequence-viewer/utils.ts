@@ -1,9 +1,13 @@
 import { useSelector } from "react-redux";
+import { Dispatch, UnknownAction } from "redux";
 import { useMemo } from "react";
+import { ResidueValidationData, ValidationData } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
+import { libcootApi } from "@/types/libcoot";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { type ResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import type { MoorhenMolecule, Sequence } from "../../utils/MoorhenMolecule";
 import { cidToSpec, sequenceIsValid } from "../../utils/utils";
+import { GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 
 export const stringToSeqViewer = (
@@ -69,27 +73,106 @@ export function MoleculeToSeqViewerSequences(molecule: MoorhenMolecule | null, g
     return newSequenceList;
 }
 
-export function addValidationDataToSeqViewerSequences(
+// export function addValidationDataToSeqViewerSequences(
+//     sequences: SeqElement[],
+//     validationData: { chain: string; label: string; data: { resNum: number; score: number | [number, number] }[] }[]
+// ): SeqElement[] {
+//     for (const dataSet of validationData) {
+//         for (const sequence of sequences) {
+//             if (dataSet.chain === sequence.chain) {
+//                 for (const residue of sequence.residues) {
+//                     const resValidation = dataSet.data.find(v => v.resNum === residue.resNum);
+//                     if (resValidation) {
+//                         if (!residue.validationData) {
+//                             residue.validationData = {};
+//                         }
+//                         residue.validationData[dataSet.label] = resValidation.score;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//     return sequences;
+// }
+
+export const cootValidationDataToSeqViewer = (cootData, valueName: string): ValidationData => {
+    const validationData: ValidationData = {};
+    const chainIDs: string[] = Array.from(new Set(cootData.map(item => item.chainId)));
+
+    for (const chainId of chainIDs) {
+        const residues: ResidueValidationData[] = cootData
+            .filter(item => item.chainId === chainId)
+            .map(item => ({ seqNum: item.seqNum, insCode: " ", resName: item.restype, [valueName]: item.value }));
+        validationData[chainId] = residues;
+    }
+    return validationData;
+};
+
+export const cootMMRCCToSeqViewer = (cootData: libcootApi.MMRCCStatsJS): ValidationData => {
+    const chainID = cootData["All atoms"][0].chainId;
+    const validationData: ValidationData = {};
+    const residues: ResidueValidationData[] = cootData["All atoms"].map(item => ({
+        seqNum: item.resNum,
+        "MMRRCC All Atoms": item.correlation,
+        "MMRRCC Side Chain": cootData["Side-chains"].find(i => i.resNum === item.resNum)?.correlation ?? null,
+    }));
+    validationData[chainID] = residues;
+    return validationData;
+};
+
+export const addValidationDataToSeqViewerSequences = (
     sequences: SeqElement[],
-    validationData: { chain: string; label: string; data: { resNum: number; score: number | [number, number] }[] }[]
-): SeqElement[] {
-    for (const dataSet of validationData) {
-        for (const sequence of sequences) {
-            if (dataSet.chain === sequence.chain) {
-                for (const residue of sequence.residues) {
-                    const resValidation = dataSet.data.find(v => v.resNum === residue.resNum);
-                    if (resValidation) {
-                        if (!residue.validationData) {
-                            residue.validationData = {};
+    validationData: ValidationData,
+    rmszScale: number = 5,
+    gradientPresets?: GradientPreset,
+    reverseGradient?: boolean,
+    category?: string
+): SeqElement[] => {
+    const scaleRMSZ = val => {
+        return Math.min(val / rmszScale, 1);
+    };
+
+    const newSequences = [...sequences];
+    for (const sequence of newSequences) {
+        const chainValidationData = validationData[sequence.chain];
+        if (!chainValidationData) {
+            continue;
+        }
+        for (const residue of sequence.residues) {
+            const resValidation = chainValidationData.find(v => v.seqNum === residue.resNum);
+            if (resValidation) {
+                if (!residue.validationData) {
+                    residue.validationData = {};
+                }
+                for (const [key, value] of Object.entries(resValidation)) {
+                    if (key !== "seqNum" && key !== "insCode" && key !== "resName") {
+                        if (typeof value === "number") {
+                            if (!residue.validationData[key]) {
+                                residue.validationData[key] = { value: null };
+                            }
+                            if (key.includes("RMSZ")) {
+                                residue.validationData[key] = {
+                                    value: [scaleRMSZ(value), value],
+                                    gradientPreset: gradientPresets ? gradientPresets[key] : null,
+                                    reverseGradient: reverseGradient ?? false,
+                                    category: category,
+                                };
+                            } else {
+                                residue.validationData[key] = {
+                                    value: value,
+                                    gradientPreset: gradientPresets ? gradientPresets[key] : null,
+                                    reverseGradient: reverseGradient ?? false,
+                                    category: category,
+                                };
+                            }
                         }
-                        residue.validationData[dataSet.label] = resValidation.score;
                     }
                 }
             }
         }
     }
-    return sequences;
-}
+    return newSequences;
+};
 
 export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection): ResiduesSelection | null => {
     const selection: ResiduesSelection | null = residueSelection.molecule
@@ -107,7 +190,12 @@ export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection):
     return selection;
 };
 
-export const handleResiduesSelection = (selection: ResiduesSelection, molecule: MoorhenMolecule, dispatch: any, enqueueSnackbar: any) => {
+export const handleResiduesSelection = (
+    selection: ResiduesSelection,
+    molecule: MoorhenMolecule,
+    dispatch: Dispatch<UnknownAction>,
+    enqueueSnackbar: any
+) => {
     if (selection.molNo !== molecule.molNo) return;
     const first = Math.min(selection.range[0], selection.range[1]);
     const second = Math.max(selection.range[0], selection.range[1]);

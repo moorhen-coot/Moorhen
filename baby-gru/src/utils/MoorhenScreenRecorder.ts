@@ -1,7 +1,8 @@
 import { webGL } from "../types/mgWebGL.js";
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
-import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore.js";
+import { RootState } from "../store/MoorhenReduxStore.js";
+import { Store } from "redux";
 
 interface ImageFrac2D {
     x: number
@@ -18,10 +19,10 @@ export class ScreenRecorder  {
     chunks: Blob[];
     canvasRef: React.RefObject<HTMLCanvasElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    store: MoorhenReduxStoreType
+    store: Store<RootState>;
     _isRecording: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: MoorhenReduxStoreType){
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
         this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
         this.store = store;
