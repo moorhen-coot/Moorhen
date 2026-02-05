@@ -305,6 +305,10 @@ export const MoorhenJsonValidation = (props: moorhen.CollectedProps) => {
                 if(sectionSortable.keys[section_index]){
                     additionalLabel += " ("+issue.badness+")"
                 }
+                // NEWWW-------------------------------------------------------------------------
+                if(issue["display-metrics"]){
+                    additionalLabel += " " + issue["display-metrics"]
+            }
                 console.log
                 return <Table key={index} style={{ margin: '0', padding:'0'}}>
                         <tbody>
