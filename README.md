@@ -19,12 +19,12 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* Coot 1.1.15
+* libcoot main branch (last release tag 1.1.20)
 * fftw 2.1.5
 * gsl 2.7.1
-* Boost 1.86.0
+* Boost 1.89.0
 * glm 0.9.9.8
-* RDKit 2024\_09\_3
+* RDKit 2025\_09\_2
 * Freetype
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
