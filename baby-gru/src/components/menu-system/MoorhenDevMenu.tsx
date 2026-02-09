@@ -7,6 +7,8 @@ import { useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
+import { useCommandCentre } from '../../InstanceManager';
+import { npts } from "../../tests/MoorhenPoissonReconTest";
 import {
     addCallback,
     addFracPathOverlay,
@@ -30,6 +32,7 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+    const commandCentre = useCommandCentre()
 
     const urlPrefix = usePaths().urlPrefix;
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
@@ -260,6 +263,22 @@ export const MoorhenDevMenu = () => {
         });
     };
 
+    const poissonReconTest = () => {
+        if (!window.cootModule) return
+        console.log(window.cootModule)
+// @ts-expect-error cootModule
+        window.cootModule.FS.writeFile("5a3h.npts", npts);
+        console.log("Written")
+        const doTest = async () => {
+        const response = await commandCentre.current.cootCommand({
+                command: "PoissonRecon",
+                commandArgs: [npts]
+            }, false) as moorhen.WorkerResponse<[string]>;
+            console.log(response)
+        }
+        doTest()
+    }
+
     return (
         <>
             <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
@@ -312,6 +331,15 @@ export const MoorhenDevMenu = () => {
                     label="Load example 2D overlays"
                 />
             </InputGroup>
+            <MenuItem
+                onClick={evt => {
+                    poissonReconTest()
+                    //document.body.click();
+                }}
+            >
+            PoissonRecon test
+            </MenuItem>
+
         </>
     );
 };

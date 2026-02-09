@@ -881,7 +881,7 @@ if [ $BUILD_POISSONRECON = true ]; then
     getpoissonrecon
     mkdir -p ${BUILD_DIR}/poissonrecon_build
     cd ${BUILD_DIR}/poissonrecon_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg -O2" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg -O2" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing PoissonRecon, giving up."
 fi

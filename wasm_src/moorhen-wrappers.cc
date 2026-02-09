@@ -77,7 +77,7 @@ extern "C" {
 void untar(FILE *a, const char *path);
 }
 
-void PoissonReconMain(const std::string &input, const std::string &output);
+std::string PoissonReconMain(const std::string &input);
 
 bool is64bit(){
 #ifdef _MOORHEN_MEMORY64_

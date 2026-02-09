@@ -1293,6 +1293,9 @@ const doCootCommand = (messageData: {
             case "is64bit":
                 cootResult = cootModule.is64bit()
                 break
+            case "PoissonRecon":
+                cootResult = cootModule.PoissonReconMain(...commandArgs as [string])
+                break
             case "get_coord_header_info":
                 cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
                 break
