@@ -48,6 +48,13 @@ fail() {
     exit 1
 }
 
+clearpoissonrecon() {
+    echo "Clear poissonrecon_build"
+    rm -rf ${BUILD_DIR}/poissonrecon_build
+    rm -rf ${INSTALL_DIR}/lib/libPoissonRecon.a
+    rm -rf ${INSTALL_DIR}/include/PoissonRecon
+}
+
 clearzlib() {
     echo "Clear zlib"
     rm -rf ${BUILD_DIR}/zlib_build
@@ -260,6 +267,7 @@ clearall() {
     clearsigcpp
     cleargraphene
     clearmoorhen
+    clearpoissonrecon
 }
 
 if [ x"$CLEAR_MODULES" = x"" ]; then
@@ -268,6 +276,8 @@ else
     for mod in $CLEAR_MODULES; do
         case $mod in
            all) clearall
+               ;;
+           poissonrecon) clearpoissonrecon
                ;;
            png) clearpng
                ;;
@@ -365,9 +375,16 @@ BUILD_CLIPPER=false
 BUILD_PRIVATEER=false
 BUILD_SSM=false
 BUILD_SLICENDICE=false
+BUILD_POISSONRECON=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+
+if test -d ${INSTALL_DIR}/include/poissonrecon; then
+    true
+else
+    BUILD_POISSONRECON=true
+fi
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -550,6 +567,9 @@ for mod in $MODULES; do
        slicendice) echo "Force build slicendice"
        BUILD_SLICENDICE=true
        ;;
+       slicendice) echo "Force build PoissonRecon"
+       BUILD_POISSONRECON=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
@@ -565,27 +585,28 @@ for mod in $MODULES; do
     esac
 done
 
-echo "BUILD_GSL        " $BUILD_GSL
-echo "BUILD_BOOST      " $BUILD_BOOST
-echo "BUILD_IGRAPH     " $BUILD_IGRAPH
-echo "BUILD_GEMMI      " $BUILD_GEMMI
-echo "BUILD_JSONCPP    " $BUILD_JSONCPP
-echo "BUILD_RDKIT      " $BUILD_RDKIT
-echo "BUILD_GRAPHENE   " $BUILD_GRAPHENE
-echo "BUILD_LIBSIGCPP  " $BUILD_LIBSIGCPP
-echo "BUILD_LIBEIGEN   " $BUILD_LIBEIGEN
-echo "BUILD_LIBCCP4    " $BUILD_LIBCCP4
-echo "BUILD_FFTW       " $BUILD_FFTW
-echo "BUILD_FFTW3      " $BUILD_FFTW3
-echo "BUILD_MMDB2      " $BUILD_MMDB2
-echo "BUILD_CLIPPER    " $BUILD_CLIPPER
-echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
-echo "BUILD_SSM        " $BUILD_SSM
-echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
-echo "BUILD_FREETYPE   " $BUILD_FREETYPE
-echo "BUILD_ZLIB       " $BUILD_ZLIB
-echo "BUILD_PNG        " $BUILD_PNG
-echo "BUILD_MOORHEN    " $BUILD_MOORHEN
+echo "BUILD_GSL          " $BUILD_GSL
+echo "BUILD_BOOST        " $BUILD_BOOST
+echo "BUILD_IGRAPH       " $BUILD_IGRAPH
+echo "BUILD_GEMMI        " $BUILD_GEMMI
+echo "BUILD_JSONCPP      " $BUILD_JSONCPP
+echo "BUILD_RDKIT        " $BUILD_RDKIT
+echo "BUILD_GRAPHENE     " $BUILD_GRAPHENE
+echo "BUILD_LIBSIGCPP    " $BUILD_LIBSIGCPP
+echo "BUILD_LIBEIGEN     " $BUILD_LIBEIGEN
+echo "BUILD_LIBCCP4      " $BUILD_LIBCCP4
+echo "BUILD_FFTW         " $BUILD_FFTW
+echo "BUILD_FFTW3        " $BUILD_FFTW3
+echo "BUILD_MMDB2        " $BUILD_MMDB2
+echo "BUILD_CLIPPER      " $BUILD_CLIPPER
+echo "BUILD_PRIVATEER    " $BUILD_PRIVATEER
+echo "BUILD_SSM          " $BUILD_SSM
+echo "BUILD_SLICENDICE   " $BUILD_SLICENDICE
+echo "BUILD_POISSONRECON " $BUILD_POISSONRECON
+echo "BUILD_FREETYPE     " $BUILD_FREETYPE
+echo "BUILD_ZLIB         " $BUILD_ZLIB
+echo "BUILD_PNG          " $BUILD_PNG
+echo "BUILD_MOORHEN      " $BUILD_MOORHEN
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
@@ -853,6 +874,16 @@ if [ $BUILD_SLICENDICE = true ]; then
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing SliceNDice, giving up."
+fi
+
+#PoissonRecon
+if [ $BUILD_POISSONRECON = true ]; then
+    getpoissonrecon
+    mkdir -p ${BUILD_DIR}/poissonrecon_build
+    cd ${BUILD_DIR}/poissonrecon_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/PoissonRecon --use-port=libjpeg" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing PoissonRecon, giving up."
 fi
 
 #Moorhen

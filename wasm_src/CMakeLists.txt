@@ -640,6 +640,7 @@ target_link_libraries(moorhen
     png16
     m
     z
+    PoissonRecon
     idbfs.js
 )
 

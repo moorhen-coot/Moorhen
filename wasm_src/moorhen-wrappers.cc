@@ -77,6 +77,8 @@ extern "C" {
 void untar(FILE *a, const char *path);
 }
 
+void PoissonReconMain(const std::string &input, const std::string &output);
+
 bool is64bit(){
 #ifdef _MOORHEN_MEMORY64_
      return true;
@@ -2669,5 +2671,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_mtz_columns",&get_mtz_columns);
     function("get_coord_header_info",&get_coord_header_info);
     function("is64bit",&is64bit);
+    function("PoissonReconMain",&PoissonReconMain);
 
 }

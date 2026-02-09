@@ -55,6 +55,18 @@ getclipper() {
     echo
 }
 
+getpoissonrecon() {
+    cdcheckout
+    if [ -r PoissonRecon ]; then
+        echo "Using existing PoissonRecon"
+    else
+        echo "Checking out PoissonRecon"
+        git clone -b wasm_hack https://github.com/stuartjamesmcnicholas/PoissonRecon.git
+        echo
+    fi
+    echo
+}
+
 getssm() {
     cdcheckout
     if [ -r ssm-$ssm_release ]; then
