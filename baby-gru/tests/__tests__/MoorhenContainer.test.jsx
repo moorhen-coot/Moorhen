@@ -57,7 +57,7 @@ const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : descri
 describeIfWasmExists('Testing MoorhenContainer', () => {
 
     beforeAll(() => {
-        const createCootModule = require('../../public/moorhen')
+        const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
