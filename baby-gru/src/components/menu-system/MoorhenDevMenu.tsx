@@ -272,7 +272,7 @@ export const MoorhenDevMenu = () => {
         const doTest = async () => {
         const response = await commandCentre.current.cootCommand({
                 command: "PoissonRecon",
-                commandArgs: [npts]
+                commandArgs: [npts, true]
             }, false) as moorhen.WorkerResponse<[string]>;
             console.log(response)
         }

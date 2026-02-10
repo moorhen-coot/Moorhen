@@ -567,7 +567,7 @@ for mod in $MODULES; do
        slicendice) echo "Force build slicendice"
        BUILD_SLICENDICE=true
        ;;
-       slicendice) echo "Force build PoissonRecon"
+       poissonrecon) echo "Force build PoissonRecon"
        BUILD_POISSONRECON=true
        ;;
        moorhen) echo "Force build moorhen"
