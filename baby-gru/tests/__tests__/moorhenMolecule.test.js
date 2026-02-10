@@ -685,7 +685,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_1,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -718,7 +718,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_3,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -785,7 +785,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_1.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
         const instancedMesh_2 = await commandCentre.current.cootCommand({
@@ -795,7 +795,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_1.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -818,7 +818,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_2.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -836,7 +836,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_2.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
