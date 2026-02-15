@@ -657,6 +657,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     }
 
+    updateFramebufferSizes() {
+        const maxDim = Math.max(this.canvas.width, this.canvas.height);
+        const maxTex = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
+        const maxRB  = this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE);
+        const hwLimit = Math.min(maxTex, maxRB);
+
+        // G-buffer: half the canvas long edge, next power-of-two.
+        //   floor 512  – sane minimum for tiny windows / embedded panels
+        //   ceil  4096 – diminishing returns beyond this; protects slow GPUs
+        //                that report a large MAX_TEXTURE_SIZE but can't fill it
+        //   hwLimit    – hard cap from GL capabilities
+        const gSize = Math.max(512, Math.min(4096, hwLimit,
+                          Math.pow(2, Math.ceil(Math.log2(Math.max(1, maxDim / 2))))));
+        this.gBuffersFramebufferSize = gSize;
+
+        // Edge-detect buffer: same size as G-buffer (no point being higher)
+        this.edgeDetectFramebufferSize = gSize;
+
+        // Invalidate existing framebuffers so they get recreated at the new size
+        if (this.gFramebuffer) {
+            this.gl.deleteFramebuffer(this.gFramebuffer);
+            this.gFramebuffer = null;
+        }
+        if (this.edgeDetectFramebuffer) {
+            this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+            this.edgeDetectFramebuffer = null;
+        }
+    }
+
     resize(width: number, height: number) : void {
 
         let theWidth = width;
@@ -678,11 +707,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
         }
-        if(this.edgeDetectFramebuffer){
-            this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
-            this.edgeDetectFramebuffer = null;
 
-        }
+        this.updateFramebufferSizes();
 
         this.silhouetteBufferReady = false;
     }
@@ -1163,8 +1189,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                Depth threshold:   1.4
                Normal threshoold: 0.5
         */
-        this.depthThreshold = 1.4;
-        this.normalThreshold = 0.5;
+        this.depthThreshold = 0.05;
+        this.normalThreshold = 0.8;
         this.scaleDepth = 2.0;
         this.scaleNormal = 1.0;
 
@@ -3705,11 +3731,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if ((this.doEdgeDetect||this.doSSAO)&&this.WEBGL2) {
             if(this.renderToTexture) {
-                this.gBuffersFramebufferSize = 4096;
-                if(this.gFramebuffer){
-                    this.gl.deleteFramebuffer(this.gFramebuffer);
-                    this.gFramebuffer = null;
-                }
+                this.updateFramebufferSizes();
                 this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
             }
             if(!this.gFramebuffer) this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
@@ -3748,13 +3770,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
             if(this.renderToTexture) {
-                this.edgeDetectFramebufferSize = 4096;
-                if(this.edgeDetectFramebuffer){
-                    this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
-                    this.edgeDetectFramebuffer = null;
-                }
+                this.updateFramebufferSizes();
                 this.createGBuffers(this.gBuffersFramebufferSize,this.gBuffersFramebufferSize);
-                if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(4096,4096);
+                if(!this.edgeDetectFramebuffer) this.createEdgeDetectFramebufferBuffer(this.edgeDetectFramebufferSize,this.edgeDetectFramebufferSize);
             } else {
                 if(!this.edgeDetectFramebuffer){
                     if(ratio>1.0)
@@ -4196,16 +4214,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         if(this.renderToTexture) {
-            this.edgeDetectFramebufferSize = 2048;
-            this.gBuffersFramebufferSize = 1024;
-            if(this.edgeDetectFramebuffer){
-                this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
-                this.edgeDetectFramebuffer = null;
-            }
-            if(this.gFramebuffer){
-                this.gl.deleteFramebuffer(this.gFramebuffer);
-                this.gFramebuffer = null;
-            }
+            this.updateFramebufferSizes();
         }
     }
 

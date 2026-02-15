@@ -3,68 +3,85 @@ precision mediump float;
 
 out vec4 fragColor;
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
+uniform sampler2D gPosition;   // eye-space position (G-buffer)
+uniform sampler2D gNormal;     // eye-space normal   (G-buffer)
 
+uniform float depthThreshold;  // relative depth sensitivity  (try 0.05)
+uniform float normalThreshold; // normal-change sensitivity   (try 0.8)
+
+// Kept for backward-compat with uniform-location lookups; unused.
 uniform float zoom;
 uniform float depthBufferSize;
-
-uniform float depthThreshold;
-uniform float normalThreshold;
 uniform float scaleDepth;
 uniform float scaleNormal;
 uniform float xPixelOffset;
 uniform float yPixelOffset;
 uniform float depthFactor;
 
-in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
 
 void main() {
 
-    float halfScaleFloorDepth = scaleDepth - 0.0625;
-    float halfScaleCeilDepth = scaleDepth + 0.0625;
-    float halfScaleFloorNormal = scaleNormal*.5 - 0.0625;
-    float halfScaleCeilNormal = scaleNormal*.5 + 0.0625;
-    /*
-    float halfScaleFloorDepth = floor(scaleDepth * 0.5);
-    float halfScaleCeilDepth = ceil(scaleDepth * 0.5);
-    float halfScaleFloorNormal = floor(scaleNormal * 0.5);
-    float halfScaleCeilNormal = ceil(scaleNormal * 0.5);
-    */
-    
+    // One-texel step in the G-buffer, independent of zoom
+    vec2 ts = 1.0 / vec2(textureSize(gPosition, 0));
 
-    float depth0 = depthFactor*texture(gPosition, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorDepth).z;
-    float depth1 = depthFactor*texture(gPosition, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilDepth).z;
-    float depth2 = depthFactor*texture(gPosition, out_TexCoord0 + vec2( xPixelOffset * halfScaleCeilDepth, -yPixelOffset * halfScaleFloorDepth)).z;
-    float depth3 = depthFactor*texture(gPosition, out_TexCoord0 + vec2(-xPixelOffset * halfScaleFloorDepth, yPixelOffset * halfScaleCeilDepth)).z;
-    float depth4 = depthFactor*texture(gPosition, out_TexCoord0).z;
+    // ---- centre samples ----
+    float mc = texture(gPosition, out_TexCoord0).z;
+    vec3  nc = normalize(texture(gNormal,   out_TexCoord0).xyz);
 
-    vec3 normal0 = normalize(texture(gNormal, out_TexCoord0 - vec2(xPixelOffset,yPixelOffset)*halfScaleFloorNormal)).xyz;
-    vec3 normal1 = normalize(texture(gNormal, out_TexCoord0 + vec2(xPixelOffset,yPixelOffset)*halfScaleCeilNormal)).xyz;
-    vec3 normal2 = normalize(texture(gNormal, out_TexCoord0 + vec2( xPixelOffset * halfScaleCeilNormal, -yPixelOffset * halfScaleFloorNormal))).xyz;
-    vec3 normal3 = normalize(texture(gNormal, out_TexCoord0 + vec2(-xPixelOffset * halfScaleFloorNormal, yPixelOffset * halfScaleCeilNormal))).xyz;
+    // ---- 4 cardinal neighbours ----
+    float d_u = texture(gPosition, out_TexCoord0 + vec2(  0.0, -ts.y)).z;
+    float d_d = texture(gPosition, out_TexCoord0 + vec2(  0.0,  ts.y)).z;
+    float d_l = texture(gPosition, out_TexCoord0 + vec2(-ts.x,   0.0)).z;
+    float d_r = texture(gPosition, out_TexCoord0 + vec2( ts.x,   0.0)).z;
 
-    float depthFiniteDifference0 = depth1 - depth0;
-    float depthFiniteDifference1 = depth3 - depth2;
+    vec3 n_u = normalize(texture(gNormal, out_TexCoord0 + vec2(  0.0, -ts.y)).xyz);
+    vec3 n_d = normalize(texture(gNormal, out_TexCoord0 + vec2(  0.0,  ts.y)).xyz);
+    vec3 n_l = normalize(texture(gNormal, out_TexCoord0 + vec2(-ts.x,   0.0)).xyz);
+    vec3 n_r = normalize(texture(gNormal, out_TexCoord0 + vec2( ts.x,   0.0)).xyz);
 
-    float diff = sqrt(pow(depthFiniteDifference0, 2.0) + pow(depthFiniteDifference1, 2.0)) * 10.0 * depthBufferSize/60.;
+    // ================================================================
+    //  Depth edge  –  max neighbour depth difference
+    //
+    //  Each pixel asks: "does ANY of my 4 neighbours have a very
+    //  different depth?"  This gives exactly 1-pixel-wide edges
+    //  with no bleeding into adjacent pixels (unlike Sobel's 3x3).
+    //  Dividing by |centre Z| keeps the threshold zoom-invariant.
+    // ================================================================
 
-    fragColor = vec4(depth0,depth0,depth0,1.0);
+    float maxDD = max(max(abs(d_u - mc), abs(d_d - mc)),
+                      max(abs(d_l - mc), abs(d_r - mc)));
 
-    diff = diff > depthThreshold ? 1.0 : 0.0;
+    float absZ = abs(mc);
+    float relDepth = (absZ > 0.001) ? maxDD / absZ : 0.0;
 
-    diff = 1.0 - diff;
+    float depthEdge = smoothstep(depthThreshold * 0.7,
+                                 depthThreshold * 1.3,
+                                 relDepth);
 
-    vec3 normalFiniteDifference0 = normal1 - normal0;
-    vec3 normalFiniteDifference1 = normal3 - normal2;
+    // ================================================================
+    //  Normal edge  –  max neighbour normal difference
+    //
+    //  Catches crease/fold edges.  Threshold of ~0.8 ignores the
+    //  22.5-degree facet seams on 16-segment cylinders (response
+    //  ~0.39) while still catching creases >= ~50 degrees.
+    // ================================================================
 
-    float edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
-    edgeNormal = edgeNormal > normalThreshold ? 1.0 : 0.0;
-    edgeNormal = 1.0 - edgeNormal;
+    float maxND = max(max(length(n_u - nc), length(n_d - nc)),
+                      max(length(n_l - nc), length(n_r - nc)));
 
-    float edgeVal = min(edgeNormal,diff);
-    fragColor = vec4(edgeVal,edgeVal,edgeVal,1.0);
+    float normalEdge = smoothstep(normalThreshold * 0.7,
+                                  normalThreshold * 1.3,
+                                  maxND);
+
+    // ================================================================
+    //  Combine – either edge source triggers an outline
+    // ================================================================
+
+    float edge = max(depthEdge, normalEdge);
+
+    // 1.0 = no edge,  0.0 = full edge  (for multiplicative compositing)
+    fragColor = vec4(vec3(1.0 - edge), 1.0);
 }
 `;
 
