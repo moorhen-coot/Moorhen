@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen";
 
 const initialState: {
@@ -24,14 +24,10 @@ export const moleculesSlice = createSlice({
         removeMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
             state = {
                 ...state,
-                generalRepresentations: state.generalRepresentations.filter(
-                    (item) => item.parentMolecule.molNo !== action.payload.molNo
-                ),
-                customRepresentations: state.customRepresentations.filter(
-                    (item) => item.parentMolecule.molNo !== action.payload.molNo
-                ),
-                visibleMolecules: state.visibleMolecules.filter((item) => item !== action.payload.molNo),
-                moleculeList: state.moleculeList.filter((item) => item.molNo !== action.payload.molNo),
+                generalRepresentations: state.generalRepresentations.filter(item => item.parentMolecule.molNo !== action.payload.molNo),
+                customRepresentations: state.customRepresentations.filter(item => item.parentMolecule.molNo !== action.payload.molNo),
+                visibleMolecules: state.visibleMolecules.filter(item => item !== action.payload.molNo),
+                moleculeList: state.moleculeList.filter(item => item.molNo !== action.payload.molNo),
             };
             return state;
         },
@@ -51,7 +47,7 @@ export const moleculesSlice = createSlice({
         hideMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
             state = {
                 ...state,
-                visibleMolecules: state.visibleMolecules.filter((item) => item !== action.payload.molNo),
+                visibleMolecules: state.visibleMolecules.filter(item => item !== action.payload.molNo),
             };
             return state;
         },
@@ -62,23 +58,60 @@ export const moleculesSlice = createSlice({
         removeCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
             state = {
                 ...state,
-                customRepresentations: state.customRepresentations.filter(
-                    (item) => item.uniqueId !== action.payload.uniqueId
-                ),
+                customRepresentations: state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
         addGeneralRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
-            state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] };
+            if (
+                !action.payload.isCustom &&
+                (action.payload.style === "CAs" ||
+                    action.payload.style === "CBs" ||
+                    action.payload.style === "CRs" ||
+                    action.payload.style === "MolecularSurface" ||
+                    action.payload.style === "gaussian" ||
+                    action.payload.style === "VdwSpheres" ||
+                    action.payload.style === "ligands" ||
+                    action.payload.style === "allHBonds")
+            ) {
+                if (
+                    state.customRepresentations &&
+                    !state.customRepresentations.some(
+                        item => item.style === action.payload.style && item.parentMolecule === action.payload.parentMolecule
+                    )
+                ) {
+                    if (action.payload.cid === "/*/*/*/*") {
+                        action.payload.cid = "/*/*/*/*:*";
+                        action.payload.interfaceOption.selectionType = "molecule";
+                    } /* convert to better cid that recognise alt conformation */
+                    state = { ...state, customRepresentations: [...state.customRepresentations, action.payload] };
+                }
+            } else {
+                state = { ...state, generalRepresentations: [...state.generalRepresentations, action.payload] };
+            }
             return state;
         },
         removeGeneralRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
-            state = {
-                ...state,
-                generalRepresentations: state.generalRepresentations.filter(
-                    (item) => item.uniqueId !== action.payload.uniqueId
-                ),
-            };
+            if (
+                action.payload.style === "CAs" ||
+                action.payload.style === "CBs" ||
+                action.payload.style === "CRs" ||
+                action.payload.style === "MolecularSurface" ||
+                action.payload.style === "gaussian" ||
+                action.payload.style === "VdwSpheres" ||
+                action.payload.style === "ligands" ||
+                action.payload.style === "allHBonds"
+            ) {
+                state = {
+                    ...state,
+                    customRepresentations: state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
+                };
+            } else {
+                state = {
+                    ...state,
+                    generalRepresentations: state.generalRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId),
+                };
+            }
             return state;
         },
     },

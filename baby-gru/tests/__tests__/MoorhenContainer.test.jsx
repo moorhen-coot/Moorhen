@@ -14,9 +14,8 @@ import { Provider } from 'react-redux'
 import { createRef } from 'react'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
-import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
-import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MoorhenModalsContainer } from '../../src/components/container/ModalsContainer'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
@@ -58,7 +57,7 @@ const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : descri
 describeIfWasmExists('Testing MoorhenContainer', () => {
 
     beforeAll(() => {
-        const createCootModule = require('../../public/moorhen')
+        const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
@@ -162,7 +161,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenNavBar {...collectedProps}/>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
                 <MoorhenModalsContainer {...collectedProps}/>
             </Provider>
         )
@@ -223,7 +222,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenNavBar {...collectedProps}/>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
                 <MoorhenModalsContainer {...collectedProps}/>
             </Provider>
         )

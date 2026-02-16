@@ -1,20 +1,22 @@
-import { useState, useEffect } from "react";
-import { Popover, Stack } from "@mui/material";
 import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
+import { useRef, useState } from "react";
 import { hexToRGB, rgbToHex } from "../../../utils/utils";
-import Tooltip from "@mui/material/Tooltip";
+import { MoorhenPopover, MoorhenStack } from "../../interface-base";
+import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
+import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
 
+type RGBAColour = [number, number, number] | [number, number, number, number];
 type MoorhenColourPickerBase = {
-    colour: [number, number, number];
-    setColour?: (colour: [number, number, number]) => void;
+    colour: RGBAColour;
+    setColour?: (colour: RGBAColour) => void;
     useAlpha?: boolean;
-    alpha?: number;
     label?: string;
-    setColourWithAlpha?: (colour: [number, number, number, number]) => void;
-    position?: string;
+    position?: "top" | "bottom" | "left" | "right";
     onClose?: () => void;
     onOpen?: () => void;
     tooltip?: string;
+    onApply?: (colour: RGBAColour) => void;
+    style?: React.CSSProperties;
 };
 
 type MoorhenColourPickerSingle = MoorhenColourPickerBase & {
@@ -24,130 +26,89 @@ type MoorhenColourPickerSingle = MoorhenColourPickerBase & {
 };
 
 type MoorhenColourPickerDual = MoorhenColourPickerBase & {
-    colour2: [number, number, number];
-    setColour2: (colour: [number, number, number]) => void;
+    colour2: RGBAColour;
+    setColour2: (colour: RGBAColour) => void;
     label2?: string;
 };
 
 type MoorhenColourPickerType = MoorhenColourPickerSingle | MoorhenColourPickerDual;
 
-/**
- * MoorhenColourPicker component props
- *
- * @typedef {object} MoorhenColourPickerBase
- * @prop {number[]} colour
- *   The primary RGB color value as an array of three numbers [number, number, number].
- * @prop {function} setColour
- *   Callback to update the primary color. (colour: [number, number, number]) => void.
- * @prop {string} [label]
- *   Optional label for the primary color picker.
- * @prop {string} [position="top"]
- *   Popover position ("top" or "bottom").
- * @prop {function} [onClose]
- *   Callback fired when the color picker popover closes. () => void.
- * @prop {function} [onOpen]
- *   Callback fired when the color picker popover opens.() => void.
- * @prop {string} [tooltip]
- *   Tooltip text for the color swatch.
- *
- * @typedef {object} MoorhenColourPickerDual
- *   Extends MoorhenColourPickerBase for a dual color picker.
- * @prop {number[]} colour2
- *   The secondary RGB color value [number, number, number].
- * @prop {function} setColour2
- *   Callback to update the secondary color. (colour: [number, number, number]) => void.
- * @prop {string} [label2]
- *   Optional label for the secondary color picker.
- *
- * @typedef {MoorhenColourPickerSingle | MoorhenColourPickerDual} MoorhenColourPickerType
- *
- * @function
- */
-
 export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
     const {
         colour,
-        setColour = null,
+        setColour = () => {},
         label = null,
         colour2 = null,
-        setColour2 = null,
+        setColour2 = () => {},
         label2 = null,
         position = "top",
-        onClose,
-        setColourWithAlpha = null,
+        tooltip,
+        onApply = null,
         useAlpha = false,
-        alpha = null,
-        onOpen,
     } = props;
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const [internalColour, setInternalColour] = useState<RGBAColour>(
+        useAlpha && colour.length === 3 ? [colour[0], colour[1], colour[2], 1] : colour
+    );
 
-    useEffect(() => {
-        if (onClose && !showColourPicker) {
-            onClose();
-        }
-        if (onOpen && showColourPicker) {
-            onOpen();
-        }
-    }, [showColourPicker, onClose, onOpen]);
+    const popoverLink = (
+        <MoorhenTooltip tooltip={tooltip}>
+            <div
+                ref={popoverRef}
+                onClick={() => {
+                    showColourPicker;
+                    setShowColourPicker(true);
+                }}
+                style={{
+                    width: "25px",
+                    height: "25px",
+                    minWidth: "25px",
+                    borderRadius: "8px",
+                    flexShrink: "0",
+                    border: "2px solid rgb(255, 255, 255)",
+                    boxShadow: "0 0 0 2px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.15)",
+                    cursor: "pointer",
+                    backgroundColor: colour2 ? "white" : `rgb(${colour[0]}, ${colour[1]}, ${colour[2]})`,
+                    backgroundImage: colour2
+                        ? `linear-gradient(135deg, rgb(${colour[0]}, ${colour[1]}, ${colour[2]}) 49%, white 49%, white 51%, rgb(${colour2[0]}, ${colour2[1]}, ${colour2[2]}) 51%)`
+                        : "none",
+                    ...props.style,
+                }}
+            />
+        </MoorhenTooltip>
+    );
 
     return (
         <>
-            <Tooltip
-                title={props.tooltip || ""}
-                placement="top"
-                disableHoverListener={!props.tooltip}
-                disableFocusListener={!props.tooltip}
-                disableTouchListener={!props.tooltip}
+            <MoorhenPopover
+                linkRef={popoverRef}
+                link={popoverLink}
+                isShown={showColourPicker}
+                setIsShown={setShowColourPicker}
+                popoverPlacement={position}
             >
-                <div
-                    onClick={({ currentTarget }) => {
-                        setAnchorEl(currentTarget);
-                        setShowColourPicker(true);
-                    }}
-                    style={{
-                        marginLeft: "0.5rem",
-                        width: "25px",
-                        height: "25px",
-                        borderRadius: "8px",
-                        border: "2px solid rgb(255, 255, 255)",
-                        boxShadow: "0 0 0 2px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.15)",
-                        cursor: "pointer",
-                        backgroundColor: colour2 ? "white" : `rgb(${colour[0]}, ${colour[1]}, ${colour[2]})`,
-                        backgroundImage: colour2
-                            ? `linear-gradient(135deg, rgb(${colour[0]}, ${colour[1]}, ${colour[2]}) 49%, white 49%, white 51%, rgb(${colour2[0]}, ${colour2[1]}, ${colour2[2]}) 51%)`
-                            : "none",
-                    }}
-                />
-            </Tooltip>
-            <Popover
-                anchorOrigin={{
-                    vertical: position === "top" ? "top" : "bottom",
-                    horizontal: "left",
-                }}
-                transformOrigin={{
-                    vertical: position === "top" ? "bottom" : "top",
-                    horizontal: "left",
-                }}
-                anchorEl={anchorEl}
-                open={showColourPicker}
-                onClose={() => setShowColourPicker(false)}
-                sx={{
-                    "& .MuiPaper-root": {
-                        overflowY: "hidden",
-                        borderRadius: "8px",
-                    },
-                }}
-            >
-                <Stack gap={3} direction="row">
-                    {useAlpha &&
-                        [{ c: colour, set: setColourWithAlpha, label }].filter(Boolean).map(({ c, set, label }, i) => (
-                            <Stack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
+                <MoorhenStack gap={3} direction="row">
+                    {[{ c: colour, set: setColour, label }, colour2 && setColour2 ? { c: colour2, set: setColour2, label: label2 } : null]
+                        .filter(Boolean)
+                        .map(({ c, set, label }, i) => (
+                            <MoorhenStack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
                                 {label ? <span>{label}</span> : null}
-                                <RgbaColorPicker
-                                    color={{ r: c[0], g: c[1], b: c[2], a: alpha }}
-                                    onChange={({ r, g, b, a }) => set([r, g, b, a])}
-                                />
+
+                                {useAlpha ? (
+                                    <RgbaColorPicker
+                                        color={{ r: c[0], g: c[1], b: c[2], a: c[3] }}
+                                        onChange={({ r, g, b, a }) => set([r, g, b, a])}
+                                    />
+                                ) : (
+                                    <RgbColorPicker
+                                        color={{ r: c[0], g: c[1], b: c[2] }}
+                                        onChange={({ r, g, b }) => {
+                                            set([r, g, b]);
+                                            setInternalColour([r, g, b]);
+                                        }}
+                                    />
+                                )}
                                 <div
                                     style={{
                                         width: "100%",
@@ -160,49 +121,18 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                     <HexColorInput
                                         className="moorhen-hex-input"
                                         color={rgbToHex(c[0], c[1], c[2])}
-                                        onChange={(hex) => {
+                                        onChange={hex => {
                                             const [r, g, b] = hexToRGB(hex);
-                                            set([r, g, b, alpha]);
+                                            set([r, g, b]);
+                                            setInternalColour([r, g, b]);
                                         }}
                                     />
                                 </div>
-                            </Stack>
+                            </MoorhenStack>
                         ))}
-                    {!useAlpha &&
-                        [
-                            { c: colour, set: setColour, label },
-                            colour2 && setColour2 ? { c: colour2, set: setColour2, label: label2 } : null,
-                        ]
-                            .filter(Boolean)
-                            .map(({ c, set, label }, i) => (
-                                <Stack key={i} direction="column" style={{ width: "100%", textAlign: "center" }}>
-                                    {label ? <span>{label}</span> : null}
-                                    <RgbColorPicker
-                                        color={{ r: c[0], g: c[1], b: c[2] }}
-                                        onChange={({ r, g, b }) => set([r, g, b])}
-                                    />
-                                    <div
-                                        style={{
-                                            width: "100%",
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            marginBottom: "0.1rem",
-                                        }}
-                                    >
-                                        <div className="moorhen-hex-input-decorator">#</div>
-                                        <HexColorInput
-                                            className="moorhen-hex-input"
-                                            color={rgbToHex(c[0], c[1], c[2])}
-                                            onChange={(hex) => {
-                                                const [r, g, b] = hexToRGB(hex);
-                                                set([r, g, b]);
-                                            }}
-                                        />
-                                    </div>
-                                </Stack>
-                            ))}
-                </Stack>
-            </Popover>
+                </MoorhenStack>
+                {onApply && <MoorhenButton onClick={() => onApply(internalColour)}>Apply</MoorhenButton>}
+            </MoorhenPopover>
         </>
     );
 };

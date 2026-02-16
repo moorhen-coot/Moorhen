@@ -1,5 +1,5 @@
 import { webGL } from '../types/mgWebGL';
-import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
+import { MoorhenReduxStoreType} from '../store/MoorhenReduxStore'
 
 interface Dictionary<T> {
     [Key: string]: T;
@@ -29,8 +29,9 @@ export class TextCanvasTexture {
     bigTextureTextIndexesBuffer: WebGLBuffer;
     textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
     shader: webGL.ShaderTextInstanced;
+    store: MoorhenReduxStoreType
 
-    constructor(gl,ext,instanced_ext,shader,width=1024,height=4096) {
+    constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: MoorhenReduxStoreType) {
         this.gl = gl
         this.ext = ext
         this.instanced_ext = instanced_ext
@@ -60,12 +61,13 @@ export class TextCanvasTexture {
         this.bigTextureTextPositionBuffer = this.gl.createBuffer();
         this.bigTextureTextIndexesBuffer = this.gl.createBuffer();
         this.textureCache = {};
+        this.store = store;
     }
 
     draw() {
-        const zoom = store.getState().glRef.zoom
-        const canvasHeight = store.getState().glRef.canvasSize[1]
-        const isWebGL2 = store.getState().glRef.isWebGL2
+        const zoom = this.store.getState().glRef.zoom
+        const canvasHeight = this.store.getState().glRef.canvasSize[1]
+        const isWebGL2 = this.store.getState().glRef.isWebGL2
 
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
@@ -279,7 +281,7 @@ export class TextCanvasTexture {
 
     addBigTextureTextImage(textObject,uuid=null) {
 
-        const background_colour = store.getState().sceneSettings.backgroundColor
+        const background_colour = this.store.getState().sceneSettings.backgroundColor
 
         let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
         if(uuid) key += "-"+uuid;

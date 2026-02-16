@@ -1,0 +1,17 @@
+@import "../../../colors.css";
+
+.moorhen__molecule_card_representation {
+    display: flex;
+    gap: 8px;
+}
+.moorhen__molecule_card_representation-chip-container {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.moorhen__molecule_card_representation-buttons {
+    display: flex;
+    flex-direction: column;
+}

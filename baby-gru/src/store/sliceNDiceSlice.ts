@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { MoorhenMolecule } from "../moorhen";
+import { MoorhenMolecule } from "@/utils";
 
 const initialState: {
     paeFileIsUploaded: boolean;
@@ -38,10 +38,7 @@ export const sliceNDiceSlice = createSlice({
         setThresholdType: (state, action: { payload: "b-factor-norm" | "af2-plddt"; type: string }) => {
             return { ...state, thresholdType: action.payload };
         },
-        setMoleculeBfactors: (
-            state,
-            action: { payload: { cid: string; bFactor: number; normalised_bFactor: number }[]; type: string }
-        ) => {
+        setMoleculeBfactors: (state, action: { payload: { cid: string; bFactor: number; normalised_bFactor: number }[]; type: string }) => {
             return { ...state, moleculeBfactors: action.payload };
         },
         setMoleculeMinBfactor: (state, action: { payload: number; type: string }) => {
@@ -62,10 +59,7 @@ export const sliceNDiceSlice = createSlice({
         setClusteringType: (state, action: { payload: string; type: string }) => {
             return { ...state, clusteringType: action.payload };
         },
-        setPAEFileContents: (
-            state,
-            action: { payload: { fileContents: string; fileName: string }[]; type: string }
-        ) => {
+        setPAEFileContents: (state, action: { payload: { fileContents: string; fileName: string }[]; type: string }) => {
             return { ...state, paeFileContents: action.payload };
         },
     },

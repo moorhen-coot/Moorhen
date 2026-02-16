@@ -1,50 +1,53 @@
-import localforage from 'localforage';
-import { Dispatch, Store, UnknownAction } from 'redux';
-import React from 'react';
-import { Preferences } from '../components/managers/preferences/MoorhenPreferences';
-import { MoorhenMap, MoorhenMolecule } from '../moorhen';
-import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from '../store/generalStatesSlice';
-import { setBusy, setGlobalInstanceReady } from '../store/globalUISlice';
-import { moorhen } from '../types/moorhen';
-import { ScreenRecorder } from '../utils/MoorhenScreenRecorder';
-import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { CommandCentre } from './CommandCentre';
-import { CootCommandWrapper } from './CommandCentre/CootCommandWrapper';
-
-//import { CommandCentre } from './CommandCentre/MoorhenCommandCentre';
+import localforage from "localforage";
+import { Dispatch, Store, UnknownAction } from "redux";
+import React from "react";
+import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
+import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
+import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
+import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
+import { MoorhenMap, MoorhenMolecule } from "@/utils";
+import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
+import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { moorhen } from "../types/moorhen";
+import { CommandCentre } from "./CommandCentre";
+import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 
 export class MoorhenInstance {
-    public dispatch: Dispatch<UnknownAction>;
-    private commandCentre!: CommandCentre;
+    private dispatch: Dispatch<UnknownAction>;
+    private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
     private videoRecorder: ScreenRecorder;
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
+    private containerRef: React.RefObject<HTMLDivElement> = null;
     private store: Store;
     private preferences: Preferences;
     private maps: MoorhenMap[] = [];
     private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    public cootCommand!: CootCommandWrapper;
+    public cootCommand: CootCommandWrapper;
+    private menuSystem: MoorhenMenuSystem | null = null;
 
-    constructor() {
+    constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this.containerRef = containerRef;
     }
 
     public paths: {
         urlPrefix: string;
         monomerLibraryPath: string;
     } = {
-        urlPrefix: '',
-        monomerLibraryPath: '',
+        urlPrefix: "",
+        monomerLibraryPath: "",
     };
 
     public setCommandCentre(commandCentre: CommandCentre): void {
@@ -57,7 +60,7 @@ export class MoorhenInstance {
         return this.commandCentre;
     }
 
-    public getCommandCentreRef(): React.RefObject<CommandCentre | null> {
+    public getCommandCentreRef(): React.RefObject<CommandCentre> {
         return this.commandCentreRef;
     }
 
@@ -70,7 +73,7 @@ export class MoorhenInstance {
         return this.timeCapsule;
     }
 
-    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule | null> {
+    public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule> {
         return this.timeCapsuleRef;
     }
 
@@ -83,7 +86,7 @@ export class MoorhenInstance {
         return this.videoRecorder;
     }
 
-    public getVideoRecorderRef(): React.RefObject<ScreenRecorder | null> {
+    public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
         return this.videoRecorderRef;
     }
 
@@ -104,6 +107,25 @@ export class MoorhenInstance {
         return this.aceDRGInstance;
     }
 
+    public getStore(): MoorhenReduxStoreType {
+        return this.store;
+    }
+
+    public getDispatch(): Dispatch<UnknownAction> {
+        return this.dispatch;
+    }
+
+    public getContainerRef() {
+        return this.containerRef;
+    }
+
+    public getMenuSystem() {
+        if (!this.menuSystem) {
+            console.error("Moorhen menu system need to be initialized before it can be used. by running start instance");
+        }
+        return this.menuSystem;
+    }
+
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -121,6 +143,7 @@ export class MoorhenInstance {
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         store: Store,
+        menuSystem: MoorhenMenuSystem,
         externalCommandCentreRef?: React.RefObject<CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>,
         timeCapsuleConfig?: {
@@ -133,13 +156,13 @@ export class MoorhenInstance {
         this.store = store;
         this.moleculesRef = moleculesRef;
         this.mapsRef = mapsRef;
-
+        this.menuSystem = menuSystem;
         // == Init Time capsule ==
         const activeMapRef = React.createRef<moorhen.Map>();
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
         const backupStorageInstance = timeCapsuleConfig?.providedBackupStorageInstance
             ? timeCapsuleConfig.providedBackupStorageInstance
-            : MoorhenInstance.createLocalStorageInstance('Moorhen-TimeCapsule');
+            : MoorhenInstance.createLocalStorageInstance("Moorhen-TimeCapsule");
         newTimeCapsule.storageInstance = backupStorageInstance;
         if (timeCapsuleConfig?.maxBackupCount) {
             newTimeCapsule.maxBackupCount = timeCapsuleConfig?.maxBackupCount;
@@ -178,6 +201,11 @@ export class MoorhenInstance {
     }
 
     public cleanup(): void {
-        this.commandCentre.close();
+        if (this.commandCentre) {
+            this.commandCentre.close();
+            this.commandCentre = undefined;
+            this.timeCapsule = undefined;
+            this.videoRecorder = undefined;
+        }
     }
 }

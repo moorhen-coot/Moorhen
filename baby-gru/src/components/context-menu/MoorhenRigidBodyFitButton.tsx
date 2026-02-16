@@ -1,8 +1,8 @@
-import { useCallback, useRef, useState } from "react";
-import { Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import { useCallback, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { MoorhenToggle } from "../inputs";
+import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
     const [randomJiggleMode, setRandomJiggleMode] = useState<boolean>(false);
@@ -17,14 +17,12 @@ export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
         selectedMode: string,
         activeMapMolNo: number
     ) => {
-        const selectedSequence = molecule.sequences.find((sequence) => sequence.chain === chosenAtom.chain_id);
+        const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id);
         let selectedResidueIndex: number = -1;
         let commandArgs: [number, string, number];
 
         if (typeof selectedSequence !== "undefined") {
-            selectedResidueIndex = selectedSequence.sequence.findIndex(
-                (residue) => residue.resNum === chosenAtom.res_no
-            );
+            selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no);
         }
 
         if (selectedResidueIndex === -1) {
@@ -86,13 +84,7 @@ export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
 
     return (
         <MoorhenContextButtonBase
-            icon={
-                <img
-                    className="moorhen-context-button__icon"
-                    src={`${props.urlPrefix}/pixmaps/rigid-body.svg`}
-                    alt="Rigid body fit"
-                />
-            }
+            icon={<img className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rigid-body.svg`} alt="Rigid body fit" />}
             refineAfterMod={false}
             needsMapData={true}
             toolTipLabel="Rigid body fit"
@@ -104,15 +96,8 @@ export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
                 setDefaultValue: (newValue: string) => {
                     props.setDefaultActionButtonSettings({ key: "rigidBodyFit", value: newValue });
                 },
-                extraInput: (ref) => {
-                    return (
-                        <Form.Check
-                            ref={ref}
-                            style={{ paddingTop: "0.1rem" }}
-                            type="switch"
-                            label="Use random jiggle fit"
-                        />
-                    );
+                extraInput: ref => {
+                    return <MoorhenToggle ref={ref} style={{ paddingTop: "0.1rem" }} type="switch" label="Use random jiggle fit" />;
                 },
             }}
             {...props}

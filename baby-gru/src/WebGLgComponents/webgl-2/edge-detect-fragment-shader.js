@@ -13,14 +13,15 @@ uniform float depthThreshold;
 uniform float normalThreshold;
 uniform float scaleDepth;
 uniform float scaleNormal;
-uniform float xPixelOffset;
-uniform float yPixelOffset;
 uniform float depthFactor;
 
 in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
 
 void main() {
+
+    // Compute pixel step from texture dimensions — zoom invariant
+    vec2 texelSize = 1.0 / vec2(textureSize(gPosition, 0));
 
     mat3 Sx;
     mat3 Sy;
@@ -32,14 +33,14 @@ void main() {
     Sy[1].xyz = vec3(  0,  0,  0);
     Sy[2].xyz = vec3(  1,  2,  1);
 
-    float tl  = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(xPixelOffset,   yPixelOffset)).z;
-    float br  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(xPixelOffset,   yPixelOffset)).z;
-    float tr  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2( xPixelOffset, -yPixelOffset)).z;
-    float bl  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(-xPixelOffset,  yPixelOffset)).z;
-    float t   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(0 , yPixelOffset)).z;
-    float b   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(0 , yPixelOffset)).z;
-    float l   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(xPixelOffset , 0)).z;
-    float r   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(xPixelOffset , 0)).z;
+    float tl  = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x,   texelSize.y)).z;
+    float br  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x,   texelSize.y)).z;
+    float tr  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2( texelSize.x, -texelSize.y)).z;
+    float bl  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(-texelSize.x,  texelSize.y)).z;
+    float t   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(0 , texelSize.y)).z;
+    float b   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(0 , texelSize.y)).z;
+    float l   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x , 0)).z;
+    float r   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x , 0)).z;
     float pix = texture(gPosition, out_TexCoord0).z;
 
     float Gx = Sx[0][0] * tl + Sx[0][1] *   t + Sx[0][2] * tr +
@@ -55,14 +56,14 @@ void main() {
     diff = 1.0 - diff;
 
     // But normals are vec3 xyz's not floats ...
-    vec3 ntl  = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(xPixelOffset,   yPixelOffset))).xyz;
-    vec3 nbr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(xPixelOffset,   yPixelOffset))).xyz;
-    vec3 ntr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2( xPixelOffset, -yPixelOffset))).xyz;
-    vec3 nbl  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(-xPixelOffset,  yPixelOffset))).xyz;
-    vec3 nt   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(0 , yPixelOffset))).xyz;
-    vec3 nb   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(0 , yPixelOffset))).xyz;
-    vec3 nl   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(xPixelOffset , 0))).xyz;
-    vec3 nr   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(xPixelOffset , 0))).xyz;
+    vec3 ntl  = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(texelSize.x,   texelSize.y))).xyz;
+    vec3 nbr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(texelSize.x,   texelSize.y))).xyz;
+    vec3 ntr  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2( texelSize.x, -texelSize.y))).xyz;
+    vec3 nbl  = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(-texelSize.x,  texelSize.y))).xyz;
+    vec3 nt   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(0 , texelSize.y))).xyz;
+    vec3 nb   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(0 , texelSize.y))).xyz;
+    vec3 nl   = normalize(texture(gNormal, out_TexCoord0 - scaleNormal*vec2(texelSize.x , 0))).xyz;
+    vec3 nr   = normalize(texture(gNormal, out_TexCoord0 + scaleNormal*vec2(texelSize.x , 0))).xyz;
     vec3 npix = normalize(texture(gNormal, out_TexCoord0)).xyz;
 
     float Gx_n = Sx[0][0] * dot(npix,ntl) + Sx[0][1] *  dot(npix, nt) + Sx[0][2] * dot(npix,ntr) +

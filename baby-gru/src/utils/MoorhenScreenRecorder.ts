@@ -1,7 +1,7 @@
 import { webGL } from "../types/mgWebGL.js";
-import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
+import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore.js";
 
 interface ImageFrac2D {
     x: number
@@ -18,11 +18,13 @@ export class ScreenRecorder  {
     chunks: Blob[];
     canvasRef: React.RefObject<HTMLCanvasElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: MoorhenReduxStoreType
     _isRecording: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>){
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: MoorhenReduxStoreType){
         this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
+        this.store = store;
         this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
 
@@ -112,10 +114,9 @@ export class ScreenRecorder  {
 
         ctx = saveCanvas.getContext("2d");
 
-        const isWebGL2 = store.getState().glRef.isWebGL2
-
-        const canvasSize = store.getState().glRef.canvasSize
-        const quat = store.getState().glRef.quat
+        const isWebGL2 = this.store.getState().glRef.isWebGL2
+        const canvasSize = this.store.getState().glRef.canvasSize
+        const quat = this.store.getState().glRef.quat
 
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
@@ -138,7 +139,7 @@ export class ScreenRecorder  {
             }
         } else {
 
-            const fbSize = store.getState().glRef.rttFramebufferSize
+            const fbSize = this.store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
             const h = fbSize[1]
 
@@ -169,8 +170,8 @@ export class ScreenRecorder  {
         }
 
         ctx.putImageData(imgData, 0,0);
-        const imageOverlays = store.getState().overlays.imageOverlayList
-        const latexOverlays = store.getState().overlays.latexOverlayList
+        const imageOverlays = this.store.getState().overlays.imageOverlayList
+        const latexOverlays = this.store.getState().overlays.latexOverlayList
 
         const promises = []
         const imgFracs = []
@@ -194,11 +195,11 @@ export class ScreenRecorder  {
                 imgFracs.push(img_frac)
             }
 
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4, this.store)
 
             let link: any = document.getElementById('download_image_link');
             if (!link) {

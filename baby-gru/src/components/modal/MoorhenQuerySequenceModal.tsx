@@ -1,21 +1,22 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Backdrop } from "@mui/material";
+import { ApolloClient, ApolloProvider, InMemoryCache, useLazyQuery } from "@apollo/client";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
-import { Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
-import { useSelector } from 'react-redux';
+import { Backdrop } from "@mui/material";
 import { Store } from "@reduxjs/toolkit";
-import { ApolloClient, InMemoryCache, ApolloProvider, useLazyQuery } from "@apollo/client";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase";
-import { MoorhenSlider } from "../inputs";
+import { Button, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
+import { useSelector } from "react-redux";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { webGL } from "../../types/mgWebGL";
-import { modalKeys } from "../../utils/enums";
+import { moorhen } from "../../types/moorhen";
 import { gql } from "../../utils/__graphql__/gql";
-import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
 import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
+import { modalKeys } from "../../utils/enums";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
+import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const GET_POLYMER_INFO = gql(`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
@@ -50,7 +51,7 @@ export const MoorhenQuerySequenceModal = () => {
 
     return (
         <ApolloProvider client={client.current}>
-            <MoorhenQuerySequence/>
+            <MoorhenQuerySequence />
         </ApolloProvider>
     );
 };
@@ -70,11 +71,11 @@ const MoorhenQuerySequence = () => {
     const cachedEValCutoff = useRef<number | null>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
     const chainSelectRef = useRef<HTMLSelectElement>(null);
-    const sourceSelectRef =  useRef<HTMLSelectElement>(null);
-   
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const sourceSelectRef = useRef<HTMLSelectElement>(null);
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
 
     const [getPolimerInfo, { loading, error, data }] = useLazyQuery(GET_POLYMER_INFO);
 
@@ -134,9 +135,12 @@ const MoorhenQuerySequence = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         try {
-            const reponse = await fetch(`https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`, {
-                signal: controller.signal,
-            });
+            const reponse = await fetch(
+                `https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`,
+                {
+                    signal: controller.signal,
+                }
+            );
             const result = await reponse.json();
             return result;
         } catch (err) {
@@ -152,7 +156,7 @@ const MoorhenQuerySequence = () => {
             setSelectedModel(null);
         } else if (selectedModel === null) {
             setSelectedModel(molecules[0].molNo);
-        } else if (!molecules.map((molecule) => molecule.molNo).includes(selectedModel)) {
+        } else if (!molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
             setSelectedModel(molecules[0].molNo);
         }
     }, [molecules.length]);
@@ -168,12 +172,12 @@ const MoorhenQuerySequence = () => {
             }
 
             setBusy(true);
-            const molecule = molecules.find((molecule) => molecule.molNo === parseInt(moleculeSelectRef.current.value));
-            const sequence = molecule.sequences.find((sequence) => sequence.chain === chainSelectRef.current.value);
+            const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
+            const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value);
             let results: { result_set: { [id: number]: { identifier: string; score: number } }; total_count: number };
 
             results = await doPDBQuery(
-                sequence.sequence.map((residue) => residue.resCode).join(""),
+                sequence.sequence.map(residue => residue.resCode).join(""),
                 resultsPageNumber * 10,
                 seqIdCutoff / 100,
                 eValCutoff,
@@ -188,15 +192,15 @@ const MoorhenQuerySequence = () => {
             let queryInput: GetPolimerInfoQueryVariables;
             if (sourceSelectRef.current.value === "AFDB") {
                 queryInput = {
-                    entryIds: Object.keys(results.result_set).map((key) =>
+                    entryIds: Object.keys(results.result_set).map(key =>
                         results.result_set[key].identifier.slice(0, results.result_set[key].identifier.length - 2)
                     ),
-                    entityIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier),
+                    entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier),
                 };
             } else {
                 queryInput = {
-                    entryIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier.slice(0, 4)),
-                    entityIds: Object.keys(results.result_set).map((key) => results.result_set[key].identifier),
+                    entryIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier.slice(0, 4)),
+                    entityIds: Object.keys(results.result_set).map(key => results.result_set[key].identifier),
                 };
             }
 
@@ -221,133 +225,111 @@ const MoorhenQuerySequence = () => {
             modalId={modalKeys.SEQ_QUERY}
             left={width / 4}
             top={height / 4}
-            minHeight={convertViewtoPx(15, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(50, height)}
-            maxWidth={convertViewtoPx(50, width)}
+            minHeight={400}
+            minWidth={220}
+            maxHeight={900}
+            maxWidth={400}
             additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy || loading}>
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
                     <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
                     <span>Fetching...</span>
                 </Backdrop>
             }
             headerTitle="Query using a sequence"
             body={
-                <>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
-                        </Col>
-                        <Col>
-                            <MoorhenChainSelect
-                                width=""
-                                molecules={molecules}
-                                onChange={handleChainChange}
-                                selectedCoordMolNo={selectedModel}
-                                ref={chainSelectRef}
-                                allowedTypes={[1, 2]}
-                            />
-                        </Col>
-                        <Col>
-                            <Form.Group style={{ margin: "0.5rem" }}>
-                                <Form.Label>Source</Form.Label>
-                                <FormSelect size="sm" ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
-                                    <option value="PDB" key="PDB">
-                                        PDB
-                                    </option>
-                                    <option value="AFDB" key="AFDB">
-                                        Predicted Models
-                                    </option>
-                                </FormSelect>
-                            </Form.Group>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                            <Form.Group controlId="eValueSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                                <MoorhenSlider
-                                    minVal={0.1}
-                                    maxVal={1.0}
-                                    logScale={false}
-                                    sliderTitle="E-Val cutoff"
-                                    decimalPlaces={1}
-                                    externalValue={eValCutoff}
-                                    setExternalValue={(value) => setEValCutoff(value)}
-                                />
-                            </Form.Group>
-                        </Col>
-                        <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                            <Form.Group controlId="seqIdSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                                <MoorhenSlider
-                                    minVal={1}
-                                    maxVal={100}
-                                    logScale={false}
-                                    sliderTitle="Seq. Id. cutoff"
-                                    externalValue={seqIdCutoff}
-                                    decimalPlaces={0}
-                                    setExternalValue={(value) => setSeqIdCutoff(value)}
-                                />
-                            </Form.Group>
-                        </Col>
-                    </Row>
+                <MoorhenStack>
+                    <MoorhenStack inputGrid addMargin>
+                        <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
+                        <MoorhenChainSelect
+                            width=""
+                            molecules={molecules}
+                            onChange={handleChainChange}
+                            selectedCoordMolNo={selectedModel}
+                            ref={chainSelectRef}
+                            allowedTypes={[1, 2]}
+                        />
+                        <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
+                            <option value="PDB" key="PDB">
+                                PDB
+                            </option>
+                            <option value="AFDB" key="AFDB">
+                                Predicted Models
+                            </option>
+                        </MoorhenSelect>
+                    </MoorhenStack>
+                    <MoorhenSlider
+                        minVal={0.1}
+                        maxVal={1.0}
+                        logScale={false}
+                        sliderTitle="E-Val cutoff"
+                        decimalPlaces={1}
+                        externalValue={eValCutoff}
+                        setExternalValue={value => setEValCutoff(value)}
+                    />
+                    <MoorhenSlider
+                        minVal={1}
+                        maxVal={100}
+                        logScale={false}
+                        sliderTitle="Seq. Id. cutoff"
+                        externalValue={seqIdCutoff}
+                        decimalPlaces={0}
+                        setExternalValue={value => setSeqIdCutoff(value)}
+                    />
                     <hr></hr>
-                    <Row>
-                        {data ? (
-                            <>
-                                {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
-                                {totalNumberOfHits > 0 ? (
-                                    <div style={{ height: "100px", width: "100%" }}>
-                                        {data &&
-                                            data.entityInfo.map((entityInfo, idx) => {
-                                                return (
-                                                    <MoorhenQueryHitCard
-                                                        key={entityInfo.entityId}
-                                                        selectedMolNo={parseInt(moleculeSelectRef.current.value)}
-                                                        selectedChain={chainSelectRef.current.value}
-                                                        data={data}
-                                                        idx={idx}
-                                                    />
-                                                );
-                                            })}
-                                    </div>
-                                ) : (
-                                    <span>No results found...</span>
-                                )}
-                            </>
-                        ) : null}
-                    </Row>
-                </>
+                    {data ? (
+                        <>
+                            {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
+                            {totalNumberOfHits > 0 ? (
+                                <MoorhenStack inputGrid>
+                                    {data &&
+                                        data.entityInfo.map((entityInfo, idx) => {
+                                            return (
+                                                <MoorhenQueryHitCard
+                                                    key={entityInfo.entityId}
+                                                    selectedMolNo={parseInt(moleculeSelectRef.current.value)}
+                                                    selectedChain={chainSelectRef.current.value}
+                                                    data={data}
+                                                    idx={idx}
+                                                />
+                                            );
+                                        })}
+                                </MoorhenStack>
+                            ) : (
+                                <span>No results found...</span>
+                            )}
+                        </>
+                    ) : null}
+                </MoorhenStack>
             }
             footer={
                 <>
-                    <Stack
-                        gap={2}
-                        direction="horizontal"
-                        style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
-                    >
+                    <MoorhenStack gap={2} direction="horizontal" justify="flex-end">
                         {totalNumberOfHits > 0 ? (
                             <span>
                                 Page {currentResultsPage + 1} of {Math.ceil(totalNumberOfHits / 10)}
                             </span>
                         ) : null}
-                        <Button variant="primary" onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}>
+                        <MoorhenButton
+                            variant="primary"
+                            onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}
+                        >
                             <FirstPageOutlined />
-                        </Button>
-                        <Button
+                        </MoorhenButton>
+                        <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === 0}
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage - 1)}
                         >
                             <ArrowBackIosOutlined />
-                        </Button>
-                        <Button
+                        </MoorhenButton>
+                        <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === Math.ceil(totalNumberOfHits / 10) - 1}
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}
                         >
                             <ArrowForwardIosOutlined />
-                        </Button>
-                    </Stack>
+                        </MoorhenButton>
+                    </MoorhenStack>
                 </>
             }
         />

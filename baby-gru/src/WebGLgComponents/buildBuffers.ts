@@ -1,11 +1,12 @@
-import { MoorhenReduxStore as store } from '../store/MoorhenReduxStore'
+import * as vec3 from 'gl-matrix/vec3';
 import { guid } from '../utils/utils';
 import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
+import { MoorhenReduxStoreType, RootState } from '../store/MoorhenReduxStore';
 
-export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: string) : any => {
+export const appendOtherData = (jsondata: any, store: MoorhenReduxStoreType, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
         const theseTexturedShapes = [];
@@ -58,7 +59,7 @@ export const appendOtherData = (jsondata: any, skipRebuild?: boolean, name?: str
                 }
             }
 
-            const theBuffer = createWebGLBuffers(jsondata,idat)
+            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
             theseBuffers.push(theBuffer);
 
             const displayBuffers = store.getState().glRef.displayBuffers
@@ -600,17 +601,13 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
     return newBuffers
 }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[], gl_in:WebGL2RenderingContext|WebGLRenderingContext|null=null,isWeGL2_in:boolean=false) : void => {
+export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth
 
         let isWebGL2 = store.getState().glRef.isWebGL2
         let gl = store.getState().glRef.glCtx
-        if(gl_in){
-            gl = gl_in
-            isWebGL2 = isWeGL2_in
-        }
 
         const tbb1 = performance.now()
 

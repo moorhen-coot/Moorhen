@@ -1,7 +1,7 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "./MoorhenReduxStore";
+import type { AppDispatch, RootState } from "./MoorhenReduxStore";
 
 const initialState: {
     settings: Record<string, Record<string, unknown>>;
@@ -50,7 +50,7 @@ export const usePersistent = <T>(menu: string, key: string, defaultValue: T): T 
  * @param autoUpdate - If true, the Redux store will be updated automatically when the value changes.
  * @returns A tuple containing the current value and a function to update it.
  */
-export const usePersistentState = <T>(menu: string, key: string, defaultValue: T, autoUpdate: boolean = false) => {
+export const usePersistentState = <T>(menu: string, key: string, defaultValue: T, autoUpdate: boolean = true) => {
     const dispatch: AppDispatch = useDispatch();
     const storeValue: T = usePersistent<T>(menu, key, defaultValue) as T;
 
@@ -73,12 +73,8 @@ export const usePersistentState = <T>(menu: string, key: string, defaultValue: T
  * @param data - An array of key-value pairs to be stored.
  */
 
-export const dispatchPersistentStates = (
-    dispatch: AppDispatch,
-    menu: string,
-    data: { key: string; value: unknown }[]
-) => {
-    data.forEach((item) => {
+export const dispatchPersistentStates = (dispatch: AppDispatch, menu: string, data: { key: string; value: unknown }[]) => {
+    data.forEach(item => {
         dispatch(setMenuSetting({ menu, key: item.key, value: item.value }));
     });
 };

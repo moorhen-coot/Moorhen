@@ -1,16 +1,16 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { Button, Form, Stack } from "react-bootstrap";
 import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { LastPageOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenReduxStore as store } from '../../store/MoorhenReduxStore'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
+import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
@@ -31,7 +31,7 @@ import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponen
 import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
 import { twod_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/twodshapes-side-on-view-vertex-shader.js';
 import { perfect_sphere_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/perfect-sphere-side-on-view-fragment-shader.js';
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
     const box = elem.getBoundingClientRect()
@@ -96,8 +96,9 @@ interface SideOnProgramInstanced extends WebGLProgram {
     vertexInstanceOrientationAttribute: GLint;
 }
 
-const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
+export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
 
+    const store = useStore<RootState>()
     const dispatch = useDispatch();
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
@@ -204,7 +205,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         const gl = canvasWebGL.getContext("webgl2")
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,gl,true)
+        buildBuffers(clonedBuffers,store)
         return clonedBuffers
 
     }, [displayBuffers,storeMolecules])
@@ -809,7 +810,7 @@ const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertica
         sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,gl,true)
+        buildBuffers(clonedBuffers,store)
         myBuffers = clonedBuffers
         imageBuffersRef.current = buildDiskBuffers()
 

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 53.7 48.7">
+  <g>
+    <g id="Calque_1">
+          <path d="M23.9,15.6c-.5-10.9-12.9-11-12.9,0" style="stroke-width: 2px; stroke-linecap: round; fill: none; stroke: #f8e448; stroke-miterlimit: 10" />
+      <path d="M24,35c.5,10.9,12.9,11,12.9,0" style="stroke-width: 2px; stroke-linecap: round; fill: none; stroke: #f8e448; stroke-miterlimit: 10" />
+      <g>
+        <line x1="36.5" y1="39.1" x2="42.2" y2="18.9" style="fill: none; stroke: #5360d1; stroke-miterlimit: 10; stroke-width: 9px" />
+        <polygon points="32.9 17.5 50.8 22.6 44.4 11.1 32.9 17.5" fill="#5360d1" stroke="none"/>
+      </g>
+      <line x1="11.2" y1="34.6" x2="11.2" y2="16.5" style="stroke-linecap: round; fill: none; stroke: #c1385b; stroke-miterlimit: 10; stroke-width: 9px" />
+      <line x1="23.9" y1="34.6" x2="23.9" y2="16.5" style="stroke-linecap: round; fill: none; stroke: #c1385b; stroke-miterlimit: 10; stroke-width: 9px" />
+    </g>
+  </g>
+</svg>

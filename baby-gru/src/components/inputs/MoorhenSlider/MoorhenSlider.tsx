@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
-import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
 import { toFixedNoZero } from "../../misc/helpers";
-import { PlusMinusButton } from "./PlusMinusButton";
+import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
 import "./MoorhenSlider.css";
+import { PlusMinusButton } from "./PlusMinusButton";
 
 type MoorhenSliderProps = {
     externalValue: number; // value passed from parent
-    setExternalValue: (value: number) => void;
+    setExternalValue: ((value: number) => void) | React.Dispatch<React.SetStateAction<number>>;
     logScale?: boolean;
     minVal?: number;
     maxVal?: number;
     sliderTitle?: string;
+    sliderPrecision?: number;
     decimalPlaces?: number;
     showMinMaxVal?: boolean;
     showButtons?: boolean;
@@ -81,7 +82,7 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
  *   If true, replaces the value display with an editable precise numeric input field.
  *
  * @prop {string | number} [piWidth]
- *   Width of the precise input field (when usePreciseInput is true). 
+ *   Width of the precise input field (when usePreciseInput is true).
  *   If not provided, width is calculated based on decimal places.
  *
  * @prop {boolean} [piWaitReturn=false]
@@ -98,6 +99,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         logScale = false,
         decimalPlaces = 0,
         sliderTitle = "",
+        sliderPrecision = null,
         showMinMaxVal = true,
         isDisabled = false,
         usePreciseInput = false,
@@ -107,7 +109,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         piMinMax = [minVal, maxVal],
     } = props;
 
-    const precision = Math.pow(10, -decimalPlaces);
+    const precision = sliderPrecision ?? Math.pow(10, -decimalPlaces);
 
     const stepButtons = useMemo(
         function getStepButtons() {
@@ -140,7 +142,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         handleChange(newSliderValue);
     };
 
-    const handleSetValue = (newVal: string) => {
+    const handleSetValue = (newVal: number) => {
         props.setExternalValue(+newVal);
     };
 
@@ -148,7 +150,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         const drawPreciseInput = () => {
             return (
                 <label className={"moorhen__slider__label"} htmlFor="slider">
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
                         value={props.externalValue as number}

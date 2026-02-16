@@ -1,20 +1,17 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
+import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack";
 import { Stack } from "react-bootstrap";
-import { IconButton, LinearProgress, Slider } from "@mui/material";
-import {
-    PauseCircleOutline,
-    PlayCircleOutline,
-    ReplayCircleFilledOutlined,
-    StopCircleOutlined,
-} from "@mui/icons-material";
-import { sleep } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
-import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
-import { MoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
+import { RootState } from "../../store/MoorhenReduxStore";
+import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
+import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
+import { sleep } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenModelTrajectorySnackBar = forwardRef<
     HTMLDivElement,
@@ -26,6 +23,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     }
 >((props, ref) => {
     const dispatch = useDispatch();
+    const store = useStore<RootState>();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
@@ -41,10 +39,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
     const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(false);
 
-    const selectedMolecule = useMemo(
-        () => molecules.find((molecule) => molecule.molNo === props.moleculeMolNo),
-        [props.moleculeMolNo]
-    );
+    const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === props.moleculeMolNo), [props.moleculeMolNo]);
 
     const { closeSnackbar } = useSnackbar();
     const commandCentre = useCommandCentre();
@@ -65,7 +60,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
             await representation.applyColourRules();
             const meshObjects = await representation.getBufferObjects();
             frames.push(meshObjects);
-            setProgress((prev) => prev + singleStepPercent);
+            setProgress(prev => prev + singleStepPercent);
         }
 
         return frames;
@@ -91,7 +86,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
             while (iFrameRef.current < framesRef.current.length) {
                 representationRef.current.deleteBuffers();
                 await representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]);
-                setCurrentFrameIndex((prev) => prev + singleStepPercent);
+                setCurrentFrameIndex(prev => prev + singleStepPercent);
                 await sleep(5);
                 iFrameRef.current += 1;
                 if (!isPlayingAnimationRef.current) {
@@ -125,12 +120,12 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
             {busyComputingFrames ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <span>Please wait...</span>
                     <LinearProgress variant="determinate" value={progress} />
-                </Stack>
+                </MoorhenStack>
             ) : nFrames > 0 ? (
-                <Stack gap={1} direction="vertical">
+                <MoorhenStack gap={1} direction="vertical">
                     <div style={{ display: "flex", justifyContent: "center" }}>
                         <IconButton onClick={playAnimation}>
                             {iFrameRef.current === framesRef.current.length - 1 ? (
@@ -171,7 +166,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
                             }
                         }}
                     />
-                </Stack>
+                </MoorhenStack>
             ) : (
                 <span>Something went wrong...</span>
             )}

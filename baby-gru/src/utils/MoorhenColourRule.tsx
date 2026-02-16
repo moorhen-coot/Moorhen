@@ -36,6 +36,7 @@ import { guid } from "./utils";
  */
 export class ColourRule {
     ruleType: string;
+    propertyType: string;
     cid: string;
     color: string;
     args: (string | number)[];
@@ -132,13 +133,13 @@ export class ColourRule {
                 .replace("rgb(", "")
                 .replace(")", "")
                 .split(", ")
-                .map((item) => parseFloat(item));
+                .map(item => parseFloat(item));
         } else {
             [r, g, b] = hexToRgb(hex)
                 .replace("rgb(", "")
                 .replace(")", "")
                 .split(", ")
-                .map((item) => parseFloat(item));
+                .map(item => parseFloat(item));
             a = 1.0;
         }
         return [r, g, b, a];
@@ -223,7 +224,7 @@ export class ColourRule {
     }[] {
         if (this.isMultiColourRule) {
             const allColours = this.args[0] as string;
-            return allColours.split("|").map((colour) => {
+            return allColours.split("|").map(colour => {
                 const [cid, hex] = colour.split("^");
                 const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
                 return {

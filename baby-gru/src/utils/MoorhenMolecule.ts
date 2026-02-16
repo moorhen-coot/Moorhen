@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -113,11 +113,11 @@ export class MoorhenMolecule {
     biomolOn: boolean;
     symmetryRadius: number;
     symmetryMatrices: number[][][];
-    gaussianSurfaceSettings: moorhen.gaussianSurfSettings;
+    gaussianSurfaceSettings: gaussianSurfSettings;
     isDarkBackground: boolean;
     defaultBondOptions: moorhen.cootBondOptions;
-    defaultM2tParams: moorhen.m2tParameters;
-    defaultResidueEnvironmentOptions: moorhen.residueEnvironmentOptions;
+    defaultM2tParams: m2tParameters;
+    defaultResidueEnvironmentOptions: residueEnvironmentOptions;
     displayObjectsTransformation: { origin: [number, number, number]; quat: any; centre: [number, number, number] };
     uniqueId: string;
     monomerLibraryPath: string;
@@ -201,7 +201,8 @@ export class MoorhenMolecule {
             ssUsageScheme: 2,
         };
         this.defaultResidueEnvironmentOptions = {
-            maxDist: 8,
+            maxDist: 3.5,
+            adaptiveDist: 8.0,
             backgroundRepresentation: "CRs",
             focusRepresentation: "CBs",
             labelled: true,
@@ -1420,26 +1421,52 @@ export class MoorhenMolecule {
      */
     async addRepresentation(
         style: moorhen.RepresentationStyles,
+        cid?: string,
+        isCustom?: boolean,
+        colourRules?: moorhen.ColourRule[],
+        bondOptions?: moorhen.cootBondOptions,
+        m2tParams?: m2tParameters,
+        residueEnvOptions?: residueEnvironmentOptions,
+        nonCustomOpacity?: number
+    ): Promise<moorhen.MoleculeRepresentation>;
+    /**
+     * Add a representation to the molecule
+     * @param {moorhen.MoleculeRepresentation} representation - A pre-configured molecule representation
+     */
+    async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
+    async addRepresentation(
+        styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
         cid: string = "/*/*/*/*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
         bondOptions?: moorhen.cootBondOptions,
-        m2tParams?: moorhen.m2tParameters,
-        residueEnvOptions?: moorhen.residueEnvironmentOptions,
+        m2tParams?: m2tParameters,
+        residueEnvOptions?: residueEnvironmentOptions,
         nonCustomOpacity?: number
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
         }
-        const representation = new MoleculeRepresentation(style, cid, this.commandCentre);
-        representation.isCustom = isCustom;
+
+        let representation: moorhen.MoleculeRepresentation;
+
+        // Check if the first argument is a MoleculeRepresentation instance
+        if (styleOrRepresentation instanceof MoleculeRepresentation) {
+            representation = styleOrRepresentation;
+        } else {
+            // Create a new representation from individual parameters
+            const style = styleOrRepresentation as moorhen.RepresentationStyles;
+            representation = new MoleculeRepresentation(style, cid, this.commandCentre);
+            representation.isCustom = isCustom;
+            representation.setColourRules(colourRules);
+            representation.setBondOptions(bondOptions);
+            representation.setM2tParams(m2tParams);
+            representation.setResidueEnvOptions(residueEnvOptions);
+            representation.setNonCustomOpacity(nonCustomOpacity);
+        }
+
         representation.setParentMolecule(this);
-        representation.setColourRules(colourRules);
-        representation.setBondOptions(bondOptions);
-        representation.setM2tParams(m2tParams);
-        representation.setResidueEnvOptions(residueEnvOptions);
         await representation.draw();
-        representation.setNonCustomOpacity(nonCustomOpacity);
         this.representations.push(representation);
         await this.drawSymmetry(false);
         this.drawBiomolecule(false);
@@ -1467,7 +1494,7 @@ export class MoorhenMolecule {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
             } else {
-                if (!cid) cid = "/*/*/*/*";
+                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1492,7 +1519,7 @@ export class MoorhenMolecule {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
             } else {
-                if (!cid) cid = "/*/*/*/*";
+                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1608,7 +1635,7 @@ export class MoorhenMolecule {
      * @returns {string} The active atom CID
      */
     async getActiveAtom(): Promise<string> {
-        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre);
+        const [_molecule, activeAtomCid] = await getCentreAtom([this], this.commandCentre, this.store);
         return activeAtomCid;
     }
 
@@ -1659,7 +1686,7 @@ export class MoorhenMolecule {
             this.environmentRepresentation.cid = selectionCid;
             await this.environmentRepresentation.redraw();
         } else {
-            const [molecule, cid] = await getCentreAtom([this], this.commandCentre);
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.store);
             this.clearBuffersOfStyle("environment");
             if (molecule?.molNo === this.molNo && cid) {
                 this.environmentRepresentation.cid = cid;

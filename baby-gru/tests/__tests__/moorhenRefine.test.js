@@ -1,10 +1,10 @@
 import fetch from 'node-fetch'
-import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
+import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
@@ -12,7 +12,7 @@ jest.setTimeout(60000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-const createCootModule = require('../../public/moorhen')
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
 let cootModule;
 
@@ -141,7 +141,7 @@ const setupFunctions = {
             const coordData = fs.readFileSync(path.join(dirName, fileName), { encoding: fileName.includes('mtz') ? null : 'utf8', flag: 'r' })
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
-        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'data.tar.gz' ), { encoding: null, flag: 'r' })
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);

@@ -3,6 +3,8 @@
 **/*.ent
 **/*.mtz
 **/*.pdb
+!baby-gru/public/MoorhenAssets/tutorials/*.mtz
+!baby-gru/public/MoorhenAssets/tutorials/*.pdb
 **/*.wasm
 **/CMakeCache.txt
 **/CMakeFiles

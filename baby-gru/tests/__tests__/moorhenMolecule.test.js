@@ -1,9 +1,9 @@
 import fetch from 'node-fetch'
-import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import { MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
+import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
@@ -11,7 +11,7 @@ jest.setTimeout(60000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-const createCootModule = require('../../public/moorhen')
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
 let cootModule;
 
@@ -685,7 +685,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_1,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -718,7 +718,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_3,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -785,7 +785,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_1.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
         const instancedMesh_2 = await commandCentre.current.cootCommand({
@@ -795,7 +795,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_1.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, false, 1
             ]
         })
 
@@ -818,7 +818,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_2.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -836,7 +836,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_2.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -849,7 +849,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA pdb", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.pdb')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.pdb')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
@@ -857,7 +857,7 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("hasDNA mmcif", async () => {
-        const fileUrl = path.join('https://files.rcsb.org/download/3L1P.cif')
+        const fileUrl = path.join(__dirname, '..', 'test_data', '3L1P.cif')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
         expect(molecule.molNo).toBe(0)
@@ -1044,7 +1044,7 @@ const setupFunctions = {
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
         cootModule.FS.mkdir("COOT_BACKUP");
-        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'data.tar.gz' ), { encoding: null, flag: 'r' })
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);

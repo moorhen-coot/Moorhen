@@ -1,12 +1,13 @@
-import { Stack } from "react-bootstrap";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
+import { SnackbarContent, useSnackbar } from "notistack";
+import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { forwardRef, useCallback, useEffect, useRef } from "react";
-import { SnackbarContent, useSnackbar } from "notistack";
-import { moorhen } from "../../types/moorhen";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { useCommandCentre } from "../../InstanceManager";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
     HTMLDivElement,
@@ -30,8 +31,8 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     const matchLigands = useCallback(async () => {
-        const movingMolecule = molecules.find((molecule) => molecule.molNo === props.movingMolNo);
-        const referenceMolecule = molecules.find((molecule) => molecule.molNo === props.refMolNo);
+        const movingMolecule = molecules.find(molecule => molecule.molNo === props.movingMolNo);
+        const referenceMolecule = molecules.find(molecule => molecule.molNo === props.refMolNo);
 
         if (!movingMolecule || !referenceMolecule) {
             return;
@@ -68,8 +69,8 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
             return;
         }
 
-        const movingMolecule = molecules.find((molecule) => molecule.molNo === props.movingMolNo);
-        const referenceMolecule = molecules.find((molecule) => molecule.molNo === props.refMolNo);
+        const movingMolecule = molecules.find(molecule => molecule.molNo === props.movingMolNo);
+        const referenceMolecule = molecules.find(molecule => molecule.molNo === props.refMolNo);
 
         if (!movingMolecule || !referenceMolecule) {
             return;
@@ -104,11 +105,7 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
             className="moorhen-notification-div"
             style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
         >
-            <Stack
-                gap={2}
-                direction="horizontal"
-                style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
-            >
+            <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div>
                     <span>Replace ligand?</span>
                 </div>
@@ -130,7 +127,7 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
                         <CloseOutlined />
                     </IconButton>
                 </div>
-            </Stack>
+            </MoorhenStack>
         </SnackbarContent>
     );
 });

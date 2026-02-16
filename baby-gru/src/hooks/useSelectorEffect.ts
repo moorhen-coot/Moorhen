@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
 import { moorhen } from "../types/moorhen";
 
 /**
@@ -20,7 +20,7 @@ import { moorhen } from "../types/moorhen";
 
 export const useSelectorEffect = <T = unknown>(
     selector: (state: moorhen.State) => T,
-    effect: (selectedState: T) => void
+    effect: (selectedState: T) => void | Promise<void>
 ) => {
     const selectedState = useSelector(selector);
 

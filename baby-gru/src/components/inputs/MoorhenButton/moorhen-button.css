@@ -1,4 +1,4 @@
-@import '../../../colors.css';
+@import "../../../colors.css";
 
 .moorhen__button__icon-only {
     padding: 0;
@@ -8,4 +8,86 @@
     border: none;
     outline: none;
     box-shadow: none;
+    box-sizing: border-box;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__button__default,
+.moorhen__button__toggle-checked,
+.moorhen__button__toggle-unchecked {
+    all: unset;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    height: 2.2rem;
+    padding: 0.4rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin: 0.1rem;
+    color: var(--moorhen-button-text);
+    background: var(--moorhen-button-background);
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.25rem;
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
+    cursor: pointer;
+    box-sizing: border-box;
+    font-family: var(--moorhen-font-family);
+    transition:
+        box-shadow 0.5s ease,
+        border-color 0.5s ease,
+        filter 0.5s ease;
+}
+
+.moorhen__button__toggle-unchecked {
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+}
+.moorhen__button__default.danger {
+    background: var(--moorhen-danger);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);
+}
+
+.moorhen__button__default.secondary {
+    background: var(--moorhen-button-background-secondary);
+}
+
+.moorhen__button__default.outlined {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+}
+
+.moorhen__button__default.white {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
+.moorhen__button__default.text {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
+.moorhen_button-text {
+    color: var(--moorhen-primary);
+    background: none;
+    box-shadow: none;
+    border: none;
+}
+
+.moorhen_button-text:hover {
+    box-shadow: none;
+    border-color: transparent;
+    filter: none;
+}
+
+.moorhen__button__default:hover {
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus);
+    border-color: var(--moorhen-secondary);
+    filter: brightness(1.1);
 }

@@ -1,20 +1,35 @@
-import { memo, useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import Stack from "@mui/material/Stack";
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
+import { memo, useState } from "react";
+import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
+import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
-import { MoorhenPreciseInput } from "../MoorhenPreciseInput/MoorhenPreciseInput";
-import { MoorhenColourPicker } from "..";
+import { MoorhenStack } from "../../interface-base";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
     colourTable: [number, [number, number, number]][];
     setColourTable: (colourTable: [number, [number, number, number]][]) => void;
     menu: string;
+    showValues?: boolean;
+    modifyValues?: boolean;
+    minValue?: number;
+    setMinValue?: (val: number) => void;
+    maxValue?: number;
+    setMaxValue?: (val: number) => void;
 };
 
 export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => {
-    const { colourTable, setColourTable, menu } = props;
+    const {
+        colourTable,
+        setColourTable,
+        menu,
+        showValues = true,
+        modifyValues = false,
+        minValue = 0,
+        maxValue = 1,
+        setMinValue = () => {},
+        setMaxValue = () => {},
+    } = props;
 
     const [internalColourTable, setInternalColourTable] = useState<[number, [number, number, number]][]>(colourTable);
     const [selectedPreset, setSelectedPreset] = usePersistentState(menu, "gradientPresets", "red-white-blue", true);
@@ -58,7 +73,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         setInternalColourTable(newColourTable);
     };
 
-    const colorStop = (index) => {
+    const colorStop = index => {
         const handleColorChange = (selectedColour: { r: number; g: number; b: number }) => {
             const newColourTable: [number, [number, number, number]][] = [];
             for (let i = 0; i < internalColourTable.length; i++) {
@@ -68,7 +83,10 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                 } else {
                     colour = internalColourTable[i][1];
                 }
-                const colourEntry: [number, [number, number, number]] = [i / (internalColourTable.length - 1), [colour[0], colour[1], colour[2]]];
+                const colourEntry: [number, [number, number, number]] = [
+                    i / (internalColourTable.length - 1),
+                    [colour[0], colour[1], colour[2]],
+                ];
                 newColourTable.push(colourEntry);
             }
             setInternalColourTable(newColourTable);
@@ -77,7 +95,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         return (
             <MoorhenColourPicker
                 colour={[internalColourTable[index][1][0], internalColourTable[index][1][1], internalColourTable[index][1][2]]}
-                setColour={(colour) => {
+                setColour={colour => {
                     handleColorChange({ r: colour[0], g: colour[1], b: colour[2] });
                 }}
                 onClose={updateExternalColourTable}
@@ -90,58 +108,51 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
 
     const getColourGradientImage = () => {
         const gradient = `linear-gradient(to right, ${internalColourTable
-            .map((colour) => `rgb(${colour[1][0]},${colour[1][1]},${colour[1][2]}) ${Math.round(colour[0] * 100)}%`)
+            .map(colour => `rgb(${colour[1][0]},${colour[1][1]},${colour[1][2]}) ${Math.round(colour[0] * 100)}%`)
             .join(", ")})`;
         return gradient;
     };
     const colourGradientImage = getColourGradientImage();
 
     return (
-        <Stack direction="column" style={{ margin: "0.5rem" }} gap={2}>
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="Center">
-                <MoorhenPreciseInput
+        <MoorhenStack direction="column" style={{ margin: "0.5rem" }}>
+            <MoorhenStack direction="row" align="center" justify="center">
+                <MoorhenNumberInput
                     value={nOfPoints}
                     minMax={[2, 7]}
                     decimalDigits={0}
                     type="number"
-                    setValue={(newVal) => {
+                    setValue={newVal => {
                         handlePointsChange(+newVal);
                     }}
                     label="Points: "
                 />
                 Presets:
-                <Form.Select
-                    value={selectedPreset}
-                    onChange={(evt) => {
+                <MoorhenSelect
+                    defaultValue={selectedPreset}
+                    onChange={evt => {
                         handlePreset(evt.target.value);
-                    }}
-                    style={{
-                        width: "10rem",
-                        marginLeft: "0.5rem",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        border: "2px solid #fff",
                     }}
                 >
                     <option value={"Custom"}>Custom</option>
-                    {Object.keys(gradientPresets).map((key) => (
+                    {Object.keys(gradientPresets).map(key => (
                         <option key={key} value={key}>
                             {key}
                         </option>
                     ))}
-                </Form.Select>
-                <Button key="centre-on-map" size="sm" variant="outlined" onClick={handleRevert}>
+                </MoorhenSelect>
+                <MoorhenButton key="reverse-gradient" size="sm" variant="outlined" onClick={handleRevert}>
                     <FlipCameraAndroidIcon />
-                </Button>
-            </Stack>
+                </MoorhenButton>
+            </MoorhenStack>
 
-            <Stack direction="column" style={{ margin: "0.5rem" }} gap={0.5}>
-                <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+            <MoorhenStack direction="column" card gap="0.2rem">
+                <MoorhenStack direction="row" align="center" justify="space-between">
                     {colorStops}
-                </Stack>
+                </MoorhenStack>
                 <div
                     style={{
-                        marginLeft: "0.2rem",
+                        marginLeft: 0,
                         width: "100%",
                         height: "25px",
                         borderRadius: "8px",
@@ -150,8 +161,27 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                         backgroundImage: colourGradientImage,
                     }}
                 />
-            </Stack>
-        </Stack>
+                {showValues && (
+                    <MoorhenStack direction="row" align="center" justify="space-between">
+                        {modifyValues ? (
+                            <>
+                                <MoorhenNumberInput type="number" value={minValue} setValue={setMinValue} />
+                                {Array.from({ length: nOfPoints - 2 }).map((_, i) => {
+                                    const value = minValue + ((i + 1) / (nOfPoints - 1)) * (maxValue - minValue);
+                                    return <div key={i}>{value.toFixed(1)}</div>;
+                                })}
+                                <MoorhenNumberInput type="number" value={maxValue} setValue={setMaxValue} />
+                            </>
+                        ) : (
+                            Array.from({ length: nOfPoints }).map((_, i) => {
+                                const value = minValue + (i / (nOfPoints - 1)) * (maxValue - minValue);
+                                return <div key={i}>{value.toFixed(1)}</div>;
+                            })
+                        )}
+                    </MoorhenStack>
+                )}
+            </MoorhenStack>
+        </MoorhenStack>
     );
 });
 

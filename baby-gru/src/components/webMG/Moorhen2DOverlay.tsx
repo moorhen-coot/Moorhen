@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
 import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
-import { MoorhenReduxStore as store } from "../../store/MoorhenReduxStore"
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import { getMathJaxSVG } from '../../utils/mathJaxUtils';
+import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
 
 interface ImageFrac2D {
     x: number
@@ -125,7 +125,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
     ctx.restore();
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number, store:MoorhenReduxStoreType) => {
 
     if(!canvas2D_ctx) return
 
@@ -642,7 +642,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
 export const Moorhen2DOverlay = ((props) => {
 
-    const dispatch = useDispatch()
+    const store = useStore<RootState>()
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
@@ -746,7 +746,7 @@ export const Moorhen2DOverlay = ((props) => {
             if(ctx){
                 ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
                 ctx.clearRect(0,0,width,height)
-                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i)
+                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i, store)
             }
         })
     }

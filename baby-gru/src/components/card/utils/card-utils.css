@@ -1,0 +1,29 @@
+@import "../../../colors.css";
+
+.moorhen__card-name-button {
+    all: unset;
+    display: block;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 2.2rem;
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+}
+.moorhen__card-name-button::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    width: 100%;
+    height: 1px;
+    background-color: var(--moorhen-border);
+    transition: all 0.2s ease;
+}
+.moorhen__card-name-button:hover::after {
+    height: 2px;
+    background-color: var(--moorhen-focus);
+    box-shadow: 0 0 8px var(--moorhen-focus-shadow);
+}
