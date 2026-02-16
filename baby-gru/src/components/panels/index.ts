@@ -1,1 +1,1 @@
-export type { PanelIDs } from "./SidePanels/SidePanelList";
+export type { PanelIDs, MoorhenPanel } from "./SidePanels/SidePanelList";

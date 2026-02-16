@@ -62,13 +62,13 @@ module.exports = (env, argv) => {
                 chunkFilename: "public/MoorhenAssets/[id].css",
                 ignoreOrder: false,
             }),
-            new TerserPlugin({
+            ...(argv.mode === "production" ? [new TerserPlugin({
                 terserOptions: {
                     compress: {
-                        pure_funcs: argv.mode === "production" ? ["console.log"] : [],
+                        pure_funcs: ["console.log"],
                     },
                 },
-            }),
+            })] : []),
             new CopyWebpackPlugin({
                 patterns: [
                     {
@@ -124,13 +124,14 @@ module.exports = (env, argv) => {
                         {
                             loader: "ts-loader",
                             options: {
-                                transpileOnly: true, // Skip type checking for faster builds with React Compiler
+                                transpileOnly: true,
                             },
                         },
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption(),
-                        },
+                        // React Compiler disabled for CCP4i2 compatibility diagnostic
+                        // {
+                        //     loader: reactCompilerLoader,
+                        //     options: defineReactCompilerLoaderOption(),
+                        // },
                     ],
                 },
                 {
@@ -148,10 +149,11 @@ module.exports = (env, argv) => {
                     exclude: /node_modules/,
                     use: [
                         "babel-loader",
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption({}),
-                        },
+                        // React Compiler disabled for CCP4i2 compatibility diagnostic
+                        // {
+                        //     loader: reactCompilerLoader,
+                        //     options: defineReactCompilerLoaderOption({}),
+                        // },
                     ],
                 },
                 {
@@ -216,11 +218,13 @@ module.exports = (env, argv) => {
                 "@": path.resolve(__dirname, "src"),
             },
         },
-        externals: {
-            react: "react",
-            "react-dom": "react-dom",
-            // "react-redux": "react-redux", adding those as external seem to not work
-            // "@reduxjs/toolkit": "@reduxjs/toolkit",
-        },
+        externals: [
+            function({ request }, callback) {
+                if (/^react(-dom|-redux)?(\/.*)?$/.test(request) || /^@reduxjs\/toolkit(\/.*)?$/.test(request)) {
+                    return callback(null, 'commonjs ' + request);
+                }
+                callback();
+            }
+        ],
     };
 };
