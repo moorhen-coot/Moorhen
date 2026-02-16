@@ -601,13 +601,17 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
     return newBuffers
 }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType) : void => {
+export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType, gl_in: WebGLRenderingContext = null) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth
 
         let isWebGL2 = store.getState().glRef.isWebGL2
-        let gl = store.getState().glRef.glCtx
+        let gl
+        if(gl_in)
+            gl = gl_in
+        else
+            gl = store.getState().glRef.glCtx
 
         const tbb1 = performance.now()
 

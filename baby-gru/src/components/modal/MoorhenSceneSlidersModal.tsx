@@ -205,7 +205,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const gl = canvasWebGL.getContext("webgl2")
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,store)
+        buildBuffers(clonedBuffers,store,gl)
         return clonedBuffers
 
     }, [displayBuffers,storeMolecules])
@@ -810,7 +810,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,store)
+        buildBuffers(clonedBuffers,store,gl)
         myBuffers = clonedBuffers
         imageBuffersRef.current = buildDiskBuffers()
 
