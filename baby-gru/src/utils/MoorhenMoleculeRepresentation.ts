@@ -1164,7 +1164,6 @@ export class MoleculeRepresentation {
                     : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
                 this.parentMolecule.defaultBondOptions.showAniso,
                 this.parentMolecule.defaultBondOptions.showOrtep,
-                false,
                 this.parentMolecule.defaultBondOptions.showHs,
                 this.parentMolecule.defaultBondOptions.smoothness
             );
@@ -1174,7 +1173,6 @@ export class MoleculeRepresentation {
                 name === "ligands" || name === "CAs" ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
                 this.bondOptions.showAniso,
                 this.bondOptions.showOrtep,
-                false,
                 this.bondOptions.showHs,
                 this.bondOptions.smoothness
             );
