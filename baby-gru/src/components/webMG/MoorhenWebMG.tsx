@@ -398,14 +398,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [doSpin])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoBias != null) {
             glRef.current.setSSAOBias(ssaoBias)
             glRef.current.drawScene()
         }
     }, [ssaoBias])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoRadius != null) {
             glRef.current.setSSAORadius(ssaoRadius)
             glRef.current.drawScene()
         }

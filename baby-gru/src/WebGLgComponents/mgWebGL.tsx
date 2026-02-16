@@ -657,6 +657,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
 
         this.silhouetteBufferReady = false;
+        this.screenshotBuffersReady = false;
     }
 
     constructor(props : webGL.MGWebGLPropsInterface) {
@@ -965,13 +966,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     initializeSSAOBuffers() {
         this.ssaoKernel = [];
-        for (let i = 0; i < 16; ++i) {
+        for (let i = 0; i < 32; ++i) {
 
             const sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
 
             NormalizeVec3(sample);
             vec3.scale(sample,sample,Math.random());
-            let scale = i / 64.0;
+            let scale = i / 32.0;
 
             // scale samples s.t. they're more aligned to center of kernel
             scale = this.lerp(0.1, 1.0, scale * scale);
@@ -1034,7 +1035,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const bigFloatArray = new Float32Array(this.ssaoKernel);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.ssaoKernelBuffer);
-        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 64), 0);
+        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 128), 0);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
 
     }
@@ -1380,7 +1381,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.doneEvents = true;
 
-        this.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
+        this.light_positions = new Float32Array([25.0, 25.0, 50.0, 1.0]);
         this.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
         this.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         this.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
@@ -2496,8 +2497,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.depth_texture) {
             this.rttFramebufferDepth = this.gl.createFramebuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
-            this.rttFramebufferDepth.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096)//1024;
-            this.rttFramebufferDepth.height = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096)//1024;
+            const hwLimit = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE), this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE));
+            const maxDim = Math.max(1, this.canvas.width, this.canvas.height);
+            const shadowSize = Math.max(1024, Math.min(4096, hwLimit, Math.pow(2, Math.ceil(Math.log2(maxDim)))));
+            this.rttFramebufferDepth.width = shadowSize;
+            this.rttFramebufferDepth.height = shadowSize;
             this.rttTextureDepth = this.gl.createTexture();
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
@@ -3165,10 +3169,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
             if(!this.screenshotBuffersReady)
                 this.initTextureFramebuffer();
-            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
-            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
-            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            this.gl.viewport(0, 0, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
         } else if(this.drawingGBuffers) {
             const width_ratio = this.gl.viewportWidth / this.gFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.gFramebuffer.height;
