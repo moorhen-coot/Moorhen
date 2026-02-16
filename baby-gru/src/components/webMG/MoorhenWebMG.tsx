@@ -12,7 +12,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { useSnackbar } from 'notistack';
 import { setQuat, setOrigin, setRequestDrawScene, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
+         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers,
+         setAmbient, setDiffuse, setSpecular } from "../../store/glRefSlice"
 import * as quat4 from 'gl-matrix/quat';
 import { gemmiAtomPairsToCylindersInfo } from '../../utils/utils'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
@@ -278,6 +279,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setSSAOOn(doSSAO)
+            if (doSSAO) {
+                // AO-optimized lighting dispatched via Redux so UI sliders stay in sync
+                dispatch(setAmbient([0.2, 0.2, 0.2, 1.0]))
+                dispatch(setDiffuse([0.8, 0.8, 0.8, 1.0]))
+                dispatch(setSpecular([0.6, 0.6, 0.6, 1.0]))
+            }
             glRef.current.drawScene()
         }
     }, [doSSAO])
@@ -391,14 +398,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [doSpin])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoBias != null) {
             glRef.current.setSSAOBias(ssaoBias)
             glRef.current.drawScene()
         }
     }, [ssaoBias])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoRadius != null) {
             glRef.current.setSSAORadius(ssaoRadius)
             glRef.current.drawScene()
         }

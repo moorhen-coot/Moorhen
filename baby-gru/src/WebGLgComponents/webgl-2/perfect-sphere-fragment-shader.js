@@ -162,7 +162,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
 
-      vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
+      // AO modulates ambient + diffuse only; specular stays clean
+      vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff) * occ;
       if(shad<0.5) {
           shad += .5;
           shad = min(shad,1.0);
@@ -170,8 +171,6 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       } else {
           color += Ispec;
       }
-
-      color *= occ;
       if(doEdgeDetect){
 
           vec2 resolution;

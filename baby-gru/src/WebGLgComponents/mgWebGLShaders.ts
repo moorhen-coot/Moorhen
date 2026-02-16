@@ -253,6 +253,7 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
     shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "bias");
     shaderProgramSSAO.depthFactor = gl.getUniformLocation(shaderProgramSSAO, "depthFactor");
     shaderProgramSSAO.depthBufferSize = gl.getUniformLocation(shaderProgramSSAO, "depthBufferSize");
+    shaderProgramSSAO.noiseScale = gl.getUniformLocation(shaderProgramSSAO, "noiseScale");
 
     return shaderProgramSSAO
 
@@ -1663,6 +1664,9 @@ export function initPointSpheresShadowShaders(vertexShader, fragmentShader, gl) 
     shaderProgramPointSpheresShadow.light_colours_ambient = gl.getUniformLocation(shaderProgramPointSpheresShadow, "light_colours_ambient");
     shaderProgramPointSpheresShadow.light_colours_specular = gl.getUniformLocation(shaderProgramPointSpheresShadow, "light_colours_specular");
     shaderProgramPointSpheresShadow.light_colours_diffuse = gl.getUniformLocation(shaderProgramPointSpheresShadow, "light_colours_diffuse");
+    shaderProgramPointSpheresShadow.ShadowMap = gl.getUniformLocation(shaderProgramPointSpheresShadow, "ShadowMap");
+    shaderProgramPointSpheresShadow.xPixelOffset = gl.getUniformLocation(shaderProgramPointSpheresShadow, "xPixelOffset");
+    shaderProgramPointSpheresShadow.yPixelOffset = gl.getUniformLocation(shaderProgramPointSpheresShadow, "yPixelOffset");
 
     return shaderProgramPointSpheresShadow
 

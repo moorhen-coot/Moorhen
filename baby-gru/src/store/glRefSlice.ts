@@ -17,7 +17,7 @@ const initialState = {
     hoverSize: 0.27,
     // These should probably be in sceneSettings slice. 
     // We'll move them in due course.
-    lightPosition: [10.0, 10.0, 60.0, 1.0],
+    lightPosition: [25.0, 25.0, 50.0, 1.0],
     ambient: [0.2, 0.2, 0.2, 1.0],
     specular: [0.6, 0.6, 0.6, 1.0],
     diffuse: [1.0, 1.0, 1.0, 1.0],

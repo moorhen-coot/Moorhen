@@ -19,7 +19,7 @@ import { blur_x_simple_fragment_shader_source as blur_x_simple_fragment_shader_s
 import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_y_simple-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
-import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader.js';
+import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader-modern.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl2 } from './webgl-2/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
@@ -275,6 +275,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
         gBuffersFramebufferSize : number;
+        shadowFramebufferSize : number;
         doRedraw: boolean;
         circleCanvasInitialized: boolean;
         textCanvasInitialized: boolean;
@@ -675,6 +676,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // Edge-detect buffer: same size as G-buffer (no point being higher)
         this.edgeDetectFramebufferSize = gSize;
 
+        // Shadow depth map: full canvas dimension, not halved.
+        // A single DEPTH_COMPONENT24 texture is ~48 MB at 4096² vs ~256 MB
+        // for the multi-attachment G-buffer, so we can afford higher resolution.
+        // Shadow aliasing is very visible when zoomed in, so maximise quality.
+        const shadowSize = Math.max(1024, Math.min(4096, hwLimit,
+                              Math.pow(2, Math.ceil(Math.log2(Math.max(1, maxDim))))));
+        this.shadowFramebufferSize = shadowSize;
+
         // Invalidate existing framebuffers so they get recreated at the new size
         if (this.gFramebuffer) {
             this.gl.deleteFramebuffer(this.gFramebuffer);
@@ -684,6 +693,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
             this.edgeDetectFramebuffer = null;
         }
+        if (this.ssaoFramebuffer) {
+            this.gl.deleteFramebuffer(this.ssaoFramebuffer);
+            this.ssaoFramebuffer = null;
+        }
+        if (this.offScreenFramebufferSimpleBlurX) {
+            this.gl.deleteFramebuffer(this.offScreenFramebufferSimpleBlurX);
+            this.offScreenFramebufferSimpleBlurX = null;
+        }
+        if (this.offScreenFramebufferSimpleBlurY) {
+            this.gl.deleteFramebuffer(this.offScreenFramebufferSimpleBlurY);
+            this.offScreenFramebufferSimpleBlurY = null;
+        }
+        // Shadow depth framebuffer tracks shadowFramebufferSize
+        this.screenshotBuffersReady = false;
     }
 
     resize(width: number, height: number) : void {
@@ -950,6 +973,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setSSAOOn(doSSAO) {
         this.doSSAO = doSSAO;
+        // Lighting changes are dispatched via Redux in MoorhenWebMG so
+        // the UI sliders stay in sync.  Nothing to do here for lighting.
+
+        // Recalculate fog/clip from current zoom so depth cueing is
+        // consistent with the current view when toggling AO on/off
+        const fieldDepthFront = 8;
+        const fieldDepthBack = 21;
+        this.set_fog_range(this.fogClipOffset - (this.zoom * fieldDepthFront),
+                           this.fogClipOffset + (this.zoom * fieldDepthBack));
+        this.set_clip_range(0 - (this.zoom * fieldDepthFront),
+                            0 + (this.zoom * fieldDepthBack));
     }
 
     setEdgeDetectDepthThreshold(depthThreshold:number) {
@@ -1015,13 +1049,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     initializeSSAOBuffers() {
         this.ssaoKernel = [];
-        for (let i = 0; i < 16; ++i) {
+        for (let i = 0; i < 32; ++i) {
 
             let sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
 
             NormalizeVec3(sample);
             vec3.scale(sample,sample,Math.random());
-            let scale = i / 16.0;
+            let scale = i / 32.0;
 
             // scale samples s.t. they're more aligned to center of kernel
             scale = this.lerp(0.1, 1.0, scale * scale);
@@ -1084,7 +1118,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const bigFloatArray = new Float32Array(this.ssaoKernel);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.ssaoKernelBuffer);
-        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 64), 0);
+        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 128), 0);
         this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
 
     }
@@ -1433,7 +1467,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         this.doneEvents = true;
 
-        self.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
+        self.light_positions = new Float32Array([25.0, 25.0, 50.0, 1.0]);
         self.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
         self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
@@ -2247,16 +2281,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-            //FIXME - Sizes?
+            const ssaoSize = this.gBuffersFramebufferSize || 1024;
             const ssaoRenderbuffer = this.gl.createRenderbuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
-            this.ssaoFramebuffer.width = 1024;
-            this.ssaoFramebuffer.height = 1024;
+            this.ssaoFramebuffer.width = ssaoSize;
+            this.ssaoFramebuffer.height = ssaoSize;
 
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, ssaoRenderbuffer);
 
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, ssaoSize, ssaoSize, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.ssaoTexture, 0);
 
             const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -2288,21 +2322,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
+        const blurSize = this.gBuffersFramebufferSize || 1024;
+
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferSimpleBlurX);
-        this.offScreenFramebufferSimpleBlurX.width = 1024;
-        this.offScreenFramebufferSimpleBlurX.height = 1024;
+        this.offScreenFramebufferSimpleBlurX.width = blurSize;
+        this.offScreenFramebufferSimpleBlurX.height = blurSize;
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurXTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, blurSize, blurSize, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.simpleBlurXTexture, 0);
 
         let status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
         console.log("offScreenFramebufferSimpleBlurX framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferSimpleBlurY);
-        this.offScreenFramebufferSimpleBlurY.width = 1024;
-        this.offScreenFramebufferSimpleBlurY.height = 1024;
+        this.offScreenFramebufferSimpleBlurY.width = blurSize;
+        this.offScreenFramebufferSimpleBlurY.height = blurSize;
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, blurSize, blurSize, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.simpleBlurYTexture, 0);
 
         status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -2551,8 +2587,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.depth_texture) {
             this.rttFramebufferDepth = this.gl.createFramebuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
-            this.rttFramebufferDepth.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096)//1024;
-            this.rttFramebufferDepth.height = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096)//1024;
+            this.rttFramebufferDepth.width = this.shadowFramebufferSize || 1024;
+            this.rttFramebufferDepth.height = this.shadowFramebufferSize || 1024;
             this.rttTextureDepth = this.gl.createTexture();
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
@@ -3208,10 +3244,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
             if(!this.screenshotBuffersReady)
                 this.initTextureFramebuffer();
-            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
-            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
-            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            this.gl.viewport(0, 0, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
         } else if(this.drawingGBuffers) {
             const width_ratio = this.gl.viewportWidth / this.gFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.gFramebuffer.height;
@@ -3864,6 +3898,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
 
             this.gl.uniform1f(this.shaderProgramSSAO.bias,this.ssaoBias);
+            this.gl.uniform2f(this.shaderProgramSSAO.noiseScale, this.ssaoFramebuffer.width / 4.0, this.ssaoFramebuffer.height / 4.0);
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
             this.gl.activeTexture(this.gl.TEXTURE1);
@@ -3875,8 +3910,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 this.gl.disableVertexAttribArray(i);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexTextureAttribute);
             this.gl.enableVertexAttribArray(this.shaderProgramSSAO.vertexPositionAttribute);
-            //FIXME - Size
-            this.gl.viewport(0, 0, 1024, 1024);
+            this.gl.viewport(0, 0, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height);
 
             let paintMvMatrix = mat4.create();
             let paintPMatrix = mat4.create();
