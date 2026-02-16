@@ -532,7 +532,7 @@ class molecules_container_js : public molecules_container_t {
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
             //FIXME - pass in against_a_dark_background
             bool against_a_dark_background = false;
-            coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, true, 1);
+            coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, false, true, 1);
 
             return GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
         }
@@ -979,6 +979,7 @@ class molecules_container_js : public molecules_container_t {
                                                                 bonds_width, atom_radius_to_bond_width_ratio,
                                                                 show_atoms_as_aniso_flag,
                                                                 show_aniso_atoms_as_ortep_flag,
+                                                                false,
                                                                 draw_hydrogen_atoms_flag,
                                                                 smoothness_factor);
 
@@ -1029,6 +1030,7 @@ class molecules_container_js : public molecules_container_t {
                                                                 bonds_width, atom_radius_to_bond_width_ratio,
                                                                 show_atoms_as_aniso_flag,
                                                                 show_aniso_atoms_as_ortep_flag,
+                                                                false,
                                                                 draw_hydrogen_atoms_flag,
                                                                 smoothness_factor);
 
