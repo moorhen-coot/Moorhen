@@ -118,11 +118,23 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     const fogOffNear = 998.0
     const fogOffFar = 999.0
-    const clipOffNear = 998.0
-    const clipOffFar = 999.0
+
+    const blurLabel = <>
+             <span style={{display: "inline-block", width:"100px"}}>Depth blur</span>
+             <span style={{color: "lightblue", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
+         </>
+
+    const clipLabel = <>
+             <span style={{display: "inline-block", width:"100px"}}>Clip</span>
+             <span style={{color: "red", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
+         </>
+
+    const fogLabel = <>
+             <span style={{display: "inline-block", width:"100px"}}>Fog</span>
+             <span style={{color: "yellow", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
+         </>
 
     const ClipFogBlurOptionsPanel = () => {
-
 
         return (
         <MoorhenStack direction="vertical">
@@ -149,7 +161,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                         }
                         setUseFog(e.target.checked)
                     }}
-                    label="Fog"
+                    label={fogLabel}
                 />
                 <Form.Check
                     type="switch"
@@ -158,15 +170,15 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                         if(useClip){
                             setBackupClipNear(clipStart)
                             setBackupClipFar(clipEnd)
-                            dispatch(setClipStart(clipOffNear));
-                            dispatch(setClipEnd(clipOffFar));
+                            dispatch(setClipStart(1.5*atomSpan));
+                            dispatch(setClipEnd(1.5*atomSpan));
                         } else {
                             dispatch(setClipStart(backupClipNear));
                             dispatch(setClipEnd(backupClipFar));
                         }
                         setUseClip(e.target.checked)
                     }}
-                    label="Clip"
+                    label={clipLabel}
                 />
                 <Form.Check
                     type="switch"
@@ -174,7 +186,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     onChange={() => {
                         dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
                     }}
-                    label="Depth Blur"
+                    label={blurLabel}
                 />
             </MoorhenStack>
         );
