@@ -11,6 +11,7 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
+import { MoorhenStack } from "../interface-base";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
@@ -117,11 +118,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
 
         return (
-            <Stack
-                gap={2}
-                direction={"vertical"}
-                style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
-            >
+        <MoorhenStack direction="vertical">
                 <Form.Check
                     type="switch"
                     checked={resetClippingFogging}
@@ -155,7 +152,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     }}
                     label="Fog"
                 />
-            </Stack>
+            </MoorhenStack>
         );
     };
 
@@ -823,11 +820,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     return (
         <>
-        <Stack
-            gap={2}
-            direction={props.stackDirection}
-            style={{ display: "flex", alignItems: "start", width: "100%", height: "100%" }}
-        >
+        <MoorhenStack direction={props.stackDirection} card={true}>
             <Stack gap={1} direction="vertical">
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
@@ -839,7 +832,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             <Stack gap={2} direction="vertical">
                 <ClipFogBlurOptionsPanel />
             </Stack>
-        </Stack>
+        </MoorhenStack>
         </>
     );
 };
