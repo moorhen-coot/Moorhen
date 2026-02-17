@@ -106,13 +106,20 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
     const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
+    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
+    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
 
     const [useFog, setUseFog] = useState<boolean>(true);
+    const [useClip, setUseClip] = useState<boolean>(true);
     const [backupFogNear, setBackupFogNear] = useState<number>(500.0);
     const [backupFogFar, setBackupFogFar] = useState<number>(500.0);
+    const [backupClipNear, setBackupClipNear] = useState<number>(500.0);
+    const [backupClipFar, setBackupClipFar] = useState<number>(500.0);
 
     const fogOffNear = 998.0
     const fogOffFar = 999.0
+    const clipOffNear = 998.0
+    const clipOffFar = 999.0
 
     const ClipFogBlurOptionsPanel = () => {
 
@@ -126,14 +133,6 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                         dispatch(setResetClippingFogging(!resetClippingFogging));
                     }}
                     label="Reset clip and fog on zoom"
-                />
-                <Form.Check
-                    type="switch"
-                    checked={useOffScreenBuffers}
-                    onChange={() => {
-                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
-                    }}
-                    label="Depth Blur"
                 />
                 <Form.Check
                     type="switch"
@@ -152,6 +151,31 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     }}
                     label="Fog"
                 />
+                <Form.Check
+                    type="switch"
+                    checked={useClip}
+                    onChange={(e) => {
+                        if(useClip){
+                            setBackupClipNear(clipStart)
+                            setBackupClipFar(clipEnd)
+                            dispatch(setClipStart(clipOffNear));
+                            dispatch(setClipEnd(clipOffFar));
+                        } else {
+                            dispatch(setClipStart(backupClipNear));
+                            dispatch(setClipEnd(backupClipFar));
+                        }
+                        setUseClip(e.target.checked)
+                    }}
+                    label="Clip"
+                />
+                <Form.Check
+                    type="switch"
+                    checked={useOffScreenBuffers}
+                    onChange={() => {
+                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                    }}
+                    label="Depth Blur"
+                />
             </MoorhenStack>
         );
     };
@@ -164,8 +188,6 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const spanScaling = 0.75
 
     const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
 
@@ -519,7 +541,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
         const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
         const depthBlurDepthPos = depthBlurDepth * plotWidth
-        
+
         ctx.save()
 
         ctx.clearRect(0,0,canvas.width,canvas.height)
@@ -591,33 +613,35 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             ctx.stroke()
         }
 
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Front clip " + clipStart.toFixed(2)
-        } else {
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 3
-        }
-        ctx.beginPath()
-        ctx.moveTo(clipStartPos,0)
-        ctx.lineTo(clipStartPos,canvas.height)
-        ctx.stroke()
+        if(useClip){
+            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
+                ctx.strokeStyle = "white"
+                    ctx.lineWidth = 4
+                    hovering = true
+                    drawText = "Front clip " + clipStart.toFixed(2)
+            } else {
+                ctx.strokeStyle = "red"
+                    ctx.lineWidth = 3
+            }
+            ctx.beginPath()
+                ctx.moveTo(clipStartPos,0)
+                ctx.lineTo(clipStartPos,canvas.height)
+                ctx.stroke()
 
-        if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
-            ctx.strokeStyle = "white"
-            ctx.lineWidth = 4
-            hovering = true
-            drawText = "Back clip " + clipEnd.toFixed(2)
-        } else {
-            ctx.strokeStyle = "red"
-            ctx.lineWidth = 3
+                if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
+                    ctx.strokeStyle = "white"
+                        ctx.lineWidth = 4
+                        hovering = true
+                        drawText = "Back clip " + clipEnd.toFixed(2)
+                } else {
+                    ctx.strokeStyle = "red"
+                        ctx.lineWidth = 3
+                }
+            ctx.beginPath()
+                ctx.moveTo(clipEndPos,0)
+                ctx.lineTo(clipEndPos,canvas.height)
+                ctx.stroke()
         }
-        ctx.beginPath()
-        ctx.moveTo(clipEndPos,0)
-        ctx.lineTo(clipEndPos,canvas.height)
-        ctx.stroke()
 
         ctx.fillStyle = "white"
         ctx.lineWidth = 3
