@@ -8,7 +8,8 @@ import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import { useCommandCentre } from '../../InstanceManager';
-import { npts } from "../../tests/MoorhenPoissonReconTest";
+//import { npts } from "../../tests/MoorhenPoissonReconTest";
+import { npts } from "../../tests/MoorhenPoissonReconTestSampled";
 import {
     addCallback,
     addFracPathOverlay,
@@ -272,7 +273,7 @@ export const MoorhenDevMenu = () => {
         const doTest = async () => {
         const response = await commandCentre.current.cootCommand({
                 command: "PoissonRecon",
-                commandArgs: [npts, true]
+                commandArgs: [npts, false]
             }, false) as moorhen.WorkerResponse<[string]>;
             console.log(response)
         }
