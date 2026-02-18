@@ -11,7 +11,7 @@ jest.setTimeout(60000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-const createCootModule = require('../../public/moorhen')
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
 let cootModule;
 
@@ -685,7 +685,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_1,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -718,7 +718,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 ligandMolNo_3,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -785,7 +785,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_1.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
         const instancedMesh_2 = await commandCentre.current.cootCommand({
@@ -795,7 +795,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_1.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, false, 1
             ]
         })
 
@@ -818,7 +818,7 @@ describe("Testing MoorhenMolecule", () => {
             commandArgs: [
                 molecule_2.molNo,
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -836,7 +836,7 @@ describe("Testing MoorhenMolecule", () => {
                 molecule_2.molNo,
                 '//',
                 'COLOUR-BY-CHAIN-AND-DICTIONARY',
-                false, 0.1, 1, false, false, false, 1
+                false, 0.1, 1, false, false, false, false, 1
             ]
         })
 
@@ -1044,7 +1044,7 @@ const setupFunctions = {
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
         cootModule.FS.mkdir("COOT_BACKUP");
-        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'data.tar.gz' ), { encoding: null, flag: 'r' })
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);
