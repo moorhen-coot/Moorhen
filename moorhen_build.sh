@@ -348,13 +348,13 @@ if test x"${MEMORY64}" = x"1"; then
     echo "Building ** 64-bit ** (large memory) version of Moorhen"
     echo "#######################################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread -fwasm-exceptions"
+    MOORHEN_CMAKE_FLAGS="-O2 -sMEMORY64=1 -pthread -fwasm-exceptions"
 else
     echo "########################################"
     echo "Building ** 32-bit ** version of Moorhen"
     echo "########################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-pthread -fwasm-exceptions"
+    MOORHEN_CMAKE_FLAGS="-O2 -pthread -fwasm-exceptions"
 fi
 
 BUILD_GSL=false
