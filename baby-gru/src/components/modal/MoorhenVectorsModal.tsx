@@ -19,7 +19,7 @@ export const MoorhenVectorsModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList.filter(x => !(x.uniqueId.includes("__TAG"))))
 
     const dispatch = useDispatch();
 
