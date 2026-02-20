@@ -714,7 +714,7 @@ export class MoleculeRepresentation {
      * @returns {object[]} An array with the buffer objects for this representation
      */
     async getNOEBuffers() {
-        const envBuffers = await this.getEnvironmentBuffers("/*/*/*");
+        const envBuffers = await this.getEnvironmentBuffers("/*/*/*/*");
         return [...envBuffers];
     }
 
