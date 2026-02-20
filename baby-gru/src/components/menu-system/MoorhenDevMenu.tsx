@@ -3,10 +3,11 @@ import { useSnackbar } from "notistack";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
+import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import {
     addCallback,
     addFracPathOverlay,
@@ -21,8 +22,34 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenToggle } from "../inputs";
 
+const newVector = () => {
+    const aVector: MoorhenVector = {
+        coordsMode: "atoms",
+        labelMode: "none",
+        labelText: "vector label",
+        drawMode: "cylinder",
+        arrowMode: "none",
+        xFrom: 0.0,
+        yFrom: 0.0,
+        zFrom: 0.0,
+        xTo: 0.0,
+        yTo: 0.0,
+        zTo: 0.0,
+        cidFrom: "",
+        cidTo: "",
+        molNoFrom: 0,
+        molNoTo: 0,
+        uniqueId: uuidv4(),
+        vectorColour: { r: 0, g: 0, b: 0 },
+        textColour: { r: 0, g: 0, b: 0 },
+    };
+    return aVector;
+}
+
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
+    const [vectorsOn, setVectorsOn] = useState<boolean>(false);
+    const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
 
     const customCid = useRef<string>("");
 
@@ -30,6 +57,25 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+
+    useEffect(() => {
+        dispatch(removeVectors(testVectors))
+        const myVecs:MoorhenVector[] = []
+        for(let i=0;i<10;i++){
+            const vec = newVector()
+            vec.xTo = 10
+            vec.yTo = i*2
+            vec.yFrom = i*2
+            vec.coordsMode = "points"
+            vec.uniqueId += "__DEV_TEST_VECTOR"
+            myVecs.push(vec)
+        }
+        setTestVectors(myVecs)
+        return () => {
+            //Remove all with "__DEV_TEST_VECTOR" in uniqueID. This gets around problem with stale state at unmount.
+            dispatch(removeVectorsMatchingIDString("__DEV_TEST_VECTOR"))
+        }
+    }, []);
 
     const urlPrefix = usePaths().urlPrefix;
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
@@ -46,6 +92,14 @@ export const MoorhenDevMenu = () => {
         ctx.font = 20 * scale + "px Arial";
         ctx.fillText("I am written by a callback", 0.5 * cbWidth, 0.5 * cbHeight);
     };
+
+    const loadVectorsBunch = async evt => {
+        dispatch(removeVectors(testVectors))
+        setVectorsOn(evt.target.checked);
+        if (evt.target.checked) {
+            dispatch(addVectors(testVectors))
+        }
+    }
 
     const loadExampleOverlays = async evt => {
         dispatch(emptyOverlays());
@@ -310,6 +364,16 @@ export const MoorhenDevMenu = () => {
                         loadExampleOverlays(evt);
                     }}
                     label="Load example 2D overlays"
+                />
+            </InputGroup>
+            <InputGroup className="moorhen-input-group-check">
+                <MoorhenToggle
+                    type="switch"
+                    checked={vectorsOn}
+                    onChange={evt => {
+                        loadVectorsBunch(evt);
+                    }}
+                    label="Load a bunch of vectors"
                 />
             </InputGroup>
         </>

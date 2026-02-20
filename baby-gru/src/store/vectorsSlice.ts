@@ -35,8 +35,27 @@ export const vectorsSlice = createSlice({
     name: "mrParse",
     initialState: initialState,
     reducers: {
+        addVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
+            state = { ...state, vectorsList: [...state.vectorsList, ...action.payload] };
+            return state;
+        },
         addVector: (state, action: { payload: MoorhenVector; type: string }) => {
             state = { ...state, vectorsList: [...state.vectorsList, action.payload] };
+            return state;
+        },
+        removeVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
+        const ids = action.payload.map((x) => x.uniqueId)
+            state = {
+                ...state,
+                vectorsList: state.vectorsList.filter((item) => !(ids.includes(item.uniqueId))),
+            };
+            return state;
+        },
+        removeVectorsMatchingIDString: (state, action: { payload: string; type: string }) => {
+            state = {
+                ...state,
+                vectorsList: state.vectorsList.filter((item) => !(item.uniqueId.includes(action.payload))),
+            };
             return state;
         },
         removeVector: (state, action: { payload: MoorhenVector; type: string }) => {
@@ -52,6 +71,6 @@ export const vectorsSlice = createSlice({
     },
 });
 
-export const { addVector, removeVector, emptyVectors } = vectorsSlice.actions;
+export const { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString } = vectorsSlice.actions;
 
 export default vectorsSlice.reducer;
