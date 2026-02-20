@@ -12,35 +12,6 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
-const MoorhenDeleteVectorMenuItem = (props: {
-    item: moorhen.Map | moorhen.Molecule;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
-
-    const dispatch = useDispatch();
-
-    const panelContent = (
-        <>
-            <div style={{ width: "10rem", margin: "0.5rem" }} className="mb-3">
-                <span style={{ fontWeight: "bold" }}>Are you sure?</span>
-            </div>
-        </>
-    );
-
-    return (
-        <MoorhenMenuItemPopover
-            textClassName="text-danger"
-            buttonVariant="danger"
-            buttonText="Delete"
-            popoverPlacement="left"
-            popoverContent={panelContent}
-            menuItemText={"Delete vector"}
-            setPopoverIsShown={props.setPopoverIsShown}
-        />
-    );
-};
-
 export const MoorhenVectorsModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
