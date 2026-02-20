@@ -67,7 +67,7 @@ export const MoorhenDevMenu = () => {
             vec.yTo = i*2
             vec.yFrom = i*2
             vec.coordsMode = "points"
-            vec.uniqueId += "__DEV_TEST_VECTOR"
+            vec.uniqueId += "__TAG_DEV_TEST_VECTOR"
             myVecs.push(vec)
         }
         setTestVectors(myVecs)
