@@ -73,7 +73,7 @@ export const MoorhenDevMenu = () => {
         setTestVectors(myVecs)
         return () => {
             //Remove all with "__DEV_TEST_VECTOR" in uniqueID. This gets around problem with stale state at unmount.
-            dispatch(removeVectorsMatchingIDString("__DEV_TEST_VECTOR"))
+            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"))
         }
     }, []);
 
