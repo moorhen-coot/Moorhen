@@ -46,7 +46,8 @@ export type RepresentationStyles =
     | "adaptativeBonds"
     | "StickBases"
     | "residue_environment"
-    | "transformation";
+    | "transformation"
+    | "noe";
 
 /**
  * Represents a molecule representation
@@ -627,6 +628,9 @@ export class MoleculeRepresentation {
             case "residueSelection":
                 objects = await this.getResidueHighlightBuffers(_cid, this.residueSelectionColor, true);
                 break;
+            case "noe":
+                objects = await this.getNOEBuffers();
+                break;
             case "environment":
             case "ligand_environment":
                 objects = await this.getEnvironmentBuffers(_cid);
@@ -703,6 +707,15 @@ export class MoleculeRepresentation {
             this.residueEnvironmentOptions.backgroundRepresentation
         );
         return [...bufferObj, ...envBuffers];
+    }
+
+    /**
+     * Get the buffers objects for a representation of style noe
+     * @returns {object[]} An array with the buffer objects for this representation
+     */
+    async getNOEBuffers() {
+        const envBuffers = await this.getEnvironmentBuffers("/*/*/*");
+        return [...envBuffers];
     }
 
     /**

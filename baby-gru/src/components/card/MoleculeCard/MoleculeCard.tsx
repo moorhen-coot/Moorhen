@@ -101,6 +101,12 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         state.molecules.customRepresentations.filter(rep => rep.parentMolecule.molNo === props.molecule.molNo)
     );
 
+    const displayNOE = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "noe";
+        });
+    });
+
     const displayEnvironment = useSelector((state: RootState) => {
         return state.molecules.generalRepresentations.some(rep => {
             return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "environment";
@@ -410,6 +416,19 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const handleNOEToggle = value => {
+        if (!value) {
+            props.molecule.noeRepresentation?.hide();
+            dispatch(removeGeneralRepresentation(props.molecule.noeRepresentation));
+            // setBusyDrawingRepresentation(false);
+        } else {
+            props.molecule.drawNOE().then(_ => {
+                dispatch(addGeneralRepresentation(props.molecule.noeRepresentation));
+                // setBusyDrawingRepresentation(false);
+            });
+        }
+    };
+
     const handleEnvironmentToggle = value => {
         if (!value) {
             props.molecule.environmentRepresentation?.hide();
@@ -499,6 +518,28 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 </div> */}
                 <MoorhenAccordion title="Tools">
                     <MoorhenStack>
+                        <MoorhenStack direction="row" align="center">
+                            <MoorhenToggle
+                                onChange={e => handleNOEToggle(e.target.checked)}
+                                checked={displayNOE}
+                                disabled={isVisible ? false : true}
+                                label={
+                                    <MoorhenStack direction="row" align="center">
+                                        NMR NOE Restraints&nbsp;
+                                        <MoorhenInfoCard
+                                            infoText={
+                                                <>
+                                                    <b>NMR NOE Restraints</b>
+                                                    <br />
+                                                    Display  NMR NOE Restraints
+                                                </>
+                                            }
+                                        />
+                                    </MoorhenStack>
+                                }
+                            />
+                        </MoorhenStack>
+
                         <MoorhenStack direction="row" align="center">
                             <MoorhenToggle
                                 onChange={e => handleEnvironmentToggle(e.target.checked)}

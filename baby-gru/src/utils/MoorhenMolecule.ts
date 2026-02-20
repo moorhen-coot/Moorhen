@@ -126,6 +126,7 @@ export class MoorhenMolecule {
     hoverRepresentation: moorhen.MoleculeRepresentation;
     unitCellRepresentation: moorhen.MoleculeRepresentation;
     environmentRepresentation: moorhen.MoleculeRepresentation;
+    noeRepresentation: moorhen.MoleculeRepresentation;
     selectionRepresentation: moorhen.MoleculeRepresentation;
     hasGlycans: boolean;
     hasDNA: boolean;
@@ -229,6 +230,8 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.noeRepresentation = new MoleculeRepresentation("noe", null, this.commandCentre);
+        this.noeRepresentation.setParentMolecule(this);
     }
 
     /**
@@ -1540,6 +1543,8 @@ export class MoorhenMolecule {
             this.hoverRepresentation?.deleteBuffers();
         } else if (style === "unitCell") {
             this.unitCellRepresentation?.deleteBuffers();
+        } else if (style === "noe") {
+            this.noeRepresentation?.deleteBuffers();
         } else if (style === "environment") {
             this.environmentRepresentation?.deleteBuffers();
         } else if (style === "residueSelection") {
@@ -1692,6 +1697,17 @@ export class MoorhenMolecule {
                 this.environmentRepresentation.cid = cid;
                 await this.environmentRepresentation.redraw();
             }
+        }
+    }
+    /**
+     * Draw NOE
+     */
+    async drawNOE(): Promise<void> {
+        const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.store);
+        this.clearBuffersOfStyle("noe");
+        if (molecule?.molNo === this.molNo && cid) {
+            this.noeRepresentation.cid = cid;
+            await this.noeRepresentation.redraw();
         }
     }
 
