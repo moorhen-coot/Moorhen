@@ -25,6 +25,7 @@ export interface MoorhenVector {
     uniqueId: string;
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
+    size?: number;
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {

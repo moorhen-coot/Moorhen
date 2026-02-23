@@ -781,7 +781,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     minDist: number = 1.9,
     maxDist: number = 4.0,
     dashed: boolean = true,
-    style: "cylinder" | "cone" = "cylinder"
+    style: "cylinder" | "cone" = "cylinder",
+    individualSizes?: number[]
 ) => {
     const atomPairs = atoms;
 
@@ -831,7 +832,10 @@ export const gemmiAtomPairsToCylindersInfo = (
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip]);
         }
         thisInstance_origins.push(at0.x, at0.y, at0.z);
-        thisInstance_sizes.push(...[size, size, l]);
+        if(individualSizes)
+            thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
+        else
+            thisInstance_sizes.push(...[size, size, l]);
         const v = vec3.create();
         const au = vec3.create();
         const a = vec3.create();
