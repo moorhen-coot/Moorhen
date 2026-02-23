@@ -55,6 +55,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uuidv4(),
             vectorColour: { r: 0, g: 0, b: 0 },
             textColour: { r: 0, g: 0, b: 0 },
+            radius: 0.07
         };
         return aVector;
     };
@@ -186,6 +187,7 @@ export const MoorhenVectorsModal = () => {
         uniqueId = undefined,
         vectorColour = undefined,
         textColour = undefined,
+        radius = undefined,
     }) => {
         const newVector: MoorhenVector = {
             coordsMode: coordsMode !== undefined ? coordsMode : theVector.coordsMode,
@@ -206,6 +208,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uniqueId !== undefined ? uniqueId : theVector.uniqueId,
             vectorColour: vectorColour !== undefined ? vectorColour : theVector.vectorColour,
             textColour: textColour !== undefined ? textColour : theVector.textColour,
+            radius: radius !== undefined ? radius : theVector.radius,
         };
         setVector(newVector);
     };
@@ -441,6 +444,17 @@ export const MoorhenVectorsModal = () => {
                         }}
                     />
                 )}
+                <MoorhenNumberInput
+                   value={theVector.radius}
+                   type="number"
+                   label="Vector width:"
+                   onChange={evt => {
+                       try {
+                           const dum = Number(evt.target.value);
+                           updateVector({ radius: Number(evt.target.value) });
+                       } catch (e) {}
+                   }}
+                />
             </MoorhenStack>
         </>
     );

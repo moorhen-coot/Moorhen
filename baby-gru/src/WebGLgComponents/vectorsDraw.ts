@@ -21,7 +21,7 @@ export const getVectorsBuffers = async (store: MoorhenReduxStoreType): Promise<a
         let xToOrig;
         let yToOrig;
         let zToOrig;
-        const vecSize = vec.size ? vec.size : 0.07
+        const vecSize = vec.radius ? vec.radius : 0.07
         const theColour = [vec.vectorColour.r/256,vec.vectorColour.g/256,vec.vectorColour.b/256,1.0]
         if(vec.coordsMode==="points"){
             xFromOrig = vec.xFrom
