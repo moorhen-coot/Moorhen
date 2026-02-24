@@ -23,6 +23,9 @@ Planned features
 - [x] Fix multiview with SSAO.
 - [x] Sensible blur radius (3) for SSAO.
 
+### For 0.22.2
+- [ ] Make ligand environment text labels much bigger.
+
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
 - [x] Fix multiview screenshots scaling.
