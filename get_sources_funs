@@ -111,7 +111,7 @@ getmonomers() {
         #git clone https://github.com/MonomerLibrary/monomers monomers
         mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list
         cd monomers
-        https://github.com/MonomerLibrary/monomers/a/ALA.cif -o a/ALA.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ALA.cif -o a/ALA.cif
         curl -L https://github.com/MonomerLibrary/monomers/a/ASP.cif -o a/ASP.cif
         curl -L https://github.com/MonomerLibrary/monomers/a/ASN.cif -o a/ASN.cif
         curl -L https://github.com/MonomerLibrary/monomers/a/ARG.cif -o a/ARG.cif
