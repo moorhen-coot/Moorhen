@@ -2,6 +2,7 @@ import { hexToRgb } from "@mui/material";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
+import pako from "pako";
 import { Shortcut } from "../components/managers/preferences";
 import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { gemmi } from "../types/gemmi";
@@ -311,6 +312,27 @@ export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
         const reader: FileReader = new FileReader();
         reader.addEventListener("load", () => resolveReader(reader, resolve));
         reader.readAsText(source);
+    });
+};
+
+export const readGzippedTextFile = (source: File): Promise<ArrayBuffer> => {
+    const resolveReader = (reader: FileReader, resolveCallback) => {
+        reader.removeEventListener("load", resolveCallback);
+        let res = ""
+        const chunk = 32*1024;
+        const gUnZippeData = pako.inflate(reader.result)
+        let i
+        for (i = 0; i < gUnZippeData.length/chunk; i++) {
+            res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk,(i+1)*chunk));
+        }
+        res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk));
+        resolveCallback(res);
+    };
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => resolveReader(reader, resolve));
+        reader.readAsArrayBuffer(source);
     });
 };
 

@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
+import { readGzippedTextFile } from "../../utils/utils";
 import {
     addCallback,
     addFracPathOverlay,
@@ -35,6 +36,13 @@ export const MoorhenDevMenu = () => {
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
+
+    const loadGzippedFiles = async (files: FileList) => {
+        for (const file of files) {
+            const fileContents = (await readGzippedTextFile(file));
+            console.log(fileContents)
+        }
+    };
 
     const exampleCallBack = (ctx, backgroundColor, cbWidth, cbHeight, scale) => {
         const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
@@ -312,6 +320,15 @@ export const MoorhenDevMenu = () => {
                     label="Load example 2D overlays"
                 />
             </InputGroup>
+            <MenuItem>
+                    <Form.Control
+                        type="file"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            loadGzippedFiles(e.target.files);
+                        }}
+                    />
+                Gzipped Text Read test
+            </MenuItem>
         </>
     );
 };
