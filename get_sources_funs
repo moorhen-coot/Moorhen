@@ -37,7 +37,7 @@ getlibccp4() {
         tar xf libccp4-$libccp4_release.tar.gz
         ln -s libccp4-$libccp4_release libccp4
         echo
-        patch -p0 < ../patches/ccp4-emscripten.patch 
+        patch -p0 < ../patches/ccp4-emscripten.patch
         cd ..
     fi
     echo
@@ -104,11 +104,54 @@ getgemmi() {
 
 getmonomers() {
     cdcheckout
-    if [ -r monomers ]; then
+    if [ -r monomers/list/mon_lib_list.cif ]; then
         echo "Using existing monomers"
     else
-        echo "Checking out monomers"
-        git clone https://github.com/MonomerLibrary/monomers monomers
+        echo "Checking out monomers subset"
+        #git clone https://github.com/MonomerLibrary/monomers monomers
+        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list
+        cd monomers
+        https://github.com/MonomerLibrary/monomers/a/ALA.cif -o a/ALA.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ASP.cif -o a/ASP.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ASN.cif -o a/ASN.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ARG.cif -o a/ARG.cif
+        curl -L https://github.com/MonomerLibrary/monomers/c/CYS.cif -o c/CYS.cif
+        curl -L https://github.com/MonomerLibrary/monomers/c/CIT.cif -o c/CIT.cif
+        curl -L https://github.com/MonomerLibrary/monomers/e/EDO.cif -o e/EDO.cif
+        curl -L https://github.com/MonomerLibrary/monomers/g/GLN.cif -o g/GLN.cif
+        curl -L https://github.com/MonomerLibrary/monomers/g/GLY.cif -o g/GLY.cif
+        curl -L https://github.com/MonomerLibrary/monomers/g/GOL.cif -o g/GOL.cif
+        curl -L https://github.com/MonomerLibrary/monomers/g/GLU.cif -o g/GLU.cif
+        curl -L https://github.com/MonomerLibrary/monomers/h/HIS.cif -o h/HIS.cif
+        curl -L https://github.com/MonomerLibrary/monomers/i/ILE.cif -o i/ILE.cif
+        curl -L https://github.com/MonomerLibrary/monomers/l/LYS.cif -o l/LYS.cif
+        curl -L https://github.com/MonomerLibrary/monomers/l/LEU.cif -o l/LEU.cif
+        curl -L https://github.com/MonomerLibrary/monomers/m/MET.cif -o m/MET.cif
+        curl -L https://github.com/MonomerLibrary/monomers/m/MSE.cif -o m/MSE.cif
+        curl -L https://github.com/MonomerLibrary/monomers/p/PRO.cif -o p/PRO.cif
+        curl -L https://github.com/MonomerLibrary/monomers/p/PHE.cif -o p/PHE.cif
+        curl -L https://github.com/MonomerLibrary/monomers/p/PO4.cif -o p/PO4.cif
+        curl -L https://github.com/MonomerLibrary/monomers/p/PEG.cif -o p/PEG.cif
+        curl -L https://github.com/MonomerLibrary/monomers/s/SER.cif -o s/SER.cif
+        curl -L https://github.com/MonomerLibrary/monomers/s/SO4.cif -o s/SO4.cif
+        curl -L https://github.com/MonomerLibrary/monomers/t/THR.cif -o t/THR.cif
+        curl -L https://github.com/MonomerLibrary/monomers/t/TRP.cif -o t/TRP.cif
+        curl -L https://github.com/MonomerLibrary/monomers/t/TYR.cif -o t/TYR.cif
+        curl -L https://github.com/MonomerLibrary/monomers/v/VAL.cif -o v/VAL.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/A.cif -o a/A.cif
+        curl -L https://github.com/MonomerLibrary/monomers/c/C.cif -o c/C.cif
+        curl -L https://github.com/MonomerLibrary/monomers/g/G.cif -o g/G.cif
+        curl -L https://github.com/MonomerLibrary/monomers/u/U.cif -o u/U.cif
+        curl -L https://github.com/MonomerLibrary/monomers/d/DA.cif -o d/DA.cif
+        curl -L https://github.com/MonomerLibrary/monomers/d/DC.cif -o d/DC.cif
+        curl -L https://github.com/MonomerLibrary/monomers/d/DG.cif -o d/DG.cif
+        curl -L https://github.com/MonomerLibrary/monomers/d/DT.cif -o d/DT.cif
+        curl -L https://github.com/MonomerLibrary/monomers/h/HOH.cif -o h/HOH.cif
+        curl -L https://github.com/MonomerLibrary/monomers/n/NA.cif -o n/NA.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ATP.cif -o a/ATP.cif
+        curl -L https://github.com/MonomerLibrary/monomers/a/ADP.cif -o a/ADP.cif
+        curl -L https://github.com/MonomerLibrary/monomers/ener_lib.cif -o ener_lib.cif
+        curl -L https://github.com/MonomerLibrary/monomers/list/mon_lib_list.cif -o list/mon_lib_list.cif
     fi
     echo
 }
