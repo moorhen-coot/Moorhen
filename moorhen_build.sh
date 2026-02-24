@@ -601,7 +601,7 @@ if [ $BUILD_ZLIB = true ]; then
     getzlib
     mkdir -p ${BUILD_DIR}/zlib_build
     cd ${BUILD_DIR}/zlib_build
-    emcmake cmake -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
+    emcmake cmake -DZLIB_BUILD_STATIC=ON -DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing zlib, giving up."
 fi
