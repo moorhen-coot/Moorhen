@@ -109,8 +109,8 @@ export const SequenceViewerPanel = () => {
     }, [sidePanelIsOpen]);
 
     const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
-    // const displaySize = (expandLength - 1) * 26 + 76;
-    const displaySize = 4 * 26 + 16;
+    const displaySize = (expandLength - 1) * 26 + 76;
+    //const displaySize = 4 * 26 + 16;
 
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;

@@ -3,7 +3,7 @@ import React, { Activity, useCallback, useEffect, useRef, useState } from "react
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState, setEnableAtomHovering, setShownSidePanel } from "@/store";
 import { setSidePanelWidth } from "@/store/globalUISlice";
-import { PanelIDs, PanelsList } from "./SidePanelList";
+import { PanelsList, SidePanelIDs } from "./SidePanelList";
 import { TabsToggle } from "./TabsToggle";
 import "./side-panels.css";
 
@@ -13,7 +13,7 @@ export const MoorhenSidePanel = () => {
     const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
     const sidePanelIsOpen = shownPanel !== null;
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [activePanels, setActivePanels] = useState<PanelIDs[]>([]);
+    const [activePanels, setActivePanels] = useState<SidePanelIDs[]>([]);
     const enableAtomHovering = useSelector((state: RootState) => state.hoveringStates.enableAtomHovering);
     const cachedEnableAtomHovering = useRef(false);
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -40,7 +40,7 @@ export const MoorhenSidePanel = () => {
     };
 
     const handleRemoveActivePanel = useCallback(
-        (id: PanelIDs) => {
+        (id: SidePanelIDs) => {
             if (activePanels.length === 1) {
                 setShowHintLabel(false);
             }

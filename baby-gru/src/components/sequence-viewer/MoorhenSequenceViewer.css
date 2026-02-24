@@ -170,11 +170,13 @@
     background: var(--moorhen-background);
     border-right: 1px solid var(--moorhen-border);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     margin-bottom: 2px;
     min-height: 1.5rem;
     max-height: 1.5rem;
+    z-index: 20;
 }
 
 .moorhen__seqviewer__left-column-spacer {

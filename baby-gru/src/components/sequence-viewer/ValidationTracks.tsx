@@ -37,7 +37,13 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
         );
     });
 
-    const validationDataCategories = Array.from(new Set(Object.values(residue?.validationData ?? {}).map(data => data.category)));
+    const validationDataCategories = Array.from(new Set(Object.values(residue?.validationData ?? {}).map(data => data.category))).sort(
+        (a, b) => {
+            if (a === "Geometry") return -1;
+            if (b === "Geometry") return 1;
+            return 0;
+        }
+    );
     const popoverContent =
         validationDataCategories.length > 0 ? (
             validationDataCategories.map(category => {
@@ -46,15 +52,23 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                     <MoorhenStack direction="column" inputGrid card key={category}>
                         <span style={{ fontWeight: "bold", marginBottom: "0.5rem", display: "block" }}>{category}</span>
                         <div />
-                        {categoryData.map(([key, data]) => (
-                            <PopoverDisplayValue
-                                key={key}
-                                label={key}
-                                value={data.value}
-                                reverseColour={data.reverseGradient}
-                                gradientPreset={data.gradientPreset ?? "Pool Party"}
-                            />
-                        ))}
+                        {categoryData
+                            .sort(([keyA], [keyB]) => {
+                                if (keyA === "Overall RMSZ") return -1;
+                                if (keyB === "Overall RMSZ") return 1;
+                                if (keyA === "Density Correlation") return -1;
+                                if (keyB === "Density Correlation") return 1;
+                                return 0;
+                            })
+                            .map(([key, data]) => (
+                                <PopoverDisplayValue
+                                    key={key}
+                                    label={key}
+                                    value={data.value}
+                                    reverseColour={data.reverseGradient}
+                                    gradientPreset={data.gradientPreset ?? "Pool Party"}
+                                />
+                            ))}
                     </MoorhenStack>
                 );
             })

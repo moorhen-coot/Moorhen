@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import type { PanelIDs } from "@/components/panels";
+import { BottomPanelIDs, SidePanelIDs } from "@/components/panels";
 
 const initialState: {
     busy: boolean;
@@ -9,9 +9,9 @@ const initialState: {
     isMainMenuOpen: boolean;
     isSearchBarActive: boolean;
     areShortcutsBlocked: boolean;
-    shownSidePanel: PanelIDs | null;
+    shownSidePanel: SidePanelIDs | null;
     sidePanelWidth: number;
-    showValidationPanel: boolean;
+    shownBottomPanel: BottomPanelIDs | null;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -22,7 +22,7 @@ const initialState: {
     areShortcutsBlocked: false,
     shownSidePanel: null,
     sidePanelWidth: 450,
-    showValidationPanel: false,
+    shownBottomPanel: "sequences-viewer",
 };
 
 const globalUISlice = createSlice({
@@ -50,14 +50,14 @@ const globalUISlice = createSlice({
         setShortCutsBlocked: (state, action: PayloadAction<boolean>) => {
             state.areShortcutsBlocked = action.payload;
         },
-        setShownSidePanel: (state, action: PayloadAction<PanelIDs | null>) => {
+        setShownSidePanel: (state, action: PayloadAction<SidePanelIDs | null>) => {
             state.shownSidePanel = action.payload;
         },
         setSidePanelWidth: (state, action: PayloadAction<number>) => {
             state.sidePanelWidth = action.payload;
         },
-        setShowValidationPanel: (state, action: PayloadAction<boolean>) => {
-            state.showValidationPanel = action.payload;
+        setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
+            state.shownBottomPanel = action.payload;
         },
     },
 });
@@ -72,6 +72,6 @@ export const {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
-    setShowValidationPanel,
+    setShownBottomPanel,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

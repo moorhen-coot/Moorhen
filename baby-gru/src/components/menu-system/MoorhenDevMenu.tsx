@@ -4,6 +4,7 @@ import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useRef, useState } from "react";
+import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
@@ -30,6 +31,7 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
     const urlPrefix = usePaths().urlPrefix;
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
@@ -312,6 +314,14 @@ export const MoorhenDevMenu = () => {
                     label="Load example 2D overlays"
                 />
             </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={toggleValidationPanel}
+                onChange={() => {
+                    dispatch(setShownBottomPanel(toggleValidationPanel ? "sequences-viewer" : "validation"));
+                }}
+                label="Show validation panel"
+            />
         </>
     );
 };

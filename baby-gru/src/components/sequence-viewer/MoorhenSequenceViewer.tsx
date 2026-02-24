@@ -6,7 +6,6 @@ import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 import "./MoorhenSequenceViewer.css";
 import { SequenceRow } from "./SequenceRow";
-import { ValidationTracks } from "./ValidationTracks";
 
 type MoorhenSequenceViewerPropsType = {
     sequences: SeqElement | SeqElement[];
@@ -29,6 +28,7 @@ type MoorhenSequenceViewerPropsType = {
     forceRedrawScrollBarKey?: string | number;
     style?: React.CSSProperties;
     showValidationData?: boolean;
+    validationTracks?: string[];
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -41,6 +41,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         className,
         onHoverResidue,
         showValidationData = false,
+        validationTracks = null,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
@@ -452,6 +453,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     handleResidueMouseDown={handleResidueMouseDown}
                     handleResidueMouseUp={handleResidueMouseUp}
                     showValidationData={showValidationData}
+                    validationTracks={validationTracks}
                 />
             );
         });
@@ -467,6 +469,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         handleResidueMouseOver,
         handleResidueMouseDown,
         handleResidueMouseUp,
+        validationTracks,
     ]);
 
     const leftButtonsBar =

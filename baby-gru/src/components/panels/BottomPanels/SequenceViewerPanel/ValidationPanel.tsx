@@ -1,4 +1,3 @@
-import { reverse } from "dns";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -17,10 +16,11 @@ import {
     useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
 import { MoorhenMapSelect } from "@/moorhen";
-import { RootState, setHoveredAtom, setShowBottomPanel, setShowValidationPanel } from "@/store";
+import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { convertRemToPx } from "@/utils/utils";
+import { ValidationTracks } from "../../../sequence-viewer/ValidationTracks";
 import "./sequence-viewer-panel.css";
 
 export const ValidationPanel = () => {
@@ -45,13 +45,8 @@ export const ValidationPanel = () => {
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
-    const showValidationPanel = useSelector((state: RootState) => state.globalUI.showValidationPanel);
     const maps = useSelector((state: RootState) => state.maps);
     const store = useStore<RootState>();
-
-    // const showValidationPanel = true;
-
-    const expand = showValidationPanel || sequencesExpand;
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
@@ -142,7 +137,7 @@ export const ValidationPanel = () => {
             setSequencesList(sequences);
         };
         updateSequences();
-    }, [selectedMolecule, molecule?.sequences, showValidationPanel, selectedMap]);
+    }, [selectedMolecule, molecule?.sequences, selectedMap]);
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
@@ -189,7 +184,7 @@ export const ValidationPanel = () => {
     }, [sidePanelIsOpen]);
 
     const expandLength = sequencesList.length <= numberOfLines ? sequencesList.length : numberOfLines;
-    const displaySize = showValidationPanel ? 2 * 26 + 76 : (expandLength - 1) * 26 + 76;
+    const displaySize = 2 * 26 + 76;
 
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
@@ -199,37 +194,13 @@ export const ValidationPanel = () => {
         <>
             <div
                 className={`moorhen__sequence-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
+                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2 + 200}px`, bottom: `${displaySize - 1}px` }}
             >
                 {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-                <button className="moorhen__sequence-panel-button" onClick={toggleBottomPanel}>
-                    &nbsp;&nbsp;Sequences&nbsp;&nbsp;
-                </button>
-                {bottomPanelIsShown &&
-                    (sequencesList.length > 1 ? (
-                        <MoorhenButton
-                            type="icon-only"
-                            icon={expand ? "MatSymDoubleArrowDown" : "MatSymDoubleArrowUp"}
-                            size="small"
-                            onClick={handleExpand}
-                        />
-                    ) : (
-                        <span>&nbsp;&nbsp;</span>
-                    ))}
-                {bottomPanelIsShown && (
-                    <MoorhenToggle
-                        label={"Validation"}
-                        checked={showValidationPanel}
-                        onChange={() => {
-                            setPanelKeyRef(current => current + 1);
-                            dispatch(setShowValidationPanel(!showValidationPanel));
-                        }}
-                    />
-                )}
             </div>
             <div
                 className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
+                style={{ height: `${displaySize}px` }}
             >
                 {bottomPanelIsShown && (
                     <MoorhenSequenceViewer
@@ -239,7 +210,6 @@ export const ValidationPanel = () => {
                         hoveredResidue={hoveredResidue}
                         maxDisplayHeight={4}
                         displayHeight={sequencesExpand ? numberOfLines : 1}
-                        // displayHeight={1}
                         showTitleBar={false}
                         onResidueClick={handleClick}
                         onResiduesSelect={residueSelectionCallback}
@@ -247,7 +217,9 @@ export const ValidationPanel = () => {
                         className={`moorhen__edge-panel-sequence-viewer`}
                         style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
                         forceRedrawScrollBarKey={panelKeyRef}
-                        showValidationData={showValidationPanel}
+                        showValidationData={true}
+                        nameColumnWidth={4}
+                        validationTracks={["Overall RMSZ", "Density Correlation"]}
                     />
                 )}
             </div>
