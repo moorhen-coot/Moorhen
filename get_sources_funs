@@ -246,6 +246,9 @@ getcoot() {
         echo "Downloading coot-1"
         git clone --branch main https://github.com/pemsley/coot.git coot-1.0
         cd coot-1.0
+        echo "Applying Coot single-threaded build patch"
+        patch -p1 < ../../patches/coot-nothreads.patch
+        cd ..
     fi
     echo
 }
@@ -343,6 +346,10 @@ getboost() {
         echo "Checking out boost"
         curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz
         tar xf boost_$boost_release.tar.gz
+        cd boost-$boost_release
+        echo "Applying Emscripten single-threaded patch"
+        patch -p1 < ../../patches/boost-emscripten-nothreads.patch
+        cd ..
     fi
     echo
 }

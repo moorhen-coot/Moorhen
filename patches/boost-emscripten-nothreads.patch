@@ -1,0 +1,37 @@
+diff --git a/libs/container/include/boost/container/detail/thread_mutex.hpp b/libs/container/include/boost/container/detail/thread_mutex.hpp
+--- a/libs/container/include/boost/container/detail/thread_mutex.hpp
++++ b/libs/container/include/boost/container/detail/thread_mutex.hpp
+@@ -35,7 +35,32 @@
+ #include <boost/container/detail/config_begin.hpp>
+ #include <boost/container/detail/workaround.hpp>
+
+-#if defined(BOOST_HAS_PTHREADS)
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++
++// Emscripten single-threaded build: no-op mutex implementation
++namespace boost{
++namespace container {
++namespace dtl {
++
++class thread_mutex
++{
++   public:
++   thread_mutex() {}
++   ~thread_mutex() {}
++
++   void lock() {}
++   void unlock() {}
++
++   private:
++   thread_mutex(thread_mutex const &);
++   thread_mutex & operator=(thread_mutex const &);
++};
++
++} // namespace dtl {
++} // namespace container {
++} // namespace boost {
++
++#elif defined(BOOST_HAS_PTHREADS)
+
+ #include <pthread.h>
+ #include <boost/assert.hpp>
