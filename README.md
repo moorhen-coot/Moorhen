@@ -19,14 +19,14 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* Coot 1.1.19
+* libcoot main branch (last release tag 1.1.20)
 * fftw 2.1.5
 * fftw3 3.3.5
 * gsl 2.7.1
 * Boost 1.89.0
 * glm 0.9.9.8
 * Eigen 3.4.0
-* RDKit 2025\_09\_1
+* RDKit 2025\_09\_2
 * graphene 1.10.8
 * libsigc++ 3.6.0
 * Freetype 2.14.1
@@ -59,7 +59,7 @@ Binaries are available on the releases page. Please read the instructions there 
 * emsdk/emscripten (Steps 1 and 2 below)
 \
 \
-Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
+Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++ pkg-config` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
 \
 \
 Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86\_64 or aarch64). Tested on Ubuntu 22.04 x86\_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
@@ -70,7 +70,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 4.0.15, the 17th September 2025 release.)
+(Moorhen is known to build successfully with emscripten version 5.0.0 - the 24th January 2026 release, and several earlier versions.)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
