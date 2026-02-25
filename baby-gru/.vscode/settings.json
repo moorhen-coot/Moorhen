@@ -25,10 +25,16 @@
 
     "workbench.colorCustomizations": {
         "tree.indentGuidesStroke": "#b633a5",
-        //"activityBar.background": "#5F0621",
         "titleBar.activeBackground": "#620885",
         "titleBar.inactiveBackground": "#620885",
-        "titleBar.activeForeground": "#FFFBFC"
+        "titleBar.activeForeground": "#FFFBFC",
+        "activityBar.background": "#0F3046",
+        "statusBar.background": "#0F3046",
+        "statusBar.foreground": "#F6FAFD",
+        "statusBar.debuggingBackground": "#0F3046",
+        "statusBar.debuggingForeground": "#F6FAFD",
+        "statusBar.noFolderBackground": "#0F3046",
+        "statusBar.noFolderForeground": "#F6FAFD"
     },
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": { "*.json": "jsonc" },

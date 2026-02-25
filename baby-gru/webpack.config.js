@@ -62,13 +62,17 @@ module.exports = (env, argv) => {
                 chunkFilename: "public/MoorhenAssets/[id].css",
                 ignoreOrder: false,
             }),
-            new TerserPlugin({
-                terserOptions: {
-                    compress: {
-                        pure_funcs: argv.mode === "production" ? ["console.log"] : [],
-                    },
-                },
-            }),
+            ...(argv.mode === "production"
+                ? [
+                      new TerserPlugin({
+                          terserOptions: {
+                              compress: {
+                                  pure_funcs: ["console.log"],
+                              },
+                          },
+                      }),
+                  ]
+                : []),
             new CopyWebpackPlugin({
                 patterns: [
                     {
@@ -216,11 +220,13 @@ module.exports = (env, argv) => {
                 "@": path.resolve(__dirname, "src"),
             },
         },
-        externals: {
-            react: "react",
-            "react-dom": "react-dom",
-            // "react-redux": "react-redux", adding those as external seem to not work
-            // "@reduxjs/toolkit": "@reduxjs/toolkit",
-        },
+        externals: [
+            function ({ request }, callback) {
+                if (/^react(-dom|-redux)?(\/.*)?$/.test(request) || /^@reduxjs\/toolkit(\/.*)?$/.test(request)) {
+                    return callback(null, "commonjs " + request);
+                }
+                callback();
+            },
+        ],
     };
 };
