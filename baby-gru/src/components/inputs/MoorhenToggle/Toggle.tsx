@@ -16,6 +16,7 @@ type MoorhenToggleProps = {
 };
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
+    const type = props.type ? props.type : "switch";
     return (
         <div
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
@@ -32,7 +33,15 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                     name={props.name}
                     disabled={props.disabled}
                 />
-                <span className="moorhen__toggle-slider"></span>
+                <span
+                    className={
+                        type === "switch"
+                            ? "moorhen__toggle-slider"
+                            : type === "radio"
+                              ? "moorhen__toggle-radio"
+                              : "moorhen__toggle-checkbox"
+                    }
+                ></span>
             </label>
             <span className="moorhen__toggle-label-text">{props.label}</span>
         </div>

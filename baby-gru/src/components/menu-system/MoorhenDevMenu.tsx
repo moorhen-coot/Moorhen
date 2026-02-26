@@ -1,6 +1,5 @@
 import { MenuItem } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useRef, useState, useEffect } from "react";
@@ -87,8 +86,8 @@ export const MoorhenDevMenu = () => {
 
     const loadGzippedFiles = async (files: FileList) => {
         for (const file of files) {
-            const fileContents = (await readGzippedTextFile(file));
-            console.log(fileContents)
+            const fileContents = await readGzippedTextFile(file);
+            console.log(fileContents);
         }
     };
 
@@ -325,7 +324,7 @@ export const MoorhenDevMenu = () => {
     };
 
     return (
-        <>
+        <MoorhenStack>
             <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
             <MenuItem
                 onClick={evt => {
@@ -344,17 +343,14 @@ export const MoorhenDevMenu = () => {
                 2D Overlays
             </MenuItem>
             <hr></hr>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={useGemmi}
-                    onChange={() => {
-                        dispatch(setUseGemmi(!useGemmi));
-                    }}
-                    label="Use gemmi for reading/writing coord files"
-                />
-            </InputGroup>
-
+            <MoorhenToggle
+                type="switch"
+                checked={useGemmi}
+                onChange={() => {
+                    dispatch(setUseGemmi(!useGemmi));
+                }}
+                label="Use gemmi for reading/writing coord files"
+            />
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
                 <MoorhenToggle

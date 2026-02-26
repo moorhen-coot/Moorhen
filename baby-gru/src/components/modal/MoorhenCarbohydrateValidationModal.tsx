@@ -1,7 +1,6 @@
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Button, Row, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { CSSProperties } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -41,9 +40,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
 
     const body = (style: CSSProperties) => (
         <div style={style}>
-            <Row className={"big-validation-tool-container-row"}>
-                <MoorhenCarbohydrateValidation />
-            </Row>
+            <MoorhenCarbohydrateValidation />
         </div>
     );
 

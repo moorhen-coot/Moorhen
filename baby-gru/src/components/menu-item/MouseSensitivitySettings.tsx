@@ -1,8 +1,8 @@
-import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const MouseSensitivitySettings = () => {
     const menuItemText = "Mouse sensitivity...";
@@ -18,51 +18,38 @@ const SensitivitySettingsPanel = () => {
     const dispatch = useDispatch();
 
     return (
-        <>
-            <Form.Group
-                controlId="mouseSensitivitySlider"
-                style={{ paddingTop: "0rem", paddingBottom: "0.5rem", paddingRight: "0.5rem", paddingLeft: "1rem", width: "25rem" }}
-            >
-                <MoorhenSlider
-                    minVal={0.01}
-                    maxVal={1.0}
-                    logScale={false}
-                    sliderTitle="Mouse sensitivity"
-                    stepButtons={0.01}
-                    externalValue={mouseSensitivity}
-                    setExternalValue={value => dispatch(setMouseSensitivity(value))}
-                    decimalPlaces={2}
-                />
-            </Form.Group>
-            <Form.Group
-                controlId="zoomWheelSensitivitySlider"
-                style={{ paddingTop: "0.5rem", paddingBottom: "0rem", paddingRight: "0.5rem", paddingLeft: "1rem", width: "25rem" }}
-            >
-                <MoorhenSlider
-                    minVal={0.1}
-                    maxVal={9.9}
-                    logScale={false}
-                    sliderTitle="Mouse wheel zoom sensitivity"
-                    stepButtons={0.1}
-                    externalValue={zoomWheelSensitivityFactor}
-                    setExternalValue={value => dispatch(setZoomWheelSensitivityFactor(value))}
-                    decimalPlaces={2}
-                />
-            </Form.Group>
-            <Form.Group
-                controlId="mapWheelSensitivitySlider"
-                style={{ paddingTop: "0.5rem", paddingBottom: "0rem", paddingRight: "0.5rem", paddingLeft: "1rem", width: "25rem" }}
-            >
-                <MoorhenSlider
-                    minVal={0.1}
-                    maxVal={10}
-                    logScale={true}
-                    sliderTitle="Mouse wheel map contour sensitivity"
-                    externalValue={contourWheelSensitivityFactor}
-                    setExternalValue={value => dispatch(setContourWheelSensitivityFactor(value))}
-                    decimalPlaces={2}
-                />
-            </Form.Group>
-        </>
+        <MoorhenStack gap={"1rem"}>
+            <MoorhenSlider
+                minVal={0.01}
+                maxVal={1.0}
+                logScale={false}
+                sliderTitle="Mouse sensitivity"
+                stepButtons={0.01}
+                externalValue={mouseSensitivity}
+                setExternalValue={value => dispatch(setMouseSensitivity(value))}
+                decimalPlaces={2}
+            />
+
+            <MoorhenSlider
+                minVal={0.1}
+                maxVal={9.9}
+                logScale={false}
+                sliderTitle="Mouse wheel zoom sensitivity"
+                stepButtons={0.1}
+                externalValue={zoomWheelSensitivityFactor}
+                setExternalValue={value => dispatch(setZoomWheelSensitivityFactor(value))}
+                decimalPlaces={2}
+            />
+
+            <MoorhenSlider
+                minVal={0.1}
+                maxVal={10}
+                logScale={true}
+                sliderTitle="Mouse wheel map contour sensitivity"
+                externalValue={contourWheelSensitivityFactor}
+                setExternalValue={value => dispatch(setContourWheelSensitivityFactor(value))}
+                decimalPlaces={2}
+            />
+        </MoorhenStack>
     );
 };

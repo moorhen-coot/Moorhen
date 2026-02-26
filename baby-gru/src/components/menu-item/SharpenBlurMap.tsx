@@ -1,4 +1,3 @@
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -83,17 +82,15 @@ export const SharpenBlurMap = () => {
         <>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
             <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50} allowNegativeValues={true} />
-            <InputGroup className="moorhen-input-group-check" style={{ width: "100%" }}>
-                <MoorhenToggle
-                    ref={useResampleSwitchRef}
-                    type="switch"
-                    checked={useResample}
-                    onChange={() => {
-                        setUseResample(prev => !prev);
-                    }}
-                    label="Use resample"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                ref={useResampleSwitchRef}
+                type="switch"
+                checked={useResample}
+                onChange={() => {
+                    setUseResample(prev => !prev);
+                }}
+                label="Use resample"
+            />
             {useResample && <MoorhenNumberForm ref={resampleFactorRef} label="Resampling factor" defaultValue={1.4} />}
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>

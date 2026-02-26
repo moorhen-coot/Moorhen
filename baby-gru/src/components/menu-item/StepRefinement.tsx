@@ -1,5 +1,4 @@
 import { useSnackbar } from "notistack";
-import { Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
 import { useTimeCapsule } from "../../InstanceManager";
@@ -49,14 +48,7 @@ export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.
 
     return (
         <>
-            <Form.Group
-                key="stepped-refinement-model-select"
-                style={{ width: "20rem", margin: "0.5rem" }}
-                controlId="modelSelect"
-                className="mb-3"
-            >
-                <MoorhenMoleculeSelect ref={moleculeSelectRef} />
-            </Form.Group>
+            <MoorhenMoleculeSelect ref={moleculeSelectRef} />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
