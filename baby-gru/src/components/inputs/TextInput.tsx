@@ -18,6 +18,7 @@ type MoorhenTextInputBase = {
     disabled?: boolean;
     placeholder?: string;
     uppercase?: boolean;
+    readOnly?: boolean;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -31,7 +32,7 @@ export type MoorhenTextInputButtonProps = MoorhenTextInputBase & {
 };
 
 export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInputButtonProps) => {
-    const { inline = true, ref, isInvalid, disabled = false, placeholder } = props;
+    const { inline = true, ref, isInvalid, disabled = false, placeholder, readOnly = false } = props;
     const id = useId();
     const dispatch = useDispatch();
     const handleBlur = () => {
@@ -58,6 +59,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     disabled={disabled}
                     placeholder={placeholder}
                     style={props.uppercase ? { textTransform: "uppercase" } : null}
+                    readOnly={readOnly}
                 />
                 {props.button ? (
                     <MoorhenButton icon={props.icon} onClick={props.onClick} className="moorhen__input-text-box-button" />

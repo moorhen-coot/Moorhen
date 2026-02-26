@@ -1,4 +1,3 @@
-import { Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
@@ -26,9 +25,7 @@ export const MoorhenDiffMapPeaksModal = () => {
             footer={null}
             body={
                 <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" />
-                    </Row>
+                    <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" />
                 </div>
             }
         />

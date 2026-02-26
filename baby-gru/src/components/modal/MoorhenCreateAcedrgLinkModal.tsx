@@ -1,5 +1,4 @@
 import { Backdrop, TextField } from "@mui/material";
-import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
@@ -7,7 +6,8 @@ import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
-import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenButton, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
@@ -158,12 +158,10 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     return (
         <MoorhenStack card>
             <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
-                <InputGroup>
-                    <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
-                        Set Atom {props.id}
-                    </MoorhenButton>
-                    <Form.Control type="text" readOnly={true} value={selectedAtom ? selectedAtom : "No atom selected"} />
-                </InputGroup>
+                <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
+                    Set Atom {props.id}
+                </MoorhenButton>
+                <MoorhenTextInput readOnly={true} text={selectedAtom ? selectedAtom : "No atom selected"} />
                 <MoorhenToggle label="Delete atom..." checked={deleteAtom} onChange={() => setDeleteAtom(!deleteAtom)} />
                 {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...
@@ -240,28 +238,24 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                         </option>
                     ))}
                 </MoorhenSelect>
-                {/* </InputGroup> */}
-                <Row style={{ justifyContent: "center", display: changeOrderBond ? "flex" : "none" }}>
-                    <MoorhenSelect ref={newBondOrderValueRef}>
-                        <option key={"SINGLE"} value={"SINGLE"}>
-                            SINGLE
-                        </option>
-                        <option key={"DOUBLE"} value={"DOUBLE"}>
-                            DOUBLE
-                        </option>
-                        <option key={"TRIPLE"} value={"TRIPLE"}>
-                            TRIPLE
-                        </option>
-                    </MoorhenSelect>
-                </Row>
-                <InputGroup>
-                    <MoorhenToggle
-                        label={"Change formal charge of an atom..."}
-                        checked={changeAtomCharge}
-                        onChange={() => setChangeAtomCharge(!changeAtomCharge)}
-                        // ref={changeAtomChargeValueRef}
-                    />
-                    {/* <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
+                <MoorhenSelect ref={newBondOrderValueRef}>
+                    <option key={"SINGLE"} value={"SINGLE"}>
+                        SINGLE
+                    </option>
+                    <option key={"DOUBLE"} value={"DOUBLE"}>
+                        DOUBLE
+                    </option>
+                    <option key={"TRIPLE"} value={"TRIPLE"}>
+                        TRIPLE
+                    </option>
+                </MoorhenSelect>
+                <MoorhenToggle
+                    label={"Change formal charge of an atom..."}
+                    checked={changeAtomCharge}
+                    onChange={() => setChangeAtomCharge(!changeAtomCharge)}
+                    // ref={changeAtomChargeValueRef}
+                />
+                {/* <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
                             
 
                             <Dropdown.Item
@@ -283,17 +277,16 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                                 No
                             </Dropdown.Item>
                         </SplitButton> */}
-                    <MoorhenSelect disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
-                        {monomerAtoms.map(atom => {
-                            const label = parseAtomInfoLabel(atom);
-                            return (
-                                <option key={label} value={label}>
-                                    {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
-                                </option>
-                            );
-                        })}
-                    </MoorhenSelect>
-                </InputGroup>
+                <MoorhenSelect disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
+                    {monomerAtoms.map(atom => {
+                        const label = parseAtomInfoLabel(atom);
+                        return (
+                            <option key={label} value={label}>
+                                {atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}
+                            </option>
+                        );
+                    })}
+                </MoorhenSelect>
                 {changeAtomCharge ? (
                     <TextField
                         style={{ margin: "0.5rem", width: "50%" }}
@@ -365,7 +358,7 @@ export const MoorhenCreateAcedrgLinkModal = () => {
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
                     <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
-                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                        <MoorhenSpinner />
                         <span>Click on an atom...</span>
                         <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
                             Cancel
@@ -398,7 +391,7 @@ export const MoorhenCreateAcedrgLinkModal = () => {
             footer={
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "left", width: "50%" }}>
-                        <Form.Control type="text" readOnly={true} value={errorMessage} />
+                        <MoorhenTextInput readOnly={true} text={errorMessage} />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "right" }}>
                         <MoorhenButton variant="primary" onClick={handleSubmitToAcedrg}>

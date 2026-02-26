@@ -1,7 +1,6 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Button, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -39,9 +38,7 @@ export const MoorhenFillPartialResiduesModal = () => {
             resizeNodeRef={resizeNodeRef}
             body={
                 <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenFillMissingAtoms />
-                    </Row>
+                    <MoorhenFillMissingAtoms />
                 </div>
             }
             additionalHeaderButtons={[
@@ -59,9 +56,7 @@ export const MoorhenFillPartialResiduesModal = () => {
                                 title: "Fill partial res.",
                                 children: (
                                     <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "30vh" }}>
-                                        <Row className={"big-validation-tool-container-row"}>
-                                            <MoorhenFillMissingAtoms />
-                                        </Row>
+                                        <MoorhenFillMissingAtoms />
                                     </div>
                                 ),
                             });

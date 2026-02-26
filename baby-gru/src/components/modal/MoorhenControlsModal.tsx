@@ -1,12 +1,12 @@
 import { Autocomplete, MenuItem, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
-import { Card, Col, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const shortCutMouseActions = {
@@ -71,9 +71,6 @@ export const MoorhenControlsModal = () => {
     );
 
     const handleMouseHover = (key: string, modifiers: string[], isMouseEnter: boolean = true) => {
-        const cardElement = document.getElementById(`show-controls-card-${key}`);
-        cardElement.style.borderWidth = isMouseEnter ? "0.2rem" : "0.1rem";
-        cardElement.style.borderColor = isMouseEnter ? "black" : "grey";
         const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
         if (!svg) {
             return;
@@ -104,14 +101,14 @@ export const MoorhenControlsModal = () => {
             top={height / 5}
             minHeight={convertViewtoPx(65, height)}
             minWidth={convertViewtoPx(60, width)}
-            maxHeight={convertViewtoPx(65, height)}
-            maxWidth={convertViewtoPx(60, width)}
+            maxHeight={convertViewtoPx(80, height)}
+            maxWidth={convertViewtoPx(80, width)}
             headerTitle="Moorhen Controls"
             enableResize={false}
             footer={null}
             body={
-                <Row style={{ display: "flex" }}>
-                    <Col className="col-4" style={{ overflowY: "scroll", height: convertViewtoPx(65, height) }}>
+                <MoorhenStack direction="row" style={{ maxHeight: "40rem" }}>
+                    <MoorhenStack direction="column" style={{ overflowY: "scroll" }}>
                         {shortCuts &&
                             Object.keys(shortCuts).map(key => {
                                 const modifiers = [];
@@ -121,10 +118,9 @@ export const MoorhenControlsModal = () => {
                                 if (shortCuts[key].modifiers.includes("altKey")) modifiers.push("Alt");
                                 if (shortCuts[key].keyPress === " ") modifiers.push("Space");
                                 return (
-                                    <Card
-                                        id={`show-controls-card-${key}`}
+                                    <div
+                                        className="moorhen__stack_card"
                                         key={key}
-                                        style={{ margin: "0.5rem", borderColor: "grey" }}
                                         onMouseEnter={() => {
                                             if (previouslySearchedRef.current) {
                                                 handleMouseHover(
@@ -137,14 +133,12 @@ export const MoorhenControlsModal = () => {
                                         }}
                                         onMouseLeave={() => handleMouseHover(key, modifiers, false)}
                                     >
-                                        <Card.Body style={{ padding: "0.5rem" }}>
-                                            <span style={{ fontWeight: "bold" }}>{`${shortCuts[key].label}`}</span>
-                                        </Card.Body>
-                                    </Card>
+                                        <span style={{ fontWeight: "bold" }}>{`${shortCuts[key].label}`}</span>
+                                    </div>
                                 );
                             })}
-                    </Col>
-                    <Col className="col-8" style={{ display: "flex", flexDirection: "column" }}>
+                    </MoorhenStack>
+                    <MoorhenStack direction="column" style={{ width: "80%" }}>
                         <Autocomplete
                             style={{ paddingTop: "0.5rem" }}
                             disablePortal
@@ -217,8 +211,8 @@ export const MoorhenControlsModal = () => {
                             }}
                         />
                         <div style={{ display: "flex" }}>{svgString ? parse(svgString) : null}</div>
-                    </Col>
-                </Row>
+                    </MoorhenStack>
+                </MoorhenStack>
             }
         />
     );

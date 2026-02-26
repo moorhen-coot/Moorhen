@@ -280,7 +280,7 @@ export const FetchOnlineSources = () => {
             </label>
             {downloadMaps && (
                 <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
-                    <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" type="checkbox" />
+                    <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" />
                 </div>
             )}
         </>

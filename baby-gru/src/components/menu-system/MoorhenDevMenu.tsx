@@ -1,13 +1,10 @@
-import { MenuItem } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
-import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
-import { readGzippedTextFile } from "../../utils/utils";
 import {
     addCallback,
     addFracPathOverlay,
@@ -18,9 +15,12 @@ import {
     emptyOverlays,
 } from "../../store/overlaysSlice";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
+import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { MoorhenToggle } from "../inputs";
+import { readGzippedTextFile } from "../../utils/utils";
+import { MoorhenFileInput, MoorhenToggle } from "../inputs";
+import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -44,7 +44,7 @@ const newVector = () => {
         textColour: { r: 0, g: 0, b: 0 },
     };
     return aVector;
-}
+};
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
@@ -59,24 +59,24 @@ export const MoorhenDevMenu = () => {
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
 
     useEffect(() => {
-        dispatch(removeVectors(testVectors))
-        const myVecs:MoorhenVector[] = []
-        for(let i=0;i<10;i++){
-            const vec = newVector()
-            vec.xTo = 10
-            vec.yTo = i*2
-            vec.yFrom = i*2
-            vec.coordsMode = "points"
-            vec.arrowMode = "both"
-            vec.uniqueId += "__TAG_DEV_TEST_VECTOR"
-            vec.radius = 0.07 + i * 0.01
-            myVecs.push(vec)
+        dispatch(removeVectors(testVectors));
+        const myVecs: MoorhenVector[] = [];
+        for (let i = 0; i < 10; i++) {
+            const vec = newVector();
+            vec.xTo = 10;
+            vec.yTo = i * 2;
+            vec.yFrom = i * 2;
+            vec.coordsMode = "points";
+            vec.arrowMode = "both";
+            vec.uniqueId += "__TAG_DEV_TEST_VECTOR";
+            vec.radius = 0.07 + i * 0.01;
+            myVecs.push(vec);
         }
-        setTestVectors(myVecs)
+        setTestVectors(myVecs);
         return () => {
             //Remove all with "__DEV_TEST_VECTOR" in uniqueID. This gets around problem with stale state at unmount.
-            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"))
-        }
+            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"));
+        };
     }, []);
 
     const urlPrefix = usePaths().urlPrefix;
@@ -103,12 +103,12 @@ export const MoorhenDevMenu = () => {
     };
 
     const loadVectorsBunch = async evt => {
-        dispatch(removeVectors(testVectors))
+        dispatch(removeVectors(testVectors));
         setVectorsOn(evt.target.checked);
         if (evt.target.checked) {
-            dispatch(addVectors(testVectors))
+            dispatch(addVectors(testVectors));
         }
-    }
+    };
 
     const loadExampleOverlays = async evt => {
         dispatch(emptyOverlays());
@@ -325,23 +325,23 @@ export const MoorhenDevMenu = () => {
 
     return (
         <MoorhenStack>
-            <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
-            <MenuItem
-                onClick={evt => {
+            <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => {
                     dispatch(showModal(modalKeys.VECTORS));
                     document.body.click();
                 }}
             >
                 Vectors
-            </MenuItem>
-            <MenuItem
-                onClick={evt => {
+            </MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => {
                     dispatch(showModal(modalKeys.OVERLAYS2D));
                     document.body.click();
                 }}
             >
                 2D Overlays
-            </MenuItem>
+            </MoorhenMenuItem>
             <hr></hr>
             <MoorhenToggle
                 type="switch"
@@ -352,45 +352,37 @@ export const MoorhenDevMenu = () => {
                 label="Use gemmi for reading/writing coord files"
             />
             <hr></hr>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doOutline}
-                    onChange={() => {
-                        dispatch(setDoOutline(!doOutline));
-                    }}
-                    label="Outlines"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={overlaysOn}
-                    onChange={evt => {
-                        loadExampleOverlays(evt);
-                    }}
-                    label="Load example 2D overlays"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={vectorsOn}
-                    onChange={evt => {
-                        loadVectorsBunch(evt);
-                    }}
-                    label="Load a bunch of vectors"
-                />
-            </InputGroup>
-            <MenuItem>
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadGzippedFiles(e.target.files);
-                        }}
-                    />
-                Gzipped Text Read test
-            </MenuItem>
-        </>
+            <MoorhenToggle
+                type="switch"
+                checked={doOutline}
+                onChange={() => {
+                    dispatch(setDoOutline(!doOutline));
+                }}
+                label="Outlines"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={overlaysOn}
+                onChange={evt => {
+                    loadExampleOverlays(evt);
+                }}
+                label="Load example 2D overlays"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={vectorsOn}
+                onChange={evt => {
+                    loadVectorsBunch(evt);
+                }}
+                label="Load a bunch of vectors"
+            />
+            <hr />
+            <MoorhenFileInput
+                label="Load gzipped files"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    loadGzippedFiles(e.target.files);
+                }}
+            />
+        </MoorhenStack>
     );
 };
