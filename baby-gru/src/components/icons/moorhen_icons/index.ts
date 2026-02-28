@@ -26,6 +26,7 @@ import MatSymVisibility from "./MatSymVisibility.svg"
 import MatSymFactCheck from "./MatSymFactCheck.svg"
 import MatSymCheckBox from "./MatSymCheckBox.svg"
 import minus from "./minus.svg"
+import MatSymFirstPage from "./MatSymFirstPage.svg"
 import MatSymRadioButtonChecked from "./MatSymRadioButtonChecked.svg"
 import MatSymCalculate from "./MatSymCalculate.svg"
 import MatSymCollapse from "./MatSymCollapse.svg"
@@ -35,11 +36,13 @@ import MatSymAdd from "./MatSymAdd.svg"
 import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
 import MatSymMenu from "./MatSymMenu.svg"
 import MatSymProgressActivity from "./MatSymProgressActivity.svg"
+import MatSymAlbum from "./MatSymAlbum.svg"
 import MatSymLockClose from "./MatSymLockClose.svg"
 import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
 import MatSymTune from "./MatSymTune.svg"
 import MatSymDoubleArrowDown from "./MatSymDoubleArrowDown.svg"
 import MatSymEdit from "./MatSymEdit.svg"
+import MatSymChevronR from "./MatSymChevronR.svg"
 import ligand from "./ligand.svg"
 import MatSymArrowLeft from "./MatSymArrowLeft.svg"
 import MatSymDelete from "./MatSymDelete.svg"
@@ -51,7 +54,9 @@ import MatSymInfo from "./MatSymInfo.svg"
 import MatSymArrowUpward from "./MatSymArrowUpward.svg"
 import MatSymFileOpen from "./MatSymFileOpen.svg"
 import MatSymRedo from "./MatSymRedo.svg"
+import MatSymCheck from "./MatSymCheck.svg"
 import MatSymRemove from "./MatSymRemove.svg"
+import MatSymChevronL from "./MatSymChevronL.svg"
 import MatSymDownload from "./MatSymDownload.svg"
 import menuLigands from "./menuLigands.svg"
 
@@ -83,6 +88,7 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymFactCheck": MatSymFactCheck,
  "MatSymCheckBox": MatSymCheckBox,
  "minus": minus,
+ "MatSymFirstPage": MatSymFirstPage,
  "MatSymRadioButtonChecked": MatSymRadioButtonChecked,
  "MatSymCalculate": MatSymCalculate,
  "MatSymCollapse": MatSymCollapse,
@@ -92,11 +98,13 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
  "MatSymMenu": MatSymMenu,
  "MatSymProgressActivity": MatSymProgressActivity,
+ "MatSymAlbum": MatSymAlbum,
  "MatSymLockClose": MatSymLockClose,
  "MatSymVisibilityOff": MatSymVisibilityOff,
  "MatSymTune": MatSymTune,
  "MatSymDoubleArrowDown": MatSymDoubleArrowDown,
  "MatSymEdit": MatSymEdit,
+ "MatSymChevronR": MatSymChevronR,
  "ligand": ligand,
  "MatSymArrowLeft": MatSymArrowLeft,
  "MatSymDelete": MatSymDelete,
@@ -108,7 +116,9 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymArrowUpward": MatSymArrowUpward,
  "MatSymFileOpen": MatSymFileOpen,
  "MatSymRedo": MatSymRedo,
+ "MatSymCheck": MatSymCheck,
  "MatSymRemove": MatSymRemove,
+ "MatSymChevronL": MatSymChevronL,
  "MatSymDownload": MatSymDownload,
  "menuLigands": menuLigands,
  }
@@ -141,6 +151,7 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymFactCheck" |
  "MatSymCheckBox" |
  "minus" |
+ "MatSymFirstPage" |
  "MatSymRadioButtonChecked" |
  "MatSymCalculate" |
  "MatSymCollapse" |
@@ -150,11 +161,13 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymRadioButtonUnchecked" |
  "MatSymMenu" |
  "MatSymProgressActivity" |
+ "MatSymAlbum" |
  "MatSymLockClose" |
  "MatSymVisibilityOff" |
  "MatSymTune" |
  "MatSymDoubleArrowDown" |
  "MatSymEdit" |
+ "MatSymChevronR" |
  "ligand" |
  "MatSymArrowLeft" |
  "MatSymDelete" |
@@ -166,6 +179,8 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymArrowUpward" |
  "MatSymFileOpen" |
  "MatSymRedo" |
+ "MatSymCheck" |
  "MatSymRemove" |
+ "MatSymChevronL" |
  "MatSymDownload" |
  "menuLigands"

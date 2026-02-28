@@ -1,6 +1,7 @@
 import { MenuItem } from "@mui/material";
-import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
+import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
+import { setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
@@ -52,6 +53,11 @@ export type MenuItemShowSidePanel = BaseMenuItem & {
     panel: PanelIDs;
 };
 
+export type MenuItemDispatch = BaseMenuItem & {
+    type: "dispatch";
+    action: PayloadAction<any>;
+};
+
 export type MenuItemCustomJSX = BaseMenuItem & {
     type: "customJSX";
     jsx: (aeg0: any) => React.JSX.Element;
@@ -86,6 +92,7 @@ export type MenuItemType =
     | PreferenceSwitch
     | MenuItemSubMenu
     | MenuItemShowSidePanel
+    | MenuItemDispatch
     | Separator;
 
 export type SubMenu = {
@@ -143,10 +150,10 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.AssociateReflectionsToMap,
             },
             {
-                type: "customJSX",
+                type: "dispatch",
                 id: "screenshot-menu-item",
                 label: "Screenshot",
-                jsx: MenuItems.Screenshot,
+                action: setShownControl({ name: "screenshot" }),
             },
 
             // {
@@ -186,8 +193,8 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "record-video",
                 label: "Record a video",
-                type: "customJSX",
-                jsx: MenuItems.RecordVideo,
+                type: "dispatch",
+                action: setShownControl({ name: "videoRecorder" }),
             },
             {
                 id: "export",

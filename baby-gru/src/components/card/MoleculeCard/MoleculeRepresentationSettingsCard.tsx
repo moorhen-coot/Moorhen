@@ -1,8 +1,7 @@
 import { Slider } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
-import { MoleculeRepresentation } from "@/moorhen";
-import { MoorhenMolecule } from "@/utils";
+import { MoleculeRepresentation, MoorhenMolecule } from "@/utils";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";

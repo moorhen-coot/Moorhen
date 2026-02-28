@@ -1,0 +1,32 @@
+@import "../../../colors.css";
+
+@keyframes slideDownFromTop {
+    from {
+        transform: translateY(-120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.moorhen__popup-control-container {
+    position: absolute;
+    top: 0.5rem;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    animation: slideDownFromTop 0.4s ease-out;
+}
+
+.moorhen_snackbar_screenshot-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}

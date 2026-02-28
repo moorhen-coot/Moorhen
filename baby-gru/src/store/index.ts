@@ -21,6 +21,10 @@ export {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
 }  from "./globalUISlice";
 export {
     addMolecule,
@@ -54,7 +58,7 @@ export {
     resetMoleculeMapUpdates,
 }  from "./moleculeMapUpdateSlice";
 export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
-export { addVector, removeVector, emptyVectors }  from "./vectorsSlice";
+export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
     addImageOverlay,
     addTextOverlay,

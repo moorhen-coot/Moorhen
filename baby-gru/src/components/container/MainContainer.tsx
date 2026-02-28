@@ -43,23 +43,18 @@ import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
-import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
-import { MoorhenAcceptRejectRotateTranslateSnackBar } from "../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar";
 import { MoorhenAtomInfoSnackBar } from "../snack-bar/MoorhenAtomInfoSnackBar";
 import { MoorhenGoToResidueSnackbar } from "../snack-bar/MoorhenGoToResidueSnackbar";
 import { MoorhenLongJobSnackBar } from "../snack-bar/MoorhenLongJobSnackBar";
 import { MoorhenMapContourLevelSnackBar } from "../snack-bar/MoorhenMapContourLevelSnackBar";
 import { MoorhenModelTrajectorySnackBar } from "../snack-bar/MoorhenModelTrajectorySnackBar";
-import { MoorhenRecordingSnackBar } from "../snack-bar/MoorhenRecordingSnackBar";
-import { MoorhenResidueSelectionSnackBar } from "../snack-bar/MoorhenResidueSelectionSnackBar";
 import { MoorhenResidueStepsSnackBar } from "../snack-bar/MoorhenResidueStepsSnackBar";
-import { MoorhenRotamerChangeSnackBar } from "../snack-bar/MoorhenRotamerChangeSnackbar";
-import { MoorhenScreenshotSnackBar } from "../snack-bar/MoorhenScreenshotSnackBar";
 import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
 import { MoorhenSnackBarManager } from "../snack-bar/MoorhenSnackBarManager";
 import { MoorhenTomogramSnackBar } from "../snack-bar/MoorhenTomogramSnackBar";
 import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
+import { PopupControls } from "../snack-bar/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
@@ -435,10 +430,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const snackbarComponents = {
         goToResidue: MoorhenGoToResidueSnackbar,
-        screenRecorder: MoorhenRecordingSnackBar,
-        residueSelection: MoorhenResidueSelectionSnackBar,
-        acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
-        acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
         acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
         longJobNotification: MoorhenLongJobSnackBar,
         residueSteps: MoorhenResidueStepsSnackBar,
@@ -446,8 +437,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         modelTrajectory: MoorhenModelTrajectorySnackBar,
         tomogram: MoorhenTomogramSnackBar,
         mapContourLevel: MoorhenMapContourLevelSnackBar,
-        rotamerChange: MoorhenRotamerChangeSnackBar,
-        screenshot: MoorhenScreenshotSnackBar,
         sideBar: MoorhenSideBar,
         atomInformation: MoorhenAtomInfoSnackBar,
     };
@@ -491,6 +480,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     Components={snackbarComponents}
                     preventDuplicate={true}
                 >
+                    <PopupControls />
                     <MoorhenMainMenu />
 
                     <div style={viewportStyle} className="moorhen__viewport-container">

@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import type { PanelIDs } from "@/components/panels";
+import { ShownControl } from "@/components/snack-bar/PopupControls/PopupControlList";
 
 const initialState: {
     busy: boolean;
@@ -11,6 +12,9 @@ const initialState: {
     areShortcutsBlocked: boolean;
     shownSidePanel: PanelIDs | null;
     sidePanelWidth: number;
+    shownControl: ShownControl | null;
+    controlLocked: number | null;
+    selectionToolsActive: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -21,6 +25,9 @@ const initialState: {
     areShortcutsBlocked: false,
     shownSidePanel: null,
     sidePanelWidth: 450,
+    shownControl: null,
+    controlLocked: null,
+    selectionToolsActive: false,
 };
 
 const globalUISlice = createSlice({
@@ -54,6 +61,34 @@ const globalUISlice = createSlice({
         setSidePanelWidth: (state, action: PayloadAction<number>) => {
             state.sidePanelWidth = action.payload;
         },
+        setShownControl: (state, action: PayloadAction<ShownControl | null>) => {
+            if (state.controlLocked) return;
+
+            if (action.payload) {
+                state.shownControl = action.payload;
+                if (action.payload.name === "selectionTools") {
+                    state.selectionToolsActive = true;
+                }
+            } else {
+                if (state.selectionToolsActive) {
+                    state.shownControl = { name: "selectionTools" };
+                } else {
+                    state.shownControl = null;
+                }
+            }
+        },
+        lockControls: (state, action: PayloadAction<number>) => {
+            state.controlLocked = action.payload;
+        },
+        unlockControls: (state, action: PayloadAction<number>) => {
+            if (state.controlLocked === action.payload) {
+                state.controlLocked = null;
+            }
+        },
+        closeResidueSelectionTools: state => {
+            state.selectionToolsActive = false;
+            state.shownControl = null;
+        },
     },
 });
 
@@ -67,5 +102,9 @@ export const {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

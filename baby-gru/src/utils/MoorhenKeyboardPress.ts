@@ -16,6 +16,7 @@ import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
 import { cidToSpec, getCentreAtom } from "./utils"
 import { MoorhenReduxStoreType } from '../store/MoorhenReduxStore';
+import { setShownControl } from '@/store';
 
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
@@ -354,11 +355,7 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'take_screenshot') {
-        enqueueSnackbar("screenshot", {
-            variant: "screenshot",
-            persist: true,
-            videoRecorderRef: videoRecorderRef 
-        })
+        dispatch(setShownControl({ name: "screenshot" }))
     }
 
     else if (action === 'show_shortcuts') {

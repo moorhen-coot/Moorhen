@@ -2,6 +2,7 @@ import { SnackbarKey, useSnackbar } from "notistack";
 import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setShownControl } from "@/store/globalUISlice";
 import { clearResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
@@ -60,7 +61,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
 
-    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const { enqueueSnackbar } = useSnackbar();
 
     const axesSpace = 75;
 
@@ -331,14 +332,13 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                             };
                             dispatch(setResidueSelection(newSelection));
                             matchMols[0].drawResidueSelection(newSelection.cid as string);
-                            const snackId = await enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
-                            setCurrentSnackId(snackId);
+                            await dispatch(setShownControl({ name: "selectionTools" }));
+                            setCurrentSnackId("1");
                         }
                     }
                 } else {
                     if (currentSnackId) {
                         dispatch(clearResidueSelection());
-                        await closeSnackbar(currentSnackId);
                         dispatch(setRequestDrawScene(true));
                         setCurrentSnackId(null);
                     }

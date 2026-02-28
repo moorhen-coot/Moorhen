@@ -1,28 +1,17 @@
 import { CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import { SnackbarContent, useSnackbar } from "notistack";
+import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
-import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { setIsChangingRotamers } from "../../store/generalStatesSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { removeMolecule } from "../../store/moleculesSlice";
-import { libcootApi } from "../../types/libcoot";
-import { webGL } from "../../types/mgWebGL";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenStack } from "../interface-base";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useCommandCentre } from "@/InstanceManager";
+import { MoorhenButton } from "@/components/inputs";
+import { MoorhenStack } from "@/components/interface-base";
+import { removeMolecule, setHoveredAtom, setIsChangingRotamers, setShownControl, triggerUpdate } from "@/store";
+import { RootState } from "@/store";
+import { libcootApi } from "@/types/libcoot";
+import { moorhen } from "@/types/moorhen";
 
-export const MoorhenRotamerChangeSnackBar = forwardRef<
-    HTMLDivElement,
-    {
-        moleculeMolNo: number;
-        chosenAtom: moorhen.ResidueSpec;
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
-        glRef: React.RefObject<webGL.MGWebGL>;
-        id: string;
-    }
->((props, ref) => {
+export const RotamerChange = () => {
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null);
     const chosenMolecule = useRef<null | moorhen.Molecule>(null);
     const selectedFragmentRef = useRef<{ cid: string; alt_conf: string }>({ cid: "", alt_conf: "" });
@@ -33,6 +22,9 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
+    const molNo = shownControl?.name === "changeRotamer" ? (shownControl.payload?.molNo ?? 0) : 0;
+    const chosenAtom = shownControl?.name === "changeRotamer" ? (shownControl.payload?.chosenAtom ?? null) : null;
 
     const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
@@ -41,20 +33,24 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
 
     useEffect(() => {
         const doRotamerChange = async () => {
-            const selectedMolecule = molecules.find(molecule => molecule.molNo === props.moleculeMolNo);
+            if (!chosenAtom) {
+                dispatch(setShownControl(null));
+                return;
+            }
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === molNo);
             if (!selectedMolecule) {
-                closeSnackbar(props.id);
+                dispatch(setShownControl(null));
                 enqueueSnackbar("Something went wrong", { variant: "warning" });
                 return;
             }
 
             chosenMolecule.current = selectedMolecule;
-            selectedFragmentRef.current.cid = `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}/*${
-                props.chosenAtom.alt_conf === "" ? "" : ":" + props.chosenAtom.alt_conf
+            selectedFragmentRef.current.cid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${
+                chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
             }`;
-            selectedFragmentRef.current.alt_conf = props.chosenAtom.alt_conf === "" ? "" : props.chosenAtom.alt_conf;
+            selectedFragmentRef.current.alt_conf = chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf;
             if (!selectedFragmentRef.current.cid) {
-                closeSnackbar(props.id);
+                dispatch(setShownControl(null));
                 enqueueSnackbar("Something went wrong", { variant: "warning" });
                 return;
             }
@@ -151,7 +147,7 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
 
         dispatch(triggerUpdate(chosenMolecule.current.molNo));
         dispatch(setIsChangingRotamers(false));
-        closeSnackbar(props.id);
+        dispatch(setShownControl(null));
     }, []);
 
     const rejectTransform = async () => {
@@ -159,57 +155,47 @@ export const MoorhenRotamerChangeSnackBar = forwardRef<
         await chosenMolecule.current.unhideAll();
         dispatch(removeMolecule(fragmentMolecule.current));
         dispatch(setIsChangingRotamers(false));
-        closeSnackbar(props.id);
+        dispatch(setShownControl(null));
     };
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
-            <MoorhenStack direction="vertical" gap={1}>
-                <div>
-                    <span>
-                        Current rotamer: {rotamerName} ({rotamerRank + 1}
-                        <sup>{rotamerRank === 0 ? "st" : rotamerRank === 1 ? "nd" : rotamerRank === 2 ? "rd" : "th"}</sup>)
-                    </span>
-                </div>
-                <div>
-                    <span>Probability: {rotamerProbability}%</span>
-                </div>
-                <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                    <IconButton
-                        onClick={() => {
-                            changeRotamer("change_to_first_rotamer");
-                        }}
-                    >
-                        <FirstPageOutlined />
-                    </IconButton>
-                    <IconButton
-                        onClick={() => {
-                            changeRotamer("change_to_previous_rotamer");
-                        }}
-                    >
-                        <NavigateBeforeOutlined />
-                    </IconButton>
-                    <IconButton
-                        onClick={async () => {
-                            changeRotamer("change_to_next_rotamer");
-                        }}
-                    >
-                        <NavigateNextOutlined />
-                    </IconButton>
-                    <IconButton style={{ padding: 0, color: isDark ? "white" : "grey" }} onClick={acceptTransform}>
-                        <CheckOutlined />
-                    </IconButton>
-                    <IconButton style={{ padding: 0, color: isDark ? "white" : "grey" }} onClick={rejectTransform}>
-                        <CloseOutlined />
-                    </IconButton>
-                </MoorhenStack>
-            </MoorhenStack>
-        </SnackbarContent>
-    );
-});
+        <MoorhenStack direction="vertical" gap={1}>
+            <div>
+                <span>
+                    Current rotamer: {rotamerName} ({rotamerRank + 1}
+                    <sup>{rotamerRank === 0 ? "st" : rotamerRank === 1 ? "nd" : rotamerRank === 2 ? "rd" : "th"}</sup>)
+                </span>
+            </div>
+            <div>
+                <span>Probability: {rotamerProbability}%</span>
+            </div>
+            <MoorhenStack direction="horizontal" align="center" justify="center">
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymFirstPage"
+                    onClick={() => {
+                        changeRotamer("change_to_first_rotamer");
+                    }}
+                    tooltip="First"
+                />
 
-MoorhenRotamerChangeSnackBar.displayName = "MoorhenRotamerChangeSnackBar";
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymChevronL"
+                    onClick={() => {
+                        changeRotamer("change_to_previous_rotamer");
+                    }}
+                    tooltip="Previous"
+                />
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymChevronR"
+                    onClick={() => changeRotamer("change_to_next_rotamer")}
+                    tooltip="Next"
+                />
+                <MoorhenButton type="icon-only" icon="MatSymCheck" onClick={acceptTransform} tooltip="Accept" />
+                <MoorhenButton type="icon-only" icon="MatSymClose" onClick={rejectTransform} tooltip="Cancel" />
+            </MoorhenStack>
+        </MoorhenStack>
+    );
+};

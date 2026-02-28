@@ -1,25 +1,20 @@
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
-import { SnackbarContent, useSnackbar } from "notistack";
-import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { forwardRef, useCallback, useEffect, useRef } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { setDraggableMolecule } from "../../store/glRefSlice";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { moorhen } from "../../types/moorhen";
-import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
-import { MoorhenStack } from "../interface-base";
+import { useCallback, useEffect, useRef } from "react";
+import { MoorhenButton } from "@/components/inputs";
+import { useControlLock } from "@/hooks/useControlsLock";
+import { setShownControl, unlockControls } from "@/store";
+import { RootState } from "@/store";
+import { useCommandCentre } from "../../../InstanceManager";
+import { setIsDraggingAtoms } from "../../../store/generalStatesSlice";
+import { setDraggableMolecule } from "../../../store/glRefSlice";
+import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../../types/moorhen";
+import { cidToSpec, parseAtomInfoLabel } from "../../../utils/utils";
+import { MoorhenStack } from "../../interface-base";
 
-export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
-    HTMLDivElement,
-    {
-        moleculeRef: React.RefObject<moorhen.Molecule>;
-        cidRef: React.RefObject<string[]>;
-        id: string;
-    }
->((props, ref) => {
+export const AcceptRejectDragAtoms = () => {
+    const controlKey = useControlLock();
+
     const moltenFragmentRef = useRef<null | moorhen.Molecule>(null);
     const busy = useRef<boolean>(false);
     const draggingDirty = useRef<boolean>(false);
@@ -27,13 +22,21 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     const autoClearRestraintsRef = useRef<boolean>(true);
     const commandCentre = useCommandCentre();
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule);
+    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
+    const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
+    const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
+    const draggableMolecule = useSelector((state: RootState) => state.glRef.draggableMolecule);
+
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+
+    const molecule = molecules.find(
+        mol => mol.molNo === (shownControl?.name === "acceptRejectDraggingAtoms" ? shownControl.payload?.molNo : undefined)
+    );
+    const fragmentCid = (shownControl?.name === "acceptRejectDraggingAtoms" ? shownControl.payload?.fragmentCid : undefined) as
+        | string[]
+        | undefined;
 
     const dispatch = useDispatch();
-
-    const { closeSnackbar } = useSnackbar();
 
     const finishDragging = async (acceptTransform: boolean) => {
         document.removeEventListener("atomDragged", atomDraggedCallback);
@@ -43,17 +46,18 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
             setTimeout(() => finishDragging(acceptTransform), 100);
             return;
         }
-        await props.moleculeRef.current.mergeFragmentFromRefinement(
-            props.cidRef.current.join("||"),
-            moltenFragmentRef.current,
-            acceptTransform,
-            false
-        );
+        await molecule.mergeFragmentFromRefinement(fragmentCid.join("||"), moltenFragmentRef.current, acceptTransform, false);
         if (acceptTransform) {
-            dispatch(triggerUpdate(props.moleculeRef.current.molNo));
+            dispatch(triggerUpdate(molecule.molNo));
         }
         dispatch(setIsDraggingAtoms(false));
-        closeSnackbar(props.id);
+        dispatch(unlockControls(controlKey));
+        if (shownControl?.name === "acceptRejectDraggingAtoms" && shownControl?.payload?.drawSelectionOnClose) {
+            molecule.drawResidueSelection(fragmentCid.join("||"));
+            dispatch(setShownControl({ name: "selectionTools" }));
+        } else {
+            dispatch(setShownControl(null));
+        }
     };
 
     const atomDraggedCallback = useCallback(
@@ -175,7 +179,7 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
             moltenFragmentRef.current = 1;
 
             /* Copy the component to move into a new molecule */
-            const newMolecule = await props.moleculeRef.current.copyFragmentForRefinement(props.cidRef.current, activeMap);
+            const newMolecule = await molecule.copyFragmentForRefinement(fragmentCid, activeMap);
             moltenFragmentRef.current = newMolecule;
 
             /* Redraw with animation*/
@@ -187,40 +191,30 @@ export const MoorhenAcceptRejectDragAtomsSnackBar = forwardRef<
     }, []);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-                <div>
-                    <span>Accept changes?</span>
-                </div>
-                <div>
-                    <IconButton
-                        style={{ padding: 0, color: isDark ? "white" : "grey" }}
-                        onClick={async () => {
-                            document.removeEventListener("atomDragged", atomDraggedCallback);
-                            document.removeEventListener("mouseup", mouseUpCallback);
-                            await finishDragging(true);
-                        }}
-                    >
-                        <CheckOutlined />
-                    </IconButton>
-                    <IconButton
-                        style={{ padding: 0, color: isDark ? "white" : "grey" }}
-                        onClick={async () => {
-                            document.removeEventListener("atomDragged", atomDraggedCallback);
-                            document.removeEventListener("mouseup", mouseUpCallback);
-                            await finishDragging(false);
-                        }}
-                    >
-                        <CloseOutlined />
-                    </IconButton>
-                </div>
-            </MoorhenStack>
-        </SnackbarContent>
+        <MoorhenStack align="center">
+            <div>
+                <span>Accept changes?</span>
+            </div>
+            <div>
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymCheck"
+                    onClick={async () => {
+                        document.removeEventListener("atomDragged", atomDraggedCallback);
+                        document.removeEventListener("mouseup", mouseUpCallback);
+                        await finishDragging(true);
+                    }}
+                />
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymClose"
+                    onClick={async () => {
+                        document.removeEventListener("atomDragged", atomDraggedCallback);
+                        document.removeEventListener("mouseup", mouseUpCallback);
+                        await finishDragging(false);
+                    }}
+                />
+            </div>
+        </MoorhenStack>
     );
-});
-
-MoorhenAcceptRejectDragAtomsSnackBar.displayName = "MoorhenAcceptRejectDragAtomsSnackBar";
+};

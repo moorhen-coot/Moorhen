@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { batch, useDispatch } from "react-redux";
 import { useRef } from "react";
+import { setShownControl } from "@/store";
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -50,16 +51,12 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
         props.setOverrideMenuContents(false);
         props.setOpacity(1);
         props.setShowContextMenu(false);
-        batch(() => {
-            dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
-            dispatch(setIsRotatingAtoms(true));
-        });
-        enqueueSnackbar("accept-reject-translate", {
-            variant: "acceptRejectRotateTranslateAtoms",
-            persist: true,
-            cidRef: fragmentCid,
-            moleculeRef: chosenMolecule,
-        });
+
+        dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
+        dispatch(setIsRotatingAtoms(true));
+        dispatch(
+            setShownControl({ name: "acceptRejectRotateTranslate", payload: { molNo: molecule.molNo, fragmentCid: fragmentCid.current } })
+        );
     };
 
     return (

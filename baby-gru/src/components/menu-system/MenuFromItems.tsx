@@ -76,6 +76,18 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                         {menuItem.label}
                     </MoorhenMenuItem>
                 );
+            } else if (menuItem.type === "dispatch") {
+                return (
+                    <MoorhenMenuItem
+                        key={menuItem.label}
+                        onClick={() => {
+                            dispatch(menuItem.action);
+                            document.body.click();
+                        }}
+                    >
+                        {menuItem.label}
+                    </MoorhenMenuItem>
+                );
             }
         }
     });

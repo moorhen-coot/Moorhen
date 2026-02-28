@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
+import { setShownControl } from "@/store";
 import { setResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
@@ -52,7 +53,7 @@ export const CreateSelection = () => {
         setInvalidCid(false);
         await molecule.drawResidueSelection(selectedCid);
         dispatch(setResidueSelection(newSelection));
-        enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+        dispatch(setShownControl({ name: "selectionTools" }));
     };
 
     return (

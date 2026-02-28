@@ -11,29 +11,29 @@ import {
     SwapVertOutlined,
     SwipeRightAlt,
 } from "@mui/icons-material";
-import { IconButton, Popover, Tooltip } from "@mui/material";
-import { SnackbarContent, enqueueSnackbar, useSnackbar } from "notistack";
+import { IconButton, Popover } from "@mui/material";
 import { HexColorInput, HexColorPicker } from "react-colorful";
-import { batch, useDispatch, useSelector } from "react-redux";
-import { forwardRef, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { closeResidueSelectionTools, setShownControl } from "@/store";
 import {
     clearResidueSelection,
     setIsDraggingAtoms,
     setIsRotatingAtoms,
     setResidueSelection,
     setShowResidueSelection,
-} from "../../store/generalStatesSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { addMolecule, removeMolecule } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../../utils/MoorhenColourRule";
-import { cidToSpec } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
-import { MoorhenStack } from "../interface-base";
+} from "../../../store/generalStatesSlice";
+import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
+import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
+import { addMolecule, removeMolecule } from "../../../store/moleculesSlice";
+import { moorhen } from "../../../types/moorhen";
+import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { cidToSpec } from "../../../utils/utils";
+import { MoorhenButton } from "../../inputs";
+import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../../interface-base";
 
-export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: string }>((props, ref) => {
+export const ResidueSelectionControls = () => {
     const changeColourAnchorRef = useRef(null);
     const cidAnchorRef = useRef(null);
     const cidFormRef = useRef(null);
@@ -46,14 +46,10 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
     const [selectedColour, setSelectedColour] = useState<string>("#808080");
 
     const dispatch = useDispatch();
-
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine);
-
-    const { closeSnackbar } = useSnackbar();
 
     useEffect(() => {
         dispatch(setShowResidueSelection(true));
@@ -62,13 +58,19 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
         };
     }, []);
 
+    useEffect(() => {
+        console.log(residueSelection);
+        if (!residueSelection.molecule) {
+            dispatch(closeResidueSelectionTools());
+        }
+    }, [residueSelection]);
+
     const clearSelection = useCallback(() => {
         setCidFormValue(null);
         setShowCidEditForm(false);
         setShowColourPopover(false);
         setInvalidCid(false);
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
-        closeSnackbar(props.id);
     }, [molecules]);
 
     useEffect(() => {
@@ -342,13 +344,12 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
             molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
             dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             dispatch(setIsRotatingAtoms(true));
-            enqueueSnackbar("accept-reject-rotate", {
-                variant: "acceptRejectRotateTranslateAtoms",
-                persist: true,
-                cidRef: { current: cid },
-                moleculeRef: { current: residueSelection.molecule },
-                onClose: () => residueSelection.molecule.drawResidueSelection(cid),
-            });
+            dispatch(
+                setShownControl({
+                    name: "acceptRejectRotateTranslate",
+                    payload: { molNo: residueSelection.molecule.molNo, fragmentCid: cid, drawSelectionOnClose: true },
+                })
+            );
         }
     }, [residueSelection]);
 
@@ -366,199 +367,165 @@ export const MoorhenResidueSelectionSnackBar = forwardRef<HTMLDivElement, { id: 
 
         if (cid) {
             molecules.forEach(molecule => molecule.clearBuffersOfStyle("residueSelection"));
-            batch(() => {
-                dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
-                dispatch(setIsDraggingAtoms(true));
-                enqueueSnackbar("accept-reject-dragging-atoms", {
-                    onClose: () => residueSelection.molecule.drawResidueSelection(cid.join("||")),
-                    variant: "acceptRejectDraggingAtoms",
-                    persist: true,
-                    commandCentre: residueSelection.molecule.commandCentre,
-                    monomerLibraryPath: residueSelection.molecule.monomerLibraryPath,
-                    cidRef: { current: cid },
-                    moleculeRef: { current: residueSelection.molecule },
-                });
-            });
+
+            dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
+            dispatch(setIsDraggingAtoms(true));
+            dispatch(
+                setShownControl({
+                    name: "acceptRejectDraggingAtoms",
+                    payload: { molNo: residueSelection.molecule.molNo, fragmentCid: cid, drawSelectionOnClose: true },
+                })
+            );
         }
     }, [residueSelection]);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
-            <Tooltip className="moorhen-tooltip" title={tooltipContents} style={{ zIndex: 99 }}>
-                <MoorhenStack direction="vertical" gap={1}>
-                    <MoorhenStack
-                        gap={0}
-                        direction="horizontal"
-                        style={{ width: "100%", display: "flex", justifyContent: "space-between" }}
+        <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack gap={0} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <span style={{ paddingLeft: "2.2rem", width: "100%", display: "flex", justifyContent: "center" }}>{`${
+                    residueSelection.label?.length > 16 ? residueSelection.label.substring(0, 12) + "..." : residueSelection.label
+                }`}</span>
+                <IconButton
+                    onClick={() => dispatch(clearResidueSelection())}
+                    onMouseEnter={() => setTooltipContents("Clear selection")}
+                    style={{ padding: 0 }}
+                >
+                    <CloseOutlined />
+                </IconButton>
+            </MoorhenStack>
+            <hr style={{ margin: 0, padding: 0 }}></hr>
+            <MoorhenStack gap={2} direction="vertical" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                    <IconButton disabled={activeMap === null} onClick={handleRefinement} onMouseEnter={() => setTooltipContents("Refine")}>
+                        <CrisisAlertOutlined />
+                    </IconButton>
+                    <IconButton
+                        disabled={activeMap === null}
+                        onClick={handleDragAtoms}
+                        onMouseEnter={() => setTooltipContents("Drag atoms")}
                     >
-                        <span style={{ paddingLeft: "2.2rem", width: "100%", display: "flex", justifyContent: "center" }}>{`${
-                            residueSelection.label?.length > 16 ? residueSelection.label.substring(0, 12) + "..." : residueSelection.label
-                        }`}</span>
-                        <IconButton
-                            onClick={() => dispatch(clearResidueSelection())}
-                            onMouseEnter={() => setTooltipContents("Clear selection")}
-                            style={{ padding: 0 }}
-                        >
-                            <CloseOutlined />
-                        </IconButton>
-                    </MoorhenStack>
-                    <hr style={{ margin: 0, padding: 0 }}></hr>
-                    <MoorhenStack gap={2} direction="vertical" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                            <IconButton
-                                disabled={activeMap === null}
-                                onClick={handleRefinement}
-                                onMouseEnter={() => setTooltipContents("Refine")}
-                            >
-                                <CrisisAlertOutlined />
-                            </IconButton>
-                            <IconButton
-                                disabled={activeMap === null}
-                                onClick={handleDragAtoms}
-                                onMouseEnter={() => setTooltipContents("Drag atoms")}
-                            >
-                                <AdsClickOutlined />
-                            </IconButton>
-                            <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents("Copy fragment")}>
-                                <CopyAllOutlined />
-                            </IconButton>
-                            <IconButton
-                                onClick={handleExpandSelection}
-                                onMouseEnter={() => setTooltipContents("Expand to neighbouring residues")}
-                            >
-                                <AllOutOutlined />
-                            </IconButton>
-                            <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents("Delete")}>
-                                <DeleteOutlined />
-                            </IconButton>
-                        </MoorhenStack>
-                        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                            <IconButton
-                                ref={cidAnchorRef}
-                                onClick={() => {
-                                    setShowCidEditForm(prev => !prev);
-                                    setCidFormValue(null);
-                                    setShowColourPopover(false);
-                                    setInvalidCid(false);
-                                }}
-                                onMouseEnter={() => setTooltipContents("Edit selection")}
-                            >
-                                <EditOutlined style={{ height: "23px", width: "23px", padding: "0.05rem", marginLeft: "0.2rem" }} />
-                            </IconButton>
-                            <IconButton onClick={handleInvertSelection} onMouseEnter={() => setTooltipContents("Invert selection")}>
-                                <SwapVertOutlined />
-                            </IconButton>
-                            <IconButton
-                                ref={changeColourAnchorRef}
-                                onClick={() => {
-                                    setShowColourPopover(prev => !prev);
-                                    setShowCidEditForm(false);
-                                    setInvalidCid(false);
-                                    setCidFormValue(null);
-                                }}
-                                onMouseEnter={() => setTooltipContents("Change colour")}
-                            >
-                                <FormatColorFillOutlined />
-                            </IconButton>
-                            <IconButton onClick={handleRotateTranslate} onMouseEnter={() => setTooltipContents("Rotate/Translate")}>
-                                <Rotate90DegreesCw />
-                            </IconButton>
-                            <IconButton
-                                disabled={activeMap === null}
-                                onClick={handleRigidBodyFit}
-                                onMouseEnter={() => setTooltipContents("Rigid body fit")}
-                            >
-                                <SwipeRightAlt />
-                            </IconButton>
-                        </MoorhenStack>
-                    </MoorhenStack>
-                    <Popover
-                        onMouseEnter={() => setTooltipContents(null)}
-                        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                        transformOrigin={{ vertical: "top", horizontal: "left" }}
-                        open={showColourPopover}
-                        anchorEl={changeColourAnchorRef.current}
-                        onClose={() => setShowColourPopover(false)}
-                        sx={{
-                            "& .MuiPaper-root": {
-                                overflowY: "hidden",
-                                borderRadius: "8px",
-                                marginTop: "1rem",
-                            },
-                        }}
-                    >
-                        <MoorhenStack gap={3} direction="horizontal">
-                            <div style={{ width: "100%", textAlign: "center" }}>
-                                <HexColorPicker
-                                    style={{ padding: "0.05rem" }}
-                                    color={selectedColour}
-                                    onChange={color => setSelectedColour(color)}
-                                />
-                                <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                                    <div className="moorhen-hex-input-decorator">#</div>
-                                    <HexColorInput
-                                        className="moorhen-hex-input"
-                                        color={selectedColour}
-                                        onChange={color => setSelectedColour(color)}
-                                    />
-                                </div>
-                                <MoorhenButton
-                                    size="sm"
-                                    variant="primary"
-                                    style={{ width: "80%", margin: "0.25rem" }}
-                                    onClick={handleColourChange}
-                                >
-                                    Apply
-                                </MoorhenButton>
-                            </div>
-                        </MoorhenStack>
-                    </Popover>
-                    <Popover
-                        onMouseEnter={() => setTooltipContents(null)}
-                        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                        transformOrigin={{ vertical: "top", horizontal: "left" }}
-                        open={showCidEditForm}
-                        anchorEl={cidAnchorRef.current}
-                        onClose={() => {
-                            setShowCidEditForm(false);
+                        <AdsClickOutlined />
+                    </IconButton>
+                    <IconButton onClick={handleSelectionCopy} onMouseEnter={() => setTooltipContents("Copy fragment")}>
+                        <CopyAllOutlined />
+                    </IconButton>
+                    <IconButton onClick={handleExpandSelection} onMouseEnter={() => setTooltipContents("Expand to neighbouring residues")}>
+                        <AllOutOutlined />
+                    </IconButton>
+                    <IconButton onClick={handleDelete} onMouseEnter={() => setTooltipContents("Delete")}>
+                        <DeleteOutlined />
+                    </IconButton>
+                </MoorhenStack>
+                <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                    <IconButton
+                        ref={cidAnchorRef}
+                        onClick={() => {
+                            setShowCidEditForm(prev => !prev);
+                            setCidFormValue(null);
+                            setShowColourPopover(false);
                             setInvalidCid(false);
                         }}
-                        sx={{
-                            "& .MuiPaper-root": {
-                                overflowY: "hidden",
-                                borderRadius: "8px",
-                                marginTop: "1rem",
-                            },
-                        }}
+                        onMouseEnter={() => setTooltipContents("Edit selection")}
                     >
-                        <MoorhenStack gap={3} direction="horizontal">
-                            <div style={{ padding: "0.2rem", textAlign: "center" }}>
-                                <MoorhenCidInputForm
-                                    margin="0"
-                                    width="100%"
-                                    onChange={evt => setCidFormValue(evt.target.value)}
-                                    ref={cidFormRef}
-                                    invalidCid={invalidCid}
-                                />
-                                <MoorhenButton
-                                    size="sm"
-                                    variant="primary"
-                                    style={{ width: "80%", margin: "0.25rem" }}
-                                    onClick={handleResidueCidChange}
-                                >
-                                    Apply
-                                </MoorhenButton>
-                            </div>
-                        </MoorhenStack>
-                    </Popover>
+                        <EditOutlined style={{ height: "23px", width: "23px", padding: "0.05rem", marginLeft: "0.2rem" }} />
+                    </IconButton>
+                    <IconButton onClick={handleInvertSelection} onMouseEnter={() => setTooltipContents("Invert selection")}>
+                        <SwapVertOutlined />
+                    </IconButton>
+                    <IconButton
+                        ref={changeColourAnchorRef}
+                        onClick={() => {
+                            setShowColourPopover(prev => !prev);
+                            setShowCidEditForm(false);
+                            setInvalidCid(false);
+                            setCidFormValue(null);
+                        }}
+                        onMouseEnter={() => setTooltipContents("Change colour")}
+                    >
+                        <FormatColorFillOutlined />
+                    </IconButton>
+                    <IconButton onClick={handleRotateTranslate} onMouseEnter={() => setTooltipContents("Rotate/Translate")}>
+                        <Rotate90DegreesCw />
+                    </IconButton>
+                    <MoorhenButton disabled={activeMap === null} onClick={handleRigidBodyFit} tooltip="Rigid body fit">
+                        <SwipeRightAlt />
+                    </MoorhenButton>
                 </MoorhenStack>
-            </Tooltip>
-        </SnackbarContent>
+            </MoorhenStack>
+            <Popover
+                onMouseEnter={() => setTooltipContents(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                open={showColourPopover}
+                anchorEl={changeColourAnchorRef.current}
+                onClose={() => setShowColourPopover(false)}
+                sx={{
+                    "& .MuiPaper-root": {
+                        overflowY: "hidden",
+                        borderRadius: "8px",
+                        marginTop: "1rem",
+                    },
+                }}
+            >
+                <MoorhenStack gap={3} direction="horizontal">
+                    <div style={{ width: "100%", textAlign: "center" }}>
+                        <HexColorPicker
+                            style={{ padding: "0.05rem" }}
+                            color={selectedColour}
+                            onChange={color => setSelectedColour(color)}
+                        />
+                        <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                            <div className="moorhen-hex-input-decorator">#</div>
+                            <HexColorInput
+                                className="moorhen-hex-input"
+                                color={selectedColour}
+                                onChange={color => setSelectedColour(color)}
+                            />
+                        </div>
+                        <MoorhenButton size="sm" variant="primary" style={{ width: "80%", margin: "0.25rem" }} onClick={handleColourChange}>
+                            Apply
+                        </MoorhenButton>
+                    </div>
+                </MoorhenStack>
+            </Popover>
+            <Popover
+                onMouseEnter={() => setTooltipContents(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                open={showCidEditForm}
+                anchorEl={cidAnchorRef.current}
+                onClose={() => {
+                    setShowCidEditForm(false);
+                    setInvalidCid(false);
+                }}
+                sx={{
+                    "& .MuiPaper-root": {
+                        overflowY: "hidden",
+                        borderRadius: "8px",
+                        marginTop: "1rem",
+                    },
+                }}
+            >
+                <MoorhenStack gap={3} direction="horizontal">
+                    <div style={{ padding: "0.2rem", textAlign: "center" }}>
+                        <MoorhenCidInputForm
+                            margin="0"
+                            width="100%"
+                            onChange={evt => setCidFormValue(evt.target.value)}
+                            ref={cidFormRef}
+                            invalidCid={invalidCid}
+                        />
+                        <MoorhenButton
+                            size="sm"
+                            variant="primary"
+                            style={{ width: "80%", margin: "0.25rem" }}
+                            onClick={handleResidueCidChange}
+                        >
+                            Apply
+                        </MoorhenButton>
+                    </div>
+                </MoorhenStack>
+            </Popover>
+        </MoorhenStack>
     );
-});
-
-MoorhenResidueSelectionSnackBar.displayName = "MoorhenResidueSelectionSnackBar";
+};

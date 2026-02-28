@@ -1,7 +1,6 @@
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack";
-import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";

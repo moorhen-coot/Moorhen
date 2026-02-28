@@ -60,8 +60,6 @@ export { Grid, ViewLayoutPreferences } from "./ViewLayoutPreferences";
 export { FetchOnlineSources } from "./FetchOnlineSources";
 export { AutoLoadFiles } from "./AutoLoadFiles";
 export { ManageSession } from "./ManageSession";
-export { RecordVideo } from "./RecordVideo";
 export { ExportGltf } from "./ExportGltf";
 export { ShowShortcutModal } from "./ShowShortcutModal";
-export { Screenshot } from "./Screenshot";
 export { ExportMenuItem } from "./Export";

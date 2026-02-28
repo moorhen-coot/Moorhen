@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
+import { setShownControl } from "@/store/globalUISlice";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { type ResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import type { MoorhenMolecule, Sequence } from "../../utils/MoorhenMolecule";
@@ -99,7 +100,7 @@ export const handleResiduesSelection = (selection: ResiduesSelection, molecule: 
     };
     dispatch(setResidueSelection(newSelection));
     molecule.drawResidueSelection(newSelection.cid as string);
-    enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+    dispatch(setShownControl({ name: "selectionTools" }));
 };
 
 export const useHoveredResidue = (): {

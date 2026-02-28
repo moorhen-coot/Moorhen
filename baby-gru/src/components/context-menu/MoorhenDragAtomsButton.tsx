@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
+import { setShownControl } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
@@ -15,8 +15,6 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
     const commandCentre = useCommandCentre();
 
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const nonCootCommand = useCallback(
         async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode?: string) => {
@@ -87,14 +85,10 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
             props.setShowOverlay(false);
             props.setOpacity(1);
             props.setShowContextMenu(false);
-            enqueueSnackbar("accept-reject-drag-atoms", {
-                variant: "acceptRejectDraggingAtoms",
-                persist: true,
-                monomerLibraryPath: props.monomerLibraryPath,
-                commandCentre: commandCentre,
-                cidRef: fragmentCid,
-                moleculeRef: chosenMolecule,
-            });
+            dispatch(
+                setShownControl({ name: "acceptRejectDraggingAtoms", payload: { molNo: molecule.molNo, fragmentCid: fragmentCid.current } })
+            );
+
             batch(() => {
                 dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
                 dispatch(setIsDraggingAtoms(true));
