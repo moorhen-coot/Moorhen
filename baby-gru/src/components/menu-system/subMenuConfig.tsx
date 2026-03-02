@@ -636,10 +636,10 @@ export const subMenuMap: SubMenuMap = {
             },
             {
                 id: "open-lhasa",
-                label: "Open Lhasa...",
+                label: "Open ligand builder...",
                 type: "popover",
-                keywords: ["lhasa", "open"],
-                description: "Open Lhasa",
+                keywords: ["ligand", "builder", "open"],
+                description: "Open ligand builder",
                 content: MenuItems.OpenLhasa,
             },
             {

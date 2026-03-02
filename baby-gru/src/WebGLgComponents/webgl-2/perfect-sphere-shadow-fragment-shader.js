@@ -35,13 +35,10 @@ var perfect_sphere_shadow_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     uniform sampler2D ShadowMap;
-    //FIXME  - my buffer is currently always 1024 x 1024. This may change.
-    //uniform float xPixelOffset;
-    //uniform float yPixelOffset;
+    uniform float xPixelOffset;
+    uniform float yPixelOffset;
 
     float lookup(vec2 offSet){
-      float xPixelOffset = 1.0/1024.0;
-      float yPixelOffset = 1.0/1024.0;
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
       if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
           return 1.0;

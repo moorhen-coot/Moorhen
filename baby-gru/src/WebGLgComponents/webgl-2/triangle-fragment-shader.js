@@ -135,7 +135,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
 
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower)*occ;
+      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
       Ispec.a *= y;
 
       float FogFragCoord = abs(eyePos.z/eyePos.w);
@@ -145,6 +145,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       vec4 theColor = vec4(vColor);
 
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
+      color *= occ;
 
       if(shad<0.5) {
           shad += .5;
@@ -157,8 +158,6 @@ var triangle_fragment_shader_source = `#version 300 es\n
       if(gl_FrontFacing!=true){
           color = vec4(shad*vColor);
       }
-
-      color *= occ;
       if(doEdgeDetect){
 
           vec2 resolution;

@@ -23,6 +23,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
         let xToOrig;
         let yToOrig;
         let zToOrig;
+        const vecSize = vec.radius ? vec.radius : 0.07
         const theColour = [vec.vectorColour.r/256,vec.vectorColour.g/256,vec.vectorColour.b/256,1.0]
         if(vec.coordsMode==="points"){
             xFromOrig = vec.xFrom
@@ -190,7 +191,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 serial: nAtom++,
                 colour: theColour
             }
-            const pair = [firstAtomInfo, secondAtomInfo]
+            const pair = [firstAtomInfo, secondAtomInfo, vecSize]
             if(vec.drawMode==="dashedcylinder"){
                 dashPairs.push(pair)
             } else {
@@ -219,7 +220,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     serial: nAtom++,
                     colour: theColour
                 }
-                const pair = [firstAtomInfo, secondAtomInfo]
+                const pair = [firstAtomInfo, secondAtomInfo, vecSize]
                 arrowHeadPairs.push(pair)
             }
             if(vec.arrowMode==="start"||vec.arrowMode==="both"){
@@ -245,7 +246,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     serial: nAtom++,
                     colour: theColour
                 }
-                const pair = [firstAtomInfo, secondAtomInfo]
+                const pair = [firstAtomInfo, secondAtomInfo, vecSize]
                 arrowHeadPairs.push(pair)
             }
         }
@@ -255,18 +256,22 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
     const solidColours = {}
     const arrowColours = {}
 
-    dashPairs.forEach(atom => { dashColours[`${atom[0].serial}`] =  atom[0].colour; dashColours[`${atom[1].serial}`] =  atom[0].colour })
-    solidPairs.forEach(atom => { solidColours[`${atom[0].serial}`] = atom[0].colour; solidColours[`${atom[1].serial}`] = atom[0].colour })
-    arrowHeadPairs.forEach(atom => { arrowColours[`${atom[0].serial}`] = atom[0].colour; arrowColours[`${atom[1].serial}`] = atom[0].colour })
+    const dashSizes = []
+    const solidSizes = []
+    const arrowSizes = []
+
+    dashPairs.forEach(atom => { dashSizes.push(atom[2]); dashColours[`${atom[0].serial}`] =  atom[0].colour; dashColours[`${atom[1].serial}`] =  atom[0].colour })
+    solidPairs.forEach(atom => { solidSizes.push(atom[2]); solidColours[`${atom[0].serial}`] = atom[0].colour; solidColours[`${atom[1].serial}`] = atom[0].colour })
+    arrowHeadPairs.forEach(atom => { arrowSizes.push(2.0*atom[2]); arrowColours[`${atom[0].serial}`] = atom[0].colour; arrowColours[`${atom[1].serial}`] = atom[0].colour })
 
     const objects = [
-        gemmiAtomPairsToCylindersInfo(dashPairs, 0.07, dashColours, false, 0.01, 1000.)
+        gemmiAtomPairsToCylindersInfo(dashPairs, 0.01, dashColours, false, 0.01, 1000.0, true, "cylinder", dashSizes)
     ]
     objects.push(...[
-        gemmiAtomPairsToCylindersInfo(solidPairs, 0.07, solidColours, false, 0.01, 1000., false)
+        gemmiAtomPairsToCylindersInfo(solidPairs, 0.01, solidColours, false, 0.01, 1000.0, false, "cylinder", solidSizes)
     ])
     objects.push(...[
-        gemmiAtomPairsToCylindersInfo(arrowHeadPairs, 0.15, arrowColours, false, 0.01, 1000., false, "cone")
+        gemmiAtomPairsToCylindersInfo(arrowHeadPairs, 0.01, arrowColours, false, 0.01, 1000.0, false, "cone", arrowSizes)
     ])
 
     return [objects,newLabelBuffers]

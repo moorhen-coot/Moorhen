@@ -3,6 +3,7 @@ import { Store } from "@reduxjs/toolkit";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
+import pako from "pako";
 import { RootState } from "@/store/MoorhenReduxStore";
 import { Shortcut } from "../components/managers/preferences";
 import { gemmi } from "../types/gemmi";
@@ -312,6 +313,27 @@ export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
         const reader: FileReader = new FileReader();
         reader.addEventListener("load", () => resolveReader(reader, resolve));
         reader.readAsText(source);
+    });
+};
+
+export const readGzippedTextFile = (source: File): Promise<ArrayBuffer> => {
+    const resolveReader = (reader: FileReader, resolveCallback) => {
+        reader.removeEventListener("load", resolveCallback);
+        let res = "";
+        const chunk = 32 * 1024;
+        const gUnZippeData = pako.inflate(reader.result);
+        let i;
+        for (i = 0; i < gUnZippeData.length / chunk; i++) {
+            res += String.fromCharCode.apply(null, gUnZippeData.subarray(i * chunk, (i + 1) * chunk));
+        }
+        res += String.fromCharCode.apply(null, gUnZippeData.subarray(i * chunk));
+        resolveCallback(res);
+    };
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => resolveReader(reader, resolve));
+        reader.readAsArrayBuffer(source);
     });
 };
 
@@ -782,7 +804,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     minDist: number = 1.9,
     maxDist: number = 4.0,
     dashed: boolean = true,
-    style: "cylinder" | "cone" = "cylinder"
+    style: "cylinder" | "cone" = "cylinder",
+    individualSizes?: number[]
 ) => {
     const atomPairs = atoms;
 
@@ -832,7 +855,8 @@ export const gemmiAtomPairsToCylindersInfo = (
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip]);
         }
         thisInstance_origins.push(at0.x, at0.y, at0.z);
-        thisInstance_sizes.push(...[size, size, l]);
+        if (individualSizes) thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
+        else thisInstance_sizes.push(...[size, size, l]);
         const v = vec3.create();
         const au = vec3.create();
         const a = vec3.create();

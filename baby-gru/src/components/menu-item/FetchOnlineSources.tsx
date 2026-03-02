@@ -60,7 +60,7 @@ export const FetchOnlineSources = () => {
     };
 
     const fetchMapFromEMDB = async () => {
-        const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase();
+        const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase().trim();
         if (emdbCode) {
             const mapUrl = `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-${emdbCode}/map/emd_${emdbCode}.map.gz`;
             const mapInfoResponse = await fetch(`https://www.ebi.ac.uk/emdb/api/entry/map/${emdbCode}`);
@@ -77,7 +77,7 @@ export const FetchOnlineSources = () => {
     };
 
     const fetchFilesFromEBI = () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase();
+        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase().trim();
         const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`;
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
@@ -93,7 +93,7 @@ export const FetchOnlineSources = () => {
     };
 
     const fetchFilesFromAFDB = async () => {
-        const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase();
+        const uniprotID: string = pdbCodeFetchInputRef.current.value.toUpperCase().trim();
 
         if (!uniprotID) return;
 
