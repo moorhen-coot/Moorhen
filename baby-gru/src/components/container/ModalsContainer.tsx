@@ -31,7 +31,7 @@ import { MoorhenUnmodelledBlobsModal } from "../modal/MoorhenUnmodelledBlobsModa
 import { MoorhenValidationPlotModal } from "../modal/MoorhenValidationPlotModal";
 import { MoorhenVectorsModal } from "../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../modal/MoorhenWaterValidationModal";
-
+import { MoorhenNOERestraints} from "../modal/MoorhenNOERestraints"
 const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     acedrg: MoorhenCreateAcedrgLinkModal,
     "query-seq": MoorhenQuerySequenceModal,
@@ -62,6 +62,7 @@ const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     maps: MoorhenMapsModal,
     models: MoorhenModelsModal,
+    NOE: MoorhenNOERestraints
 };
 // ...existing code...
 export type ExtraDraggableModals = React.JSX.Element[];

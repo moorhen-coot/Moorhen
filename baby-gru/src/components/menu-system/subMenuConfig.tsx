@@ -220,6 +220,14 @@ export const subMenuMap: SubMenuMap = {
                 type: "popover",
                 content: MenuItems.DeleteEverything,
             },
+                        {
+                id: "load-NOE",
+                label: "Load NOE...",
+                type: "showModal",
+                modal: "NOE",
+                devOnly: true,
+                specialType: "upload",
+            },
         ],
     },
     calculate: {
