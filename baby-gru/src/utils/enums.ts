@@ -28,6 +28,7 @@ export const modalKeys = Object.freeze({
     VECTORS: "vectors",
     OVERLAYS2D: "overlays-2d",
     PAEPLOT: "pae-plot",
+    NOE: "NOE",
 });
 
 export const representationLabelMapping = Object.freeze({

@@ -22,7 +22,7 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenToggle } from "../inputs";
-import { ImportNOERestraints } from "../menu-item/ImportNOERestraints"
+
 const newVector = () => {
     const aVector: MoorhenVector = {
         coordsMode: "atoms",
@@ -394,10 +394,6 @@ export const MoorhenDevMenu = () => {
                         }}
                     />
                 Gzipped Text Read test
-            </MenuItem>
-
-            <MenuItem>
-                    <ImportNOERestraints/>
             </MenuItem>
         </>
     );
