@@ -24,9 +24,10 @@ export const AcceptRejectDragAtoms = () => {
 
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
-    const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
+
     const draggableMolecule = useSelector((state: RootState) => state.glRef.draggableMolecule);
 
+    const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
 
     const molecule = molecules.find(

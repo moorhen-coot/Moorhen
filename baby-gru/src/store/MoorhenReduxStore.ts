@@ -1,5 +1,4 @@
 import { configureStore } from "@reduxjs/toolkit";
-import atomInfoCardsReducer from "./atomInfoCardsSlice";
 import backupSettingsReducer from "./backupSettingsSlice";
 import generalStatesReducer from "./generalStatesSlice";
 import glRefSliceReducer from "./glRefSlice";
@@ -46,7 +45,6 @@ export const reducers = {
     glRef: glRefSliceReducer,
     overlays: overlaysSliceReducer,
     menus: menusReducer,
-    atomInfoCards: atomInfoCardsReducer,
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
 };

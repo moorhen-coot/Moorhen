@@ -2,6 +2,7 @@ import React from "react";
 import { moorhen } from "@/types/moorhen";
 import { AcceptRejectDragAtoms } from "./AcceptRejectDragAtoms";
 import { AcceptRejectRotateTranslate } from "./AcceptRejectRotateTranslate";
+import { AtomInfo } from "./AtomInfo";
 import { ResidueSelectionControls } from "./ResidueSelection";
 import { RotamerChange } from "./RotamerChange";
 import { Screenshot } from "./ScreenshotControls";
@@ -16,6 +17,8 @@ type PayloadMap = ValidatePayloadMap<{
     acceptRejectDraggingAtoms: { molNo: number; fragmentCid: string | string[]; drawSelectionOnClose?: boolean };
     acceptRejectRotateTranslate: { molNo: number; fragmentCid: string; drawSelectionOnClose?: boolean };
     selectionTools: undefined;
+    atomInfo: { molNo: number; fragmentCid: string };
+
     changeRotamer: { molNo: number; chosenAtom: moorhen.ResidueSpec };
     videoRecorder: undefined;
 }>;
@@ -56,5 +59,9 @@ export const PopupControlList: PopupControl[] = [
     {
         name: "videoRecorder",
         component: <VideoRecording />,
+    },
+    {
+        name: "atomInfo",
+        component: <AtomInfo />,
     },
 ];

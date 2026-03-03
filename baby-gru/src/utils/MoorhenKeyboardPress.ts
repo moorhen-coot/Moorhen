@@ -2,7 +2,7 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
-import { EnqueueSnackbar, closeSnackbar } from "notistack";
+import { EnqueueSnackbar } from "notistack";
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
@@ -11,7 +11,6 @@ import { webGL } from "../types/mgWebGL";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
 import { cidToSpec, getCentreAtom } from "./utils"
@@ -63,7 +62,6 @@ export const moorhenKeyPress = (
     const height = store.getState().sceneSettings.height
     const cursorPosition = store.getState().glRef.cursorPosition
     const shortCutHelp = store.getState().glRef.shortCutHelp
-    const atomInfoIds = store.getState().atomInfoCards.atomInfoIds
 
     const getFrontAndBackPos = () : [number[], number[], number, number] =>  {
         const x = cursorPosition[0];
@@ -95,19 +93,7 @@ export const moorhenKeyPress = (
             chosenAtom = cidToSpec(hoveredAtom.cid)
             const fragmentCid = chosenAtom.cid
             const chosenMolecule = hoveredAtom.molecule
-            for(let i_id=0;i_id<atomInfoIds.length;i_id++)
-                await closeSnackbar(atomInfoIds[i_id])
-            if(showShortcutToast) {
-                const newId = await enqueueSnackbar("atoms-info_"+chosenMolecule.molNo+"_"+fragmentCid, {
-                    variant: "atomInformation",
-                    monomerLibraryPath: hoveredAtom.molecule.monomerLibraryPath,
-                    commandCentre: commandCentre,
-                    cidRef: fragmentCid,
-                    moleculeRef: chosenMolecule,
-                    persist: true
-                })
-                collectedProps.dispatch(setAtomInfoIds([newId]))
-            }
+            dispatch(setShownControl({ name: "atomInfo", payload: { molNo: chosenMolecule.molNo, fragmentCid } }))
             return false
         }
     }
