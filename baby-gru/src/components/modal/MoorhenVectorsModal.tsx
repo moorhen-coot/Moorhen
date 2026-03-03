@@ -71,6 +71,7 @@ export const MoorhenVectors = () => {
     };
 
     const handleApply = () => {
+
         if (vectorSelectRef.current.value !== "new") {
             dispatch(removeVector(theVector));
         }

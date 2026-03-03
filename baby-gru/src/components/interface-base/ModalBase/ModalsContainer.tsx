@@ -60,6 +60,7 @@ export type ModalKey =
     | "overlays-2d"
     | "conkit"
     | "pae-plot"
+    | "NOE"
     | "config-shortcuts";
 
 export type ModalComponentProps = {
