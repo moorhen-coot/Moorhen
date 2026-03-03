@@ -250,7 +250,7 @@ export const MoorhenNOERestraints = () => {
 
     return (
         <MoorhenDraggableModalBase
-            modalId={modalKeys.JSON_VALIDATION}
+            modalId={modalKeys.NOE}
             left={width / 6}
             top={height / 3}
             minHeight={convertViewtoPx(30, height)}
