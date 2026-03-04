@@ -1,10 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-const ActivityCompat = (React as any).Activity ??
-    (({ mode, children }: { mode: string; children: React.ReactNode }) => (
-        <div style={{ display: mode === "visible" ? "flex" : "none", flex: 1, minWidth: 0, overflow: "hidden" }}>{children}</div>
-    ));
+import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState, setEnableAtomHovering, setShownSidePanel } from "@/store";
 import { setSidePanelWidth } from "@/store/globalUISlice";
@@ -18,7 +14,7 @@ interface MoorhenSidePanelProps {
 
 export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => {
     const allPanels: Record<string, MoorhenPanel> = useMemo(
-        () => extraSidePanels ? { ...PanelsList, ...extraSidePanels } : PanelsList,
+        () => (extraSidePanels ? { ...PanelsList, ...extraSidePanels } : PanelsList),
         [extraSidePanels]
     );
     const height = useSelector((state: RootState) => state.sceneSettings.height);
@@ -36,6 +32,7 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
     const maxWidth = 900;
     const [width, setWidth, widthRef] = useStateWithRef(450);
     const [noAnimation, setNoAnimation] = useState(false);
+
     const dispatch = useDispatch();
 
     //Floating labels
