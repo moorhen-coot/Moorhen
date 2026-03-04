@@ -5,7 +5,7 @@ import { setDisplayBuffers, setOrigin, setRequestDrawScene } from "../store/glRe
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
-import { guid, hsvToRgb, readDataFile, rgbToHsv } from "./utils";
+import { guid, hsvToRgb, rgbToHsv } from "./utils";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -274,7 +274,7 @@ export class MoorhenMap {
      */
     loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
         //const $this = this likely not needed here
-        const reflectionData = await readDataFile(source);
+        const reflectionData = await source.arrayBuffer()
         const asUIntArray = new Uint8Array(reflectionData);
         await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns);
         if (selectedColumns.calcStructFact) {
@@ -362,7 +362,7 @@ export class MoorhenMap {
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
     async loadToCootFromMapFile(source: File, isDiffMap: boolean = false, decompress: boolean = false): Promise<moorhen.Map> {
-        const arrayBuffer = await readDataFile(source);
+        const arrayBuffer = await source.arrayBuffer()
         let mapData: ArrayBuffer | Uint8Array;
         let mapName: string;
         if (decompress) {

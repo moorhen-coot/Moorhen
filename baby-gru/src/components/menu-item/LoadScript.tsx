@@ -1,7 +1,6 @@
 import { Form, Row } from "react-bootstrap";
 import { useRef } from "react";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
-import { readTextFile } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 
 export const LoadScript = () => {
@@ -9,7 +8,7 @@ export const LoadScript = () => {
 
     const onCompleted = async () => {
         for (const file of filesRef.current.files) {
-            const code = (await readTextFile(file)) as string;
+            const code = await file.text()
             try {
                 const scriptApi = new MoorhenScriptApi();
                 scriptApi.exe(code);

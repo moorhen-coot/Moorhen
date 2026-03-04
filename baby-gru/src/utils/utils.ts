@@ -302,56 +302,17 @@ export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100);
 }
 
-export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        resolveCallback(reader.result);
-    };
+export const readGzippedTextFile = async (source: File): Promise<string> => {
+    const data = await source.arrayBuffer()
+    const gUnZippeData = pako.inflate(data, { to: 'string' })
+    return gUnZippeData
+}
 
-    return new Promise((resolve, reject) => {
-        const reader: FileReader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsText(source);
-    });
-};
-
-export const readGzippedTextFile = (source: File): Promise<ArrayBuffer> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        let res = ""
-        const chunk = 32*1024;
-        const gUnZippeData = pako.inflate(reader.result)
-        let i
-        for (i = 0; i < gUnZippeData.length/chunk; i++) {
-            res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk,(i+1)*chunk));
-        }
-        res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk));
-        resolveCallback(res);
-    };
-
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsArrayBuffer(source);
-    });
-};
-
-export const readDataFile = (source: File): Promise<ArrayBuffer> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        if (typeof reader.result === "string") {
-            resolveCallback(JSON.parse(reader.result));
-        } else {
-            resolveCallback(reader.result);
-        }
-    };
-
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsArrayBuffer(source);
-    });
-};
+export const readGzippedDataFile = async (source: File): Promise<ArrayBuffer> => {
+    const data = await source.arrayBuffer()
+    const gUnZippeData = pako.inflate(data)
+    return gUnZippeData
+}
 
 const downloadFile = (file: File, fileName: string) => {
     const url = window.URL.createObjectURL(file);

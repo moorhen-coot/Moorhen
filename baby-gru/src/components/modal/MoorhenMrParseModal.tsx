@@ -29,7 +29,7 @@ import { moorhen } from "../../types/moorhen";
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -567,16 +567,16 @@ export const MoorhenMrParseModal = () => {
 
         for (const file of files) {
             if (file.name === "input.fasta") {
-                fastaContents = (await readTextFile(file)) as string;
+                fastaContents = await file.text()
             }
             if (file.name === "af_models.json") {
-                afModelContents = (await readTextFile(file)) as string;
+                afModelContents = await file.text()
             }
             if (file.name === "esm_models.json") {
-                esmModelContents = (await readTextFile(file)) as string;
+                esmModelContents = await file.text()
             }
             if (file.name === "homologs.json") {
-                homologsContents = (await readTextFile(file)) as string;
+                homologsContents = await file.text()
             }
         }
 
