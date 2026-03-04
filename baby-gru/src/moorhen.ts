@@ -8,6 +8,8 @@ export { MoorhenApp } from "./components/MoorhenApp";
 export type { MoorhenReduxStoreType } from "@/store/index";
 export { MoorhenProvider } from "./components/MoorhenProvider";
 export { MoorhenContainer } from "./components/container/MainContainer";
+export type { ContainerProps } from "./components/container/MainContainer";
+export type { MoorhenPanel } from "./components/panels";
 export { MoorhenDraggableModalBase } from "./components/interface-base/ModalBase/DraggableModalBase";
 export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 export { ColourRule } from "./utils/MoorhenColourRule";

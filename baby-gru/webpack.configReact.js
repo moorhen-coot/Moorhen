@@ -3,14 +3,13 @@ const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const { defineReactCompilerLoaderOption, reactCompilerLoader } = require("react-compiler-webpack");
 
 const paths = {
     src: path.resolve(__dirname, "src"),
     types: path.resolve(__dirname, "src", "types"),
     dist: path.resolve(__dirname, "dist"),
     public: path.resolve(__dirname, "public"),
-    monomerLibraryPath: path.resolve(__dirname, "..", "checkout", "monomers"),
+    monomerLibraryPath: path.resolve(__dirname, "public", "baby-gru", "monomers"),
     minimalMonomerLib: [
         "ALA",
         "ASP",
@@ -131,10 +130,11 @@ module.exports = (env, argv) => {
                                 transpileOnly: true,
                             },
                         },
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption(),
-                        },
+                        // React Compiler disabled for CCP4i2 compatibility diagnostic
+                        // {
+                        //     loader: reactCompilerLoader,
+                        //     options: defineReactCompilerLoaderOption(),
+                        // },
                     ],
                 },
                 {
@@ -152,10 +152,11 @@ module.exports = (env, argv) => {
                     exclude: /node_modules/,
                     use: [
                         "babel-loader",
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption({}),
-                        },
+                        // React Compiler disabled for CCP4i2 compatibility diagnostic
+                        // {
+                        //     loader: reactCompilerLoader,
+                        //     options: defineReactCompilerLoaderOption({}),
+                        // },
                     ],
                 },
                 {

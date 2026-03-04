@@ -151,6 +151,7 @@ interface ContainerOptionalProps {
     urlPrefix?: string;
     viewOnly: boolean;
     extraDraggableModals?: React.JSX.Element[];
+    extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
     setMoorhenDimensions?: null | (() => [number, number]);
     allowScripting?: boolean;
@@ -518,7 +519,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
-                    <MoorhenSidePanel />
+                    <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
                 </SnackbarProvider>
             </div>
         </>

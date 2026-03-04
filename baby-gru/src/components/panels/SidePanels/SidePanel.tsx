@@ -1,13 +1,22 @@
 import { useDispatch, useSelector } from "react-redux";
-import React, { Activity, useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState, setEnableAtomHovering, setShownSidePanel } from "@/store";
 import { setSidePanelWidth } from "@/store/globalUISlice";
-import { PanelsList, SidePanelIDs } from "./SidePanelList";
+import { PanelsList, SidePanelIDs, MoorhenPanel } from "./SidePanelList";
 import { TabsToggle } from "./TabsToggle";
 import "./side-panels.css";
 
-export const MoorhenSidePanel = () => {
+interface MoorhenSidePanelProps {
+    extraSidePanels?: Record<string, MoorhenPanel>;
+}
+
+export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => {
+    const allPanels: Record<string, MoorhenPanel> = useMemo(
+        () => (extraSidePanels ? { ...PanelsList, ...extraSidePanels } : PanelsList),
+        [extraSidePanels]
+    );
     const height = useSelector((state: RootState) => state.sceneSettings.height);
     const [showHintLabel, setShowHintLabel] = useState<boolean>(null);
     const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
@@ -23,6 +32,7 @@ export const MoorhenSidePanel = () => {
     const maxWidth = 900;
     const [width, setWidth, widthRef] = useStateWithRef(450);
     const [noAnimation, setNoAnimation] = useState(false);
+
     const dispatch = useDispatch();
 
     //Floating labels
@@ -115,8 +125,8 @@ export const MoorhenSidePanel = () => {
     const toggles: React.JSX.Element[] = activePanels.map(id => {
         return (
             <TabsToggle
-                icon={PanelsList[id].icon}
-                label={PanelsList[id].label}
+                icon={allPanels[id].icon}
+                label={allPanels[id].label}
                 id={id}
                 key={`${id}-tab-toggle`}
                 showHintLabel={showHintLabel}
@@ -127,9 +137,9 @@ export const MoorhenSidePanel = () => {
 
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
-            <Activity mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
-                {PanelsList[id].panelContent}
-            </Activity>
+            <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
+                {allPanels[id].panelContent}
+            </ActivityCompat>
         );
     });
 
