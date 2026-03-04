@@ -707,6 +707,8 @@ export const MoorhenMrParseModal = () => {
             <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
                     <Form.Control
+/* @ts-expect-error */
+                        directory="" webkitdirectory="true"
                         ref={filesRef}
                         type="file"
                         multiple={true}
