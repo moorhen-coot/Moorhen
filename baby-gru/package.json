@@ -1,6 +1,6 @@
 {
     "name": "moorhen",
-    "version": "0.23.0-dev",
+    "version": "0.23.1-alpha.0",
     "private": false,
     "main": "moorhen.js",
     "types": "moorhen.d.ts",

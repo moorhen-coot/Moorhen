@@ -12,35 +12,6 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
-const MoorhenDeleteVectorMenuItem = (props: {
-    item: moorhen.Map | moorhen.Molecule;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
-
-    const dispatch = useDispatch();
-
-    const panelContent = (
-        <>
-            <div style={{ width: "10rem", margin: "0.5rem" }} className="mb-3">
-                <span style={{ fontWeight: "bold" }}>Are you sure?</span>
-            </div>
-        </>
-    );
-
-    return (
-        <MoorhenMenuItemPopover
-            textClassName="text-danger"
-            buttonVariant="danger"
-            buttonText="Delete"
-            popoverPlacement="left"
-            popoverContent={panelContent}
-            menuItemText={"Delete vector"}
-            setPopoverIsShown={props.setPopoverIsShown}
-        />
-    );
-};
-
 export const MoorhenVectorsModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +19,7 @@ export const MoorhenVectorsModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList.filter(x => !(x.uniqueId.includes("__TAG"))))
 
     const dispatch = useDispatch();
 
@@ -84,6 +55,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uuidv4(),
             vectorColour: { r: 0, g: 0, b: 0 },
             textColour: { r: 0, g: 0, b: 0 },
+            radius: 0.07
         };
         return aVector;
     };
@@ -215,6 +187,7 @@ export const MoorhenVectorsModal = () => {
         uniqueId = undefined,
         vectorColour = undefined,
         textColour = undefined,
+        radius = undefined,
     }) => {
         const newVector: MoorhenVector = {
             coordsMode: coordsMode !== undefined ? coordsMode : theVector.coordsMode,
@@ -235,6 +208,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uniqueId !== undefined ? uniqueId : theVector.uniqueId,
             vectorColour: vectorColour !== undefined ? vectorColour : theVector.vectorColour,
             textColour: textColour !== undefined ? textColour : theVector.textColour,
+            radius: radius !== undefined ? radius : theVector.radius,
         };
         setVector(newVector);
     };
@@ -470,6 +444,17 @@ export const MoorhenVectorsModal = () => {
                         }}
                     />
                 )}
+                <MoorhenNumberInput
+                   value={theVector.radius}
+                   type="number"
+                   label="Vector width:"
+                   onChange={evt => {
+                       try {
+                           const dum = Number(evt.target.value);
+                           updateVector({ radius: Number(evt.target.value) });
+                       } catch (e) {}
+                   }}
+                />
             </MoorhenStack>
         </>
     );

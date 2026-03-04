@@ -10,7 +10,7 @@ const paths = {
     types: path.resolve(__dirname, "src", "types"),
     dist: path.resolve(__dirname, "dist"),
     public: path.resolve(__dirname, "public"),
-    monomerLibraryPath: path.resolve(__dirname, "public", "baby-gru", "monomers"),
+    monomerLibraryPath: path.resolve(__dirname, "..", "checkout", "monomers"),
     minimalMonomerLib: [
         "ALA",
         "ASP",

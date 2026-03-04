@@ -634,6 +634,7 @@ target_link_libraries(moorhen
     RDKit::RDGeneral
     RDKit::DataStructs
     RDKit::GenericGroups
+    RDKit::RDInchiLib
     Boost::thread
     Boost::serialization
     freetype
