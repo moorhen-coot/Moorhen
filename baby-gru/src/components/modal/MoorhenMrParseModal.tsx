@@ -29,7 +29,7 @@ import { moorhen } from "../../types/moorhen";
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -567,16 +567,16 @@ export const MoorhenMrParseModal = () => {
 
         for (const file of files) {
             if (file.name === "input.fasta") {
-                fastaContents = (await readTextFile(file)) as string;
+                fastaContents = await file.text()
             }
             if (file.name === "af_models.json") {
-                afModelContents = (await readTextFile(file)) as string;
+                afModelContents = await file.text()
             }
             if (file.name === "esm_models.json") {
-                esmModelContents = (await readTextFile(file)) as string;
+                esmModelContents = await file.text()
             }
             if (file.name === "homologs.json") {
-                homologsContents = (await readTextFile(file)) as string;
+                homologsContents = await file.text()
             }
         }
 
@@ -707,6 +707,8 @@ export const MoorhenMrParseModal = () => {
             <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
                     <Form.Control
+/* @ts-expect-error */
+                        directory="" webkitdirectory="true"
                         ref={filesRef}
                         type="file"
                         multiple={true}
@@ -794,6 +796,17 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{homEl.rmsd}</td>
                                                 <td>{homEl.seq_ident.toFixed(2)}</td>
                                                 <td>
+                                                <MoorhenStack
+                                                    gap={2}
+                                                    direction="horizontal"
+                                                    style={{
+                                                        paddingTop: "0.5rem",
+                                                        alignItems: "space-between",
+                                                        alignContent: "space-between",
+                                                        justifyContent: "space-between",
+                                                        width: "100%",
+                                                    }}
+                                                >
                                                     <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                                                     </MoorhenButton>
@@ -803,6 +816,7 @@ export const MoorhenMrParseModal = () => {
                                                     <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
                                                     </MoorhenButton>
+                                                    </MoorhenStack>
                                                 </td>
                                             </tr>
                                         );
@@ -875,6 +889,17 @@ export const MoorhenMrParseModal = () => {
                                                 <td>{afEl.h_score}</td>
                                                 <td>{afEl.seq_ident.toFixed(2)}</td>
                                                 <td>
+                                                <MoorhenStack
+                                                    gap={2}
+                                                    direction="horizontal"
+                                                    style={{
+                                                        paddingTop: "0.5rem",
+                                                        alignItems: "space-between",
+                                                        alignContent: "space-between",
+                                                        justifyContent: "space-between",
+                                                        width: "100%",
+                                                    }}
+                                                >
                                                     <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
                                                         {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
                                                     </MoorhenButton>
@@ -884,6 +909,7 @@ export const MoorhenMrParseModal = () => {
                                                     <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
                                                         <DownloadOutlined />
                                                     </MoorhenButton>
+                                                </MoorhenStack>
                                                 </td>
                                             </tr>
                                         );
