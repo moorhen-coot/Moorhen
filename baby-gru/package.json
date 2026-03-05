@@ -4,6 +4,23 @@
     "private": false,
     "main": "moorhen.js",
     "types": "moorhen.d.ts",
+    "typesVersions": {
+        "*": {
+            "vite-plugin": [
+                "scripts/VitePlugin.d.ts"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "types": "./moorhen.d.ts",
+            "default": "./moorhen.js"
+        },
+        "./vite-plugin": {
+            "types": "./scripts/VitePlugin.d.ts",
+            "default": "./scripts/VitePlugin.mjs"
+        }
+    },
     "homepage": "./",
     "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Jordan Dialpuri, Jakub Smulski, Lucrezia Catapano, Paul Bond, Clément Dégut, Stuart McNicholas",
     "description": "Moorhen molecular graphics",
