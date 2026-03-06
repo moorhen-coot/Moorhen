@@ -3,6 +3,7 @@ import { moorhen } from "@/types/moorhen";
 import { AcceptRejectDragAtoms } from "./AcceptRejectDragAtoms";
 import { AcceptRejectRotateTranslate } from "./AcceptRejectRotateTranslate";
 import { AtomInfo } from "./AtomInfo";
+import { MapContourLevel } from "./MapContourLevel";
 import { ResidueSelectionControls } from "./ResidueSelection";
 import { RotamerChange } from "./RotamerChange";
 import { Screenshot } from "./ScreenshotControls";
@@ -18,9 +19,9 @@ type PayloadMap = ValidatePayloadMap<{
     acceptRejectRotateTranslate: { molNo: number; fragmentCid: string; drawSelectionOnClose?: boolean };
     selectionTools: undefined;
     atomInfo: { molNo: number; fragmentCid: string };
-
     changeRotamer: { molNo: number; chosenAtom: moorhen.ResidueSpec };
     videoRecorder: undefined;
+    mapContourLvl: { molNo: number; mapPrecision: number };
 }>;
 
 type PopupControl = {
@@ -63,5 +64,9 @@ export const PopupControlList: PopupControl[] = [
     {
         name: "atomInfo",
         component: <AtomInfo />,
+    },
+    {
+        name: "mapContourLvl",
+        component: <MapContourLevel />,
     },
 ];

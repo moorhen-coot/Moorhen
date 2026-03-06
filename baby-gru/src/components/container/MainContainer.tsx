@@ -46,7 +46,6 @@ import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
 import { MoorhenGoToResidueSnackbar } from "../snack-bar/MoorhenGoToResidueSnackbar";
 import { MoorhenLongJobSnackBar } from "../snack-bar/MoorhenLongJobSnackBar";
-import { MoorhenMapContourLevelSnackBar } from "../snack-bar/MoorhenMapContourLevelSnackBar";
 import { MoorhenModelTrajectorySnackBar } from "../snack-bar/MoorhenModelTrajectorySnackBar";
 import { MoorhenResidueStepsSnackBar } from "../snack-bar/MoorhenResidueStepsSnackBar";
 import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
@@ -435,7 +434,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         updatingMaps: MoorhenUpdatingMapsSnackBar,
         modelTrajectory: MoorhenModelTrajectorySnackBar,
         tomogram: MoorhenTomogramSnackBar,
-        mapContourLevel: MoorhenMapContourLevelSnackBar,
         sideBar: MoorhenSideBar,
     };
 

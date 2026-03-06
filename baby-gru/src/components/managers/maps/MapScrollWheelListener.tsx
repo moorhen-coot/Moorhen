@@ -1,10 +1,11 @@
-import { useSnackbar } from 'notistack';
-import { useSelector } from 'react-redux';
-import { useCallback, useRef } from 'react';
-import { useDocumentEventListener } from '../../../hooks/useDocumentEventListener';
-import { useFastContourMode } from '../../../hooks/useFastContourMode';
-import { RootState } from '../../../store/MoorhenReduxStore';
-import { moorhen } from '../../../types/moorhen';
+import { useSnackbar } from "notistack";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useRef } from "react";
+import { setShownControl } from "@/store";
+import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
+import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { RootState } from "../../../store/MoorhenReduxStore";
+import { moorhen } from "../../../types/moorhen";
 
 export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map }) => {
     const mapContourLevelRef = useRef<number>(1);
@@ -25,9 +26,11 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         map: props.map,
         mapRadius,
         radiusThreshold: 25,
-        fastRadius: 'auto',
+        fastRadius: "auto",
         timeoutDelay: 500,
     });
+
+    const dispatch = useDispatch();
 
     // Debouncing refs for performance
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,14 +50,14 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
             evt.preventDefault();
             if (outOfMap) {
                 enqueueSnackbar(`Out of map bounds! \nIncrease map radius or unlock origin`, {
-                    variant: 'warning',
+                    variant: "warning",
                     persist: false,
                 });
                 return;
             }
 
             if (!props.mapIsVisible) {
-                enqueueSnackbar('Active map not displayed, cannot change contour lvl.', { variant: 'warning' });
+                enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning" });
                 return;
             }
 
@@ -82,12 +85,12 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
             debounceTimeoutRef.current = setTimeout(() => {
                 if (newMapContourLevel) {
                     fastMapContourLevel(newMapContourLevel);
-                    enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
-                        variant: 'mapContourLevel',
-                        persist: true,
-                        mapMolNo: props.map.molNo,
-                        mapPrecision: props.map.levelRange[0],
-                    });
+                    dispatch(
+                        setShownControl({
+                            name: "mapContourLvl",
+                            payload: { molNo: props.map.molNo, mapPrecision: props.map.levelRange[0] },
+                        })
+                    );
                 }
                 debounceTimeoutRef.current = null;
             }, debounceDelayMs);
@@ -95,7 +98,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         [props.map, mapContourLevelRef, fastMapContourLevel, enqueueSnackbar, outOfMap]
     );
 
-    useDocumentEventListener<moorhen.WheelContourLevelEvent>('wheelContourLevelChanged', handleWheelContourLevel);
+    useDocumentEventListener<moorhen.WheelContourLevelEvent>("wheelContourLevelChanged", handleWheelContourLevel);
 
     return null;
 };

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { useMoorhenInstance, usePersistentState } from "@/hooks";
 import { RootState, setDrawCrosshairs, setHoveredAtom, setShownControl } from "@/store";
-import { MoorhenTextInput } from "../../inputs";
+import { MoorhenButton, MoorhenTextInput } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
 import "./popup-controls.css";
 
@@ -15,6 +15,7 @@ export const Screenshot = () => {
     const videoRecorderRef = moorhenInstance.getVideoRecorderRef();
     const showCrosshairs = useSelector((state: RootState) => state.sceneSettings.drawCrosshairs);
     const [pictureName, setPictureName] = usePersistentState("scrrenshot", "pictureName", "moorhen_screenshot", true);
+    const [screenShotHovered, setScreenShotHovered] = useState<boolean>(false);
 
     const [doTransparentBackground, setDoTransparentBackground] = useState<boolean>(false);
 
@@ -35,29 +36,26 @@ export const Screenshot = () => {
     return (
         <MoorhenStack direction="column" align="normal" gap="0.5rem">
             <div className="moorhen_snackbar_screenshot-buttons">
-                <Tooltip title={"Take screenshot"}>
-                    <IconButton
-                        onClick={handleScreenShot}
-                        style={{ borderStyle: "solid", borderWidth: "1px", borderColor: isDark ? "black" : "black" }}
-                    >
-                        <CameraAlt style={{ color: isDark ? "black" : "black", paddingTop: 0, paddingBottom: 0 }} />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title={doTransparentBackground ? "Use opaque background" : "Use transparent background"}>
-                    <IconButton
-                        onClick={() => {
-                            doTransparentBackgroundRef.current = !doTransparentBackgroundRef.current;
-                            setDoTransparentBackground(prev => !prev);
-                        }}
-                    >
-                        {doTransparentBackground ? <PhotoOutlined /> : <Photo />}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title={"Close"}>
-                    <IconButton onClick={() => dispatch(setShownControl(null))}>
-                        <CloseOutlined />
-                    </IconButton>
-                </Tooltip>
+                <MoorhenButton
+                    onClick={handleScreenShot}
+                    onMouseEnter={() => setScreenShotHovered(true)}
+                    onMouseLeave={() => setScreenShotHovered(false)}
+                    type="icon-only"
+                    icon={screenShotHovered ? "MatSymShutter" : "MatSymPhotoCam"}
+                    tooltip={"Take screenshot"}
+                ></MoorhenButton>
+
+                <MoorhenButton
+                    type="icon-only"
+                    icon={doTransparentBackground ? "MatSymBackgroudDots" : "MatSymBackgroudNoDots"}
+                    onClick={() => {
+                        doTransparentBackgroundRef.current = !doTransparentBackgroundRef.current;
+                        setDoTransparentBackground(prev => !prev);
+                    }}
+                    tooltip={doTransparentBackground ? "Use opaque background" : "Use transparent background"}
+                />
+
+                <MoorhenButton onClick={() => dispatch(setShownControl(null))} type="icon-only" icon="MatSymClose" tooltip={"Close"} />
             </div>
             <MoorhenTextInput label="Name: " text={pictureName} setText={setPictureName} style={{ width: "40%" }} />
         </MoorhenStack>
