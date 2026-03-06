@@ -20,6 +20,12 @@ jobs:
         cache: 'npm'
         cache-dependency-path: baby-gru/package-lock.json
 
+    - name: Install Lhasa sources
+      working-directory: baby-gru
+      run: |
+          source ./get_sources_funs && getlhasa
+          cp -r ../checkout/LhasaReact ./src/
+
     - name: Install dependencies
       working-directory: baby-gru
       run: npm ci
