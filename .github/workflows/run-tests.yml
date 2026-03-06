@@ -25,7 +25,7 @@ jobs:
       run: |
           source ../get_sources_funs && getlhasa
           echo pwd $(pwd)
-          cd ../baby-gru
+          ls ../
           cp -r ../checkout/LhasaReact ./src/
 
     - name: Install dependencies
