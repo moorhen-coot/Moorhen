@@ -293,6 +293,26 @@ getcoot() {
     echo
 }
 
+getlhasa() {
+    cdcheckout
+    if [ -r LhasaReact ]; then
+        if [ -eq "x$(git -C LhasaReact rev-parse --short main)" = "x$lhasa_commit" ];then
+            echo "Using existing LhasaReact"
+        else
+            echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short main) -> $lhasa_commit)"
+            git -C LhasaReact fetch &&\
+            git -C LhasaReact checkout $lhasa_commit &&\
+            echo Using checked-out LhasaReact || echo Failed to checkout LhasaReact!
+        fi
+    else
+        echo "Downloading LhasaReact..."
+        git clone --depth 1 --branch main https://github.com/moorhen-coot/LhasaReact &&\
+        git -C LhasaReact fetch --depth 1 origin $lhasa_commit &&\
+        git -C LhasaReact checkout $lhasa_commit
+    fi
+    echo    
+}
+
 getglm() {
     cdcheckout
     if [ -r glm-$glm_release ]; then

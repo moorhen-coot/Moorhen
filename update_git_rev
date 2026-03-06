@@ -1,0 +1,59 @@
+#!/usr/bin/sh
+
+# This script can be used to update the git commit hash for certain dependencies in VERSIONS
+show_help() {
+	echo "This script is used for updating the git commit hash (in the VERSIONS file) of certain dependencies (like lhasa or coot) to their newest verions."
+	echo "Usage:"
+	echo "    $0 <dependency> [optional commit hash (other than the newest)]"
+	echo "---"
+	echo "Supported dependencies: lhasa, coot"
+	echo "---"
+	echo "This script requires git, awk, grep, etc. to operate."
+}
+
+### $1 - Owner
+### $2 - Repo
+### $3 - Branch
+query_current_commit_hash_from_github() {
+	git ls-remote https://github.com/${1}/${2}.git refs/heads/${3} | awk '{print $1}' | cut -c1-7
+}
+
+
+### $1 - dependency
+### $2 - target hash
+update_dep_hash() {
+  old_hash=$(grep "${1}_commit=" VERSIONS | cut -d'=' -f2 | tr -d '"')
+  if [ "$old_hash" = "$2" ]; then
+  	echo "The target hash ($2) is already being used in VERSIONS"
+  else
+    # sed: In-place replace line containing a `string`
+    # sed -i 's/.*string.*/replacement line/' file.txt
+  	sed -i "s/.*${1}_commit.*/${1}_commit=\"${2}\"/" VERSIONS &&\
+  	echo "Updated $1 commit hash to $2 (from previous hash = $old_hash)" ||\
+  	echo Failed to update commit hash for $1
+  fi
+}
+
+case $1 in
+	coot)
+  	if [ "x$2" = "x" ]; then
+  		echo Querying newest commit hash for Coot...
+  		commit_hash=$(query_current_commit_hash_from_github pemsley coot main)
+  		update_dep_hash coot $commit_hash
+  	else
+  		update_dep_hash coot $2
+  	fi
+	;;
+	lhasa)
+	  if [ "x$2" = "x" ]; then
+  		echo Querying newest commit hash for LhasaReact...
+		  commit_hash=$(query_current_commit_hash_from_github moorhen-coot LhasaReact main)
+		  update_dep_hash lhasa $commit_hash
+  	else
+	  	update_dep_hash lhasa $2
+  	fi
+	;;
+	*)
+	show_help
+	;;
+esac
