@@ -1,4 +1,4 @@
-import { MenuItem } from "@mui/material";
+import { MenuItem, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +9,7 @@ import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { readGzippedTextFile } from "../../utils/utils";
+import { useCommandCentre } from "../../InstanceManager";
 import {
     addCallback,
     addFracPathOverlay,
@@ -22,6 +23,7 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenToggle } from "../inputs";
+import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -51,13 +53,40 @@ export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
+    const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
+    const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
+
+    const commandCentre = useCommandCentre();
 
     const customCid = useRef<string>("");
+    const conKitFile1Ref = useRef<null | HTMLInputElement>(null);
+    const conKitFile2Ref = useRef<null | HTMLInputElement>(null);
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+
+    const handleRunConKit = async () => {
+        if(conKitFile1Contents.length==0 || conKitFile2Contents.length==0){
+            return
+        }
+        const response = (await commandCentre.current.cootCommand(
+            {
+                message: "run_conkit_validate",
+                command: "run_conkit_validate",
+                returnType: "string",
+                commandArgs: [conKitFile1Contents,conKitFile2Contents],
+            },
+            false
+        )) as moorhen.WorkerResponse<string>;
+
+        //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
+        const json_string = response.data.result as any as string
+
+        console.log(JSON.parse(json_string))
+        
+    }
 
     useEffect(() => {
         dispatch(removeVectors(testVectors))
@@ -84,6 +113,20 @@ export const MoorhenDevMenu = () => {
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
+
+    const handleConKitFile1Changed = async (files: FileList) => {
+        for (const file of files) {
+            const fileContents = await file.text()
+            setConKitFile1Contents(fileContents)
+        }
+    };
+
+    const handleConKitFile2Changed = async (files: FileList) => {
+        for (const file of files) {
+            const fileContents = await file.text()
+            setConKitFile2Contents(fileContents)
+        }
+    };
 
     const loadGzippedFiles = async (files: FileList) => {
         for (const file of files) {
@@ -395,6 +438,27 @@ export const MoorhenDevMenu = () => {
                     />
                 Gzipped Text Read test
             </MenuItem>
+            <hr className="moorhen_menu-hr"></hr>
+                    Conkit Input File
+                    <Form.Control
+                        type="file"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            handleConKitFile1Changed(e.target.files);
+                        }}
+                    />
+                    Conkit Model
+                    <Form.Control
+                        type="file"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            handleConKitFile2Changed(e.target.files);
+                        }}
+                    />
+                    <MoorhenButton
+                    onClick={() => {
+                        handleRunConKit();
+                    }}
+                    >Run ConKit</MoorhenButton>
+            <hr className="moorhen_menu-hr"></hr>
         </>
     );
 };

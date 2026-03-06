@@ -2434,6 +2434,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("output",&ValidateOptions::output)
         .field("overwrite",&ValidateOptions::overwrite)
         .field("gap_opening_penalty",&ValidateOptions::gap_opening_penalty)
+        .field("gap_extension_penalty",&ValidateOptions::gap_extension_penalty)
         .field("seq_separation_cutoff",&ValidateOptions::seq_separation_cutoff)
         .field("n_iterations",&ValidateOptions::n_iterations)
         .field("use_gap_ss",&ValidateOptions::use_gap_ss)
