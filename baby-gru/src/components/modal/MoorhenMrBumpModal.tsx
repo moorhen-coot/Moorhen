@@ -9,7 +9,7 @@ import { addMoleculeList } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -295,7 +295,7 @@ export const MoorhenMrBumpModal = () => {
 
         for (const file of files) {
             if (file.name === "models.json" && file.webkitRelativePath.includes("logs/models.json")) {
-                const fileContents = (await readTextFile(file)) as string;
+                const fileContents = await file.text()
                 const json = JSON.parse(fileContents);
                 for (const iter of Object.entries(json)) {
                     const key: string = iter[0];
@@ -322,10 +322,10 @@ export const MoorhenMrBumpModal = () => {
                 }
             }
             if (file.name === "alignment_report.log" && file.webkitRelativePath.includes("alignment_report.log")) {
-                alignText = (await readTextFile(file)) as string;
+                alignText = await file.text()
             }
             if (file.name === "phmmer.log" && file.webkitRelativePath.includes("phmmer.log")) {
-                phmmerText = (await readTextFile(file)) as string;
+                phmmerText = await file.text()
             }
         }
 

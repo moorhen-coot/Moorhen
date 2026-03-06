@@ -2,6 +2,7 @@ import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
+import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
@@ -57,6 +58,7 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
     useEffect(() => {
         dispatch(removeVectors(testVectors));
@@ -375,6 +377,37 @@ export const MoorhenDevMenu = () => {
                     loadVectorsBunch(evt);
                 }}
                 label="Load a bunch of vectors"
+            />
+            <hr />
+            <MoorhenFileInput
+                label="Load gzipped files"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    loadGzippedFiles(e.target.files);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={doOutline}
+                onChange={() => {
+                    dispatch(setDoOutline(!doOutline));
+                }}
+                label="Outlines"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={overlaysOn}
+                onChange={evt => {
+                    loadExampleOverlays(evt);
+                }}
+                label="Load example 2D overlays"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={toggleValidationPanel}
+                onChange={() => {
+                    dispatch(setShownBottomPanel(toggleValidationPanel ? "sequences-viewer" : "validation"));
+                }}
+                label="Show validation panel"
             />
             <hr />
             <MoorhenFileInput

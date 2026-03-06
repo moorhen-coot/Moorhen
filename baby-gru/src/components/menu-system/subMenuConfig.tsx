@@ -20,7 +20,7 @@ import {
 } from "../../store/sceneSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import * as MenuItems from "../menu-item";
-import { PanelIDs } from "../panels";
+import { SidePanelIDs } from "../panels";
 
 // export type SubMenus = "file" | "calculate" | "edit" | "help" | "ligand" | "map-tool" | "validation" | "view" | "preferences";
 
@@ -50,7 +50,7 @@ export type MenuItemShowModal = BaseMenuItem & {
 
 export type MenuItemShowSidePanel = BaseMenuItem & {
     type: "showPanel";
-    panel: PanelIDs;
+    panel: SidePanelIDs;
 };
 
 export type MenuItemDispatch = BaseMenuItem & {

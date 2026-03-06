@@ -8,8 +8,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { readTextFile } from "../../utils/utils";
-import { MoorhenButton, MoorhenFileInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
@@ -395,7 +394,7 @@ export const ImportDictionary = () => {
 
     const parseCifDict = async (file: File) => {
         const result: { comp_id: string; dict_contents: string }[] = [];
-        const fileContent = (await readTextFile(file)) as string;
+        const fileContent = await file.text();
         const compIdsVector = window.CCP4Module.parse_ligand_dict_info(fileContent);
         const compIdsVectorSize = compIdsVector.size();
         for (let i = 0; i < compIdsVectorSize; i++) {

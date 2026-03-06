@@ -5,14 +5,14 @@ import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
-import { PanelIDs } from "./SidePanelList";
+import { SidePanelIDs } from "./SidePanelList";
 
 type TabsToggleProps = {
     label: string;
     icon: MoorhenSVG;
     showHintLabel?: boolean;
-    id: PanelIDs;
-    onDelete: (id: PanelIDs) => void;
+    id: SidePanelIDs;
+    onDelete: (id: SidePanelIDs) => void;
 };
 export const TabsToggle = (props: TabsToggleProps) => {
     const { label, icon, showHintLabel, id } = props;

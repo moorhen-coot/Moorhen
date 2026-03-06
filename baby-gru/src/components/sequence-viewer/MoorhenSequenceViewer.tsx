@@ -27,6 +27,8 @@ type MoorhenSequenceViewerPropsType = {
     displayHeight?: number;
     forceRedrawScrollBarKey?: string | number;
     style?: React.CSSProperties;
+    showValidationData?: boolean;
+    validationTracks?: string[];
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -38,6 +40,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         showTitleBar = true,
         className,
         onHoverResidue,
+        showValidationData = false,
+        validationTracks = null,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
@@ -448,6 +452,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     handleResidueMouseOver={handleResidueMouseOver}
                     handleResidueMouseDown={handleResidueMouseDown}
                     handleResidueMouseUp={handleResidueMouseUp}
+                    showValidationData={showValidationData}
+                    validationTracks={validationTracks}
                 />
             );
         });
@@ -463,6 +469,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         handleResidueMouseOver,
         handleResidueMouseDown,
         handleResidueMouseUp,
+        validationTracks,
     ]);
 
     const leftButtonsBar =
