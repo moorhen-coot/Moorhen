@@ -284,11 +284,19 @@ getgsl() {
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
-        echo "Using existing coot"
+        if [ "x$(git -C coot-1.0 rev-parse --short main)" = "x$coot_commit" ];then
+            echo "Using existing coot-1.0"
+        else
+            echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short main) -> $coot_commit)"
+            git -C coot-1.0 fetch &&\
+            git -C coot-1.0 checkout $coot_commit &&\
+            echo Using checked-out coot-1.0 || echo Failed to checkout coot-1.0!
+        fi
     else
-        echo "Downloading coot-1"
-        git clone --branch main https://github.com/pemsley/coot.git coot-1.0
-        cd coot-1.0
+        echo "Downloading coot-1.0..."
+        git clone --depth 1 --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
+        git -C coot-1.0 fetch --depth 1 origin $coot_commit &&\
+        git -C coot-1.0 checkout $coot_commit
     fi
     echo
 }
@@ -306,7 +314,7 @@ getlhasa() {
         fi
     else
         echo "Downloading LhasaReact..."
-        git clone --depth 1 --branch main https://github.com/moorhen-coot/LhasaReact &&\
+        git clone --depth 1 --branch main https://github.com/moorhen-coot/LhasaReact.git &&\
         git -C LhasaReact fetch --depth 1 origin $lhasa_commit &&\
         git -C LhasaReact checkout $lhasa_commit
     fi
