@@ -15,7 +15,7 @@ show_help() {
 ### $2 - Repo
 ### $3 - Branch
 query_current_commit_hash_from_github() {
-	git ls-remote https://github.com/${1}/${2}.git refs/heads/${3} | awk '{print $1}' | cut -c1-7
+	git ls-remote https://github.com/${1}/${2}.git refs/heads/${3} | awk '{print $1}' | cut -c1-10
 }
 
 
