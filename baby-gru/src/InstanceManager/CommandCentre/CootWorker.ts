@@ -1590,6 +1590,49 @@ onmessage = function (e) {
         postMessage({
             messageId: e.data.messageId, resultList
         })
+    } else if (e.data.message === 'run_conkit_validate') {
+
+        const fileDataPdb = e.data.commandArgs[0]
+        const fileDataModel = e.data.commandArgs[1]
+
+        const model_file_str = "model.cif"
+        const pdb_file_str = "pdb.pdb"
+
+        cootModule.FS_createDataFile(".", pdb_file_str, fileDataPdb, true, true);
+        cootModule.FS_createDataFile(".", model_file_str, fileDataModel, true, true);
+
+        const options: libcootApi.ValidateOptions = {
+            pdb_file:pdb_file_str,
+            model_file: model_file_str,
+            seqfile: "",
+            seqformat: "fasta",
+            output: "conkit.json",
+            overwrite: false,
+            pdb_chain: "n",
+            model_chain: "",
+            gap_opening_penalty: -1.0,
+            gap_extension_penalty: -0.01,
+            seq_separation_cutoff: 3,
+            n_iterations: 20,
+            use_gap_ss: false,
+            gap_ss_w: 2.0,
+            use_prf: false,
+            prf_w: 1.0,
+            map_align_silent: true,
+            silent: false,
+            renumber: false,
+        }
+
+        cootModule.run_conkit_validate(options)
+        cootModule.FS_unlink(pdb_file_str)
+        cootModule.FS_unlink(model_file_str)
+        const jsonContents = cootModule.FS.readFile("conkit.json", { encoding: 'utf8' })
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result:jsonContents,
+        })
     }
 
     if (e.data.message === 'coot_command') {
