@@ -1,10 +1,10 @@
-import { moorhen } from "../../types/moorhen";
 import { useSelector } from 'react-redux';
+import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../card/MoorhenCarbohydrateCard";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-export const MoorhenCarbohydrateValidation = (props: moorhen.CollectedProps) => {
+export const MoorhenCarbohydrateValidation = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 

@@ -1,4 +1,4 @@
 [submodule "baby-gru/src/LhasaReact"]
 	path = baby-gru/src/LhasaReact
 	url = https://github.com/moorhen-coot/LhasaReact
-	branch = moorhen_upstream
+	branch = ui_scale_issue

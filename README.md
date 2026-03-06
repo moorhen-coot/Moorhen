@@ -21,11 +21,16 @@ The following libraries/programs are compiled to Web Assembly:
 * gemmi 0.7.0
 * libcoot main branch (last release tag 1.1.20)
 * fftw 2.1.5
+* fftw3 3.3.5
 * gsl 2.7.1
 * Boost 1.89.0
 * glm 0.9.9.8
+* Eigen 3.4.0
 * RDKit 2025\_09\_2
-* Freetype
+* graphene 1.10.8
+* libsigc++ 3.6.0
+* Freetype 2.14.1
+* Jsoncpp 1.9.6
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
 

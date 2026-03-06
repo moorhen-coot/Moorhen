@@ -1,46 +1,37 @@
+import type { Store } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
-import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoorhenMap } from "./MoorhenMap";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
-import { Store } from "@reduxjs/toolkit";
-import { MoorhenColourRule } from "./MoorhenColourRule";
-import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { setOrigin, setZoom, setQuat, setRequestDrawScene, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setActiveMolecule, setDraggableMolecule, setDisplayBuffers} from "../store/glRefSlice"
 import { addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays} from "../store/overlaysSlice"
 import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBondSmoothness,
     setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
-    setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius, setBackgroundColor,
+    setDoShadow, setDoSpin,setDepthBlurRadius, setBackgroundColor,
     setDepthBlurDepth, setDrawAxes, setEdgeDetectDepthScale,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
     setDoCrossEyedStereo, setDoSideBySideStereo, setDoThreeWayView, setDoMultiView, setMultiViewRows, setMultiViewColumns,
     setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from "../store/sceneSettingsSlice"
 import {setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
   setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings } from "../store/refinementSettingsSlice"
+import { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { ColourRule } from "./MoorhenColourRule";
+import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenMolecule } from "./MoorhenMolecule";
 
-interface MoorhenScriptApiInterface {
-    molecules: moorhen.Molecule[];
-    maps: moorhen.Map[];
-    glRef: React.RefObject<webGL.MGWebGL>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    store: Store;
-}
-
-export class MoorhenScriptApi implements MoorhenScriptApiInterface {
+export class MoorhenScriptApi  {
 
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
-    glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     store: Store;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: Store, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
-        this.molecules = molecules
-        this.maps = maps
-        this.store = store
-        this.glRef = glRef
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre> = null, store:Store = null, molecules: moorhen.Molecule[] = null, maps: moorhen.Map[] = null) {
+        this.store = store ? store : store;
         this.commandCentre = commandCentre
+        this.molecules = molecules ? molecules : store.getState().molecules.moleculeList;
+        this.maps = maps ? maps : store.getState().maps;
     }
 
     doRigidBodyFit = async (molNo: number, cidsString: string, mapNo: number) => {
@@ -106,7 +97,7 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
 
     exe(src: string) {
         // This env defines the variables accesible within the user-defined code
-        let env = {
+        const env = {
             molecules: this.molecules.reduce((obj, molecule) => {
                 obj[molecule.molNo] = molecule
                 return obj
@@ -119,8 +110,8 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
             commandCentre: this.commandCentre,
             MoorhenMolecule: MoorhenMolecule,
             MoorhenMap: MoorhenMap,
-            MoorhenColourRule: MoorhenColourRule,
-            MoorhenMoleculeRepresentation: MoorhenMoleculeRepresentation,
+            MoorhenColourRule: ColourRule,
+            MoorhenMoleculeRepresentation: MoleculeRepresentation,
             dispatch: (arg) => this.store.dispatch( arg ),
             addMolecule: addMolecule,
             addMap: addMap, 

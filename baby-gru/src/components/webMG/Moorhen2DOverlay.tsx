@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { moorhen } from "../../types/moorhen"
-import { get_grid } from "../../utils/utils"
-import store from '../../store/MoorhenReduxStore'
-import { useDispatch, useSelector } from 'react-redux'
-import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
-import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
+import { moorhen } from "../../types/moorhen"
+import { get_grid } from "../../utils/utils"
+import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
+import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import { getMathJaxSVG } from '../../utils/mathJaxUtils';
+import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
 
 interface ImageFrac2D {
     x: number
@@ -18,7 +18,7 @@ interface ImageFrac2D {
     zIndex: number;
 }
 
-let stereoQuats = []
+const stereoQuats = []
 let yForward = null
 let xForward = null
 let zForward = null
@@ -102,8 +102,8 @@ const createThreeWayQuats = () => {
 
 function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
 
-    var headLength = 10*scale;
-    var angle = Math.atan2(toy-fromy,tox-fromx);
+    const headLength = 10*scale;
+    const angle = Math.atan2(toy-fromy,tox-fromx);
 
     ctx.save();
     ctx.strokeStyle = color;
@@ -125,7 +125,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
     ctx.restore();
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number, store:MoorhenReduxStoreType) => {
 
     if(!canvas2D_ctx) return
 
@@ -208,7 +208,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     svgPathOverlays.forEach(t => {
         if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
-        let p = new Path2D(t.path)
+        const p = new Path2D(t.path)
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
         else canvas2D_ctx.lineWidth = 1.0
         if(t.drawStyle==="stroke"){
@@ -360,7 +360,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
         const end = width - 60*scale
 
-        let wh_ratio = 1.0 * width / height
+        const wh_ratio = 1.0 * width / height
         const l = 0.21 * width
 
         const vpos = 30*scale
@@ -536,9 +536,9 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         canvas2D_ctx.font =  Math.floor(22*scale) + "px helvetica"
         const drawAxes = (theQuat,base_x,base_y,multiScale) => {
             const theMatrix = quatToMat4(theQuat);
-            let x_axis = vec3.create();
-            let y_axis = vec3.create();
-            let z_axis = vec3.create();
+            const x_axis = vec3.create();
+            const y_axis = vec3.create();
+            const z_axis = vec3.create();
             vec3.set(x_axis, 1.0, 0.0, 0.0);
             vec3.set(y_axis, 0.0, 1.0, 0.0);
             vec3.set(z_axis, 0.0, 0.0, 1.0);
@@ -590,8 +590,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 drawAxes(newQuat_y,base_x,base_y,0.75)
             } else {
                 if(threeWayViewOrder[0]!==" ") {
-                    let base_x = width*.46
-                    let base_y = height*.075
+                    const base_x = width*.46
+                    const base_y = height*.075
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[0]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -601,8 +601,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                 }
                 if(threeWayViewOrder[1]!==" ") {
                     console.log(threeWayViewOrder[1])
-                    let base_x = width*.96
-                    let base_y = height*.075
+                    const base_x = width*.96
+                    const base_y = height*.075
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[1]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -611,8 +611,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                     drawAxes(newQuat,base_x,base_y,0.55)
                 }
                 if(threeWayViewOrder[2]!==" ") {
-                    let base_x = width*.46
-                    let base_y = height*.575
+                    const base_x = width*.46
+                    const base_y = height*.575
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[2]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -621,8 +621,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                     drawAxes(newQuat,base_x,base_y,0.55)
                 }
                 if(threeWayViewOrder[3]!==" ") {
-                    let base_x = width*.96
-                    let base_y = height*.575
+                    const base_x = width*.96
+                    const base_y = height*.575
                     const newQuat = quat4.clone(quat)
                     if(threeWayViewOrder[3]==="Y")
                         quat4.multiply(newQuat, newQuat, yForward);
@@ -642,10 +642,10 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
 
 export const Moorhen2DOverlay = ((props) => {
 
-    const dispatch = useDispatch()
+    const store = useStore<RootState>()
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
@@ -746,7 +746,7 @@ export const Moorhen2DOverlay = ((props) => {
             if(ctx){
                 ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
                 ctx.clearRect(0,0,width,height)
-                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i)
+                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i, store)
             }
         })
     }

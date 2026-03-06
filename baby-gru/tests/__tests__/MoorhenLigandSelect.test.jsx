@@ -1,20 +1,20 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup }  from '@testing-library/react'
-import { MoorhenLigandSelect }  from '../../src/components/select/MoorhenLigandSelect'
-import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
+import { MoorhenLigandSelect }  from '../../src/components/inputs/Selector/MoorhenLigandSelect'
+import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 
 describe('Testing MoorhenLigandSelect', () => {
-    
+
     afterEach(cleanup)
 
-    test('Test MoorhenLigandSelect label', () => {
+    test('MoorhenLigandSelect label', () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={[ ]} selectedCoordMolNo={null} label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
@@ -24,7 +24,7 @@ describe('Testing MoorhenLigandSelect', () => {
         expect(selectNode).toBeVisible()
     })
 
-    test('Test MoorhenLigandSelect select ligands', async () => {
+    test('MoorhenLigandSelect select ligands', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
@@ -49,9 +49,9 @@ describe('Testing MoorhenLigandSelect', () => {
         const molecules = [molecule_1, molecule_2, molecule_3]
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={0}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')
@@ -72,7 +72,7 @@ describe('Testing MoorhenLigandSelect', () => {
         expect(optionNode_3.selected).toBeTruthy()
     })
 
-    test('Test MoorhenLigandSelect onChange', async () => {
+    test('MoorhenLigandSelect onChange', async () => {
         const molecule_1 = new MoorhenMolecule(null, null, '')
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
@@ -95,13 +95,13 @@ describe('Testing MoorhenLigandSelect', () => {
         molecule_3.name = 'mol-3'
 
         const molecules = [molecule_1, molecule_2, molecule_3]
-        
+
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenLigandSelect molecules={molecules} selectedCoordMolNo={0} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const selectNode = screen.getByRole('combobox')

@@ -14,7 +14,7 @@ function next_power_of_2(v) {
 export function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
 
     // FIXME - For text, need to fathom how to create a quad of appropriate size to draw on, and how to create correct sized canvas for that.
-    let acanvas = document.createElement("canvas");
+    const acanvas = document.createElement("canvas");
 
     let nptw;
     let npth;
@@ -26,7 +26,7 @@ export function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
         npth = 256;
     }
 
-    let ctx = acanvas.getContext("2d");
+    const ctx = acanvas.getContext("2d");
 
     let scalew = 1.0;
     let scaleh = 1.0;
@@ -45,10 +45,10 @@ export function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
         ctx.scale(scalew, scaleh);
         ctx.drawImage(image, 0, 0);
     } else {
-        let fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
+        const fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
         ctx.font = font;
-        let textWidth = ctx.measureText(text).width;
-        let textHeight = 1.0 * determineFontHeight(font, fnsize);
+        const textWidth = ctx.measureText(text).width;
+        const textHeight = 1.0 * determineFontHeight(font, fnsize);
         nptw = next_power_of_2(Math.floor(textWidth));
         npth = next_power_of_2(Math.floor(textHeight));
         console.log(nptw + " " + npth);
@@ -76,15 +76,15 @@ export function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
 }
 
 export function initStringTextures(gl, text, tex_size, font) {
-    let cubeTexture = gl.createTexture();
+    const cubeTexture = gl.createTexture();
     handleTextureLoaded(gl, null, cubeTexture, text, tex_size, font);
     return cubeTexture;
 }
 
 export function initTextures(gl, fname) {
-    let cubeTexture = gl.createTexture();
-    let cubeImage = new Image();
-    let tex_size = {};
+    const cubeTexture = gl.createTexture();
+    const cubeImage = new Image();
+    const tex_size = {};
 
     cubeImage.src = fname;
 

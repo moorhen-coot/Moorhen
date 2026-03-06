@@ -1,73 +1,87 @@
-import { forwardRef } from "react";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenToggle } from "./MoorhenToggle/Toggle";
+import React, { useState } from "react";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
     width?: string;
     margin?: string;
     label?: string;
-    placeholder?: string; 
+    placeholder?: string;
     defaultValue?: string;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     invalidCid?: boolean;
     allowUseCurrentSelection?: boolean;
-}
+    ref?: React.Ref<HTMLInputElement>;
+    inline?: boolean
+    setCid?: React.Dispatch<React.SetStateAction<string>>
+};
 
-export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
-
-    const defaultProps = { 
-        height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", 
-        placeholder: "", defaultValue: "", invalidCid: false, allowUseCurrentSelection: false
-    }
-
+export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
     const {
-        height, width, margin, label, placeholder, defaultValue, invalidCid, allowUseCurrentSelection
-    } = { ...defaultProps, ...props }
-    
-    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
-    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection)
+    height = "4rem",
+    width = "16rem",
+    margin = "0.1rem",
+    label = "Atom selection",
+    placeholder = "",
+    defaultValue = "",
+    invalidCid = false,
+    allowUseCurrentSelection = false,
+    onChange,
+    ref: cidFormRef,
+    inline = true,
+} = props
+    const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
+    const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
+    const [selection, setSelection] = useState<string>(defaultValue)
+    const [useSelection, setUseSelection] = useState(false)
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        if (props.onChange) {
-            props.onChange(evt)
+        if (onChange) {
+            onChange(evt);     
         }
-        if(cidFormRef !== null && typeof cidFormRef !== 'function') cidFormRef.current.value = evt.target.value
-    }
+        setSelection(evt.target.value)
+        props.setCid?.(evt.target.value)
+    };
 
-    const handleFillCurrentSelection = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        if (evt.target.checked) {
-            if (residueSelection.cid) {
-                // @ts-ignore
-                handleChange({target: {value: typeof residueSelection.cid === 'string' ? residueSelection.cid : residueSelection.cid.join('||')}})
+    const handleFillCurrentSelection = () => {
+        let cid: string = ""
+        if (!useSelection) {
+            if (residueSelection) {
+                if (residueSelection.cid === null) {
+                    cid = residueSelection.first
+                } else {
+                cid = Array.isArray(residueSelection.cid) ? residueSelection.cid[0] : residueSelection.cid}
             }
         } else {
-            // @ts-ignore
-            handleChange({target: {value: ''}})
+            cid = ""
         }
-    }
+        setSelection(cid)
+        handleChange({ target: { value: cid }} as React.ChangeEvent<HTMLInputElement>)
+        setUseSelection(!useSelection)}
 
     return (
         <>
-            <div style={{ width: width, margin: margin, height: height }}>
+            <MoorhenStack  direction={inline? "line" : null} style={{ width: width, margin: margin, height: height }}>
                 {label && <label style={{ display: "block", marginBottom: "0.25rem" }}>{label}</label>}
                 <input
                     type="text"
                     className={`${"moorhen__input"} ${invalidCid ? "moorhen__input.invalid" : ""}`}
                     placeholder={placeholder}
-                    defaultValue={defaultValue}
                     onChange={handleChange}
                     ref={cidFormRef}
+                    value={selection}
                 />
-            </div>
+            </MoorhenStack>
             {allowUseCurrentSelection && showResidueSelection && (
-                <div style={{ width: width, margin: margin, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <input type="checkbox" id="useCurrentSelection" onChange={handleFillCurrentSelection} />
-                    <label htmlFor="useCurrentSelection">Use current selection?</label>
-                </div>
+                <MoorhenToggle
+                    label="Use Current Selection"
+                    onChange={handleFillCurrentSelection} 
+                    checked={useSelection}/>
             )}
         </>
     );
-})
-
+};

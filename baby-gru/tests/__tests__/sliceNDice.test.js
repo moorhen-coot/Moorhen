@@ -5,8 +5,7 @@ jest.setTimeout(40000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
-
-const createCootModule = require('../../public/moorhen')
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
 let cootModule;
 let cleanUpVariables = []
@@ -59,7 +58,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables = []
     })
 
-    test("Test kmeans", () => {
+    test("kmeans", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -73,7 +72,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test birch", () => {
+    test("birch", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -87,7 +86,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test agglomerative", () => {
+    test("agglomerative", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
         
@@ -101,7 +100,7 @@ describe('Testing slice-n-dice', () => {
         cleanUpVariables.push(retVal)
     })
 
-    test("Test pae", () => {
+    test("pae", () => {
         const coordMol = molecules_container.read_pdb('./AF-A5YKK6-F1-model_v4.pdb')
         expect(coordMol).toBe(0)
 
@@ -142,7 +141,7 @@ const setupFunctions = {
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
         cootModule.FS.mkdir("COOT_BACKUP");
-        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'data.tar.gz' ), { encoding: null, flag: 'r' })
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);

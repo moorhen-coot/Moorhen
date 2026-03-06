@@ -1,10 +1,10 @@
-import { MoorhenMolecule } from "../../tsDist/src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../../tsDist/src/utils/MoorhenMap"
-import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
-import { MoorhenReduxStore } from "../../tsDist/src/store/MoorhenReduxStore"
-import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../tsDist/src/utils/utils"
 import fetch from 'node-fetch'
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
+import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MockWebGL } from "../__mocks__/mockWebGL"
+import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 
 jest.setTimeout(60000)
@@ -12,8 +12,8 @@ jest.setTimeout(60000)
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
-const createCootModule = require('../../public/moorhen')
 let cootModule;
 
 const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
@@ -89,9 +89,9 @@ describe("Testing MoorhenMolecule", () => {
         }
     })
 
-    test("Test refineResiduesUsingAtomCidAnimated", async () => {
+    test("refineResiduesUsingAtomCidAnimated", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h-nitrobenzene.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, glRef, MoorhenReduxStore, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif')
@@ -115,7 +115,7 @@ describe("Testing MoorhenMolecule", () => {
         })
         //const result_301 = molecules_container.get_acedrg_atom_types_for_ligand(molecule_1.molNo, '/1/A/301/*')
         //console.log(acedrgTypesForBondData.data.result.result)
-        expect(acedrgTypesForBondData.data.result.result.length).toBe(14)
+        expect(acedrgTypesForBondData.data.result.result).toHaveLength(14)
         expect(acedrgTypesForBondData.data.result.result.every(bond=>bond.bond_length<2.25)).toBeTruthy()
     })
 })
@@ -141,7 +141,7 @@ const setupFunctions = {
             const coordData = fs.readFileSync(path.join(dirName, fileName), { encoding: fileName.includes('mtz') ? null : 'utf8', flag: 'r' })
             cootModule.FS_createDataFile(".", fileName, coordData, true, true);
         })
-        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'baby-gru', 'data.tar.gz' ), { encoding: null, flag: 'r' })
+        const cootDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'data.tar.gz' ), { encoding: null, flag: 'r' })
         return ungzip(cootDataZipped).then((cootData) => {
             cootModule.FS.mkdir("data_tmp")
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);

@@ -2,7 +2,7 @@ import pako from 'pako';
 import { base64decode } from './mgBase64.js';
 
 export function getEncodedData(rssentries:any[]) {
-    let allBuffers = [];
+    const allBuffers = [];
     for (let i = 0; i < rssentries.length; i++) {
         if (typeof (rssentries[i]) === "string") {
             const b64Data = rssentries[i];
@@ -15,23 +15,23 @@ export function getEncodedData(rssentries:any[]) {
             //let binData     = new Uint8Array();
             let j;
 
-            let binData = new Uint8Array(strData.length);
+            const binData = new Uint8Array(strData.length);
             for (j = 0; j < strData.length; j++) {
                 binData[j] = strData[j].charCodeAt(0);
             }
 
-            let data = pako.inflate(binData);
+            const data = pako.inflate(binData);
 
             strData = "";
 
             if (window.TextDecoder) {
                 // THIS'LL only work in Firefox 19+, Opera 25+ and Chrome 38+.
-                let decoder = new TextDecoder('utf-8');
+                const decoder = new TextDecoder('utf-8');
                 strData = decoder.decode(data);
             } else {
-                let unpackBufferLength = 60000;
+                const unpackBufferLength = 60000;
                 for (j = 0; j < data.length / unpackBufferLength; j++) {
-                    let lower = j * unpackBufferLength;
+                    const lower = j * unpackBufferLength;
                     let upper = (j + 1) * unpackBufferLength;
                     if (upper > data.length) {
                         upper = data.length;

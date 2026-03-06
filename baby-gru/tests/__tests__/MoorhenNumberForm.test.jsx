@@ -1,31 +1,31 @@
 import '@testing-library/jest-dom'
 import { render, screen, cleanup, waitFor }  from '@testing-library/react'
-import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 import { Provider } from 'react-redux'
 import { userEvent } from '@testing-library/user-event'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MoorhenNumberForm }  from '../../src/components/select/MoorhenNumberForm'
 
 describe('Testing MoorhenNumberForm', () => {
-    
+
     afterEach(cleanup)
 
-    test('Test MoorhenNumberForm label', async () => {
+    test('MoorhenNumberForm label', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm defaultValue={10} label="Test Label"/>
-            </Provider> 
+            </Provider>
         )
 
         const labelNode = screen.getByText('Test Label')
         expect(labelNode).toBeVisible()
     })
 
-    test('Test MoorhenNumberForm disabled', async () => {
+    test('MoorhenNumberForm disabled', async () => {
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm defaultValue={10} disabled={true}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -33,13 +33,13 @@ describe('Testing MoorhenNumberForm', () => {
         expect(formNode).toBeDisabled()
     })
 
-    test('Test MoorhenNumberForm change values', async () => {
+    test('MoorhenNumberForm change values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -53,15 +53,15 @@ describe('Testing MoorhenNumberForm', () => {
         expect(formNode).toHaveValue(15)
     })
 
-    test('Test MoorhenNumberForm onChange', async () => {
+    test('MoorhenNumberForm onChange', async () => {
         const numberFormRef = createRef(null)
-        
+
         const onChange = jest.fn()
 
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10} onChange={onChange}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -71,13 +71,13 @@ describe('Testing MoorhenNumberForm', () => {
         expect(onChange).toHaveBeenCalled()
     })
 
-    test('Test MoorhenNumberForm allowNegativeValues', async () => {
+    test('MoorhenNumberForm allowNegativeValues', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10} allowNegativeValues={true}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -90,13 +90,13 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm invalid negative values', async () => {
+    test('MoorhenNumberForm invalid negative values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -109,13 +109,13 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm invalid letter values', async () => {
+    test('MoorhenNumberForm invalid letter values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')
@@ -128,13 +128,13 @@ describe('Testing MoorhenNumberForm', () => {
         })
     })
 
-    test('Test MoorhenNumberForm valid float values', async () => {
+    test('MoorhenNumberForm valid float values', async () => {
         const numberFormRef = createRef(null)
-        
+
         render(
-            <Provider store={MoorhenStore}> 
+            <Provider store={MoorhenReduxStore}>
                 <MoorhenNumberForm ref={numberFormRef} defaultValue={10}/>
-            </Provider> 
+            </Provider>
         )
 
         const formNode = screen.getByRole('spinbutton')

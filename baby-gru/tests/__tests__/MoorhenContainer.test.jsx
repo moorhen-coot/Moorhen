@@ -11,20 +11,18 @@ jest.mock('chart.js', () => ({
 import '@testing-library/jest-dom'
 import { render, cleanup, screen }  from '@testing-library/react'
 import { Provider } from 'react-redux'
-import MoorhenStore from "../../src/store/MoorhenReduxStore"
 import { createRef } from 'react'
-import { MoorhenModalsContainer } from '../../src/components/misc/MoorhenModalsContainer'
-import { MoorhenNavBar } from '../../src/components/navbar-menus/MoorhenNavBar'
+import userEvent from '@testing-library/user-event'
+import fetch from 'node-fetch'
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MoorhenModalsContainer } from '../../src/components/container/ModalsContainer'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
 import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
 import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
-import userEvent from '@testing-library/user-event'
-import fetch from 'node-fetch'
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
-
 const fs = require('fs')
 
 let cootModule = null
@@ -57,9 +55,9 @@ let mockMonomerLibraryPath = null
 const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
 
 describeIfWasmExists('Testing MoorhenContainer', () => {
-    
-    beforeAll(() => {   
-        const createCootModule = require('../../public/moorhen')
+
+    beforeAll(() => {
+        const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
@@ -81,7 +79,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
                                 const fileContents = fs.readFileSync(`./public/baby-gru/${url}`)
                                 const buff = fileContents.buffer
                                 return buff
-                            }    
+                            }
                         }
                     }
                 })
@@ -97,7 +95,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             return Promise.resolve()
         })
     })
-    
+
     beforeEach(() => {
         molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
@@ -136,36 +134,36 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         commandCentre.current = new MockMoorhenCommandCentre(molecules_container, cootModule)
 
         collectedProps = {
-            glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance, 
+            glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance,
             urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
             extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
-            videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals, 
+            videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals,
             includeNavBarMenuNames, onAtomHovered: () => {}, onKeyPress: () => {}
         }
 
-        MoorhenStore.dispatch(setHoveredAtom({
+        MoorhenReduxStore.dispatch(setHoveredAtom({
             molecule: null,
             cid: null,
         }))
-        MoorhenStore.dispatch( setDevMode(false) )    
-        MoorhenStore.dispatch( setIsDark(false) )    
-        MoorhenStore.dispatch( setWidth(1600) )    
-        MoorhenStore.dispatch( setHeight(900) )    
-        MoorhenStore.dispatch( setCootInitialized(true) )
-        MoorhenStore.dispatch( setDefaultBondSmoothness(1) )
-        MoorhenStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
-        MoorhenStore.dispatch( setShowScoresToast(true) )
+        MoorhenReduxStore.dispatch( setDevMode(false) )
+        MoorhenReduxStore.dispatch( setIsDark(false) )
+        MoorhenReduxStore.dispatch( setWidth(1600) )
+        MoorhenReduxStore.dispatch( setHeight(900) )
+        MoorhenReduxStore.dispatch( setCootInitialized(true) )
+        MoorhenReduxStore.dispatch( setDefaultBondSmoothness(1) )
+        MoorhenReduxStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
+        MoorhenReduxStore.dispatch( setShowScoresToast(true) )
     })
 
     afterEach(cleanup)
 
-    test('Test MoorhenContainer load tutorial data 1', async () => {
+    test('MoorhenContainer load tutorial data 1', async () => {
 
         render(
-            <Provider store={MoorhenStore}> 
-                <MoorhenNavBar {...collectedProps}/>
+            <Provider store={MoorhenReduxStore}>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
                 <MoorhenModalsContainer {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const user = userEvent.setup()
@@ -189,7 +187,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         const moleculeCard = screen.getByText(/#0 mol\. mol\-1/i)
         expect(moleculeCard).not.toBeVisible()
 
-        const molecules = MoorhenStore.getState().molecules.moleculeList
+        const molecules = MoorhenReduxStore.getState().molecules.moleculeList
         expect(molecules).toHaveLength(1)
         expect(molecules[0].molNo).toBe(0)
 
@@ -199,7 +197,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         const diffMapCard = screen.getByText(/#2 map diff\-map\-1/i)
         expect(diffMapCard).not.toBeVisible()
 
-        const maps = MoorhenStore.getState().maps
+        const maps = MoorhenReduxStore.getState().maps
         expect(maps.map(item => item.molNo)).toEqual([1, 2])
 
         expect(collectedProps.glRef.current.zoom).toBeCloseTo(1.29, 1)
@@ -214,19 +212,19 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         const deleteButton = screen.getByRole('button', { name: /i understand\, delete/i })
         await user.click(deleteButton)
 
-        const molecules_empty = MoorhenStore.getState().molecules.moleculeList
-        const maps_empty = MoorhenStore.getState().maps
+        const molecules_empty = MoorhenReduxStore.getState().molecules.moleculeList
+        const maps_empty = MoorhenReduxStore.getState().maps
         expect(molecules_empty).toHaveLength(0)
         expect(maps_empty).toHaveLength(0)
     })
 
-    test.skip('Test MoorhenContainer connect map and molecule', async () => {
+    test.skip('MoorhenContainer connect map and molecule', async () => {
 
         render(
-            <Provider store={MoorhenStore}> 
-                <MoorhenNavBar {...collectedProps}/>
+            <Provider store={MoorhenReduxStore}>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
                 <MoorhenModalsContainer {...collectedProps}/>
-            </Provider> 
+            </Provider>
         )
 
         const user = userEvent.setup()
@@ -236,8 +234,8 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const molecules = MoorhenStore.getState().molecules.moleculeList
-        const maps = MoorhenStore.getState().maps
+        const molecules = MoorhenReduxStore.getState().molecules.moleculeList
+        const maps = MoorhenReduxStore.getState().maps
         expect(molecules).toHaveLength(1)
         expect(maps).toHaveLength(2)
 
@@ -245,7 +243,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         await user.click( screen.getByRole('menuitem', { name: /connect mol\. and map for updating\.\.\./i }) )
         await user.click( screen.getByRole('button', { name: /ok/i }) )
 
-        const state = MoorhenStore.getState()
+        const state = MoorhenReduxStore.getState()
         expect(state.moleculeMapUpdate.updatingMapsIsEnabled).toBeTruthy()
         expect(state.moleculeMapUpdate.connectedMolecule).toBe(0)
         expect(state.moleculeMapUpdate.reflectionMap).toBe(1)

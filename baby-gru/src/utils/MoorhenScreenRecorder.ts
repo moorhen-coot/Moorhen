@@ -1,12 +1,7 @@
-import * as vec3 from 'gl-matrix/vec3';
-import * as quat4 from 'gl-matrix/quat';
-import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { webGL } from "../types/mgWebGL.js";
-import { moorhen } from '../types/moorhen.js';
-import store from '../store/MoorhenReduxStore'
-import { setOrigin } from "../store/glRefSlice"
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
+import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore.js";
 
 interface ImageFrac2D {
     x: number
@@ -17,21 +12,23 @@ interface ImageFrac2D {
     zIndex: number;
 }
 
-export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
+export class ScreenRecorder  {
 
     rec: MediaRecorder;
     chunks: Blob[];
-    glRef: React.RefObject<webGL.MGWebGL>;
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    glRef: React.RefObject<webGL.MGWebGL>;
+    store: MoorhenReduxStoreType
     _isRecording: boolean;
 
-    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>){
-        this.glRef = glRef
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: MoorhenReduxStoreType){
+        this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
+        this.store = store;
         this.canvasRef = canvasRef
         const stream = this.canvasRef.current.captureStream(30)
 
-        let options = {
+        const options = {
           videoBitsPerSecond: 25000000000 // 2.5Mbps
         }
 
@@ -90,7 +87,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
     }
 
     downloadVideo = async (blob: Blob) => {
-        let url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         let link: any = document.getElementById('download_video_link');
         if (!link) {
             link = document.createElement('a');
@@ -117,10 +114,9 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
 
         ctx = saveCanvas.getContext("2d");
 
-        const isWebGL2 = store.getState().glRef.isWebGL2
-
-        const canvasSize = store.getState().glRef.canvasSize
-        const quat = store.getState().glRef.quat
+        const isWebGL2 = this.store.getState().glRef.isWebGL2
+        const canvasSize = this.store.getState().glRef.canvasSize
+        const quat = this.store.getState().glRef.quat
 
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
@@ -143,7 +139,7 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
             }
         } else {
 
-            const fbSize = store.getState().glRef.rttFramebufferSize
+            const fbSize = this.store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
             const h = fbSize[1]
 
@@ -174,8 +170,8 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
         }
 
         ctx.putImageData(imgData, 0,0);
-        const imageOverlays = store.getState().overlays.imageOverlayList
-        const latexOverlays = store.getState().overlays.latexOverlayList
+        const imageOverlays = this.store.getState().overlays.imageOverlayList
+        const latexOverlays = this.store.getState().overlays.latexOverlayList
 
         const promises = []
         const imgFracs = []
@@ -199,11 +195,11 @@ export class MoorhenScreenRecorder implements moorhen.ScreenRecorder {
                 imgFracs.push(img_frac)
             }
 
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3)
-            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,0, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,1, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,2, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3, this.store)
+            drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4, this.store)
 
             let link: any = document.getElementById('download_image_link');
             if (!link) {

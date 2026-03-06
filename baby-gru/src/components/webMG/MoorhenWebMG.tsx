@@ -1,35 +1,35 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer,useRef } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
+import { useSnackbar } from 'notistack';
+import * as quat4 from 'gl-matrix/quat';
+import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
-import { buildBuffers, appendOtherData,linesToThickLines } from '../../WebGLgComponents/buildBuffers'
+import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
-import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
+import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
+import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
 import { cidToSpec } from '../../utils/utils';
-import { MoorhenScreenRecorder } from "../../utils/MoorhenScreenRecorder"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { useDispatch, useSelector } from 'react-redux';
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
-import { useSnackbar } from 'notistack';
-import { setQuat, setOrigin, setRequestDrawScene, setZoom,
+import { setQuat, setOrigin, setZoom,
          setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
-import * as quat4 from 'gl-matrix/quat';
-import { gemmiAtomPairsToCylindersInfo } from '../../utils/utils'
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
-import { guid } from '../../utils/utils';
-import { gemmi } from "../../types/gemmi"
+import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { RootState } from '../../store/MoorhenReduxStore';
+import { DrawHoverAtom } from './HoverAtom';
+
 
 interface MoorhenWebMGPropsInterface {
     monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
-    videoRecorderRef: React.MutableRefObject<null | moorhen.ScreenRecorder>;
 }
 
-const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
+const intialDefaultActionButtonSettings: ActionButtonSettings = {
     mutate: 'ALA',
     refine: 'TRIPLE',
     delete: 'RESIDUE',
@@ -38,7 +38,7 @@ const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
     rigidBodyFit: 'CHAIN',
 }
 
-const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettings, change: {key: string; value: string}) => {
+const actionButtonSettingsReducer = (defaultSettings: ActionButtonSettings, change: {key: string; value: string}) => {
     defaultSettings[change.key] = change.value
     return defaultSettings
 }
@@ -48,12 +48,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const glRef = OldglRef as React.Ref<MGWebGL>
 
     const dispatch = useDispatch()
+    const store = useStore<RootState>()
 
     const { enqueueSnackbar } = useSnackbar()
 
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
+    const moorhenGlobalInstance = useMoorhenInstance();
+    const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
@@ -101,8 +104,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
@@ -137,6 +140,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
     const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
     const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
     useEffect(() => {
         const dispatchVectorsBuffers = async() => {
@@ -153,13 +157,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
 
-            const [objects,newLabelBuffers] = await getVectorsBuffers()
+            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
 
             let newBuffers = []
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, true);
+                const a = appendOtherData(object, store, true);
                 newBuffers = [...newBuffers,...a]
-                buildBuffers(a)
+                buildBuffers(a, store)
             })
 
             setVectorBuffers(newBuffers)
@@ -170,6 +174,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
         dispatchVectorsBuffers()
     }, [vectorsList])
+
+    const commandCentre = useCommandCentre()
 
     const setClipFogByZoom = (): void => {
         const fieldDepthFront: number = 8;
@@ -189,15 +195,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [glRef, resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
-        const response = await props.commandCentre.current.cootCommand({
+        const response = await commandCentre.current.cootCommand({
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
-        let newOrigin = response.data.result.result;
+        const newOrigin = response.data.result.result;
         dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
-    }, [props.commandCentre, glRef])
+    }, [commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
         if (hoveredAtom?.molecule && hoveredAtom?.cid){
@@ -213,9 +219,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [hoveredAtom])
 
     useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function') {
-            props.videoRecorderRef.current = new MoorhenScreenRecorder(glRef, getCanvasRef())
-        }
+       if (glRef !== null && typeof glRef !== 'function') {
+           const videoRecorder = new ScreenRecorder(glRef, getCanvasRef(), store)
+           moorhenGlobalInstance.setVideoRecorder(videoRecorder);
+       }
     }, [])
 
     useEffect(() => {
@@ -391,14 +398,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [doSpin])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoBias != null) {
             glRef.current.setSSAOBias(ssaoBias)
             glRef.current.drawScene()
         }
     }, [ssaoBias])
 
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoRadius != null) {
             glRef.current.setSSAORadius(ssaoRadius)
             glRef.current.drawScene()
         }
@@ -641,7 +648,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms) {
+        if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms || shortcutsBlocked ) {
             return false
         }
         return moorhenKeyPress(
@@ -653,13 +660,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 dispatch,
                 enqueueSnackbar,
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
+                videoRecorderRef,
+                commandCentre: commandCentre,
+                store: store,
                 ...props
             },
             JSON.parse(shortCuts as string),
             showShortcutToast,
             shortcutOnHoveredAtom
         )
-    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms])
+    }, [molecules, activeMap, hoveredAtom, props.viewOnly, shortCuts, showShortcutToast, shortcutOnHoveredAtom, isChangingRotamers, isRotatingAtoms, isDraggingAtoms, commandCentre.current, shortcutsBlocked])
 
 
     const getCanvasRef = (() => {
@@ -715,7 +725,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [zoom,quat,originState])
 
     return  <>
-                <figure style={{position: "relative"}}>
+                <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -733,7 +743,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}/>
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
+                    store={store}
+                    dispatch={dispatch} />
                     <Moorhen2DOverlay drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&
@@ -742,13 +754,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}
-                    commandCentre={props.commandCentre}
+                    commandCentre={commandCentre}
                     timeCapsuleRef={props.timeCapsuleRef}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                     defaultActionButtonSettings={defaultActionButtonSettings}
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
+                <DrawHoverAtom />
             </>
 });
 
+MoorhenWebMG.displayName = "MoorhenWebMG";

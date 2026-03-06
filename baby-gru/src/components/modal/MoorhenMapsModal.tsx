@@ -1,14 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
-import { MoorhenMapCard } from "../card/MoorhenMapCard";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
 import { UnfoldLessOutlined } from "@mui/icons-material";
-import { Button } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import { useMemo, useState } from "react";
+import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenMapCard } from "../card/MapCard/MoorhenMapCard";
+import { MoorhenButton } from "../inputs";
+import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
-export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
+export const MoorhenMapsModal = () => {
     const [collapseAll, setCollapseAll] = useState<boolean>(false);
     const [collapsedCards, setCollapsedCards] = useState<number[]>([]);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -21,15 +21,15 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
             setCollapsedCards([]);
         } else {
             setCollapseAll(true);
-            const allCards = maps.map((map) => map.molNo);
+            const allCards = maps.map(map => map.molNo);
             setCollapsedCards(allCards);
         }
     };
 
-    const handleCollapseToggle = (key) => {
+    const handleCollapseToggle = key => {
         if (collapsedCards.includes(key)) {
             setCollapseAll(false);
-            setCollapsedCards(collapsedCards.filter((card) => card !== key));
+            setCollapsedCards(collapsedCards.filter(card => card !== key));
         } else {
             if (collapsedCards.length === 1) {
                 setCollapseAll(true);
@@ -47,10 +47,9 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
                 map={map}
                 initialContour={map.suggestedContourLevel ? map.suggestedContourLevel : 0.8}
                 initialRadius={map.suggestedRadius ? map.suggestedRadius : 13}
-                isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
-                onCollapseToggle={(key) => handleCollapseToggle(key)}
+                //isCollapsed={collapsedCards.includes(map.molNo) ? true : false}
+                onCollapseToggle={key => handleCollapseToggle(key)}
                 modalWidth={modalWidth}
-                {...props}
             />
         ));
     }, [modalWidth, collapsedCards, collapseAll, maps]);
@@ -75,9 +74,14 @@ export const MoorhenMapsModal = (props: moorhen.CollectedProps) => {
             }}
             headerTitle={"Maps"}
             additionalHeaderButtons={[
-                <Button variant="white" key="collapse-all-maps" style={{ margin: "0.1rem", padding: "0.1rem" }} onClick={handleCollapseAll}>
+                <MoorhenButton
+                    variant="white"
+                    key="collapse-all-maps"
+                    style={{ margin: "0.1rem", padding: "0.1rem" }}
+                    onClick={handleCollapseAll}
+                >
                     <UnfoldLessOutlined />
-                </Button>,
+                </MoorhenButton>,
             ]}
             body={maps.length === 0 ? <span>No maps loaded</span> : sortedDisplayData}
             footer={null}

@@ -1,14 +1,10 @@
 import { SnackbarContent, useSnackbar } from "notistack";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { moorhen } from "../../types/moorhen";
-import { webGL } from "../../types/mgWebGL";
+import { forwardRef, useEffect,  useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { cidToSpec, parseAtomInfoLabel } from "../../utils/utils";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
-import { Stack } from "react-bootstrap";
-import { IconButton, Table, TableHead, TableBody, TableRow, TableCell } from "@mui/material";
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { IconButton, Table, TableBody, TableRow, TableCell } from "@mui/material";
+import { CloseOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
+
 
 export const MoorhenAtomInfoSnackBar = forwardRef<
     HTMLDivElement, 
@@ -16,7 +12,6 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         moleculeRef: moorhen.Molecule;
         cidRef: string;
-        glRef: React.RefObject<webGL.MGWebGL>;
         monomerLibraryPath: string;
         id: string;
     }
@@ -27,7 +22,7 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
     const dispatch = useDispatch()
 
     const { closeSnackbar } = useSnackbar()
-    const [atomProps, setAtomProps] = useState({tempFactor:100.0,occupancy:0.0,x:-9999.,y:-9999.,z:-9999.,charge:0});
+    const [atomProps, setAtomProps] = useState({tempFactor:100.0,occupancy:0.0,x:-9999.,y:-9999.,z:-9999.,charge:0})
 
     const finishDragging = async (acceptTransform: boolean) => {
         closeSnackbar(props.id)
@@ -92,3 +87,5 @@ export const MoorhenAtomInfoSnackBar = forwardRef<
                 </Table>
     </SnackbarContent>
 })
+
+MoorhenAtomInfoSnackBar.displayName = "MoorhenAtomInfoSnackBar";

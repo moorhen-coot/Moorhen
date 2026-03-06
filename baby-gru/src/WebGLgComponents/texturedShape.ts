@@ -35,8 +35,8 @@ export class TexturedShape {
             [0.0, 0.0, 0.0, 1.0],
             [1.0, 1.0, 1.0, 1.0],
         ];
-        let ramp_accu = 256;
-        let colour_ramp_values = [];
+        const ramp_accu = 256;
+        const colour_ramp_values = [];
         for(let i=0;i<ramp_accu;i++){
             const frac = i/ramp_accu;
             const frac2 = 1.0-frac;

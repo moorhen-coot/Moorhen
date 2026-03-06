@@ -1,21 +1,23 @@
-import { useCallback, useState } from "react";
-import { Col, Row, Form, Card, Button } from "react-bootstrap";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
-import { MoorhenSlider } from "../inputs/MoorhenSlider";
+import { useSnackbar } from "notistack";
+import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback } from "react";
+import { useCommandCentre } from "../../InstanceManager";
+import { usePersistentState } from "../../store/menusSlice";
+import { hideModal } from "../../store/modalsSlice";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { cidToSpec, sleep } from "../../utils/utils";
-import { hideModal } from "../../store/modalsSlice";
-import { useSnackbar } from "notistack";
 import { modalKeys } from "../../utils/enums";
-import { usePersistentState } from "../../store/menusSlice";
+import { cidToSpec, sleep } from "../../utils/utils";
+import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
+export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
     const dispatch = useDispatch();
+    const commandCentre = useCommandCentre();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -25,7 +27,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
     const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await props.commandCentre.current.cootCommand(
+        await commandCentre.current.cootCommand(
             {
                 returnType: "status",
                 command: "flipPeptide_cid",
@@ -36,7 +38,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
         );
 
         if (enableRefineAfterMod) {
-            await props.commandCentre.current.cootCommand(
+            await commandCentre.current.cootCommand(
                 {
                     returnType: "status",
                     command: "refine_residues_using_atom_cid",
@@ -53,7 +55,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     };
 
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
-        if (args.every((arg) => arg !== null)) {
+        if (args.every(arg => arg !== null)) {
             flipPeptide(...args);
         }
     };
@@ -70,8 +72,10 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
             commandArgs: [selectedModel, selectedMap, selectedRmsd],
         };
 
-        let response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>;
-        let newPepflips = response.data.result.result;
+        const response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<
+            libcootApi.InterestingPlaceDataJS[]
+        >;
+        const newPepflips = response.data.result.result;
 
         return newPepflips;
     };
@@ -87,7 +91,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                     await flipPeptide(selectedMolecule, resSpec.chain_id, resSpec.res_no, resSpec.ins_code);
                 };
 
-                const residueList = residues.map((residue) => {
+                const residueList = residues.map(residue => {
                     return {
                         cid: `//${residue.chainId}/${residue.resNum}/`,
                     };
@@ -96,7 +100,6 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                 enqueueSnackbar("flip-all-peptides", {
                     variant: "residueSteps",
                     persist: true,
-                    timeCapsuleRef: props.timeCapsuleRef,
                     residueList: residueList,
                     sleepTime: 1500,
                     onStep: handleStepFlipPeptide,
@@ -113,8 +116,8 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
     );
 
     const getCards = useCallback(
-        (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]):React.JSX.Element[] => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+        (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): React.JSX.Element[] => {
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             let cards = newPepflips.map((flip, index) => {
                 return (
                     <Card key={index} style={{ marginTop: "0.5rem" }}>
@@ -122,20 +125,22 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                             <Row style={{ display: "flex", justifyContent: "between" }}>
                                 <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>{flip.buttonLabel}</Col>
                                 <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                    <Button
+                                    <MoorhenButton
                                         style={{ marginRight: "0.5rem" }}
-                                        onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}
+                                        onClick={() =>
+                                            selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)
+                                        }
                                     >
                                         View
-                                    </Button>
-                                    <Button
+                                    </MoorhenButton>
+                                    <MoorhenButton
                                         style={{ marginRight: "0.5rem" }}
                                         onClick={() => {
                                             handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
                                         }}
                                     >
                                         Flip
-                                    </Button>
+                                    </MoorhenButton>
                                 </Col>
                             </Row>
                         </Card.Body>
@@ -144,9 +149,13 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
             });
             if (cards.length > 0) {
                 const button = (
-                    <Button style={{ width: "100%" }} onClick={() => handleFlipAll(selectedMolecule, newPepflips)} key="flip-all-button">
+                    <MoorhenButton
+                        style={{ width: "100%" }}
+                        onClick={() => handleFlipAll(selectedMolecule, newPepflips)}
+                        key="flip-all-button"
+                    >
                         Flip all
-                    </Button>
+                    </MoorhenButton>
                 );
                 cards = [button, ...cards];
             }
@@ -173,7 +182,7 @@ export const MoorhenPepflipsDifferenceMap = (props: moorhen.CollectedProps) => {
                             stepButtons={0.5}
                             decimalPlaces={1}
                             externalValue={selectedRmsd}
-                            setExternalValue={(value) => setSelectedRmsd(value)}
+                            setExternalValue={value => setSelectedRmsd(value)}
                         />
                     </Form.Group>
                 </Col>

@@ -1,7 +1,7 @@
 import Brightness1Icon from '@mui/icons-material/Brightness1';
 import IconButton from '@mui/material/IconButton';
-import { hexToRGB } from "../../utils/utils";
 import { Grid } from "@mui/material";
+import { hexToRGB } from "../../utils/utils";
 
 export const MoorhenColorSwatch = (props => {
     const size = (typeof props.size === 'undefined') ? 20 : parseInt(props.size)

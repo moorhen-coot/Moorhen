@@ -1,31 +1,37 @@
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useSnackbar } from "notistack";
+import { moorhen } from "../../types/moorhen";
+import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useCommandCentre } from "../../InstanceManager";
 
-export const MoorhenRotamerChangeButton = (props: moorhen.ContextButtonProps) => {
-    
-    const { enqueueSnackbar } = useSnackbar()
-    
+export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
+    const { enqueueSnackbar } = useSnackbar();
+    const commandCentre = useCommandCentre();
+
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
-        props.setOpacity(1)
-        props.setOverrideMenuContents(false)
-        props.setShowContextMenu(false)
+        props.setOpacity(1);
+        props.setOverrideMenuContents(false);
+        props.setShowContextMenu(false);
         enqueueSnackbar("rotamer-change", {
             variant: "rotamerChange",
             persist: true,
-            commandCentre: props.commandCentre,
-            glRef: props.glRef,
+            commandCentre: commandCentre,
             moleculeMolNo: molecule.molNo,
-            chosenAtom: chosenAtom
-        })
-    }
+            chosenAtom: chosenAtom,
+        });
+    };
 
-    return <MoorhenContextButtonBase
-        icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rotamers.svg`} />}
-        toolTipLabel="Change rotamers"
-        nonCootCommand={nonCootCommand}
-        {...props}
-    />
-
-}
-
+    return (
+        <MoorhenContextButtonBase
+            icon={
+                <img
+                    alt="change rotamer"
+                    className="moorhen-context-button__icon"
+                    src={`${props.urlPrefix}/pixmaps/rotamers.svg`}
+                />
+            }
+            toolTipLabel="Change rotamers"
+            nonCootCommand={nonCootCommand}
+            {...props}
+        />
+    );
+};

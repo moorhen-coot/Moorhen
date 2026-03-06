@@ -225,16 +225,16 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/web_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.data
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.worker.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
 }
 
 clearall() {
@@ -490,13 +490,13 @@ else
 fi
 
 if test x"${MEMORY64}" = x"1"; then
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen64.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
 else
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/moorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
@@ -641,7 +641,7 @@ if [ $BUILD_BOOST = true ]; then
     getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="-DBOOST_STACKTRACE_LIBCXX_RUNTIME_MAY_CAUSE_MEMORY_LEAK ${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
+    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_STACKTRACE_ENABLE_FROM_EXCEPTION=OFF -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing boost, giving up."
 fi
@@ -652,7 +652,7 @@ if [ $BUILD_RDKIT = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
     # Manually copy coordgen and maeparser headers
@@ -869,6 +869,6 @@ if [ $BUILD_MOORHEN = true ]; then
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
     npm run transpile-graphql-codegen
-    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/baby-gru
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi

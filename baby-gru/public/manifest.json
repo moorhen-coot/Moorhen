@@ -5,17 +5,62 @@
     {
       "src": "/baby-gru/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo44.png",
+      "type": "image/png",
+      "sizes": "44x44",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo71.png",
+      "type": "image/png",
+      "sizes": "71x71",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo150.png",
+      "type": "image/png",
+      "sizes": "150x150",
+      "purpose": "any"
     },
     {
       "src": "/baby-gru/logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo310x150.png",
+      "type": "image/png",
+      "sizes": "310x150",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo310.png",
+      "type": "image/png",
+      "sizes": "310x310",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/logo50.png",
+      "type": "image/png",
+      "sizes": "50x50",
+      "purpose": "any"
     },
     {
       "src": "/baby-gru/logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/baby-gru/splash620x300.png",
+      "type": "image/png",
+      "sizes": "620x300",
+      "purpose": "any"
     }
   ],
   "start_url": ".",

@@ -1,14 +1,16 @@
+import { Card, Col, InputGroup, Row } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { Col, Row, Form, Card, Button, Stack, InputGroup } from "react-bootstrap";
-import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { useCommandCentre } from "../../InstanceManager";
+import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
-import { useDispatch, useSelector } from "react-redux";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { MoorhenPreciseInput } from "../inputs/MoorhenPreciseInput";
+import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenNumberInput } from "../inputs/";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
-export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
+export const MoorhenWaterValidation = () => {
     const isDirty = useRef<boolean>(false);
     const busyFetching = useRef<boolean>(false);
     const ignorePartOccRef = useRef<HTMLInputElement>(null);
@@ -21,13 +23,14 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const [maxDist, setMaxDist] = useState<number>(3.5);
     const [ignorePartOcc, setIgnorePartOcc] = useState<boolean>(false);
     const [ignoreZeroOcc, setIgnoreZeroOcc] = useState<boolean>(false);
+    const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const viewWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
                 await selectedMolecule.centreOn(cid, true, true);
@@ -38,7 +41,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
     const deleteWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
                 await selectedMolecule.deleteCid(cid);
@@ -50,7 +53,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
 
     const refineWater = useCallback(
         async (selectedModel: number, water: libcootApi.AtomSpecJS) => {
-            const selectedMolecule = molecules.find((molecule) => molecule.molNo === selectedModel);
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             if (selectedMolecule) {
                 const cid = `/${water.model_number}/${water.chain_id}/${water.res_no}`;
                 await selectedMolecule.refineResiduesUsingAtomCid(cid, "SNGLE");
@@ -81,9 +84,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 ],
             };
 
-            let response = (await props.commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<
-                libcootApi.AtomSpecJS[]
-            >;
+            let response = (await commandCentre.current.cootCommand(inputData, false)) as moorhen.WorkerResponse<libcootApi.AtomSpecJS[]>;
             if (response.data.result.result) {
                 badWaters = response.data.result.result;
             } else if (response.data.result.status === "Exception") {
@@ -98,11 +99,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
         [bFactorLim, sigmaLevel, minDist, maxDist]
     );
 
-    const getCards = (
-        selectedModel: number,
-        selectedMap: number,
-        badWaters: libcootApi.AtomSpecJS[]
-    ): React.JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, badWaters: libcootApi.AtomSpecJS[]): React.JSX.Element[] => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return (
@@ -122,34 +119,31 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                                 >
                                     {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
                                 </Col>
-                                <Col
-                                    className="col-3"
-                                    style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}
-                                >
-                                    <Button
+                                <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
+                                    <MoorhenButton
                                         style={{ marginRight: "0.5rem" }}
                                         onClick={() => {
                                             viewWater(selectedModel, water);
                                         }}
                                     >
                                         View
-                                    </Button>
-                                    <Button
+                                    </MoorhenButton>
+                                    <MoorhenButton
                                         style={{ marginRight: "0.5rem" }}
                                         onClick={() => {
                                             refineWater(selectedModel, water);
                                         }}
                                     >
                                         Refine
-                                    </Button>
-                                    <Button
+                                    </MoorhenButton>
+                                    <MoorhenButton
                                         style={{ marginRight: "0.5rem" }}
                                         onClick={() => {
                                             deleteWater(selectedModel, water);
                                         }}
                                     >
                                         Delete
-                                    </Button>
+                                    </MoorhenButton>
                                 </Col>
                             </Row>
                         </Card.Body>
@@ -166,7 +160,7 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
             if (isDirty.current) {
                 if (!busyFetching.current) {
                     isDirty.current = false;
-                    setTriggerDataFetch((prev) => !prev);
+                    setTriggerDataFetch(prev => !prev);
                 }
                 handleControlFormChange();
             }
@@ -176,53 +170,51 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
     const extraControls = (
         <>
             <Row>
-                <Col
-                    style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}
-                >
-                    <MoorhenPreciseInput
+                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
+                    <MoorhenNumberInput
                         label="B-Factor"
                         labelPosition="top"
                         value={bFactorLim}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setBFactorLim(+newVal);
+                        setValue={newVal => {
+                            setBFactorLim(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Sigma"
                         labelPosition="top"
                         value={sigmaLevel}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setSigmaLevel(parseFloat(newVal));
+                        setValue={newVal => {
+                            setSigmaLevel(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Min. dist."
                         labelPosition="top"
                         value={minDist}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setMinDist(parseFloat(newVal));
+                        setValue={newVal => {
+                            setMinDist(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
                     />
-                    <MoorhenPreciseInput
+                    <MoorhenNumberInput
                         label="Max. dist."
                         labelPosition="top"
                         value={maxDist}
                         decimalDigits={1}
                         type="numberForm"
-                        setValue={(newVal: string) => {
-                            setMaxDist(parseFloat(newVal));
+                        setValue={newVal => {
+                            setMaxDist(newVal);
                             isDirty.current = true;
                             handleControlFormChange();
                         }}
@@ -230,34 +222,31 @@ export const MoorhenWaterValidation = (props: moorhen.CollectedProps) => {
                 </Col>
             </Row>
             <Row>
-                <Stack direction="horizontal" gap={1} style={{ display: "flex" }}>
-                    <InputGroup
-                        className="moorhen-input-group-check"
-                        style={{ display: "flex", justifyContent: "center", width: "100%" }}
-                    >
-                        <Form.Check
+                <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
+                    <InputGroup className="moorhen-input-group-check" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                        <MoorhenToggle
                             label="Ignore part. occ."
                             ref={ignorePartOccRef}
                             type="switch"
                             style={{ marginRight: "2rem" }}
                             checked={ignorePartOcc}
                             onChange={() => {
-                                setIgnorePartOcc((prev) => !prev);
-                                setTriggerDataFetch((prev) => !prev);
+                                setIgnorePartOcc(prev => !prev);
+                                setTriggerDataFetch(prev => !prev);
                             }}
                         />
-                        <Form.Check
+                        <MoorhenToggle
                             label="Ignore zero occ."
                             ref={ignoreZeroOccRef}
                             type="switch"
                             checked={ignoreZeroOcc}
                             onChange={() => {
-                                setIgnoreZeroOcc((prev) => !prev);
-                                setTriggerDataFetch((prev) => !prev);
+                                setIgnoreZeroOcc(prev => !prev);
+                                setTriggerDataFetch(prev => !prev);
                             }}
                         />
                     </InputGroup>
-                </Stack>
+                </MoorhenStack>
             </Row>
         </>
     );
