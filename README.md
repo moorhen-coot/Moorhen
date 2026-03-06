@@ -95,13 +95,19 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **Updating**
 
-When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+When you wish to update the application from this git repository, do the following steps:
 1. `git pull`
-2. `cd checkout/coot-1.0`
-3. `git pull`
-4. `cd ../..`
-5. `./moorhen_build.sh moorhen`
-6. `./moorhen_build.sh --64bit moorhen`
+2. `./moorhen_build.sh moorhen`
+3. `./moorhen_build.sh --64bit moorhen`
+
+### **Updating Coot and Lhasa dependencies (for developers)**
+
+When you wish to update the `Coot` (and/or [`Lhasa`](https://github.com/moorhen-coot/LhasaReact)) git repository used for compiling Moorhen, do the following steps:
+1. `./update_git_rev coot`
+2. `./moorhen_build.sh moorhen`
+3. `./moorhen_build.sh --64bit moorhen`
+
+For updating `Lhasa`, substitute `coot` for `lhasa` in the first command: `./update_git_rev lhasa`.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen application*
