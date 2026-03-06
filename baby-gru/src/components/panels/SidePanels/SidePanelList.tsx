@@ -5,12 +5,9 @@ import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type BuiltinPanelIDs = "models" | "maps" | "sceneSettings";
-export type PanelIDs = BuiltinPanelIDs | (string & {});
-
+export type SidePanelIDs = "models" | "maps" | "sceneSettings";
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
-
-export const PanelsList: Record<string, MoorhenPanel> = {
+export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
     models: { icon: "menuModels", label: "Models", panelContent: <ModelsPanel /> },
     sceneSettings: {

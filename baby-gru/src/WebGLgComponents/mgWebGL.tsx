@@ -5,7 +5,6 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { MoorhenReduxStoreType} from "../store/MoorhenReduxStore"
 import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
 import { parseAtomInfoLabel, guid, get_grid , gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
@@ -103,8 +102,9 @@ import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQ
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
-import { Dispatch } from '@reduxjs/toolkit';
+import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
+import { RootState } from '@/store/MoorhenReduxStore';
 
 function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -159,7 +159,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         props: webGL.MGWebGLPropsInterface;
 
         //Other stuff
-        store: MoorhenReduxStoreType
+        store: Store<RootState>;
         dispatch: Dispatch<any>;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule

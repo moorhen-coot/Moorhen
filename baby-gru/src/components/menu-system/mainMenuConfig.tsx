@@ -1,7 +1,7 @@
 import React from "react";
 import { ModalKey } from "../../store/modalsSlice";
 import { MoorhenSVG } from "../icons";
-import { PanelIDs } from "../panels";
+import { SidePanelIDs } from "../panels";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import "./main-menu.css";
 
@@ -22,7 +22,7 @@ export type MainMenuEntryModal = {
 export type MainMenuEntryPanel = {
     type: "panel";
     label: string;
-    panel: PanelIDs;
+    panel: SidePanelIDs;
 } & Icon;
 
 export type MainMenuEntryJSX = {
