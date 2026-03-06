@@ -9,7 +9,7 @@ Planned features
 - [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
 - [ ] Fix multiview with shadows.
 - [ ] Fix multiview with transparency and edge detect/SSAO.
-- [ ] -DRDK_BUILD_INCHI_SUPPORT=ON
+- [ ] -DRDK_BUILD_INCHI_SUPPORT=ON ~ Hey! I've done that already! ~ J.S.
 
 ### For 0.23.0
 - [x] Fix SSAO.
