@@ -12,6 +12,8 @@ jobs:
 
       - uses: actions/checkout@v3
         name: Checkout Moorhen
+        with:
+          submodules: recursive
   
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/       

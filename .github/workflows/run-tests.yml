@@ -12,6 +12,8 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        submodules: recursive
     
     - name: Install node.js v22
       uses: actions/setup-node@v3
