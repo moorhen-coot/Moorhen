@@ -303,12 +303,13 @@ export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100);
 }
 
-export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        resolveCallback(reader.result);
-    };
+export const readGzippedTextFile = async (source: File): Promise<string> => {
+    const data = await source.arrayBuffer()
+    const gUnZippeData = pako.inflate(data, { to: 'string' })
+    return gUnZippeData
+}
 
+<<<<<<< HEAD
     return new Promise((resolve, reject) => {
         const reader: FileReader = new FileReader();
         reader.addEventListener("load", () => resolveReader(reader, resolve));
@@ -353,6 +354,13 @@ export const readDataFile = (source: File): Promise<ArrayBuffer> => {
         reader.readAsArrayBuffer(source);
     });
 };
+=======
+export const readGzippedDataFile = async (source: File): Promise<ArrayBuffer> => {
+    const data = await source.arrayBuffer()
+    const gUnZippeData = pako.inflate(data)
+    return gUnZippeData
+}
+>>>>>>> origin/main
 
 const downloadFile = (file: File, fileName: string) => {
     const url = window.URL.createObjectURL(file);
