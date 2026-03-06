@@ -295,8 +295,8 @@ getcoot() {
         fi
     else
         echo "Downloading coot-1.0..."
-        git clone --depth 1 --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
-        git -C coot-1.0 fetch --depth 1 origin $coot_commit &&\
+        git clone --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
+        git -C coot-1.0 fetch origin &&\
         git -C coot-1.0 checkout $coot_commit
     fi
     echo
@@ -315,8 +315,8 @@ getlhasa() {
         fi
     else
         echo "Downloading LhasaReact..."
-        git clone --depth 1 --branch main https://github.com/moorhen-coot/LhasaReact.git &&\
-        git -C LhasaReact fetch --depth 1 origin $lhasa_commit &&\
+        git clone --branch main https://github.com/moorhen-coot/LhasaReact.git &&\
+        git -C LhasaReact fetch origin &&\
         git -C LhasaReact checkout $lhasa_commit
     fi
     echo    
