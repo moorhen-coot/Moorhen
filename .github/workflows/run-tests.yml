@@ -23,7 +23,7 @@ jobs:
     - name: Install Lhasa sources
       working-directory: /home/runner/work/Moorhen/Moorhen
       run: |
-          source ./get_sources_funs && getlhasa && cp -r LhasaReact ../baby-gru/src/
+          source ./get_sources_funs && echo pwd and ls: $(pwd) && ls && getlhasa && echo pwd and ls: $(pwd) && ls && cp -r LhasaReact ../baby-gru/src/
 
     - name: Install dependencies
       working-directory: baby-gru
