@@ -25,8 +25,7 @@ jobs:
       run: |
           source VERSIONS && source ./get_sources_funs && getlhasa
           echo The MOORHEN_SOURCE_DIR resolved by get_sources_funs is wrong because it\'s being sourced \(not executed directly\). And we need to source it here..
-          mkdir -p /home/runner/work/Moorhen/Moorhen/checkout
-          mv LhasaReact /home/runner/work/Moorhen/Moorhen/checkout/
+          cd .. && mv checkout /home/runner/work/Moorhen/Moorhen/
           cd /home/runner/work/Moorhen/Moorhen && cp -rv checkout/LhasaReact baby-gru/src/
 
     - name: Install dependencies
