@@ -204,6 +204,13 @@ clearslicendice() {
     rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
 }
 
+clearconkit() {
+    echo "Clear ConKit"
+    rm -rf ${BUILD_DIR}/conkit_build
+    rm -rf ${INSTALL_DIR}/include/conkit
+    rm -rf ${INSTALL_DIR}/lib/libconkit.a
+}
+
 clearsigcpp() {
     echo "Clear sigc++"
     rm -rf ${BUILD_DIR}/libsigcplusplus_build
@@ -257,6 +264,7 @@ clearall() {
     clearprivateer
     clearssm
     clearslicendice
+    clearconkit
     clearsigcpp
     cleargraphene
     clearmoorhen
@@ -304,6 +312,8 @@ else
            ssm) clearssm
                ;;
            slicendice) clearslicendice
+               ;;
+           conkit) clearconkit
                ;;
            sigcpp) clearsigcpp
                ;;
