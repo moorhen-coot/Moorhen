@@ -36,6 +36,8 @@
 #include "slicendice_cpp/pae_igraph.h"
 #include "Eigen/Dense"
 
+#include "conkit/conkit_validate.h"
+
 #include <math.h>
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -2405,7 +2407,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("bond_has_hydrogen_flag",&moorhen::h_bond::bond_has_hydrogen_flag)
     ;
 
-    value_object<moorhen::h_bond_atom>(" h_bond_atom")
+    value_object<moorhen::h_bond_atom>("h_bond_atom")
         .field("serial",&moorhen::h_bond_atom::serial)
         .field("x",&moorhen::h_bond_atom::x)
         .field("y",&moorhen::h_bond_atom::y)
@@ -2420,6 +2422,27 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("res_no",&moorhen::h_bond_atom::res_no)
         .field("residue_name",&moorhen::h_bond_atom::residue_name)
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
+    ;
+
+    value_object<ValidateOptions>("ConKitValidateOptions")
+        .field("seqfile",&ValidateOptions::seqfile)
+        .field("seqformat",&ValidateOptions::seqformat)
+        .field("model_file",&ValidateOptions::model_file)
+        .field("pdb_file",&ValidateOptions::pdb_file)
+        .field("pdb_chain",&ValidateOptions::pdb_chain)
+        .field("model_chain",&ValidateOptions::model_chain)
+        .field("output",&ValidateOptions::output)
+        .field("overwrite",&ValidateOptions::overwrite)
+        .field("gap_opening_penalty",&ValidateOptions::gap_opening_penalty)
+        .field("seq_separation_cutoff",&ValidateOptions::seq_separation_cutoff)
+        .field("n_iterations",&ValidateOptions::n_iterations)
+        .field("use_gap_ss",&ValidateOptions::use_gap_ss)
+        .field("gap_ss_w",&ValidateOptions::gap_ss_w)
+        .field("use_prf",&ValidateOptions::use_prf)
+        .field("prf_w",&ValidateOptions::prf_w)
+        .field("map_align_silent",&ValidateOptions::map_align_silent)
+        .field("silent",&ValidateOptions::silent)
+        .field("renumber",&ValidateOptions::renumber)
     ;
 
     register_vector<molecules_container_t::fit_ligand_info_t>("VectorFitLigandInfo_t");
@@ -2669,5 +2692,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_mtz_columns",&get_mtz_columns);
     function("get_coord_header_info",&get_coord_header_info);
     function("is64bit",&is64bit);
+
+    function("run_conkit_validate",&run_conkit_validate);
 
 }
