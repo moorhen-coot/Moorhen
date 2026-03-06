@@ -3,12 +3,13 @@ import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
 import pako from "pako";
+import { CommandCentre, WorkerResponse } from "@/InstanceManager/CommandCentre";
+import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
+import type { MoorhenMolecule, ResidueInfo } from "@/utils//MoorhenMolecule";
 import { Shortcut } from "../components/managers/preferences";
-import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
-import type { ResidueInfo } from "./MoorhenMolecule";
 
 export const make3MFZipFile = async modelFile => {
     const zip = new JSZip();
@@ -88,11 +89,11 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 };
 
 export const getCentreAtom = async (
-    molecules: moorhen.Molecule[],
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
+    molecules: MoorhenMolecule[],
+    commandCentre: React.RefObject<CommandCentre>,
     store: MoorhenReduxStoreType
-): Promise<[moorhen.Molecule, string]> => {
-    const visibleMolecules: moorhen.Molecule[] = molecules.filter((molecule: moorhen.Molecule) => molecule.isVisible());
+): Promise<[MoorhenMolecule, string]> => {
+    const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
     const originState = store.getState().glRef.origin;
     if (visibleMolecules.length === 0) {
         return [null, null];
@@ -104,10 +105,10 @@ export const getCentreAtom = async (
             commandArgs: [...originState.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(":")],
         },
         false
-    )) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>;
+    )) as WorkerResponse<libcootApi.PairType<number, string>>;
     const moleculeMolNo: number = response.data.result.result.first;
     const residueCid: string = response.data.result.result.second;
-    const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo);
+    const selectedMolecule = visibleMolecules.find((molecule: MoorhenMolecule) => molecule.molNo === moleculeMolNo);
     return [selectedMolecule, residueCid];
 };
 
@@ -302,55 +303,16 @@ export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100);
 }
 
-export const readTextFile = (source: File): Promise<ArrayBuffer | string> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        resolveCallback(reader.result);
-    };
-
-    return new Promise((resolve, reject) => {
-        const reader: FileReader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsText(source);
-    });
+export const readGzippedTextFile = async (source: File): Promise<string> => {
+    const data = await source.arrayBuffer();
+    const gUnZippeData = pako.inflate(data, { to: "string" });
+    return gUnZippeData;
 };
 
-export const readGzippedTextFile = (source: File): Promise<ArrayBuffer> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        let res = ""
-        const chunk = 32*1024;
-        const gUnZippeData = pako.inflate(reader.result)
-        let i
-        for (i = 0; i < gUnZippeData.length/chunk; i++) {
-            res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk,(i+1)*chunk));
-        }
-        res += String.fromCharCode.apply(null,gUnZippeData.subarray(i*chunk));
-        resolveCallback(res);
-    };
-
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsArrayBuffer(source);
-    });
-};
-
-export const readDataFile = (source: File): Promise<ArrayBuffer> => {
-    const resolveReader = (reader: FileReader, resolveCallback) => {
-        reader.removeEventListener("load", resolveCallback);
-        if (typeof reader.result === "string") {
-            resolveCallback(JSON.parse(reader.result));
-        } else {
-            resolveCallback(reader.result);
-        }
-    };
-
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolveReader(reader, resolve));
-        reader.readAsArrayBuffer(source);
-    });
+export const readGzippedDataFile = async (source: File): Promise<ArrayBuffer> => {
+    const data = await source.arrayBuffer();
+    const gUnZippeData = pako.inflate(data);
+    return gUnZippeData;
 };
 
 const downloadFile = (file: File, fileName: string) => {
@@ -469,7 +431,7 @@ type ResidueInfoType = {
 };
 
 export const getResidueInfo = (
-    molecules: moorhen.Molecule[],
+    molecules: MoorhenMolecule[],
     selectedMolNo: number,
     selectedChain: string,
     selectedResidueIndex: number
@@ -621,7 +583,7 @@ const getSecondaryStructureColourRules = (secondaryStructureInfo: libcootApi.Res
     return result.join("|");
 };
 
-export const getMultiColourRuleArgs = async (molecule: moorhen.Molecule, ruleType: string): Promise<string> => {
+export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType: string): Promise<string> => {
     let multiRulesArgs: string;
     switch (ruleType) {
         case "secondary-structure":
@@ -854,10 +816,8 @@ export const gemmiAtomPairsToCylindersInfo = (
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip]);
         }
         thisInstance_origins.push(at0.x, at0.y, at0.z);
-        if(individualSizes)
-            thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
-        else
-            thisInstance_sizes.push(...[size, size, l]);
+        if (individualSizes) thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
+        else thisInstance_sizes.push(...[size, size, l]);
         const v = vec3.create();
         const au = vec3.create();
         const a = vec3.create();

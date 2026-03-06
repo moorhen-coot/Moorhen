@@ -9,13 +9,11 @@ import { addMap, addMapList } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
 import { addMoleculeList } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
-import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { readDataFile, readTextFile } from "./utils";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -104,7 +102,7 @@ export const loadCoordFiles = async (
     const loadPromises: Promise<moorhen.Molecule>[] = [];
     for (const file of files) {
         if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
-            const contents = (await readTextFile(file)) as string;
+            const contents = await file.text()
             loadPromises.push(
                 readCoordsString(contents, file.name, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
             );
@@ -163,7 +161,7 @@ export const handleSessionUpload = async (
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     dispatch: Dispatch<AnyAction>
 ) => {
-    const arrayBuffer = await readDataFile(file);
+    const arrayBuffer = await file.arrayBuffer()
     const bytes = new Uint8Array(arrayBuffer);
     const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
     await loadSession(sessionMessage, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
@@ -233,16 +231,16 @@ const loadMrParseJson = async (files: File[]) => {
 
     for (const file of files) {
         if (file.name.endsWith("input.fasta")) {
-            fastaContents = (await readTextFile(file)) as string;
+            fastaContents = await file.text()
         }
         if (file.name.endsWith("af_models.json")) {
-            afModelContents = (await readTextFile(file)) as string;
+            afModelContents = await file.text()
         }
         if (file.name.endsWith("esm_models.json")) {
-            esmModelContents = (await readTextFile(file)) as string;
+            esmModelContents = await file.text()
         }
         if (file.name.endsWith("homologs.json")) {
-            homologsContents = (await readTextFile(file)) as string;
+            homologsContents = await file.text()
         }
     }
 
@@ -264,7 +262,7 @@ const loadCoordinateFilesFromFileList = async (
     for (const file of files) {
         for (const modelFile of modelFiles) {
             if (file.webkitRelativePath.includes(modelFile) || (file.webkitRelativePath.length === 0 && modelFile.includes(file.name))) {
-                const contents = (await readTextFile(file)) as string;
+                const contents = await file.text()
                 loadPromises.push(
                     readCoordsString(contents, file.name, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
                 );
@@ -483,7 +481,7 @@ export const autoOpenFiles = async (
     for (const file of files) {
         if (file.name.endsWith(".json")) {
             try {
-                const fileContents = (await readTextFile(file)) as string;
+                const fileContents = await file.text()
                 const json = JSON.parse(fileContents);
                 dispatch(setValidationJson(json));
                 dispatch(showModal(modalKeys.JSON_VALIDATION));

@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { setValidationJson } from "../../store/jsonValidation";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, readTextFile } from "../../utils/utils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
@@ -19,7 +19,7 @@ export const MoorhenJsonValidationModal = () => {
 
     const loadJsonFiles = async (files: FileList) => {
         for (const file of files) {
-            const fileContents = (await readTextFile(file)) as string;
+            const fileContents = await file.text()
             const json = JSON.parse(fileContents);
             dispatch(setValidationJson(json));
         }

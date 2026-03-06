@@ -3,7 +3,8 @@ import { useSnackbar } from "notistack";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
@@ -47,7 +48,7 @@ const newVector = () => {
         textColour: { r: 0, g: 0, b: 0 },
     };
     return aVector;
-}
+};
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
@@ -66,6 +67,7 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
+    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
     const handleRunConKit = async () => {
         if(conKitFile1Contents.length==0 || conKitFile2Contents.length==0){
@@ -89,24 +91,24 @@ export const MoorhenDevMenu = () => {
     }
 
     useEffect(() => {
-        dispatch(removeVectors(testVectors))
-        const myVecs:MoorhenVector[] = []
-        for(let i=0;i<10;i++){
-            const vec = newVector()
-            vec.xTo = 10
-            vec.yTo = i*2
-            vec.yFrom = i*2
-            vec.coordsMode = "points"
-            vec.arrowMode = "both"
-            vec.uniqueId += "__TAG_DEV_TEST_VECTOR"
-            vec.radius = 0.07 + i * 0.01
-            myVecs.push(vec)
+        dispatch(removeVectors(testVectors));
+        const myVecs: MoorhenVector[] = [];
+        for (let i = 0; i < 10; i++) {
+            const vec = newVector();
+            vec.xTo = 10;
+            vec.yTo = i * 2;
+            vec.yFrom = i * 2;
+            vec.coordsMode = "points";
+            vec.arrowMode = "both";
+            vec.uniqueId += "__TAG_DEV_TEST_VECTOR";
+            vec.radius = 0.07 + i * 0.01;
+            myVecs.push(vec);
         }
-        setTestVectors(myVecs)
+        setTestVectors(myVecs);
         return () => {
             //Remove all with "__DEV_TEST_VECTOR" in uniqueID. This gets around problem with stale state at unmount.
-            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"))
-        }
+            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"));
+        };
     }, []);
 
     const urlPrefix = usePaths().urlPrefix;
@@ -130,8 +132,8 @@ export const MoorhenDevMenu = () => {
 
     const loadGzippedFiles = async (files: FileList) => {
         for (const file of files) {
-            const fileContents = (await readGzippedTextFile(file));
-            console.log(fileContents)
+            const fileContents = await readGzippedTextFile(file);
+            console.log(fileContents);
         }
     };
 
@@ -147,12 +149,12 @@ export const MoorhenDevMenu = () => {
     };
 
     const loadVectorsBunch = async evt => {
-        dispatch(removeVectors(testVectors))
+        dispatch(removeVectors(testVectors));
         setVectorsOn(evt.target.checked);
         if (evt.target.checked) {
-            dispatch(addVectors(testVectors))
+            dispatch(addVectors(testVectors));
         }
-    }
+    };
 
     const loadExampleOverlays = async evt => {
         dispatch(emptyOverlays());
@@ -419,6 +421,14 @@ export const MoorhenDevMenu = () => {
                     label="Load example 2D overlays"
                 />
             </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={toggleValidationPanel}
+                onChange={() => {
+                    dispatch(setShownBottomPanel(toggleValidationPanel ? "sequences-viewer" : "validation"));
+                }}
+                label="Show validation panel"
+            />
             <InputGroup className="moorhen-input-group-check">
                 <MoorhenToggle
                     type="switch"
@@ -430,12 +440,12 @@ export const MoorhenDevMenu = () => {
                 />
             </InputGroup>
             <MenuItem>
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadGzippedFiles(e.target.files);
-                        }}
-                    />
+                <Form.Control
+                    type="file"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadGzippedFiles(e.target.files);
+                    }}
+                />
                 Gzipped Text Read test
             </MenuItem>
             <hr className="moorhen_menu-hr"></hr>

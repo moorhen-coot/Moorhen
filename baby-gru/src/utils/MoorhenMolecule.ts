@@ -25,7 +25,6 @@ import {
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
-    readTextFile,
 } from "./utils";
 
 export type ResidueInfo = {
@@ -892,7 +891,7 @@ export class MoorhenMolecule {
      */
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
-            const coordData = await readTextFile(source);
+            const coordData = await source.text()
             let is_small = false;
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
                 is_small = window.CCP4Module.is_small_structure(coordData as string);
