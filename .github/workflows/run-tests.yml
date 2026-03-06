@@ -23,7 +23,9 @@ jobs:
     - name: Install Lhasa sources
       working-directory: baby-gru
       run: |
-          source ./get_sources_funs && getlhasa
+          source ../get_sources_funs && getlhasa
+          echo pwd $(pwd)
+          cd ../baby-gru
           cp -r ../checkout/LhasaReact ./src/
 
     - name: Install dependencies
