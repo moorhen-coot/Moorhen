@@ -364,13 +364,11 @@ export const SMILESToLigand = () => {
 
 export const ImportDictionary = () => {
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([]);
-    const filesRef = useRef<null | HTMLInputElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectValueRef = useRef<null | string>(null);
     const addToRef = useRef<null | HTMLSelectElement>(null);
     const addToMoleculeValueRef = useRef<null | number>(null);
     const tlcSelectRef = useRef<null | HTMLSelectElement>(null);
-    const tlcValueRef = useRef<null | string>(null);
     const createRef = useRef<boolean>(true);
 
     const [tlc, setTlc] = useState<string>("");
@@ -432,7 +430,6 @@ export const ImportDictionary = () => {
                 value={tlc}
                 onChange={newVal => {
                     setTlc(newVal.target.value);
-                    tlcValueRef.current = newVal.target.value;
                 }}
             >
                 {tlcsOfFile.map(tlcOfFile => (
@@ -445,8 +442,8 @@ export const ImportDictionary = () => {
     );
 
     const fetchLigandDict = async (): Promise<string> => {
-        if (filesRef.current.files.length > 0 && tlcValueRef.current) {
-            const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlcValueRef.current);
+        if (tlc) {
+            const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlc);
             if (ligandInfo) {
                 return ligandInfo.dict_contents;
             } else {
