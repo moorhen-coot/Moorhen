@@ -296,7 +296,7 @@ getcoot() {
 getlhasa() {
     cdcheckout
     if [ -r LhasaReact ]; then
-        if [ -eq "x$(git -C LhasaReact rev-parse --short main)" = "x$lhasa_commit" ];then
+        if [ "x$(git -C LhasaReact rev-parse --short main)" = "x$lhasa_commit" ];then
             echo "Using existing LhasaReact"
         else
             echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short main) -> $lhasa_commit)"

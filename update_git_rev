@@ -2,7 +2,7 @@
 
 # This script can be used to update the git commit hash for certain dependencies in VERSIONS
 show_help() {
-	echo "This script is used for updating the git commit hash (in the VERSIONS file) of certain dependencies (like lhasa or coot) to their newest verions."
+	echo "This script is used for updating the git commit hash (in the VERSIONS file) of certain dependencies (like lhasa or coot) to their newest verions. Intended to be used by Moorhen developers."
 	echo "Usage:"
 	echo "    $0 <dependency> [optional commit hash (other than the newest)]"
 	echo "---"

@@ -19,7 +19,7 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* libcoot main branch (last release tag 1.1.20)
+* libcoot (commit hash specified in `VERSIONS`; latest release is 1.20) 
 * fftw 2.1.5
 * fftw3 3.3.5
 * gsl 2.7.1
@@ -76,7 +76,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `source ./emsdk_env.sh`
 
 3. Get the source:  
-`git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
+`git clone https://github.com/moorhen-coot/Moorhen.git`  
 `cd Moorhen`
 
 4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
@@ -97,12 +97,11 @@ And then point a web browser at `http://localhost:5173/` .
 
 When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
 1. `git pull`
-2. `git submodule update -f --remote --merge`
-3. `cd checkout/coot-1.0`
-4. `git pull`
-5. `cd ../..`
-6. `./moorhen_build.sh moorhen`
-7. `./moorhen_build.sh --64bit moorhen`
+2. `cd checkout/coot-1.0`
+3. `git pull`
+4. `cd ../..`
+5. `./moorhen_build.sh moorhen`
+6. `./moorhen_build.sh --64bit moorhen`
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen application*
