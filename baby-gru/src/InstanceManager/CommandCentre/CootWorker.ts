@@ -1627,6 +1627,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(pdb_file_str)
         cootModule.FS_unlink(model_file_str)
         const jsonContents = cootModule.FS.readFile("conkit.json", { encoding: 'utf8' })
+        cootModule.FS_unlink("conkit.json")
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
