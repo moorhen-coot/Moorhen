@@ -9,7 +9,7 @@ jobs:
     steps:
 
       # Checkout repository
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         name: Checkout Moorhen
 
       # Install some general dependencies
