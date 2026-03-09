@@ -69,27 +69,6 @@ export const MoorhenDevMenu = () => {
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
-    const handleRunConKit = async () => {
-        if(conKitFile1Contents.length==0 || conKitFile2Contents.length==0){
-            return
-        }
-        const response = (await commandCentre.current.cootCommand(
-            {
-                message: "run_conkit_validate",
-                command: "run_conkit_validate",
-                returnType: "string",
-                commandArgs: [conKitFile1Contents,conKitFile2Contents],
-            },
-            false
-        )) as moorhen.WorkerResponse<string>;
-
-        //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
-        const json_string = response.data.result as any as string
-
-        console.log(JSON.parse(json_string))
-        
-    }
-
     useEffect(() => {
         dispatch(removeVectors(testVectors));
         const myVecs: MoorhenVector[] = [];
@@ -115,20 +94,6 @@ export const MoorhenDevMenu = () => {
     // This is a bunch of examples of adding images (bitmap or svg), legends, paths in fractional coords on
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
-
-    const handleConKitFile1Changed = async (files: FileList) => {
-        for (const file of files) {
-            const fileContents = await file.text()
-            setConKitFile1Contents(fileContents)
-        }
-    };
-
-    const handleConKitFile2Changed = async (files: FileList) => {
-        for (const file of files) {
-            const fileContents = await file.text()
-            setConKitFile2Contents(fileContents)
-        }
-    };
 
     const loadGzippedFiles = async (files: FileList) => {
         for (const file of files) {
@@ -448,27 +413,6 @@ export const MoorhenDevMenu = () => {
                 />
                 Gzipped Text Read test
             </MenuItem>
-            <hr className="moorhen_menu-hr"></hr>
-                    Conkit Input File
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            handleConKitFile1Changed(e.target.files);
-                        }}
-                    />
-                    Conkit Model
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            handleConKitFile2Changed(e.target.files);
-                        }}
-                    />
-                    <MoorhenButton
-                    onClick={() => {
-                        handleRunConKit();
-                    }}
-                    >Run ConKit</MoorhenButton>
-            <hr className="moorhen_menu-hr"></hr>
         </>
     );
 };

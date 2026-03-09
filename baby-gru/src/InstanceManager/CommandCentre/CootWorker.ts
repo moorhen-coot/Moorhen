@@ -1594,9 +1594,9 @@ onmessage = function (e) {
 
         const fileDataPdb = e.data.commandArgs[0]
         const fileDataModel = e.data.commandArgs[1]
-
-        const model_file_str = "model.cif"
-        const pdb_file_str = "pdb.pdb"
+        const pdb_file_str = e.data.commandArgs[2]
+        const model_file_str = e.data.commandArgs[3]
+        const pdb_chain = e.data.commandArgs[4]
 
         cootModule.FS_createDataFile(".", pdb_file_str, fileDataPdb, true, true);
         cootModule.FS_createDataFile(".", model_file_str, fileDataModel, true, true);
@@ -1608,7 +1608,7 @@ onmessage = function (e) {
             seqformat: "fasta",
             output: "conkit.json",
             overwrite: false,
-            pdb_chain: "n",
+            pdb_chain: pdb_chain,
             model_chain: "",
             gap_opening_penalty: -1.0,
             gap_extension_penalty: -0.01,
