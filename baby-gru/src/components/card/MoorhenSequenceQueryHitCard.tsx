@@ -1,6 +1,7 @@
 import { enqueueSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useMemo } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -16,7 +17,7 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
 

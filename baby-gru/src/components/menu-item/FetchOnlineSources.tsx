@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
@@ -25,7 +26,7 @@ export const FetchOnlineSources = () => {
 
     const { sources, downloadMaps } = { ...defaultProps };
 
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
