@@ -466,11 +466,10 @@ export const autoOpenFiles = async (
                 backgroundColor,
                 defaultBondSmoothness
             );
+
             if (newMolecule.molNo === -1) {
-                //enqueueSnackbar("Failed to read molecule", { variant: "warning" });
                 console.log("Failed to read molecule");
                 if (newMolecule.ligands.length > 0) {
-                    enqueueSnackbar(`Failed to read molecule ${file.name} is this a ligand dictionary?`, { variant: "warning" });
                     const newMonomer = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                     await commandCentre.current.cootCommand(
                         {
@@ -502,8 +501,14 @@ export const autoOpenFiles = async (
                         await newMonomer.fetchIfDirtyAndDraw("CBs");
                         dispatch(addMolecule(newMonomer));
                     }
+                } else {
+                    enqueueSnackbar(`Failed to read molecule ${file.name}`, { variant: "warning" });
                 }
+            } else if (newMolecule.atomCount === 0) {
+                console.log(`Molecule ${file.name} has no atoms, skipping...`);
+                continue;
             } else {
+                console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
                 await drawModels([newMolecule]);
                 dispatch(addMoleculeList([newMolecule]));
                 newMolecule.centreOn("/*/*/*/*", true);
