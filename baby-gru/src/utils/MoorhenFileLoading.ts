@@ -506,6 +506,7 @@ export const autoOpenFiles = async (
                 }
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
+                enqueueSnackbar(`Failed to read molecule ${file.name}, no atoms found`, { variant: "warning" });
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
@@ -516,7 +517,7 @@ export const autoOpenFiles = async (
         } else if (file.name.endsWith(".mtz")) {
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
             if (newMaps.length === 0) {
-                //enqueueSnackbar('Error reading mtz file', { variant: "warning" })
+                enqueueSnackbar(`Failed to read mtz file ${file.name}`, { variant: "warning" });
             } else {
                 dispatch(addMapList(newMaps));
                 dispatch(setActiveMap(newMaps[0]));
@@ -525,7 +526,7 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
             } catch (e) {
-                //enqueueSnackbar("Error loading the session", { variant: "warning" })
+                enqueueSnackbar(`Failed to load session ${file.name}`, { variant: "warning" });
             }
             break; //We only load the first session.
         } else if (file.name.endsWith(".json")) {
@@ -535,7 +536,7 @@ export const autoOpenFiles = async (
                 dispatch(setValidationJson(json));
                 dispatch(showModal(modalKeys.JSON_VALIDATION));
             } catch (e) {
-                //enqueueSnackbar("Error loading json validation", { variant: "warning" })
+                enqueueSnackbar(`Failed to load json validation ${file.name}`, { variant: "warning" });
             }
         } else if (
             file.name.endsWith(".mrc") ||
