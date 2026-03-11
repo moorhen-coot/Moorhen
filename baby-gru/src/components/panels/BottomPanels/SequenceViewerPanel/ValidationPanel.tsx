@@ -3,7 +3,8 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import { MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import { MoorhenMapSelect } from "@/components/inputs/";
 import { MoorhenStack } from "@/components/interface-base/Stack/Stack";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
@@ -15,12 +16,10 @@ import {
     handleResiduesSelection,
     useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
-import { MoorhenMapSelect } from "@/moorhen";
 import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { convertRemToPx } from "@/utils/utils";
-import { ValidationTracks } from "../../../sequence-viewer/ValidationTracks";
 import "./sequence-viewer-panel.css";
 
 export const ValidationPanel = () => {
