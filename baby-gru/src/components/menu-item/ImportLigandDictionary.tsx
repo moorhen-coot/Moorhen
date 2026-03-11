@@ -5,6 +5,7 @@ import { Dropdown, Form, InputGroup, OverlayTrigger, SplitButton, Tooltip } from
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { MoorhenStoreRootState } from "@/moorhen";
+import { parseCifDict } from "@/utils/MoorhenFileLoading";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
@@ -438,21 +439,6 @@ export const ImportDictionary = () => {
         addToRef,
         addToMoleculeValueRef,
         moleculeSelectValueRef,
-    };
-
-    const parseCifDict = async (file: File) => {
-        const result: { comp_id: string; dict_contents: string }[] = [];
-        const fileContent = await file.text();
-        const compIdsVector = window.CCP4Module.parse_ligand_dict_info(fileContent);
-        const compIdsVectorSize = compIdsVector.size();
-        for (let i = 0; i < compIdsVectorSize; i++) {
-            const ligandInfo = compIdsVector.get(i);
-            if (ligandInfo.comp_id.length > 0) {
-                result.push({ ...ligandInfo });
-            }
-        }
-        compIdsVector.delete();
-        return result;
     };
 
     const panelContent = (
