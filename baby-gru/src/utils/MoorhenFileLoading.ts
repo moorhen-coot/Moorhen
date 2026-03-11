@@ -1,13 +1,13 @@
 import Fasta from "biojs-io-fasta";
 import { enqueueSnackbar } from "notistack";
-import type { Dispatch, Store, StoreCreator } from "redux";
-import { MoorhenReduxStoreType, hideMap } from "@/store";
+import type { Dispatch, Store } from "redux";
+import { MoorhenReduxStoreType } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
 import { addMap, addMapList } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
-import { addMolecule, addMoleculeList } from "../store/moleculesSlice";
+import { addMoleculeList } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
 import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
@@ -493,7 +493,6 @@ export const autoOpenFiles = async (
         return;
     }
 
-    const dictionaryFilesContent: string[] = [];
     const moleculesCreated: MoorhenMolecule[] = [];
     for (const file of files) {
         //Structures
@@ -610,14 +609,6 @@ export const autoOpenFiles = async (
     if (moleculesCreated.length > 0) {
         moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
     }
-    // if (dictionaryFilesContent && dictionaryFilesContent.length > 0) {
-    //                 await Promise.all(
-    //                     molecules.map(molecule => {
-    //                         molecule.cacheLigandDict(fileContent);
-    //                         molNosToUpdate.push(molecule.molNo);
-    //                         return molecule.redraw();
-    //                     })
-    // );
     if (isRelionLocresFolder) {
         dispatch(showModal("colour-map-by-map"));
     }
