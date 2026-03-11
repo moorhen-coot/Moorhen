@@ -420,6 +420,46 @@ export const loadMrParseUrl = async (
     dispatch(setMrParseModels(newMolecules));
 };
 
+const readCifDictionary = async (file: File, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
+    const dictionary = await parseCifDict(file);
+    if (dictionary.length === 0) {
+        return null;
+    }
+    const newMonomers: MoorhenMolecule[] = [];
+    for (const dict of dictionary) {
+        const newMonomer = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        await commandCentre.current.cootCommand(
+            {
+                returnType: "status",
+                command: "read_dictionary_string",
+                commandArgs: [dict.dict_contents, -999999],
+                changesMolecules: [],
+            },
+            false
+        );
+        // dictionaryFilesContent.push(content);
+        // const compIdsVector = window.CCP4Module.parse_ligand_dict_info(content);
+
+        const result: moorhen.WorkerResponse<number> = await commandCentre.current.cootCommand(
+            {
+                returnType: "status",
+                command: "get_monomer_and_position_at",
+                commandArgs: [dict.comp_id, -999999, ...store.getState().glRef.origin.map(coord => -coord)],
+            },
+            true
+        );
+        if (result.data.result.status === "Completed") {
+            newMonomer.molNo = result.data.result.result;
+            newMonomer.name = file.name;
+            newMonomer.setBackgroundColour(backgroundColor);
+            newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
+            newMonomer.coordsFormat = "mmcif";
+            newMonomer.addDict(dict.dict_contents);
+            newMonomers.push(newMonomer);
+        }
+    }
+    return newMonomers;
+};
 export const autoOpenFiles = async (
     files: File[],
     commandCentre,
@@ -453,8 +493,10 @@ export const autoOpenFiles = async (
         return;
     }
 
-    // let dictionaryFilesContent: string[] = [];
+    const dictionaryFilesContent: string[] = [];
+    const moleculesCreated: MoorhenMolecule[] = [];
     for (const file of files) {
+        //Structures
         if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
             const content = await file.text();
             const newMolecule = await readCoordsString(
@@ -468,42 +510,23 @@ export const autoOpenFiles = async (
             );
 
             if (newMolecule.molNo === -1) {
-                console.log("Failed to read molecule");
-                if (newMolecule.ligands.length > 0) {
-                    const newMonomer = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
-                    await commandCentre.current.cootCommand(
-                        {
-                            returnType: "status",
-                            command: "read_dictionary_string",
-                            commandArgs: [content, -999999],
-                            changesMolecules: [],
-                        },
-                        false
-                    );
-                    // dictionaryFilesContent.push(content);
-                    // const compIdsVector = window.CCP4Module.parse_ligand_dict_info(content);
-                    const dictionary = await parseCifDict(file);
-                    const result: moorhen.WorkerResponse<number> = await commandCentre.current.cootCommand(
-                        {
-                            returnType: "status",
-                            command: "get_monomer_and_position_at",
-                            commandArgs: [dictionary[0].comp_id, -999999, ...store.getState().glRef.origin.map(coord => -coord)],
-                        },
-                        true
-                    );
-                    if (result.data.result.status === "Completed") {
-                        newMonomer.molNo = result.data.result.result;
-                        newMonomer.name = file.name;
-                        newMonomer.setBackgroundColour(backgroundColor);
-                        newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
-                        newMonomer.coordsFormat = "mmcif";
-                        await Promise.all([newMonomer.fetchDefaultColourRules(), newMonomer.addDict(content)]);
-                        await newMonomer.fetchIfDirtyAndDraw("CBs");
-                        dispatch(addMolecule(newMonomer));
-                    }
-                } else {
-                    enqueueSnackbar(`Failed to read molecule ${file.name}`, { variant: "warning" });
+                console.log("Failed to read molecule from file " + file.name + " trying to read as cif dictionary...");
+                const newMonomer = await readCifDictionary(
+                    file,
+                    commandCentre,
+                    store,
+                    monomerLibraryPath,
+                    backgroundColor,
+                    defaultBondSmoothness
+                );
+                if (newMonomer === null) {
+                    console.log(`Failed to read molecule ${file.name} as a cif dictionary, skipping...`);
+                    enqueueSnackbar(`Failed to read molecule ${file.name} as a structure or cif dictionary`, { variant: "warning" });
+                    continue;
                 }
+                await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
+                dispatch(addMoleculeList(newMonomer));
+                moleculesCreated.push(...newMonomer);
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
                 enqueueSnackbar(`Failed to read molecule ${file.name}, no atoms found`, { variant: "warning" });
@@ -512,7 +535,7 @@ export const autoOpenFiles = async (
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
                 await drawModels([newMolecule]);
                 dispatch(addMoleculeList([newMolecule]));
-                newMolecule.centreOn("/*/*/*/*", true);
+                moleculesCreated.push(newMolecule);
             }
         } else if (file.name.endsWith(".mtz")) {
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
@@ -523,6 +546,7 @@ export const autoOpenFiles = async (
                 dispatch(setActiveMap(newMaps[0]));
             }
         } else if (file.name.endsWith(".pb")) {
+            //Session file
             try {
                 await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
             } catch (e) {
@@ -582,6 +606,9 @@ export const autoOpenFiles = async (
                 document.body.click();
             }
         }
+    }
+    if (moleculesCreated.length > 0) {
+        moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
     }
     // if (dictionaryFilesContent && dictionaryFilesContent.length > 0) {
     //                 await Promise.all(
