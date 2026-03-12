@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Container, Col, Form, Row } from "react-bootstrap";
 import { MoorhenMoleculeSelect } from "../inputs";
@@ -8,6 +8,7 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenButton } from "../inputs";
 import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle"
+import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
 interface MoorhenConKitProps {
     resizeTrigger?: boolean;
@@ -23,6 +24,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null);
     const [selectedInputChain, setSelectedInputChain] = useState<string | null>(null);
     const [selectedRefChain, setSelectedRefChain] = useState<string | null>(null);
+    const [sequencesLists, setSequenceLists] = useState<MoorhenSequenceViewerSequence[] | null>([]);
+    const [conKitMatches, setConKitMatches] = useState<any[] | null>([]);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const inputMoleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -40,8 +43,74 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         setSelectedInputChain(evt.target.value);
     };
 
+    useEffect(() => {
+
+        if (molecules.length === 0) {
+            setSelectedRefModel(null);
+            setSelectedInputModel(null);
+            setSelectedRefChain(null);
+            setSelectedInputChain(null);
+            return;
+        }
+
+        if (selectedRefModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
+            setSelectedRefModel(molecules[0].molNo);
+            if (molecules[0].sequences && molecules[0].sequences.length > 0 && molecules[0].sequences[0].chain) {
+                setSelectedRefChain(molecules[0].sequences[0].chain);
+            } else {
+                setSelectedRefChain("A");
+            }
+        }
+
+        if (selectedInputModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedInputModel)) {
+            setSelectedInputModel(molecules[0].molNo);
+            if (molecules[0].sequences && molecules[0].sequences.length > 0 && molecules[0].sequences[0].chain) {
+                setSelectedInputChain(molecules[0].sequences[0].chain);
+            } else {
+                setSelectedInputChain("A");
+            }
+        }
+    }, [molecules.length]);
+
+    useEffect(() => {
+        const list: MoorhenSequenceViewerSequence[] = [];
+        if(!inputMoleculeSelectRef.current||!molecules[inputMoleculeSelectRef.current.value]){
+            return 
+        }
+        const foundMol = molecules[inputMoleculeSelectRef.current.value]
+        const filteredSeqs =  foundMol.sequences.filter(c => c.chain===selectedInputChain)
+        if(foundMol&&filteredSeqs.length===1){
+            const seq = filteredSeqs[0];
+            const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
+            seqElement.colour = "rgb(128, 128, 128)";
+            seqElement.blockAlternateColour = true;
+            seqElement.missingAs = "none";
+            seqElement.hideResCode = true;
+            let seq1letter = ""
+            if(seqElement.residues.length>0){
+                if(conKitMatches.length>0){
+                    conKitMatches.forEach(m => {
+                        if(m.original_number!==null) {
+                            const found = seqElement.residues.find((element) => element.resNum === m.original_number);
+                            if(found) found.colour = "#00ff00"
+                        }
+                    })
+                }
+                seqElement.residuesDisplayOffset = 0
+                seqElement.residues.forEach(r => {
+                    seq1letter += r.resCode
+                })
+                const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
+                afDisplaySequence.displayName = "Query";
+                list.push(afDisplaySequence);
+                list.push(seqElement);
+            }
+        }
+        setSequenceLists(list)
+    },[inputMoleculeSelectRef.current, molecules, selectedInputChain,conKitMatches])
+
     const runConKit = useCallback(async () => {
-       
+
        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[inputMoleculeSelectRef.current.value].gemmiStructure)
        const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[refMoleculeSelectRef.current.value].gemmiStructure)
 
@@ -61,15 +130,34 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
         const json_string = response.data.result as any as string
 
-        console.log(JSON.parse(json_string))
-       
+        const res = JSON.parse(json_string)
+        setConKitMatches(res.residues)
+
     }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules,specifyTargetChain]);
-    
+
+    const handleModelChange = (evt: number, isReferenceModel: boolean) => {
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
+        if (isReferenceModel) {
+            setSelectedRefModel(evt);
+            if (selectedMolecule.sequences && selectedMolecule.sequences.length > 0 && selectedMolecule.sequences[0].chain) {
+                setSelectedRefChain(selectedMolecule.sequences[0].chain);
+            } else {
+                setSelectedRefChain("A");
+            }
+        } else {
+            setSelectedInputModel(evt);
+            if (selectedMolecule.sequences && selectedMolecule.sequences.length > 0 && selectedMolecule.sequences[0].chain) {
+                setSelectedInputChain(selectedMolecule.sequences[0].chain);
+            } else {
+                setSelectedInputChain("A");
+            }
+        }
+    };
 
     return (<>
                     <MoorhenStack direction="row">
                         <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Input molecule" onSelect={sel => setSelectedInputModel(sel)} ref={inputMoleculeSelectRef} />
+                            <MoorhenMoleculeSelect label="Input molecule" onSelect={sel => handleModelChange(sel, false)} ref={inputMoleculeSelectRef} />
                             <MoorhenChainSelect
                                 width=""
                                 molecules={molecules}
@@ -80,7 +168,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             />
                         </MoorhenStack>
                         <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Reference molecule" onSelect={sel => setSelectedRefModel(sel)} ref={refMoleculeSelectRef} />
+                            <MoorhenMoleculeSelect label="Reference molecule" onSelect={sel => handleModelChange(sel, true)} ref={refMoleculeSelectRef} />
                             <MoorhenStack direction="row">
                             <MoorhenToggle
                             style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
@@ -104,5 +192,12 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                         </MoorhenStack>
                     </MoorhenStack>
                     <MoorhenButton onClick={runConKit}>OK</MoorhenButton>
+                    <MoorhenSequenceViewer
+                        sequences={sequencesLists}
+                        nameColumnWidth={5}
+                        columnWidth={0.45}
+                        fontSize={0.5}
+                        reOrder={false}
+                    />
             </>)
 }
