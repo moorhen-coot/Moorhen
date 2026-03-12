@@ -154,6 +154,14 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         }
     };
 
+    const handleClickResidue = useCallback(
+        (molIndex: number, molName: string, chain: string, resNum: number) => {
+            const foundModel = molecules.find(mod => mod.name === molName);
+            foundModel?.centreOn(`/*/${chain}/${resNum}-${resNum}/*`);
+        },
+        [molecules]
+    );
+
     return (<>
                     <MoorhenStack direction="row">
                         <MoorhenStack direction="column">
@@ -193,6 +201,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                     </MoorhenStack>
                     <MoorhenButton onClick={runConKit}>OK</MoorhenButton>
                     <MoorhenSequenceViewer
+                        onResidueClick={handleClickResidue}
                         sequences={sequencesLists}
                         nameColumnWidth={5}
                         columnWidth={0.45}
