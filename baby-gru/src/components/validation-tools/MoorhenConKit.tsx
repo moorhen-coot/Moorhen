@@ -21,9 +21,9 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const commandCentre = useCommandCentre();
 
     const [selectedInputModel, setSelectedInputModel] = useState<null | number>(null);
-    const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null);
+    const [selectedPredictedModel, setSelectedPredictedModel] = useState<null | number>(null);
     const [selectedInputChain, setSelectedInputChain] = useState<string | null>(null);
-    const [selectedRefChain, setSelectedRefChain] = useState<string | null>(null);
+    const [selectedPredictedChain, setSelectedPredictedChain] = useState<string | null>(null);
     const [sequencesLists, setSequenceLists] = useState<MoorhenSequenceViewerSequence[] | null>([]);
     const [conKitMatches, setConKitMatches] = useState<any[] | null>([]);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -36,8 +36,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
     const [doRenumber, setDoRenumber] = useState<boolean>(false);
 
-    const handleRefChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedRefChain(evt.target.value);
+    const handlePredictedChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedPredictedChain(evt.target.value);
     };
 
     const handleInputChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -47,19 +47,19 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     useEffect(() => {
 
         if (molecules.length === 0) {
-            setSelectedRefModel(null);
+            setSelectedPredictedModel(null);
             setSelectedInputModel(null);
-            setSelectedRefChain(null);
+            setSelectedPredictedChain(null);
             setSelectedInputChain(null);
             return;
         }
 
-        if (selectedRefModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
-            setSelectedRefModel(molecules[0].molNo);
+        if (selectedPredictedModel === null || !molecules.map(molecule => molecule.molNo).includes(selectedPredictedModel)) {
+            setSelectedPredictedModel(molecules[0].molNo);
             if (molecules[0].sequences && molecules[0].sequences.length > 0 && molecules[0].sequences[0].chain) {
-                setSelectedRefChain(molecules[0].sequences[0].chain);
+                setSelectedPredictedChain(molecules[0].sequences[0].chain);
             } else {
-                setSelectedRefChain("A");
+                setSelectedPredictedChain("A");
             }
         }
 
@@ -90,10 +90,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             let seq1letter = ""
             if(seqElement.residues.length>0){
                 if(conKitMatches.length>0){
+                    seqElement.colour = "#00ff00"
                     conKitMatches.forEach(m => {
                         if(m.original_number!==null) {
-                            const found = seqElement.residues.find((element) => element.resNum === m.original_number);
-                            if(found) found.colour = "#00ff00"
+                            const registerError = seqElement.residues.find((element) => element.resNum === m.original_number);
+                            if(registerError) registerError.colour = "#ff0000"
                         }
                     })
                 }
@@ -139,11 +140,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
         if (isReferenceModel) {
-            setSelectedRefModel(evt);
+            setSelectedPredictedModel(evt);
             if (selectedMolecule.sequences && selectedMolecule.sequences.length > 0 && selectedMolecule.sequences[0].chain) {
-                setSelectedRefChain(selectedMolecule.sequences[0].chain);
+                setSelectedPredictedChain(selectedMolecule.sequences[0].chain);
             } else {
-                setSelectedRefChain("A");
+                setSelectedPredictedChain("A");
             }
         } else {
             setSelectedInputModel(evt);
@@ -166,7 +167,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     return (<>
                     <MoorhenStack direction="row">
                         <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Input molecule" onSelect={sel => handleModelChange(sel, false)} ref={inputMoleculeSelectRef} />
+                            <MoorhenMoleculeSelect label="Reference structure" onSelect={sel => handleModelChange(sel, false)} ref={inputMoleculeSelectRef} />
                             <MoorhenChainSelect
                                 width=""
                                 molecules={molecules}
@@ -177,7 +178,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             />
                         </MoorhenStack>
                         <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Reference molecule" onSelect={sel => handleModelChange(sel, true)} ref={refMoleculeSelectRef} />
+                            <MoorhenMoleculeSelect label="Predicted model" onSelect={sel => handleModelChange(sel, true)} ref={refMoleculeSelectRef} />
                             <MoorhenStack direction="row">
                             <MoorhenToggle
                             style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
@@ -192,8 +193,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                                 disabled={!specifyTargetChain}
                                 label=""
                                 molecules={molecules}
-                                onChange={handleRefChainChange}
-                                selectedCoordMolNo={selectedRefModel}
+                                onChange={handlePredictedChainChange}
+                                selectedCoordMolNo={selectedPredictedModel}
                                 ref={refChainSelectRef}
                                 allowedTypes={[1, 2]}
                             />
