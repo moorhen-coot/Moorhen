@@ -34,6 +34,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const refChainSelectRef = useRef<HTMLSelectElement>(null);
 
     const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
+    const [doRenumber, setDoRenumber] = useState<boolean>(false);
 
     const handleRefChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedRefChain(evt.target.value);
@@ -122,7 +123,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 message: "run_conkit_validate",
                 command: "run_conkit_validate",
                 returnType: "string",
-                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, refChainSelectRef.current.value],
+                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, refChainSelectRef.current.value, doRenumber],
             },
             false
         )) as moorhen.WorkerResponse<string>;
@@ -133,7 +134,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         const res = JSON.parse(json_string)
         setConKitMatches(res.residues)
 
-    }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules,specifyTargetChain]);
+    }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules,specifyTargetChain,doRenumber]);
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
@@ -199,7 +200,15 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             </MoorhenStack>
                         </MoorhenStack>
                     </MoorhenStack>
-                    <MoorhenButton onClick={runConKit}>OK</MoorhenButton>
+                    <MoorhenToggle
+                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                        label="Renumber residues to assist matching"
+                        checked={doRenumber}
+                        onChange={e => {
+                            setDoRenumber(!doRenumber);
+                        }}
+                    />
+                    <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
                     <MoorhenSequenceViewer
                         onResidueClick={handleClickResidue}
                         sequences={sequencesLists}

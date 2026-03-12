@@ -1599,6 +1599,7 @@ onmessage = function (e) {
         const pdb_chain = e.data.commandArgs[4]
         const use_model_chain = e.data.commandArgs[5]
         const model_chain = e.data.commandArgs[6]
+        const renumber = e.data.commandArgs[7]
 
         cootModule.FS_createDataFile(".", pdb_file_str, fileDataPdb, true, true);
         cootModule.FS_createDataFile(".", model_file_str, fileDataModel, true, true);
@@ -1622,7 +1623,7 @@ onmessage = function (e) {
             prf_w: 1.0,
             map_align_silent: true,
             silent: false,
-            renumber: false,
+            renumber: renumber,
         }
 
         cootModule.run_conkit_validate(options)

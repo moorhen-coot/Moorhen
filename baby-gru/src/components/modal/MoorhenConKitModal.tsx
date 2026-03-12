@@ -36,14 +36,14 @@ export const MoorhenConKitModal = () => {
             left={width / 6}
             top={height / 6}
             lockAspectRatio={true}
-            initialHeight={convertRemToPx(30)}
+            initialHeight={convertRemToPx(40)}
             initialWidth={convertRemToPx(40)}
             onResize={(evt, ref, direction, delta, size) => {
                 setModalSize(size);
             }}
             minHeight={100}
             minWidth={200}
-            maxHeight={convertViewtoPx(35, height)}
+            maxHeight={convertViewtoPx(45, height)}
             maxWidth={convertViewtoPx(80, width)}
             enforceMaxBodyDimensions={true}
             overflowY="auto"
