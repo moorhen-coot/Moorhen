@@ -12,6 +12,7 @@ type MoorhenChainSelectPropsType = {
     selectedCoordMolNo: number;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
     defaultValue?: string;
+    disabled?: boolean;
 };
 
 export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSelectPropsType>((props, selectRef) => {
@@ -45,7 +46,7 @@ export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSele
     };
 
     return (
-        <MoorhenSelect ref={selectRef} defaultValue={defaultValue} onChange={handleChange} label={label}>
+        <MoorhenSelect ref={selectRef} disabled={props.disabled} defaultValue={defaultValue} onChange={handleChange} label={label}>
             {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) : null}
         </MoorhenSelect>
     );

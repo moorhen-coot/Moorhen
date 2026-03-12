@@ -1,12 +1,13 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Col, Form, Row } from "react-bootstrap";
+import { Container, Col, Form, Row } from "react-bootstrap";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenButton } from "../inputs";
 import { useCommandCentre } from "../../InstanceManager";
+import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle"
 
 interface MoorhenConKitProps {
     resizeTrigger?: boolean;
@@ -29,6 +30,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const inputChainSelectRef = useRef<HTMLSelectElement>(null);
     const refChainSelectRef = useRef<HTMLSelectElement>(null);
 
+    const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
+
     const handleRefChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedRefChain(evt.target.value);
     };
@@ -50,7 +53,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 message: "run_conkit_validate",
                 command: "run_conkit_validate",
                 returnType: "string",
-                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value],
+                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, refChainSelectRef.current.value],
             },
             false
         )) as moorhen.WorkerResponse<string>;
@@ -60,7 +63,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
         console.log(JSON.parse(json_string))
        
-    }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules]);
+    }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules,specifyTargetChain]);
     
 
     return (<>
@@ -78,14 +81,26 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                         </MoorhenStack>
                         <MoorhenStack direction="column">
                             <MoorhenMoleculeSelect label="Reference molecule" onSelect={sel => setSelectedRefModel(sel)} ref={refMoleculeSelectRef} />
+                            <MoorhenStack direction="row">
+                            <MoorhenToggle
+                            style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                            label="Specify reference model chain"
+                            checked={specifyTargetChain}
+                            onChange={e => {
+                                setSpecifyTargetChain(!specifyTargetChain);
+                            }}
+                            />
                             <MoorhenChainSelect
                                 width=""
+                                disabled={!specifyTargetChain}
+                                label=""
                                 molecules={molecules}
                                 onChange={handleRefChainChange}
                                 selectedCoordMolNo={selectedRefModel}
                                 ref={refChainSelectRef}
                                 allowedTypes={[1, 2]}
                             />
+                            </MoorhenStack>
                         </MoorhenStack>
                     </MoorhenStack>
                     <MoorhenButton onClick={runConKit}>OK</MoorhenButton>

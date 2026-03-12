@@ -1597,6 +1597,8 @@ onmessage = function (e) {
         const pdb_file_str = e.data.commandArgs[2]
         const model_file_str = e.data.commandArgs[3]
         const pdb_chain = e.data.commandArgs[4]
+        const use_model_chain = e.data.commandArgs[5]
+        const model_chain = e.data.commandArgs[6]
 
         cootModule.FS_createDataFile(".", pdb_file_str, fileDataPdb, true, true);
         cootModule.FS_createDataFile(".", model_file_str, fileDataModel, true, true);
@@ -1609,7 +1611,7 @@ onmessage = function (e) {
             output: "conkit.json",
             overwrite: false,
             pdb_chain: pdb_chain,
-            model_chain: "",
+            model_chain: (use_model_chain ? model_chain : ""),
             gap_opening_penalty: -1.0,
             gap_extension_penalty: -0.01,
             seq_separation_cutoff: 3,
