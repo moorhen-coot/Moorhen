@@ -29,9 +29,9 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const inputMoleculeSelectRef = useRef<HTMLSelectElement>(null);
-    const refMoleculeSelectRef = useRef<HTMLSelectElement>(null);
+    const predMoleculeSelectRef = useRef<HTMLSelectElement>(null);
     const inputChainSelectRef = useRef<HTMLSelectElement>(null);
-    const refChainSelectRef = useRef<HTMLSelectElement>(null);
+    const predChainSelectRef = useRef<HTMLSelectElement>(null);
 
     const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
     const [doRenumber, setDoRenumber] = useState<boolean>(false);
@@ -75,19 +75,29 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     useEffect(() => {
         const list: MoorhenSequenceViewerSequence[] = [];
-        if(!inputMoleculeSelectRef.current||!molecules[inputMoleculeSelectRef.current.value]){
+        if(!predMoleculeSelectRef.current||!molecules[predMoleculeSelectRef.current.value]){
             return 
         }
-        const foundMol = molecules[inputMoleculeSelectRef.current.value]
-        const filteredSeqs =  foundMol.sequences.filter(c => c.chain===selectedInputChain)
+        const foundMol = molecules[predMoleculeSelectRef.current.value]
+        const filteredSeqs =  foundMol.sequences.filter(c => c.chain===selectedPredictedChain)
         if(foundMol&&filteredSeqs.length===1){
             const seq = filteredSeqs[0];
+
+            const seqElementPLDDT = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
+            seqElementPLDDT.colour = "rgb(128, 128, 128)";
+            seqElementPLDDT.blockAlternateColour = true;
+            seqElementPLDDT.missingAs = "none";
+            seqElementPLDDT.hideResCode = true;
+            seqElementPLDDT.displayName = "PLDDT";
+
             const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElement.colour = "rgb(128, 128, 128)";
             seqElement.blockAlternateColour = true;
             seqElement.missingAs = "none";
             seqElement.hideResCode = true;
+            seqElement.displayName = "Register";
             let seq1letter = ""
+            const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/
             if(seqElement.residues.length>0){
                 if(conKitMatches.length>0){
                     seqElement.colour = "#00ff00"
@@ -96,16 +106,33 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             const registerError = seqElement.residues.find((element) => element.resNum === m.original_number);
                             if(registerError) registerError.colour = "#ff0000"
                         }
+                        if(m.residue.match(rgx).length>0){
+                            const matchResNum = parseInt(m.residue.match(rgx)[1])
+                            const plddtResElement = seqElementPLDDT.residues.find((element) => element.resNum === matchResNum);
+                            if(plddtResElement){
+                                if(m.plddt>90){
+                                    plddtResElement.colour = "#0053D6"; // Very high confidence
+                                } else  if(m.plddt>70){
+                                    plddtResElement.colour = "#65CBF3"; // Confident
+                                } else  if(m.plddt>50){
+                                    plddtResElement.colour = "#FFDB13"; // Confident
+                                } else {
+                                    plddtResElement.colour = "#FF7D45"; // Confident
+                                }
+                            }
+                        }
                     })
                 }
                 seqElement.residuesDisplayOffset = 0
                 seqElement.residues.forEach(r => {
                     seq1letter += r.resCode
                 })
+                seqElementPLDDT.residuesDisplayOffset = 0
                 const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
                 afDisplaySequence.displayName = "Query";
                 list.push(afDisplaySequence);
                 list.push(seqElement);
+                list.push(seqElementPLDDT);
             }
         }
         setSequenceLists(list)
@@ -114,7 +141,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const runConKit = useCallback(async () => {
 
        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[inputMoleculeSelectRef.current.value].gemmiStructure)
-       const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[refMoleculeSelectRef.current.value].gemmiStructure)
+       const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[predMoleculeSelectRef.current.value].gemmiStructure)
 
         if(input_cif_string.length==0 || ref_cif_string.length==0){
             return
@@ -124,7 +151,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 message: "run_conkit_validate",
                 command: "run_conkit_validate",
                 returnType: "string",
-                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, refChainSelectRef.current.value, doRenumber],
+                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, predChainSelectRef.current.value, doRenumber],
             },
             false
         )) as moorhen.WorkerResponse<string>;
@@ -135,7 +162,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         const res = JSON.parse(json_string)
         setConKitMatches(res.residues)
 
-    }, [inputMoleculeSelectRef.current, refMoleculeSelectRef.current, inputChainSelectRef.current, refChainSelectRef.current, molecules,specifyTargetChain,doRenumber]);
+    }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber]);
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
@@ -178,11 +205,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             />
                         </MoorhenStack>
                         <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Predicted model" onSelect={sel => handleModelChange(sel, true)} ref={refMoleculeSelectRef} />
+                            <MoorhenMoleculeSelect label="Predicted model" onSelect={sel => handleModelChange(sel, true)} ref={predMoleculeSelectRef} />
                             <MoorhenStack direction="row">
                             <MoorhenToggle
                             style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                            label="Specify reference model chain"
+                            label="Specify predicted model chain"
                             checked={specifyTargetChain}
                             onChange={e => {
                                 setSpecifyTargetChain(!specifyTargetChain);
@@ -195,7 +222,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                                 molecules={molecules}
                                 onChange={handlePredictedChainChange}
                                 selectedCoordMolNo={selectedPredictedModel}
-                                ref={refChainSelectRef}
+                                ref={predChainSelectRef}
                                 allowedTypes={[1, 2]}
                             />
                             </MoorhenStack>
