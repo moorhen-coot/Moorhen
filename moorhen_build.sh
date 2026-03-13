@@ -244,6 +244,12 @@ clearmoorhen() {
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
 }
 
+clearlhasa() {
+    echo "Clear Lhasa"
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
+    
+}
+
 clearall() {
     echo "Clear all"
     clearfreetype
@@ -251,6 +257,7 @@ clearall() {
     clearzlib
     clearboost
     cleargemmi
+    clearlhasa
     cleargsl
     clearigraph
     clearjsoncpp
@@ -286,6 +293,8 @@ else
            boost) clearboost
                ;;
            gemmi) cleargemmi
+               ;;
+           lhasa) clearlhasa
                ;;
            gsl) cleargsl
                ;;
@@ -891,6 +900,7 @@ if [ $BUILD_MOORHEN = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     getglm
     getcoot
+    getlhasa
     getmonomers
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
@@ -899,6 +909,9 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
+    printf "\e[36mCopying LhasaReact...\e[0m"
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
+    cp -r ${MOORHEN_SOURCE_DIR}/checkout/LhasaReact ${MOORHEN_SOURCE_DIR}/baby-gru/src/
     npm run transpile-graphql-codegen
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
