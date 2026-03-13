@@ -10,6 +10,8 @@ import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle"
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 import type { ResiduesSelection, SeqElement } from "../sequence-viewer/MoorhenSeqViewTypes";
+import { useSnackbar } from "notistack";
+import { handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
 
 interface MoorhenConKitProps {
     resizeTrigger?: boolean;
@@ -20,6 +22,8 @@ interface MoorhenConKitProps {
 export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     const commandCentre = useCommandCentre();
+    const dispatch = useDispatch();
+    const { enqueueSnackbar } = useSnackbar();
 
     const [selectedInputModel, setSelectedInputModel] = useState<null | number>(null);
     const [selectedPredictedModel, setSelectedPredictedModel] = useState<null | number>(null);
@@ -199,8 +203,9 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     const handlResiduesSelect = useCallback(
         (selection: ResiduesSelection) => {
-            console.log(selection)
-        },[molecules]
+            const molecule = molecules[selection.molNo]
+            handleResiduesSelection(selection, molecule, dispatch, enqueueSnackbar);
+        },[molecules, dispatch, enqueueSnackbar]
     )
 
     const handleClickResidue = useCallback(
