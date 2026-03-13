@@ -91,6 +91,13 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementPLDDT.hideResCode = true;
             seqElementPLDDT.displayName = "PLDDT";
 
+            const seqElementMatch = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
+            seqElementMatch.colour = "rgb(128, 128, 128)";
+            seqElementMatch.blockAlternateColour = true;
+            seqElementMatch.missingAs = "none";
+            seqElementMatch.hideResCode = true;
+            seqElementMatch.displayName = "Matches";
+
             const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElement.colour = "rgb(128, 128, 128)";
             seqElement.blockAlternateColour = true;
@@ -107,8 +114,12 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                     seqElement.colour = "#00ff00"
                     let ires = 0
                     conKitMatches.forEach(m => {
+                        if(m.predicted_contacts!==null) {
+                            const matchScore = 255-Math.trunc(Math.min(m.predicted_contacts / 15,1.0) * 255)
+                            seqElementMatch.residues[ires].colour = `rgb(${matchScore},${matchScore},${matchScore})`
+                        }
                         if(m.original_number!==null) {
-                            seqElement.residues[ires].colour =   "#ff0000"
+                            seqElement.residues[ires].colour = "#ff0000"
                         }
                         if(m.residue.match(rgx).length>0){
                             const matchResNum = parseInt(m.residue.match(rgx)[1])
@@ -135,6 +146,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 list.push(afDisplaySequence);
                 list.push(seqElement);
                 list.push(seqElementPLDDT);
+                list.push(seqElementMatch);
             }
         }
         setSequenceLists(list)
