@@ -204,6 +204,13 @@ clearslicendice() {
     rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
 }
 
+clearconkit() {
+    echo "Clear ConKit"
+    rm -rf ${BUILD_DIR}/conkit_build
+    rm -rf ${INSTALL_DIR}/include/conkit
+    rm -rf ${INSTALL_DIR}/lib/libconkit.a
+}
+
 clearsigcpp() {
     echo "Clear sigc++"
     rm -rf ${BUILD_DIR}/libsigcplusplus_build
@@ -264,6 +271,7 @@ clearall() {
     clearprivateer
     clearssm
     clearslicendice
+    clearconkit
     clearsigcpp
     cleargraphene
     clearmoorhen
@@ -313,6 +321,8 @@ else
            ssm) clearssm
                ;;
            slicendice) clearslicendice
+               ;;
+           conkit) clearconkit
                ;;
            sigcpp) clearsigcpp
                ;;
@@ -377,6 +387,13 @@ BUILD_SLICENDICE=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+BUILD_CONKIT=false
+
+if test -d ${INSTALL_DIR}/include/conkit; then
+    true
+else
+    BUILD_CONKIT=true
+fi
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -559,6 +576,9 @@ for mod in $MODULES; do
        slicendice) echo "Force build slicendice"
        BUILD_SLICENDICE=true
        ;;
+       conkit) echo "Force build conkit"
+       BUILD_CONKIT=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
@@ -595,6 +615,7 @@ echo "BUILD_FREETYPE   " $BUILD_FREETYPE
 echo "BUILD_ZLIB       " $BUILD_ZLIB
 echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
+echo "BUILD_CONKIT     " $BUILD_CONKIT
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
@@ -860,6 +881,16 @@ if [ $BUILD_SLICENDICE = true ]; then
     mkdir -p ${BUILD_DIR}/slicendice_cpp_build
     cd ${BUILD_DIR}/slicendice_cpp_build
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing SliceNDice, giving up."
+fi
+
+#conkit
+if [ $BUILD_CONKIT = true ]; then
+    getconkit
+    mkdir -p ${BUILD_DIR}/conkit_build
+    cd ${BUILD_DIR}/conkit_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/conkit  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include/conkit_validate -I${MOORHEN_SOURCE_DIR}/checkout/conkit/external/map_align" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing SliceNDice, giving up."
 fi

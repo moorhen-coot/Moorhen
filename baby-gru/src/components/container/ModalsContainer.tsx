@@ -16,6 +16,7 @@ import { MoorhenLigandValidationModal } from "../modal/MoorhenLigandValidationMo
 import { MoorhenMapsModal } from "../modal/MoorhenMapsModal";
 import { MoorhenMmrrccModal } from "../modal/MoorhenMmrrccModal";
 import { MoorhenModelsModal } from "../modal/MoorhenModelsModal";
+import { MoorhenConKitModal } from "../modal/MoorhenConKitModal";
 import { MoorhenMrBumpModal } from "../modal/MoorhenMrBumpModal";
 import { MoorhenMrParseModal } from "../modal/MoorhenMrParseModal";
 import { MoorhenPAEModal } from "../modal/MoorhenPAEModal";
@@ -62,6 +63,7 @@ const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     maps: MoorhenMapsModal,
     models: MoorhenModelsModal,
+    conkit: MoorhenConKitModal,
 };
 // ...existing code...
 export type ExtraDraggableModals = React.JSX.Element[];
