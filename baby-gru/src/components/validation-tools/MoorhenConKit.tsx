@@ -99,16 +99,19 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             let seq1letter = ""
             const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/
             if(seqElement.residues.length>0){
+                seqElement.residues.forEach(r => {
+                    seq1letter += r.resCode
+                })
                 if(conKitMatches.length>0){
                     seqElement.colour = "#00ff00"
+                    let ires = 0
                     conKitMatches.forEach(m => {
                         if(m.original_number!==null) {
-                            const registerError = seqElement.residues.find((element) => element.resNum === m.original_number);
-                            if(registerError) registerError.colour = "#ff0000"
+                            seqElement.residues[ires].colour =   "#ff0000"
                         }
                         if(m.residue.match(rgx).length>0){
                             const matchResNum = parseInt(m.residue.match(rgx)[1])
-                            const plddtResElement = seqElementPLDDT.residues.find((element) => element.resNum === matchResNum);
+                            const plddtResElement = seqElementPLDDT.residues[ires]
                             if(plddtResElement){
                                 if(m.plddt>90){
                                     plddtResElement.colour = "#0053D6"; // Very high confidence
@@ -121,12 +124,10 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                                 }
                             }
                         }
+                        ires++
                     })
                 }
                 seqElement.residuesDisplayOffset = 0
-                seqElement.residues.forEach(r => {
-                    seq1letter += r.resCode
-                })
                 seqElementPLDDT.residuesDisplayOffset = 0
                 const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
                 afDisplaySequence.displayName = "Query";
