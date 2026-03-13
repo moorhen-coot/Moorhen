@@ -9,6 +9,7 @@ import { MoorhenButton } from "../inputs";
 import { useCommandCentre } from "../../InstanceManager";
 import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle"
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
+import type { ResiduesSelection, SeqElement } from "../sequence-viewer/MoorhenSeqViewTypes";
 
 interface MoorhenConKitProps {
     resizeTrigger?: boolean;
@@ -184,6 +185,12 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         }
     };
 
+    const handlResiduesSelect = useCallback(
+        (selection: ResiduesSelection) => {
+            console.log(selection)
+        },[molecules]
+    )
+
     const handleClickResidue = useCallback(
         (molIndex: number, molName: string, chain: string, resNum: number) => {
             const foundModel = molecules.find(mod => mod.name === molName);
@@ -240,6 +247,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                     <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
                     <MoorhenSequenceViewer
                         onResidueClick={handleClickResidue}
+                        onResiduesSelect={handlResiduesSelect}
                         sequences={sequencesLists}
                         nameColumnWidth={5}
                         columnWidth={0.45}
