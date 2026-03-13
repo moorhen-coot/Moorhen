@@ -3,6 +3,7 @@ import { useSnackbar } from "notistack";
 import { Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { LhasaComponent } from "../../LhasaReact/src/Lhasa";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
@@ -28,7 +29,7 @@ const LhasaWrapper = (props: {
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
 
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const dispatch = useDispatch();
