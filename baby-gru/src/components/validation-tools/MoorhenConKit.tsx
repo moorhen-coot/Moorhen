@@ -43,6 +43,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
     const [doRenumber, setDoRenumber] = useState<boolean>(false);
     const [specifySequence, setSpecifySequence] = useState<boolean>(false);
+    const [hoverText, setHoverText] = useState<string>("");
 
     const sequenceFileRef = useRef<null | HTMLInputElement>(null);
 
@@ -211,6 +212,15 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         },[molecules, dispatch, enqueueSnackbar]
     )
 
+    const onHoverResidue = useCallback(
+        (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => {
+            if(conKitMatches.length>resNum&&conKitMatches[resNum-1]){
+                const poss_reg_error = conKitMatches[resNum-1].suggested_register
+                setHoverText(poss_reg_error.length>0 ? `Suggested register change: ${poss_reg_error}` : "Register OK")
+            }
+        },
+        [molecules,conKitMatches]
+    )
     const handleClickResidue = useCallback(
         (molIndex: number, molName: string, chain: string, resNum: number) => {
             const foundModel = molecules.find(mod => mod.name === molName);
@@ -224,6 +234,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         setSequenceText(seqText)
         setSequenceFileName(f.name)
     }
+
     return (<>
                     <MoorhenStack direction="row">
                         <MoorhenStack direction="column">
@@ -293,10 +304,14 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                         onResidueClick={handleClickResidue}
                         onResiduesSelect={handlResiduesSelect}
                         sequences={sequencesLists}
+                        onHoverResidue={onHoverResidue}
                         nameColumnWidth={5}
                         columnWidth={0.45}
                         fontSize={0.5}
                         reOrder={false}
                     />
+                    <div>
+                    {hoverText}
+                    </div>
             </>)
 }
