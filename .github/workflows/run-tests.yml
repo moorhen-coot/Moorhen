@@ -37,7 +37,7 @@ jobs:
       uses: actions/cache@v4
       with: 
         path: emsdk/
-        key: emsdk-cache-{{ env.TARGET_EMSDK_VERSION }}
+        key: emsdk-cache-${{ env.TARGET_EMSDK_VERSION }}
 
     - name: Download and install Emsdk
       if: steps.cache-emsdk.outputs.cache-hit != 'true'
@@ -89,7 +89,7 @@ jobs:
           CCP4_WASM_BUILD/
           !checkout/coot-1.0
           !checkout/LhasaReact
-        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-{{ env.TARGET_EMSDK_VERSION }}
+        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
     - name: Download C++ dependencies
       if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
       run: |
