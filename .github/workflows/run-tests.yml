@@ -50,6 +50,7 @@ jobs:
         cd emsdk/
         ./emsdk activate latest
 
+    # Todo: Resolve emsdk version tag
     - name: Read Coot commit hash
       id: coot_commit
       # Sources VERSIONS (a shell snippet that sets $coot_commit) and
@@ -57,14 +58,44 @@ jobs:
       run: |
         . ./VERSIONS
         echo "commit=${coot_commit}" >> "$GITHUB_OUTPUT"
-
-    - name: Install Lhasa sources
+    - name: Cache Coot sources
+      id: cache-coot-src
+      uses: actions/cache@v4
+      with:
+        path: checkout/coot-1.0
+        key: coot-src-${{ steps.coot_commit.outputs.commit }}
+    - name: Download Coot sources
+      if: steps.cache-coot-src.outputs.cache-hit != 'true'
       env:
         MOORHEN_SOURCE_DIR: ${{ github.workspace }}
       run: |
-          source ./get_sources_funs && getlhasa
-          cd .. && cp -rv checkout/LhasaReact baby-gru/src/
-
+        source ./get_sources_funs && getcoot
+    - name: Cache prebuilt C++ dependencies with sources (without Coot and Lhasa)
+      id: cache-dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          checkout/
+          install/
+          CCP4_WASM_BUILD/
+          !checkout/coot-1.0
+          !checkout/LhasaReact
+        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-latest
+    - name: Download C++ dependencies
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      run: |
+        ./get_sources
+    - name: Build C++ dependencies
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      run: |
+        source emsdk/emsdk_env.sh
+        # This also build Moorhen, but we don't care about it here.
+        ./initial_build.sh
+    # The proper build of Moorhen. Todo: Cache it.
+    - name: Build Moorhen WASM
+      run: |
+        source emsdk/emsdk_env.sh
+        ./moorhen_build.sh
     - name: Install Node.js dependencies
       working-directory: baby-gru
       run: npm ci
@@ -80,3 +111,8 @@ jobs:
     - name: Run React tests
       working-directory: baby-gru
       run: npm run test-react
+    - name: Run tests
+      working-directory: baby-gru
+      run: |
+        source emsdk/emsdk_env.sh
+        npm test
