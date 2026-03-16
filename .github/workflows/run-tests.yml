@@ -39,11 +39,11 @@ jobs:
 
     - name: Download and install emsdk
       if: steps.cache-emsdk.outputs.cache-hit != 'true'
-        run: |
-          cd /home/runner/work/Moorhen/
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd /home/runner/work/Moorhen/emsdk/
-          ./emsdk install latest
+      run: |
+        cd /home/runner/work/Moorhen/
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd /home/runner/work/Moorhen/emsdk/
+        ./emsdk install latest
 
     - name: Activate emsdk
       run: |
