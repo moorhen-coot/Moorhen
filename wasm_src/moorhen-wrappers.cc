@@ -30,7 +30,7 @@
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
 
-
+#include "rotarama.hpp"
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
 #include "slicendice_cpp/birch.h"
@@ -505,10 +505,17 @@ class molecules_container_js : public molecules_container_t {
 
             Json::Value root;
 
+            std::filesystem::path rotarama_data(); // TODO
+            const Rota rota(rotarama_data);
+            const Rama rama(rotarama_data);
+
             for (auto& chain : st.models[model_index].chains) {
                 Json::Value chain_json;
                 int res_idx = 0;
                 for (auto& res : chain.residues) {
+                    const auto prev_res = chain.previous_residue(res);
+                    const auto next_res = chain.next_residue(res);
+
                     Json::Value res_json;
                     res_json["name"] = res.name;
                     res_json["seqNum"] = res.seqid.num.value;
@@ -554,6 +561,8 @@ class molecules_container_js : public molecules_container_t {
                     res_json["Chiral RMSZ"] = z_chirals;
                     res_json["Plane RMSZ"] = z_planes;
                     res_json["Torsion RMSZ"] = z_torsions;
+                    res_json["Rama Score"] = rama.score(&prev_res, res, &next_res);
+                    res_json["Rota Score"] = rota.score(res);
                     chain_json[res_idx++] = res_json;
                 }
                 root[chain.name] = chain_json;
