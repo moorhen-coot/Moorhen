@@ -50,6 +50,14 @@ jobs:
         cd emsdk/
         ./emsdk activate latest
 
+    - name: Read Coot commit hash
+      id: coot_commit
+      # Sources VERSIONS (a shell snippet that sets $coot_commit) and
+      # exports the value as a step output for use in cache keys below.
+      run: |
+        . ./VERSIONS
+        echo "commit=${coot_commit}" >> "$GITHUB_OUTPUT"
+
     - name: Install Lhasa sources
       env:
         MOORHEN_SOURCE_DIR: ${{ github.workspace }}
