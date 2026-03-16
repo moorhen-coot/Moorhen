@@ -505,7 +505,7 @@ class molecules_container_js : public molecules_container_t {
 
             Json::Value root;
 
-            std::filesystem::path rotarama_data(); // TODO
+            const std::filesystem::path rotarama_data("TODO PATH"); // TODO
             const Rota rota(rotarama_data);
             const Rama rama(rotarama_data);
 
@@ -561,7 +561,7 @@ class molecules_container_js : public molecules_container_t {
                     res_json["Chiral RMSZ"] = z_chirals;
                     res_json["Plane RMSZ"] = z_planes;
                     res_json["Torsion RMSZ"] = z_torsions;
-                    res_json["Rama Score"] = rama.score(&prev_res, res, &next_res);
+                    res_json["Rama Score"] = rama.score(*prev_res, res, *next_res);
                     res_json["Rota Score"] = rota.score(res);
                     chain_json[res_idx++] = res_json;
                 }
