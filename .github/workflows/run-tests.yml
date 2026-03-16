@@ -10,6 +10,8 @@ on:
 jobs:
   run_tests:
     runs-on: ubuntu-latest
+    env:
+      TARGET_EMSDK_VERSION: 5.0.3
     timeout-minutes: 240
     steps:
 
@@ -35,43 +37,50 @@ jobs:
       uses: actions/cache@v4
       with: 
         path: emsdk/
-        # Todo: change this key when this branch is ready to merge
-        key: emsdk-cache-new
+        key: emsdk-cache-{{ env.TARGET_EMSDK_VERSION }}
 
     - name: Download and install Emsdk
       if: steps.cache-emsdk.outputs.cache-hit != 'true'
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk/
-        ./emsdk install latest
+        ./emsdk install {{ env.TARGET_EMSDK_VERSION }}
 
     - name: Activate Emsdk
       run: |
         cd emsdk/
-        ./emsdk activate latest
+        ./emsdk activate {{ env.TARGET_EMSDK_VERSION }}
 
-    # Todo: Resolve emsdk version tag
     - name: Read Coot commit hash
       id: coot_commit
-      # Sources VERSIONS (a shell snippet that sets $coot_commit) and
+      # Sources VERSIONS and
       # exports the value as a step output for use in cache keys below.
       run: |
         . ./VERSIONS
         echo "commit=${coot_commit}" >> "$GITHUB_OUTPUT"
-    - name: Cache Coot sources
-      id: cache-coot-src
+    - name: Read LhasaReact commit hash
+      id: lhasa_commit
+      # Sources VERSIONS and
+      # exports the value as a step output for use in cache keys below.
+      run: |
+        . ./VERSIONS
+        echo "commit=${lhasa_commit}" >> "$GITHUB_OUTPUT"
+    - name: Cache Coot and Lhasa sources
+      id: cache-coot-lhasa-src
       uses: actions/cache@v4
       with:
-        path: checkout/coot-1.0
-        key: coot-src-${{ steps.coot_commit.outputs.commit }}
-    - name: Download Coot sources
-      if: steps.cache-coot-src.outputs.cache-hit != 'true'
+        path: |
+          checkout/coot-1.0
+          checkout/LhasaReact
+        key: coot-src-${{ steps.coot_commit.outputs.commit }}-lhasa-src-${{ steps.lhasa_commit.outputs.commit }}
+    - name: Download Coot and LhasaReact sources
+      if: steps.cache-coot-lhasa-src.outputs.cache-hit != 'true'
       env:
         MOORHEN_SOURCE_DIR: ${{ github.workspace }}
       run: |
-        source ./get_sources_funs && getcoot
+        source ./get_sources_funs && getcoot && getlhasa
     - name: Cache prebuilt C++ dependencies with sources (without Coot and Lhasa)
-      id: cache-dependencies
+      id: cache-cpp-dependencies
       uses: actions/cache@v4
       with:
         path: |
@@ -80,16 +89,16 @@ jobs:
           CCP4_WASM_BUILD/
           !checkout/coot-1.0
           !checkout/LhasaReact
-        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-latest
+        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-{{ env.TARGET_EMSDK_VERSION }}
     - name: Download C++ dependencies
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
       run: |
         ./get_sources
     - name: Build C++ dependencies
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
       run: |
         source emsdk/emsdk_env.sh
-        # This also build Moorhen, but we don't care about it here.
+        # This also builds Moorhen, but we don't care about it here.
         ./initial_build.sh
     # The proper build of Moorhen. Todo: Cache it.
     - name: Build Moorhen WASM
