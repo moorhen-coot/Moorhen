@@ -30,6 +30,26 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y git bzr patch curl
 
+    - name: Cache emsdk
+      id: cache-emsdk
+      uses: actions/cache/save@v4
+      with: 
+        path: /home/runner/work/Moorhen/emsdk/
+        key: emsdk-cache
+
+    - name: Download and install emsdk
+      if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          cd /home/runner/work/Moorhen/
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd /home/runner/work/Moorhen/emsdk/
+          ./emsdk install latest
+
+    - name: Activate emsdk
+      run: |
+        cd /home/runner/work/Moorhen/emsdk/
+        ./emsdk activate latest
+
     - name: Install Lhasa sources
       working-directory: /home/runner/work/Moorhen/Moorhen
       env:
