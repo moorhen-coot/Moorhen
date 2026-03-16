@@ -4,11 +4,11 @@
 * install-cache - Triggered manually. Very rarely ran. Does a full build of Moorhen. Not sure what for. Highly redundant / confusing (probably erroneous) cache operations. Can probably be deleted.
 * js-documentation - Triggered on push to release branches. Builds the js documentation and pushes it to the gh-pages branch. Needs to be fixed. It might never have worked.
 * nightly-tests - As the name implies: Runs every night. Builds the entirety of Moorhen with all dependencies and runs 'npm test' (probably same as 'npm run test'). Very wasteful: Needs improved dependency caching. How does 'npm test' differ from 'npm test-react'?
-* node16-modules-cache.yml - Triggered by changes to 'baby-gru/package.json' and also every week. Writes 'node16-modules-cache'. Can be deleted right away. because it's not used anywhere.
+* node16-modules-cache.yml - Triggered by changes to 'baby-gru/package.json' and also every week. Writes 'node16-modules-cache'. Can be deleted right away because the resulting cache is not used anywhere. Also uses node 22 instead of node 16.
 * npm-modules-cache - Triggered manually. Redundant emsdk operations with broken version management. Writes 'emdsk-node-modules-cache'. Used by 'install-cache'. Highly redundant. Can be deleted right away. The cache is useless because GitHub deletes caches after 7 days of inactivity.
 * run-tests - Triggered on push and pull request. Similar to 'nightly-tests' but only does Typescript and React testing (`npm run test-react`).
 
 # What I will change:
 
-* Merge 'nightly-tests' and 'run-tests' into a single workflow which test everything and manages caches correctly.
+* Merge 'nightly-tests' and 'run-tests' into a single workflow which tests everything and manages caches correctly.
 * All workflows which use emsdk need to extract the emsdk version
