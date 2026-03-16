@@ -1600,6 +1600,13 @@ onmessage = function (e) {
         const use_model_chain = e.data.commandArgs[5]
         const model_chain = e.data.commandArgs[6]
         const renumber = e.data.commandArgs[7]
+        const specifySequence = e.data.commandArgs[8]
+        const sequenceText = e.data.commandArgs[9]
+        const sequenceFileName = e.data.commandArgs[10]
+
+        if(specifySequence&&sequenceText&&sequenceFileName){
+            cootModule.FS_createDataFile(".", sequenceFileName, sequenceText, true, true);
+        }
 
         cootModule.FS_createDataFile(".", pdb_file_str, fileDataPdb, true, true);
         cootModule.FS_createDataFile(".", model_file_str, fileDataModel, true, true);
@@ -1607,7 +1614,7 @@ onmessage = function (e) {
         const options: libcootApi.ValidateOptions = {
             pdb_file:pdb_file_str,
             model_file: model_file_str,
-            seqfile: "",
+            seqfile: ((specifySequence&&sequenceFileName) ? sequenceFileName : ""),
             seqformat: "fasta",
             output: "conkit.json",
             overwrite: false,
@@ -1629,6 +1636,9 @@ onmessage = function (e) {
         cootModule.run_conkit_validate(options)
         cootModule.FS_unlink(pdb_file_str)
         cootModule.FS_unlink(model_file_str)
+        if(specifySequence&&sequenceText&&sequenceFileName){
+            cootModule.FS_unlink(sequenceFileName);
+        }
         const jsonContents = cootModule.FS.readFile("conkit.json", { encoding: 'utf8' })
         cootModule.FS_unlink("conkit.json")
         postMessage({

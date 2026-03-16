@@ -31,6 +31,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [selectedPredictedChain, setSelectedPredictedChain] = useState<string | null>(null);
     const [sequencesLists, setSequenceLists] = useState<MoorhenSequenceViewerSequence[] | null>([]);
     const [conKitMatches, setConKitMatches] = useState<any[] | null>([]);
+    const [sequenceText, setSequenceText] = useState<null | string>(null);
+    const [sequenceFileName, setSequenceFileName] = useState<null | string>(null);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
     const inputMoleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -40,6 +42,9 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     const [specifyTargetChain, setSpecifyTargetChain] = useState<boolean>(false);
     const [doRenumber, setDoRenumber] = useState<boolean>(false);
+    const [specifySequence, setSpecifySequence] = useState<boolean>(false);
+
+    const sequenceFileRef = useRef<null | HTMLInputElement>(null);
 
     const handlePredictedChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedPredictedChain(evt.target.value);
@@ -110,39 +115,37 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElement.displayName = "Register";
             let seq1letter = ""
             const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/
-            if(seqElement.residues.length>0){
+            if(seqElement.residues.length>0&&conKitMatches.length>0){
                 seqElement.residues.forEach(r => {
                     seq1letter += r.resCode
                 })
-                if(conKitMatches.length>0){
-                    seqElement.colour = "#00ff00"
-                    let ires = 0
-                    conKitMatches.forEach(m => {
-                        if(m.predicted_contacts!==null) {
-                            const matchScore = 255-Math.trunc(Math.min(m.predicted_contacts / 15,1.0) * 255)
-                            seqElementMatch.residues[ires].colour = `rgb(${matchScore},${matchScore},${matchScore})`
-                        }
-                        if(m.original_number!==null) {
-                            seqElement.residues[ires].colour = "#ff0000"
-                        }
-                        if(m.residue.match(rgx).length>0){
-                            const matchResNum = parseInt(m.residue.match(rgx)[1])
-                            const plddtResElement = seqElementPLDDT.residues[ires]
-                            if(plddtResElement){
-                                if(m.plddt>90){
-                                    plddtResElement.colour = "#0053D6"; // Very high confidence
-                                } else  if(m.plddt>70){
-                                    plddtResElement.colour = "#65CBF3"; // Confident
-                                } else  if(m.plddt>50){
-                                    plddtResElement.colour = "#FFDB13"; // Confident
-                                } else {
-                                    plddtResElement.colour = "#FF7D45"; // Confident
-                                }
+                seqElement.colour = "#00ff00"
+                let ires = 0
+                conKitMatches.forEach(m => {
+                    if(m.predicted_contacts!==null) {
+                        const matchScore = 255-Math.trunc(Math.min(m.predicted_contacts / 15,1.0) * 255)
+                        seqElementMatch.residues[ires].colour = `rgb(${matchScore},${matchScore},${matchScore})`
+                    }
+                    if(m.original_number!==null) {
+                        seqElement.residues[ires].colour = "#ff0000"
+                    }
+                    if(m.residue.match(rgx).length>0){
+                        const matchResNum = parseInt(m.residue.match(rgx)[1])
+                        const plddtResElement = seqElementPLDDT.residues[ires]
+                        if(plddtResElement){
+                            if(m.plddt>90){
+                                plddtResElement.colour = "#0053D6"; // Very high confidence
+                            } else  if(m.plddt>70){
+                                plddtResElement.colour = "#65CBF3"; // Confident
+                            } else  if(m.plddt>50){
+                                plddtResElement.colour = "#FFDB13"; // Confident
+                            } else {
+                                plddtResElement.colour = "#FF7D45"; // Confident
                             }
                         }
-                        ires++
-                    })
-                }
+                    }
+                    ires++
+                })
                 seqElement.residuesDisplayOffset = 0
                 seqElementPLDDT.residuesDisplayOffset = 0
                 const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
@@ -169,7 +172,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 message: "run_conkit_validate",
                 command: "run_conkit_validate",
                 returnType: "string",
-                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, predChainSelectRef.current.value, doRenumber],
+                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, predChainSelectRef.current.value, doRenumber, specifySequence, sequenceText, ((specifySequence&&sequenceFileName) ? sequenceFileName : null)],
             },
             false
         )) as moorhen.WorkerResponse<string>;
@@ -180,7 +183,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         const res = JSON.parse(json_string)
         setConKitMatches(res.residues)
 
-    }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber]);
+    }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber,specifySequence,sequenceText,sequenceFileName]);
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
@@ -216,6 +219,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         [molecules]
     );
 
+    const loadSequenceFile = async (f:File) => {
+        const seqText = await f.text()
+        setSequenceText(seqText)
+        setSequenceFileName(f.name)
+    }
     return (<>
                     <MoorhenStack direction="row">
                         <MoorhenStack direction="column">
@@ -261,6 +269,25 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             setDoRenumber(!doRenumber);
                         }}
                     />
+                    <MoorhenStack direction="row">
+                    <MoorhenToggle
+                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                        label="Specify sequence file (fasta)"
+                        checked={specifySequence}
+                        onChange={e => {
+                            setSpecifySequence(!specifySequence);
+                        }}
+                    />
+                    <Form.Control
+                        disabled={!specifySequence}
+                        ref={sequenceFileRef}
+                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                        type="file"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            loadSequenceFile(e.target.files[0])
+                        }}
+                    />
+                    </MoorhenStack>
                     <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
                     <MoorhenSequenceViewer
                         onResidueClick={handleClickResidue}

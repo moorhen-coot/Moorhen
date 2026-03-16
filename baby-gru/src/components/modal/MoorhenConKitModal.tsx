@@ -43,7 +43,7 @@ export const MoorhenConKitModal = () => {
             }}
             minHeight={100}
             minWidth={200}
-            maxHeight={convertViewtoPx(45, height)}
+            maxHeight={convertViewtoPx(55, height)}
             maxWidth={convertViewtoPx(80, width)}
             enforceMaxBodyDimensions={true}
             overflowY="auto"
