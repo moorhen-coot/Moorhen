@@ -38,14 +38,14 @@ jobs:
         # Todo: change this key when this branch is ready to merge
         key: emsdk-cache-new
 
-    - name: Download and install emsdk
+    - name: Download and install Emsdk
       if: steps.cache-emsdk.outputs.cache-hit != 'true'
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk/
         ./emsdk install latest
 
-    - name: Activate emsdk
+    - name: Activate Emsdk
       run: |
         cd emsdk/
         ./emsdk activate latest
@@ -62,7 +62,7 @@ jobs:
       working-directory: baby-gru
       run: npm ci
 
-    - name: Test typescript transpilation
+    - name: Test Typescript transpilation
       working-directory: baby-gru
       run: |
         npm run create-version
@@ -70,6 +70,6 @@ jobs:
         npx graphql-codegen
         npx tsc
         
-    - name: Run react tests
+    - name: Run React tests
       working-directory: baby-gru
       run: npm run test-react
