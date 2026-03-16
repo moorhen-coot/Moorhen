@@ -51,9 +51,8 @@ jobs:
         ./emsdk activate latest
 
     - name: Install Lhasa sources
-      working-directory: /home/runner/work/Moorhen/Moorhen
       env:
-        MOORHEN_SOURCE_DIR: /home/runner/work/Moorhen/Moorhen
+        MOORHEN_SOURCE_DIR: ${{ github.workspace }}
       run: |
           source ./get_sources_funs && getlhasa
           cd .. && cp -rv checkout/LhasaReact baby-gru/src/
