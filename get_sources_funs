@@ -40,14 +40,15 @@ getlibccp4() {
         echo "Using existing libccp4"
     else
         echo "Checking out libccp4"
-        curl -fL https://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
-        echo
-        echo "Unpacking libccp4 source"
-        tar xf libccp4-$libccp4_release.tar.gz
-        ln -s libccp4-$libccp4_release libccp4
-        echo
-        patch -p0 < ../patches/ccp4-emscripten.patch
-        cd ..
+        curl -fL https://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking libccp4 source" &&\
+        tar xf libccp4-$libccp4_release.tar.gz &&\
+        ln -s libccp4-$libccp4_release libccp4 &&\
+        echo &&\
+        echo "Patching libccp4 for Emscripten" &&\
+        patch -p0 < ../patches/ccp4-emscripten.patch &&\
+        cd .. || fail "Failed to download, unpack and patch libccp4"
     fi
     echo
 }
@@ -57,8 +58,8 @@ getclipper() {
     if [ -r clipper ]; then
         echo "Using existing clipper"
     else
-        echo "Checking out clipper"
-        git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git
+        echo "Checking out clipper (gemmi branch)"
+        git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git || fail "Failed to clone clipper"
         echo
     fi
     echo
@@ -70,10 +71,10 @@ getssm() {
         echo "Using existing ssm"
     else
         echo "Checking out ssm"
-        curl https://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz
-        echo
-        echo "Unpacking ssm source"
-        tar xf ssm-$ssm_release.tar.gz
+        curl https://ftp.ccp4.ac.uk/opensource/ssm-$ssm_release.tar.gz -o ssm-$ssm_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking ssm source" &&\
+        tar xf ssm-$ssm_release.tar.gz || fail "Failed to download and unpack ssm"
         rm -f ssm
         ln -s ssm-$ssm_release ssm
     fi
