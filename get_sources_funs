@@ -19,7 +19,7 @@ geteigen() {
         echo "Using existing LibEigen"
     else
         echo "Checking out LibEigen"
-        curl -L https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
+        curl -fL https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
         tar xf eigen-$libeigen_release.tar.gz
     fi
     echo
@@ -31,7 +31,7 @@ getlibccp4() {
         echo "Using existing libccp4"
     else
         echo "Checking out libccp4"
-        curl -L https://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
+        curl -fL https://ftp.ccp4.ac.uk/opensource/libccp4-$libccp4_release.tar.gz -o libccp4-$libccp4_release.tar.gz
         echo
         echo "Unpacking libccp4 source"
         tar xf libccp4-$libccp4_release.tar.gz
@@ -77,7 +77,7 @@ getmmdb2() {
         echo "Using existing mmdb2"
     else
         echo "Checking out mmdb2"
-        curl -L https://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
+        curl -fL https://ftp.ccp4.ac.uk/opensource/mmdb2-$mmdb_release.tar.gz -o mmdb2-$mmdb_release.tar.gz
         echo
         echo "Unpacking mmdb2 source"
         tar xf mmdb2-$mmdb_release.tar.gz
@@ -111,47 +111,47 @@ getmonomers() {
         #git clone https://github.com/MonomerLibrary/monomers monomers
         mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list
         cd monomers
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ALA.cif -o a/ALA.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASP.cif -o a/ASP.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASN.cif -o a/ASN.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ARG.cif -o a/ARG.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CYS.cif -o c/CYS.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CIT.cif -o c/CIT.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/e/EDO.cif -o e/EDO.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLN.cif -o g/GLN.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLY.cif -o g/GLY.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GOL.cif -o g/GOL.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLU.cif -o g/GLU.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/h/HIS.cif -o h/HIS.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/i/ILE.cif -o i/ILE.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/l/LYS.cif -o l/LYS.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/l/LEU.cif -o l/LEU.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MET.cif -o m/MET.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MSE.cif -o m/MSE.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PRO.cif -o p/PRO.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PHE.cif -o p/PHE.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PO4.cif -o p/PO4.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PEG.cif -o p/PEG.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/s/SER.cif -o s/SER.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/s/SO4.cif -o s/SO4.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/THR.cif -o t/THR.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/TRP.cif -o t/TRP.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/TYR.cif -o t/TYR.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/v/VAL.cif -o v/VAL.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/A.cif -o a/A.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/C.cif -o c/C.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/G.cif -o g/G.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/u/U.cif -o u/U.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DA.cif -o d/DA.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DC.cif -o d/DC.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DG.cif -o d/DG.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DT.cif -o d/DT.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/h/HOH.cif -o h/HOH.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NA.cif -o n/NA.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ATP.cif -o a/ATP.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ADP.cif -o a/ADP.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/ener_lib.cif -o ener_lib.cif
-        curl -L https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/list/mon_lib_list.cif -o list/mon_lib_list.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ALA.cif -o a/ALA.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASP.cif -o a/ASP.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASN.cif -o a/ASN.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ARG.cif -o a/ARG.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CYS.cif -o c/CYS.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CIT.cif -o c/CIT.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/e/EDO.cif -o e/EDO.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLN.cif -o g/GLN.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLY.cif -o g/GLY.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GOL.cif -o g/GOL.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/GLU.cif -o g/GLU.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/h/HIS.cif -o h/HIS.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/i/ILE.cif -o i/ILE.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/l/LYS.cif -o l/LYS.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/l/LEU.cif -o l/LEU.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MET.cif -o m/MET.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MSE.cif -o m/MSE.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PRO.cif -o p/PRO.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PHE.cif -o p/PHE.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PO4.cif -o p/PO4.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/p/PEG.cif -o p/PEG.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/s/SER.cif -o s/SER.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/s/SO4.cif -o s/SO4.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/THR.cif -o t/THR.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/TRP.cif -o t/TRP.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/t/TYR.cif -o t/TYR.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/v/VAL.cif -o v/VAL.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/A.cif -o a/A.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/C.cif -o c/C.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/g/G.cif -o g/G.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/u/U.cif -o u/U.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DA.cif -o d/DA.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DC.cif -o d/DC.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DG.cif -o d/DG.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/d/DT.cif -o d/DT.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/h/HOH.cif -o h/HOH.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NA.cif -o n/NA.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ATP.cif -o a/ATP.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ADP.cif -o a/ADP.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/ener_lib.cif -o ener_lib.cif
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/list/mon_lib_list.cif -o list/mon_lib_list.cif
     fi
     echo
 }
@@ -197,7 +197,7 @@ getfftw() {
         echo "Using existing fftw"
     else
         echo "Downloading out fftw-$fftw_release"
-        curl -L http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
+        curl -fL http://www.fftw.org/fftw-$fftw_release.tar.gz -o fftw-$fftw_release.tar.gz
         echo
         echo "Unpacking fftw-$fftw_release"
         tar xf fftw-$fftw_release.tar.gz
@@ -211,7 +211,7 @@ getfftw3() {
         echo "Using existing fftw3"
     else
         echo "Downloading out fftw-$fftw3_release"
-        curl -L http://www.fftw.org/fftw-$fftw3_release.tar.gz -o fftw-$fftw3_release.tar.gz
+        curl -fL http://www.fftw.org/fftw-$fftw3_release.tar.gz -o fftw-$fftw3_release.tar.gz
         echo
         echo "Unpacking fftw-$fftw3_release"
         tar xf fftw-$fftw3_release.tar.gz
@@ -226,7 +226,7 @@ getfreetype() {
     else
         cdcheckout
         echo "Downloading freetype-$freetype_release"
-        curl -L https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz
+        curl -fL https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz
         echo
         echo "Unpacking freetype-$freetype_release"
         tar xf freetype-$freetype_release.tar.gz
@@ -241,7 +241,7 @@ getpng() {
     else
         cdcheckout
         echo "Downloading png-$png_release"
-        curl -L http://prdownloads.sourceforge.net/libpng/libpng-$png_release.tar.gz -o libpng-$png_release.tar.gz
+        curl -fL http://prdownloads.sourceforge.net/libpng/libpng-$png_release.tar.gz -o libpng-$png_release.tar.gz
         echo
         echo "Unpacking png-$png_release"
         tar xf libpng-$png_release.tar.gz
@@ -256,7 +256,7 @@ getzlib() {
     else
         cdcheckout
         echo "Downloading zlib-$zlib_release"
-        curl -L https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz
+        curl -fL https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz
         echo
         echo "Unpacking zlib-$zlib_release"
         tar xf zlib-$zlib_release.tar.gz
@@ -272,7 +272,7 @@ getgsl() {
     else
         cdcheckout
         echo "Downloading gsl-$gsl_release"
-        curl -L https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
+        curl -fL https://ftp.gnu.org/gnu/gsl/gsl-$gsl_release.tar.gz -o gsl-$gsl_release.tar.gz
         echo
         cd ${MOORHEN_SOURCE_DIR}
         echo "Unpacking gsl-$gsl_release"
@@ -328,7 +328,7 @@ getglm() {
         echo "Using existing glm"
     else
         echo "Downloading glm"
-        curl -L https://github.com/g-truc/glm/archive/refs/tags/$glm_release.tar.gz -o glm-$glm_release.tar.gz
+        curl -fL https://github.com/g-truc/glm/archive/refs/tags/$glm_release.tar.gz -o glm-$glm_release.tar.gz
         echo
         echo "Unpacking glm-$glm_release"
         tar xf glm-$glm_release.tar.gz
@@ -348,7 +348,7 @@ getrdkit() {
         echo "Using existing rdkit"
     else
         echo "Downloading RDKit source"
-        curl -L https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
+        curl -fL https://github.com/rdkit/rdkit/archive/refs/tags/$rdkit_release.tar.gz -o "$rdkit_release.tar.gz"
         echo
         echo "Unpacking RDKit source"
         tar xf "$rdkit_release.tar.gz"
@@ -369,7 +369,7 @@ getgraphene() {
         echo "Using existing graphene"
     else
         echo "Downloading graphene source"
-        curl -L https://github.com/ebassi/graphene/archive/refs/tags/$graphene_release.tar.gz -o graphene_$graphene_release.tar.gz
+        curl -fL https://github.com/ebassi/graphene/archive/refs/tags/$graphene_release.tar.gz -o graphene_$graphene_release.tar.gz
         echo
         echo "Unpacking graphene source"
         tar xf "graphene_$graphene_release.tar.gz"
@@ -383,7 +383,7 @@ getsigcpp() {
         echo "Using existing libsigcplusplus"
     else
         echo "Downloading libsigc++ source"
-        curl -L https://github.com/libsigcplusplus/libsigcplusplus/archive/refs/tags/$libsigcpp_release.tar.gz -o libsigcplusplus_$libsigcpp_release.tar.gz
+        curl -fL https://github.com/libsigcplusplus/libsigcplusplus/archive/refs/tags/$libsigcpp_release.tar.gz -o libsigcplusplus_$libsigcpp_release.tar.gz
         echo
         echo "Unpacking libsigc++ source"
         tar xf "libsigcplusplus_$libsigcpp_release.tar.gz"
@@ -397,11 +397,11 @@ getprivateer() {
         echo "Using existing privateer"
     else
         echo "Downloading and Unpacking Privateer"
-        curl -L https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz
+        curl -fL https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz
         tar xf privateer-wasm.tar.gz
         mv privateer-moorhen-build-0.3.5 privateer-wasm
         echo "Getting updated simdjson.h"
-        curl -L https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
+        curl -fL https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h
         patch -p0 < ../patches/privateer-gemmi070.patch
     fi
     echo
@@ -413,7 +413,7 @@ getboost() {
         echo "Using existing boost"
     else
         echo "Checking out boost"
-        curl -L https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz
+        curl -fL https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz
         tar xf boost_$boost_release.tar.gz
     fi
     echo
