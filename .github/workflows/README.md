@@ -2,6 +2,7 @@
 
 * emsdk-cache - Triggered manually. Updates the cached emsdk version. Poorly named. Needs renaming.
 * install-cache - Triggered manually. Very rarely ran. Does a full build of Moorhen. Not sure what for. Highly redundant / confusing (probably erroneous) cache operations. Can probably be deleted.
+* js-documentation - Triggered on push to release branches. Builds the js documentation and pushes it to the gh-pages branch. Needs to be fixed.
 
 # What I will change:
 
