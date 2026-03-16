@@ -12,9 +12,14 @@ fi
 
 . ${MOORHEN_SOURCE_DIR}/VERSIONS
 
+fail() {
+    echo $1
+    exit 1
+}
+
 cdcheckout() {
-    mkdir -p ${MOORHEN_SOURCE_DIR}/checkout
-    cd ${MOORHEN_SOURCE_DIR}/checkout
+    mkdir -p ${MOORHEN_SOURCE_DIR}/checkout &&\
+    cd ${MOORHEN_SOURCE_DIR}/checkout || fail "Failed to cd to checkout directory"
 }
 
 geteigen() {
@@ -23,8 +28,8 @@ geteigen() {
         echo "Using existing LibEigen"
     else
         echo "Checking out LibEigen"
-        curl -fL https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz
-        tar xf eigen-$libeigen_release.tar.gz
+        curl -fL https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz &&\
+        tar xf eigen-$libeigen_release.tar.gz || fail "Failed to download and unpack LibEigen"
     fi
     echo
 }

@@ -47,11 +47,6 @@ fi
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
 
-fail() {
-    echo $1
-    exit 1
-}
-
 clearzlib() {
     echo "Clear zlib"
     rm -rf ${BUILD_DIR}/zlib_build
