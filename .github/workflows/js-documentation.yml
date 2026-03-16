@@ -4,7 +4,6 @@ on:
   push:
     # Only build dev docs based on the branch for the latest release...
     branches:
-      - ci_improvements
       - v0.22
       - v0.23
       - v0.24
