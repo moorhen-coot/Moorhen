@@ -1,4 +1,4 @@
-name: Update emsdk
+name: Update emsdk to the latest version
 
 on: workflow_dispatch
 

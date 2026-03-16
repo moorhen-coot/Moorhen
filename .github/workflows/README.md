@@ -1,6 +1,6 @@
 # Summary of what I know about the workflows:
 
-* emsdk-cache - Triggered manually. Updates the cached emsdk version. Poorly named. Needs renaming.
+* emsdk-cache - Triggered manually. Updates the cached emsdk version.
 * js-documentation - Triggered on push to release branches. Builds the js documentation and pushes it to the gh-pages branch. Needs to be fixed. It might never have worked.
 * nightly-tests - As the name implies: Runs every night. Builds the entirety of Moorhen with all dependencies and runs 'npm test' (probably same as 'npm run test'). Very wasteful: Needs improved dependency caching. How does 'npm test' differ from 'npm test-react'?
 * run-tests - Triggered on push and pull request. Similar to 'nightly-tests' but only does Typescript and React testing (`npm run test-react`).
@@ -16,3 +16,4 @@
 
 * Merge 'nightly-tests' and 'run-tests' into a single workflow which tests everything and manages caches correctly.
 * All workflows which use emsdk need to extract the emsdk version
+* Drop usage of hard-coded absolute paths in the runnner.
