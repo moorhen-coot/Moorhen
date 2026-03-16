@@ -44,12 +44,12 @@ jobs:
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk/
-        ./emsdk install {{ env.TARGET_EMSDK_VERSION }}
+        ./emsdk install $TARGET_EMSDK_VERSION
 
     - name: Activate Emsdk
       run: |
         cd emsdk/
-        ./emsdk activate {{ env.TARGET_EMSDK_VERSION }}
+        ./emsdk activate $TARGET_EMSDK_VERSION
 
     - name: Read Coot commit hash
       id: coot_commit
