@@ -1,6 +1,7 @@
 name: Nightly tests
 
 on:
+  # Every day at midnight UTC
   schedule:
   - cron: "0 0 * * *"
 
