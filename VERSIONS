@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 rdkit_release="Release_2025_09_2"
 libccp4_release="8.0.0"
