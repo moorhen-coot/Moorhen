@@ -5671,7 +5671,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     "detail": {
                         atom: displayBuffers[minidx].atoms[minj],
                         buffer: displayBuffers[minidx],
-                        isResidueSelection: self.keysDown['residue_selection']
+                        isResidueSelection: self.keysDown['residue_selection'],
+                        label: atomLabel
                     }
                 });
                 document.dispatchEvent(atomClicked);
