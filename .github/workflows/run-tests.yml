@@ -35,6 +35,7 @@ jobs:
       uses: actions/cache/save@v4
       with: 
         path: emsdk/
+        # Todo: change this key when this branch is ready to merge
         key: emsdk-cache-new
 
     - name: Download and install emsdk
