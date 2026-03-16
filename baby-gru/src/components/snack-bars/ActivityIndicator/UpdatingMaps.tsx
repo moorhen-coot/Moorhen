@@ -1,13 +1,11 @@
-import { SnackbarContent, useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
-import { forwardRef, useCallback, useEffect, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { disableUpdatingMaps, setCurrentScores } from "../../store/moleculeMapUpdateSlice";
-import { webGL } from "../../types/mgWebGL";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenStack } from "../interface-base";
+import { useCallback, useEffect, useState } from "react";
+import { useCommandCentre } from "../../../InstanceManager";
+import { disableUpdatingMaps, setCurrentScores } from "../../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../../types/moorhen";
+import { MoorhenStack } from "../../interface-base";
 
-export const MoorhenUpdatingMapsManager = () => {
+export const UpdatingMapsManager = () => {
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const updatingMapsIsEnabled = useSelector((state: moorhen.State) => state.moleculeMapUpdate.updatingMapsIsEnabled);
@@ -22,8 +20,6 @@ export const MoorhenUpdatingMapsManager = () => {
     const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         // if (updatingMapsIsEnabled && showScoresToast) {
@@ -126,12 +122,11 @@ export const MoorhenUpdatingMapsManager = () => {
     return null;
 };
 
-export const MoorhenUpdatingMapsSnackBar = () => {
+export const UpdatingMapsSnackBar = () => {
     const [innerRFactorDiff, setInnerRFactorDiff] = useState<string | null>(null);
     const [innerRFreeDiff, setInnerRFreeDiff] = useState<string | null>(null);
     const [innerMoorhenPointsDiff, setInnerMoorhenPointsDiff] = useState<string | null>(null);
 
-    const showScoresToast = useSelector((state: moorhen.State) => state.moleculeMapUpdate.showScoresToast);
     const rFactor = useSelector((state: moorhen.State) => state.moleculeMapUpdate.currentScores.rFactor);
     const rFree = useSelector((state: moorhen.State) => state.moleculeMapUpdate.currentScores.rFactor);
     const moorhenPoints = useSelector((state: moorhen.State) => state.moleculeMapUpdate.currentScores.moorhenPoints);
@@ -139,16 +134,6 @@ export const MoorhenUpdatingMapsSnackBar = () => {
     const rFreeDiff = useSelector((state: moorhen.State) => state.moleculeMapUpdate.currentScoreDiffs.rFactor);
     const moorhenPointsDiff = useSelector((state: moorhen.State) => state.moleculeMapUpdate.currentScoreDiffs.moorhenPoints);
     const defaultUpdatingScores = useSelector((state: moorhen.State) => state.moleculeMapUpdate.defaultUpdatingScores);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const updatingMapsIsEnabled = useSelector((state: moorhen.State) => state.moleculeMapUpdate.updatingMapsIsEnabled);
-
-    // const { closeSnackbar } = useSnackbar();
-
-    // useEffect(() => {
-    //     if (!showScoresToast || !updatingMapsIsEnabled) {
-    //         closeSnackbar(props.id);
-    //     }
-    // }, [showScoresToast, updatingMapsIsEnabled]);
 
     useEffect(() => {
         if (rFactorDiff !== null) {
@@ -218,5 +203,3 @@ export const MoorhenUpdatingMapsSnackBar = () => {
         </MoorhenStack>
     );
 };
-
-MoorhenUpdatingMapsSnackBar.displayName = "MoorhenUpdatingMapsSnackBar";

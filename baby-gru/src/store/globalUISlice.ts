@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { BottomPanelIDs, SidePanelIDs } from "@/components/panels";
-import { ShownControl } from "@/components/snack-bar/PopupControls/PopupControlList";
+import { ShownControl } from "@/components/snack-bars/PopupControls/PopupControlList";
 
 const initialState: {
     busy: boolean;

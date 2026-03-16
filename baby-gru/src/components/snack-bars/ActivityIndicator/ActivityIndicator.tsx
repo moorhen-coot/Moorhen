@@ -1,10 +1,10 @@
 import { SaveOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { MoorhenSpinner } from "../icons";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
-import "./container.css";
+import { MoorhenSpinner } from "../../icons";
+import { MoorhenStack } from "../../interface-base";
+import { UpdatingMapsSnackBar } from "./UpdatingMaps";
+import "./activity-indicator.css";
 
 export const ActivityIndicator = () => {
     const busy = useSelector((state: RootState) => state.globalUI.busy);
@@ -62,7 +62,7 @@ export const ActivityIndicator = () => {
             {updatingMapsIsEnabled && (
                 <div className="moorhen__activity-indicator">
                     {" "}
-                    <MoorhenUpdatingMapsSnackBar />
+                    <UpdatingMapsSnackBar />
                 </div>
             )}
         </div>

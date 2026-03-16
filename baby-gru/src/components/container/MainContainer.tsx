@@ -43,18 +43,18 @@ import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
-import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
-import { MoorhenGoToResidueSnackbar } from "../snack-bar/MoorhenGoToResidueSnackbar";
-import { MoorhenLongJobSnackBar } from "../snack-bar/MoorhenLongJobSnackBar";
-import { MoorhenModelTrajectorySnackBar } from "../snack-bar/MoorhenModelTrajectorySnackBar";
-import { MoorhenResidueStepsSnackBar } from "../snack-bar/MoorhenResidueStepsSnackBar";
-import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
-import { MoorhenSnackBarManager } from "../snack-bar/MoorhenSnackBarManager";
-import { MoorhenTomogramSnackBar } from "../snack-bar/MoorhenTomogramSnackBar";
-import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
-import { PopupControls } from "../snack-bar/PopupControls/PopupControls";
+import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
+import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
+import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bars/MoorhenAcceptRejectMatchingLigandSnackBar";
+import { MoorhenGoToResidueSnackbar } from "../snack-bars/MoorhenGoToResidueSnackbar";
+import { MoorhenLongJobSnackBar } from "../snack-bars/MoorhenLongJobSnackBar";
+import { MoorhenModelTrajectorySnackBar } from "../snack-bars/MoorhenModelTrajectorySnackBar";
+import { MoorhenResidueStepsSnackBar } from "../snack-bars/MoorhenResidueStepsSnackBar";
+import { MoorhenSideBar } from "../snack-bars/MoorhenSideBar";
+import { MoorhenSnackBarManager } from "../snack-bars/MoorhenSnackBarManager";
+import { MoorhenTomogramSnackBar } from "../snack-bars/MoorhenTomogramSnackBar";
+import { PopupControls } from "../snack-bars/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
-import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
@@ -432,7 +432,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
         longJobNotification: MoorhenLongJobSnackBar,
         residueSteps: MoorhenResidueStepsSnackBar,
-        updatingMaps: MoorhenUpdatingMapsSnackBar,
         modelTrajectory: MoorhenModelTrajectorySnackBar,
         tomogram: MoorhenTomogramSnackBar,
         sideBar: MoorhenSideBar,
@@ -485,7 +484,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
                         <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
                         <MoorhenSnackBarManager />
-                        <MoorhenUpdatingMapsManager />
+                        <UpdatingMapsManager />
                         <MoorhenMapsHeadManager />
                         <MoleculesOriginListener />
 

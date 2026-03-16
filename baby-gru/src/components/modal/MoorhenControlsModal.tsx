@@ -35,8 +35,6 @@ export const MoorhenControlsModal = () => {
     const [svgString, setSvgString] = useState<string | null>(null);
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
 
-    const previouslySearchedRef = useRef<string | null>(null);
-    const autoCompleteRef = useRef<string | null>(null);
     const shortCuts = useMemo(() => {
         const shortCuts: { [key: string]: { modifiers: string[]; keyPress: string; label: string } } = _shortCuts
             ? JSON.parse(_shortCuts as string)
@@ -70,17 +68,28 @@ export const MoorhenControlsModal = () => {
         []
     );
 
-    const handleMouseHover = (key: string, modifiers: string[], isMouseEnter: boolean = true) => {
+    const handleMouseHover = (key: string, isMouseEnter: boolean = null) => {
         const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
         if (!svg) {
             return;
         }
 
+        if (isMouseEnter && autoCompleteValue !== "") {
+            setAutoCompleteValue("");
+        }
+
+        const modifiers = [];
+        if (shortCuts[key].modifiers.includes("shiftKey")) modifiers.push("Shift");
+        if (shortCuts[key].modifiers.includes("ctrlKey")) modifiers.push("Ctrl");
+        if (shortCuts[key].modifiers.includes("metaKey")) modifiers.push("Meta");
+        if (shortCuts[key].modifiers.includes("altKey")) modifiers.push("Alt");
+        if (shortCuts[key].keyPress === " ") modifiers.push("Space");
+
         const elementsToHighlight: string[] = [...modifiers, shortCuts[key].keyPress];
         elementsToHighlight.forEach(elementId => {
             const svgElement: SVGElement = svg.getElementById(elementId);
             if (svgElement) {
-                svgElement.style.fill = isMouseEnter ? "#f55142" : "#ffffffff";
+                svgElement.style.fill = isMouseEnter === true || isMouseEnter === null ? "#f55142" : "#ffffffff";
             }
         });
 
@@ -111,27 +120,14 @@ export const MoorhenControlsModal = () => {
                     <MoorhenStack direction="column" style={{ overflowY: "scroll" }}>
                         {shortCuts &&
                             Object.keys(shortCuts).map(key => {
-                                const modifiers = [];
-                                if (shortCuts[key].modifiers.includes("shiftKey")) modifiers.push("Shift");
-                                if (shortCuts[key].modifiers.includes("ctrlKey")) modifiers.push("Ctrl");
-                                if (shortCuts[key].modifiers.includes("metaKey")) modifiers.push("Meta");
-                                if (shortCuts[key].modifiers.includes("altKey")) modifiers.push("Alt");
-                                if (shortCuts[key].keyPress === " ") modifiers.push("Space");
                                 return (
                                     <div
                                         className="moorhen__stack_card"
                                         key={key}
                                         onMouseEnter={() => {
-                                            if (previouslySearchedRef.current) {
-                                                handleMouseHover(
-                                                    previouslySearchedRef.current,
-                                                    shortCuts[previouslySearchedRef.current].modifiers,
-                                                    false
-                                                );
-                                            }
-                                            handleMouseHover(key, modifiers);
+                                            handleMouseHover(key, true);
                                         }}
-                                        onMouseLeave={() => handleMouseHover(key, modifiers, false)}
+                                        onMouseLeave={() => handleMouseHover(key, false)}
                                     >
                                         <span style={{ fontWeight: "bold" }}>{`${shortCuts[key].label}`}</span>
                                     </div>
@@ -167,18 +163,9 @@ export const MoorhenControlsModal = () => {
                                     <MenuItem
                                         key={key}
                                         onClick={_evt => {
-                                            autoCompleteRef.current = key;
                                             setAutoCompleteValue(shortCuts[key].label);
                                             setAutocompleteOpen(false);
-                                            if (previouslySearchedRef.current) {
-                                                handleMouseHover(
-                                                    previouslySearchedRef.current,
-                                                    shortCuts[previouslySearchedRef.current].modifiers,
-                                                    false
-                                                );
-                                            }
-                                            previouslySearchedRef.current = key;
-                                            handleMouseHover(key, shortCuts[key].modifiers);
+                                            handleMouseHover(key);
                                         }}
                                     >
                                         {shortCuts[key].label}
@@ -187,13 +174,6 @@ export const MoorhenControlsModal = () => {
                             }}
                             options={Object.keys(shortCuts)}
                             filterOptions={filterOptions}
-                            onChange={(evt, newSelection: string) => {
-                                autoCompleteRef.current = newSelection;
-                                if (newSelection === null) {
-                                    setAutoCompleteValue(newSelection);
-                                }
-                                setAutocompleteOpen(false);
-                            }}
                             sx={{
                                 "& .MuiInputBase-root": {
                                     backgroundColor: isDark ? "#222" : "white",
