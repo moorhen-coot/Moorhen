@@ -224,16 +224,14 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/coot_env_web.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/data.tar.gz
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/Components-inchikey.ich
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons
 }
 
 clearlhasa() {
@@ -498,13 +496,13 @@ else
 fi
 
 if test x"${MEMORY64}" = x"1"; then
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
 else
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
