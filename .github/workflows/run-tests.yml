@@ -30,7 +30,7 @@ jobs:
     - name: Install system dependencies     
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y git bzr patch curl
+        sudo apt-get install -y git bzr patch curl meson
 
     - name: Cache emsdk
       id: cache-emsdk
