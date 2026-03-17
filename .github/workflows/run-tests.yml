@@ -1,5 +1,8 @@
 name: Run tests
 
+## Todo: Also consider building & testing 64-bit WebAssembly version of Moorhen.
+## Not currently done to save CI time.
+
 on:
   # Every day at midnight UTC
   schedule:
