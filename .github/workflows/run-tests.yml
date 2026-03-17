@@ -110,7 +110,6 @@ jobs:
       with:
         path: |
           baby-gru/public/MoorhenAssets/
-          CCP4_WASM_BUILD/moorhen_build/
         key: moorhen-wasm-${{ hashFiles('CMakeLists.txt', 'wasm_src/**', 'wasm_src_frontend/**', 'metaballs/**', 'VERSIONS', 'moorhen_build.sh') }}-coot-${{ steps.coot_commit.outputs.commit }}-lhasa-${{ steps.lhasa_commit.outputs.commit }}-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
     - name: Build Moorhen WASM
       if: steps.cache-moorhen-wasm.outputs.cache-hit != 'true'
@@ -118,6 +117,7 @@ jobs:
         source emsdk/emsdk_env.sh
         ./moorhen_build.sh
     - name: Set up LhasaReact and monomers
+      if: steps.cache-moorhen-wasm.outputs.cache-hit == 'true'
       run: |
         rm -rf baby-gru/src/LhasaReact
         cp -r checkout/LhasaReact baby-gru/src/
