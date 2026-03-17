@@ -173,6 +173,7 @@ export const MoorhenLhasaModal = () => {
             resizeNodeRef={resizeNodeRef}
             onClose={handleClose}
             onResize={(_evt, _direction, _div, _delta, size) => {
+                console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
                 setLhasaMaxWidth(size.width);
                 setLhasaMaxHeight(size.height);
             }}
