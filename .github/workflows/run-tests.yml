@@ -19,10 +19,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Install Node.js v22
+    - name: Install Node.js v24
       uses: actions/setup-node@v4
       with:
-        node-version: 22
+        node-version: 24
         cache: 'npm'
         cache-dependency-path: baby-gru/package-lock.json
 
