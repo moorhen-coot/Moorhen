@@ -64,6 +64,10 @@ jobs:
       run: |
         . ./VERSIONS
         echo "commit=${lhasa_commit}" >> "$GITHUB_OUTPUT"
+    - name: Hash dependency versions and build scripts (excluding Coot and Lhasa)
+      id: dep_versions
+      run: |
+        { grep -v 'lhasa\|coot_commit=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
     - name: Cache Coot and Lhasa sources
       id: cache-coot-lhasa-src
       uses: actions/cache@v4
@@ -92,7 +96,7 @@ jobs:
           rdkit
           !checkout/coot-1.0
           !checkout/LhasaReact
-        key: prebuilt-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
+        key: prebuilt-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
     - name: Download C++ dependencies
       if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -109,7 +113,7 @@ jobs:
       with:
         path: |
           baby-gru/public/MoorhenAssets/
-        key: moorhen-wasm-${{ hashFiles('CMakeLists.txt', 'wasm_src/**', 'wasm_src_frontend/**', 'metaballs/**', 'VERSIONS', 'moorhen_build.sh') }}-coot-${{ steps.coot_commit.outputs.commit }}-lhasa-${{ steps.lhasa_commit.outputs.commit }}-deps-${{ hashFiles('VERSIONS', 'initial_build.sh', 'get_sources', 'get_sources_funs', 'moorhen_build.sh') }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
+        key: moorhen-wasm-${{ hashFiles('CMakeLists.txt', 'wasm_src/**', 'wasm_src_frontend/**', 'metaballs/**', 'moorhen_build.sh') }}-coot-${{ steps.coot_commit.outputs.commit }}-lhasa-${{ steps.lhasa_commit.outputs.commit }}-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
     - name: Build Moorhen WASM
       if: steps.cache-moorhen-wasm.outputs.cache-hit != 'true'
       run: |
