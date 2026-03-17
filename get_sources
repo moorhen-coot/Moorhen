@@ -24,6 +24,9 @@ getigraph
 getslicendice
 getfftw
 getfftw3
+getfreetype
+getpng
+getzlib
 getgsl
 getcoot
 getlhasa
