@@ -12,11 +12,10 @@
 * emsdk-cache - Triggered manually. Updates the cached emsdk version. Can be deleted after I'm done with updating the workflows. Now obsolete because we manually specify the emsdk version in the workflows.
 
 
-# What I will change:
-
-* Drop usage of hard-coded absolute paths in the runnner.
+## What I will change:
 
 ## What I have done:
 
 * Merge 'nightly-tests' and 'run-tests' into a single workflow which tests everything and manages caches correctly.
 * All workflows which use emsdk need to extract/set the emsdk version
+* Drop usage of hard-coded absolute paths in the runnner.
