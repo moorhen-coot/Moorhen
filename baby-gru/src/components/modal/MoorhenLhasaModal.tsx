@@ -19,8 +19,8 @@ import { MoorhenDraggableModalBase } from "../interface-base";
 const LhasaWrapper = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
-    maxWidth?: number;
-    maxHeight?: number;
+    Width?: number;
+    Height?: number;
 }) => {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -133,8 +133,8 @@ const LhasaWrapper = (props: {
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
             dark_mode={isDark}
-            max_width={props.maxWidth}
-            max_height={props.maxHeight}
+            width={props.Width}
+            height={props.Height}
         />
     ) : null;
 };
@@ -144,8 +144,8 @@ export const MoorhenLhasaModal = () => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const [lhasaMaxWidth, setLhasaMaxWidth] = useState<number>(convertRemToPx(37));
-    const [lhasaMaxHeight, setLhasaMaxHeight] = useState<number>(convertViewtoPx(30, height));
+    const [lhasaWidth, setLhasaWidth] = useState<number>(convertRemToPx(37));
+    const [lhasaHeight, setLhasaHeight] = useState<number>(convertViewtoPx(30, height));
 
     const urlPrefix = usePaths().urlPrefix;
 
@@ -174,10 +174,10 @@ export const MoorhenLhasaModal = () => {
             onClose={handleClose}
             onResize={(_evt, _direction, _div, _delta, size) => {
                 console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
-                setLhasaMaxWidth(size.width);
-                setLhasaMaxHeight(size.height);
+                setLhasaWidth(size.width - 20);
+                setLhasaHeight(size.height - 20);
             }}
-            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} maxHeight={lhasaMaxHeight} maxWidth={lhasaMaxWidth} />}
+            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} Height={lhasaHeight} Width={lhasaWidth} />}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
                     <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
