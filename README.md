@@ -70,7 +70,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 5.0.0 - the 24th January 2026 release, and several earlier versions.)
+(Moorhen is known to build successfully with emscripten version 5.0.3 - the 24th January 2026 release, and several earlier versions.)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
@@ -84,7 +84,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 <br/>After first checkout you should run the following to build the 32-bit and 64-bit WebAssembly versions of Moorhen:  
 `./moorhen_build.sh`  
 `./moorhen_build.sh  --64bit`  
-This should build all dependencies and then `Moorhen`.
+This should build all dependencies and then build `Moorhen`.
 
 **It is important to build both versions at the moment.**
 
