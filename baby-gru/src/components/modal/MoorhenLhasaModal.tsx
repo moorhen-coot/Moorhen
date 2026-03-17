@@ -15,6 +15,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base";
 
+/// Internal wrapper for use in the scope of this file.
 const LhasaWrapper = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
