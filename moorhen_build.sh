@@ -875,6 +875,8 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
+    # NOTE: If you change/add some steps below, make sure to update .github/workflows/run-tests.yml
+    # down below in the 'Set up LhasaReact and monomers' step, if needed.
     printf "\e[36mCopying LhasaReact...\e[0m"
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
     cp -r ${MOORHEN_SOURCE_DIR}/checkout/LhasaReact ${MOORHEN_SOURCE_DIR}/baby-gru/src/
