@@ -173,6 +173,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const resizableSize = getResizableSize();
 
     const [size, setSize] = useState<{ width: number; height: number }>(resizableSize);
+    const sizeRef = useRef(size);
+    const onResizeRef = useRef(props.onResize);
+    onResizeRef.current = props.onResize;
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
     const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
