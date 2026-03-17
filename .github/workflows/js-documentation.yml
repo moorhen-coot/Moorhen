@@ -46,7 +46,7 @@ jobs:
       - name: Update mirrors
         run: sudo apt-get update -y
 
-      - name: Install dependencies 
+      - name: Install dependencies
         run: |    
           sudo apt-get install -y npm
 
