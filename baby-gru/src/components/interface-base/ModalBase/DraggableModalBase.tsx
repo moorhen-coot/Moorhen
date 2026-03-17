@@ -305,21 +305,22 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         const deltaY = evt.pageY - lastMousePos.current.y;
         lastMousePos.current = { x: evt.pageX, y: evt.pageY };
 
-        setSize(prev => {
-            let width = prev.width + deltaX;
-            let height = prev.height + deltaY;
-            if (width < minWidth) {
-                width = minWidth;
-            } else if (width > maxWidth) {
-                width = maxWidth;
-            }
-            if (height < minHeight) {
-                height = minHeight;
-            } else if (height > maxHeight) {
-                height = maxHeight;
-            }
-            return { width, height };
-        });
+        let width = sizeRef.current.width + deltaX;
+        let height = sizeRef.current.height + deltaY;
+        if (width < minWidth) {
+            width = minWidth;
+        } else if (width > maxWidth) {
+            width = maxWidth;
+        }
+        if (height < minHeight) {
+            height = minHeight;
+        } else if (height > maxHeight) {
+            height = maxHeight;
+        }
+        const newSize = { width, height };
+        sizeRef.current = newSize;
+        setSize(newSize);
+        onResizeRef.current?.(evt, "bottomRight", null, { width: deltaX, height: deltaY }, newSize);
     };
 
     const handleClose = useCallback(async () => {
