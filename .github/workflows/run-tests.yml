@@ -71,6 +71,21 @@ jobs:
       id: dep_versions
       run: |
         { grep -v 'lhasa\|coot_commit=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
+    - name: Cache prebuilt C++ dependencies with sources
+      id: cache-cpp-dependencies
+      uses: actions/cache@v4
+      with:
+        # include/glm and rdkit are symlinks to the GLM headers and to the rdkit sources respectively.
+        # They need to be included in the cache, I think.
+        # Note: we cannot exclude Coot and LhasaReact sources from this cache because there is no syntax to do so.
+        path: |
+          checkout/
+          install/
+          CCP4_WASM_BUILD/
+          include/glm
+          rdkit
+        key: prebuilt-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
+    # Restoring this cache now should overwrite whatever junk was put into checkout/coot-1.0 by the previous step
     - name: Cache Coot and Lhasa sources
       id: cache-coot-lhasa-src
       uses: actions/cache@v4
@@ -85,21 +100,6 @@ jobs:
         MOORHEN_SOURCE_DIR: ${{ github.workspace }}
       run: |
         source ./get_sources_funs && getcoot && getlhasa
-    - name: Cache prebuilt C++ dependencies with sources (without Coot and Lhasa)
-      id: cache-cpp-dependencies
-      uses: actions/cache@v4
-      with:
-        # include/glm and rdkit are symlinks to the GLM headers and to the rdkit sources respectively.
-        # They need to be included in the cache, I think.
-        path: |
-          checkout/
-          install/
-          CCP4_WASM_BUILD/
-          include/glm
-          rdkit
-          !checkout/coot-1.0
-          !checkout/LhasaReact
-        key: prebuilt-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
     - name: Download C++ dependencies
       if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
       run: |
