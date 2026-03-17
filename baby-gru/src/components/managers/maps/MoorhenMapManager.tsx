@@ -1,13 +1,15 @@
-import { useDispatch, useSelector, useStore } from 'react-redux';
-import { memo, useEffect, useMemo, useRef } from 'react';
-import type { RootState } from '../../../store/MoorhenReduxStore';
-import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from '../../../store/mapContourSettingsSlice';
-import { SelectorEffect } from '../../hookComponent/SelectorEffect';
-import { MapOriginListener, MapOriginListenerMouseUp } from './MapOriginListener';
-import { MapScrollWheelListener } from './MapScrollWheelListener';
+import { useDispatch, useSelector, useStore } from "react-redux";
+import { memo, useEffect, useMemo, useRef } from "react";
+import { MoorhenInstance, useMoorhenInstance } from "@/InstanceManager";
+import type { RootState } from "../../../store/MoorhenReduxStore";
+import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
+import { SelectorEffect } from "../../hookComponent/SelectorEffect";
+import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
+import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
     const lastTime = useRef<number>(Date.now());
     const drawQueue = useRef<
         {
@@ -16,7 +18,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             z: number;
             radius: number;
             contourLevel: number;
-            style: 'solid' | 'lit-lines' | 'lines';
+            style: "solid" | "lit-lines" | "lines";
         }[]
     >([]);
     const isWorkingRef = useRef<boolean>(false);
@@ -75,14 +77,14 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
     });
 
-    const mapStyle: 'solid' | 'lit-lines' | 'lines' = useSelector((state: RootState) => {
+    const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: RootState) => {
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
-                ? 'lit-lines'
+                ? "lit-lines"
                 : store.getState().mapContourSettings.defaultMapSurface
-                  ? 'solid'
-                  : 'lines';
+                  ? "solid"
+                  : "lines";
             return defaultStyle;
         }
         return style.style;
@@ -138,13 +140,32 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/
-        if (map?.showOnLoad) {
-            dispatch(showMap(map));
-            dispatch(setMapRadius({ molNo: mapMolNo, radius: map?.suggestedRadius * 1.2 || 15 }));
-            dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
-            dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: map?.suggestedContourLevel || 0.8 }));
-            dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
-        }
+        const intiliaseMap = async () => {
+            let mapRadius = map?.suggestedRadius * 1.2 || 15;
+            if (map?.isEM) {
+                const boundingSphere = await moorhenInstance.cootCommand.get_map_bounding_sphere(mapMolNo, map?.suggestedContourLevel);
+                const maxRadius = Math.max(map?.headerInfo.cell.a, map?.headerInfo.cell.b, map?.headerInfo.cell.c) / 2;
+                mapRadius = Math.min(boundingSphere.radius, maxRadius);
+                map.drawOrigin = boundingSphere.center;
+                console.log(`Map bounding sphere center: ${boundingSphere.center}, radius: ${boundingSphere.radius}`);
+            }
+
+            let contourLevel = 1;
+            if (map?.isEM) {
+                contourLevel = map?.isDifference ? 5 * map.mapRmsd : map?.suggestedContourLevel;
+            } else {
+                contourLevel = map?.isDifference ? 3 * map.mapRmsd : 1 * map.mapRmsd;
+            }
+
+            if (map?.showOnLoad) {
+                dispatch(showMap(map));
+                dispatch(setMapRadius({ molNo: mapMolNo, radius: mapRadius }));
+                dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
+                dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: contourLevel }));
+                dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
+            }
+        };
+        intiliaseMap();
     }, []);
 
     useEffect(() => {
@@ -187,4 +208,4 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     );
 });
 
-MoorhenMapManager.displayName = 'MoorhenMapManager';
+MoorhenMapManager.displayName = "MoorhenMapManager";
