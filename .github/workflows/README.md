@@ -14,9 +14,9 @@
 
 # What I will change:
 
-* All workflows which use emsdk need to extract/set the emsdk version
+* Drop usage of hard-coded absolute paths in the runnner.
 
 ## What I have done:
 
 * Merge 'nightly-tests' and 'run-tests' into a single workflow which tests everything and manages caches correctly.
-* Drop usage of hard-coded absolute paths in the runnner.
+* All workflows which use emsdk need to extract/set the emsdk version
