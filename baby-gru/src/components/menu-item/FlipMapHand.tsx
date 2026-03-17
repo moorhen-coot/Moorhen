@@ -1,5 +1,6 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -15,7 +16,7 @@ export const FlipMapHand = () => {
 
     const selectRef = useRef<HTMLSelectElement>(null);
     const commandCentre = useCommandCentre();
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const menuItemText = "Flip map...";
 
