@@ -1,5 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMapList } from "../../store/mapsSlice";
@@ -11,7 +12,7 @@ import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 export const LoadTutorialData = () => {
     const dispatch = useDispatch();
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);

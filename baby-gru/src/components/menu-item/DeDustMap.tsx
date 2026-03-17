@@ -1,5 +1,6 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -15,7 +16,7 @@ export const DedustMap = () => {
     const selectRef = useRef<HTMLSelectElement>(null);
     const moorhenInstance = useMoorhenInstance();
     const commandCentre = useCommandCentre();
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const onCompleted = async () => {
         if (!selectRef.current?.value) {
