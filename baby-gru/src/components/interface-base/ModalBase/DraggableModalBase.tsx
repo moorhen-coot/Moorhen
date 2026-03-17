@@ -40,7 +40,7 @@ type MoorhenDraggableModalBaseProps = {
     onResize?: (
         evt: MouseEvent | TouchEvent,
         direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
-        ref: HTMLDivElement,
+        ref: HTMLDivElement | null,
         delta: { width: number; height: number },
         size: { width: number; height: number }
     ) => void;
