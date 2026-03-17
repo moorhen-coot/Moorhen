@@ -44,25 +44,23 @@ jobs:
           node-version: 24
 
       - name: Update mirrors
-        working-directory: /home/runner/work/Moorhen/
         run: sudo apt-get update -y
 
       - name: Install dependencies 
-        working-directory: /home/runner/work/Moorhen/
         run: |    
           sudo apt-get install -y npm
 
-      - name: Create mock version file
-        working-directory: /home/runner/work/Moorhen/       
+      # What does this even do?
+      - name: Create mock version file     
         run: |    
-          echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
+          echo "export const version = 0.1" > baby-gru/src/version.js
 
       - name: npm install
-        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        working-directory: baby-gru
         run: npm install
 
       - name: compile jsDocs
-        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        working-directory: baby-gru
         run: |
           npm install --force better-docs
           npx jsdoc -c jsdoc.json    
@@ -72,4 +70,4 @@ jobs:
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: /home/runner/work/Moorhen/Moorhen/baby-gru/docs
+          publish_dir: baby-gru/docs
