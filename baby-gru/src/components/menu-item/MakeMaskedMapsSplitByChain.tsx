@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -18,7 +19,7 @@ export const MakeMaskedMapsSplitByChain = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const { enqueueSnackbar } = useSnackbar();
 

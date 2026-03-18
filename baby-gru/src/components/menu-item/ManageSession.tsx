@@ -12,7 +12,7 @@ import { Backups } from "./Backups";
 
 export const ManageSession = () => {
     const commandCentre = useCommandCentre();
-    const store = useStore();
+    const store = useStore<RootState>();
     const [sessionName, setSessionName] = usePersistentState("manageSession", "uploadName", "moorhen_session", true);
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
     const maps = useSelector((state: RootState) => state.maps);
@@ -26,7 +26,7 @@ export const ManageSession = () => {
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files)
             try {
-                const arrayBuffer = await e.target.files[0].arrayBuffer()
+                const arrayBuffer = await e.target.files[0].arrayBuffer();
                 const bytes = new Uint8Array(arrayBuffer);
                 const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
                 //console.log(JSON.stringify(sessionMessage, null, 4))
