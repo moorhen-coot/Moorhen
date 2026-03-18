@@ -505,7 +505,7 @@ class molecules_container_js : public molecules_container_t {
 
             Json::Value root;
 
-            const std::filesystem::path rotarama_data("TODO PATH"); // TODO
+            const std::filesystem::path rotarama_data("data/rotarama/"); // TODO
             const Rota rota(rotarama_data);
             const Rama rama(rotarama_data);
 
