@@ -615,6 +615,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
         }
     }
 
+    if(existingColour.length===4 && isNaN(existingColour[3])) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
+    if(existingColour.length===3 ) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
+
     useEffect(() => {
         console.log("useEffect (selectedDrawStyle)");
         if (selectedDrawStyle === "gradient" && !theOverlayObject.gradientBoundary) {
@@ -1105,7 +1108,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
             left={width / 6}
             top={height / 3}
             minHeight={50}
-            minWidth={convertRemToPx(37)}
+            minWidth={convertRemToPx(25)}
             maxHeight={convertViewtoPx(70, height)}
             maxWidth={convertViewtoPx(90, width)}
             enforceMaxBodyDimensions={true}
