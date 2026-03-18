@@ -48,8 +48,8 @@ inline std::vector<double> calculate_chi_angles(
         atoms[i] = residue.find_atom(it->second[i], altloc);
     std::vector<double> angles(atoms.size() - 3, NAN);
     for (size_t i = 0; i < angles.size(); i++)
-        angles[i] = gemmi::calculate_dihedral_from_atoms(
-            atoms[i], atoms[i + 1], atoms[i + 2], atoms[i + 3]);
+        angles[i] = gemmi::deg(gemmi::calculate_dihedral_from_atoms(
+            atoms[i], atoms[i + 1], atoms[i + 2], atoms[i + 3]));
     return angles;
 }
 
