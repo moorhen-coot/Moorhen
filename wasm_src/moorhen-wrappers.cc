@@ -1671,6 +1671,16 @@ void unpackCootDataFile(const std::string &fileName, bool doUnzip, const std::st
 
 std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &small_molecule_cif);
 
+int run_conkit_validate_with_exception(ValidateOptions& opts){
+    try {
+        return run_conkit_validate(opts);
+    } catch(std::exception e){
+        //ConKit failed ...
+        std::cout << "ConKit failed ..." << std::endl;
+        return -1;
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module) {
         // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
@@ -2844,6 +2854,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_coord_header_info",&get_coord_header_info);
     function("is64bit",&is64bit);
 
-    function("run_conkit_validate",&run_conkit_validate);
+    function("run_conkit_validate",&run_conkit_validate_with_exception);
 
 }

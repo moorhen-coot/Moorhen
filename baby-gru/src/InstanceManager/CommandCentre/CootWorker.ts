@@ -1633,19 +1633,24 @@ onmessage = function (e) {
             renumber: renumber,
         }
 
-        cootModule.run_conkit_validate(options)
+        const retCode = cootModule.run_conkit_validate(options)
         cootModule.FS_unlink(pdb_file_str)
         cootModule.FS_unlink(model_file_str)
         if(specifySequence&&sequenceText&&sequenceFileName){
             cootModule.FS_unlink(sequenceFileName);
         }
-        const jsonContents = cootModule.FS.readFile("conkit.json", { encoding: 'utf8' })
-        cootModule.FS_unlink("conkit.json")
+
+        let jsonContents = JSON.stringify({residues:[]})
+        if(retCode === 0 ){
+            jsonContents = cootModule.FS.readFile("conkit.json", { encoding: 'utf8' }) as string
+            cootModule.FS_unlink("conkit.json")
+        }
+
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
             messageTag: "result",
-            result:jsonContents,
+            result: jsonContents,
         })
     }
 

@@ -31,6 +31,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [selectedPredictedChain, setSelectedPredictedChain] = useState<string | null>(null);
     const [sequencesLists, setSequenceLists] = useState<MoorhenSequenceViewerSequence[] | null>([]);
     const [conKitMatches, setConKitMatches] = useState<any[] | null>([]);
+    const [conKitSuccess, setConKitSuccess] = useState<boolean>(true);
     const [sequenceText, setSequenceText] = useState<null | string>(null);
     const [sequenceFileName, setSequenceFileName] = useState<null | string>(null);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -190,6 +191,10 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
         const res = JSON.parse(json_string)
         setConKitMatches(res.residues)
+        if(res.residues.length===0)
+            setConKitSuccess(false)
+        else
+            setConKitSuccess(true)
 
     }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber,specifySequence,sequenceText,sequenceFileName]);
 
@@ -307,6 +312,9 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                     />
                     </MoorhenStack>
                     <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
+                    {(conKitMatches !==null && conKitMatches.length ===0 && !conKitSuccess ) &&
+                    <div style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}><b>ConKit failed to produce any results</b></div>
+                    }
                     <MoorhenSequenceViewer
                         onResidueClick={handleClickResidue}
                         onResiduesSelect={handlResiduesSelect}
