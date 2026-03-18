@@ -615,8 +615,8 @@ export const Moorhen2DCanvasObjectsModal = () => {
         }
     }
 
-    if(existingColour.length===4 && isNaN(existingColour[3])) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
-    if(existingColour.length===3 ) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
+    if(existingColour && existingColour.length===4 && isNaN(existingColour[3])) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
+    if(existingColour && existingColour.length===3 ) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
 
     useEffect(() => {
         console.log("useEffect (selectedDrawStyle)");
@@ -979,6 +979,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                         <MoorhenColourPicker
                                             colour={col}
                                             setColour={color => {
+                                                if(color.length===4 && isNaN(color[3])) color[3] =  1.0
+                                                if(color.length===3 ) color.push(1.0)
+                                                console.log(color)
                                                 updateObject(
                                                     {
                                                         gradientStops: [
@@ -994,13 +997,6 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                                     },
                                                     drawModeRef.current.value
                                                 );
-                                                /*
-                                   setGradientStops([
-                                     ...gradientStops.slice(0, istop),
-                                     {stop:s.stop,colour:rgbToHex(color[0], color[1], color[2])+componentToHex(Math.floor(color[3]*255))},
-                                     ...gradientStops.slice(istop+1)
-                                   ]);
-                                   */
                                             }}
                                             useAlpha={true}
                                             position="bottom"
