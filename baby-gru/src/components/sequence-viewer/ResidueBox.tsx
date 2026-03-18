@@ -38,7 +38,7 @@ export const ResidueBox = memo((props: ResidueBoxProps) => {
     if (!residue) {
         return (
             <div
-                key={sequence.molNo + sequence.chain + "empty" + index}
+                key={sequence.molNo + sequence.chain + "empty" + index + (sequence.key ? sequence.key : "")}
                 className="moorhen__seqviewer__residue-box msv__empty"
                 style={{ "--column-width": `${columnWidth}rem` } as React.CSSProperties}
             ></div>
@@ -52,7 +52,7 @@ export const ResidueBox = memo((props: ResidueBoxProps) => {
         return (
             <div
                 role="button"
-                key={sequence.molNo + sequence.chain + residue.resNum}
+                key={sequence.molNo + sequence.chain + residue.resNum + (sequence.key ? sequence.key : "")}
                 className={className}
                 data-molname={sequence.molName}
                 data-molno={sequence.molNo}

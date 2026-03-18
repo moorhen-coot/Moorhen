@@ -15,6 +15,7 @@ fi
 geteigen
 getlibccp4
 getclipper
+getconkit
 getssm
 getmmdb2
 getgemmi
