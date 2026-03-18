@@ -272,7 +272,7 @@ export const MoorhenVectorsModal = () => {
                     <MoorhenMoleculeSelect label="Molecule" onSelect={sel => handleModelChange(sel, false)} />
                     <MoorhenStack direction="horizontal">
                     <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(0)}>
-                        Click to pick atom
+                        Pick atom
                     </MoorhenButton>
                     <MoorhenTextInput
                         style={{ height: "2rem" }}
@@ -296,7 +296,7 @@ export const MoorhenVectorsModal = () => {
                     />
                     <MoorhenStack direction="horizontal">
                     <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(1)}>
-                        Click to pick atom
+                        Pick atom
                     </MoorhenButton>
                     <MoorhenTextInput
                         ref={cidToRef}
@@ -503,7 +503,7 @@ export const MoorhenVectorsModal = () => {
             left={width / 6}
             top={height / 3}
             minHeight={50}
-            minWidth={convertRemToPx(37)}
+            minWidth={convertRemToPx(25)}
             maxHeight={convertViewtoPx(70, height)}
             maxWidth={convertViewtoPx(90, width)}
             enforceMaxBodyDimensions={true}
