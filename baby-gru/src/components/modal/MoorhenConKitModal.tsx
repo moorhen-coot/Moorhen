@@ -1,4 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
+import { usePaths } from "@/InstanceManager";
 import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
@@ -23,6 +24,8 @@ export const MoorhenConKitModal = () => {
         false
     );
 
+    const path = usePaths().urlPrefix;
+
     const infoText = (
         <>
             <h1>ConKit</h1>
@@ -34,6 +37,8 @@ export const MoorhenConKitModal = () => {
             sem, nec sagittis ante dui in quam. Curabitur maximus ex at scelerisque posuere. Cras iaculis velit sit amet eleifend gravida.
             Pellentesque molestie cursus metus et aliquam. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
             curae; Donec a nunc sed enim efficitur
+            <h2>Image Test</h2>
+            <img src={`${path}/pixmaps/docs/ConKit.jpg`} alt="ConKit image" />
             <h3>Citation: </h3>
             <ul>
                 <li>
@@ -46,7 +51,7 @@ export const MoorhenConKitModal = () => {
     );
     const tittleBar = (
         <MoorhenStack direction="horizontal" align="center" gap={"1rem"}>
-            ConKit <MoorhenInfoCard infoText={infoText} />
+            ConKit <MoorhenInfoCard infoText={infoText} width="32rem" />
         </MoorhenStack>
     );
 

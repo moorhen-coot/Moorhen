@@ -87,6 +87,8 @@
 .moorhen__info-card {
     font-size: 1rem;
     font-style: italic;
+    width: auto;
+    max-width: 26rem;
 }
 
 .moorhen__info-card > h1 {
