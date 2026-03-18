@@ -1,6 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
+import { cidToSpec } from "../../utils/utils";
+import { Backdrop } from "@mui/material";
+import { Spinner } from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { addVector, removeVector } from "../../store/vectorsSlice";
 import type { MoorhenVector, VectorsArrowMode, VectorsCoordMode, VectorsDrawMode, VectorsLabelMode } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -13,6 +16,9 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
 export const MoorhenVectorsModal = () => {
+
+    const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
+
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -264,15 +270,19 @@ export const MoorhenVectorsModal = () => {
                     <p>From atom</p>
                     <div />
                     <MoorhenMoleculeSelect label="Molecule" onSelect={sel => handleModelChange(sel, false)} />
+                    <MoorhenStack direction="horizontal">
+                    <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(0)}>
+                        Click to pick atom
+                    </MoorhenButton>
                     <MoorhenTextInput
                         style={{ height: "2rem" }}
                         ref={cidFromRef}
-                        label="Selection"
                         text={theVector.cidFrom}
                         onChange={evt => {
                             updateVector({ cidFrom: evt.target.value });
                         }}
                     />
+                    </MoorhenStack>
                 </MoorhenStack>
             )}
             {theVector.coordsMode === "atoms" && (
@@ -284,14 +294,18 @@ export const MoorhenVectorsModal = () => {
                         style={{ height: "3rem", margin: "0rem" }}
                         onSelect={sel => handleModelChange(sel, true)}
                     />
+                    <MoorhenStack direction="horizontal">
+                    <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(1)}>
+                        Click to pick atom
+                    </MoorhenButton>
                     <MoorhenTextInput
                         ref={cidToRef}
                         text={theVector.cidTo}
-                        label="Selection"
                         onChange={evt => {
                             updateVector({ cidTo: evt.target.value });
                         }}
                     />
+                    </MoorhenStack>
                 </MoorhenStack>
             )}
             {theVector.coordsMode === "points" && (
@@ -459,6 +473,30 @@ export const MoorhenVectorsModal = () => {
         </>
     );
 
+    const setAtomPickerEventListener = async evt => {
+        const chosenAtom = cidToSpec(evt.detail.label);
+        if(awaitAtomClick===0){
+            updateVector({ cidFrom: chosenAtom.cid })
+            cidFromRef.current.value = chosenAtom.cid
+        } else if(awaitAtomClick===1){
+            updateVector({ cidTo: chosenAtom.cid })
+            cidToRef.current.value = chosenAtom.cid
+        }
+        setAwaitAtomClick(-1);
+    }
+
+    useEffect(() => {
+        if (awaitAtomClick !== -1) {
+            document.addEventListener("atomClicked", setAtomPickerEventListener, { once: true });
+        }
+
+        return () => {
+            if (awaitAtomClick !== -1) {
+                document.removeEventListener("atomClicked", setAtomPickerEventListener);
+            }
+        };
+    }, [awaitAtomClick]);
+
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.VECTORS}
@@ -473,6 +511,17 @@ export const MoorhenVectorsModal = () => {
             overflowX="auto"
             headerTitle="Vectors"
             resizeNodeRef={resizeNodeRef}
+            additionalChildren={
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                        <span>Click on an atom...</span>
+                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
+                            Cancel
+                        </MoorhenButton>
+                    </MoorhenStack>
+                </Backdrop>
+            }
             body={bodyContent}
             footer={footer}
         />
