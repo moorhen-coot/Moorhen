@@ -47,12 +47,12 @@ getrotarama() {
         curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-thr.data -o rota8000-thr.data &&\
         curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-trp.data -o rota8000-trp.data &&\
         curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-val.data -o rota8000-val.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-cispro.data -o rota8000-cispro.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-general-noGPIVpreP.data -o rota8000-general-noGPIVpreP.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-gly-sym.data -o rota8000-gly-sym.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-ileval-nopreP.data -o rota8000-ileval-nopreP.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-prepro-noGP.data -o rota8000-prepro-noGP.data &&\
-        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-transpro.data -o rota8000-transpro.data || fail "Failed to download rotarama data"
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-cispro.data -o rama8000-cispro.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-general-noGPIVpreP.data -o rama8000-general-noGPIVpreP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-gly-sym.data -o rama8000-gly-sym.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-ileval-nopreP.data -o rama8000-ileval-nopreP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-prepro-noGP.data -o rama8000-prepro-noGP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-transpro.data -o rama8000-transpro.data || fail "Failed to download rotarama data"
     fi
     echo
 }
