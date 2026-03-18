@@ -31,6 +31,7 @@ export type SeqElement = {
     residuesDisplayOffset?: number;
     colour?: string;
     missingAs?: string;
+    key?: string;
     blockAlternateColour?: boolean;
     residues: Residue[];
 };
