@@ -86,10 +86,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     useEffect(() => {
         const list: MoorhenSequenceViewerSequence[] = [];
-        if(!predMoleculeSelectRef.current||!molecules[predMoleculeSelectRef.current.value]){
+        const foundMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value))
+        if(!predMoleculeSelectRef.current||!foundMol){
             return 
         }
-        const foundMol = molecules[predMoleculeSelectRef.current.value]
+        
         const filteredSeqs =  foundMol.sequences.filter(c => c.chain===selectedPredictedChain)
         if(foundMol&&filteredSeqs.length===1){
             const seq = filteredSeqs[0];
@@ -100,6 +101,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementPLDDT.missingAs = "none";
             seqElementPLDDT.hideResCode = true;
             seqElementPLDDT.displayName = "PLDDT";
+            seqElementPLDDT.key = "PLDDT"
 
             const seqElementMatch = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElementMatch.colour = "rgb(128, 128, 128)";
@@ -107,13 +109,15 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementMatch.missingAs = "none";
             seqElementMatch.hideResCode = true;
             seqElementMatch.displayName = "Matches";
-
+            seqElementMatch.key = "Matches";
+            
             const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElement.colour = "rgb(128, 128, 128)";
             seqElement.blockAlternateColour = true;
             seqElement.missingAs = "none";
             seqElement.hideResCode = true;
             seqElement.displayName = "Register";
+            seqElement.key = "Register";
             let seq1letter = ""
             const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/
             if(seqElement.residues.length>0&&conKitMatches.length>0){
@@ -151,6 +155,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 seqElementPLDDT.residuesDisplayOffset = 0
                 const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
                 afDisplaySequence.displayName = "Query";
+                afDisplaySequence.key = "Query";
                 list.push(afDisplaySequence);
                 list.push(seqElement);
                 list.push(seqElementPLDDT);
@@ -161,9 +166,11 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     },[inputMoleculeSelectRef.current, molecules, selectedInputChain,conKitMatches])
 
     const runConKit = useCallback(async () => {
+        const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
+        const predMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value));
 
-       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[inputMoleculeSelectRef.current.value].gemmiStructure)
-       const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(molecules[predMoleculeSelectRef.current.value].gemmiStructure)
+       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
+       const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(predMol.gemmiStructure)
 
         if(input_cif_string.length==0 || ref_cif_string.length==0){
             return
