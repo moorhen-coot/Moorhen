@@ -207,7 +207,7 @@ getconkit() {
         echo "Using existing conkit_cpp"
     else
         echo "Checking out ConKit Validate"
-        git clone https://github.com/hlasimpk/conkit_validate_cpp.git conkit
+        git clone https://github.com/hlasimpk/conkit_validate_cpp.git conkit || fail "Failed to clone conkit"
     fi
     echo
 }
