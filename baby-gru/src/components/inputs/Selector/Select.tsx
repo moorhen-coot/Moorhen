@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React, { useEffect, useId } from "react";
 import { MoorhenStack } from "../../interface-base";
 
 export type MoorhenSelectProps = {
@@ -16,13 +16,14 @@ export type MoorhenSelectProps = {
 };
 
 export const MoorhenSelect = (props: MoorhenSelectProps) => {
-    const { children, ref = null, label = "", inline = true, defaultValue, disabled = false, value } = props;
+    const { children, ref = undefined, label = "", inline = true, defaultValue, disabled = false, value } = props;
     const id = useId();
 
     const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         props.onChange?.(e);
         props.setValue?.(e.target.value);
     };
+
     return (
         <MoorhenStack direction={inline ? "line" : "column"} align="center" gap="0.5rem">
             {label && (

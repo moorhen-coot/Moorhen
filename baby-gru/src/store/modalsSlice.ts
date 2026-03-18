@@ -29,6 +29,7 @@ export type ModalKey =
     | "colour-map-by-map"
     | "vectors"
     | "overlays-2d"
+    | "conkit"
     | "pae-plot";
 
 const initialState: {

@@ -201,6 +201,17 @@ getslicendice() {
     echo
 }
 
+getconkit() {
+    cdcheckout
+    if [ -r conkit ]; then
+        echo "Using existing conkit_cpp"
+    else
+        echo "Checking out ConKit Validate"
+        git clone https://github.com/hlasimpk/conkit_validate_cpp.git conkit
+    fi
+    echo
+}
+
 getfftw() {
     cdcheckout
     if [ -r fftw-$fftw_release ]; then
