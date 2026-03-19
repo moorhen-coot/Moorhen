@@ -580,6 +580,12 @@ export const subMenuMap: SubMenuMap = {
                 description: "Layout settings",
                 content: MenuItems.LayoutSettings,
             },
+            {
+                id: "vectors",
+                label: "Vectors...",
+                type: "showPanel",
+                panel: "vectors",
+            },
         ],
     },
     ligand: {

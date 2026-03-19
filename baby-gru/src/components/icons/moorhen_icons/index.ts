@@ -54,6 +54,7 @@ import MatSymRedo from "./MatSymRedo.svg"
 import MatSymRemove from "./MatSymRemove.svg"
 import MatSymDownload from "./MatSymDownload.svg"
 import menuLigands from "./menuLigands.svg"
+import menuVectors from "./menuVectors.svg"
 
 export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymTiltShiftFilter": MatSymTiltShiftFilter,
@@ -111,6 +112,7 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymRemove": MatSymRemove,
  "MatSymDownload": MatSymDownload,
  "menuLigands": menuLigands,
+ "menuVectors": menuVectors,
  }
 
 export type MoorhenSVG = "MatSymHistory" |
@@ -168,4 +170,5 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymRedo" |
  "MatSymRemove" |
  "MatSymDownload" |
- "menuLigands"
+ "menuLigands" |
+ "menuVectors"

@@ -331,14 +331,6 @@ export const MoorhenDevMenu = () => {
             <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
             <MenuItem
                 onClick={evt => {
-                    dispatch(showModal(modalKeys.VECTORS));
-                    document.body.click();
-                }}
-            >
-                Vectors
-            </MenuItem>
-            <MenuItem
-                onClick={evt => {
                     dispatch(showModal(modalKeys.OVERLAYS2D));
                     document.body.click();
                 }}

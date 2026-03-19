@@ -1,15 +1,25 @@
 import React from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenSceneSettings } from "../../modal/MoorhenSceneSettingsModal";
+import { MoorhenVectors } from "../../modal/MoorhenVectorsModal";
 import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type SidePanelIDs = "models" | "maps" | "sceneSettings";
+export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors";
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
 export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
     models: { icon: "menuModels", label: "Models", panelContent: <ModelsPanel /> },
+    vectors: {
+        icon: "menuVectors",
+        label: "Vectors",
+        panelContent: (
+            <SidePanelContainer title="Vectors">
+                <MoorhenVectors/>
+            </SidePanelContainer>
+        )
+    },
     sceneSettings: {
         icon: "MatSymVisibility",
         label: "SceneSettings",

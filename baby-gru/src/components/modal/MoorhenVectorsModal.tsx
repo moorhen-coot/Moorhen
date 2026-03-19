@@ -15,14 +15,10 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
-export const MoorhenVectorsModal = () => {
+export const MoorhenVectors = () => {
 
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
 
-    const resizeNodeRef = useRef<HTMLDivElement>(null);
-
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList.filter(x => !(x.uniqueId.includes("__TAG"))))
@@ -497,6 +493,27 @@ export const MoorhenVectorsModal = () => {
         };
     }, [awaitAtomClick]);
 
+    return (<>
+                {bodyContent}
+                {footer}
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                        <span>Click on an atom...</span>
+                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
+                            Cancel
+                        </MoorhenButton>
+                    </MoorhenStack>
+                </Backdrop>
+            </>)
+}
+
+export const MoorhenVectorsModal = () => {
+
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
+
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.VECTORS}
@@ -511,19 +528,8 @@ export const MoorhenVectorsModal = () => {
             overflowX="auto"
             headerTitle="Vectors"
             resizeNodeRef={resizeNodeRef}
-            additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
-                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
-                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
-                        <span>Click on an atom...</span>
-                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
-                            Cancel
-                        </MoorhenButton>
-                    </MoorhenStack>
-                </Backdrop>
-            }
-            body={bodyContent}
-            footer={footer}
+            body={<MoorhenVectors/>}
+            footer={null}
         />
     );
 };
