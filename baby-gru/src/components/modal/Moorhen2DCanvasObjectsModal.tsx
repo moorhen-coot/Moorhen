@@ -943,9 +943,9 @@ export const Moorhen2DCanvasObjects = () => {
                         <MoorhenNumberInput
                             label="Line Width"
                             type="number"
-                            value={theOverlayObject.lineWidth}
+                            value={theOverlayObject.lineWidth?theOverlayObject.lineWidth:1.0}
                             onChange={evt => {
-                                updateObject({ lineWidth: evt.target.value }, drawModeRef.current.value);
+                                updateObject({ lineWidth: parseFloat(evt.target.value) }, drawModeRef.current.value);
                             }}
                         />
                     )}
