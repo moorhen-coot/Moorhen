@@ -158,7 +158,7 @@ export const MoorhenVectors = () => {
     );
 
     const footer = (
-        <>
+        <MoorhenStack direction="line">
             {vectorSelectRef.current && selectedOption !== "new" && (
                 <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
                     Delete
@@ -167,7 +167,7 @@ export const MoorhenVectors = () => {
             <MoorhenButton className="m-2" onClick={handleApply}>
                 Apply
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 
     const updateVector = ({

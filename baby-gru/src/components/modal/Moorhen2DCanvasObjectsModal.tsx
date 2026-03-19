@@ -2,6 +2,7 @@ import { Delete, FileOpen } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
+import { Container } from "react-bootstrap";
 import {
     addFracPathOverlay,
     addImageOverlay,
@@ -28,11 +29,8 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenNumberInpu
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
-export const Moorhen2DCanvasObjectsModal = () => {
-    const resizeNodeRef = useRef<HTMLDivElement>(null);
+export const Moorhen2DCanvasObjects = () => {
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList);
@@ -492,7 +490,6 @@ export const Moorhen2DCanvasObjectsModal = () => {
     const combinedArrays = [...latexOverlays, ...imageOverlays, ...textOverlays, ...svgPathOverlays, ...fracPathOverlays];
 
     const headerContent = (
-        <MoorhenStack inputGrid>
             <MoorhenSelect ref={vectorSelectRef} label="Object" onChange={handleObjectChange} value={selectedOption}>
                 <option value="new">New</option>
                 {combinedArrays.length > 0 &&
@@ -535,11 +532,11 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         }
                     })}
             </MoorhenSelect>
-        </MoorhenStack>
     );
 
     const footer = (
         <>
+            <MoorhenStack direction="line">
             {vectorSelectRef.current && selectedOption !== "new" && (
                 <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
                     Delete
@@ -548,6 +545,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
             <MoorhenButton className="m-2" onClick={handleApply}>
                 Apply
             </MoorhenButton>
+            </MoorhenStack>
         </>
     );
 
@@ -704,10 +702,11 @@ export const Moorhen2DCanvasObjectsModal = () => {
         return isOk;
     };
 
-    const bodyContent = (
+     return (
         <>
+            <MoorhenStack direction="column">
             {headerContent}
-            <MoorhenStack inputGrid>
+            <Container style={{ height: "3rem", margin: "0.3rem" }} >
                 <MoorhenSelect
                     label="Type"
                     ref={drawModeRef}
@@ -725,6 +724,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     <option value="image">Image</option>
                     <option value="latex">Latex</option>
                 </MoorhenSelect>
+                </Container>
                 {(isDefaultNew ||
                     (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
                     <>
@@ -734,6 +734,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             onChange={evt => {
                                 updateObject({ text: evt.target.value }, drawModeRef.current.value);
                             }}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
 
                         <MoorhenTextInput
@@ -743,6 +744,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 setPositionText(evt.target.value);
                             }}
                             isInvalid={!checkPositionText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
                         <MoorhenNumberInput
                             type="number"
@@ -759,6 +761,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     else updateObject({ fontPixelSize: h }, drawModeRef.current.value);
                                 } catch (e) {}
                             }}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>
                 )}
@@ -783,6 +786,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                 )}
                 {drawModeRef.current && drawModeRef.current.value === "image" && (
                     <>
+                        <MoorhenStack direction="line">
                         <MoorhenFileInput
                             ref={inputFile}
                             accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP"
@@ -790,17 +794,20 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 console.log("Change", e.target.files);
                                 upLoadNewImage(e.target.files[0]);
                             }}
+                            style={{display:'none'}}
                         />
                         <MoorhenTextInput
                             disabled
                             text={pathText}
+                            label="Image file"
                             onChange={evt => {
                                 updateObject({ src: evt.target.value }, drawModeRef.current.value);
                             }}
+                            style={{ height: "2rem", margin: "0.1rem" }}
                         />
                         {imageString && (
-                            <MoorhenStack direction="line">
-                                <img style={{ margin: "0.3rem" }} src={imageString} width="28" height="28" />
+                        <>
+                                <img style={{ width: "1.5rem", height: "1.5rem", margin: "0.3rem" }} src={imageString} width="28" height="28" />
                                 <MoorhenButton
                                     size="sm"
                                     style={{ margin: "0.1rem" }}
@@ -810,8 +817,10 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 >
                                     <FileOpen />
                                 </MoorhenButton>
-                            </MoorhenStack>
+                                </>
                         )}
+                        </MoorhenStack>
+                        <MoorhenStack direction="line">
                         <MoorhenTextInput
                             label="Position"
                             text={positionText}
@@ -819,7 +828,10 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 setPositionText(evt.target.value);
                             }}
                             isInvalid={!checkPositionText()}
+                            style={{ height: "2rem", margin: "0.1rem" }}
                         />
+                        </MoorhenStack>
+                        <MoorhenStack direction="line">
                         <MoorhenNumberInput
                             type="number"
                             label="Width"
@@ -830,6 +842,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     updateObject({ width: w }, drawModeRef.current.value);
                                 } catch (e) {}
                             }}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
                         <MoorhenNumberInput
                             label="Height"
@@ -841,7 +854,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     updateObject({ height: h }, drawModeRef.current.value);
                                 } catch (e) {}
                             }}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
+                        </MoorhenStack>
                     </>
                 )}
                 {drawModeRef.current && drawModeRef.current.value === "text" && (
@@ -881,6 +896,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     (drawModeRef.current.value === "text" ||
                         drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath") && (
+                        <Container style={{ height: "2rem", margin: "0.3rem" }}>
                         <MoorhenSelect
                             label="Draw Style"
                             value={selectedDrawStyle}
@@ -917,6 +933,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 Gradient
                             </option>
                         </MoorhenSelect>
+                        </Container>
                     )}
                 {drawModeRef.current &&
                     selectedDrawStyle === "stroke" &&
@@ -937,6 +954,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                     (drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath" ||
                         drawModeRef.current.value === "text") && (
+                        <Container style={{ height: "2rem", margin: "0.5rem" }}>
                         <MoorhenStack direction="line">
                             <label>Colour</label>
                             <MoorhenColourPicker
@@ -951,6 +969,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                             />
                             {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
                         </MoorhenStack>
+                        </Container>
                     )}
                 {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
                     <>
@@ -961,8 +980,9 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                 setGradientBoundaryText(evt.target.value);
                             }}
                             isInvalid={!checkGradientBoundaryText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
                         />
-                        <MoorhenStack direction="line">Gradient stops</MoorhenStack>
+                        <Container style={{ height: "2rem", margin: "0.3rem" }}>Gradient stops</Container>
                         {theOverlayObject.gradientStops &&
                             theOverlayObject.gradientStops.map((s, istop) => {
                                 let col;
@@ -974,7 +994,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                                     col = hexToRGB(getHexForCanvasColourName(s.colour));
                                 }
                                 return (
-                                    <MoorhenStack direction="line">
+                                    <MoorhenStack inputGrid gridWidth={3}>
                                         <label></label>
                                         <MoorhenColourPicker
                                             colour={col}
@@ -1070,6 +1090,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         </MoorhenStack>
                     </>
                 )}
+                <Container style={{ height: "2rem", margin: "0.3rem" }}>
                 <MoorhenSelect
                     label="Z-depth"
                     value={selectedDepth}
@@ -1094,10 +1115,17 @@ export const Moorhen2DCanvasObjectsModal = () => {
                         4
                     </option>
                 </MoorhenSelect>
+                </Container>
+            {footer}
             </MoorhenStack>
         </>
     );
+}
 
+export const Moorhen2DCanvasObjectsModal = () => {
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.OVERLAYS2D}
@@ -1112,8 +1140,8 @@ export const Moorhen2DCanvasObjectsModal = () => {
             overflowX="auto"
             headerTitle="2D Overlay objects"
             resizeNodeRef={resizeNodeRef}
-            body={bodyContent}
-            footer={footer}
+            body={<Moorhen2DCanvasObjects/>}
+            footer={null}
         />
     );
 };
