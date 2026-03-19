@@ -221,10 +221,10 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.7, 0.5],
-                        [0.8, 0.9],
-                        [0.6, 0.7],
-                        [0.7, 0.5],
+                        0.7, 0.5,
+                        0.8, 0.9,
+                        0.6, 0.7,
+                        0.7, 0.5,
                     ],
                     drawStyle: "fill",
                     fillStyle: "#00ffff77",
@@ -259,8 +259,8 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.0, 0.0],
-                        [1.0, 1.0],
+                        0.0, 0.0,
+                        1.0, 1.0,
                     ],
                     drawStyle: "stroke",
                     uniqueId: uuidv4(),
@@ -269,8 +269,8 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.4, 0.2],
-                        [0.8, 0.6],
+                        0.4, 0.2,
+                        0.8, 0.6,
                     ],
                     drawStyle: "stroke",
                     strokeStyle: "red",
@@ -281,10 +281,10 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.2, 0.5],
-                        [0.3, 0.9],
-                        [0.1, 0.7],
-                        [0.2, 0.5],
+                        0.2, 0.5,
+                        0.3, 0.9,
+                        0.1, 0.7,
+                        0.2, 0.5,
                     ],
                     gradientStops,
                     gradientBoundary: [0.1, 0, 0.3, 0],

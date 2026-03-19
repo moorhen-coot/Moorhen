@@ -236,18 +236,11 @@ export const Moorhen2DCanvasObjects = () => {
                 })
             );
         } else if (objectType === "fracpath") {
-            let arr: [number, number][] = [
-                [0, 0],
-                [1, 1],
+            let arr: number[] = [
+                0, 0, 1, 1,
             ];
             try {
-                arr = pathText
-                    .split(",")
-                    .reduce(
-                        (rows, key, index) =>
-                            (index % 2 == 0 ? rows.push([parseFloat(key)]) : rows[rows.length - 1].push(parseFloat(key))) && rows,
-                        []
-                    );
+                arr = pathText.split(",").map(v => parseFloat(v))
             } catch (e) {
                 console.log("Not a valid array of number pairs for fractional path points.");
             }
@@ -617,7 +610,6 @@ export const Moorhen2DCanvasObjects = () => {
     if(existingColour && existingColour.length===3 ) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
 
     useEffect(() => {
-        console.log("useEffect (selectedDrawStyle)");
         if (selectedDrawStyle === "gradient" && !theOverlayObject.gradientBoundary) {
             if (checkGradientBoundaryText) {
                 const arr = gradientBoundaryText.split(",").map(a => parseFloat(a));
