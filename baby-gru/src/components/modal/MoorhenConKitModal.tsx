@@ -51,7 +51,7 @@ export const MoorhenConKitModal = () => {
     );
     const tittleBar = (
         <MoorhenStack direction="horizontal" align="center" gap={"1rem"}>
-            ConKit <MoorhenInfoCard infoText={infoText} width="32rem" />
+            ConKit <MoorhenInfoCard infoText={infoText} />
         </MoorhenStack>
     );
 

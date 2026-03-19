@@ -93,6 +93,7 @@
 
 .moorhen__info-card > h1 {
     font-size: 1.5rem;
+    font-style: normal;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
     color: var(--moorhen-primary);
@@ -110,4 +111,11 @@
     font-weight: 600;
     margin: 0.5rem 0 0.25rem 0;
     color: var(--moorhen-primary);
+}
+
+.moorhen__info-card > img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
 }
