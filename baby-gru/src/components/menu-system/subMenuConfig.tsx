@@ -586,6 +586,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showPanel",
                 panel: "vectors",
             },
+            {
+                id: "overlay2DObjects",
+                label: "2D objects...",
+                type: "showPanel",
+                panel: "overlay2DObjects",
+            },
         ],
     },
     ligand: {

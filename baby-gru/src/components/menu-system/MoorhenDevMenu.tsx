@@ -329,14 +329,6 @@ export const MoorhenDevMenu = () => {
     return (
         <>
             <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
-            <MenuItem
-                onClick={evt => {
-                    dispatch(showModal(modalKeys.OVERLAYS2D));
-                    document.body.click();
-                }}
-            >
-                2D Overlays
-            </MenuItem>
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
                 <MoorhenToggle

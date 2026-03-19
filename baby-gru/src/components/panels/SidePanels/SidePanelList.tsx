@@ -2,11 +2,12 @@ import React from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenSceneSettings } from "../../modal/MoorhenSceneSettingsModal";
 import { MoorhenVectors } from "../../modal/MoorhenVectorsModal";
+import { Moorhen2DCanvasObjects } from "../../modal/Moorhen2DCanvasObjectsModal";
 import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors";
+export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors" | "overlay2DObjects";
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
 export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
@@ -17,6 +18,15 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         panelContent: (
             <SidePanelContainer title="Vectors">
                 <MoorhenVectors/>
+            </SidePanelContainer>
+        )
+    },
+    overlay2DObjects: {
+        icon: "menu2DObjects",
+        label: "2D Objects",
+        panelContent: (
+            <SidePanelContainer title="2D objects">
+                <Moorhen2DCanvasObjects/>
             </SidePanelContainer>
         )
     },
