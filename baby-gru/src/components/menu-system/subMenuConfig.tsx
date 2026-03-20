@@ -495,6 +495,13 @@ export const subMenuMap: SubMenuMap = {
                 devOnly: true,
             },
             {
+                id: "conkit",
+                label: "ConKit...",
+                type: "showModal",
+                modal: "conkit",
+                devOnly: true,
+            },
+            {
                 id: "json-validation",
                 label: "Interesting bits JSON validation...",
                 type: "showModal",
@@ -586,6 +593,18 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["layout", "settings"],
                 description: "Layout settings",
                 content: MenuItems.LayoutSettings,
+            },
+            {
+                id: "vectors",
+                label: "Vectors...",
+                type: "showPanel",
+                panel: "vectors",
+            },
+            {
+                id: "overlay2DObjects",
+                label: "2D objects...",
+                type: "showPanel",
+                panel: "overlay2DObjects",
             },
         ],
     },

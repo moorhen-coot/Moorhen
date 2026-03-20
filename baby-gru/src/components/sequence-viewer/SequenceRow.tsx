@@ -34,7 +34,7 @@ export const SequenceRow = memo(
         const refList: React.RefObject<HTMLDivElement>[] = sequence.residues?.map(() => useRef<HTMLDivElement>(null)) ?? [];
 
         const residueBoxes = sequence.residues?.map((residue, j) => (
-            <div key={sequence.molNo + sequence.chain + `box${j}`} ref={refList[j]}>
+            <div key={sequence.molNo + sequence.chain + (sequence.key ? sequence.key : "") + `box${j}`} ref={refList[j]}>
                 <ResidueBox
                     sequence={sequence}
                     residue={residue}
@@ -56,6 +56,7 @@ export const SequenceRow = memo(
             ? validationTracks?.map((value, index) => {
                   return (
                       <div
+                          key={`validation-label-${index}`}
                           className="moorhen__seqviewer__sticky-left-column"
                           style={{
                               minWidth: `${nameColumnWidth}rem`,
@@ -88,7 +89,7 @@ export const SequenceRow = memo(
         const validationTracksComponents = showValidationData
             ? sequence.residues.map((residue, j) => (
                   <ValidationTracks
-                      key={sequence.molNo + sequence.chain + `box${j}` + "_validation"}
+                      key={sequence.molNo + sequence.chain + `box${j}` + "_validation" + (sequence.key ? sequence.key : "")}
                       popoverRef={refList[j]}
                       sequence={sequence}
                       residue={residue}

@@ -6,10 +6,14 @@
 #installed (by default) in install/web_packages/baby-gru. The "install"
 #part of this can also be changed below.
 
-if command -v greadlink > /dev/null 2>&1; then
-    MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+if [ "x$MOORHEN_SOURCE_DIR" = "x" ]; then
+    if command -v greadlink > /dev/null 2>&1; then
+        MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+    else
+        MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+    fi
 else
-    MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+    echo "Using MOORHEN_SOURCE_DIR from environment: $MOORHEN_SOURCE_DIR"
 fi
 
 . ${MOORHEN_SOURCE_DIR}/VERSIONS
@@ -42,11 +46,6 @@ fi
 
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
-
-fail() {
-    echo $1
-    exit 1
-}
 
 clearzlib() {
     echo "Clear zlib"
@@ -204,6 +203,13 @@ clearslicendice() {
     rm -rf ${INSTALL_DIR}/lib/libslicendice_cpp.a
 }
 
+clearconkit() {
+    echo "Clear ConKit"
+    rm -rf ${BUILD_DIR}/conkit_build
+    rm -rf ${INSTALL_DIR}/include/conkit
+    rm -rf ${INSTALL_DIR}/lib/libconkit.a
+}
+
 clearsigcpp() {
     echo "Clear sigc++"
     rm -rf ${BUILD_DIR}/libsigcplusplus_build
@@ -225,16 +231,14 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/coot_env_web.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/data.tar.gz
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/Components-inchikey.ich
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons
 }
 
 clearlhasa() {
@@ -264,6 +268,7 @@ clearall() {
     clearprivateer
     clearssm
     clearslicendice
+    clearconkit
     clearsigcpp
     cleargraphene
     clearmoorhen
@@ -313,6 +318,8 @@ else
            ssm) clearssm
                ;;
            slicendice) clearslicendice
+               ;;
+           conkit) clearconkit
                ;;
            sigcpp) clearsigcpp
                ;;
@@ -377,6 +384,13 @@ BUILD_SLICENDICE=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+BUILD_CONKIT=false
+
+if test -d ${INSTALL_DIR}/include/conkit; then
+    true
+else
+    BUILD_CONKIT=true
+fi
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -499,13 +513,13 @@ else
 fi
 
 if test x"${MEMORY64}" = x"1"; then
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
 else
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
@@ -559,6 +573,9 @@ for mod in $MODULES; do
        slicendice) echo "Force build slicendice"
        BUILD_SLICENDICE=true
        ;;
+       conkit) echo "Force build conkit"
+       BUILD_CONKIT=true
+       ;;
        moorhen) echo "Force build moorhen"
        BUILD_MOORHEN=true
        ;;
@@ -595,6 +612,7 @@ echo "BUILD_FREETYPE   " $BUILD_FREETYPE
 echo "BUILD_ZLIB       " $BUILD_ZLIB
 echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
+echo "BUILD_CONKIT     " $BUILD_CONKIT
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
@@ -864,6 +882,16 @@ if [ $BUILD_SLICENDICE = true ]; then
     emmake make install || fail "Error installing SliceNDice, giving up."
 fi
 
+#conkit
+if [ $BUILD_CONKIT = true ]; then
+    getconkit
+    mkdir -p ${BUILD_DIR}/conkit_build
+    cd ${BUILD_DIR}/conkit_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/conkit  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include/conkit_validate -I${MOORHEN_SOURCE_DIR}/checkout/conkit/external/map_align" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing SliceNDice, giving up."
+fi
+
 #Moorhen
 if [ $BUILD_MOORHEN = true ]; then
     BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
@@ -878,6 +906,8 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
+    # NOTE: If you change/add some steps below, make sure to update .github/workflows/run-tests.yml
+    # down below in the 'Set up LhasaReact and monomers' step, if needed.
     printf "\e[36mCopying LhasaReact...\e[0m"
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
     cp -r ${MOORHEN_SOURCE_DIR}/checkout/LhasaReact ${MOORHEN_SOURCE_DIR}/baby-gru/src/

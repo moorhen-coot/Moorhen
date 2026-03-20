@@ -129,7 +129,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 
     const setAtomPickerEventListener = async evt => {
         const chosenMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer));
-        const chosenAtom = cidToSpec(evt.detail.atom.label);
+        const chosenAtom = cidToSpec(evt.detail.label);
         const chosenResidueCid = `/${chosenAtom.mol_no}/${chosenAtom.chain_id}/${chosenAtom.res_no}-${chosenAtom.res_no}/*`;
         const [atoms, monomerBonds] = await Promise.all([
             chosenMolecule.gemmiAtomsForCid(chosenResidueCid),

@@ -1,5 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -11,7 +12,7 @@ import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const SharpenBlurMap = () => {
     const dispatch = useDispatch();
-    const store = useStore();
+    const store = useStore<RootState>();
     const maps = useSelector((state: moorhen.State) => state.maps);
 
     const factorRef = useRef<string>(null);

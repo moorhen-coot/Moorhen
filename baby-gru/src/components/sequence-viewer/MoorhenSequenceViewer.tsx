@@ -434,7 +434,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         if (noSequence || invalidSequences) {
             return null;
         }
-        return sequencesToDisplay?.map(seqObj => {
+        return sequencesToDisplay?.map((seqObj, index) => {
             const hoveredResidue = hoveredRef
                 ? seqObj.molNo === hoveredRef.molno && seqObj.chain === hoveredRef.chain
                     ? hoveredRef.resNum
@@ -442,7 +442,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 : null;
             return (
                 <SequenceRow
-                    key={seqObj.molNo + seqObj.chain}
+                    key={`${seqObj.molNo}-${seqObj.chain}-${seqObj.key ? seqObj.key : index}`}
                     sequence={seqObj}
                     nameColumnWidth={nameColumnWidth}
                     columnWidth={columnWidth}

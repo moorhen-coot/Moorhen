@@ -14,7 +14,7 @@ export const MoorhenHistoryMenu = () => {
     const [historyHead, setHistoryHead] = useState(0);
 
     const dispatch = useDispatch();
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

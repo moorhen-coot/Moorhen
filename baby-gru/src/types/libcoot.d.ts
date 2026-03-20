@@ -150,6 +150,27 @@ export namespace libcootApi {
         is_allowed_flag: boolean;
         residue_name: () => string;
     }
+    interface ValidateOptions {
+        pdb_file: string;
+        model_file: string;
+        seqfile: string;
+        seqformat: string;
+        pdb_chain: string;
+        model_chain: string;
+        output: string;
+        overwrite: boolean;
+        gap_opening_penalty: number;
+        seq_separation_cutoff: number;
+        gap_extension_penalty: number;
+        n_iterations: number;
+        use_gap_ss: boolean;
+        gap_ss_w: number;
+        use_prf: boolean;
+        prf_w: number;
+        map_align_silent: boolean;
+        silent: boolean;
+        renumber: boolean;
+    }
     interface InterestingPlaceT {
         feature_type: string;
         residue_spec: ResidueSpecT;
@@ -575,6 +596,7 @@ export namespace libcootApi {
         vector_pair_double_vector_double: { new (): emscriptem.vector<{ first: double; second: emscriptem.vector<double> }> };
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
+        run_conkit_validate(options:ValidateOptions): number;
     };
     interface DoublePairDoubleJS {
         first: number;
