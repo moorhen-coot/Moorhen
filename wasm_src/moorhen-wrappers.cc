@@ -1024,11 +1024,14 @@ class molecules_container_js : public molecules_container_t {
         }
 
 
-    emscripten::val get_map_bounding_sphere(int imol, double threshold)
+    std::pair<std::array<float,3>,float> get_map_bounding_sphere(int imol, double threshold)
     {
         auto xMap = (*this)[imol].xmap;
         clipper::Grid_sampling gs = xMap.grid_sampling();
         clipper::Cell cell = xMap.cell();
+
+        std::pair<std::array<float,3>,float> result;
+        std::array<float,3> center_array;
 
         int min_u = gs.nu(), max_u = 0;
         int min_v = gs.nv(), max_v = 0;
@@ -1056,14 +1059,9 @@ class molecules_container_js : public molecules_container_t {
         }
 
         if (!found) {
-            emscripten::val empty_result = emscripten::val::object();
-            emscripten::val empty_center = emscripten::val::array();
-            empty_center.set(0, 0.0);
-            empty_center.set(1, 0.0);
-            empty_center.set(2, 0.0);
-            empty_result.set("center", empty_center);
-            empty_result.set("radius", 0.0);
-            return empty_result;
+            result.first = {0.0, 0.0, 0.0};
+            result.second = 0.0;
+            return result;
         }
 
         // Convert box corners to orthogonal coords
@@ -1105,15 +1103,12 @@ class molecules_container_js : public molecules_container_t {
 
         double radius = std::sqrt(r2_max);
 
-        emscripten::val result = emscripten::val::object();
-        emscripten::val center_array = emscripten::val::array();
+        center_array[0] = center.x();
+        center_array[1] = center.y();
+        center_array[2] = center.z();
 
-        center_array.set(0, center.x());
-        center_array.set(1, center.y());
-        center_array.set(2, center.z());
-
-        result.set("center", center_array);
-        result.set("radius", radius);
+        result.first = center_array;
+        result.second = radius;
 
         return result;
     }
