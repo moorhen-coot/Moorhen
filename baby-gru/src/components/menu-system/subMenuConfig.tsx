@@ -488,6 +488,13 @@ export const subMenuMap: SubMenuMap = {
                 devOnly: true,
             },
             {
+                id: "conkit",
+                label: "ConKit...",
+                type: "showModal",
+                modal: "conkit",
+                devOnly: true,
+            },
+            {
                 id: "json-validation",
                 label: "Interesting bits JSON validation...",
                 type: "showModal",
