@@ -1788,6 +1788,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<TorsionEntry>("vector<TorsionEntry>");
     register_vector<coot::residue_range_t>("vector_residue_range_t");
     register_vector<coot::geometry_distortion_info_container_t>("vector_geometry_distortion_info_container_t");
+    register_vector<coot::geometry_distortion_info_t>("vector_geometry_distortion_info_t");
+    register_vector<coot::mutate_insertion_range_info_t>("vector_mutate_insertion_range_info_t");
+    register_vector<coot::geometry_distortion_info_pod_container_t>("vector_geometry_distortion_info_pod_container_t");
+    register_vector<coot::geometry_distortion_info_pod_t>("vector_geometry_distortion_info_pod_t");
 
     value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
@@ -1904,6 +1908,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
     .function("get_chi",&coot::simple_rotamer::get_chi)
     ;
+        class_<coot::atom_overlaps_dots_container_t>("atom_overlaps_dots_container_t")
+    ;
+
     class_<coot::geometry_distortion_info_container_t>("geometry_distortion_info_container_t")
       .constructor()
       .property("geometry_distortion",&coot::geometry_distortion_info_container_t::geometry_distortion)
@@ -1918,7 +1925,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
       .function("distortion_sum",&coot::geometry_distortion_info_container_t::distortion_sum)
       .function("get_geometry_distortion_info",&coot::geometry_distortion_info_container_t::get_geometry_distortion_info)
     ;
-    //FIXME - this ignores simple_restraint
+    class_<coot::simple_restraint>("simple_restraint")
+    ;
+    class_<coot::refinement_results_mini_stats_t>("refinement_results_mini_stats_t")
+      .property("distortion",&coot::refinement_results_mini_stats_t::distortion)
+    ;
+    class_<coot::geometry_distortion_info_pod_t>("geometry_distortion_info_pod_t")
+      .constructor()
+      .property("is_set",&coot::geometry_distortion_info_pod_t::is_set)
+      .property("distortion_score",&coot::geometry_distortion_info_pod_t::distortion_score)
+      .property("atom_specs",&coot::geometry_distortion_info_pod_t::atom_specs)
+      .property("residue_spec",&coot::geometry_distortion_info_pod_t::residue_spec)
+    ;
+    class_<coot::geometry_distortion_info_pod_container_t>("geometry_distortion_info_pod_container_t")
+      .property("geometry_distortion",&coot::geometry_distortion_info_pod_container_t::geometry_distortion)
+      .property("chain_id",&coot::geometry_distortion_info_pod_container_t::chain_id)
+      .property("n_atoms",&coot::geometry_distortion_info_pod_container_t::n_atoms)
+      .property("min_resno",&coot::geometry_distortion_info_pod_container_t::min_resno)
+      .property("max_resno",&coot::geometry_distortion_info_pod_container_t::max_resno)
+    ;
     class_<coot::geometry_distortion_info_t>("geometry_distortion_info_t")
       .constructor()
       .property("is_set",&coot::geometry_distortion_info_t::is_set)
@@ -2121,6 +2146,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("alpha", &coot::Cell::alpha)
     .field("beta", &coot::Cell::beta)
     .field("gamma", &coot::Cell::gamma)
+    ;
+    value_object<api::cell_t>("api_cell_t")
+    .field("a", &api::cell_t::a)
+    .field("b", &api::cell_t::b)
+    .field("c", &api::cell_t::c)
+    .field("alpha", &api::cell_t::alpha)
+    .field("beta", &api::cell_t::beta)
+    .field("gamma", &api::cell_t::gamma)
+    .field("is_set", &api::cell_t::is_set)
     ;
     value_object<coot::symmetry_info_t>("symmetry_info_t")
     .field("cell",&coot::symmetry_info_t::cell)
@@ -2707,10 +2741,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
+    register_vector<gemmi::FTransform>("VectorGemmiFTransform");
+    register_vector<std::array<int, 3>>("VectorArrayInt3");
     register_map<std::string,std::vector<std::string>>("MapStringVectorString");
+    register_map<std::string,std::string>("MapStringString");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
+    register_map<std::string, std::vector<coot::simple_rotamer>>("MapStringVectorSimpleRotamer");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");
     register_vector<std::pair<std::string, int>>("VectorStringInt_pair");
@@ -2730,6 +2768,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<double>("VectorDouble");
     register_vector<int>("VectorInt");
     register_vector<char>("VectorChar");
+    register_vector<signed char>("VectorSignedChar");
     register_vector<coot::validation_information_t>("VectorValidationInformation");
     register_vector<std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t> >("VectorResidueValidationInformationPair");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
@@ -2765,6 +2804,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<bool, float>>("pair_bool_float")
         .field("first",&std::pair<bool, float>::first)
         .field("second",&std::pair<bool, float>::second)
+    ;
+    value_object<std::pair<bool, clipper::Coord_orth>>("pair_bool_clipper_coord_orth")
+        .field("first",&std::pair<bool, clipper::Coord_orth>::first)
+        .field("second",&std::pair<bool, clipper::Coord_orth>::second)
     ;
     value_object<std::pair<double, std::vector<double> > >("pair_double_vector_double")
         .field("first",&std::pair<double, std::vector<double>>::first)
@@ -2840,6 +2883,26 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",  &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::first)
         .field("second", &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::second)
     ;
+
+    value_object<std::pair<std::array<float, 3>, float>>("array_float_3_float_pair");
+
+    value_object<std::array<int, 3>>("array_int_3");
+
+    value_object<std::array<double, 3>>("array_double_3");
+
+    value_object<std::array<std::array<int, 3>, 3>>("array_int_3x3");
+
+    value_object<std::array<std::array<int, 4>, 4>>("array_int_4x4");
+
+    value_object<std::array<std::array<double, 4>, 4>>("array_double_4x4");
+
+    value_object<std::array<size_t, 3>>("array_size_t_3");
+
+    value_object<std::array<int, 5>>("array_int_5");
+
+    value_object<std::array<double, 2>>("array_double_2");
+
+    value_object<std::array<std::string, 2>>("array_string_2");
 
     value_object<lsq_results_t>("lsq_results_t")
       .field("rotation_matrix", &lsq_results_t::rotation_matrix)

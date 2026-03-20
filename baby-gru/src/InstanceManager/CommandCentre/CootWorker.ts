@@ -484,6 +484,7 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+
 const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
     let fn
     let suffix
@@ -1220,6 +1221,13 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
     }
 }
 
+const positionValuePairToJSArray = (result: libcootApi.positionValuePair): { position: [number,number,number]; value: number } => {
+    return {
+        position: result.first,
+        value: result.second
+    }
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -1239,7 +1247,6 @@ const doCootCommand = (messageData: {
         switch (command) {
             case 'shim_set_colour_map_for_map_coloured_by_other_map':
                 const theVector = new cootModule.vector_pair_double_vector_double()
-                console.log(commandArgs)
                 commandArgs.forEach((cp) => {
                     const thePair: libcootApi.DoublePairDoubleJS = {first:0,second:null}
                     thePair.first = cp[0]
@@ -1296,6 +1303,10 @@ const doCootCommand = (messageData: {
             case "get_coord_header_info":
                 cootResult = cootModule.get_coord_header_info(...commandArgs as [string,string])
                 break
+            case "get_map_bounding_sphere": {
+                const cootResult = molecules_container.get_map_bounding_sphere(...commandArgs as [number, number])
+                break
+            }
             case "shim_export_metaballs_as_mesh_file":
                 cootResult =  export_metaballs_as_mesh_file(...commandArgs as [number, string, number, number, number, string])
                 break
@@ -1427,6 +1438,9 @@ const doCootCommand = (messageData: {
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
                 break
+            case 'position_value_pair':
+                returnResult = positionValuePairToJSArray(cootResult)
+                break
             case 'status':
             default:
                 returnResult = cootResult
@@ -1465,7 +1479,6 @@ onmessage = function (e) {
         const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
         if (memory64&&!isChromeLinux) {
             try {
-                // @ts-ignore
                 importScripts('./moorhen64.js')
                 mod = createCoot64Module
                 scriptName = "moorhen64.js"
@@ -1478,14 +1491,13 @@ onmessage = function (e) {
                 console.error(e)
                 console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
                 memory64 = false
-                // @ts-ignore
+
                 importScripts('./moorhen.js')
                 mod = createCootModule
                 scriptName = "moorhen.js"
                 console.log("Successfully loaded 32-bit libcoot in worker thread")
             }
         } else {
-            // @ts-ignore
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"

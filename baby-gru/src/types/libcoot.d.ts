@@ -1,6 +1,6 @@
-import { emscriptem } from './emscriptem';
-import { gemmi } from './gemmi';
-import { privateer } from './privateer';
+import { emscriptem } from "./emscriptem";
+import { gemmi } from "./gemmi";
+import { privateer } from "./privateer";
 
 // Warning: do not import moorhen namespace otherwise worker code breaks during transpilation
 
@@ -269,8 +269,8 @@ export namespace libcootApi {
         bond_has_hydrogen_flag: boolean;
     };
     interface MMRCCStatsJS {
-        'All atoms': DensityCorrelationStatsInfoJS[];
-        'Side-chains': DensityCorrelationStatsInfoJS[];
+        "All atoms": DensityCorrelationStatsInfoJS[];
+        "Side-chains": DensityCorrelationStatsInfoJS[];
     }
     interface DensityCorrelationStatsInfoJS {
         resNum: number;
@@ -542,6 +542,8 @@ export namespace libcootApi {
         name: string;
         three_letter_code: string;
     };
+    type positionValuePair = PairType<[number, number, number], number>;
+
     type CootModule = {
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
@@ -596,7 +598,7 @@ export namespace libcootApi {
         vector_pair_double_vector_double: { new (): emscriptem.vector<{ first: double; second: emscriptem.vector<double> }> };
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
-        run_conkit_validate(options:ValidateOptions): number;
+        run_conkit_validate(options: ValidateOptions): number;
     };
     interface DoublePairDoubleJS {
         first: number;
@@ -669,5 +671,6 @@ export namespace libcootApi {
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
         get_map_spacegroup(arg0: number): string;
         get_map_data_resolution(arg0: number): number;
+        get_map_bounding_sphere(imol: number, threshold: number): PairType<[number, number, number], number>;
     }
 }

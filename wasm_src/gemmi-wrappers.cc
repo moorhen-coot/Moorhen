@@ -792,6 +792,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     register_vector<gemmi::Assembly::Gen>("VectorGemmiAssemblyGen");
     register_vector<gemmi::Sheet::Strand>("VectorGemmiSheetStrand");
     register_vector<gemmi::Entity::DbRef>("VectorGemmiEntityDbRef");
+    register_vector<gemmi::ChemComp::Atom>("VectorGemmiChemCompAtom");
     register_vector<gemmi::Atom>("VectorGemmiAtom");
     register_vector<gemmi::Model>("VectorGemmiModel");
     register_vector<gemmi::Op>("VectorGemmiOp");
@@ -921,6 +922,12 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
         .value("CompleteIcosahedral", gemmi::Assembly::SpecialKind::CompleteIcosahedral)
         .value("RepresentativeHelical", gemmi::Assembly::SpecialKind::RepresentativeHelical)
         .value("CompletePoint", gemmi::Assembly::SpecialKind::CompletePoint)
+    ;
+
+    enum_<gemmi::HowToNameCopiedChain>("HowToNameCopiedChain")
+        .value("Short", gemmi::HowToNameCopiedChain::Short)
+        .value("AddNumber", gemmi::HowToNameCopiedChain::AddNumber)
+        .value("Dup", gemmi::HowToNameCopiedChain::Dup)
     ;
 
     enum_<gemmi::Connection::Type>("ConnectionType")
@@ -1270,8 +1277,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("sole_residue",&gemmi::Model::sole_residue)
     .function("find_cra",select_overload<gemmi::CRA(const gemmi::AtomAddress&, bool)>(&gemmi::Model::find_cra))
     .function("find_cra_const",select_overload<gemmi::const_CRA(const gemmi::AtomAddress&, bool)const>(&gemmi::Model::find_cra))
-    .function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
-    .function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
+    //.function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
+    //.function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
     .function("empty_copy",&gemmi::Model::empty_copy)
     .function("children",select_overload<std::vector<gemmi::Chain>&()>(&gemmi::Model::children))
     .function("children_const",select_overload<const std::vector<gemmi::Chain>&()const>(&gemmi::Model::children))
@@ -1542,7 +1549,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("sifts_unp_acc",&gemmi::Entity::sifts_unp_acc)
     .property("full_sequence",&gemmi::Entity::full_sequence)
     .property("dbrefs",&gemmi::Entity::dbrefs)
-    .function("first_mon",&gemmi::Entity::first_mon)
+    .class_function("first_mon",&gemmi::Entity::first_mon)
     ;
 
     class_<gemmi::ItemGroup<gemmi::Atom>>("ItemGroupAtom")
@@ -1619,7 +1626,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("combine",&gemmi::Op::combine)
     .function("apply_to_xyz",&gemmi::Op::apply_to_xyz)// ? const std::array<double, 3> arg and return
     .function("apply_to_hkl_without_division",&gemmi::Op::apply_to_hkl_without_division) //No idea if this can work - Miller
-    .function("divide_hkl_by_DEN",&gemmi::Op::divide_hkl_by_DEN) //No idea if this can work - Miller std::array<int, 3>
+    .class_function("divide_hkl_by_DEN",&gemmi::Op::divide_hkl_by_DEN) //No idea if this can work - Miller std::array<int, 3>
     .function("apply_to_hkl",&gemmi::Op::apply_to_hkl) //No idea if this can work - Miller std::array<int, 3>
     .function("phase_shift",&gemmi::Op::phase_shift) //No idea if this can work - Miller std::array<int, 3>
     .function("int_seitz",&gemmi::Op::int_seitz)// ? std::array<std::array<int, 4>, 4> return
@@ -1638,7 +1645,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("is_reflection_centric",&gemmi::GroupOps::is_reflection_centric)
     .function("epsilon_factor",&gemmi::GroupOps::epsilon_factor)
     .function("epsilon_factor_without_centering",&gemmi::GroupOps::epsilon_factor_without_centering)
-    .function("has_phase_shift",&gemmi::GroupOps::has_phase_shift)
+    .class_function("has_phase_shift",&gemmi::GroupOps::has_phase_shift)
     .function("is_systematically_absent",&gemmi::GroupOps::is_systematically_absent)
     .function("change_basis_impl",&gemmi::GroupOps::change_basis_impl)
     .function("change_basis_forward",&gemmi::GroupOps::change_basis_forward)
@@ -1735,10 +1742,10 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("remark_300_detail",&gemmi::Metadata::remark_300_detail)
     .function("has_restr",&gemmi::Metadata::has_restr)
     .function("has_tls",&gemmi::Metadata::has_tls)
-    .function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_m33",select_overload<bool(gemmi::SMat33<double> gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    //.function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    //.function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    //.function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    //.function("has_m33",select_overload<bool(gemmi::SMat33<double> gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     ;
 
     class_<gemmi::SoftwareItem>("SoftwareItem")
@@ -1802,8 +1809,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("r_all",&gemmi::BasicRefinementInfo::r_all)
     .property("r_work",&gemmi::BasicRefinementInfo::r_work)
     .property("r_free",&gemmi::BasicRefinementInfo::r_free)
-    .property("cc_fo_fc_work",&gemmi::RefinementInfo::cc_fo_fc_work)
-    .property("cc_fo_fc_free",&gemmi::RefinementInfo::cc_fo_fc_free)
     ;
 
     class_<gemmi::TlsGroup::Selection>("TlsGroupSelection")
@@ -1978,7 +1983,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("chiral_abs_volume",&gemmi::Restraints::chiral_abs_volume)
     .function("get_or_add_plane",&gemmi::Restraints::get_or_add_plane)
     .function("rename_atom",&gemmi::Restraints::rename_atom)
-    .function("lexicographic_str",&gemmi::Restraints::lexicographic_str)
+    .class_function("lexicographic_str",&gemmi::Restraints::lexicographic_str)
     ;
 
     class_<gemmi::cif::Block>("cifBlock")
@@ -2135,13 +2140,13 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("aliases",&gemmi::ChemComp::aliases)
     .property("rt",&gemmi::ChemComp::rt)
     .function("get_aliasing",&gemmi::ChemComp::get_aliasing)
-    .function("read_group",&gemmi::ChemComp::read_group)
+    .class_function("read_group",&gemmi::ChemComp::read_group)
     .function("set_group",&gemmi::ChemComp::set_group)
     .function("has_atom",&gemmi::ChemComp::has_atom)
     .function("get_atom_index",&gemmi::ChemComp::get_atom_index)
     .function("get_atom",&gemmi::ChemComp::get_atom)
-    .function("is_peptide_group",&gemmi::ChemComp::is_peptide_group)
-    .function("is_nucleotide_group",&gemmi::ChemComp::is_nucleotide_group)
+    .class_function("is_peptide_group",&gemmi::ChemComp::is_peptide_group)
+    .class_function("is_nucleotide_group",&gemmi::ChemComp::is_nucleotide_group)
     .function("remove_nonmatching_restraints",&gemmi::ChemComp::remove_nonmatching_restraints)
     .function("remove_hydrogens",&gemmi::ChemComp::remove_hydrogens)
     ;
@@ -2191,7 +2196,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     */
     .function("add_monomer_if_present",&gemmi::MonLib::add_monomer_if_present)
     .function("path",&gemmi::MonLib::path)
-    .function("relative_monomer_path",&gemmi::MonLib::relative_monomer_path)
+    .class_function("relative_monomer_path",&gemmi::MonLib::relative_monomer_path)
     .function("read_monomer_doc",&gemmi::MonLib::read_monomer_doc)
     //.function("read_monomer_cif",&gemmi::MonLib::read_monomer_cif) TODO
     .function("set_monomer_dir",&gemmi::MonLib::set_monomer_dir)
@@ -2260,11 +2265,11 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("set_atom_flags",&gemmi::Selection::set_atom_flags)
     .function("remove_selected_residue",&GemmiSelectionRemoveSelectedResidue)
     .function("remove_not_selected_residue",&GemmiSelectionRemoveNotSelectedResidue)
-    .function("first",&gemmi::Selection::first)
-    .function("chains",&gemmi::Selection::chains)
-    .function("models",&gemmi::Selection::models)
-    .function("residues",&gemmi::Selection::residues)
-    .function("atoms",&gemmi::Selection::atoms)
+    //.function("first",&gemmi::Selection::first) // returns pair<Model*,CRA> - complex type
+    //.function("chains",&gemmi::Selection::chains) // returns FilterProxy
+    //.function("models",&gemmi::Selection::models) // returns FilterProxy
+    //.function("residues",&gemmi::Selection::residues) // returns FilterProxy
+    //.function("atoms",&gemmi::Selection::atoms) // returns FilterProxy
     //I have no ide what is wrong with these 2.
     //.function("remove_not_selected_atom",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
     //.function("remove_not_selected_residue",select_overload<void(gemmi::Residue&)const>(&gemmi::Selection::remove_not_selected))
