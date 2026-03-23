@@ -1838,6 +1838,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    value_object<std::pair<std::array<float,3>,float>>("pair_position_value")
+    .field("position", &std::pair<std::array<float,3>,float>::first)
+    .field("value", &std::pair<std::array<float,3>,float>::second)
+    ;
+
     value_object<coot::atom_overlap_t>("atom_overlap_t")
     .field("overlap_volume", &coot::atom_overlap_t::overlap_volume)
     .field("r_1", &coot::atom_overlap_t::r_1)
