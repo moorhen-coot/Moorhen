@@ -505,9 +505,9 @@ class molecules_container_js : public molecules_container_t {
 
             Json::Value root;
 
-            const std::filesystem::path rotarama_data("data/rotarama/");
-            const Rota rota(rotarama_data);
-            const Rama rama(rotarama_data);
+            static const std::filesystem::path rotarama_data("data/rotarama/");
+            static const Rota rota(rotarama_data);
+            static const Rama rama(rotarama_data);
 
             for (auto& chain : st.models[model_index].chains) {
                 Json::Value chain_json;
