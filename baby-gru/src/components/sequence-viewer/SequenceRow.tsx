@@ -69,7 +69,7 @@ export const SequenceRow = memo(
         const residueColumns =
             sequence.residues?.map((residue, j) => (
                 <div
-                    key={sequence.molNo + sequence.chain + `column${j}`}
+                    key={sequence.molNo + sequence.chain + (sequence.key ?? "") + `column${j}`}
                     ref={refList[j]}
                     style={{ display: "flex", flexDirection: "column" }}
                 >
