@@ -33,7 +33,7 @@ const initialState: { vectorsList: MoorhenVector[] } = {
 };
 
 export const vectorsSlice = createSlice({
-    name: "mrParse",
+    name: "vectors",
     initialState: initialState,
     reducers: {
         addVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
