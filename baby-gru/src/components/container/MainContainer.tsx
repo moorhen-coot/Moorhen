@@ -45,10 +45,8 @@ import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
 import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
-import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bars/MoorhenAcceptRejectMatchingLigandSnackBar";
 import { MoorhenGoToResidueSnackbar } from "../snack-bars/MoorhenGoToResidueSnackbar";
 import { MoorhenLongJobSnackBar } from "../snack-bars/MoorhenLongJobSnackBar";
-import { MoorhenModelTrajectorySnackBar } from "../snack-bars/MoorhenModelTrajectorySnackBar";
 import { MoorhenResidueStepsSnackBar } from "../snack-bars/MoorhenResidueStepsSnackBar";
 import { MoorhenSideBar } from "../snack-bars/MoorhenSideBar";
 import { MoorhenSnackBarManager } from "../snack-bars/MoorhenSnackBarManager";
@@ -429,10 +427,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const snackbarComponents = {
         goToResidue: MoorhenGoToResidueSnackbar,
-        acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
         longJobNotification: MoorhenLongJobSnackBar,
         residueSteps: MoorhenResidueStepsSnackBar,
-        modelTrajectory: MoorhenModelTrajectorySnackBar,
         tomogram: MoorhenTomogramSnackBar,
         sideBar: MoorhenSideBar,
     };

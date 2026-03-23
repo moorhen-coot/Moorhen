@@ -1,25 +1,15 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import { SnackbarContent, useSnackbar } from "notistack";
-import { Stack } from "react-bootstrap";
+import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
-import { forwardRef, useCallback, useEffect, useRef } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenStack } from "../interface-base";
+import { useCallback, useEffect, useRef } from "react";
+import { useCommandCentre } from "../../../InstanceManager";
+import { setShownControl } from "../../../store/globalUISlice";
+import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
+import { moorhen } from "../../../types/moorhen";
+import { MoorhenStack } from "../../interface-base";
 
-export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
-    HTMLDivElement,
-    {
-        refMolNo: number;
-        movingMolNo: number;
-        refLigandCid: string;
-        movingLigandCid: string;
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
-        id: string;
-    }
->((props, ref) => {
+export const AcceptRejectMatchingLigand = () => {
     const copyMovingMoleculeRef = useRef<moorhen.Molecule | null>(null);
 
     const dispatch = useDispatch();
@@ -27,6 +17,13 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const props = useSelector((state: moorhen.State) => state.globalUI.shownControl?.payload) as {
+        movingMolNo: number;
+        refMolNo: number;
+        movingLigandCid: string;
+        refLigandCid: string;
+    };
+    console.log("props", props);
 
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
@@ -49,6 +46,7 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
             false
         )) as moorhen.WorkerResponse<boolean>;
 
+        console.log("match result", result);
         if (result.data.result.result) {
             copyMovingMoleculeRef.current.setAtomsDirty(true);
             await copyMovingMoleculeRef.current.fetchIfDirtyAndDraw("ligands");
@@ -56,7 +54,7 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
         } else {
             await copyMovingMoleculeRef.current.delete(true);
             enqueueSnackbar(`Failed to match ligands`, { variant: "warning" });
-            closeSnackbar(props.id);
+            dispatch(setShownControl(null));
         }
     }, [molecules]);
 
@@ -96,40 +94,32 @@ export const MoorhenAcceptRejectMatchingLigandSnackBar = forwardRef<
             false
         );
 
-        closeSnackbar(props.id);
+        dispatch(setShownControl(null));
     }, []);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-                <div>
-                    <span>Replace ligand?</span>
-                </div>
-                <div>
-                    <IconButton
-                        style={{ padding: 0, color: isDark ? "white" : "grey" }}
-                        onClick={async () => {
-                            await exit(true);
-                        }}
-                    >
-                        <CheckOutlined />
-                    </IconButton>
-                    <IconButton
-                        style={{ padding: 0, color: isDark ? "white" : "grey" }}
-                        onClick={async () => {
-                            await exit();
-                        }}
-                    >
-                        <CloseOutlined />
-                    </IconButton>
-                </div>
-            </MoorhenStack>
-        </SnackbarContent>
+        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+            <div>
+                <span>Replace ligand?</span>
+            </div>
+            <div>
+                <IconButton
+                    style={{ padding: 0, color: isDark ? "white" : "grey" }}
+                    onClick={async () => {
+                        await exit(true);
+                    }}
+                >
+                    <CheckOutlined />
+                </IconButton>
+                <IconButton
+                    style={{ padding: 0, color: isDark ? "white" : "grey" }}
+                    onClick={async () => {
+                        await exit();
+                    }}
+                >
+                    <CloseOutlined />
+                </IconButton>
+            </div>
+        </MoorhenStack>
     );
-});
-
-MoorhenAcceptRejectMatchingLigandSnackBar.displayName = "MoorhenAcceptRejectMatchingLigandSnackBar";
+};

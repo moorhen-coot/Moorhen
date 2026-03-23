@@ -2,25 +2,18 @@ import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, Stop
 import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { SnackbarContent, useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
-import { RootState } from "../../store/MoorhenReduxStore";
-import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
-import { sleep } from "../../utils/utils";
-import { MoorhenStack } from "../interface-base";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCommandCentre } from "@/InstanceManager";
+import { MoorhenStack } from "@/components/interface-base";
+import { RootState } from "@/store/MoorhenReduxStore";
+import { setIsAnimatingTrajectory } from "@/store/generalStatesSlice";
+import { setShownControl } from "@/store/globalUISlice";
+import { hideMolecule, showMolecule } from "@/store/moleculesSlice";
+import { moorhen } from "@/types/moorhen";
+import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
+import { sleep } from "@/utils/utils";
 
-export const MoorhenModelTrajectorySnackBar = forwardRef<
-    HTMLDivElement,
-    {
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
-        moleculeMolNo: number;
-        representationStyle: string;
-        id: string;
-    }
->((props, ref) => {
+export const ModelTrajectory = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
 
@@ -32,15 +25,16 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     const framesRef = useRef<null | moorhen.DisplayObject[][]>([]);
     const iFrameRef = useRef<number>(0);
 
-    const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(false);
+    const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(true);
     const [nFrames, setNFrames] = useState<number>(0);
     const [progress, setProgress] = useState<number>(0);
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
     const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(false);
+    const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
+    const molNo = shownControl?.name === "trajectory" ? (shownControl.payload?.molNo ?? 0) : 0;
+    const style = shownControl?.name === "trajectory" ? (shownControl?.payload?.style ?? "CRs") : "CRs";
 
-    const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === props.moleculeMolNo), [props.moleculeMolNo]);
-
-    const { closeSnackbar } = useSnackbar();
+    const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === molNo), [molNo]);
     const commandCentre = useCommandCentre();
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
@@ -98,11 +92,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true));
-            representationRef.current = new MoleculeRepresentation(
-                props.representationStyle as moorhen.RepresentationStyles,
-                "/*/*/*/*",
-                commandCentre
-            );
+            representationRef.current = new MoleculeRepresentation(style, "/*/*/*/*", commandCentre);
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current);
             setNFrames(framesRef.current.length);
             setBusyComputingFrames(false);
@@ -113,11 +103,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
     }, []);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
+        <>
             {busyComputingFrames ? (
                 <MoorhenStack gap={1} direction="vertical">
                     <span>Please wait...</span>
@@ -142,7 +128,7 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
                                 representationRef.current?.deleteBuffers();
                                 dispatch(showMolecule(selectedMolecule));
                                 dispatch(setIsAnimatingTrajectory(false));
-                                closeSnackbar(props.id);
+                                dispatch(setShownControl(null));
                             }}
                         >
                             <StopCircleOutlined />
@@ -167,10 +153,8 @@ export const MoorhenModelTrajectorySnackBar = forwardRef<
                     />
                 </MoorhenStack>
             ) : (
-                <span>Something went wrong...</span>
+                <span>Loading...</span>
             )}
-        </SnackbarContent>
+        </>
     );
-});
-
-MoorhenModelTrajectorySnackBar.displayName = "MoorhenModelTrajectorySnackBar";
+};

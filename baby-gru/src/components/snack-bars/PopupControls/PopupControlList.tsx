@@ -1,9 +1,12 @@
 import React from "react";
 import { moorhen } from "@/types/moorhen";
+import { RepresentationStyles } from "@/utils";
 import { AcceptRejectDragAtoms } from "./AcceptRejectDragAtoms";
+import { AcceptRejectMatchingLigand } from "./AcceptRejectMatchingLigand";
 import { AcceptRejectRotateTranslate } from "./AcceptRejectRotateTranslate";
 import { AtomInfo } from "./AtomInfo";
 import { MapContourLevel } from "./MapContourLevel";
+import { ModelTrajectory } from "./ModelTrajectory";
 import { ResidueSelectionControls } from "./ResidueSelection";
 import { RotamerChange } from "./RotamerChange";
 import { Screenshot } from "./ScreenshotControls";
@@ -22,6 +25,8 @@ type PayloadMap = ValidatePayloadMap<{
     changeRotamer: { molNo: number; chosenAtom: moorhen.ResidueSpec };
     videoRecorder: undefined;
     mapContourLvl: { molNo: number; mapPrecision: number };
+    trajectory: { molNo: number; style: RepresentationStyles };
+    acceptRejectMatchingLigand: { movingMolNo: number; refMolNo: number; movingLigandCid: string; refLigandCid: string };
 }>;
 
 type PopupControl = {
@@ -68,5 +73,13 @@ export const PopupControlList: PopupControl[] = [
     {
         name: "mapContourLvl",
         component: <MapContourLevel />,
+    },
+    {
+        name: "trajectory",
+        component: <ModelTrajectory />,
+    },
+    {
+        name: "acceptRejectMatchingLigand",
+        component: <AcceptRejectMatchingLigand />,
     },
 ];
