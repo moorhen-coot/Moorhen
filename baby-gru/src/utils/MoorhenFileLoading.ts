@@ -570,18 +570,18 @@ export const autoOpenFiles = async (
         ) {
             try {
                 const newMap = new MoorhenMap(commandCentre, store);
-                const isDiff = file.name.endsWith("_fofc.mrc");
-                const isLocres = file.name.endsWith("_locres.mrc");
+                const isDiff = file.name.includes("_fofc.mrc");
+                const isLocres = file.name.includes("_locres.mrc");
                 try {
-                    await newMap.loadToCootFromMapFile(file, isDiff);
-                } catch (err) {
-                    // Try again if this is a compressed file...
-                    if (file.name.includes(".gz")) {
+                    if (file.name.endsWith(".gz")) {
                         await newMap.loadToCootFromMapFile(file, isDiff, true);
                     } else {
-                        console.warn(err);
-                        throw new Error("Cannot read the fetched map...");
+                        await newMap.loadToCootFromMapFile(file, isDiff);
                     }
+                } catch (err) {
+                    // Try again if this is a compressed file...
+                    console.warn(err);
+                    throw new Error("Cannot read the fetched map...");
                 }
                 if (newMap.molNo === -1) {
                     throw new Error("Cannot read the map file!");

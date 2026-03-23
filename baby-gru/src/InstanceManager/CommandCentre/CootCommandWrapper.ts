@@ -191,6 +191,9 @@ export class CootCommandWrapper {
             },
             false
         );
-        return (await result).data.result.result as { center: [number, number, number]; radius: number };
+
+        const response = await result;
+        const results = response.data.result.result;
+        return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
     }
 }
