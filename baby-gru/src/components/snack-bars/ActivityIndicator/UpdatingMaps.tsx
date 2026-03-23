@@ -22,19 +22,6 @@ export const UpdatingMapsManager = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        // if (updatingMapsIsEnabled && showScoresToast) {
-        //     enqueueSnackbar("updating-maps-scores", {
-        //         variant: "updatingMaps",
-        //         persist: true,
-        //         commandCentre: commandCentre,
-        //         anchorOrigin: { vertical: "top", horizontal: "right" },
-        //     });
-        // } else if (updatingMapsIsEnabled) {
-        //     enqueueSnackbar("Adjust preferences to display scores after map updates", {variant: "info"})
-        // }
-    }, [updatingMapsIsEnabled, showScoresToast]);
-
-    useEffect(() => {
         const handleConnectMaps = async () => {
             if (updatingMapsIsEnabled) {
                 const currentScores = (await commandCentre.current.cootCommand(

@@ -3,6 +3,7 @@ import { IconButton } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
+import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
 import { useCommandCentre } from "../../../InstanceManager";
 import { setShownControl } from "../../../store/globalUISlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -98,27 +99,25 @@ export const AcceptRejectMatchingLigand = () => {
     }, []);
 
     return (
-        <MoorhenStack gap={2} direction="horizontal" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+        <MoorhenStack align="center" justify="center">
             <div>
                 <span>Replace ligand?</span>
             </div>
             <div>
-                <IconButton
-                    style={{ padding: 0, color: isDark ? "white" : "grey" }}
+                <MoorhenButton
+                    type="icon-only"
                     onClick={async () => {
                         await exit(true);
                     }}
-                >
-                    <CheckOutlined />
-                </IconButton>
-                <IconButton
-                    style={{ padding: 0, color: isDark ? "white" : "grey" }}
+                    icon="MatSymCheck"
+                ></MoorhenButton>
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymClose"
                     onClick={async () => {
                         await exit();
                     }}
-                >
-                    <CloseOutlined />
-                </IconButton>
+                ></MoorhenButton>
             </div>
         </MoorhenStack>
     );
