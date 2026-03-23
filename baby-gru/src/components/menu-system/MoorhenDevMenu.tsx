@@ -1,4 +1,4 @@
-import { MenuItem } from "@mui/material";
+import { MenuItem, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,6 +8,9 @@ import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
+import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
+import { readGzippedTextFile } from "../../utils/utils";
+import { useCommandCentre } from "../../InstanceManager";
 import {
     addCallback,
     addFracPathOverlay,
@@ -18,11 +21,10 @@ import {
     emptyOverlays,
 } from "../../store/overlaysSlice";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
-import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenToggle } from "../inputs";
+import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -52,8 +54,14 @@ export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
+    const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
+    const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
+
+    const commandCentre = useCommandCentre();
 
     const customCid = useRef<string>("");
+    const conKitFile1Ref = useRef<null | HTMLInputElement>(null);
+    const conKitFile2Ref = useRef<null | HTMLInputElement>(null);
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -221,10 +229,10 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.7, 0.5],
-                        [0.8, 0.9],
-                        [0.6, 0.7],
-                        [0.7, 0.5],
+                        0.7, 0.5,
+                        0.8, 0.9,
+                        0.6, 0.7,
+                        0.7, 0.5,
                     ],
                     drawStyle: "fill",
                     fillStyle: "#00ffff77",
@@ -259,8 +267,8 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.0, 0.0],
-                        [1.0, 1.0],
+                        0.0, 0.0,
+                        1.0, 1.0,
                     ],
                     drawStyle: "stroke",
                     uniqueId: uuidv4(),
@@ -269,8 +277,8 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.4, 0.2],
-                        [0.8, 0.6],
+                        0.4, 0.2,
+                        0.8, 0.6,
                     ],
                     drawStyle: "stroke",
                     strokeStyle: "red",
@@ -281,10 +289,10 @@ export const MoorhenDevMenu = () => {
             dispatch(
                 addFracPathOverlay({
                     path: [
-                        [0.2, 0.5],
-                        [0.3, 0.9],
-                        [0.1, 0.7],
-                        [0.2, 0.5],
+                        0.2, 0.5,
+                        0.3, 0.9,
+                        0.1, 0.7,
+                        0.2, 0.5,
                     ],
                     gradientStops,
                     gradientBoundary: [0.1, 0, 0.3, 0],
@@ -329,22 +337,6 @@ export const MoorhenDevMenu = () => {
     return (
         <>
             <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
-            <MenuItem
-                onClick={evt => {
-                    dispatch(showModal(modalKeys.VECTORS));
-                    document.body.click();
-                }}
-            >
-                Vectors
-            </MenuItem>
-            <MenuItem
-                onClick={evt => {
-                    dispatch(showModal(modalKeys.OVERLAYS2D));
-                    document.body.click();
-                }}
-            >
-                2D Overlays
-            </MenuItem>
             <hr></hr>
             <InputGroup className="moorhen-input-group-check">
                 <MoorhenToggle

@@ -597,6 +597,7 @@ target_link_libraries(moorhen
     gemmi_cpp
     privateer
     slicendice_cpp
+    conkit
     fftw
     rfftw
     fftw3f
