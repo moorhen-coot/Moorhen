@@ -561,8 +561,8 @@ class molecules_container_js : public molecules_container_t {
                     res_json["Chiral RMSZ"] = z_chirals;
                     res_json["Plane RMSZ"] = z_planes;
                     res_json["Torsion RMSZ"] = z_torsions;
-                    res_json["Rama Score"] = rama.score(*prev_res, res, *next_res);
-                    res_json["Rota Score"] = rota.score(res);
+                    res_json["Rama. ZScore"] = rama.score(*prev_res, res, *next_res);
+                    res_json["Rota. ZScore"] = rota.score(res);
                     chain_json[res_idx++] = res_json;
                 }
                 root[chain.name] = chain_json;
