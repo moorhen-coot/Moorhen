@@ -658,7 +658,7 @@ if [ $BUILD_GSL = true ]; then
     getgsl
     mkdir -p ${BUILD_DIR}/gsl_build
     cd ${BUILD_DIR}/gsl_build
-    emconfigure ${MOORHEN_SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
+    emconfigure ${MOORHEN_SOURCE_DIR}/gsl-${gsl_release}/configure --prefix=${INSTALL_DIR}
     emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make install || fail "Error installing gsl, giving up."
 fi
