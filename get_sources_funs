@@ -22,6 +22,41 @@ cdcheckout() {
     cd ${MOORHEN_SOURCE_DIR}/checkout || fail "Failed to cd to checkout directory"
 }
 
+getrotarama() {
+    cdcheckout
+    if [ -r rotarama ]; then
+        echo "Using existing rotarama"
+    else
+        echo "Checking out rotarama"
+        mkdir -p rotarama
+        cd rotarama
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-arg.data -o rota8000-arg.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-asn.data -o rota8000-asn.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-asp.data -o rota8000-asp.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-cys.data -o rota8000-cys.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-gln.data -o rota8000-gln.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-glu.data -o rota8000-glu.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-his.data -o rota8000-his.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-ile.data -o rota8000-ile.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-leu.data -o rota8000-leu.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-lys.data -o rota8000-lys.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-met.data -o rota8000-met.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-phetyr.data -o rota8000-phetyr.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-pro.data -o rota8000-pro.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-ser.data -o rota8000-ser.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-thr.data -o rota8000-thr.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-trp.data -o rota8000-trp.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_rotamer_pct_contour_grids/rota8000-val.data -o rota8000-val.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-cispro.data -o rama8000-cispro.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-general-noGPIVpreP.data -o rama8000-general-noGPIVpreP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-gly-sym.data -o rama8000-gly-sym.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-ileval-nopreP.data -o rama8000-ileval-nopreP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-prepro-noGP.data -o rama8000-prepro-noGP.data &&\
+        curl -fL https://raw.githubusercontent.com/rlabduke/reference_data/refs/heads/master/Top8000/Top8000_ramachandran_pct_contour_grids/rama8000-transpro.data -o rama8000-transpro.data || fail "Failed to download rotarama data"
+    fi
+    echo
+}
+
 geteigen() {
     cdcheckout
     if [ -r eigen-$libeigen_release ]; then
