@@ -151,12 +151,12 @@ export const addValidationDataToSeqViewerSequences = (
                             if (!residue.validationData[key]) {
                                 residue.validationData[key] = { value: null };
                             }
-                            if (key.includes("RMSZ")) {
+                            if (key.includes("RMSZ") || key.includes("ZScore")) {
                                 residue.validationData[key] = {
                                     value: [scaleRMSZ(value), value],
                                     gradientPreset: gradientPresets ? gradientPresets[key] : null,
                                     reverseGradient: reverseGradient ?? false,
-                                    category: category,
+                                    category: key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category,
                                 };
                             } else {
                                 residue.validationData[key] = {

@@ -104,6 +104,8 @@ export const MoorhenVectors = () => {
                     if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = existingVector.drawMode;
                     if (arrowModeRef !== null && typeof arrowModeRef !== "function") arrowModeRef.current.value = existingVector.arrowMode;
                     if (labelModeRef !== null && typeof labelModeRef !== "function") labelModeRef.current.value = existingVector.labelMode;
+                    if (cidFromRef !== null && typeof cidFromRef !== "function") cidFromRef.current.value = existingVector.cidFrom;
+                    if (cidToRef !== null && typeof cidToRef !== "function") cidToRef.current.value = existingVector.cidTo;
                     setCoordsModeButtonState(existingVector.coordsMode);
                 } catch (e) {}
             }
@@ -274,6 +276,7 @@ export const MoorhenVectors = () => {
                         style={{ height: "2rem" }}
                         ref={cidFromRef}
                         text={theVector.cidFrom}
+                        setText={t => updateVector({ cidFrom: t })}
                         onChange={evt => {
                             updateVector({ cidFrom: evt.target.value });
                         }}
@@ -297,6 +300,7 @@ export const MoorhenVectors = () => {
                     <MoorhenTextInput
                         ref={cidToRef}
                         text={theVector.cidTo}
+                        setText={t => updateVector({ cidTo: t })}
                         onChange={evt => {
                             updateVector({ cidTo: evt.target.value });
                         }}
