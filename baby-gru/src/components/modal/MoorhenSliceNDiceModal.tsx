@@ -20,7 +20,7 @@ import {
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
-import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex, readTextFile } from "../../utils/utils";
+import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
@@ -500,7 +500,7 @@ export const MoorhenSliceNDiceModal = () => {
 
     const handlePaeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.length > 0) {
-            const fileContents = (await readTextFile(e.target.files[0])) as string;
+            const fileContents = await e.target.files[0].text()
             if (fileContents.length > 0) {
                 paeFileContentsRef.current = fileContents;
                 dispatch(setPaeFileIsUploaded(true));

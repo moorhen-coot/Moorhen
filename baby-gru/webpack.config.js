@@ -128,7 +128,7 @@ module.exports = (env, argv) => {
                         {
                             loader: "ts-loader",
                             options: {
-                                transpileOnly: true, // Skip type checking for faster builds with React Compiler
+                                transpileOnly: true,
                             },
                         },
                         {

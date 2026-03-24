@@ -1,5 +1,6 @@
+import { RootState } from '@/store/MoorhenReduxStore';
 import { webGL } from '../types/mgWebGL';
-import { MoorhenReduxStoreType} from '../store/MoorhenReduxStore'
+import { Store } from '@reduxjs/toolkit';
 
 interface Dictionary<T> {
     [Key: string]: T;
@@ -29,9 +30,9 @@ export class TextCanvasTexture {
     bigTextureTextIndexesBuffer: WebGLBuffer;
     textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
     shader: webGL.ShaderTextInstanced;
-    store: MoorhenReduxStoreType
+    store: Store<RootState>;
 
-    constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: MoorhenReduxStoreType) {
+    constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: Store<RootState>) {
         this.gl = gl
         this.ext = ext
         this.instanced_ext = instanced_ext

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <zlib.h>
 #include <unistd.h>
+#include <cmath>
 
 #include <filesystem>
 #include <complex>
@@ -28,13 +29,17 @@
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
+#include <gemmi/topo.hpp>
 
-
+#include "rotarama.hpp"
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
 #include "slicendice_cpp/birch.h"
 #include "slicendice_cpp/pae_igraph.h"
 #include "Eigen/Dense"
+
+#include "conkit/conkit_validate.h"
+#include "json/json.h"
 
 #include <math.h>
 #ifndef M_PI
@@ -65,6 +70,8 @@
 #include "cartesian.h"
 #include "geomutil.h"
 #include "matrix.h"
+
+
 
 #include "smilestopdb.h"
 using namespace emscripten;
@@ -413,6 +420,162 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        std::string get_validation(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            size_t model_index = 0;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_bonds;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_angles;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_torsions;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_chirals;
+            std::map<gemmi::Atom*, std::vector<double>> atom_zs_planes;
+            for (gemmi::Chain& chain : st.models[model_index].chains) {
+                for (gemmi::Residue& res : chain.residues) {
+                    for (gemmi::Atom& atom : res.atoms) {
+                        atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        atom_zs[&atom] = std::vector<double>();
+                        atom_zs_bonds[&atom] = std::vector<double>();
+                        atom_zs_angles[&atom] = std::vector<double>();
+                        atom_zs_torsions[&atom] = std::vector<double>();
+                        atom_zs_chirals[&atom] = std::vector<double>();
+                        atom_zs_planes[&atom] = std::vector<double>();
+                    }
+                }
+            }
+            gemmi::MonLib monlib;
+            std::filesystem::path ccp4_lib(std::getenv("CCP4_LIB"));
+            auto monomer_dir = ccp4_lib / "data" / "monomers";
+            auto resnames = st.models[model_index].get_all_residue_names();
+            gemmi::Logger logger;
+            monlib.read_monomer_lib(monomer_dir, resnames, logger);
+            auto hchange = gemmi::HydrogenChange::NoChange;
+            auto reorder = false;
+            auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
+            for (const auto& bond : topo->bonds) {
+                double z = bond.calculate_z();
+                atom_zs[bond.atoms[0]].push_back(z);
+                atom_zs[bond.atoms[1]].push_back(z);
+                atom_zs_bonds[bond.atoms[0]].push_back(z);
+                atom_zs_bonds[bond.atoms[1]].push_back(z);
+            }
+            for (const auto& angle : topo->angles) {
+                double z = angle.calculate_z();
+                atom_zs[angle.atoms[0]].push_back(z);
+                atom_zs[angle.atoms[1]].push_back(z);
+                atom_zs[angle.atoms[2]].push_back(z);
+                atom_zs_angles[angle.atoms[0]].push_back(z);
+                atom_zs_angles[angle.atoms[1]].push_back(z);
+                atom_zs_angles[angle.atoms[2]].push_back(z);
+            }
+            for (const auto& torsion : topo->torsions) {
+                // Some torsions are only restrained with planes so check esd
+                if (torsion.restr->esd > 0.0) {
+                    double z = torsion.calculate_z();
+                    atom_zs[torsion.atoms[0]].push_back(z);
+                    atom_zs[torsion.atoms[1]].push_back(z);
+                    atom_zs[torsion.atoms[2]].push_back(z);
+                    atom_zs[torsion.atoms[3]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[0]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[1]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[2]].push_back(z);
+                    atom_zs_torsions[torsion.atoms[3]].push_back(z);
+                }
+            }
+            for (const auto& plane : topo->planes) {
+                const auto abcd = gemmi::find_best_plane(plane.atoms);
+                for (const auto &atom : plane.atoms)
+                {
+                    const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
+                    atom_zs[atom].push_back(dist / plane.restr->esd);
+                    atom_zs_planes[atom].push_back(dist / plane.restr->esd);
+                }
+            }
+            for (const auto& chir : topo->chirs) {
+                static const double esd = 0.1;
+                const double ideal = topo->ideal_chiral_abs_volume(chir);
+                const double z = chir.calculate_z(ideal, esd);
+                atom_zs[chir.atoms[0]].push_back(z);
+                atom_zs[chir.atoms[1]].push_back(z);
+                atom_zs[chir.atoms[2]].push_back(z);
+                atom_zs[chir.atoms[3]].push_back(z);
+                atom_zs_chirals[chir.atoms[0]].push_back(z);
+                atom_zs_chirals[chir.atoms[1]].push_back(z);
+                atom_zs_chirals[chir.atoms[2]].push_back(z);
+                atom_zs_chirals[chir.atoms[3]].push_back(z);
+            }
+
+            Json::Value root;
+
+            static const std::filesystem::path rotarama_data("data/rotarama/");
+            static const Rota rota(rotarama_data);
+            static const Rama rama(rotarama_data);
+
+            for (auto& chain : st.models[model_index].chains) {
+                Json::Value chain_json;
+                int res_idx = 0;
+                for (auto& res : chain.residues) {
+                    const auto prev_res = chain.previous_residue(res);
+                    const auto next_res = chain.next_residue(res);
+
+                    Json::Value res_json;
+                    res_json["name"] = res.name;
+                    res_json["seqNum"] = res.seqid.num.value;
+                    res_json["insCode"] = std::string{res.seqid.icode};
+                    std::vector<double> res_zs;
+                    std::vector<double> res_zs_bonds;
+                    std::vector<double> res_zs_angles;
+                    std::vector<double> res_zs_chirals;
+                    std::vector<double> res_zs_planes;
+                    std::vector<double> res_zs_torsions;
+                    for (auto& atom : res.atoms) {
+                        auto& zs = atom_zs[&atom];
+                        res_zs.insert(res_zs.end(), zs.begin(), zs.end());
+
+                        auto& zs_bonds = atom_zs_bonds[&atom];
+                        res_zs_bonds.insert(res_zs_bonds.end(), zs_bonds.begin(), zs_bonds.end());
+
+                        auto& zs_angles = atom_zs_angles[&atom];
+                        res_zs_angles.insert(res_zs_angles.end(), zs_angles.begin(), zs_angles.end());
+
+                        auto& zs_chirals = atom_zs_chirals[&atom];
+                        res_zs_chirals.insert(res_zs_chirals.end(), zs_chirals.begin(), zs_chirals.end());
+
+                        auto& zs_planes = atom_zs_planes[&atom];
+                        res_zs_planes.insert(res_zs_planes.end(), zs_planes.begin(), zs_planes.end());
+
+                        auto& zs_torsions = atom_zs_torsions[&atom];
+                        res_zs_torsions.insert(res_zs_torsions.end(), zs_torsions.begin(), zs_torsions.end());
+
+                    }
+
+                    double z = gemmi::calculate_data_statistics(res_zs).rms;
+
+                    double z_bonds = gemmi::calculate_data_statistics(res_zs_bonds).rms;
+                    double z_angles = gemmi::calculate_data_statistics(res_zs_angles).rms;
+                    double z_chirals = gemmi::calculate_data_statistics(res_zs_chirals).rms;
+                    double z_planes = gemmi::calculate_data_statistics(res_zs_planes).rms;
+                    double z_torsions = gemmi::calculate_data_statistics(res_zs_torsions).rms;
+
+                    res_json["Overall RMSZ"] = z;
+                    res_json["Bond RMSZ"] = z_bonds;
+                    res_json["Angle RMSZ"] = z_angles;
+                    res_json["Chiral RMSZ"] = z_chirals;
+                    res_json["Plane RMSZ"] = z_planes;
+                    res_json["Torsion RMSZ"] = z_torsions;
+                    res_json["Rama. ZScore"] = rama.score(*prev_res, res, *next_res);
+                    res_json["Rota. ZScore"] = rota.score(res);
+                    chain_json[res_idx++] = res_json;
+                }
+                root[chain.name] = chain_json;
+            }
+            
+            Json::StreamWriterBuilder builder;
+            const std::string json_string = Json::writeString(builder, root);
+            
+            return json_string;
         }
 
         std::string molecule_to_mmCIF_string_with_gemmi(int imol){
@@ -868,6 +1031,96 @@ class molecules_container_js : public molecules_container_t {
             }
             return sg;
         }
+
+
+    std::pair<std::array<float,3>,float> get_map_bounding_sphere(int imol, double threshold)
+    {
+        auto xMap = (*this)[imol].xmap;
+        clipper::Grid_sampling gs = xMap.grid_sampling();
+        clipper::Cell cell = xMap.cell();
+
+        std::pair<std::array<float,3>,float> result;
+        std::array<float,3> center_array;
+
+        int min_u = gs.nu(), max_u = 0;
+        int min_v = gs.nv(), max_v = 0;
+        int min_w = gs.nw(), max_w = 0;
+
+        bool found = false;
+
+        // ---- First pass: bounding box ----
+        for (clipper::Xmap<float>::Map_reference_index ix = xMap.first();
+            !ix.last(); ix.next())
+        {
+            if (xMap[ix] >= threshold)
+            {
+                found = true;
+                clipper::Coord_grid cg = ix.coord();
+
+                min_u = std::min(min_u, cg.u());
+                min_v = std::min(min_v, cg.v());
+                min_w = std::min(min_w, cg.w());
+
+                max_u = std::max(max_u, cg.u());
+                max_v = std::max(max_v, cg.v());
+                max_w = std::max(max_w, cg.w());
+            }
+        }
+
+        if (!found) {
+            result.first = {0.0, 0.0, 0.0};
+            result.second = 0.0;
+            return result;
+        }
+
+        // Convert box corners to orthogonal coords
+        auto to_orth = [&](int u, int v, int w) {
+            return clipper::Coord_grid(u,v,w)
+                .coord_frac(gs)
+                .coord_orth(cell);
+        };
+
+        clipper::Coord_orth omin = to_orth(min_u, min_v, min_w);
+        clipper::Coord_orth omax = to_orth(max_u, max_v, max_w);
+
+        // Center = midpoint of box
+        clipper::Coord_orth center(
+            0.5 * (omin.x() + omax.x()),
+            0.5 * (omin.y() + omax.y()),
+            0.5 * (omin.z() + omax.z())
+        );
+
+        // ---- Second pass: max radius ----
+        double r2_max = 0.0;
+
+        for (clipper::Xmap<float>::Map_reference_index ix = xMap.first();
+            !ix.last(); ix.next())
+        {
+            if (xMap[ix] >= threshold)
+            {
+                clipper::Coord_orth pos =
+                    ix.coord().coord_frac(gs).coord_orth(cell);
+
+                double dx = pos.x() - center.x();
+                double dy = pos.y() - center.y();
+                double dz = pos.z() - center.z();
+
+                double r2 = dx*dx + dy*dy + dz*dz;
+                r2_max = std::max(r2_max, r2);
+            }
+        }
+
+        double radius = std::sqrt(r2_max);
+
+        center_array[0] = center.x();
+        center_array[1] = center.y();
+        center_array[2] = center.z();
+
+        result.first = center_array;
+        result.second = radius;
+
+        return result;
+    }
 
         double get_map_data_resolution(int imol){
             /* This can only work if associate_data_mtz_file_with_map has be called. */
@@ -1520,6 +1773,16 @@ void unpackCootDataFile(const std::string &fileName, bool doUnzip, const std::st
 
 std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &small_molecule_cif);
 
+int run_conkit_validate_with_exception(ValidateOptions& opts){
+    try {
+        return run_conkit_validate(opts);
+    } catch(std::exception e){
+        //ConKit failed ...
+        std::cout << "ConKit failed ..." << std::endl;
+        return -1;
+    }
+}
+
 EMSCRIPTEN_BINDINGS(my_module) {
         // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
@@ -1584,6 +1847,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    value_object<std::pair<std::array<float,3>,float>>("pair_position_value")
+    .field("position", &std::pair<std::array<float,3>,float>::first)
+    .field("value", &std::pair<std::array<float,3>,float>::second)
+    ;
+
     value_object<coot::atom_overlap_t>("atom_overlap_t")
     .field("overlap_volume", &coot::atom_overlap_t::overlap_volume)
     .field("r_1", &coot::atom_overlap_t::r_1)
@@ -2150,12 +2418,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
+    .function("get_validation",&molecules_container_js::get_validation)
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("get_map_data_resolution",&molecules_container_js::get_map_data_resolution)
     .function("get_map_cell",&molecules_container_js::get_map_cell)
     .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
+    .function("get_map_bounding_sphere",&molecules_container_js::get_map_bounding_sphere)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
@@ -2405,7 +2675,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("bond_has_hydrogen_flag",&moorhen::h_bond::bond_has_hydrogen_flag)
     ;
 
-    value_object<moorhen::h_bond_atom>(" h_bond_atom")
+    value_object<moorhen::h_bond_atom>("h_bond_atom")
         .field("serial",&moorhen::h_bond_atom::serial)
         .field("x",&moorhen::h_bond_atom::x)
         .field("y",&moorhen::h_bond_atom::y)
@@ -2420,6 +2690,28 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("res_no",&moorhen::h_bond_atom::res_no)
         .field("residue_name",&moorhen::h_bond_atom::residue_name)
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
+    ;
+
+    value_object<ValidateOptions>("ConKitValidateOptions")
+        .field("seqfile",&ValidateOptions::seqfile)
+        .field("seqformat",&ValidateOptions::seqformat)
+        .field("model_file",&ValidateOptions::model_file)
+        .field("pdb_file",&ValidateOptions::pdb_file)
+        .field("pdb_chain",&ValidateOptions::pdb_chain)
+        .field("model_chain",&ValidateOptions::model_chain)
+        .field("output",&ValidateOptions::output)
+        .field("overwrite",&ValidateOptions::overwrite)
+        .field("gap_opening_penalty",&ValidateOptions::gap_opening_penalty)
+        .field("gap_extension_penalty",&ValidateOptions::gap_extension_penalty)
+        .field("seq_separation_cutoff",&ValidateOptions::seq_separation_cutoff)
+        .field("n_iterations",&ValidateOptions::n_iterations)
+        .field("use_gap_ss",&ValidateOptions::use_gap_ss)
+        .field("gap_ss_w",&ValidateOptions::gap_ss_w)
+        .field("use_prf",&ValidateOptions::use_prf)
+        .field("prf_w",&ValidateOptions::prf_w)
+        .field("map_align_silent",&ValidateOptions::map_align_silent)
+        .field("silent",&ValidateOptions::silent)
+        .field("renumber",&ValidateOptions::renumber)
     ;
 
     register_vector<molecules_container_t::fit_ligand_info_t>("VectorFitLigandInfo_t");
@@ -2669,5 +2961,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_mtz_columns",&get_mtz_columns);
     function("get_coord_header_info",&get_coord_header_info);
     function("is64bit",&is64bit);
+
+    function("run_conkit_validate",&run_conkit_validate_with_exception);
 
 }

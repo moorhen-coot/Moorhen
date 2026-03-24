@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from "uuid";
-import { readDataFile } from "./utils";
 
 export class MoorhenMtzWrapper {
     reflectionData: null | Uint8Array;
@@ -11,7 +10,7 @@ export class MoorhenMtzWrapper {
     }
 
     async loadHeaderFromFile(file: File): Promise<{ [colType: string]: string }> {
-        const arrayBuffer = await readDataFile(file);
+        const arrayBuffer = await file.arrayBuffer()
         const fileName = `File_${uuidv4()}`;
         const byteArray = new Uint8Array(arrayBuffer);
         window.CCP4Module.FS_createDataFile(".", fileName, byteArray, true, true);

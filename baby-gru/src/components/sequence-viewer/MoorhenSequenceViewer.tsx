@@ -27,6 +27,8 @@ type MoorhenSequenceViewerPropsType = {
     displayHeight?: number;
     forceRedrawScrollBarKey?: string | number;
     style?: React.CSSProperties;
+    showValidationData?: boolean;
+    validationTracks?: string[];
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -38,6 +40,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         showTitleBar = true,
         className,
         onHoverResidue,
+        showValidationData = false,
+        validationTracks = null,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
@@ -430,7 +434,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         if (noSequence || invalidSequences) {
             return null;
         }
-        return sequencesToDisplay?.map(seqObj => {
+        return sequencesToDisplay?.map((seqObj, index) => {
             const hoveredResidue = hoveredRef
                 ? seqObj.molNo === hoveredRef.molno && seqObj.chain === hoveredRef.chain
                     ? hoveredRef.resNum
@@ -438,7 +442,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 : null;
             return (
                 <SequenceRow
-                    key={seqObj.molNo + seqObj.chain}
+                    key={`${seqObj.molNo}-${seqObj.chain}-${seqObj.key ? seqObj.key : index}`}
                     sequence={seqObj}
                     nameColumnWidth={nameColumnWidth}
                     columnWidth={columnWidth}
@@ -448,6 +452,8 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     handleResidueMouseOver={handleResidueMouseOver}
                     handleResidueMouseDown={handleResidueMouseDown}
                     handleResidueMouseUp={handleResidueMouseUp}
+                    showValidationData={showValidationData}
+                    validationTracks={validationTracks}
                 />
             );
         });
@@ -463,6 +469,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         handleResidueMouseOver,
         handleResidueMouseDown,
         handleResidueMouseUp,
+        validationTracks,
     ]);
 
     const leftButtonsBar =

@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -12,7 +13,7 @@ import { MoorhenStack } from "../interface-base";
 
 export const ImportMapCoefficients = () => {
     const dispatch = useDispatch();
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

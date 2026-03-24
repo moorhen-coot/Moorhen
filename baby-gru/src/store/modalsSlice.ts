@@ -31,6 +31,8 @@ export type ModalKey =
     | "overlays-2d"
     | "pae-plot"
     | "NOE";
+    | "conkit"
+    | "pae-plot";
 
 const initialState: {
     activeModals: ModalKey[];

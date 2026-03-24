@@ -19,7 +19,7 @@ import {
 } from "../../store/sceneSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
 import * as MenuItems from "../menu-item";
-import { PanelIDs } from "../panels";
+import { SidePanelIDs } from "../panels";
 
 // export type SubMenus = "file" | "calculate" | "edit" | "help" | "ligand" | "map-tool" | "validation" | "view" | "preferences";
 
@@ -49,7 +49,7 @@ export type MenuItemShowModal = BaseMenuItem & {
 
 export type MenuItemShowSidePanel = BaseMenuItem & {
     type: "showPanel";
-    panel: PanelIDs;
+    panel: SidePanelIDs;
 };
 
 export type MenuItemCustomJSX = BaseMenuItem & {
@@ -496,6 +496,13 @@ export const subMenuMap: SubMenuMap = {
                 devOnly: true,
             },
             {
+                id: "conkit",
+                label: "ConKit...",
+                type: "showModal",
+                modal: "conkit",
+                devOnly: true,
+            },
+            {
                 id: "json-validation",
                 label: "Interesting bits JSON validation...",
                 type: "showModal",
@@ -587,6 +594,18 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["layout", "settings"],
                 description: "Layout settings",
                 content: MenuItems.LayoutSettings,
+            },
+            {
+                id: "vectors",
+                label: "Vectors...",
+                type: "showPanel",
+                panel: "vectors",
+            },
+            {
+                id: "overlay2DObjects",
+                label: "2D objects...",
+                type: "showPanel",
+                panel: "overlay2DObjects",
             },
         ],
     },

@@ -7,7 +7,8 @@ import { get_grid } from "../../utils/utils"
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import { getMathJaxSVG } from '../../utils/mathJaxUtils';
-import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
+import {  RootState } from '../../store/MoorhenReduxStore';
+import { Store } from '@reduxjs/toolkit';
 
 interface ImageFrac2D {
     x: number
@@ -125,7 +126,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, arrowWidth, color, scale){
     ctx.restore();
 }
 
-export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number, store:MoorhenReduxStoreType) => {
+export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: number, height: number, scale: number, helpText: string[], images: ImageFrac2D[], drawQuat: quat4, zIndex: number, store: Store<RootState>) => {
 
     if(!canvas2D_ctx) return
 

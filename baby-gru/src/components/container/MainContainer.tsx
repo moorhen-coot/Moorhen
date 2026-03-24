@@ -8,7 +8,7 @@ import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../..
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
 import { useWindowEventListener } from "../../hooks/useWindowEventListener";
-import { MoorhenReduxStoreType, RootState } from "../../store/MoorhenReduxStore";
+import { RootState } from "../../store/MoorhenReduxStore";
 import {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,
@@ -41,7 +41,7 @@ import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginLi
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
-import { BottomPanelContainer } from "../panels/BottomPanel";
+import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
 import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
@@ -151,6 +151,7 @@ interface ContainerOptionalProps {
     urlPrefix?: string;
     viewOnly: boolean;
     extraDraggableModals?: React.JSX.Element[];
+    extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
     setMoorhenDimensions?: null | (() => [number, number]);
     allowScripting?: boolean;
@@ -518,7 +519,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
-                    <MoorhenSidePanel />
+                    <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
                 </SnackbarProvider>
             </div>
         </>

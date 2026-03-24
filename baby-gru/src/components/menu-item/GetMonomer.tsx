@@ -3,6 +3,7 @@ import parse from "html-react-parser";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
@@ -75,7 +76,7 @@ const CompoundAutoCompleteOption = (props: {
 };
 
 export const GetMonomer = () => {
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

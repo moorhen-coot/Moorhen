@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
+set(lhasa_react_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/LhasaReact)
 
 # XDATADIR should be "${install_top_dir}/share/data"
 add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
@@ -558,6 +559,7 @@ FILE(COPY ../checkout/monomers/a/ADP.cif DESTINATION data/ccp4_lib/data/monomers
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
 FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
+FILE(COPY ../checkout/rotarama DESTINATION data )
 FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
@@ -595,6 +597,7 @@ target_link_libraries(moorhen
     gemmi_cpp
     privateer
     slicendice_cpp
+    conkit
     fftw
     rfftw
     fftw3f
@@ -679,4 +682,4 @@ ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
 
 install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/src/LhasaReact/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
+install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
