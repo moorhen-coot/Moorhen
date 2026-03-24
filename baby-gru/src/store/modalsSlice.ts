@@ -29,8 +29,7 @@ export type ModalKey =
     | "colour-map-by-map"
     | "vectors"
     | "overlays-2d"
-    | "pae-plot"
-    | "NOE";
+    | "NOE"
     | "conkit"
     | "pae-plot";
 

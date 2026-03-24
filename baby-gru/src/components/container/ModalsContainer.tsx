@@ -63,7 +63,7 @@ const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     maps: MoorhenMapsModal,
     models: MoorhenModelsModal,
-    NOE: MoorhenNOERestraints
+    NOE: MoorhenNOERestraints,
     conkit: MoorhenConKitModal,
 };
 // ...existing code...
