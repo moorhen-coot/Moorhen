@@ -4,6 +4,7 @@ import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { SnackBars } from "@/components/snack-bars";
 import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
@@ -472,10 +473,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     Components={snackbarComponents}
                     preventDuplicate={true}
                 >
-                    <PopupControls />
-                    <MoorhenMainMenu />
-
                     <div style={viewportStyle} className="moorhen__viewport-container">
+                        <MoorhenMainMenu />
+                        <PopupControls />
+                        <SnackBars />
                         <ActivityIndicator />
                         <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
                         <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />

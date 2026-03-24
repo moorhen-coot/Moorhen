@@ -21,6 +21,7 @@ import sceneSettingsReducer from "./sceneSettingsSlice";
 import sharedSessionReducer from "./sharedSessionSlice";
 import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
+import snackBarsReducer from "./snackbarSlice";
 import vectorsReducer from "./vectorsSlice";
 
 export const reducers = {
@@ -47,6 +48,7 @@ export const reducers = {
     menus: menusReducer,
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
+    snackBars: snackBarsReducer,
 };
 
 export const _MoorhenReduxStore = configureStore({

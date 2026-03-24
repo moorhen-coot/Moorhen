@@ -12,7 +12,8 @@
 }
 
 .moorhen__popup-control-container {
-    position: absolute;
+    position: relative;
+    width: fit-content;
     top: 0.5rem;
     z-index: 5;
     display: flex;

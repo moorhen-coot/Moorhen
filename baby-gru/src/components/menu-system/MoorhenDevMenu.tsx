@@ -1,8 +1,8 @@
-import { Button, MenuItem } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { useCommandCentre } from "../../InstanceManager";
@@ -65,7 +65,6 @@ export const MoorhenDevMenu = () => {
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
-    const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
@@ -309,18 +308,18 @@ export const MoorhenDevMenu = () => {
         }
     };
 
-    const tomogramTest = () => {
-        enqueueSnackbar("tomogram", {
-            variant: "tomogram",
-            persist: true,
-            mapMolNo: 0,
-            anchorOrigin: { vertical: "bottom", horizontal: "center" },
-        });
-    };
+    // const tomogramTest = () => {
+    //     enqueueSnackbar("tomogram", {
+    //         variant: "tomogram",
+    //         persist: true,
+    //         mapMolNo: 0,
+    //         anchorOrigin: { vertical: "bottom", horizontal: "center" },
+    //     });
+    // };
 
     return (
         <MoorhenStack>
-            <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem>
+            {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
             <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal(modalKeys.VECTORS));
@@ -394,6 +393,32 @@ export const MoorhenDevMenu = () => {
                 }}
                 label="Show validation panel"
             />
+            <MoorhenButton
+                onClick={() =>
+                    dispatch(enqueueSnackbar({ message: "This is a success message", variant: "success", autoHideDuration: 5000 }))
+                }
+            >
+                Show Success Snackbar
+            </MoorhenButton>
+            <MoorhenButton
+                onClick={() =>
+                    dispatch(enqueueSnackbar({ message: "This is a warning message", variant: "warning", autoHideDuration: 50000 }))
+                }
+            >
+                Show Warning Snackbar
+            </MoorhenButton>
+            <MoorhenButton
+                onClick={() =>
+                    dispatch(enqueueSnackbar({ message: "This is an error message", variant: "error", autoHideDuration: 50000 }))
+                }
+            >
+                Show Error Snackbar
+            </MoorhenButton>
+            <MoorhenButton
+                onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info", autoHideDuration: 50000 }))}
+            >
+                Show Info Snackbar
+            </MoorhenButton>
         </MoorhenStack>
     );
 };
