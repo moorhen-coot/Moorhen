@@ -587,6 +587,18 @@ export const subMenuMap: SubMenuMap = {
                 description: "Layout settings",
                 content: MenuItems.LayoutSettings,
             },
+            {
+                id: "vectors",
+                label: "Vectors...",
+                type: "showPanel",
+                panel: "vectors",
+            },
+            {
+                id: "overlay2DObjects",
+                label: "2D objects...",
+                type: "showPanel",
+                panel: "overlay2DObjects",
+            },
         ],
     },
     ligand: {

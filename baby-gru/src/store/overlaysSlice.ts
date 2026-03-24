@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export interface Overlay2DFracPath {
     type: "FracPath";
-    path: [number, number][];
+    path: number[];
     fillStyle?: string;
     strokeStyle?: string;
     drawStyle?: string;

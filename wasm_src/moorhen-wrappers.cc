@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <zlib.h>
 #include <unistd.h>
+#include <cmath>
 
 #include <filesystem>
 #include <complex>
@@ -30,7 +31,7 @@
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
 
-
+#include "rotarama.hpp"
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
 #include "slicendice_cpp/birch.h"
@@ -69,6 +70,8 @@
 #include "cartesian.h"
 #include "geomutil.h"
 #include "matrix.h"
+
+
 
 #include "smilestopdb.h"
 using namespace emscripten;
@@ -506,10 +509,17 @@ class molecules_container_js : public molecules_container_t {
 
             Json::Value root;
 
+            static const std::filesystem::path rotarama_data("data/rotarama/");
+            static const Rota rota(rotarama_data);
+            static const Rama rama(rotarama_data);
+
             for (auto& chain : st.models[model_index].chains) {
                 Json::Value chain_json;
                 int res_idx = 0;
                 for (auto& res : chain.residues) {
+                    const auto prev_res = chain.previous_residue(res);
+                    const auto next_res = chain.next_residue(res);
+
                     Json::Value res_json;
                     res_json["name"] = res.name;
                     res_json["seqNum"] = res.seqid.num.value;
@@ -555,6 +565,8 @@ class molecules_container_js : public molecules_container_t {
                     res_json["Chiral RMSZ"] = z_chirals;
                     res_json["Plane RMSZ"] = z_planes;
                     res_json["Torsion RMSZ"] = z_torsions;
+                    res_json["Rama. ZScore"] = rama.score(*prev_res, res, *next_res);
+                    res_json["Rota. ZScore"] = rota.score(res);
                     chain_json[res_idx++] = res_json;
                 }
                 root[chain.name] = chain_json;
@@ -1019,6 +1031,96 @@ class molecules_container_js : public molecules_container_t {
             }
             return sg;
         }
+
+
+    std::pair<std::array<float,3>,float> get_map_bounding_sphere(int imol, double threshold)
+    {
+        auto xMap = (*this)[imol].xmap;
+        clipper::Grid_sampling gs = xMap.grid_sampling();
+        clipper::Cell cell = xMap.cell();
+
+        std::pair<std::array<float,3>,float> result;
+        std::array<float,3> center_array;
+
+        int min_u = gs.nu(), max_u = 0;
+        int min_v = gs.nv(), max_v = 0;
+        int min_w = gs.nw(), max_w = 0;
+
+        bool found = false;
+
+        // ---- First pass: bounding box ----
+        for (clipper::Xmap<float>::Map_reference_index ix = xMap.first();
+            !ix.last(); ix.next())
+        {
+            if (xMap[ix] >= threshold)
+            {
+                found = true;
+                clipper::Coord_grid cg = ix.coord();
+
+                min_u = std::min(min_u, cg.u());
+                min_v = std::min(min_v, cg.v());
+                min_w = std::min(min_w, cg.w());
+
+                max_u = std::max(max_u, cg.u());
+                max_v = std::max(max_v, cg.v());
+                max_w = std::max(max_w, cg.w());
+            }
+        }
+
+        if (!found) {
+            result.first = {0.0, 0.0, 0.0};
+            result.second = 0.0;
+            return result;
+        }
+
+        // Convert box corners to orthogonal coords
+        auto to_orth = [&](int u, int v, int w) {
+            return clipper::Coord_grid(u,v,w)
+                .coord_frac(gs)
+                .coord_orth(cell);
+        };
+
+        clipper::Coord_orth omin = to_orth(min_u, min_v, min_w);
+        clipper::Coord_orth omax = to_orth(max_u, max_v, max_w);
+
+        // Center = midpoint of box
+        clipper::Coord_orth center(
+            0.5 * (omin.x() + omax.x()),
+            0.5 * (omin.y() + omax.y()),
+            0.5 * (omin.z() + omax.z())
+        );
+
+        // ---- Second pass: max radius ----
+        double r2_max = 0.0;
+
+        for (clipper::Xmap<float>::Map_reference_index ix = xMap.first();
+            !ix.last(); ix.next())
+        {
+            if (xMap[ix] >= threshold)
+            {
+                clipper::Coord_orth pos =
+                    ix.coord().coord_frac(gs).coord_orth(cell);
+
+                double dx = pos.x() - center.x();
+                double dy = pos.y() - center.y();
+                double dz = pos.z() - center.z();
+
+                double r2 = dx*dx + dy*dy + dz*dz;
+                r2_max = std::max(r2_max, r2);
+            }
+        }
+
+        double radius = std::sqrt(r2_max);
+
+        center_array[0] = center.x();
+        center_array[1] = center.y();
+        center_array[2] = center.z();
+
+        result.first = center_array;
+        result.second = radius;
+
+        return result;
+    }
 
         double get_map_data_resolution(int imol){
             /* This can only work if associate_data_mtz_file_with_map has be called. */
@@ -1745,6 +1847,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("suggested_radius", &coot::util::map_molecule_centre_info_t::suggested_radius)
     .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
+    value_object<std::pair<std::array<float,3>,float>>("pair_position_value")
+    .field("position", &std::pair<std::array<float,3>,float>::first)
+    .field("value", &std::pair<std::array<float,3>,float>::second)
+    ;
+
     value_object<coot::atom_overlap_t>("atom_overlap_t")
     .field("overlap_volume", &coot::atom_overlap_t::overlap_volume)
     .field("r_1", &coot::atom_overlap_t::r_1)
@@ -2318,6 +2425,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_data_resolution",&molecules_container_js::get_map_data_resolution)
     .function("get_map_cell",&molecules_container_js::get_map_cell)
     .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
+    .function("get_map_bounding_sphere",&molecules_container_js::get_map_bounding_sphere)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
