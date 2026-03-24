@@ -19,8 +19,8 @@ import { MoorhenDraggableModalBase } from "../interface-base";
 const LhasaWrapper = (props: {
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
     urlPrefix: string;
-    Width?: number;
-    Height?: number;
+    width?: number;
+    height?: number;
 }) => {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -133,8 +133,8 @@ const LhasaWrapper = (props: {
             name_of_host_program="Moorhen"
             smiles_callback={smilesCallback}
             dark_mode={isDark}
-            width={props.Width}
-            height={props.Height}
+            width={props.width}
+            height={props.height}
         />
     ) : null;
 };
@@ -173,11 +173,14 @@ export const MoorhenLhasaModal = () => {
             resizeNodeRef={resizeNodeRef}
             onClose={handleClose}
             onResize={(_evt, _direction, _div, _delta, size) => {
-                console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
-                setLhasaWidth(size.width - 20);
-                setLhasaHeight(size.height - 20);
+                // console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
+                // Unfortunately it seems that the real amount of space is ever-so-slightly smaller because the surrounding padding
+                // is not taken into consideration by this function.
+                const pixel_margin = 18;
+                setLhasaWidth(size.width - pixel_margin);
+                setLhasaHeight(size.height - pixel_margin);
             }}
-            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} Height={lhasaHeight} Width={lhasaWidth} />}
+            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} height={lhasaHeight} width={lhasaWidth} />}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
                     <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
