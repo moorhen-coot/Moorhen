@@ -29,6 +29,7 @@ export const modalKeys = Object.freeze({
     OVERLAYS2D: "overlays-2d",
     PAEPLOT: "pae-plot",
     CONKIT: "conkit",
+    NOE: "NOE"
 });
 
 export const representationLabelMapping = Object.freeze({

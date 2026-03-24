@@ -24,11 +24,10 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenToggle } from "../inputs";
-<<<<<<< HEAD
-import { ImportNOERestraints } from "../menu-item/ImportNOERestraints"
-=======
->>>>>>> 6cf8a67e3501fb773db893befba1f4a0f73511ba
+
+import { ImportNOERestraints } from "../menu-item/ImportNOERestraints";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
+
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -400,10 +399,6 @@ export const MoorhenDevMenu = () => {
                     }}
                 />
                 Gzipped Text Read test
-            </MenuItem>
-
-            <MenuItem>
-                    <ImportNOERestraints/>
             </MenuItem>
         </>
     );
