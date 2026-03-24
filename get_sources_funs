@@ -282,7 +282,7 @@ getfreetype() {
     else
         cdcheckout
         echo "Downloading freetype-$freetype_release"
-        curl -fL https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz &&\
+        curl --retry 5 -fL https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz &&\
         echo &&\
         echo "Unpacking freetype-$freetype_release" &&\
         tar xf freetype-$freetype_release.tar.gz || fail "Failed to download and unpack freetype"
