@@ -176,7 +176,7 @@ export const MoorhenLhasaModal = () => {
                 // console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
                 // Unfortunately it seems that the real amount of space is ever-so-slightly smaller because the surrounding padding
                 // is not taken into consideration by this function.
-                const pixel_margin = 18;
+                const pixel_margin = 20;
                 setLhasaWidth(size.width - pixel_margin);
                 setLhasaHeight(size.height - pixel_margin);
             }}
