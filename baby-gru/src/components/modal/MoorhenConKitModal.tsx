@@ -1,6 +1,5 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { Button, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
@@ -27,8 +26,6 @@ export const MoorhenConKitModal = () => {
         },
         false
     );
-
-    const { enqueueSnackbar } = useSnackbar();
 
     return (
         <MoorhenDraggableModalBase

@@ -1,10 +1,9 @@
 import { GrainOutlined } from "@mui/icons-material";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -94,8 +93,6 @@ export const AddCustomRepresentationCard = memo(
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
         const dispatch = useDispatch();
-
-        const { enqueueSnackbar } = useSnackbar();
 
         const mode = props.mode ?? "add";
 
@@ -309,9 +306,12 @@ export const AddCustomRepresentationCard = memo(
                 await createRepresentation();
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar(`Something went wrong while ${mode === "edit" ? "editing" : "creating a new"} custom representation`, {
-                    variant: "error",
-                });
+                dispatch(
+                    enqueueSnackbar({
+                        message: `Something went wrong while ${mode === "edit" ? "editing" : "creating a new"} custom representation`,
+                        variant: "error",
+                    })
+                );
             }
         };
 

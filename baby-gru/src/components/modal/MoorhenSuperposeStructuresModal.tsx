@@ -1,10 +1,9 @@
 import { DeleteOutlined, WarningAmberOutlined } from "@mui/icons-material";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { Button, Card, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { addMolecule, hideModal } from "@/store";
+import { addMolecule, enqueueSnackbar, hideModal } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
@@ -133,8 +132,6 @@ export const MoorheSuperposeStructuresModal = () => {
 
     const dispatch = useDispatch();
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const handleSuperpose = useCallback(async () => {
         if (!refMoleculeSelectRef || !movMoleculeSelectRef) {
             return;
@@ -153,7 +150,7 @@ export const MoorheSuperposeStructuresModal = () => {
         if (!refMolecule || !movMolecule) {
             return;
         } else if (refMolecule.molNo === movMolecule.molNo && refChainSelectRef.current.value === movChainSelectRef.current.value) {
-            enqueueSnackbar("Cannot superpose structure to itself", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Cannot superpose structure to itself", variant: "warning" }));
             return;
         }
 
@@ -220,10 +217,10 @@ export const MoorheSuperposeStructuresModal = () => {
                 };
                 setLsqkbResidueRanges({ action: "add", item: newMatch });
             } else {
-                enqueueSnackbar("Something went wrong...", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
             }
         } else {
-            enqueueSnackbar("Something went wrong...", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
         }
     }, [molecules]);
 

@@ -1,6 +1,5 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { InputGroup } from "react-bootstrap";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
@@ -482,8 +481,6 @@ export const MoorhenSceneSettingsModal = () => {
 
     const dispatch = useDispatch();
 
-    const { enqueueSnackbar } = useSnackbar();
-
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.SCENE_SETTINGS}
@@ -497,31 +494,33 @@ export const MoorhenSceneSettingsModal = () => {
             enforceMaxBodyDimensions={true}
             body={<MoorhenSceneSettings stackDirection="horizontal" />}
             footer={null}
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={1}>
-                    <MoorhenButton
-                        variant="white"
-                        style={{ margin: "0.1rem", padding: "0.1rem" }}
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.SCENE_SETTINGS));
-                            enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                title: "Scene settings",
-                                modalId: modalKeys.SCENE_SETTINGS,
-                                children: (
-                                    <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
-                                        <MoorhenSceneSettings stackDirection="vertical" />
-                                    </div>
-                                ),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </MoorhenButton>
-                </Tooltip>,
-            ]}
+            additionalHeaderButtons={
+                [
+                    // <Tooltip title={"Move to side panel"} key={1}>
+                    //     <MoorhenButton
+                    //         variant="white"
+                    //         style={{ margin: "0.1rem", padding: "0.1rem" }}
+                    //         onClick={() => {
+                    //             dispatch(hideModal(modalKeys.SCENE_SETTINGS));
+                    //             enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
+                    //                 variant: "sideBar",
+                    //                 persist: true,
+                    //                 anchorOrigin: { horizontal: "right", vertical: "bottom" },
+                    //                 title: "Scene settings",
+                    //                 modalId: modalKeys.SCENE_SETTINGS,
+                    //                 children: (
+                    //                     <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
+                    //                         <MoorhenSceneSettings stackDirection="vertical" />
+                    //                     </div>
+                    //                 ),
+                    //             });
+                    //         }}
+                    //     >
+                    //         <LastPageOutlined />
+                    //     </MoorhenButton>
+                    // </Tooltip>,
+                ]
+            }
         />
     );
 };

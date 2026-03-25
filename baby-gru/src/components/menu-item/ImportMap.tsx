@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -20,8 +19,6 @@ export const ImportMap = () => {
     const isDiffRef = useRef<undefined | HTMLInputElement>(null);
     const [isActiveButton, setIsActiveButton] = useState(true);
     const [isDiff, setIsDiff] = useState<boolean>(false);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const readMaps = async () => {
         if (filesRef.current.files.length > 0) {
@@ -62,7 +59,7 @@ export const ImportMap = () => {
                 });
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar("Error reading map files", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Error reading map files", variant: "error" }));
                 console.log(`Cannot read files`);
             } finally {
                 document.body.click();

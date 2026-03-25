@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { cidToSpec } from "../../utils/utils";
 import { MoorhenButton, MoorhenTextInput } from "../inputs";
@@ -14,8 +14,7 @@ export const GoTo = () => {
     const [cid, setCid] = useState<string>("");
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     const onCompleted = () => {
         const selectedCid = cidRef.current.value;
@@ -25,7 +24,7 @@ export const GoTo = () => {
 
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
         if (!molecule) {
-            enqueueSnackbar("Not a valid molecule", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Not a valid molecule", variant: "warning" }));
             return;
         }
 
@@ -33,7 +32,7 @@ export const GoTo = () => {
         try {
             residueSpec = cidToSpec(selectedCid);
             if (!residueSpec.chain_id || !residueSpec.res_no) {
-                enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             } else {
                 molecule.centreOn(
                     `/${residueSpec.mol_no ? residueSpec.mol_no : "*"}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`,
@@ -43,7 +42,7 @@ export const GoTo = () => {
             }
         } catch (err) {
             console.log(err);
-            enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             return;
         }
     };

@@ -1,16 +1,20 @@
 @import "../../../colors.css";
 
 .moorhen__snack-bars-container {
+    display: flex;
+    flex-direction: column;
     position: relative;
     left: 25%;
     top: 1rem;
-    width: 50%;
+    max-width: 50%;
     z-index: 1000;
     max-height: 500px;
     height: fit-content;
     overflow: hidden;
     font-family: var(--moorhen-font-family);
     user-select: text;
+    justify-content: center;
+    align-items: center;
 }
 
 .moorhen__snack-bar-wrapper {
@@ -18,9 +22,8 @@
 }
 
 .moorhen__snack-bar {
-    position: relative;
-    bottom: 0;
     display: flex;
+    width: fit-content;
     align-items: center;
     justify-content: center;
     padding: 0.5rem 1rem;
@@ -29,7 +32,6 @@
     background-color: var(--moorhen-background-header);
     /* border: 1px solid var(--moorhen-border); */
     border-radius: 0.25rem;
-
     box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
     margin-bottom: 0.5rem;
     overflow: hidden;

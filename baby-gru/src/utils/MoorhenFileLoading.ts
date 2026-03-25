@@ -1,7 +1,6 @@
 import Fasta from "biojs-io-fasta";
-import { enqueueSnackbar } from "notistack";
 import type { Dispatch, Store } from "redux";
-import { MoorhenReduxStoreType } from "@/store";
+import { MoorhenReduxStoreType, enqueueSnackbar } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
@@ -289,7 +288,7 @@ const loadCoordinateFilesFromFileList = async (
 
     newMolecules = await Promise.all(loadPromises);
     if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-        //enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+        //dispatch(enqueueSnackbar({ message:"Failed to read molecule",  variant: "warning" }))
         console.log("Failed to read molecule");
         newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1);
     }
@@ -385,7 +384,7 @@ const loadCoordinateFilesFromURL = async (
 
     newMolecules = await Promise.all(loadPromises);
     if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-        //enqueueSnackbar("Failed to read molecule", { variant: "warning" })
+        //dispatch(enqueueSnackbar({ message:"Failed to read molecule",  variant: "warning" }))
         newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1);
     }
 
@@ -520,7 +519,12 @@ export const autoOpenFiles = async (
                 );
                 if (newMonomer === null) {
                     console.log(`Failed to read molecule ${file.name} as a cif dictionary, skipping...`);
-                    enqueueSnackbar(`Failed to read molecule ${file.name} as a structure or cif dictionary`, { variant: "warning" });
+                    dispatch(
+                        enqueueSnackbar({
+                            message: `Failed to read molecule ${file.name} as a structure or cif dictionary`,
+                            variant: "warning",
+                        })
+                    );
                     continue;
                 }
                 await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
@@ -528,7 +532,7 @@ export const autoOpenFiles = async (
                 moleculesCreated.push(...newMonomer);
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
-                enqueueSnackbar(`Failed to read molecule ${file.name}, no atoms found`, { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: `Failed to read molecule ${file.name}, no atoms found`, variant: "warning" }));
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
@@ -539,7 +543,7 @@ export const autoOpenFiles = async (
         } else if (file.name.endsWith(".mtz")) {
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
             if (newMaps.length === 0) {
-                enqueueSnackbar(`Failed to read mtz file ${file.name}`, { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
             } else {
                 dispatch(addMapList(newMaps));
                 dispatch(setActiveMap(newMaps[0]));
@@ -549,7 +553,7 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
             } catch (e) {
-                enqueueSnackbar(`Failed to load session ${file.name}`, { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }
             break; //We only load the first session.
         } else if (file.name.endsWith(".json")) {
@@ -559,7 +563,7 @@ export const autoOpenFiles = async (
                 dispatch(setValidationJson(json));
                 dispatch(showModal(modalKeys.JSON_VALIDATION));
             } catch (e) {
-                enqueueSnackbar(`Failed to load json validation ${file.name}`, { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
         } else if (
             file.name.endsWith(".mrc") ||
@@ -599,7 +603,7 @@ export const autoOpenFiles = async (
                 }
             } catch (err) {
                 console.warn(err);
-                // enqueueSnackbar("Error reading map files", { variant: "error" });
+                // dispatch(enqueueSnackbar({ message:"Error reading map files",  variant: "error" }));
                 console.log(`Cannot read files`);
             } finally {
                 document.body.click();

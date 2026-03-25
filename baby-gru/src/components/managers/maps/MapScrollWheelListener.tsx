@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
-import { setShownControl } from "@/store";
+import { enqueueSnackbar, setShownControl } from "@/store";
 import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
 import { RootState } from "../../../store/MoorhenReduxStore";
@@ -19,7 +18,6 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
     const zoomLevel = useSelector((state: RootState) => state.glRef.zoom);
     const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);
     const origin = useSelector((state: RootState) => state.glRef.origin);
-    const { enqueueSnackbar } = useSnackbar();
 
     // Use the fast contour mode hook
     const { fastMapContourLevel } = useFastContourMode({
@@ -49,15 +47,12 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         (evt: moorhen.WheelContourLevelEvent) => {
             evt.preventDefault();
             if (outOfMap) {
-                enqueueSnackbar(`Out of map bounds! \nIncrease map radius or unlock origin`, {
-                    variant: "warning",
-                    persist: false,
-                });
+                dispatch(enqueueSnackbar({ message: `Out of map bounds! \nIncrease map radius or unlock origin`, variant: "warning" }));
                 return;
             }
 
             if (!props.mapIsVisible) {
-                enqueueSnackbar("Active map not displayed, cannot change contour lvl.", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Active map not displayed, cannot change contour lvl.", variant: "warning" }));
                 return;
             }
 

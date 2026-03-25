@@ -2,7 +2,7 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { Dispatch } from "react";
 import { AnyAction, Store } from "@reduxjs/toolkit";
-import { EnqueueSnackbar, closeSnackbar } from "notistack";
+
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
@@ -14,7 +14,7 @@ import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
 import { cidToSpec, getCentreAtom } from "./utils"
-import { setShownControl, RootState  } from '@/store';
+import { setShownControl, RootState, enqueueSnackbar  } from '@/store';
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
     molecule.setAtomsDirty(true)
@@ -28,7 +28,6 @@ export const moorhenKeyPress = (
     event: KeyboardEvent, 
     collectedProps: {
         dispatch: Dispatch<AnyAction>;
-        enqueueSnackbar: EnqueueSnackbar;
         store: Store<RootState>;
         hoveredAtom: moorhen.HoveredAtom;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -45,7 +44,7 @@ export const moorhenKeyPress = (
     
     const { 
         hoveredAtom, activeMap, commandCentre, glRef, molecules, 
-        viewOnly, videoRecorderRef, enqueueSnackbar, dispatch, store
+        viewOnly, videoRecorderRef, dispatch, store
     } = collectedProps;
 
 
@@ -171,7 +170,7 @@ export const moorhenKeyPress = (
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE", 4000]
         }
         if (showShortcutToast) {
-            enqueueSnackbar("Sphere refine", { variant: "info"})
+            dispatch(enqueueSnackbar({ message:"Sphere refine",  variant: "info"}))
         }
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
@@ -197,7 +196,7 @@ export const moorhenKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
-        if (showShortcutToast) enqueueSnackbar("Flip peptide", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Flip peptide",  variant: "info"}))
         return doShortCut('flipPeptide_cid', formatArgs)
     }
 
@@ -205,7 +204,7 @@ export const moorhenKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE", 4000]
         }
-        if (showShortcutToast) enqueueSnackbar("Triple refine", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Triple refine",  variant: "info"}))
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -220,7 +219,7 @@ export const moorhenKeyPress = (
                 activeMap.molNo
             ]
         }
-        if (showShortcutToast) enqueueSnackbar("Auto fit rotamer", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Auto fit rotamer",  variant: "info"}))
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
 
@@ -228,7 +227,7 @@ export const moorhenKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        if (showShortcutToast) enqueueSnackbar("Add residue", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Add residue",  variant: "info"}))
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
 
@@ -240,7 +239,7 @@ export const moorhenKeyPress = (
                 'LITERAL'
             ]
         }
-        if (showShortcutToast) enqueueSnackbar("Delete residue", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Delete residue",  variant: "info"}))
         return doShortCut('delete_using_cid', formatArgs)
     }
 
@@ -248,21 +247,16 @@ export const moorhenKeyPress = (
         const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        if (showShortcutToast) enqueueSnackbar("Eigen flip", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Eigen flip",  variant: "info"}))
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
     else if (action === 'go_to_residue' && molecules.length > 0) {
-        enqueueSnackbar("go-to-residue", {
-            variant: "goToResidue",
-            persist: true,
-            glRef: glRef,
-            commandCentre: commandCentre,
-        })
+        dispatch(setShownControl({ name: "goToResidue"}))
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
-        if (showShortcutToast) enqueueSnackbar("Go to blob", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Go to blob",  variant: "info"}))
         const frontAndBack: [number[], number[], number, number] = getFrontAndBackPos()
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
@@ -287,7 +281,7 @@ export const moorhenKeyPress = (
     else if (action === 'clear_labels') {
         dispatch(triggerClearLabels(true))
         molecules.forEach(molecule => molecule.clearBuffersOfStyle('residueSelection'))
-        if (showShortcutToast) enqueueSnackbar("Clear labels", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Clear labels",  variant: "info"}))
     }
 
     else if (action === 'move_up') {
@@ -377,7 +371,7 @@ export const moorhenKeyPress = (
             showShortCutHelp = []
         }
         dispatch(setShortCutHelp(showShortCutHelp))
-        if (showShortcutToast) enqueueSnackbar((showShortCutHelp.length>0) ? 'Show help' : 'Hide help', { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:(showShortCutHelp.length>0) ? 'Show help' : 'Hide help',  variant: "info"}))
         return false
     }
 
@@ -417,25 +411,25 @@ export const moorhenKeyPress = (
 
     else if (action === 'decrease_front_clip') {
         dispatch(setClipStart(clipStart-0.5))
-        if (showShortcutToast) enqueueSnackbar("Front clip down", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip down",  variant: "info"}))
         return false
     }
 
     else if (action === 'increase_front_clip') {
         dispatch(setClipStart(clipStart+0.5))
-        if (showShortcutToast) enqueueSnackbar("Front clip up", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip up",  variant: "info"}))
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         dispatch(setClipEnd(clipEnd-0.5))
-        if (showShortcutToast) enqueueSnackbar("Back clip down", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip down",  variant: "info"}))
         return false
     }
 
     else if (action === 'increase_back_clip') {
         dispatch(setClipEnd(clipEnd+0.5))
-        if (showShortcutToast) enqueueSnackbar("Back clip up", { variant: "info"})
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip up",  variant: "info"}))
         return false
     }
     else if (action === 'show_atom_info') {

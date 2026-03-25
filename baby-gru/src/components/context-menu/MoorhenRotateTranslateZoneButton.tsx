@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { batch, useDispatch } from "react-redux";
 import { useRef } from "react";
 import { setShownControl } from "@/store";
@@ -13,8 +12,6 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
     const customCid = useRef<null | string>(null);
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const rotateTranslateModes = ["ATOM", "RESIDUE", "CHAIN", "MOLECULE"];
 

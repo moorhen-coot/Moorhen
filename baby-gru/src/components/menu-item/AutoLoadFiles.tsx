@@ -62,7 +62,7 @@ export const AutoLoadFiles = () => {
 
 //         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises);
 //         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-//             enqueueSnackbar("Failed to read molecule", { variant: "warning" });
+//             dispatch(enqueueSnackbar({ message:"Failed to read molecule",  variant: "warning" }));
 //             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1);
 //             if (newMolecules.length === 0) {
 //                 return;

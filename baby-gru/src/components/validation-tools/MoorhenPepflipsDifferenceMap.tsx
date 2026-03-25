@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { Button, Card, Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
@@ -21,8 +20,6 @@ export const MoorhenPepflipsDifferenceMap = () => {
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
@@ -97,19 +94,19 @@ export const MoorhenPepflipsDifferenceMap = () => {
                     };
                 });
 
-                enqueueSnackbar("flip-all-peptides", {
-                    variant: "residueSteps",
-                    persist: true,
-                    residueList: residueList,
-                    sleepTime: 1500,
-                    onStep: handleStepFlipPeptide,
-                    onStart: async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw("rama");
-                    },
-                    onStop: () => {
-                        selectedMolecule.clearBuffersOfStyle("rama");
-                    },
-                });
+                //     enqueueSnackbar("flip-all-peptides", {
+                //         variant: "residueSteps",
+                //         persist: true,
+                //         residueList: residueList,
+                //         sleepTime: 1500,
+                //         onStep: handleStepFlipPeptide,
+                //         onStart: async () => {
+                //             await selectedMolecule.fetchIfDirtyAndDraw("rama");
+                //         },
+                //         onStop: () => {
+                //             selectedMolecule.clearBuffersOfStyle("rama");
+                //         },
+                //     });
             }
         },
         [molecules]

@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import React, { useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper";
 import { MoorhenButton, MoorhenFileInput, MoorhenSelect } from "../inputs";
@@ -16,10 +16,9 @@ export const AssociateReflectionsToMap = () => {
     const sigFobsSelectRef = useRef<null | HTMLSelectElement>(null);
     const freeRSelectRef = useRef<null | HTMLSelectElement>(null);
     const reflectionDataRef = useRef<Uint8Array>(null);
+    const dispatch = useDispatch();
 
     const [columns, setColumns] = useState<{ [colType: string]: string }>({});
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const babyGruMtzWrapper = new MoorhenMtzWrapper();
@@ -28,7 +27,7 @@ export const AssociateReflectionsToMap = () => {
             setColumns(allColumnNames);
             reflectionDataRef.current = babyGruMtzWrapper.reflectionData;
         } catch (err) {
-            enqueueSnackbar("Error reading mtz file", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Error reading mtz file", variant: "error" }));
             document.body.click();
         }
     };

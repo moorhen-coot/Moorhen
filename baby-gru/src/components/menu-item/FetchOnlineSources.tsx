@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
@@ -39,8 +38,6 @@ export const FetchOnlineSources = () => {
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {
@@ -120,13 +117,13 @@ export const FetchOnlineSources = () => {
                     fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true);
                 }
             } else {
-                enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+                dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
                 console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
                 setIsValidPdbId(false);
                 dispatch(setBusy(false));
             }
         } catch (e) {
-            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+            dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
             console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
             setIsValidPdbId(false);
             dispatch(setBusy(false));
@@ -184,7 +181,7 @@ export const FetchOnlineSources = () => {
             // props.onMoleculeLoad?.(newMolecule);
             return newMolecule;
         } catch (err) {
-            enqueueSnackbar("Failed to read molecule", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to read molecule", variant: "error" }));
             console.log(`Cannot fetch molecule from ${url}`);
             setIsValidPdbId(false);
             dispatch(setBusy(false));
@@ -216,7 +213,7 @@ export const FetchOnlineSources = () => {
             dispatch(setActiveMap(newMap));
         } catch (err) {
             console.warn(err);
-            enqueueSnackbar("Failed to read map", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Failed to read map", variant: "warning" }));
             console.log(`Cannot fetch map from ${url}`);
             dispatch(setBusy(false));
         }
@@ -235,7 +232,7 @@ export const FetchOnlineSources = () => {
             dispatch(addMap(newMap));
             dispatch(setActiveMap(newMap));
         } catch {
-            enqueueSnackbar("Failed to read mtz", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to read mtz", variant: "error" }));
             console.log(`Cannot fetch mtz from ${url}`);
             dispatch(setBusy(false));
         }

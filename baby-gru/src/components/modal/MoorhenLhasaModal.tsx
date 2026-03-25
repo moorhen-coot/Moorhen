@@ -1,9 +1,8 @@
 import { Backdrop } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { LhasaComponent } from "../../LhasaReact/src/Lhasa";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
@@ -33,8 +32,6 @@ const LhasaWrapper = (props: {
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const handleCootAttached = useCallback(() => {
         if (window.cootModule !== undefined) {
@@ -66,7 +63,7 @@ const LhasaWrapper = (props: {
                 )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
 
                 if (!smilesResult.data.result.result.second) {
-                    enqueueSnackbar("Unable to read SMILES...", { variant: "error" });
+                    dispatch(enqueueSnackbar({ message: "Unable to read SMILES...", variant: "error" }));
                     props.setBusy(false);
                     return;
                 }
@@ -82,7 +79,7 @@ const LhasaWrapper = (props: {
                 )) as moorhen.WorkerResponse<number>;
 
                 if (readDictResult.data.result.result !== 1) {
-                    enqueueSnackbar("Unable to read dictionary...", { variant: "error" });
+                    dispatch(enqueueSnackbar({ message: "Unable to read dictionary...", variant: "error" }));
                     props.setBusy(false);
                     return;
                 }
@@ -97,7 +94,7 @@ const LhasaWrapper = (props: {
                 )) as moorhen.WorkerResponse<number>;
 
                 if (getMonomerResult.data.result.result === -1) {
-                    enqueueSnackbar("Unable to get monomer...", { variant: "error" });
+                    dispatch(enqueueSnackbar({ message: "Unable to get monomer...", variant: "error" }));
                 } else if (getMonomerResult.data.result.status === "Completed") {
                     const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                     newMolecule.molNo = getMonomerResult.data.result.result;
@@ -109,12 +106,12 @@ const LhasaWrapper = (props: {
                     await newMolecule.fetchIfDirtyAndDraw("CBs");
                     dispatch(addMolecule(newMolecule));
                 } else {
-                    enqueueSnackbar("Something went wrong...", { variant: "warning" });
+                    dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
                 }
                 props.setBusy(false);
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar("Something went wrong...", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
                 props.setBusy(false);
             }
         },

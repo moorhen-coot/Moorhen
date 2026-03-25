@@ -1,9 +1,9 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
 import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../../InstanceManager";
 import { setShownControl } from "../../../store/globalUISlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -25,8 +25,6 @@ export const AcceptRejectMatchingLigand = () => {
         refLigandCid: string;
     };
     console.log("props", props);
-
-    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     const matchLigands = useCallback(async () => {
         const movingMolecule = molecules.find(molecule => molecule.molNo === props.movingMolNo);
@@ -54,7 +52,7 @@ export const AcceptRejectMatchingLigand = () => {
             await copyMovingMoleculeRef.current.centreOn("/*/*/*/*", true, true);
         } else {
             await copyMovingMoleculeRef.current.delete(true);
-            enqueueSnackbar(`Failed to match ligands`, { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: `Failed to match ligands`, variant: "warning" }));
             dispatch(setShownControl(null));
         }
     }, [molecules]);

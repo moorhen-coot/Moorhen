@@ -73,6 +73,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
                     placeholder={placeholder}
                     onChange={handleChange}
                     ref={cidFormRef}
+                    style={{ width: "100%" }}
                     value={selection}
                 />
             </MoorhenStack>

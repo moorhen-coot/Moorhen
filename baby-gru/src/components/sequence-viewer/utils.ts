@@ -191,12 +191,7 @@ export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection):
     return selection;
 };
 
-export const handleResiduesSelection = (
-    selection: ResiduesSelection,
-    molecule: MoorhenMolecule,
-    dispatch: Dispatch<UnknownAction>,
-    enqueueSnackbar: any
-) => {
+export const handleResiduesSelection = (selection: ResiduesSelection, molecule: MoorhenMolecule, dispatch: Dispatch<UnknownAction>) => {
     if (selection.molNo !== molecule.molNo) return;
     const first = Math.min(selection.range[0], selection.range[1]);
     const second = Math.max(selection.range[0], selection.range[1]);

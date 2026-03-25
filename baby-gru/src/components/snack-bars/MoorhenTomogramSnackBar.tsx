@@ -9,6 +9,7 @@ import { SnackbarContent, useSnackbar } from "notistack";
 import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { appendOtherData } from "../../WebGLgComponents/buildBuffers";
 import { RootState } from "../../store/MoorhenReduxStore";
@@ -40,8 +41,6 @@ export const MoorhenTomogramSnackBar = forwardRef<
     const [progress, setProgress] = useState<number>(0);
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const texturedShapes = useSelector((state: moorhen.State) => state.glRef.texturedShapes);
 
     useEffect(() => {
@@ -60,7 +59,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
 
             const selectedMap = maps.find(map => map.molNo === props.mapMolNo);
             if (!selectedMap || !selectedMap.mapRmsd || !selectedMap.mapMean) {
-                enqueueSnackbar("Unable to load tomogram frames", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Unable to load tomogram frames", variant: "warning" }));
                 return;
             }
 

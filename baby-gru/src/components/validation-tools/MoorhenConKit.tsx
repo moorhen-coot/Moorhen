@@ -1,17 +1,16 @@
-import { Fragment, useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { Col, Container, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { Container, Col, Form, Row } from "react-bootstrap";
-import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenStack } from "../interface-base";
-import { MoorhenButton } from "../inputs";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
 import { useCommandCentre } from "../../InstanceManager";
-import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle"
+import { moorhen } from "../../types/moorhen";
+import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenButton } from "../inputs";
+import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle";
+import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 import type { ResiduesSelection, SeqElement } from "../sequence-viewer/MoorhenSeqViewTypes";
-import { useSnackbar } from "notistack";
-import { handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
 
 interface MoorhenConKitProps {
     resizeTrigger?: boolean;
@@ -20,10 +19,8 @@ interface MoorhenConKitProps {
 }
 
 export const MoorhenConKit = (props: MoorhenConKitProps) => {
-
     const commandCentre = useCommandCentre();
     const dispatch = useDispatch();
-    const { enqueueSnackbar } = useSnackbar();
 
     const [selectedInputModel, setSelectedInputModel] = useState<null | number>(null);
     const [selectedPredictedModel, setSelectedPredictedModel] = useState<null | number>(null);
@@ -57,7 +54,6 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     };
 
     useEffect(() => {
-
         if (molecules.length === 0) {
             setSelectedPredictedModel(null);
             setSelectedInputModel(null);
@@ -87,13 +83,13 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     useEffect(() => {
         const list: MoorhenSequenceViewerSequence[] = [];
-        const foundMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value))
-        if(!predMoleculeSelectRef.current||!foundMol){
-            return 
+        const foundMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value));
+        if (!predMoleculeSelectRef.current || !foundMol) {
+            return;
         }
-        
-        const filteredSeqs =  foundMol.sequences.filter(c => c.chain===selectedPredictedChain)
-        if(foundMol&&filteredSeqs.length===1){
+
+        const filteredSeqs = foundMol.sequences.filter(c => c.chain === selectedPredictedChain);
+        if (foundMol && filteredSeqs.length === 1) {
             const seq = filteredSeqs[0];
 
             const seqElementPLDDT = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
@@ -102,7 +98,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementPLDDT.missingAs = "none";
             seqElementPLDDT.hideResCode = true;
             seqElementPLDDT.displayName = "PLDDT";
-            seqElementPLDDT.key = "PLDDT"
+            seqElementPLDDT.key = "PLDDT";
 
             const seqElementMatch = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElementMatch.colour = "rgb(128, 128, 128)";
@@ -111,7 +107,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementMatch.hideResCode = true;
             seqElementMatch.displayName = "Matches";
             seqElementMatch.key = "Matches";
-            
+
             const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElement.colour = "rgb(128, 128, 128)";
             seqElement.blockAlternateColour = true;
@@ -119,41 +115,41 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElement.hideResCode = true;
             seqElement.displayName = "Register";
             seqElement.key = "Register";
-            let seq1letter = ""
-            const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/
-            if(seqElement.residues.length>0&&conKitMatches.length>0){
+            let seq1letter = "";
+            const rgx = /.*?\([^\d]*(\d+)[^\d]*\).*/;
+            if (seqElement.residues.length > 0 && conKitMatches.length > 0) {
                 seqElement.residues.forEach(r => {
-                    seq1letter += r.resCode
-                })
-                seqElement.colour = "#00ff00"
-                let ires = 0
+                    seq1letter += r.resCode;
+                });
+                seqElement.colour = "#00ff00";
+                let ires = 0;
                 conKitMatches.forEach(m => {
-                    if(m.predicted_contacts!==null) {
-                        const matchScore = 255-Math.trunc(Math.min(m.predicted_contacts / 15,1.0) * 255)
-                        seqElementMatch.residues[ires].colour = `rgb(${matchScore},${matchScore},${matchScore})`
+                    if (m.predicted_contacts !== null) {
+                        const matchScore = 255 - Math.trunc(Math.min(m.predicted_contacts / 15, 1.0) * 255);
+                        seqElementMatch.residues[ires].colour = `rgb(${matchScore},${matchScore},${matchScore})`;
                     }
-                    if(m.original_number!==null) {
-                        seqElement.residues[ires].colour = "#ff0000"
+                    if (m.original_number !== null) {
+                        seqElement.residues[ires].colour = "#ff0000";
                     }
-                    if(m.residue.match(rgx).length>0){
-                        const matchResNum = parseInt(m.residue.match(rgx)[1])
-                        const plddtResElement = seqElementPLDDT.residues[ires]
-                        if(plddtResElement){
-                            if(m.plddt>90){
+                    if (m.residue.match(rgx).length > 0) {
+                        const matchResNum = parseInt(m.residue.match(rgx)[1]);
+                        const plddtResElement = seqElementPLDDT.residues[ires];
+                        if (plddtResElement) {
+                            if (m.plddt > 90) {
                                 plddtResElement.colour = "#0053D6"; // Very high confidence
-                            } else  if(m.plddt>70){
+                            } else if (m.plddt > 70) {
                                 plddtResElement.colour = "#65CBF3"; // Confident
-                            } else  if(m.plddt>50){
+                            } else if (m.plddt > 50) {
                                 plddtResElement.colour = "#FFDB13"; // Confident
                             } else {
                                 plddtResElement.colour = "#FF7D45"; // Confident
                             }
                         }
                     }
-                    ires++
-                })
-                seqElement.residuesDisplayOffset = 0
-                seqElementPLDDT.residuesDisplayOffset = 0
+                    ires++;
+                });
+                seqElement.residuesDisplayOffset = 0;
+                seqElementPLDDT.residuesDisplayOffset = 0;
                 const afDisplaySequence = stringToSeqViewer(seq1letter, seqElement.residues[0].resNum);
                 afDisplaySequence.displayName = "Query";
                 afDisplaySequence.key = "Query";
@@ -163,40 +159,60 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                 list.push(seqElementMatch);
             }
         }
-        setSequenceLists(list)
-    },[inputMoleculeSelectRef.current, molecules, selectedInputChain,conKitMatches])
+        setSequenceLists(list);
+    }, [inputMoleculeSelectRef.current, molecules, selectedInputChain, conKitMatches]);
 
     const runConKit = useCallback(async () => {
         const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
         const predMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value));
 
-       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
-       const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(predMol.gemmiStructure)
+        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure);
+        const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(predMol.gemmiStructure);
 
-        if(input_cif_string.length==0 || ref_cif_string.length==0){
-            return
+        if (input_cif_string.length == 0 || ref_cif_string.length == 0) {
+            return;
         }
         const response = (await commandCentre.current.cootCommand(
             {
                 message: "run_conkit_validate",
                 command: "run_conkit_validate",
                 returnType: "string",
-                commandArgs: [input_cif_string,ref_cif_string,"input.cif","ref.cif",inputChainSelectRef.current.value, specifyTargetChain, predChainSelectRef.current.value, doRenumber, specifySequence, sequenceText, ((specifySequence&&sequenceFileName) ? sequenceFileName : null)],
+                commandArgs: [
+                    input_cif_string,
+                    ref_cif_string,
+                    "input.cif",
+                    "ref.cif",
+                    inputChainSelectRef.current.value,
+                    specifyTargetChain,
+                    predChainSelectRef.current.value,
+                    doRenumber,
+                    specifySequence,
+                    sequenceText,
+                    specifySequence && sequenceFileName ? sequenceFileName : null,
+                ],
             },
             false
         )) as moorhen.WorkerResponse<string>;
 
         //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
-        const json_string = response.data.result as any as string
+        const json_string = response.data.result as any as string;
 
-        const res = JSON.parse(json_string)
-        setConKitMatches(res.residues)
-        if(res.residues.length===0)
-            setConKitSuccess(false)
-        else
-            setConKitSuccess(true)
-
-    }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber,specifySequence,sequenceText,sequenceFileName]);
+        const res = JSON.parse(json_string);
+        setConKitMatches(res.residues);
+        if (res.residues.length === 0) setConKitSuccess(false);
+        else setConKitSuccess(true);
+    }, [
+        inputMoleculeSelectRef.current,
+        predMoleculeSelectRef.current,
+        inputChainSelectRef.current,
+        predChainSelectRef.current,
+        molecules,
+        specifyTargetChain,
+        doRenumber,
+        specifySequence,
+        sequenceText,
+        sequenceFileName,
+    ]);
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
@@ -219,20 +235,21 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     const handlResiduesSelect = useCallback(
         (selection: ResiduesSelection) => {
-            const molecule = molecules[selection.molNo]
-            handleResiduesSelection(selection, molecule, dispatch, enqueueSnackbar);
-        },[molecules, dispatch, enqueueSnackbar]
-    )
+            const molecule = molecules[selection.molNo];
+            handleResiduesSelection(selection, molecule, dispatch);
+        },
+        [molecules, dispatch]
+    );
 
     const onHoverResidue = useCallback(
         (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => {
-            if(conKitMatches.length>resNum&&conKitMatches[resNum-1]){
-                const poss_reg_error = conKitMatches[resNum-1].suggested_register
-                setHoverText(poss_reg_error.length>0 ? `Suggested register change: ${poss_reg_error}` : "Register OK")
+            if (conKitMatches.length > resNum && conKitMatches[resNum - 1]) {
+                const poss_reg_error = conKitMatches[resNum - 1].suggested_register;
+                setHoverText(poss_reg_error.length > 0 ? `Suggested register change: ${poss_reg_error}` : "Register OK");
             }
         },
-        [molecules,conKitMatches]
-    )
+        [molecules, conKitMatches]
+    );
     const handleClickResidue = useCallback(
         (molIndex: number, molName: string, chain: string, resNum: number) => {
             const foundModel = molecules.find(mod => mod.name === molName);
@@ -241,92 +258,102 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         [molecules]
     );
 
-    const loadSequenceFile = async (f:File) => {
-        const seqText = await f.text()
-        setSequenceText(seqText)
-        setSequenceFileName(f.name)
-    }
+    const loadSequenceFile = async (f: File) => {
+        const seqText = await f.text();
+        setSequenceText(seqText);
+        setSequenceFileName(f.name);
+    };
 
-    return (<>
+    return (
+        <>
+            <MoorhenStack direction="row">
+                <MoorhenStack direction="column">
+                    <MoorhenMoleculeSelect
+                        label="Reference structure"
+                        onSelect={sel => handleModelChange(sel, false)}
+                        ref={inputMoleculeSelectRef}
+                    />
+                    <MoorhenChainSelect
+                        width=""
+                        molecules={molecules}
+                        onChange={handleInputChainChange}
+                        selectedCoordMolNo={selectedInputModel}
+                        ref={inputChainSelectRef}
+                        allowedTypes={[1, 2]}
+                    />
+                </MoorhenStack>
+                <MoorhenStack direction="column">
+                    <MoorhenMoleculeSelect
+                        label="Predicted model"
+                        onSelect={sel => handleModelChange(sel, true)}
+                        ref={predMoleculeSelectRef}
+                    />
                     <MoorhenStack direction="row">
-                        <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Reference structure" onSelect={sel => handleModelChange(sel, false)} ref={inputMoleculeSelectRef} />
-                            <MoorhenChainSelect
-                                width=""
-                                molecules={molecules}
-                                onChange={handleInputChainChange}
-                                selectedCoordMolNo={selectedInputModel}
-                                ref={inputChainSelectRef}
-                                allowedTypes={[1, 2]}
-                            />
-                        </MoorhenStack>
-                        <MoorhenStack direction="column">
-                            <MoorhenMoleculeSelect label="Predicted model" onSelect={sel => handleModelChange(sel, true)} ref={predMoleculeSelectRef} />
-                            <MoorhenStack direction="row">
-                            <MoorhenToggle
+                        <MoorhenToggle
                             style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
                             label="Specify predicted model chain"
                             checked={specifyTargetChain}
                             onChange={e => {
                                 setSpecifyTargetChain(!specifyTargetChain);
                             }}
-                            />
-                            <MoorhenChainSelect
-                                width=""
-                                disabled={!specifyTargetChain}
-                                label=""
-                                molecules={molecules}
-                                onChange={handlePredictedChainChange}
-                                selectedCoordMolNo={selectedPredictedModel}
-                                ref={predChainSelectRef}
-                                allowedTypes={[1, 2]}
-                            />
-                            </MoorhenStack>
-                        </MoorhenStack>
+                        />
+                        <MoorhenChainSelect
+                            width=""
+                            disabled={!specifyTargetChain}
+                            label=""
+                            molecules={molecules}
+                            onChange={handlePredictedChainChange}
+                            selectedCoordMolNo={selectedPredictedModel}
+                            ref={predChainSelectRef}
+                            allowedTypes={[1, 2]}
+                        />
                     </MoorhenStack>
-                    <MoorhenToggle
-                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                        label="Renumber residues to assist matching"
-                        checked={doRenumber}
-                        onChange={e => {
-                            setDoRenumber(!doRenumber);
-                        }}
-                    />
-                    <MoorhenStack direction="row">
-                    <MoorhenToggle
-                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                        label="Specify sequence file (fasta)"
-                        checked={specifySequence}
-                        onChange={e => {
-                            setSpecifySequence(!specifySequence);
-                        }}
-                    />
-                    <Form.Control
-                        disabled={!specifySequence}
-                        ref={sequenceFileRef}
-                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadSequenceFile(e.target.files[0])
-                        }}
-                    />
-                    </MoorhenStack>
-                    <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
-                    {(conKitMatches !==null && conKitMatches.length ===0 && !conKitSuccess ) &&
-                    <div style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}><b>ConKit failed to produce any results</b></div>
-                    }
-                    <MoorhenSequenceViewer
-                        onResidueClick={handleClickResidue}
-                        onResiduesSelect={handlResiduesSelect}
-                        sequences={sequencesLists}
-                        onHoverResidue={onHoverResidue}
-                        nameColumnWidth={5}
-                        columnWidth={0.45}
-                        fontSize={0.5}
-                        reOrder={false}
-                    />
-                    <div>
-                    {hoverText}
-                    </div>
-            </>)
-}
+                </MoorhenStack>
+            </MoorhenStack>
+            <MoorhenToggle
+                style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                label="Renumber residues to assist matching"
+                checked={doRenumber}
+                onChange={e => {
+                    setDoRenumber(!doRenumber);
+                }}
+            />
+            <MoorhenStack direction="row">
+                <MoorhenToggle
+                    style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                    label="Specify sequence file (fasta)"
+                    checked={specifySequence}
+                    onChange={e => {
+                        setSpecifySequence(!specifySequence);
+                    }}
+                />
+                <Form.Control
+                    disabled={!specifySequence}
+                    ref={sequenceFileRef}
+                    style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                    type="file"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadSequenceFile(e.target.files[0]);
+                    }}
+                />
+            </MoorhenStack>
+            <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
+            {conKitMatches !== null && conKitMatches.length === 0 && !conKitSuccess && (
+                <div style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}>
+                    <b>ConKit failed to produce any results</b>
+                </div>
+            )}
+            <MoorhenSequenceViewer
+                onResidueClick={handleClickResidue}
+                onResiduesSelect={handlResiduesSelect}
+                sequences={sequencesLists}
+                onHoverResidue={onHoverResidue}
+                nameColumnWidth={5}
+                columnWidth={0.45}
+                fontSize={0.5}
+                reOrder={false}
+            />
+            <div>{hoverText}</div>
+        </>
+    );
+};

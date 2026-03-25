@@ -2,6 +2,7 @@ import { SnackbarKey, useSnackbar } from "notistack";
 import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { setShownControl } from "@/store/globalUISlice";
 import { clearResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
@@ -61,8 +62,6 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const axesSpace = 75;
 
     const clearRubberBand = () => {
@@ -92,7 +91,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             }
         } catch (e) {
             console.log(e);
-            enqueueSnackbar("Failed to parse file " + fn.name + " as PAE", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to parse file " + fn.name + " as PAE", variant: "error" }));
         }
     };
 
@@ -124,12 +123,12 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                         setDataName(uniprotID);
                     } else {
                         console.log(paeResponse);
-                        enqueueSnackbar("Failed to fetch PAE file for name: " + uniprotID, { variant: "error" });
+                        dispatch(enqueueSnackbar({ message: "Failed to fetch PAE file for name: " + uniprotID, variant: "error" }));
                     }
                 }
             }
         } catch (e) {
-            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+            dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
             console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
         }
     };

@@ -1,6 +1,5 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -18,8 +17,6 @@ export const MoorhenFillPartialResiduesModal = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     return (
         <MoorhenDraggableModalBase
@@ -41,31 +38,33 @@ export const MoorhenFillPartialResiduesModal = () => {
                     <MoorhenFillMissingAtoms />
                 </div>
             }
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={1}>
-                    <MoorhenButton
-                        variant="white"
-                        style={{ margin: "0.1rem", padding: "0.1rem" }}
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.FILL_PART_RES));
-                            enqueueSnackbar(modalKeys.FILL_PART_RES, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                modalId: modalKeys.FILL_PART_RES,
-                                title: "Fill partial res.",
-                                children: (
-                                    <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "30vh" }}>
-                                        <MoorhenFillMissingAtoms />
-                                    </div>
-                                ),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </MoorhenButton>
-                </Tooltip>,
-            ]}
+            additionalHeaderButtons={
+                [
+                    // <Tooltip title={"Move to side panel"} key={1}>
+                    //     <MoorhenButton
+                    //         variant="white"
+                    //         style={{ margin: "0.1rem", padding: "0.1rem" }}
+                    //         onClick={() => {
+                    //             dispatch(hideModal(modalKeys.FILL_PART_RES));
+                    //             enqueueSnackbar(modalKeys.FILL_PART_RES, {
+                    //                 variant: "sideBar",
+                    //                 persist: true,
+                    //                 anchorOrigin: { horizontal: "right", vertical: "bottom" },
+                    //                 modalId: modalKeys.FILL_PART_RES,
+                    //                 title: "Fill partial res.",
+                    //                 children: (
+                    //                     <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "30vh" }}>
+                    //                         <MoorhenFillMissingAtoms />
+                    //                     </div>
+                    //                 ),
+                    //             });
+                    //         }}
+                    //     >
+                    //         <LastPageOutlined />
+                    //     </MoorhenButton>
+                    // </Tooltip>,
+                ]
+            }
         />
     );
 };

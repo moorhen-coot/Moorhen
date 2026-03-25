@@ -5,6 +5,7 @@ import { AcceptRejectDragAtoms } from "./AcceptRejectDragAtoms";
 import { AcceptRejectMatchingLigand } from "./AcceptRejectMatchingLigand";
 import { AcceptRejectRotateTranslate } from "./AcceptRejectRotateTranslate";
 import { AtomInfo } from "./AtomInfo";
+import { GoToResidue } from "./GoToResidue";
 import { MapContourLevel } from "./MapContourLevel";
 import { ModelTrajectory } from "./ModelTrajectory";
 import { ResidueSelectionControls } from "./ResidueSelection";
@@ -27,6 +28,7 @@ type PayloadMap = ValidatePayloadMap<{
     mapContourLvl: { molNo: number; mapPrecision: number };
     trajectory: { molNo: number; style: RepresentationStyles };
     acceptRejectMatchingLigand: { movingMolNo: number; refMolNo: number; movingLigandCid: string; refLigandCid: string };
+    goToResidue: undefined;
 }>;
 
 type PopupControl = {
@@ -81,5 +83,9 @@ export const PopupControlList: PopupControl[] = [
     {
         name: "acceptRejectMatchingLigand",
         component: <AcceptRejectMatchingLigand />,
+    },
+    {
+        name: "goToResidue",
+        component: <GoToResidue />,
     },
 ];

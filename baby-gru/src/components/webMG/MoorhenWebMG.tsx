@@ -658,7 +658,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 activeMap,
                 hoveredAtom,
                 dispatch,
-                enqueueSnackbar,
                 glRef: glRef as React.RefObject<webGL.MGWebGL>,
                 videoRecorderRef,
                 commandCentre: commandCentre,

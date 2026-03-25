@@ -1,8 +1,7 @@
 import { TextField } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { MoorhenStoreRootState } from "@/moorhen";
+import { RootState, enqueueSnackbar } from "@/store/";
 import { parseCifDict } from "@/utils/MoorhenFileLoading";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -34,7 +33,7 @@ const ImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const store = useStore<MoorhenStoreRootState>();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const {
@@ -377,8 +376,7 @@ export const ImportDictionary = () => {
     const [createInstance, setCreateInstance] = useState<boolean>(true);
     const [validDictFile, setValidDictFile] = useState<boolean>(true);
     const [tlcsOfFile, setTlcsOfFile] = useState<{ comp_id: string; dict_contents: string }[]>([]);
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     const collectedProps = {
         tlc,
@@ -434,7 +432,7 @@ export const ImportDictionary = () => {
                 return ligandInfo.dict_contents;
             } else {
                 console.warn(`Unable to parse ligand dictionary`);
-                enqueueSnackbar("Unable to import ligand", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Unable to import ligand", variant: "error" }));
             }
         }
     };

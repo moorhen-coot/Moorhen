@@ -1,10 +1,9 @@
 import { CenterFocusWeakOutlined, DownloadOutlined, VisibilityOutlined } from "@mui/icons-material";
 import { Slider, Typography } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { Button, Card, Col, Container, Form, ListGroup, Row, Stack, Tab, Tabs } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -155,7 +154,6 @@ export const MoorhenMrBumpModal = () => {
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
-    const { enqueueSnackbar } = useSnackbar();
 
     const dispatch = useDispatch();
 
@@ -356,7 +354,7 @@ export const MoorhenMrBumpModal = () => {
 
         let newMolecules: { molecule: moorhen.Molecule; domain: string }[] = await Promise.all(readPromises);
         if (!newMolecules.every(molecule => molecule.molecule.molNo !== -1)) {
-            enqueueSnackbar("Failed to read molecule", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Failed to read molecule", variant: "warning" }));
             newMolecules = newMolecules.filter(molecule => molecule.molecule.molNo !== -1);
             if (newMolecules.length === 0) {
                 return;

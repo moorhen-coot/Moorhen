@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useTimeCapsule } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
@@ -10,8 +10,7 @@ export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
     const timeCapsuleRef = useTimeCapsule();
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     const menuItemText = "Stepped refine...";
 
@@ -28,19 +27,19 @@ export const StepRefinement = (props: { setPopoverIsShown: React.Dispatch<React.
                 .map(sequence => sequence.map(residue => residue))
                 .flat();
 
-            enqueueSnackbar("stepped-refine", {
-                variant: "residueSteps",
-                persist: true,
-                timeCapsuleRef: timeCapsuleRef,
-                residueList: residueList,
-                onStep: handleStepRefine,
-                onStart: async () => {
-                    await selectedMolecule.fetchIfDirtyAndDraw("rama");
-                },
-                onStop: () => {
-                    selectedMolecule.clearBuffersOfStyle("rama");
-                },
-            });
+            // dispatch(enqueueSnackbar({ message:"stepped-refine", {
+            //     variant: "residueSteps",
+            //     persist: true,
+            //     timeCapsuleRef: timeCapsuleRef,
+            //     residueList: residueList,
+            //     onStep: handleStepRefine,
+            //     onStart: async () => {
+            //         await selectedMolecule.fetchIfDirtyAndDraw("rama");
+            //     },
+            //     onStop: () => {
+            //         selectedMolecule.clearBuffersOfStyle("rama");
+            //     },
+            // });
         } else {
             console.warn(`Unable to find molecule with molNo ${moleculeSelectRef.current.value} for stepped refinement...`);
         }

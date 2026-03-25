@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
@@ -393,30 +392,16 @@ export const MoorhenDevMenu = () => {
                 }}
                 label="Show validation panel"
             />
-            <MoorhenButton
-                onClick={() =>
-                    dispatch(enqueueSnackbar({ message: "This is a success message", variant: "success", autoHideDuration: 5000 }))
-                }
-            >
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a success message", variant: "success" }))}>
                 Show Success Snackbar
             </MoorhenButton>
-            <MoorhenButton
-                onClick={() =>
-                    dispatch(enqueueSnackbar({ message: "This is a warning message", variant: "warning", autoHideDuration: 50000 }))
-                }
-            >
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a warning message", variant: "warning" }))}>
                 Show Warning Snackbar
             </MoorhenButton>
-            <MoorhenButton
-                onClick={() =>
-                    dispatch(enqueueSnackbar({ message: "This is an error message", variant: "error", autoHideDuration: 50000 }))
-                }
-            >
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an error message", variant: "error" }))}>
                 Show Error Snackbar
             </MoorhenButton>
-            <MoorhenButton
-                onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info", autoHideDuration: 50000 }))}
-            >
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
                 Show Info Snackbar
             </MoorhenButton>
         </MoorhenStack>

@@ -1,6 +1,5 @@
 import { LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { Button, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
@@ -27,8 +26,6 @@ export const MoorhenRamaPlotModal = () => {
         },
         false
     );
-
-    const { enqueueSnackbar } = useSnackbar();
 
     return (
         <MoorhenDraggableModalBase
@@ -58,32 +55,34 @@ export const MoorhenRamaPlotModal = () => {
                     </Row>
                 </div>
             }
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={1}>
-                    <MoorhenButton
-                        variant="white"
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.RAMA_PLOT));
-                            enqueueSnackbar(modalKeys.RAMA_PLOT, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                modalId: modalKeys.RAMA_PLOT,
-                                title: "Rama. Plot",
-                                children: (
-                                    <div style={{ height: "100%" }}>
-                                        <Row className={"rama-validation-tool-container-row"}>
-                                            <MoorhenRamachandran resizeTrigger={false} />
-                                        </Row>
-                                    </div>
-                                ),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </MoorhenButton>
-                </Tooltip>,
-            ]}
+            additionalHeaderButtons={
+                [
+                    // <Tooltip title={"Move to side panel"} key={1}>
+                    //     <MoorhenButton
+                    //         variant="white"
+                    //         onClick={() => {
+                    //             dispatch(hideModal(modalKeys.RAMA_PLOT));
+                    //             enqueueSnackbar(modalKeys.RAMA_PLOT, {
+                    //                 variant: "sideBar",
+                    //                 persist: true,
+                    //                 anchorOrigin: { horizontal: "right", vertical: "bottom" },
+                    //                 modalId: modalKeys.RAMA_PLOT,
+                    //                 title: "Rama. Plot",
+                    //                 children: (
+                    //                     <div style={{ height: "100%" }}>
+                    //                         <Row className={"rama-validation-tool-container-row"}>
+                    //                             <MoorhenRamachandran resizeTrigger={false} />
+                    //                         </Row>
+                    //                     </div>
+                    //                 ),
+                    //             });
+                    //         }}
+                    //     >
+                    //         <LastPageOutlined />
+                    //     </MoorhenButton>
+                    // </Tooltip>,
+                ]
+            }
         />
     );
 };

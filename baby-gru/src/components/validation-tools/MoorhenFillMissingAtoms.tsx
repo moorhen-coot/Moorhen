@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { Button, Card, Col, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
@@ -18,8 +17,6 @@ export const MoorhenFillMissingAtoms = () => {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await commandCentre.current.cootCommand(
@@ -84,19 +81,19 @@ export const MoorhenFillMissingAtoms = () => {
                     };
                 });
 
-                enqueueSnackbar("fill-all-atoms", {
-                    variant: "residueSteps",
-                    persist: true,
-                    residueList: residueList,
-                    sleepTime: 1500,
-                    onStep: handleStepFillAtoms,
-                    onStart: async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw("rotamer");
-                    },
-                    onStop: () => {
-                        selectedMolecule.clearBuffersOfStyle("rotamer");
-                    },
-                });
+                // enqueueSnackbar("fill-all-atoms", {
+                //     variant: "residueSteps",
+                //     persist: true,
+                //     residueList: residueList,
+                //     sleepTime: 1500,
+                //     onStep: handleStepFillAtoms,
+                //     onStart: async () => {
+                //         await selectedMolecule.fetchIfDirtyAndDraw("rotamer");
+                //     },
+                //     onStop: () => {
+                //         selectedMolecule.clearBuffersOfStyle("rotamer");
+                //     },
+                // });
             }
         },
         [molecules]

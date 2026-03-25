@@ -1,12 +1,11 @@
 import { CheckOutlined, CloseOutlined, FirstPageOutlined, NavigateBeforeOutlined, NavigateNextOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
-import { removeMolecule, setHoveredAtom, setIsChangingRotamers, setShownControl, triggerUpdate } from "@/store";
+import { enqueueSnackbar, removeMolecule, setHoveredAtom, setIsChangingRotamers, setShownControl, triggerUpdate } from "@/store";
 import { RootState } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import { moorhen } from "@/types/moorhen";
@@ -29,8 +28,6 @@ export const RotamerChange = () => {
     const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
 
-    const { closeSnackbar, enqueueSnackbar } = useSnackbar();
-
     useEffect(() => {
         const doRotamerChange = async () => {
             if (!chosenAtom) {
@@ -40,7 +37,7 @@ export const RotamerChange = () => {
             const selectedMolecule = molecules.find(molecule => molecule.molNo === molNo);
             if (!selectedMolecule) {
                 dispatch(setShownControl(null));
-                enqueueSnackbar("Something went wrong", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
                 return;
             }
 
@@ -51,7 +48,7 @@ export const RotamerChange = () => {
             selectedFragmentRef.current.alt_conf = chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf;
             if (!selectedFragmentRef.current.cid) {
                 dispatch(setShownControl(null));
-                enqueueSnackbar("Something went wrong", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
                 return;
             }
 

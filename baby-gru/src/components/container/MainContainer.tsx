@@ -5,6 +5,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { SnackBars } from "@/components/snack-bars";
+import { enqueueSnackbar } from "@/store";
 import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
@@ -35,7 +36,7 @@ import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
-import { parseAtomInfoLabel } from "../../utils/utils";
+import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
@@ -46,7 +47,6 @@ import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
 import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
-import { MoorhenGoToResidueSnackbar } from "../snack-bars/MoorhenGoToResidueSnackbar";
 import { MoorhenLongJobSnackBar } from "../snack-bars/MoorhenLongJobSnackBar";
 import { MoorhenResidueStepsSnackBar } from "../snack-bars/MoorhenResidueStepsSnackBar";
 import { MoorhenSideBar } from "../snack-bars/MoorhenSideBar";
@@ -365,6 +365,16 @@ export const MoorhenContainer = (props: ContainerProps) => {
             dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
+            const shortCuts = store.getState().shortcutSettings.shortCuts;
+
+            const shortCut = JSON.parse(shortCuts as string).show_shortcuts;
+            try {
+                dispatch(enqueueSnackbar({ message: `Press ${getTooltipShortcutLabel(shortCut)} to show help`, variant: "info" }));
+            } catch (error) {
+                console.error("Error parsing shortcuts:", error);
+                const json = JSON.parse(shortCuts);
+                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
+            }
         };
         startupEffect().then(() => {
             if (props.onInitialisationCompleted) {
@@ -427,7 +437,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     );
 
     const snackbarComponents = {
-        goToResidue: MoorhenGoToResidueSnackbar,
         longJobNotification: MoorhenLongJobSnackBar,
         residueSteps: MoorhenResidueStepsSnackBar,
         tomogram: MoorhenTomogramSnackBar,

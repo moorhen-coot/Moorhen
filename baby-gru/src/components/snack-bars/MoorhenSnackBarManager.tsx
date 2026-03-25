@@ -5,7 +5,7 @@ import { setShownControl } from "@/store/globalUISlice";
 import { useCommandCentre } from "../../InstanceManager";
 import { clearResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
-import { atomInfoToResSpec, cidToSpec, getTooltipShortcutLabel, sleep } from "../../utils/utils";
+import { atomInfoToResSpec, cidToSpec, sleep } from "../../utils/utils";
 
 export const MoorhenSnackBarManager = () => {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -159,19 +159,6 @@ export const MoorhenSnackBarManager = () => {
         },
         [residueSelection, isRotatingAtoms, isChangingRotamers, isDraggingAtoms]
     );
-
-    useEffect(() => {
-        if (isGlobalInstanceReady) {
-            const shortCut = JSON.parse(shortCuts as string).show_shortcuts;
-            try {
-                enqueueSnackbar(`Press ${getTooltipShortcutLabel(shortCut)} to show help`, { variant: "info" });
-            } catch (error) {
-                console.error("Error parsing shortcuts:", error);
-                const json = JSON.parse(shortCuts);
-                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
-            }
-        }
-    }, [isGlobalInstanceReady]);
 
     useEffect(() => {
         document.addEventListener("atomClicked", handleAtomClicked);
