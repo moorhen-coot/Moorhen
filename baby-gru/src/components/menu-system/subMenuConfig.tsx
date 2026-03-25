@@ -370,6 +370,14 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.SetOccupancy,
             },
             {
+                id: "step-refinement",
+                label: "Step refinement...",
+                type: "popover",
+                keywords: ["step", "refinement"],
+                description: "Perform stepwise refinement",
+                content: MenuItems.StepRefinement,
+            },
+            {
                 id: "split-models",
                 label: "Split models...",
                 type: "popover",

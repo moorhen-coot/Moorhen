@@ -1,15 +1,52 @@
+import { UnknownAction } from "@reduxjs/toolkit";
 import { Button, Card, Col, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback } from "react";
+import React, { Dispatch, useCallback } from "react";
+import { setShownControl } from "@/store/globalUISlice";
 import { useCommandCentre } from "../../InstanceManager";
+import { CommandCentre } from "../../InstanceManager/CommandCentre/MoorhenCommandCentre";
 import { hideModal } from "../../store/modalsSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { cidToSpec, sleep } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+
+export const fillPartialResidue = async (
+    selectedMolecule: moorhen.Molecule,
+    chainId: string,
+    resNum: number,
+    insCode: string,
+    commandCentre: React.RefObject<CommandCentre>,
+    dispatch: Dispatch<UnknownAction>,
+    enableRefineAfterMod: boolean
+) => {
+    await commandCentre.current.cootCommand(
+        {
+            returnType: "status",
+            command: "fill_partial_residue",
+            commandArgs: [selectedMolecule.molNo, chainId, resNum, insCode],
+            changesMolecules: [selectedMolecule.molNo],
+        },
+        true
+    );
+
+    if (enableRefineAfterMod) {
+        await commandCentre.current.cootCommand(
+            {
+                returnType: "status",
+                command: "refine_residues_using_atom_cid",
+                commandArgs: [selectedMolecule.molNo, `//${chainId}/${resNum}`, "TRIPLE", 4000],
+                changesMolecules: [selectedMolecule.molNo],
+            },
+            true
+        );
+    }
+    selectedMolecule.setAtomsDirty(true);
+    await selectedMolecule.redraw();
+    dispatch(triggerUpdate(selectedMolecule.molNo));
+};
 
 export const MoorhenFillMissingAtoms = () => {
     const dispatch = useDispatch();
@@ -18,36 +55,9 @@ export const MoorhenFillMissingAtoms = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
 
-    const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
-        await commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "fill_partial_residue",
-                commandArgs: [selectedMolecule.molNo, chainId, resNum, insCode],
-                changesMolecules: [selectedMolecule.molNo],
-            },
-            true
-        );
-
-        if (enableRefineAfterMod) {
-            await commandCentre.current.cootCommand(
-                {
-                    returnType: "status",
-                    command: "refine_residues_using_atom_cid",
-                    commandArgs: [selectedMolecule.molNo, `//${chainId}/${resNum}`, "TRIPLE", 4000],
-                    changesMolecules: [selectedMolecule.molNo],
-                },
-                true
-            );
-        }
-        selectedMolecule.setAtomsDirty(true);
-        await selectedMolecule.redraw();
-        dispatch(triggerUpdate(selectedMolecule.molNo));
-    };
-
     const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            fillPartialResidue(...args);
+            fillPartialResidue(...args, commandCentre, dispatch, enableRefineAfterMod);
         }
     };
 
@@ -68,32 +78,16 @@ export const MoorhenFillMissingAtoms = () => {
         (selectedMolecule: moorhen.Molecule, residues: libcootApi.ResidueSpecJS[]) => {
             dispatch(hideModal(modalKeys.FILL_PART_RES));
             if (selectedMolecule) {
-                const handleStepFillAtoms = async (cid: string) => {
-                    const resSpec = cidToSpec(cid);
-                    await selectedMolecule.centreAndAlignViewOn(cid, true);
-                    await sleep(1000);
-                    await fillPartialResidue(selectedMolecule, resSpec.chain_id, resSpec.res_no, resSpec.ins_code);
-                };
-
                 const residueList = residues.map(residue => {
-                    return {
-                        cid: `//${residue.chainId}/${residue.resNum}/`,
-                    };
+                    return `//${residue.chainId}/${residue.resNum}/`;
                 });
 
-                // enqueueSnackbar("fill-all-atoms", {
-                //     variant: "residueSteps",
-                //     persist: true,
-                //     residueList: residueList,
-                //     sleepTime: 1500,
-                //     onStep: handleStepFillAtoms,
-                //     onStart: async () => {
-                //         await selectedMolecule.fetchIfDirtyAndDraw("rotamer");
-                //     },
-                //     onStop: () => {
-                //         selectedMolecule.clearBuffersOfStyle("rotamer");
-                //     },
-                // });
+                dispatch(
+                    setShownControl({
+                        name: "fillAllAtoms",
+                        payload: { residueList: residueList, selectedMolecule: selectedMolecule.molNo },
+                    })
+                );
             }
         },
         [molecules]

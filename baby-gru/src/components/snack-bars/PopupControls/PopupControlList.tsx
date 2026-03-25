@@ -9,11 +9,15 @@ import { GoToResidue } from "./GoToResidue";
 import { MapContourLevel } from "./MapContourLevel";
 import { ModelTrajectory } from "./ModelTrajectory";
 import { ResidueSelectionControls } from "./ResidueSelection";
+import { ResidueSteps } from "./ResidueSteps";
 import { RotamerChange } from "./RotamerChange";
 import { Screenshot } from "./ScreenshotControls";
 import { VideoRecording } from "./VideoRecording";
 
-type PayloadType = Record<string, string | string[] | number | number[] | boolean | boolean[] | moorhen.ResidueSpec>;
+type PayloadType = Record<
+    string,
+    string | string[] | number | number[] | boolean | boolean[] | moorhen.ResidueSpec | moorhen.ResidueSpec[] | undefined
+>;
 
 type ValidatePayloadMap<T extends Record<string, PayloadType | undefined>> = T;
 
@@ -29,6 +33,9 @@ type PayloadMap = ValidatePayloadMap<{
     trajectory: { molNo: number; style: RepresentationStyles };
     acceptRejectMatchingLigand: { movingMolNo: number; refMolNo: number; movingLigandCid: string; refLigandCid: string };
     goToResidue: undefined;
+    flipAllPeptides: { residueList: string[]; selectedMolecule: number };
+    steppedRefine: { residueList: string[]; selectedMolecule: number };
+    fillAllAtoms: { residueList: string[]; selectedMolecule: number };
 }>;
 
 type PopupControl = {
@@ -88,4 +95,7 @@ export const PopupControlList: PopupControl[] = [
         name: "goToResidue",
         component: <GoToResidue />,
     },
+    { name: "flipAllPeptides", component: <ResidueSteps variant="pepFlip" /> },
+    { name: "steppedRefine", component: <ResidueSteps variant="stepRefine" /> },
+    { name: "fillAllAtoms", component: <ResidueSteps variant="fillAllAtoms" /> },
 ];

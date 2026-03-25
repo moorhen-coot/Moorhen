@@ -38,6 +38,7 @@ import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
 import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
@@ -47,10 +48,8 @@ import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
 import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
-import { MoorhenLongJobSnackBar } from "../snack-bars/MoorhenLongJobSnackBar";
-import { MoorhenResidueStepsSnackBar } from "../snack-bars/MoorhenResidueStepsSnackBar";
+import { LongJobSnackNotification } from "../snack-bars/LongJobSnackNotification";
 import { MoorhenSideBar } from "../snack-bars/MoorhenSideBar";
-import { MoorhenSnackBarManager } from "../snack-bars/MoorhenSnackBarManager";
 import { MoorhenTomogramSnackBar } from "../snack-bars/MoorhenTomogramSnackBar";
 import { PopupControls } from "../snack-bars/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
@@ -432,13 +431,13 @@ export const MoorhenContainer = (props: ContainerProps) => {
         () => ({
             height: Math.floor(GlViewportHeight),
             width: Math.floor(GlViewportWidth),
+            maxHeight: Math.floor(GlViewportHeight),
+            maxWidth: Math.floor(GlViewportWidth),
         }),
         [GlViewportHeight, GlViewportWidth]
     );
 
     const snackbarComponents = {
-        longJobNotification: MoorhenLongJobSnackBar,
-        residueSteps: MoorhenResidueStepsSnackBar,
         tomogram: MoorhenTomogramSnackBar,
         sideBar: MoorhenSideBar,
     };
@@ -482,17 +481,18 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     Components={snackbarComponents}
                     preventDuplicate={true}
                 >
-                    <div style={viewportStyle} className="moorhen__viewport-container">
+                    <div className="moorhen__viewport-container" style={viewportStyle}>
                         <MoorhenMainMenu />
                         <PopupControls />
                         <SnackBars />
                         <ActivityIndicator />
                         <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
                         <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                        <MoorhenSnackBarManager />
+                        <AtomClickManager />
                         <UpdatingMapsManager />
                         <MoorhenMapsHeadManager />
                         <MoleculesOriginListener />
+                        <LongJobSnackNotification />
 
                         <MoorhenDroppable
                             monomerLibraryPath={monomerLibraryPath}
@@ -510,6 +510,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                         </MoorhenDroppable>
                     </div>
                     <BottomPanelContainer />
+
                     <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
                 </SnackbarProvider>
             </div>

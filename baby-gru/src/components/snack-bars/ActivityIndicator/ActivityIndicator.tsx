@@ -1,5 +1,6 @@
 import { SaveOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
+import { useState } from "react";
 import { RootState } from "@/store";
 import { MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
@@ -19,6 +20,8 @@ export const ActivityIndicator = () => {
     const bFactorNOccupancy = hoveredAtom.atomInfo
         ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(1)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";
+    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
+
     const busyIndicator = busy ? (
         <>
             <MoorhenSpinner size="3rem" />
@@ -33,7 +36,7 @@ export const ActivityIndicator = () => {
 
     const showHoverInfoPanel = busy || timeCapsuleBusy || (showHoverInfo && hoveredAtom.cid);
     return (
-        <div className="moorhen__activity-indicator-container">
+        <div className="moorhen__activity-indicator-container" style={{ left: glWidth }}>
             {showHoverInfoPanel && (
                 <div className="moorhen__activity-indicator">
                     {busyIndicator}

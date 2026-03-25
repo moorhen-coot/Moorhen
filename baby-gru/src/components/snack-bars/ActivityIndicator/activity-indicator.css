@@ -4,11 +4,12 @@
     z-index: var(--z-window-base);
     position: absolute;
     top: 0.1rem;
-    right: 10px;
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
+    transform: translateX(calc(-100% - 30px));
 }
+
 .moorhen__activity-indicator {
     text-align: center;
     border-radius: 2rem;

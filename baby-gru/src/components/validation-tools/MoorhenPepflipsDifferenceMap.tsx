@@ -1,6 +1,9 @@
-import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { UnknownAction } from "@reduxjs/toolkit";
+import { Card, Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback } from "react";
+import { Dispatch, useCallback } from "react";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { setShownControl } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { usePersistentState } from "../../store/menusSlice";
 import { hideModal } from "../../store/modalsSlice";
@@ -12,6 +15,41 @@ import { cidToSpec, sleep } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
+export const flipPeptide = async (
+    selectedMolecule: moorhen.Molecule,
+    chainId: string,
+    seqNum: number,
+    insCode: string,
+    commandCentre: React.RefObject<CommandCentre>,
+    enableRefineAfterMod: boolean,
+    dispatch: Dispatch<UnknownAction>
+) => {
+    await commandCentre.current.cootCommand(
+        {
+            returnType: "status",
+            command: "flipPeptide_cid",
+            commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ""],
+            changesMolecules: [selectedMolecule.molNo],
+        },
+        true
+    );
+
+    if (enableRefineAfterMod) {
+        await commandCentre.current.cootCommand(
+            {
+                returnType: "status",
+                command: "refine_residues_using_atom_cid",
+                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, "TRIPLE", 4000],
+                changesMolecules: [selectedMolecule.molNo],
+            },
+            true
+        );
+    }
+
+    selectedMolecule.setAtomsDirty(true);
+    await selectedMolecule.redraw();
+    dispatch(triggerUpdate(selectedMolecule.molNo));
+};
 export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
@@ -23,37 +61,9 @@ export const MoorhenPepflipsDifferenceMap = () => {
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
-    const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "flipPeptide_cid",
-                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ""],
-                changesMolecules: [selectedMolecule.molNo],
-            },
-            true
-        );
-
-        if (enableRefineAfterMod) {
-            await commandCentre.current.cootCommand(
-                {
-                    returnType: "status",
-                    command: "refine_residues_using_atom_cid",
-                    commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, "TRIPLE", 4000],
-                    changesMolecules: [selectedMolecule.molNo],
-                },
-                true
-            );
-        }
-
-        selectedMolecule.setAtomsDirty(true);
-        await selectedMolecule.redraw();
-        dispatch(triggerUpdate(selectedMolecule.molNo));
-    };
-
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            flipPeptide(...args);
+            flipPeptide(...args, commandCentre, enableRefineAfterMod, dispatch);
         }
     };
 
@@ -81,32 +91,15 @@ export const MoorhenPepflipsDifferenceMap = () => {
         async (selectedMolecule: moorhen.Molecule, residues: libcootApi.InterestingPlaceDataJS[]) => {
             dispatch(hideModal(modalKeys.PEPTIDE_FLIPS));
             if (selectedMolecule) {
-                const handleStepFlipPeptide = async (cid: string) => {
-                    const resSpec = cidToSpec(cid);
-                    await selectedMolecule.centreAndAlignViewOn(cid, false);
-                    await sleep(1000);
-                    await flipPeptide(selectedMolecule, resSpec.chain_id, resSpec.res_no, resSpec.ins_code);
-                };
-
                 const residueList = residues.map(residue => {
-                    return {
-                        cid: `//${residue.chainId}/${residue.resNum}/`,
-                    };
+                    return `//${residue.chainId}/${residue.resNum}/`;
                 });
-
-                //     enqueueSnackbar("flip-all-peptides", {
-                //         variant: "residueSteps",
-                //         persist: true,
-                //         residueList: residueList,
-                //         sleepTime: 1500,
-                //         onStep: handleStepFlipPeptide,
-                //         onStart: async () => {
-                //             await selectedMolecule.fetchIfDirtyAndDraw("rama");
-                //         },
-                //         onStop: () => {
-                //             selectedMolecule.clearBuffersOfStyle("rama");
-                //         },
-                //     });
+                dispatch(
+                    setShownControl({
+                        name: "flipAllPeptides",
+                        payload: { residueList: residueList, selectedMolecule: selectedMolecule.molNo },
+                    })
+                );
             }
         },
         [molecules]

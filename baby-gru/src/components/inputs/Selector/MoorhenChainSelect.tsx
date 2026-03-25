@@ -13,6 +13,7 @@ type MoorhenChainSelectPropsType = {
     defaultValue?: string;
     disabled?: boolean;
     ref?: React.Ref<HTMLSelectElement>;
+    allowAll?: boolean;
 };
 
 export const MoorhenChainSelect = (props: MoorhenChainSelectPropsType) => {
@@ -28,14 +29,23 @@ export const MoorhenChainSelect = (props: MoorhenChainSelectPropsType) => {
     const getChainOptions = (selectedCoordMolNo: number): React.JSX.Element[] => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo);
         if (selectedMolecule) {
-            return selectedMolecule.sequences.map(sequence =>
+            const option = selectedMolecule.sequences.map(sequence =>
                 allowedTypes.includes(sequence.type) ? (
                     <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>
                         {sequence.chain}
                     </option>
                 ) : null
             );
+            if (props.allowAll) {
+                option.unshift(
+                    <option value="*" key={`${selectedMolecule.molNo}_all`}>
+                        All
+                    </option>
+                );
+            }
+            return option;
         }
+        return [];
     };
 
     return (

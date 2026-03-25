@@ -5,12 +5,10 @@ import { Snackbar, closeSnackbar } from "@/store/snackbarSlice";
 import "./snack-bars.css";
 
 /* to fix :
-"flip-all-peptides" 
-"stepped-refine
-go_to_residue
+"stepped-refine"
 enqueueSnackbar(modalKeys.CARB_VALIDATION,
 "Move to side panel"
-"fill-all-atoms"*/
+*/
 export const SnackBars = () => {
     const snackBars = useSelector((state: RootState) => state.snackBars);
     const disaply = snackBars.map(snackbar => <SnackBar key={snackbar.uid} {...snackbar} />);

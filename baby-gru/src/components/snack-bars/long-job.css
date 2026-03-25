@@ -1,0 +1,16 @@
+@import "../../colors.css";
+
+.moorhen__long-job-notification {
+    z-index: 9999999;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: 1px solid var(--moorhen-border);
+    width: 12rem;
+    border-radius: 1rem;
+    background-color: var(--moorhen-background);
+    transform: translate(-50%, -200%);
+}

@@ -30,11 +30,13 @@ import MatSymFactCheck from "./MatSymFactCheck.svg"
 import MatSymCheckBox from "./MatSymCheckBox.svg"
 import minus from "./minus.svg"
 import MatSymFirstPage from "./MatSymFirstPage.svg"
+import MatSymStopCircled from "./MatSymStopCircled.svg"
 import MatSymRadioButtonChecked from "./MatSymRadioButtonChecked.svg"
 import MatSymCalculate from "./MatSymCalculate.svg"
 import MatSymCollapse from "./MatSymCollapse.svg"
 import MatSymUndo from "./MatSymUndo.svg"
 import MatSymHelp from "./MatSymHelp.svg"
+import MatSymPlayCircled from "./MatSymPlayCircled.svg"
 import MatSymAdd from "./MatSymAdd.svg"
 import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
 import MatSymMenu from "./MatSymMenu.svg"
@@ -43,6 +45,7 @@ import MatSymAlbum from "./MatSymAlbum.svg"
 import MatSymLockClose from "./MatSymLockClose.svg"
 import MatSymShutter from "./MatSymShutter.svg"
 import MatSymPhotoCam from "./MatSymPhotoCam.svg"
+import MatSymPauseCircled from "./MatSymPauseCircled.svg"
 import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
 import MatSymTune from "./MatSymTune.svg"
 import MatSymDoubleArrowDown from "./MatSymDoubleArrowDown.svg"
@@ -98,11 +101,13 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymCheckBox": MatSymCheckBox,
  "minus": minus,
  "MatSymFirstPage": MatSymFirstPage,
+ "MatSymStopCircled": MatSymStopCircled,
  "MatSymRadioButtonChecked": MatSymRadioButtonChecked,
  "MatSymCalculate": MatSymCalculate,
  "MatSymCollapse": MatSymCollapse,
  "MatSymUndo": MatSymUndo,
  "MatSymHelp": MatSymHelp,
+ "MatSymPlayCircled": MatSymPlayCircled,
  "MatSymAdd": MatSymAdd,
  "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
  "MatSymMenu": MatSymMenu,
@@ -111,6 +116,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymLockClose": MatSymLockClose,
  "MatSymShutter": MatSymShutter,
  "MatSymPhotoCam": MatSymPhotoCam,
+ "MatSymPauseCircled": MatSymPauseCircled,
  "MatSymVisibilityOff": MatSymVisibilityOff,
  "MatSymTune": MatSymTune,
  "MatSymDoubleArrowDown": MatSymDoubleArrowDown,
@@ -167,11 +173,13 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymCheckBox" |
  "minus" |
  "MatSymFirstPage" |
+ "MatSymStopCircled" |
  "MatSymRadioButtonChecked" |
  "MatSymCalculate" |
  "MatSymCollapse" |
  "MatSymUndo" |
  "MatSymHelp" |
+ "MatSymPlayCircled" |
  "MatSymAdd" |
  "MatSymRadioButtonUnchecked" |
  "MatSymMenu" |
@@ -180,6 +188,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymLockClose" |
  "MatSymShutter" |
  "MatSymPhotoCam" |
+ "MatSymPauseCircled" |
  "MatSymVisibilityOff" |
  "MatSymTune" |
  "MatSymDoubleArrowDown" |
