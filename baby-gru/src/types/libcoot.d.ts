@@ -597,6 +597,7 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
+        get_nef_restraints(nef_input:string): string;
     };
     interface DoublePairDoubleJS {
         first: number;
