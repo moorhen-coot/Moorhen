@@ -318,9 +318,6 @@ export const MoorhenCreateAcedrgLinkModal = () => {
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
     const [errorMessage, setErrorMessage] = useState<string>("");
 
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-
     const dispatch = useDispatch();
 
     const handleCancel = () => {
@@ -349,12 +346,6 @@ export const MoorhenCreateAcedrgLinkModal = () => {
         <MoorhenDraggableModalBase
             modalId={modalKeys.ACEDRG}
             headerTitle="Create covalent link"
-            left={width / 2}
-            top={height / 3}
-            minHeight={convertViewtoPx(10, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(90, height)}
-            maxWidth={convertRemToPx(55)}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
                     <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>

@@ -106,12 +106,6 @@ export const MoorhenControlsModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.SHOW_CONTROLS}
-            left={width / 5}
-            top={height / 5}
-            minHeight={convertViewtoPx(65, height)}
-            minWidth={convertViewtoPx(60, width)}
-            maxHeight={convertViewtoPx(80, height)}
-            maxWidth={convertViewtoPx(80, width)}
             headerTitle="Moorhen Controls"
             enableResize={false}
             footer={null}

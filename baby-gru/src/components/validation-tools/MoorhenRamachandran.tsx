@@ -1,6 +1,5 @@
-import { Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { libcootApi } from "../../types/libcoot";
@@ -8,6 +7,7 @@ import { moorhen } from "../../types/moorhen";
 import { convertRemToPx } from "../../utils/utils";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
+import { MoorhenStack } from "../interface-base";
 
 interface MoorhenRamachandranProps {
     resizeTrigger?: boolean;
@@ -214,59 +214,36 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
                     const x = ((phitest / 180) * 0.5 + 0.5) * canvasRef.current.width;
                     const y = ((-psitest / 180) * 0.5 + 0.5) * canvasRef.current.height;
 
+                    const progress = iframe / animationFrames;
+                    const grow = progress * 8;
+                    const hitSize = pointSize + grow;
+
+                    let hitImage: HTMLImageElement;
                     if (ramaPlotData[newHit].isOutlier) {
                         if (ramaPlotData[newHit].restype === "PRO") {
-                            ctx.drawImage(
-                                ramaPlotProOutlierImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotProOutlierImageRef.current;
                         } else if (ramaPlotData[newHit].restype === "GLY") {
-                            ctx.drawImage(
-                                ramaPlotGlyOutlierImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotGlyOutlierImageRef.current;
                         } else {
-                            ctx.drawImage(
-                                ramaPlotOtherOutlierImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotOtherOutlierImageRef.current;
                         }
                     } else {
                         if (ramaPlotData[newHit].restype === "PRO") {
-                            ctx.drawImage(
-                                ramaPlotProNormalImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotProNormalImageRef.current;
                         } else if (ramaPlotData[newHit].restype === "GLY") {
-                            ctx.drawImage(
-                                ramaPlotGlyNormalImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotGlyNormalImageRef.current;
                         } else {
-                            ctx.drawImage(
-                                ramaPlotOtherNormalImageRef.current,
-                                x - 4 - (iframe / animationFrames) * 2,
-                                y - 4 - (iframe / animationFrames) * 2,
-                                pointSize + (iframe / animationFrames) * 4,
-                                pointSize + (iframe / animationFrames) * 4
-                            );
+                            hitImage = ramaPlotOtherNormalImageRef.current;
                         }
                     }
+
+                    ctx.drawImage(hitImage, x - hitSize / 2, y - hitSize / 2, hitSize, hitSize);
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, hitSize / 2 + 1, 0, 2 * Math.PI);
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = ramaPlotData[newHit].isOutlier ? "#cc0000" : "#1a56db";
+                    ctx.stroke();
                 }
             }
             if (iframe < animationFrames) {
@@ -573,29 +550,19 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
     }, [hoveredAtom]);
 
     return (
-        <Fragment>
-            <Form style={{ padding: "0", margin: "0" }}>
-                <Form.Group>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
-                        </Col>
-                        <Col>
-                            <MoorhenChainSelect
-                                width=""
-                                molecules={molecules}
-                                onChange={handleChainChange}
-                                selectedCoordMolNo={selectedModel}
-                                ref={chainSelectRef}
-                                allowedTypes={[1, 2]}
-                            />
-                        </Col>
-                    </Row>
-                </Form.Group>
-            </Form>
+        <div>
+            <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
+            <MoorhenChainSelect
+                width=""
+                molecules={molecules}
+                onChange={handleChainChange}
+                selectedCoordMolNo={selectedModel}
+                ref={chainSelectRef}
+                allowedTypes={[1, 2]}
+            />
             <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{ padding: "0rem", margin: "0rem" }}>
                 <canvas ref={canvasRef} style={{ marginTop: "1rem" }} height={ramaPlotDimensions} width={ramaPlotDimensions} />
             </div>
-        </Fragment>
+        </div>
     );
 };

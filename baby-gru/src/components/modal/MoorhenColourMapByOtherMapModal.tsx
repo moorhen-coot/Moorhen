@@ -320,17 +320,10 @@ export const MoorhenColourMapByOtherMapModal = () => {
 
     return (
         <MoorhenDraggableModalBase
+            allowDocking={true}
             modalId={modalKeys.COLOR_MAP_BY_MAP}
             body={panelContent}
             headerTitle="Colour map by other map..."
-            left={100}
-            top={100}
-            initialHeight={600}
-            initialWidth={440}
-            minHeight={220}
-            minWidth={360}
-            maxHeight={600}
-            maxWidth={500}
         />
     );
 };

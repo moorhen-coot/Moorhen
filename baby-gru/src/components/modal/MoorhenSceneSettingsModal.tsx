@@ -476,51 +476,13 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
 };
 
 export const MoorhenSceneSettingsModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-
-    const dispatch = useDispatch();
-
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.SCENE_SETTINGS}
-            left={width / 5}
-            top={height / 6}
             headerTitle="Scene settings"
-            minHeight={convertViewtoPx(60, height)}
-            minWidth={convertRemToPx(40)}
-            maxHeight={convertViewtoPx(75, height)}
-            maxWidth={convertRemToPx(60)}
             enforceMaxBodyDimensions={true}
             body={<MoorhenSceneSettings stackDirection="horizontal" />}
             footer={null}
-            additionalHeaderButtons={
-                [
-                    // <Tooltip title={"Move to side panel"} key={1}>
-                    //     <MoorhenButton
-                    //         variant="white"
-                    //         style={{ margin: "0.1rem", padding: "0.1rem" }}
-                    //         onClick={() => {
-                    //             dispatch(hideModal(modalKeys.SCENE_SETTINGS));
-                    //             enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
-                    //                 variant: "sideBar",
-                    //                 persist: true,
-                    //                 anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                    //                 title: "Scene settings",
-                    //                 modalId: modalKeys.SCENE_SETTINGS,
-                    //                 children: (
-                    //                     <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
-                    //                         <MoorhenSceneSettings stackDirection="vertical" />
-                    //                     </div>
-                    //                 ),
-                    //             });
-                    //         }}
-                    //     >
-                    //         <LastPageOutlined />
-                    //     </MoorhenButton>
-                    // </Tooltip>,
-                ]
-            }
         />
     );
 };

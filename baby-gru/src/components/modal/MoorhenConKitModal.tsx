@@ -15,14 +15,12 @@ export const MoorhenConKitModal = () => {
     const menu = "moorhenconKitModal";
     const dispatch = useDispatch();
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
         menu,
         "modalSize",
         {
-            width: convertRemToPx(50),
-            height: convertRemToPx(25),
+            width: undefined,
+            height: undefined,
         },
         false
     );
@@ -30,31 +28,19 @@ export const MoorhenConKitModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.CONKIT}
-            left={width / 6}
-            top={height / 6}
             lockAspectRatio={true}
-            initialHeight={convertRemToPx(40)}
-            initialWidth={convertRemToPx(40)}
+            initialHeight={modalSize.height}
+            initialWidth={modalSize.width}
             onResize={(evt, ref, direction, delta, size) => {
                 setModalSize(size);
             }}
-            minHeight={100}
-            minWidth={200}
-            maxHeight={convertViewtoPx(65, height)}
-            maxWidth={convertViewtoPx(80, width)}
             enforceMaxBodyDimensions={true}
             overflowY="auto"
             overflowX="auto"
             headerTitle="ConKit"
             footer={null}
             onResizeStop={() => dispatchPersistentStates(dispatch, menu, [{ key: "modalSize", value: modalSize }])}
-            body={
-                <div style={{ height: "100%" }}>
-                    <Row className={"rama-validation-tool-container-row"}>
-                        <MoorhenConKit size={modalSize} resizeTrigger={false} />
-                    </Row>
-                </div>
-            }
+            body={<MoorhenConKit size={modalSize} resizeTrigger={false} />}
         />
     );
 };

@@ -5,6 +5,7 @@ import MatSymFileDownload from "./MatSymFileDownload.svg"
 import MatSymConstruction from "./MatSymConstruction.svg"
 import MatSymLockOpen from "./MatSymLockOpen.svg"
 import MatSymExpand from "./MatSymExpand.svg"
+import MatSymArrowMenuClose from "./MatSymArrowMenuClose.svg"
 import vanillin from "./vanillin.svg"
 import MatSymFilterFocus from "./MatSymFilterFocus.svg"
 import MatSymClose from "./MatSymClose.svg"
@@ -17,6 +18,7 @@ import MatSymBackgroudDots from "./MatSymBackgroudDots.svg"
 import MatSymSettings from "./MatSymSettings.svg"
 import MatSymCheckedBox from "./MatSymCheckedBox.svg"
 import MatSymToggle from "./MatSymToggle.svg"
+import MatSymLastPage from "./MatSymLastPage.svg"
 import temperature from "./temperature.svg"
 import MatSymColors from "./MatSymColors.svg"
 import MatSymGrain from "./MatSymGrain.svg"
@@ -76,6 +78,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymConstruction": MatSymConstruction,
  "MatSymLockOpen": MatSymLockOpen,
  "MatSymExpand": MatSymExpand,
+ "MatSymArrowMenuClose": MatSymArrowMenuClose,
  "vanillin": vanillin,
  "MatSymFilterFocus": MatSymFilterFocus,
  "MatSymClose": MatSymClose,
@@ -88,6 +91,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymSettings": MatSymSettings,
  "MatSymCheckedBox": MatSymCheckedBox,
  "MatSymToggle": MatSymToggle,
+ "MatSymLastPage": MatSymLastPage,
  "temperature": temperature,
  "MatSymColors": MatSymColors,
  "MatSymGrain": MatSymGrain,
@@ -148,6 +152,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymConstruction" |
  "MatSymLockOpen" |
  "MatSymExpand" |
+ "MatSymArrowMenuClose" |
  "vanillin" |
  "MatSymFilterFocus" |
  "MatSymClose" |
@@ -160,6 +165,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymSettings" |
  "MatSymCheckedBox" |
  "MatSymToggle" |
+ "MatSymLastPage" |
  "temperature" |
  "MatSymColors" |
  "MatSymGrain" |

@@ -54,12 +54,12 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
     const isClosedRef = useRef<boolean>(false);
     const isRunningRef = useRef<boolean>(false);
 
-    const exit = useCallback(async () => {
+    const exit = async () => {
         onStop?.();
+        dispatch(setShownControl(null));
         if (disableTimeCapsule) timeCapsuleRef.current.disableBackups = !timeCapsuleIsEnabled;
         await timeCapsuleRef.current.addModification();
-        dispatch(setShownControl(null));
-    }, [timeCapsuleIsEnabled]);
+    };
 
     const init = async () => {
         await onStart?.();
@@ -72,6 +72,7 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
         const nSteps = residueList.length;
         const stepPercent = nSteps / 100;
         const singleStepPercent = 1 / stepPercent;
+
         for (const residue of residueList) {
             setBuffer(prev => prev + singleStepPercent);
             if (isClosedRef.current) {
@@ -155,7 +156,9 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
         );
     } else if (props.variant === "fillAllAtoms") {
         onStart = async () => {
-            await selectedMolecule.fetchIfDirtyAndDraw("rotamer");
+            await selectedMolecule.show("rotamer").then(representation => {
+                dispatch(addGeneralRepresentation(representation));
+            });
         };
         onStep = handleStepFillAtoms;
         onStop = () => {

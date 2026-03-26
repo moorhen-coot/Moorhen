@@ -1,8 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import useStateWithRef from "@/hooks/useStateWithRef";
+import { RootState } from "@/store";
 import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
+import { usePersistentState } from "../../../store/menusSlice";
 import { ModalKey, focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
-import { moorhen } from "../../../types/moorhen";
 import { MoorhenButton } from "../../inputs";
 import "./draggable-modal-base.css";
 
@@ -10,6 +12,7 @@ type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
     body: React.JSX.Element | React.JSX.Element[];
     modalId: string;
+    allowDocking?: boolean;
     initialWidth?: number;
     initialHeight?: number;
     maxWidth?: number;
@@ -18,6 +21,7 @@ type MoorhenDraggableModalBaseProps = {
     minHeight?: number;
     top?: number;
     left?: number;
+    rememberSize?: boolean;
     additionalHeaderButtons?: React.JSX.Element[];
     footer?: React.JSX.Element;
     additionalChildren?: React.JSX.Element;
@@ -80,17 +84,17 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         additionalChildren = null,
         top = 100,
         left = 200,
-        initialHeight = Math.min(400, props.maxHeight),
-        initialWidth = Math.min(400, props.maxWidth),
-        maxHeight = 600,
-        maxWidth = 600,
-        minHeight = 100,
-        minWidth = 100,
+        initialHeight = null,
+        initialWidth = null,
+        minHeight = 300,
+        minWidth = 300,
+        lockAspectRatio = false,
+        allowDocking = false,
+        rememberSize = true,
         // The following props are accepted but not used internally.
         // They remain in the type so that existing callers don't break.
         // handleClassName: _handleClassName,
         // enableResize: _enableResize,
-        // lockAspectRatio: _lockAspectRatio,
         // overflowY: _overflowY,
         // overflowX: _overflowX,
         // enforceMaxBodyDimensions: _enforceMaxBodyDimensions,
@@ -101,41 +105,46 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     // off-screen in a hidden div, measure it with useLayoutEffect, then
     // switch to the real modal. `measured` gates this two-phase render.
     const bodyRef = useRef<HTMLDivElement>(null);
-    const [bodySize, setBodySize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-    const [measured, setMeasured] = useState(props.initialWidth && props.initialHeight ? true : false);
+    const [measured, setMeasured] = useState(false);
+    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
+    const glHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
+    const sceneWidth = useSelector((state: RootState) => state.sceneSettings.width);
+    const sceneHeight = useSelector((state: RootState) => state.sceneSettings.height);
+    const maxHeight = props.maxHeight ?? glHeight;
+    const maxWidth = props.maxWidth ?? glWidth;
+    const aspectRatioRef = useRef<number>(1);
+    const [size, setSize, sizeRef] = useStateWithRef<{ width: number; height: number }>({
+        width: 1,
+        height: 1,
+    });
+    const [docked, setDocked] = useState<boolean>(false);
+
+    const [savedSize, setSavedSize] = usePersistentState("modalSizes", props.modalId, { width: null, height: null }, true);
+
     useLayoutEffect(() => {
         if (bodyRef.current) {
-            setBodySize({
-                width: bodyRef.current.offsetWidth,
-                height: bodyRef.current.offsetHeight,
+            const rect = bodyRef.current.getBoundingClientRect();
+            let width: number, height: number;
+            if (savedSize.width) {
+                console.log(`Restoring saved size: ${savedSize.width}x${savedSize.height}`);
+                width = savedSize.width;
+                height = savedSize.height;
+            } else {
+                width = initialWidth ?? Math.min(rect.width, maxWidth);
+                height = initialHeight ? initialHeight - 48 - 40 : Math.min(rect.height, maxHeight);
+            }
+            setSize({
+                width: width,
+                height: height,
             });
+            props.onResize?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 }, { width, height });
+            props.onResizeStop?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 });
+            aspectRatioRef.current = width / height;
+            console.log(`Measured body size: ${rect.width}x${rect.height}`);
             setMeasured(true);
         }
-    }, [measured, props.body]);
-
-    /** Compute the initial size for the resizable container, clamped to min/max bounds. */
-    const getResizableSize = (): { width: number; height: number } => {
-        if (initialWidth && initialHeight) {
-            return {
-                width: initialWidth,
-                height: initialHeight,
-            };
-        } else if (measured) {
-            return {
-                width: bodySize.width > minWidth ? (bodySize.width < maxWidth ? bodySize.width : maxWidth) : minWidth,
-                height: bodySize.height > minHeight ? (bodySize.height < maxHeight ? bodySize.height : maxHeight) : minHeight,
-            };
-        } else {
-            return {
-                width: minWidth,
-                height: minHeight,
-            };
-        }
-    };
-    const resizableSize = getResizableSize();
-
-    // ── Core state ─────────────────────────────────────────────────────
-    const [size, setSize] = useState<{ width: number; height: number }>(resizableSize);
+    }, []);
+    const modalRef = useRef<HTMLDivElement>(null);
 
     // Refs to avoid stale closures in event listeners.
     //
@@ -152,18 +161,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     // onResizeRef / onResizeStopRef: since callers typically pass inline
     //   arrow functions (new reference every render), a stale closure would
     //   hold an old callback. The ref always points to the latest one.
-    const sizeRef = useRef(size);
     const onResizeRef = useRef(props.onResize);
     onResizeRef.current = props.onResize;
     const onResizeStopRef = useRef(props.onResizeStop);
     onResizeStopRef.current = props.onResizeStop;
 
     const dispatch = useDispatch();
-    const focusHierarchy = useSelector((state: moorhen.State) => state.modals.focusHierarchy);
-    const windowWidth = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const windowHeight = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const transparentModalsOnMouseOut = useSelector((state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut);
-    const enableAtomHovering = useSelector((state: moorhen.State) => state.hoveringStates.enableAtomHovering);
+    const focusHierarchy = useSelector((state: RootState) => state.modals.focusHierarchy);
+    const transparentModalsOnMouseOut = useSelector((state: RootState) => state.generalStates.transparentModalsOnMouseOut);
+    const enableAtomHovering = useSelector((state: RootState) => state.hoveringStates.enableAtomHovering);
 
     const [currentZIndex, setCurrentZIndex] = useState<number>(999);
     const [opacity, setOpacity] = useState<number>(1.0);
@@ -241,6 +247,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
 
     /** onMouseDown handler for the header drag button. Starts drag tracking. */
     const handleDragStart = (evt: React.MouseEvent) => {
+        dispatch(focusOnModal(modalIdRef.current));
         pauseAtomHovering();
         evt.preventDefault();
         evt.stopPropagation();
@@ -270,17 +277,27 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             let y = prev.y + deltaY;
             if (x < 0) {
                 x = 0;
-            } else if (x > windowWidth - 100) {
-                x = windowWidth - 100;
+            } else if (x > sceneWidth - size.width) {
+                x = sceneWidth - size.width;
             }
             if (y < 0) {
                 y = 0;
-            } else if (y > windowHeight - 100) {
-                y = windowHeight - 100;
+            } else if (y > sceneHeight - size.height - 88) {
+                y = sceneHeight - size.height - 88;
             }
-            return { x, y };
+            return { x: docked ? prev.x : x, y };
         });
     };
+
+    useLayoutEffect(() => {
+        if (position.x > sceneWidth - size.width) {
+            setPosition(prev => ({ ...prev, x: sceneWidth - size.width }));
+        }
+        if (position.y + size.height + 88 > sceneHeight) {
+            const y = sceneHeight - size.height - 88;
+            setPosition(prev => ({ ...prev, y: y > 0 ? y : 0 }));
+        }
+    }, [sceneWidth, sceneHeight]);
 
     // ── Resize logic ───────────────────────────────────────────────────
 
@@ -296,6 +313,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const handleResizeStop = () => {
         abortControllerRef.current?.abort();
         resumeAtomHovering();
+        if (rememberSize) {
+            setSavedSize(sizeRef.current);
+        }
         onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
     };
 
@@ -303,11 +323,11 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
      * pointermove handler during resize. Computes new size from pointer delta,
      * clamps to min/max bounds, then updates both the synchronous ref (for
      * the next pointermove) and React state (to trigger re-render).
-     *
-     * Reads from `sizeRef` (not `size` state) to avoid stale closure — see
-     * the ref comment block above.
      */
     const resizeModal = (evt: PointerEvent) => {
+        if (docked) {
+            return;
+        }
         evt.preventDefault();
         evt.stopPropagation();
         const deltaX = evt.pageX - lastMousePos.current.x;
@@ -316,6 +336,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
 
         let width = sizeRef.current.width + deltaX;
         let height = sizeRef.current.height + deltaY;
+
+        if (lockAspectRatio) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                height = width / aspectRatioRef.current;
+            } else {
+                width = height * aspectRatioRef.current;
+            }
+        }
+
         if (width < minWidth) {
             width = minWidth;
         } else if (width > maxWidth) {
@@ -327,10 +356,41 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             height = maxHeight;
         }
         const newSize = { width, height };
-        sizeRef.current = newSize;
         setSize(newSize);
         onResizeRef.current?.(evt, "bottomRight", null, { width: deltaX, height: deltaY }, newSize);
     };
+
+    // ── Docking & collapsing logic ─────────────────────────────────────
+    const unDockRef = useRef<{ position: { x: number; y: number }; size: { width: number; height: number } }>({ position, size });
+    const handleDocking = () => {
+        if (!allowDocking) {
+            return;
+        }
+        if (!docked) {
+            unDockRef.current = { position, size };
+            setPosition({ x: glWidth - 300 - 36, y: 100 });
+            setSize(prev => {
+                const aspect = prev.width / prev.height;
+                return { width: 300, height: 300 / aspect };
+            });
+            setDocked(true);
+            onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, { width: 300, height: 300 / aspectRatioRef.current });
+            onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
+        } else {
+            setPosition(unDockRef.current.position);
+            setSize(unDockRef.current.size);
+            setDocked(false);
+            onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, unDockRef.current.size);
+            onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
+        }
+    };
+
+    useLayoutEffect(() => {
+        if (!docked) {
+            return;
+        }
+        setPosition({ x: glWidth - size.width - 36, y: position.y });
+    }, [glWidth]);
 
     // ── Close logic ────────────────────────────────────────────────────
     const handleClose = useCallback(async () => {
@@ -363,10 +423,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
 
     // Phase 2: the actual visible modal.
     return (
-        /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-        /* eslint-disable jsx-a11y/click-events-have-key-events */
         <div
             id={modalIdRef.current}
+            ref={modalRef}
             role="dialog"
             aria-modal="true"
             onClick={() => dispatch(focusOnModal(modalIdRef.current))}
@@ -378,9 +437,9 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 height: size.height + 48 + 40,
                 width: size.width,
                 minWidth: minWidth,
-                minHeight: minHeight + 48 + 40,
+                minHeight: collapse ? 40 : minHeight + 88,
                 maxWidth: maxWidth,
-                maxHeight: collapse ? 32 + 48 : maxHeight + 48 + 40,
+                maxHeight: collapse ? 43 : maxHeight + 48 + 40,
             }}
             onMouseOver={() => setOpacity(1.0)}
             onFocus={() => setOpacity(1.0)}
@@ -397,6 +456,15 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 </button>
                 <div className={`moorhen__modal-header-buttons`}>
                     {collapse ? null : additionalHeaderButtons?.map(button => button)}
+                    {allowDocking && (
+                        <MoorhenButton
+                            type="icon-only"
+                            icon={docked ? "MatSymArrowMenuClose" : "MatSymLastPage"}
+                            size="small"
+                            onClick={handleDocking}
+                            tooltip={docked ? "Undock" : "Dock to side"}
+                        />
+                    )}
                     <MoorhenButton
                         type="icon-only"
                         icon={collapse ? "MatSymAdd" : "MatSymRemove"}
@@ -409,25 +477,31 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             <div
                 className="moorhen__modal-body"
                 style={{
-                    maxHeight: maxHeight,
+                    maxHeight: maxHeight - 88, // Account for header/footer height
                     maxWidth: maxWidth,
                 }}
             >
                 {props.body}
             </div>
-            <div className="moorhen__modal-footer">
-                {props.footer}
-                {"\u00A0\u00A0\u00A0"}
-                <MoorhenButton
-                    type="icon-only"
-                    icon="resizable"
-                    size="medium"
-                    className="moorhen__modal-stretch-button"
-                    iconStyle={{ cursor: "nwse-resize" }}
-                    onMouseDown={handleResizeStart}
-                />
-            </div>
-            {additionalChildren}
+            {!collapse && (
+                <>
+                    <div className="moorhen__modal-footer">
+                        {props.footer}
+                        {"\u00A0\u00A0\u00A0"}
+                        {!docked && (
+                            <MoorhenButton
+                                type="icon-only"
+                                icon="resizable"
+                                size="medium"
+                                className="moorhen__modal-stretch-button"
+                                iconStyle={{ cursor: "nwse-resize" }}
+                                onMouseDown={handleResizeStart}
+                            />
+                        )}
+                    </div>
+                    {additionalChildren}{" "}
+                </>
+            )}
         </div>
     );
 };

@@ -6,18 +6,12 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifferenceMapPeaks";
 
 export const MoorhenDiffMapPeaksModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
 
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.DIFF_MAP_PEAKS}
-            left={width / 6}
-            top={height / 3}
-            minHeight={convertViewtoPx(30, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(90, height)}
-            maxWidth={convertViewtoPx(80, width)}
+            initialWidth={width / 3}
             enforceMaxBodyDimensions={false}
             overflowY="hidden"
             overflowX="auto"
