@@ -5,7 +5,6 @@ import { Snackbar, closeSnackbar } from "@/store/snackbarSlice";
 import "./snack-bars.css";
 
 /* to fix :
-"stepped-refine"
 enqueueSnackbar(modalKeys.CARB_VALIDATION,
 "Move to side panel"
 */

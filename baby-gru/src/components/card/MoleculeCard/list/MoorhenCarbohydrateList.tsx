@@ -53,6 +53,14 @@ export const MoorhenCarbohydrateList = (props: {
 
     const extraControl = [
         <MoorhenButton
+            type="icon-only"
+            icon="MatSymInfo"
+            style={{ margin: "0.1rem", padding: "0.1rem" }}
+            onClick={() => window.open("https://privateer.york.ac.uk/")}
+            tooltip="This plugin uses Privateer."
+        />,
+
+        <MoorhenButton
             icon={showGlycoBlock ? "MatSymVisibility" : "MatSymVisibilityOff"}
             variant="white"
             onClick={toggleGlycoBlocks}
