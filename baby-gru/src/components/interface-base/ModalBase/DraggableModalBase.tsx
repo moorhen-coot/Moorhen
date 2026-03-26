@@ -325,9 +325,6 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
      * the next pointermove) and React state (to trigger re-render).
      */
     const resizeModal = (evt: PointerEvent) => {
-        if (docked) {
-            return;
-        }
         evt.preventDefault();
         evt.stopPropagation();
         const deltaX = evt.pageX - lastMousePos.current.x;
@@ -355,7 +352,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         } else if (height > maxHeight) {
             height = maxHeight;
         }
-        const newSize = { width, height };
+        const newSize = { width: docked ? size.width : width, height };
         setSize(newSize);
         onResizeRef.current?.(evt, "bottomRight", null, { width: deltaX, height: deltaY }, newSize);
     };
@@ -488,13 +485,13 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                     <div className="moorhen__modal-footer">
                         {props.footer}
                         {"\u00A0\u00A0\u00A0"}
-                        {!docked && (
+                        {docked && lockAspectRatio ? null : (
                             <MoorhenButton
                                 type="icon-only"
-                                icon="resizable"
+                                icon={docked ? "resizableVertical" : "resizable"}
                                 size="medium"
                                 className="moorhen__modal-stretch-button"
-                                iconStyle={{ cursor: "nwse-resize" }}
+                                iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
                                 onMouseDown={handleResizeStart}
                             />
                         )}

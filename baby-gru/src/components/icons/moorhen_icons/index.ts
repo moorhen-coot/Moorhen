@@ -59,6 +59,7 @@ import MatSymDelete from "./MatSymDelete.svg"
 import plus from "./plus.svg"
 import MatSymDoubleArrowUp from "./MatSymDoubleArrowUp.svg"
 import menuModels from "./menuModels.svg"
+import resizableVertical from "./resizableVertical.svg"
 import resizable from "./resizable.svg"
 import menuVectors from "./menuVectors.svg"
 import MatSymInfo from "./MatSymInfo.svg"
@@ -132,6 +133,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "plus": plus,
  "MatSymDoubleArrowUp": MatSymDoubleArrowUp,
  "menuModels": menuModels,
+ "resizableVertical": resizableVertical,
  "resizable": resizable,
  "menuVectors": menuVectors,
  "MatSymInfo": MatSymInfo,
@@ -206,6 +208,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "plus" |
  "MatSymDoubleArrowUp" |
  "menuModels" |
+ "resizableVertical" |
  "resizable" |
  "menuVectors" |
  "MatSymInfo" |
