@@ -14,9 +14,25 @@ export const MoorhenInfoCard = (props: InfoCardProps) => {
             {props.infoText}
         </div>
     );
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const handleMouseLeave = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+        timerRef.current = setTimeout(() => {
+            setPopOverIsShown(false);
+        }, 600);
+    };
 
     return (
-        <div onMouseLeave={() => setPopOverIsShown(false)}>
+        <div
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={() => {
+                if (timerRef.current) {
+                    clearTimeout(timerRef.current);
+                }
+            }}
+        >
             <MoorhenPopover
                 link={popOverLink}
                 linkRef={buttonRef}

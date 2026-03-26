@@ -2,11 +2,10 @@ import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
-import { MoorhenAccordion } from "@/components/interface-base";
+import { MoorhenAccordion, MoorhenInfoCard } from "@/components/interface-base";
 import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
 import { privateer } from "../../../../types/privateer";
-import { modalKeys } from "../../../../utils/enums";
 import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
 
 export const MoorhenCarbohydrateList = (props: {
@@ -52,13 +51,7 @@ export const MoorhenCarbohydrateList = (props: {
     };
 
     const extraControl = [
-        <MoorhenButton
-            type="icon-only"
-            icon="MatSymInfo"
-            style={{ margin: "0.1rem", padding: "0.1rem" }}
-            onClick={() => window.open("https://privateer.york.ac.uk/")}
-            tooltip="This plugin uses Privateer."
-        />,
+        <MoorhenInfoCard infoText={privateerInfoText} />,
 
         <MoorhenButton
             icon={showGlycoBlock ? "MatSymVisibility" : "MatSymVisibilityOff"}
@@ -88,3 +81,13 @@ export const MoorhenCarbohydrateList = (props: {
         </MoorhenAccordion>
     );
 };
+
+const privateerInfoText = (
+    <>
+        <h1>Privateer</h1>
+        <p>This plugin uses Privateer to generate validation data.</p>
+        <a href="https://privateer.york.ac.uk/database" target="_blank" rel="noreferrer">
+            Privateer Website
+        </a>
+    </>
+);

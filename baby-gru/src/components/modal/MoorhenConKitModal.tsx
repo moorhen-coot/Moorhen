@@ -1,30 +1,10 @@
-import { LastPageOutlined } from "@mui/icons-material";
-import { Tooltip } from "@mui/material";
-import { Button, Row } from "react-bootstrap";
-import { useDispatch, useSelector } from "react-redux";
 import { usePaths } from "@/InstanceManager";
-import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
-import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenConKit } from "../validation-tools/MoorhenConKit";
 
 export const MoorhenConKitModal = () => {
-    const menu = "moorhenconKitModal";
-    const dispatch = useDispatch();
-
-    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
-        menu,
-        "modalSize",
-        {
-            width: undefined,
-            height: undefined,
-        },
-        false
-    );
-
     const path = usePaths().urlPrefix;
 
     const infoText = (
@@ -60,18 +40,10 @@ export const MoorhenConKitModal = () => {
         <MoorhenDraggableModalBase
             modalId={modalKeys.CONKIT}
             lockAspectRatio={true}
-            initialHeight={modalSize.height}
-            initialWidth={modalSize.width}
-            onResize={(evt, ref, direction, delta, size) => {
-                setModalSize(size);
-            }}
             enforceMaxBodyDimensions={true}
-            overflowY="auto"
-            overflowX="auto"
             headerTitle={tittleBar}
             footer={null}
-            onResizeStop={() => dispatchPersistentStates(dispatch, menu, [{ key: "modalSize", value: modalSize }])}
-            body={<MoorhenConKit size={modalSize} resizeTrigger={false} />}
+            body={<MoorhenConKit />}
         />
     );
 };
