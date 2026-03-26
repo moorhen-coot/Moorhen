@@ -204,6 +204,7 @@ export namespace moorhen {
         buffer: { id: string };
         atom: AtomInfo;
         isResidueSelection: boolean;
+        label: string;
     }>;
 
     type NewMapContourEvent = CustomEvent<{

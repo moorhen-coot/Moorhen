@@ -27,9 +27,16 @@
  * @see PreferenceEntry
  * @see moorhen.State
  */
-
 import { UnknownAction } from "@reduxjs/toolkit";
-import { moorhen } from "../../../types/moorhen";
+import {
+    setEnableTimeCapsule,
+    setMakeBackups,
+    setMaxBackupCount,
+    setModificationCountBackupThreshold,
+} from "../../../store/backupSettingsSlice";
+import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut, setUseGemmi } from "../../../store/generalStatesSlice";
+import { setElementsIndicesRestrict } from "../../../store/glRefSlice";
+import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice";
 import {
     setDefaultMapLitLines,
     setDefaultMapSamplingRate,
@@ -37,26 +44,16 @@ import {
     setMapLineWidth,
     setReContourMapOnlyOnMouseUp,
 } from "../../../store/mapContourSettingsSlice";
-import {
-    setContourWheelSensitivityFactor,
-    setMouseSensitivity,
-    setZoomWheelSensitivityFactor,
-} from "../../../store/mouseSettings";
-import {
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-} from "../../../store/backupSettingsSlice";
 import { overwriteMapUpdatingScores, setShowScoresToast } from "../../../store/moleculeMapUpdateSlice";
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
-import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice";
+import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../../store/mouseSettings";
+import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice";
 import {
     setClipCap,
     setDefaultBackgroundColor,
     setDefaultBondSmoothness,
     setDepthBlurDepth,
     setDepthBlurRadius,
+    setDoEdgeDetect,
     setDoOutline,
     setDoPerspectiveProjection,
     setDoSSAO,
@@ -64,27 +61,20 @@ import {
     setDoShadowDepthDebug,
     setDrawAxes,
     setDrawCrosshairs,
-    setUseOffScreenBuffers,
     setDrawFPS,
     setDrawMissingLoops,
+    setDrawScaleBar,
+    setEdgeDetectDepthScale,
+    setEdgeDetectDepthThreshold,
+    setEdgeDetectNormalScale,
+    setEdgeDetectNormalThreshold,
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setEdgeDetectNormalScale,
-    setDrawScaleBar,
-    setDoEdgeDetect,
-    setEdgeDetectDepthThreshold,
-    setEdgeDetectNormalThreshold,
-    setEdgeDetectDepthScale,
+    setUseOffScreenBuffers,
 } from "../../../store/sceneSettingsSlice";
-import {
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setDevMode,
-    setUseGemmi,
-} from "../../../store/generalStatesSlice";
-import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice";
-import { setElementsIndicesRestrict } from "../../../store/glRefSlice";
+import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
+import { moorhen } from "../../../types/moorhen";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
@@ -393,7 +383,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "useGemmi",
         valueSetter: setUseGemmi,
         selector: (state: moorhen.State) => state.generalStates.useGemmi,
-        defaultValue: false,
+        defaultValue: true,
     },
     51: {
         label: "elementsIndicesRestrict",

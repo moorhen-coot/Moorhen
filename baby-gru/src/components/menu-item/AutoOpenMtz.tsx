@@ -1,6 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useDispatch, useStore } from "react-redux";
 import { useCallback, useRef } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMapList } from "../../store/mapsSlice";
@@ -14,7 +15,7 @@ export const AutoOpenMtz = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     const dispatch = useDispatch();
-    const store = useStore();
+    const store = useStore<RootState>();
 
     const onCompleted = useCallback(async () => {
         if (filesRef.current.files.length === 0) {

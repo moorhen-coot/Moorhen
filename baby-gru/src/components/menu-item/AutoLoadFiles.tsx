@@ -1,13 +1,13 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useState } from "react";
 import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
-import { RootState } from "../../store/MoorhenReduxStore";
+import { MoorhenReduxStoreType, RootState } from "../../store/MoorhenReduxStore";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
 import { MoorhenFileInput } from "../inputs";
 
 export const AutoLoadFiles = () => {
     const commandCentre = useCommandCentre();
-    const store = useStore();
+    const store: MoorhenReduxStoreType = useStore<RootState>();
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
     const monomerLibraryPath = useMoorhenInstance().paths.monomerLibraryPath;
     const dispatch = useDispatch();

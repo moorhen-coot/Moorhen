@@ -117,17 +117,13 @@ message MapColour {
   int32 b = 3;
 }
 
-message PathElement {
-  repeated float v = 1;
-}
-
 message GradientStop {
   float stop = 1;
   string colour = 2;
 }
 
 message MoorhenOverlay2DFracPath {
-  repeated PathElement path = 1;
+  repeated float path = 1;
   optional string fillStyle = 2;
   optional string strokeStyle = 3;
   optional string drawStyle = 4;
@@ -153,7 +149,7 @@ message MoorhenOverlay2DTextFrac {
   float y = 2;
   string text = 3;
   string fontFamily = 4;
-  string fontPixelSize = 5;
+  float fontPixelSize = 5;
   optional string fillStyle = 6;
   optional string strokeStyle = 7;
   optional string drawStyle = 8;

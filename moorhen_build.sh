@@ -6,10 +6,14 @@
 #installed (by default) in install/web_packages/baby-gru. The "install"
 #part of this can also be changed below.
 
-if command -v greadlink > /dev/null 2>&1; then
-    MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+if [ "x$MOORHEN_SOURCE_DIR" = "x" ]; then
+    if command -v greadlink > /dev/null 2>&1; then
+        MOORHEN_SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+    else
+        MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+    fi
 else
-    MOORHEN_SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+    echo "Using MOORHEN_SOURCE_DIR from environment: $MOORHEN_SOURCE_DIR"
 fi
 
 . ${MOORHEN_SOURCE_DIR}/VERSIONS
@@ -42,11 +46,6 @@ fi
 
 mkdir -p ${BUILD_DIR}
 mkdir -p ${INSTALL_DIR}
-
-fail() {
-    echo $1
-    exit 1
-}
 
 clearzlib() {
     echo "Clear zlib"
@@ -232,16 +231,14 @@ cleargraphene() {
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.data
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.worker.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.js
-    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmweb_example.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/coot_env_web.js
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/data.tar.gz
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/Components-inchikey.ich
+    rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons
 }
 
 clearlhasa() {
@@ -516,13 +513,13 @@ else
 fi
 
 if test x"${MEMORY64}" = x"1"; then
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen64.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm; then
     true
 else
     BUILD_MOORHEN=true
 fi
 else
-if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasmmoorhen.wasm; then
+if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen.wasm; then
     true
 else
     BUILD_MOORHEN=true
@@ -661,7 +658,7 @@ if [ $BUILD_GSL = true ]; then
     getgsl
     mkdir -p ${BUILD_DIR}/gsl_build
     cd ${BUILD_DIR}/gsl_build
-    emconfigure ${MOORHEN_SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
+    emconfigure ${MOORHEN_SOURCE_DIR}/gsl-${gsl_release}/configure --prefix=${INSTALL_DIR}
     emmake make LDFLAGS=-all-static -j ${NUMPROCS} CXXFLAGS="${MOORHEN_CMAKE_FLAGS}" CFLAGS="${MOORHEN_CMAKE_FLAGS}"
     emmake make install || fail "Error installing gsl, giving up."
 fi
@@ -902,6 +899,7 @@ if [ $BUILD_MOORHEN = true ]; then
     getcoot
     getlhasa
     getmonomers
+    getrotarama
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
     emcmake cmake -DMEMORY64=${MEMORY64} -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
@@ -909,6 +907,8 @@ if [ $BUILD_MOORHEN = true ]; then
     emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
     npm install
+    # NOTE: If you change/add some steps below, make sure to update .github/workflows/run-tests.yml
+    # down below in the 'Set up LhasaReact and monomers' step, if needed.
     printf "\e[36mCopying LhasaReact...\e[0m"
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
     cp -r ${MOORHEN_SOURCE_DIR}/checkout/LhasaReact ${MOORHEN_SOURCE_DIR}/baby-gru/src/

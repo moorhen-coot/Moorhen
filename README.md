@@ -21,15 +21,15 @@ The following libraries/programs are compiled to Web Assembly:
 * gemmi 0.7.0
 * libcoot (commit hash specified in `VERSIONS`; latest release is 1.20) 
 * fftw 2.1.5
-* fftw3 3.3.5
-* gsl 2.7.1
+* fftw3 3.3.10
+* gsl 2.8
 * Boost 1.89.0
 * glm 0.9.9.8
 * Eigen 3.4.0
-* RDKit 2025\_09\_2
+* RDKit 2025\_09\_6
 * graphene 1.10.8
-* libsigc++ 3.6.0
-* Freetype 2.14.1
+* libsigc++ 3.8.0
+* Freetype 2.14.3
 * Jsoncpp 1.9.6
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
@@ -70,7 +70,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 5.0.0 - the 24th January 2026 release, and several earlier versions.)
+(Moorhen is known to build successfully with emscripten version 5.0.3 - the 14th March 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
@@ -84,7 +84,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 <br/>After first checkout you should run the following to build the 32-bit and 64-bit WebAssembly versions of Moorhen:  
 `./moorhen_build.sh`  
 `./moorhen_build.sh  --64bit`  
-This should build all dependencies and then `Moorhen`.
+This should build all dependencies and then build `Moorhen`.
 
 **It is important to build both versions at the moment.**
 

@@ -1,13 +1,20 @@
 name: Run tests
 
+## Todo: Also consider building & testing 64-bit WebAssembly version of Moorhen.
+## Not currently done to save CI time.
+
 on:
+  # Every day at midnight UTC
+  schedule:
+  - cron: "0 0 * * *"
   push:
-  pull_request:
 
 jobs:
   run_tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    env:
+      TARGET_EMSDK_VERSION: 5.0.4
+    timeout-minutes: 240
     steps:
 
     - name: Checkout repository
@@ -15,26 +22,117 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Install node.js v22
-      uses: actions/setup-node@v3
+    - name: Install Node.js v24
+      uses: actions/setup-node@v4
       with:
-        node-version: 22
+        node-version: 24
         cache: 'npm'
         cache-dependency-path: baby-gru/package-lock.json
 
-    - name: Install Lhasa sources
-      working-directory: /home/runner/work/Moorhen/Moorhen
+    - name: Install system dependencies     
       run: |
-          source VERSIONS && source ./get_sources_funs && getlhasa
-          echo The MOORHEN_SOURCE_DIR resolved by get_sources_funs is wrong because it\'s being sourced \(not executed directly\). And we need to source it here..
-          cd .. && mv checkout /home/runner/work/Moorhen/Moorhen/
-          cd /home/runner/work/Moorhen/Moorhen && cp -rv checkout/LhasaReact baby-gru/src/
+        sudo apt-get update -y
+        sudo apt-get install -y git bzr patch curl meson cmake bison flex pkg-config build-essential
 
-    - name: Install dependencies
+    - name: Cache emsdk
+      id: cache-emsdk
+      uses: actions/cache@v4
+      with: 
+        path: emsdk/
+        key: emsdk-cache-${{ env.TARGET_EMSDK_VERSION }}
+
+    - name: Download and install Emsdk
+      if: steps.cache-emsdk.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd emsdk/
+        ./emsdk install $TARGET_EMSDK_VERSION
+
+    - name: Activate Emsdk
+      run: |
+        cd emsdk/
+        ./emsdk activate $TARGET_EMSDK_VERSION
+
+    - name: Read Coot commit hash
+      id: coot_commit
+      # Sources VERSIONS and
+      # exports the value as a step output for use in cache keys below.
+      run: |
+        . ./VERSIONS
+        echo "commit=${coot_commit}" >> "$GITHUB_OUTPUT"
+    - name: Read LhasaReact commit hash
+      id: lhasa_commit
+      # Sources VERSIONS and
+      # exports the value as a step output for use in cache keys below.
+      run: |
+        . ./VERSIONS
+        echo "commit=${lhasa_commit}" >> "$GITHUB_OUTPUT"
+    - name: Hash dependency versions and build scripts (excluding Coot and Lhasa)
+      id: dep_versions
+      run: |
+        { grep -v 'lhasa\|coot_commit=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
+    - name: Cache prebuilt C++ dependencies with sources
+      id: cache-cpp-dependencies
+      uses: actions/cache@v4
+      with:
+        # include/glm and rdkit are symlinks to the GLM headers and to the rdkit sources respectively.
+        # They need to be included in the cache, I think.
+        # Note: we cannot exclude Coot and LhasaReact sources from this cache because there is no syntax to do so.
+        path: |
+          checkout/
+          install/
+          CCP4_WASM_BUILD/
+          include/glm
+          rdkit
+        key: prebuilt-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
+    # Restoring this cache now should overwrite whatever junk was put into checkout/coot-1.0 by the previous step
+    - name: Cache Coot and Lhasa sources
+      id: cache-coot-lhasa-src
+      uses: actions/cache@v4
+      with:
+        path: |
+          checkout/coot-1.0
+          checkout/LhasaReact
+        key: coot-src-${{ steps.coot_commit.outputs.commit }}-lhasa-src-${{ steps.lhasa_commit.outputs.commit }}
+    - name: Download Coot and LhasaReact sources
+      if: steps.cache-coot-lhasa-src.outputs.cache-hit != 'true'
+      env:
+        MOORHEN_SOURCE_DIR: ${{ github.workspace }}
+      run: |
+        source ./get_sources_funs && getcoot && getlhasa
+    - name: Download C++ dependencies
+      if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
+      run: |
+        ./get_sources
+    - name: Build C++ dependencies
+      if: steps.cache-cpp-dependencies.outputs.cache-hit != 'true'
+      run: |
+        source emsdk/emsdk_env.sh
+        # This also builds Moorhen, but we don't care about it here.
+        ./initial_build.sh
+    - name: Cache Moorhen WASM build
+      id: cache-moorhen-wasm
+      uses: actions/cache@v4
+      with:
+        path: |
+          baby-gru/public/MoorhenAssets/
+        key: moorhen-wasm-${{ hashFiles('CMakeLists.txt', 'wasm_src/**', 'wasm_src_frontend/**', 'metaballs/**', 'moorhen_build.sh') }}-coot-${{ steps.coot_commit.outputs.commit }}-lhasa-${{ steps.lhasa_commit.outputs.commit }}-deps-${{ steps.dep_versions.outputs.hash }}-emsdk-${{ env.TARGET_EMSDK_VERSION }}
+    - name: Build Moorhen WASM
+      if: steps.cache-moorhen-wasm.outputs.cache-hit != 'true'
+      run: |
+        source emsdk/emsdk_env.sh
+        ./moorhen_build.sh
+    - name: Set up LhasaReact and monomers
+      if: steps.cache-moorhen-wasm.outputs.cache-hit == 'true'
+      run: |
+        rm -rf baby-gru/src/LhasaReact
+        cp -r checkout/LhasaReact baby-gru/src/
+        ln -sf ${{ github.workspace }}/checkout/monomers baby-gru/public/MoorhenAssets/monomers
+    - name: Install Node.js dependencies
       working-directory: baby-gru
       run: npm ci
 
-    - name: Test typescript transpilation
+    - name: Test Typescript transpilation
       working-directory: baby-gru
       run: |
         npm run create-version
@@ -42,6 +140,11 @@ jobs:
         npx graphql-codegen
         npx tsc
         
-    - name: Run react tests
+    - name: Run React tests
       working-directory: baby-gru
       run: npm run test-react
+    - name: Run tests
+      working-directory: baby-gru
+      run: |
+        source ../emsdk/emsdk_env.sh
+        npm test

@@ -33,30 +33,10 @@ export const SequenceRow = memo(
         } = props;
         const refList: React.RefObject<HTMLDivElement>[] = sequence.residues?.map(() => useRef<HTMLDivElement>(null)) ?? [];
 
-        const residueBoxes = sequence.residues?.map((residue, j) => (
-            <div key={sequence.molNo + sequence.chain + (sequence.key ? sequence.key : "") + `box${j}`} ref={refList[j]}>
-                <ResidueBox
-                    sequence={sequence}
-                    residue={residue}
-                    index={j}
-                    columnWidth={columnWidth}
-                    fontSize={fontSize}
-                    hoveredResidue={hoveredResidue}
-                    isGliding={isGliding}
-                    handleResidueMouseOver={handleResidueMouseOver}
-                    handleResidueMouseDown={handleResidueMouseDown}
-                    handleResidueMouseUp={handleResidueMouseUp}
-                    showValidationData={showValidationData}
-                    validationTracks={validationTracks}
-                />
-            </div>
-        ));
-
         const validationTracksLabels = showValidationData
             ? validationTracks?.map((value, index) => {
                   return (
                       <div
-                          key={`validation-label-${index}`}
                           className="moorhen__seqviewer__sticky-left-column"
                           style={{
                               minWidth: `${nameColumnWidth}rem`,
@@ -86,19 +66,39 @@ export const SequenceRow = memo(
               })
             : null;
 
-        const validationTracksComponents = showValidationData
-            ? sequence.residues.map((residue, j) => (
-                  <ValidationTracks
-                      key={sequence.molNo + sequence.chain + `box${j}` + "_validation" + (sequence.key ? sequence.key : "")}
-                      popoverRef={refList[j]}
-                      sequence={sequence}
-                      residue={residue}
-                      columnWidth={columnWidth}
-                      handleResidueMouseUp={handleResidueMouseUp}
-                      validationTracks={validationTracks}
-                  />
-              ))
-            : null;
+        const residueColumns =
+            sequence.residues?.map((residue, j) => (
+                <div
+                    key={sequence.molNo + sequence.chain + (sequence.key ?? "") + `column${j}`}
+                    ref={refList[j]}
+                    style={{ display: "flex", flexDirection: "column" }}
+                >
+                    <ResidueBox
+                        sequence={sequence}
+                        residue={residue}
+                        index={j}
+                        columnWidth={columnWidth}
+                        fontSize={fontSize}
+                        hoveredResidue={hoveredResidue}
+                        isGliding={isGliding}
+                        handleResidueMouseOver={handleResidueMouseOver}
+                        handleResidueMouseDown={handleResidueMouseDown}
+                        handleResidueMouseUp={handleResidueMouseUp}
+                        showValidationData={showValidationData}
+                        validationTracks={validationTracks}
+                    />
+                    {showValidationData && (
+                        <ValidationTracks
+                            sequence={sequence}
+                            residue={residue}
+                            columnWidth={columnWidth}
+                            handleResidueMouseUp={handleResidueMouseUp}
+                            validationTracks={validationTracks}
+                            popoverRef={refList[j]}
+                        />
+                    )}
+                </div>
+            )) ?? [];
 
         return (
             <MoorhenStack direction="row">
@@ -113,14 +113,9 @@ export const SequenceRow = memo(
                     className="moorhen__seqviewer__left-column-spacer"
                     style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}
                 />
-                <MoorhenStack direction="column">
-                    <div className="moorhen__seqviewer__residues-container" style={{ display: "flex", flexDirection: "row" }}>
-                        {residueBoxes}
-                    </div>
-                    <div className="moorhen__seqviewer__residues-container" style={{ display: "flex", flexDirection: "row" }}>
-                        {validationTracksComponents}
-                    </div>
-                </MoorhenStack>
+                <div className="moorhen__seqviewer__residues-container" style={{ display: "flex", flexDirection: "row" }}>
+                    {residueColumns}
+                </div>
             </MoorhenStack>
         );
     }

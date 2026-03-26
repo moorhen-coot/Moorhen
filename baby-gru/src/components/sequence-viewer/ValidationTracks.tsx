@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { getColorFromGradient } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPopover, MoorhenStack } from "../interface-base";
@@ -76,6 +76,17 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
             <span style={{ fontStyle: "italic" }}>No validation data available</span>
         );
 
+    useEffect(() => {
+        if (props.popoverRef?.current) {
+            const handleMouseLeave = () => setIsPopoverShown(false);
+            const currentRef = props.popoverRef.current;
+            currentRef.onmouseleave = handleMouseLeave;
+            return () => {
+                currentRef.onmouseleave = null;
+            };
+        }
+    }, [props.popoverRef]);
+
     if (validationTracks.length > 0) {
         return (
             <MoorhenPopover
@@ -91,7 +102,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                         data-rescode={residue.resCode}
                         data-rescid={residue.resCID}
                         onMouseEnter={() => setIsPopoverShown(true)}
-                        onMouseLeave={() => setIsPopoverShown(false)}
+                        // onMouseLeave={() => setIsPopoverShown(false)}
                         onMouseUp={props.handleResidueMouseUp}
                     >
                         {tracks}

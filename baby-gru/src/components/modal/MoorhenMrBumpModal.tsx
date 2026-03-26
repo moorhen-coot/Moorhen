@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import { Button, Card, Col, Container, Form, ListGroup, Row, Stack, Tab, Tabs } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
+import { RootState } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMoleculeList } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -151,7 +152,7 @@ export const MoorhenMrBumpModal = () => {
 
     const filesRef = useRef<null | HTMLInputElement>(null);
 
-    const store = useStore();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const { enqueueSnackbar } = useSnackbar();
@@ -295,7 +296,7 @@ export const MoorhenMrBumpModal = () => {
 
         for (const file of files) {
             if (file.name === "models.json" && file.webkitRelativePath.includes("logs/models.json")) {
-                const fileContents = await file.text()
+                const fileContents = await file.text();
                 const json = JSON.parse(fileContents);
                 for (const iter of Object.entries(json)) {
                     const key: string = iter[0];
@@ -322,10 +323,10 @@ export const MoorhenMrBumpModal = () => {
                 }
             }
             if (file.name === "alignment_report.log" && file.webkitRelativePath.includes("alignment_report.log")) {
-                alignText = await file.text()
+                alignText = await file.text();
             }
             if (file.name === "phmmer.log" && file.webkitRelativePath.includes("phmmer.log")) {
-                phmmerText = await file.text()
+                phmmerText = await file.text();
             }
         }
 
