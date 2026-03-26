@@ -92,6 +92,46 @@ bool is64bit(){
 #endif
 }
 
+std::string get_nef_restraints(const std::string &data){
+
+    auto doc = gemmi::cif::read_string(data);
+
+    Json::Value root;
+
+    for (const auto& block: doc.blocks){
+        for (const auto& item: block.items){
+           if (item.type == gemmi::cif::ItemType::Frame){
+                const gemmi::cif::Block& frame = item.frame;
+                bool isNoeRestrains = false;
+                for(const auto& item2 : frame.items){
+                    if(item2.type == gemmi::cif::ItemType::Pair) {
+                        if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]=="noe"){
+                            isNoeRestrains = true;
+                        }
+                    }
+                    if(isNoeRestrains){
+                        if(item2.type == gemmi::cif::ItemType::Loop) {
+                            for(auto i=0;i<item2.loop.values.size();i+=item2.loop.tags.size()){
+                                Json::Value row;
+                                for(auto j=0;j<item2.loop.tags.size();j++){
+                                    row[item2.loop.tags[j]] = item2.loop.values[i+j];
+                                }
+                                root.append(row);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Json::StreamWriterBuilder builder;
+    const std::string json_string = Json::writeString(builder, root);
+
+    return json_string;
+
+}
+
 namespace moorhen {
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
@@ -571,10 +611,10 @@ class molecules_container_js : public molecules_container_t {
                 }
                 root[chain.name] = chain_json;
             }
-            
+
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
-            
+
             return json_string;
         }
 
@@ -2963,5 +3003,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("is64bit",&is64bit);
 
     function("run_conkit_validate",&run_conkit_validate_with_exception);
+
+    function("get_nef_restraints",&get_nef_restraints);
 
 }
