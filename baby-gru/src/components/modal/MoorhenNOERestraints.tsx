@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setValidationJson } from "../../store/jsonValidation";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, readTextFile, readDataFile } from "../../utils/utils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 // import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
@@ -161,25 +161,16 @@ export const MoorhenNOERestraints = () => {
         for (const file of files) {
             if (file.name.endsWith(".gz"))
             {
-                const binFileContents = (await readDataFile(file));
+                const binFileContents = await file.arrayBuffer()
                 // console.log(binFileContents)
-                const gunzippeddata =  pako.ungzip(binFileContents)
-
-               let fileContents = ""
-                const chunk = 32*1024;
-                let i
-                for (i = 0; i < gunzippeddata.length/chunk; i++) {
-                    fileContents += String.fromCharCode.apply(null,gunzippeddata.subarray(i*chunk,(i+1)*chunk));
-                }
-                fileContents += String.fromCharCode.apply(null,gunzippeddata.subarray(i*chunk));
-                // console.log(fileContents)
+                const fileContents =  pako.inflate(binFileContents, { to: "string" })
                 var restraintData = parseNEF_NOEs(fileContents)
                 const convertedData = convertDataframe(restraintData)
                 console.log(convertedData)
 
             }
             else {  
-                const fileContents = (await readTextFile(file)) as string;
+                const fileContents = await file.text()
                 // console.log(fileContents)
                 parseNEF_NOEs(fileContents)
                 var restraintData = parseNEF_NOEs(fileContents)

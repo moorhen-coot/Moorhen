@@ -11,7 +11,6 @@
 // import { addMap } from "../../store/mapsSlice";
 // import { Store } from "@reduxjs/toolkit";
 // import { useSnackbar } from "notistack";
-import { readTextFile } from "../../utils/utils"
 import { parseNEF_NOEs } from "../../utils/MoorhenNEFParser_tk"
 // import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { useSnackbar } from "notistack";
@@ -70,7 +69,7 @@ export const ImportNOERestraints = () => {
             const files = Array.from(filesRef.current.files);
             const newNOE = [];   
             if (files.length > 0 ) {
-               const fileContents = await readTextFile(files[0]) as string 
+               const fileContents = await files[0].text()
                console.log(fileContents)
                const parsedNOE = parseNEF_NOEs(fileContents)
                console.log(parsedNOE)
