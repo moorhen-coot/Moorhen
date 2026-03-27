@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState } from "@/store";
 import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
@@ -110,6 +110,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const glHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const sceneWidth = useSelector((state: RootState) => state.sceneSettings.width);
     const sceneHeight = useSelector((state: RootState) => state.sceneSettings.height);
+    const mainMenuIsOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
     const maxHeight = props.maxHeight ?? glHeight;
     const maxWidth = props.maxWidth ?? glWidth;
     const aspectRatioRef = useRef<number>(1);
@@ -117,7 +118,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         width: 1,
         height: 1,
     });
-    const [docked, setDocked] = useState<boolean>(false);
+    const [docked, setDocked] = useState<null | "left" | "right">(null);
 
     const [savedSize, setSavedSize] = usePersistentState("modalSizes", props.modalId, { width: null, height: null }, true);
 
@@ -171,7 +172,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     const transparentModalsOnMouseOut = useSelector((state: RootState) => state.generalStates.transparentModalsOnMouseOut);
     const enableAtomHovering = useSelector((state: RootState) => state.hoveringStates.enableAtomHovering);
 
-    const [currentZIndex, setCurrentZIndex] = useState<number>(999);
+    const [currentZIndex, setCurrentZIndex] = useState<string>("--var(--z-modals)");
     const [opacity, setOpacity] = useState<number>(1.0);
     const [collapse, setCollapse] = useState<boolean>(false);
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: left, y: top });
@@ -186,7 +187,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     // Recalculate our z-index whenever the global focus hierarchy changes.
     useEffect(() => {
         const focusIndex = focusHierarchy.findIndex(item => item === modalIdRef.current);
-        setCurrentZIndex(999 - focusIndex);
+        setCurrentZIndex(`calc(var(--z-modals) - ${focusIndex})`);
     }, [focusHierarchy]);
 
     // Remove ourselves from the focus hierarchy on unmount.
@@ -272,6 +273,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         const deltaY = evt.pageY - lastMousePos.current.y;
         lastMousePos.current = { x: evt.pageX, y: evt.pageY };
 
+        const maxTop = docked === "left" ? 80 : 0;
         setPosition(prev => {
             let x = prev.x + deltaX;
             let y = prev.y + deltaY;
@@ -280,8 +282,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             } else if (x > sceneWidth - size.width) {
                 x = sceneWidth - size.width;
             }
-            if (y < 0) {
-                y = 0;
+            if (y < maxTop) {
+                y = maxTop;
             } else if (y > sceneHeight - size.height - 88) {
                 y = sceneHeight - size.height - 88;
             }
@@ -359,28 +361,38 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
 
     // ── Docking & collapsing logic ─────────────────────────────────────
     const unDockRef = useRef<{ position: { x: number; y: number }; size: { width: number; height: number } }>({ position, size });
-    const handleDocking = () => {
+    const handleDocking = (side: "left" | "right" | null) => {
         if (!allowDocking) {
             return;
         }
         if (!docked) {
             unDockRef.current = { position, size };
-            setPosition({ x: glWidth - 300 - 36, y: 100 });
+            if (side === "left") {
+                setPosition({ x: mainMenuIsOpen ? 200 : 26, y: 80 });
+            } else if (side === "right") {
+                setPosition({ x: glWidth - 300 - 36, y: 100 });
+            }
             setSize(prev => {
                 const aspect = prev.width / prev.height;
                 return { width: 300, height: 300 / aspect };
             });
-            setDocked(true);
+            setDocked(side);
             onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, { width: 300, height: 300 / aspectRatioRef.current });
             onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
         } else {
             setPosition(unDockRef.current.position);
             setSize(unDockRef.current.size);
-            setDocked(false);
+            setDocked(side);
             onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, unDockRef.current.size);
             onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
         }
     };
+
+    useLayoutEffect(() => {
+        if (docked === "left") {
+            setPosition({ x: mainMenuIsOpen ? 200 : 26, y: position.y });
+        }
+    }, [mainMenuIsOpen]);
 
     useLayoutEffect(() => {
         if (!docked) {
@@ -453,14 +465,35 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 </button>
                 <div className={`moorhen__modal-header-buttons`}>
                     {collapse ? null : additionalHeaderButtons?.map(button => button)}
-                    {allowDocking && (
-                        <MoorhenButton
-                            type="icon-only"
-                            icon={docked ? "MatSymArrowMenuClose" : "MatSymLastPage"}
-                            size="small"
-                            onClick={handleDocking}
-                            tooltip={docked ? "Undock" : "Dock to side"}
-                        />
+                    {allowDocking ? (
+                        docked ? (
+                            <MoorhenButton
+                                type="icon-only"
+                                icon={docked === "left" ? "MatSymArrowMenuOpen" : "MatSymArrowMenuClose"}
+                                size="small"
+                                onClick={() => handleDocking(null)}
+                                tooltip={"Undock"}
+                            />
+                        ) : (
+                            <>
+                                <MoorhenButton
+                                    type="icon-only"
+                                    icon={"MatSymFirstPage"}
+                                    size="small"
+                                    onClick={() => handleDocking("left")}
+                                    tooltip={"Dock to Left side"}
+                                />
+                                <MoorhenButton
+                                    type="icon-only"
+                                    icon={"MatSymLastPage"}
+                                    size="small"
+                                    onClick={() => handleDocking("right")}
+                                    tooltip={"Dock to the Right side"}
+                                />
+                            </>
+                        )
+                    ) : (
+                        ""
                     )}
                     <MoorhenButton
                         type="icon-only"
