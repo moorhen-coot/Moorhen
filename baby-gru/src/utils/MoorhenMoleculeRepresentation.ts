@@ -588,7 +588,15 @@ export class MoleculeRepresentation {
      */
     async getBufferObjects(style?: moorhen.RepresentationStyles, cid?: string) {
         const _style = style ?? this.style;
-        const _cid = cid ?? this.cid;
+        let _cid = cid ?? this.cid;
+
+        if(this.restrictToNeighbours){
+            //Now we might not want to use the new method, maybe the old one.
+            //In either case, we need to be able to do something like getAdaptativeBondBuffers
+            //to *exclude* a selection from a drawing.
+            _cid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0)
+        }
+
         let objects;
         switch (_style) {
             case "VdwSpheres":
