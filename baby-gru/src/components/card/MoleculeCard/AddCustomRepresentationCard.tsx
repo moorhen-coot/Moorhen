@@ -49,6 +49,9 @@ export const AddCustomRepresentationCard = memo(
         );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
+        const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
+        const [neighboursCid, setNeighboursCid] = useState<string>("");
+
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
                 if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
@@ -107,6 +110,10 @@ export const AddCustomRepresentationCard = memo(
 
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
 
+        const handleUseNeighbourhoodSettingsChange = () => {
+            setRestrictToNeighbours(!restrictToNeighbours);
+        }
+
         const handleDefaultRepresentationSettingsChange = () => {
             setUseDefaultRepresentationSettings(!useDefaultRepresentationSettings);
 
@@ -123,6 +130,7 @@ export const AddCustomRepresentationCard = memo(
         };
 
         const createRepresentation = async () => {
+
             props.setBusy?.(true);
 
             let cidSelection: string;
@@ -275,6 +283,8 @@ export const AddCustomRepresentationCard = memo(
                     }
                 } else {
                     representationRef.current.cid = cidSelection;
+                    representationRef.current.restrictToNeighbours = restrictToNeighbours;
+                    representationRef.current.neighboursCid = neighboursCid;
                     representationRef.current.setStyle(representationStyle);
                     representationRef.current.setUseDefaultColourRules(useDefaultColours);
                     representationRef.current.setColourRules(colourRule ? [colourRule] : null);
@@ -286,6 +296,8 @@ export const AddCustomRepresentationCard = memo(
                 const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId);
                 if (representation) {
                     representation.cid = cidSelection;
+                    representation.restrictToNeighbours = restrictToNeighbours;
+                    representation.neighboursCid = neighboursCid;
                     representation.setStyle(styleSelectRef.current.value as moorhen.RepresentationStyles);
                     representation.setUseDefaultColourRules(!colourRule);
                     representation.setColourRules(colourRule ? [colourRule] : null);
@@ -462,6 +474,22 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 ) : null}
+                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
+                    <MoorhenToggle
+                        type="switch"
+                        label={`In neighbourhood of`}
+                        checked={restrictToNeighbours}
+                        onChange={handleUseNeighbourhoodSettingsChange}
+                    />
+                )}
+                {restrictToNeighbours && (
+                    <MoorhenCidInputForm
+                        setCid={setNeighboursCid}
+                        label="Neighbours selection"
+                        defaultValue={props.representation?.neighboursCid ?? ""}
+                        allowUseCurrentSelection={true}
+                    />
+                )}
                 {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
                     <MoorhenToggle
                         ref={useDefaultRepresentationSettingsSwitchRef}

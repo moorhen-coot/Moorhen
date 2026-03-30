@@ -174,6 +174,59 @@ std::string clipperStringAsString(const clipper::String &s){
     return static_cast<std::string>(s);
 }
 
+std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d){
+
+    auto d2 = d*d;
+
+    auto distsq = [](const gemmi::Atom &a1, const gemmi::Atom &a2){
+        return (a1.pos.x-a2.pos.x)*(a1.pos.x-a2.pos.x) + (a1.pos.y-a2.pos.y)*(a1.pos.y-a2.pos.y) + (a1.pos.z-a2.pos.z)*(a1.pos.z-a2.pos.z);
+    };
+
+    gemmi::Selection sel(cid);
+    gemmi::Selection sel2(cidNeighbours);
+
+    std::vector<gemmi::Atom> atoms;
+
+    for(auto m: sel2.models(st)){
+        for(auto c: sel2.chains(m)){
+            for(auto r: sel2.residues(c)){
+                for(auto a: sel2.atoms(r)){
+                    atoms.push_back(a);
+                }
+            }
+        }
+    }
+
+    std::string sel_str = "";
+
+    for(auto m: sel.models(st)){
+        for(auto c: sel.chains(m)){
+            for(auto r: sel.residues(c)){
+                auto num = r.seqid.num;
+                bool found_residue = false;
+                if(num.has_value()){
+                    for(auto a: sel.atoms(r)){
+                        for(auto a2:atoms){
+                            if(distsq(a,a2)<d2){
+                                found_residue = true;
+                                break;
+                            }
+                        }
+                        if(found_residue) break;
+                    }
+                    if(found_residue) sel_str += c.name + "/" + std::to_string(num.value) + "||";
+                }
+            }
+        }
+    }
+
+    if(sel_str.length()>2)
+        return sel_str.substr(0,sel_str.length()-2);
+
+    return "";
+
+}
+
 std::vector<coot::residue_spec_t> getSecondaryStructure(mmdb::Manager *m, int imodel=1){
     /* int_user_data is an int of secondary structure as defined in MMDB:
 
@@ -2963,5 +3016,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("is64bit",&is64bit);
 
     function("run_conkit_validate",&run_conkit_validate_with_exception);
+
+    function("cidToNeighboursCid",&cidToNeighboursCid);
 
 }

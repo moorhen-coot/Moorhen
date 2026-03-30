@@ -51,7 +51,9 @@ export type RepresentationStyles =
 /**
  * Represents a molecule representation
  * @property {string} style - The style of this molecule representation instance
- * @property {string} cid - The CID selection for this colour rule
+ * @property {string} cid - The CID selection
+ * @property {string} restrictToNeighbours - Whether or not to restrict to neighbourhood
+ * @property {string} neighboursCid - The CID for additional selection for neighbourhood
  * @property {moorhen.Molecule} parentMolecule - The molecule assigned to this colour rule
  * @property {string} uniqueId - A unique identifier for this colour rule
  * @property {boolean} visible - Indicates whether the molecule representation is currently visible
@@ -114,6 +116,8 @@ export class MoleculeRepresentation {
     uniqueId: string;
     style: moorhen.RepresentationStyles;
     cid: string;
+    neighboursCid: string;
+    restrictToNeighbours: boolean;
     buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
