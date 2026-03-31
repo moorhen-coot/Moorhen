@@ -1,17 +1,18 @@
 import { useDispatch, useSelector } from "react-redux";
-import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState } from "@/store";
 import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
 import { usePersistentState } from "../../../store/menusSlice";
-import { ModalKey, focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
+import { focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
 import { MoorhenButton } from "../../inputs";
+import { ModalKey } from "./ModalsContainer";
 import "./draggable-modal-base.css";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
     body: React.JSX.Element | React.JSX.Element[];
-    modalId: string;
+    modalId: ModalKey;
     allowDocking?: boolean;
     initialWidth?: number;
     initialHeight?: number;
@@ -40,6 +41,8 @@ type MoorhenDraggableModalBaseProps = {
         ref: HTMLDivElement | null,
         delta: { width: number; height: number }
     ) => void;
+    onDock?: (side: "left" | "right" | null) => void;
+    openDocked?: "left" | "right" | null;
     // --- Props accepted for API compatibility but currently unused internally ---
     enforceMaxBodyDimensions?: boolean;
     resizeNodeRef?: null | React.RefObject<HTMLDivElement>;
@@ -91,6 +94,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         lockAspectRatio = false,
         allowDocking = false,
         rememberSize = true,
+        openDocked = null,
         // The following props are accepted but not used internally.
         // They remain in the type so that existing callers don't break.
         // handleClassName: _handleClassName,
@@ -144,8 +148,16 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             console.log(`Measured body size: ${rect.width}x${rect.height}`);
             setMeasured(true);
         }
+        if (openDocked) {
+            handleDocking(openDocked);
+        }
     }, []);
+
     const modalRef = useRef<HTMLDivElement>(null);
+    const showFooter: boolean = (props.footer ? true : false) || !(docked && lockAspectRatio);
+    const headerHeight = 48;
+    const footerHeight = showFooter ? 40 : 0;
+    const totalNonBodyHeight = headerHeight + footerHeight;
 
     // Refs to avoid stale closures in event listeners.
     //
@@ -386,6 +398,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, unDockRef.current.size);
             onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
         }
+        props.onDock?.(side);
     };
 
     useLayoutEffect(() => {
@@ -443,12 +456,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 opacity: opacity,
                 zIndex: currentZIndex,
                 transform: `translate(${position.x}px, ${position.y}px)`,
-                height: size.height + 48 + 40,
+                height: size.height + totalNonBodyHeight,
                 width: size.width,
                 minWidth: minWidth,
-                minHeight: collapse ? 40 : minHeight + 88,
+                minHeight: collapse ? 40 : minHeight + totalNonBodyHeight,
                 maxWidth: maxWidth,
-                maxHeight: collapse ? 43 : maxHeight + 48 + 40,
+                maxHeight: collapse ? 43 : maxHeight + totalNonBodyHeight,
             }}
             onMouseOver={() => setOpacity(1.0)}
             onFocus={() => setOpacity(1.0)}
@@ -506,31 +519,29 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             </div>
             <div
                 className="moorhen__modal-body"
-                style={{
-                    maxHeight: maxHeight - 88, // Account for header/footer height
-                    maxWidth: maxWidth,
-                }}
+                // style={{
+                //     maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
+                //     maxWidth: maxWidth,
+                // }}
             >
                 {props.body}
+                {additionalChildren}{" "}
             </div>
-            {!collapse && (
-                <>
-                    <div className="moorhen__modal-footer">
-                        {props.footer}
-                        {"\u00A0\u00A0\u00A0"}
-                        {docked && lockAspectRatio ? null : (
-                            <MoorhenButton
-                                type="icon-only"
-                                icon={docked ? "resizableVertical" : "resizable"}
-                                size="medium"
-                                className="moorhen__modal-stretch-button"
-                                iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
-                                onMouseDown={handleResizeStart}
-                            />
-                        )}
-                    </div>
-                    {additionalChildren}{" "}
-                </>
+            {!collapse && showFooter && (
+                <div className="moorhen__modal-footer">
+                    {props.footer}
+                    {"\u00A0\u00A0\u00A0"}
+                    {docked && lockAspectRatio ? null : (
+                        <MoorhenButton
+                            type="icon-only"
+                            icon={docked ? "resizableVertical" : "resizable"}
+                            size="medium"
+                            className="moorhen__modal-stretch-button"
+                            iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
+                            onMouseDown={handleResizeStart}
+                        />
+                    )}
+                </div>
             )}
         </div>
     );

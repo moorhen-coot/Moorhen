@@ -321,7 +321,7 @@ export const MoorhenDevMenu = () => {
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
             <MoorhenMenuItem
                 onClick={() => {
-                    dispatch(showModal(modalKeys.VECTORS));
+                    dispatch(showModal({ key: modalKeys.VECTORS }));
                     document.body.click();
                 }}
             >
@@ -329,7 +329,7 @@ export const MoorhenDevMenu = () => {
             </MoorhenMenuItem>
             <MoorhenMenuItem
                 onClick={() => {
-                    dispatch(showModal(modalKeys.OVERLAYS2D));
+                    dispatch(showModal({ key: modalKeys.OVERLAYS2D }));
                     document.body.click();
                 }}
             >

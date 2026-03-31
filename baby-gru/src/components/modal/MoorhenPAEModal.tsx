@@ -27,13 +27,8 @@ export const MoorhenPAEModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.PAEPLOT}
-            left={width / 6}
-            top={height / 3}
-            minHeight={convertViewtoPx(30, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(90, height)}
-            maxWidth={convertViewtoPx(50, width)}
             enforceMaxBodyDimensions={false}
+            allowDocking
             overflowY="hidden"
             overflowX="auto"
             headerTitle="Alphafold PAE Plot"
@@ -42,13 +37,7 @@ export const MoorhenPAEModal = () => {
                 setModalSize(size);
             }}
             onResizeStop={() => dispatchPersistentStates(dispatch, menu, [{ key: "modalSize", value: modalSize }])}
-            body={
-                <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenPAEPlot size={modalSize} resizeTrigger={false} />
-                    </Row>
-                </div>
-            }
+            body={<MoorhenPAEPlot size={modalSize} resizeTrigger={false} />}
         />
     );
 };

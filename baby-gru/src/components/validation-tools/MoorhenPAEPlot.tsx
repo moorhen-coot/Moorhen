@@ -1,5 +1,3 @@
-import { SnackbarKey, useSnackbar } from "notistack";
-import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { enqueueSnackbar } from "@/store";
@@ -7,9 +5,10 @@ import { setShownControl } from "@/store/globalUISlice";
 import { clearResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
-import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { paeToImageData, resizeImageData } from "../../utils/utils";
+import { MoorhenButton, MoorhenFileInput, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 interface MoorhenPAEProps {
     resizeTrigger?: boolean;
@@ -51,7 +50,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false);
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot");
     const [dataName, setDataName] = useState<string>("");
-    const [currentSnackId, setCurrentSnackId] = useState<SnackbarKey | null>(null);
+    const [currentSnackId, setCurrentSnackId] = useState<string | null>(null);
     const [cursorMode, setCursorMode] = useState<string>("drag");
     const [panXY, setPanXY] = useState<{ x: number; y: number }>({ x: -1, y: -1 });
 
@@ -608,125 +607,96 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         setSelectedModel(parseInt(evt.target.value));
     };
 
-    const plotHeight = props.size.height - convertRemToPx(18);
-    const plotWidth = props.size.width - convertRemToPx(3);
+    const plotHeight = props.size.height - 180;
+    const plotWidth = props.size.width;
     const plotSize = Math.min(plotWidth, plotHeight);
 
     return (
         <>
-            <Row style={{ textAlign: "left" }}>
-                <Col sm={3}>Data source</Col>
-                <InputGroup as={Col} className="mb-3">
-                    <Form.Check
-                        inline
-                        label="Alphafold EBI search"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "uniprot"}
-                        onChange={e => {
-                            handleModeChange(e, "uniprot");
-                        }}
-                    />
-                    <Form.Check
-                        inline
-                        label="PAE File"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "paefile"}
-                        onChange={e => {
-                            handleModeChange(e, "paefile");
-                        }}
-                    />
-                    <Form.Check
-                        inline
-                        label="Loaded molecule"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "molecule"}
-                        onChange={e => {
-                            handleModeChange(e, "molecule");
-                        }}
-                    />
-                </InputGroup>
-            </Row>
-
+            DataSource
+            <MoorhenStack direction="row">
+                <MoorhenToggle
+                    inline
+                    label="Alphafold EBI search"
+                    name="paetypegroup"
+                    type="radio"
+                    checked={paeModeButtonState === "uniprot"}
+                    onChange={e => {
+                        handleModeChange(e, "uniprot");
+                    }}
+                />
+                <MoorhenToggle
+                    inline
+                    label="PAE File"
+                    name="paetypegroup"
+                    type="radio"
+                    checked={paeModeButtonState === "paefile"}
+                    onChange={e => {
+                        handleModeChange(e, "paefile");
+                    }}
+                />
+                <MoorhenToggle
+                    inline
+                    label="Loaded molecule"
+                    name="paetypegroup"
+                    type="radio"
+                    checked={paeModeButtonState === "molecule"}
+                    onChange={e => {
+                        handleModeChange(e, "molecule");
+                    }}
+                />
+            </MoorhenStack>
             {paeModeButtonState === "uniprot" && (
-                <Row style={{ textAlign: "left", marginBottom: "0.2rem" }} className="align-items-centre">
-                    <Form
-                        onSubmit={evt => {
-                            evt.preventDefault();
-                            fetchData();
+                <MoorhenStack direction="row" align="center" justify="flex-start">
+                    <MoorhenTextInput
+                        label="UniProt ID:"
+                        placeholder="e.g. Q12XU1"
+                        text={queryText}
+                        onChange={evt => {
+                            setQueryText(evt.target.value);
                         }}
-                    >
-                        <Form.Group as={Row} className="mb-3" controlId="formAFUniProt">
-                            <Col sm={3}>
-                                <Form.Label>UniProt</Form.Label>
-                            </Col>
-                            <Col sm={4}>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="e.g. Q12XU1"
-                                    value={queryText}
-                                    onChange={evt => {
-                                        setQueryText(evt.target.value);
-                                    }}
-                                />
-                            </Col>
-                            <Col sm={4}>
-                                <MoorhenButton variant="secondary" disabled={queryText.length === 0} size="sm" onClick={fetchData}>
-                                    Fetch and plot
-                                </MoorhenButton>
-                            </Col>
-                        </Form.Group>
-                    </Form>
-                </Row>
+                        onSubmit={() => fetchData()}
+                        style={{ flex: "0 0 auto" }}
+                    />
+
+                    <MoorhenButton variant="secondary" disabled={queryText.length === 0} onClick={fetchData}>
+                        Fetch and plot
+                    </MoorhenButton>
+                </MoorhenStack>
             )}
             {paeModeButtonState === "paefile" && (
-                <Row style={{ marginBottom: "0.1rem" }}>
-                    <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadPAE" className="mb-3">
-                        <Form.Control
-                            type="file"
-                            multiple={false}
-                            accept=".json,.JSON,.pae,.PAE"
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                upLoadPaeFile(e.target.files[0]);
-                            }}
-                        />
-                    </Form.Group>
-                </Row>
+                <MoorhenFileInput
+                    multiple={false}
+                    accept=".json,.JSON,.pae,.PAE"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        upLoadPaeFile(e.target.files[0]);
+                    }}
+                />
             )}
             {paeModeButtonState === "molecule" && (
-                <Row>
-                    <Col sm={3}>Molecule</Col>
-                    <Col sm={4}>
-                        <MoorhenMoleculeSelect selected={selectedModel} onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
-                    </Col>
-                    <Col sm={4}>
-                        <MoorhenButton
-                            variant="secondary"
-                            size="sm"
-                            disabled={selectedModel === null || molecules.length === 0 || selectedModel < 0}
-                            onClick={fetchDataForLoadedMolecule}
-                        >
-                            Fetch and plot
-                        </MoorhenButton>
-                    </Col>
-                </Row>
+                <MoorhenStack direction="row" align="center" justify="flex-start">
+                    <MoorhenMoleculeSelect
+                        selected={selectedModel}
+                        onSelect={sel => setSelectedModel(sel)}
+                        ref={moleculeSelectRef}
+                        style={{ flex: "0 0 auto" }}
+                    />
+                    <MoorhenButton
+                        variant="secondary"
+                        size="sm"
+                        disabled={selectedModel === null || molecules.length === 0 || selectedModel < 0}
+                        onClick={fetchDataForLoadedMolecule}
+                    >
+                        Fetch and plot
+                    </MoorhenButton>
+                </MoorhenStack>
             )}
-            <Row>
-                <Col>
-                    <div>
-                        <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
-                    </div>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <div>
-                        <canvas height={50} width={plotSize} ref={canvasLegendRef}></canvas>
-                    </div>
-                </Col>
-            </Row>
+            <div>
+                <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
+            </div>
+            <div>
+                <canvas height={50} width={plotSize} ref={canvasLegendRef}></canvas>
+            </div>
         </>
     );
 };

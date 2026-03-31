@@ -1,13 +1,13 @@
 import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
+import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
 import { setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import type { ModalKey } from "../../store/modalsSlice";
 import {
     setDoPerspectiveProjection,
     setDoSpin,
@@ -19,6 +19,7 @@ import {
     setDrawScaleBar,
 } from "../../store/sceneSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import * as MenuItems from "../menu-item";
 import { SidePanelIDs } from "../panels";
 
@@ -46,6 +47,7 @@ export type MenuItem = BaseMenuItem & {
 export type MenuItemShowModal = BaseMenuItem & {
     type: "showModal";
     modal: ModalKey;
+    args?: ModalComponentProps;
 };
 
 export type MenuItemShowSidePanel = BaseMenuItem & {
@@ -784,8 +786,8 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "configure-shortcuts",
                 label: "Configure shortcuts...",
-                type: "customJSX",
-                jsx: MenuItems.ShowShortcutModal,
+                type: "showModal",
+                modal: "config-shortcuts",
             },
             {
                 id: "labels-font",

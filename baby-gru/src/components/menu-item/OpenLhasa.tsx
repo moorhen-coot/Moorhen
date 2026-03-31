@@ -109,7 +109,7 @@ export const OpenLhasa = () => {
                     }
                 }
             }
-            dispatch(showModal(modalKeys.LHASA));
+            dispatch(showModal({ key: modalKeys.LHASA }));
             document.body.click();
         } catch (err) {
             dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));

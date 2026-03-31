@@ -1,45 +1,14 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { ModalComponentProps, ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
 
-export type ModalKey =
-    | "models"
-    | "maps"
-    | "acedrg"
-    | "query-seq"
-    | "scripting"
-    | "show-controls"
-    | "fit-ligand"
-    | "rama-plot"
-    | "diff-map-peaks"
-    | "validation-plot"
-    | "mmrrcc"
-    | "water-validation"
-    | "lig-validation"
-    | "fill-partial-residues"
-    | "pepflips"
-    | "unmodelled-blobs"
-    | "carb-validation"
-    | "slice-n-dice"
-    | "superpose"
-    | "scene-settings"
-    | "lhasa"
-    | "qscore"
-    | "json-validation"
-    | "mrbump"
-    | "mrparse"
-    | "colour-map-by-map"
-    | "vectors"
-    | "overlays-2d"
-    | "conkit"
-    | "pae-plot";
+type ModalCall = { key: ModalKey } & ModalComponentProps;
 
 const initialState: {
-    activeModals: ModalKey[];
+    activeModals: ModalCall[];
     focusHierarchy: ModalKey[];
-    modalsAttachedToSideBar: { key: string; isCollapsed: boolean }[];
 } = {
     activeModals: [],
     focusHierarchy: [],
-    modalsAttachedToSideBar: [],
 };
 
 export const modalsSlice = createSlice({
@@ -49,51 +18,17 @@ export const modalsSlice = createSlice({
         resetActiveModals: () => {
             return initialState;
         },
-        attachModalToSideBar: (state, action: PayloadAction<string>) => {
+        showModal: (state, action: PayloadAction<ModalCall>) => {
             return {
                 ...state,
-                modalsAttachedToSideBar: [
-                    { key: action.payload, isCollapsed: false },
-                    ...state.modalsAttachedToSideBar
-                        .filter(item => item.key !== action.payload)
-                        .map(item => {
-                            return { ...item, isCollapsed: true };
-                        }),
+                activeModals: [
+                    { key: action.payload.key, ...action.payload },
+                    ...state.activeModals.filter(item => item.key !== action.payload.key),
                 ],
             };
         },
-        detachModalFromSideBar: (state, action: PayloadAction<string>) => {
-            return {
-                ...state,
-                modalsAttachedToSideBar: [...state.modalsAttachedToSideBar.filter(item => item.key !== action.payload)],
-            };
-        },
-        collapseSideBarModal: (state, action: PayloadAction<string>) => {
-            return {
-                ...state,
-                modalsAttachedToSideBar: [
-                    ...state.modalsAttachedToSideBar.filter(item => item.key !== action.payload),
-                    { key: action.payload, isCollapsed: true },
-                ],
-            };
-        },
-        expandSideBarModal: (state, action: PayloadAction<string>) => {
-            return {
-                ...state,
-                modalsAttachedToSideBar: [
-                    ...state.modalsAttachedToSideBar.filter(item => item.key !== action.payload),
-                    { key: action.payload, isCollapsed: false },
-                ],
-            };
-        },
-        showModal: (state, action: PayloadAction<ModalKey>) => {
-            return {
-                ...state,
-                activeModals: [action.payload, ...state.activeModals.filter(item => item !== action.payload)],
-            };
-        },
-        hideModal: (state, action: PayloadAction<string>) => {
-            return { ...state, activeModals: [...state.activeModals.filter(item => item !== action.payload)] };
+        hideModal: (state, action: PayloadAction<ModalKey>) => {
+            return { ...state, activeModals: [...state.activeModals.filter(item => item.key !== action.payload)] };
         },
         focusOnModal: (state, action: PayloadAction<ModalKey>) => {
             return {
@@ -107,16 +42,6 @@ export const modalsSlice = createSlice({
     },
 });
 
-export const {
-    attachModalToSideBar,
-    showModal,
-    hideModal,
-    detachModalFromSideBar,
-    focusOnModal,
-    unFocusModal,
-    resetActiveModals,
-    collapseSideBarModal,
-    expandSideBarModal,
-} = modalsSlice.actions;
+export const { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals } = modalsSlice.actions;
 
 export default modalsSlice.reducer;

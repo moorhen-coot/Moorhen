@@ -23,11 +23,14 @@
 .moorhen__stack_card {
     width: auto;
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     border: 1px solid var(--moorhen-border);
     padding: 1rem;
     border-radius: 0.5rem;
     margin: 0.5rem;
     padding-bottom: 1.5rem;
+    overflow: auto;
 }
 
 .moorhen__input-grid {

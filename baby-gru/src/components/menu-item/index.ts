@@ -61,5 +61,4 @@ export { FetchOnlineSources } from "./FetchOnlineSources";
 export { AutoLoadFiles } from "./AutoLoadFiles";
 export { ManageSession } from "./ManageSession";
 export { ExportGltf } from "./ExportGltf";
-export { ShowShortcutModal } from "./ShowShortcutModal";
 export { ExportMenuItem } from "./Export";

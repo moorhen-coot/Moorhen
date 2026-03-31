@@ -8,6 +8,7 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
 const shortCutMouseActions = {
     open_context_menu: ["circle-right-mouse-click", "two-finger-tap"],
@@ -24,7 +25,7 @@ const shortCutMouseActions = {
     contour_lvl: ["mouse-scroll-arrows", "two-finger-scroll"],
 };
 
-export const MoorhenControlsModal = () => {
+export const MoorhenControlsModal = (props: ModalComponentProps) => {
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);

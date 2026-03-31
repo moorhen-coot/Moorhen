@@ -1,13 +1,13 @@
-import { Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation";
 
-export const MoorhenLigandValidationModal = () => {
+export const MoorhenLigandValidationModal = (props: ModalComponentProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -27,14 +27,9 @@ export const MoorhenLigandValidationModal = () => {
             overflowX="auto"
             headerTitle="Ligand validation"
             footer={null}
+            openDocked={props.openDocked}
             resizeNodeRef={resizeNodeRef}
-            body={
-                <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenLigandValidation />
-                    </Row>
-                </div>
-            }
+            body={<MoorhenLigandValidation />}
         />
     );
 };

@@ -13,6 +13,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 const LigandHitCard = (props: {
@@ -114,7 +115,7 @@ const LigandHitCard = (props: {
     );
 };
 
-export const MoorheFindLigandModal = () => {
+export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -296,6 +297,7 @@ export const MoorheFindLigandModal = () => {
             onClose={handleClose}
             footer={footerContent}
             body={bodyContent}
+            openDocked={props.openDocked}
         />
     );
 };

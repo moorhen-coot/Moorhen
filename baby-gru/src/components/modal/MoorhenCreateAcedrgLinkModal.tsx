@@ -10,6 +10,7 @@ import { MoorhenSpinner } from "../icons";
 import { MoorhenButton, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -308,7 +309,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 
 AceDRGtomPicker.displayName = "AceDRGtomPicker";
 
-export const MoorhenCreateAcedrgLinkModal = () => {
+export const MoorhenCreateAcedrgLinkModal = (props: ModalComponentProps) => {
     const atomPickerOneRef = useRef(null);
     const atomPickerTwoRef = useRef(null);
 

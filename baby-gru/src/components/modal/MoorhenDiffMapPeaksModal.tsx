@@ -1,11 +1,11 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifferenceMapPeaks";
 
-export const MoorhenDiffMapPeaksModal = () => {
+export const MoorhenDiffMapPeaksModal = (props: ModalComponentProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
 
     return (

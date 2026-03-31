@@ -37,13 +37,6 @@ export const MoorhenConKitModal = () => {
     );
 
     return (
-        <MoorhenDraggableModalBase
-            modalId={modalKeys.CONKIT}
-            lockAspectRatio={true}
-            enforceMaxBodyDimensions={true}
-            headerTitle={tittleBar}
-            footer={null}
-            body={<MoorhenConKit />}
-        />
+        <MoorhenDraggableModalBase modalId={modalKeys.CONKIT} lockAspectRatio={false} headerTitle={tittleBar} body={<MoorhenConKit />} />
     );
 };

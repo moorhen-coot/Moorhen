@@ -1,6 +1,5 @@
 import { Backdrop } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
-import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
@@ -38,6 +37,7 @@ import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
 import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { MoorhenModalsContainer } from "../interface-base/ModalBase/ModalsContainer";
 import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
@@ -49,78 +49,11 @@ import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
 import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
 import { LongJobSnackNotification } from "../snack-bars/LongJobSnackNotification";
-import { MoorhenSideBar } from "../snack-bars/MoorhenSideBar";
 import { MoorhenTomogramSnackBar } from "../snack-bars/MoorhenTomogramSnackBar";
 import { PopupControls } from "../snack-bars/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { cootAPIHelpers } from "./ContainerHelpers";
-import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
-
-declare module "notistack" {
-    interface VariantOverrides {
-        goToResidue;
-        screenRecorder: {
-            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-        };
-        residueSelection: true;
-        acceptRejectDraggingAtoms: {
-            moleculeRef: React.RefObject<moorhen.Molecule>;
-            cidRef: React.RefObject<string[]>;
-        };
-        atomInformation: {
-            moleculeRef: moorhen.Molecule;
-            cidRef: string;
-        };
-        acceptRejectRotateTranslateAtoms: {
-            moleculeRef: React.RefObject<moorhen.Molecule>;
-            cidRef: React.RefObject<string>;
-        };
-        acceptRejectMatchingLigand: {
-            refMolNo: number;
-            movingMolNo: number;
-            refLigandCid: string;
-            movingLigandCid: string;
-        };
-        longJobNotification: true;
-        residueSteps: {
-            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-            residueList: { cid: string }[];
-            onStep: (stepInput) => Promise<void>;
-            onStart?: () => Promise<void> | void;
-            onStop?: () => void;
-            onPause?: () => void;
-            onResume?: () => void;
-            onProgress?: (progress: number) => void;
-            disableTimeCapsule?: boolean;
-            sleepTime?: number;
-        };
-        updatingMaps;
-        modelTrajectory: {
-            moleculeMolNo: number;
-            representationStyle: string;
-        };
-        tomogram: {
-            mapMolNo: number;
-        };
-        mapContourLevel: {
-            mapMolNo: number;
-            mapPrecision: number;
-        };
-        rotamerChange: {
-            moleculeMolNo: number;
-            chosenAtom: moorhen.ResidueSpec;
-        };
-        screenshot: {
-            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-        };
-        sideBar: {
-            children: React.JSX.Element;
-            modalId: string;
-            title: string | React.JSX.Element;
-        };
-    }
-}
 
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;
@@ -437,11 +370,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         [GlViewportHeight, GlViewportWidth]
     );
 
-    const snackbarComponents = {
-        tomogram: MoorhenTomogramSnackBar,
-        sideBar: MoorhenSideBar,
-    };
-
     // ========== Loading Screen ==========
     if (!isGlobalInstanceReady) {
         return (
@@ -472,47 +400,33 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 id="moorhen-main-container"
                 data-theme={isDark ? "dark" : "light"}
             >
-                <SnackbarProvider
-                    hideIconVariant={false}
-                    autoHideDuration={4000}
-                    maxSnack={20}
-                    anchorOrigin={{ horizontal: "center", vertical: "top" }}
-                    transitionDuration={{ enter: 500, exit: 300 }}
-                    Components={snackbarComponents}
-                    preventDuplicate={true}
-                >
-                    <div className="moorhen__viewport-container" style={viewportStyle}>
-                        <MoorhenMainMenu />
-                        <PopupControls />
-                        <SnackBars />
-                        <ActivityIndicator />
-                        <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                        <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                        <AtomClickManager />
-                        <UpdatingMapsManager />
-                        <MoorhenMapsHeadManager />
-                        <MoleculesOriginListener />
-                        <LongJobSnackNotification />
+                <div className="moorhen__viewport-container" style={viewportStyle}>
+                    <MoorhenMainMenu />
+                    <PopupControls />
+                    <SnackBars />
+                    <ActivityIndicator />
+                    <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                    <AtomClickManager />
+                    <UpdatingMapsManager />
+                    <MoorhenMapsHeadManager />
+                    <MoleculesOriginListener />
+                    <LongJobSnackNotification />
 
-                        <MoorhenDroppable
+                    <MoorhenDroppable monomerLibraryPath={monomerLibraryPath} timeCapsuleRef={timeCapsuleRef} commandCentre={commandCentre}>
+                        <MoorhenWebMG
+                            ref={glRef}
                             monomerLibraryPath={monomerLibraryPath}
                             timeCapsuleRef={timeCapsuleRef}
-                            commandCentre={commandCentre}
-                        >
-                            <MoorhenWebMG
-                                ref={glRef}
-                                monomerLibraryPath={monomerLibraryPath}
-                                timeCapsuleRef={timeCapsuleRef}
-                                onAtomHovered={onAtomHovered}
-                                urlPrefix={urlPrefix}
-                                viewOnly={viewOnly}
-                            />
-                        </MoorhenDroppable>
-                    </div>
-                    <BottomPanelContainer />
+                            onAtomHovered={onAtomHovered}
+                            urlPrefix={urlPrefix}
+                            viewOnly={viewOnly}
+                        />
+                    </MoorhenDroppable>
+                </div>
+                <BottomPanelContainer />
 
-                    <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
-                </SnackbarProvider>
+                <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
             </div>
         </>
     );

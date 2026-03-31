@@ -46,7 +46,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                     <MoorhenMenuItem
                         key={menuItem.label}
                         onClick={() => {
-                            dispatch(showModal(menuItem.modal));
+                            dispatch(showModal({ key: menuItem.modal, openDocked: menuItem.args?.openDocked }));
                             document.body.click();
                         }}
                     >

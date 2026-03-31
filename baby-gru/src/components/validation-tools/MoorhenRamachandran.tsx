@@ -446,8 +446,8 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
 
     useEffect(() => {
         setTimeout(() => {
-            const plotHeigth = props.size.height - convertRemToPx(7);
-            const plotWidth = props.size.width - convertRemToPx(3);
+            const plotHeigth = props.size.height - 85;
+            const plotWidth = props.size.width;
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth) : setRamaPlotDimensions(plotHeigth);
             }
@@ -560,9 +560,14 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
                 ref={chainSelectRef}
                 allowedTypes={[1, 2]}
             />
-            <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{ padding: "0rem", margin: "0rem" }}>
-                <canvas ref={canvasRef} style={{ marginTop: "1rem" }} height={ramaPlotDimensions} width={ramaPlotDimensions} />
-            </div>
+            <MoorhenStack direction="horizontal" align="center" justify="center">
+                <canvas
+                    ref={canvasRef}
+                    style={{ margin: "0.5rem 0rem", padding: "0rem" }}
+                    height={ramaPlotDimensions}
+                    width={ramaPlotDimensions}
+                />
+            </MoorhenStack>
         </div>
     );
 };

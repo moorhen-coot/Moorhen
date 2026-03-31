@@ -7,9 +7,10 @@ import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
 
-export const MoorhenJsonValidationModal = () => {
+export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
     const dispatch = useDispatch();
 
     const resizeNodeRef = useRef<HTMLDivElement>(null);
@@ -19,7 +20,7 @@ export const MoorhenJsonValidationModal = () => {
 
     const loadJsonFiles = async (files: FileList) => {
         for (const file of files) {
-            const fileContents = await file.text()
+            const fileContents = await file.text();
             const json = JSON.parse(fileContents);
             dispatch(setValidationJson(json));
         }
@@ -60,6 +61,8 @@ export const MoorhenJsonValidationModal = () => {
             maxHeight={convertViewtoPx(70, height)}
             maxWidth={convertViewtoPx(50, width)}
             enforceMaxBodyDimensions={true}
+            allowDocking={true}
+            openDocked={props.openDocked}
             overflowY="auto"
             overflowX="auto"
             headerTitle="JSON validation"

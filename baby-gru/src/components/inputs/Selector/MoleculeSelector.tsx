@@ -82,6 +82,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             defaultValue={getDefaultValue()}
             onChange={e => handleChange(e)}
             ref={ref}
+            style={style}
         >
             {options}
         </MoorhenSelect>

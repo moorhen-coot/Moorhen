@@ -7,11 +7,12 @@ import { addMolecule, enqueueSnackbar, hideModal } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenSequenceRangeSlider } from "../misc/MoorhenSequenceRangeSlider";
 
 const lsqkbResidueRangesReducer = (
@@ -106,7 +107,7 @@ const LskqbResidueRangeMatchCard = (props: {
     );
 };
 
-export const MoorheSuperposeStructuresModal = () => {
+export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);

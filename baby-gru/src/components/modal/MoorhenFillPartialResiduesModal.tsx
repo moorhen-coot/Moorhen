@@ -1,9 +1,10 @@
 import { useRef } from "react";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms";
 
-export const MoorhenFillPartialResiduesModal = () => {
+export const MoorhenFillPartialResiduesModal = (props: ModalComponentProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
     return (
         <MoorhenDraggableModalBase
@@ -14,6 +15,7 @@ export const MoorhenFillPartialResiduesModal = () => {
             headerTitle="Fill partial residues"
             footer={null}
             allowDocking={true}
+            openDocked={props.openDocked}
             resizeNodeRef={resizeNodeRef}
             body={<MoorhenFillMissingAtoms />}
         />

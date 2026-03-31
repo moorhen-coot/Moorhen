@@ -1,8 +1,8 @@
 import { Delete, FileOpen } from "@mui/icons-material";
+import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
-import { Container } from "react-bootstrap";
 import {
     addFracPathOverlay,
     addImageOverlay,
@@ -28,9 +28,9 @@ import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourN
 import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
-export const Moorhen2DCanvasObjects = () => {
-
+export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList);
@@ -236,11 +236,9 @@ export const Moorhen2DCanvasObjects = () => {
                 })
             );
         } else if (objectType === "fracpath") {
-            let arr: number[] = [
-                0, 0, 1, 1,
-            ];
+            let arr: number[] = [0, 0, 1, 1];
             try {
-                arr = pathText.split(",").map(v => parseFloat(v))
+                arr = pathText.split(",").map(v => parseFloat(v));
             } catch (e) {
                 console.log("Not a valid array of number pairs for fractional path points.");
             }
@@ -483,61 +481,61 @@ export const Moorhen2DCanvasObjects = () => {
     const combinedArrays = [...latexOverlays, ...imageOverlays, ...textOverlays, ...svgPathOverlays, ...fracPathOverlays];
 
     const headerContent = (
-            <MoorhenSelect ref={vectorSelectRef} label="Object" onChange={handleObjectChange} value={selectedOption}>
-                <option value="new">New</option>
-                {combinedArrays.length > 0 &&
-                    combinedArrays.map((vec, i) => {
-                        if (vec.type === "SvgPath") {
-                            return (
-                                <option key={i} value={vec.uniqueId}>
-                                    {"SVG path: " + vec.path.substring(0, 50)}
-                                </option>
-                            );
-                        } else if (vec.type === "FracPath") {
-                            return (
-                                <option key={i} value={vec.uniqueId}>
-                                    {"Fractional points path: " +
-                                        vec.path
-                                            .flat()
-                                            .map(number => number.toFixed(3))
-                                            .toString()
-                                            .substring(0, 50)}
-                                </option>
-                            );
-                        } else if (vec.type === "Image") {
-                            return (
-                                <option key={i} value={vec.uniqueId}>
-                                    {"Image: " + vec.src.substring(0, 50)}
-                                </option>
-                            );
-                        } else if (vec.text) {
-                            return (
-                                <option key={i} value={vec.uniqueId}>
-                                    {"Text: " + vec.text.substring(0, 50)}
-                                </option>
-                            );
-                        } else {
-                            return (
-                                <option key={i} value={vec.uniqueId}>
-                                    {vec.uniqueId}
-                                </option>
-                            );
-                        }
-                    })}
-            </MoorhenSelect>
+        <MoorhenSelect ref={vectorSelectRef} label="Object" onChange={handleObjectChange} value={selectedOption}>
+            <option value="new">New</option>
+            {combinedArrays.length > 0 &&
+                combinedArrays.map((vec, i) => {
+                    if (vec.type === "SvgPath") {
+                        return (
+                            <option key={i} value={vec.uniqueId}>
+                                {"SVG path: " + vec.path.substring(0, 50)}
+                            </option>
+                        );
+                    } else if (vec.type === "FracPath") {
+                        return (
+                            <option key={i} value={vec.uniqueId}>
+                                {"Fractional points path: " +
+                                    vec.path
+                                        .flat()
+                                        .map(number => number.toFixed(3))
+                                        .toString()
+                                        .substring(0, 50)}
+                            </option>
+                        );
+                    } else if (vec.type === "Image") {
+                        return (
+                            <option key={i} value={vec.uniqueId}>
+                                {"Image: " + vec.src.substring(0, 50)}
+                            </option>
+                        );
+                    } else if (vec.text) {
+                        return (
+                            <option key={i} value={vec.uniqueId}>
+                                {"Text: " + vec.text.substring(0, 50)}
+                            </option>
+                        );
+                    } else {
+                        return (
+                            <option key={i} value={vec.uniqueId}>
+                                {vec.uniqueId}
+                            </option>
+                        );
+                    }
+                })}
+        </MoorhenSelect>
     );
 
     const footer = (
         <>
             <MoorhenStack direction="line">
-            {vectorSelectRef.current && selectedOption !== "new" && (
-                <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
-                    Delete
+                {vectorSelectRef.current && selectedOption !== "new" && (
+                    <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
+                        Delete
+                    </MoorhenButton>
+                )}
+                <MoorhenButton className="m-2" onClick={handleApply}>
+                    Apply
                 </MoorhenButton>
-            )}
-            <MoorhenButton className="m-2" onClick={handleApply}>
-                Apply
-            </MoorhenButton>
             </MoorhenStack>
         </>
     );
@@ -606,8 +604,9 @@ export const Moorhen2DCanvasObjects = () => {
         }
     }
 
-    if(existingColour && existingColour.length===4 && isNaN(existingColour[3])) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
-    if(existingColour && existingColour.length===3 ) existingColour[3] = (!isNaN(selectedAlpha)) ? selectedAlpha : 1.0
+    if (existingColour && existingColour.length === 4 && isNaN(existingColour[3]))
+        existingColour[3] = !isNaN(selectedAlpha) ? selectedAlpha : 1.0;
+    if (existingColour && existingColour.length === 3) existingColour[3] = !isNaN(selectedAlpha) ? selectedAlpha : 1.0;
 
     useEffect(() => {
         if (selectedDrawStyle === "gradient" && !theOverlayObject.gradientBoundary) {
@@ -694,28 +693,28 @@ export const Moorhen2DCanvasObjects = () => {
         return isOk;
     };
 
-     return (
+    return (
         <>
             <MoorhenStack direction="column">
-            {headerContent}
-            <Container style={{ height: "3rem", margin: "0.3rem" }} >
-                <MoorhenSelect
-                    label="Type"
-                    ref={drawModeRef}
-                    defaultValue="text"
-                    onChange={evt => {
-                        if (drawModeRef !== null && typeof drawModeRef !== "function") {
-                            drawModeRef.current.value = evt.target.value;
-                            updateObject({ drawMode: evt.target.value }, evt.target.value);
-                        }
-                    }}
-                >
-                    <option value="text">Text</option>
-                    <option value="svgpath">SVG path</option>
-                    <option value="fracpath">Fractional points path</option>
-                    <option value="image">Image</option>
-                    <option value="latex">Latex</option>
-                </MoorhenSelect>
+                {headerContent}
+                <Container style={{ height: "3rem", margin: "0.3rem" }}>
+                    <MoorhenSelect
+                        label="Type"
+                        ref={drawModeRef}
+                        defaultValue="text"
+                        onChange={evt => {
+                            if (drawModeRef !== null && typeof drawModeRef !== "function") {
+                                drawModeRef.current.value = evt.target.value;
+                                updateObject({ drawMode: evt.target.value }, evt.target.value);
+                            }
+                        }}
+                    >
+                        <option value="text">Text</option>
+                        <option value="svgpath">SVG path</option>
+                        <option value="fracpath">Fractional points path</option>
+                        <option value="image">Image</option>
+                        <option value="latex">Latex</option>
+                    </MoorhenSelect>
                 </Container>
                 {(isDefaultNew ||
                     (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
@@ -779,75 +778,80 @@ export const Moorhen2DCanvasObjects = () => {
                 {drawModeRef.current && drawModeRef.current.value === "image" && (
                     <>
                         <MoorhenStack direction="line">
-                        <MoorhenFileInput
-                            ref={inputFile}
-                            accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP"
-                            onChange={e => {
-                                console.log("Change", e.target.files);
-                                upLoadNewImage(e.target.files[0]);
-                            }}
-                            style={{display:'none'}}
-                        />
-                        <MoorhenTextInput
-                            disabled
-                            text={pathText}
-                            label="Image file"
-                            onChange={evt => {
-                                updateObject({ src: evt.target.value }, drawModeRef.current.value);
-                            }}
-                            style={{ height: "2rem", margin: "0.1rem" }}
-                        />
-                        {imageString && (
-                        <>
-                                <img style={{ width: "1.5rem", height: "1.5rem", margin: "0.3rem" }} src={imageString} width="28" height="28" />
-                                <MoorhenButton
-                                    size="sm"
-                                    style={{ margin: "0.1rem" }}
-                                    onClick={() => {
-                                        inputFile.current.click();
-                                    }}
-                                >
-                                    <FileOpen />
-                                </MoorhenButton>
+                            <MoorhenFileInput
+                                ref={inputFile}
+                                accept=".jpeg,.jpg,.png,.bmp,.JPEG,.JPG,.PNG,.BMP"
+                                onChange={e => {
+                                    console.log("Change", e.target.files);
+                                    upLoadNewImage(e.target.files[0]);
+                                }}
+                                style={{ display: "none" }}
+                            />
+                            <MoorhenTextInput
+                                disabled
+                                text={pathText}
+                                label="Image file"
+                                onChange={evt => {
+                                    updateObject({ src: evt.target.value }, drawModeRef.current.value);
+                                }}
+                                style={{ height: "2rem", margin: "0.1rem" }}
+                            />
+                            {imageString && (
+                                <>
+                                    <img
+                                        style={{ width: "1.5rem", height: "1.5rem", margin: "0.3rem" }}
+                                        src={imageString}
+                                        width="28"
+                                        height="28"
+                                    />
+                                    <MoorhenButton
+                                        size="sm"
+                                        style={{ margin: "0.1rem" }}
+                                        onClick={() => {
+                                            inputFile.current.click();
+                                        }}
+                                    >
+                                        <FileOpen />
+                                    </MoorhenButton>
                                 </>
-                        )}
+                            )}
                         </MoorhenStack>
                         <MoorhenStack direction="line">
-                        <MoorhenTextInput
-                            label="Position"
-                            text={positionText}
-                            onChange={evt => {
-                                setPositionText(evt.target.value);
-                            }}
-                            isInvalid={!checkPositionText()}
-                            style={{ height: "2rem", margin: "0.1rem" }}
-                        />
+                            <MoorhenTextInput
+                                label="Position"
+                                text={positionText}
+                                onChange={evt => {
+                                    setPositionText(evt.target.value);
+                                }}
+                                isInvalid={!checkPositionText()}
+                                style={{ height: "2rem", margin: "0.1rem" }}
+                            />
                         </MoorhenStack>
                         <MoorhenStack direction="line">
-                        <MoorhenNumberInput
-                            type="number"
-                            label="Width"
-                            value={theOverlayObject.width}
-                            onChange={evt => {
-                                try {
-                                    const w = parseFloat(evt.target.value);
-                                    updateObject({ width: w }, drawModeRef.current.value);
-                                } catch (e) {}
-                            }}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                        <MoorhenNumberInput
-                            label="Height"
-                            type="number"
-                            value={theOverlayObject.height}
-                            onChange={evt => {
-                                try {
-                                    const h = parseFloat(evt.target.value);
-                                    updateObject({ height: h }, drawModeRef.current.value);
-                                } catch (e) {}
-                            }}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
+                            <MoorhenNumberInput
+                                type="number"
+                                label="Width"
+                                value={theOverlayObject.width}
+                                onChange={evt => {
+                                    try {
+                                        const w = parseFloat(evt.target.value);
+                                        updateObject({ width: w }, drawModeRef.current.value);
+                                    } catch (e) {}
+                                }}
+                                style={{ height: "2rem", margin: "0.3rem" }}
+                            />
+                            <MoorhenNumberInput
+                                label="Height"
+                                type="number"
+                                value={theOverlayObject.height}
+                                onChange={evt => {
+                                    try {
+                                        const h = parseFloat(evt.target.value);
+                                        updateObject({ height: h }, drawModeRef.current.value);
+                                    } catch (e) {}
+                                }}
+                                style={{ height: "2rem", margin: "0.3rem" }}
+                            />
                         </MoorhenStack>
                     </>
                 )}
@@ -889,42 +893,46 @@ export const Moorhen2DCanvasObjects = () => {
                         drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath") && (
                         <Container style={{ height: "2rem", margin: "0.3rem" }}>
-                        <MoorhenSelect
-                            label="Draw Style"
-                            value={selectedDrawStyle}
-                            onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                                setSelectedDrawStyle(evt.target.value);
-                                if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === "fill") {
-                                    updateObject(
-                                        {
-                                            drawStyle: evt.target.value,
-                                            fillStyle: theOverlayObject.strokeStyle,
-                                        },
-                                        drawModeRef.current.value
-                                    );
-                                } else if (!theOverlayObject.strokeStyle && theOverlayObject.fillStyle && evt.target.value === "stroke") {
-                                    updateObject(
-                                        {
-                                            drawStyle: evt.target.value,
-                                            strokeStyle: theOverlayObject.fillStyle,
-                                        },
-                                        drawModeRef.current.value
-                                    );
-                                } else {
-                                    updateObject({ drawStyle: evt.target.value }, drawModeRef.current.value);
-                                }
-                            }}
-                        >
-                            <option key="stroke" value="stroke">
-                                Outline
-                            </option>
-                            <option key="fill" value="fill">
-                                Filled
-                            </option>
-                            <option key="gradient" value="gradient">
-                                Gradient
-                            </option>
-                        </MoorhenSelect>
+                            <MoorhenSelect
+                                label="Draw Style"
+                                value={selectedDrawStyle}
+                                onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                                    setSelectedDrawStyle(evt.target.value);
+                                    if (!theOverlayObject.fillStyle && theOverlayObject.strokeStyle && evt.target.value === "fill") {
+                                        updateObject(
+                                            {
+                                                drawStyle: evt.target.value,
+                                                fillStyle: theOverlayObject.strokeStyle,
+                                            },
+                                            drawModeRef.current.value
+                                        );
+                                    } else if (
+                                        !theOverlayObject.strokeStyle &&
+                                        theOverlayObject.fillStyle &&
+                                        evt.target.value === "stroke"
+                                    ) {
+                                        updateObject(
+                                            {
+                                                drawStyle: evt.target.value,
+                                                strokeStyle: theOverlayObject.fillStyle,
+                                            },
+                                            drawModeRef.current.value
+                                        );
+                                    } else {
+                                        updateObject({ drawStyle: evt.target.value }, drawModeRef.current.value);
+                                    }
+                                }}
+                            >
+                                <option key="stroke" value="stroke">
+                                    Outline
+                                </option>
+                                <option key="fill" value="fill">
+                                    Filled
+                                </option>
+                                <option key="gradient" value="gradient">
+                                    Gradient
+                                </option>
+                            </MoorhenSelect>
                         </Container>
                     )}
                 {drawModeRef.current &&
@@ -935,7 +943,7 @@ export const Moorhen2DCanvasObjects = () => {
                         <MoorhenNumberInput
                             label="Line Width"
                             type="number"
-                            value={theOverlayObject.lineWidth?theOverlayObject.lineWidth:1.0}
+                            value={theOverlayObject.lineWidth ? theOverlayObject.lineWidth : 1.0}
                             onChange={evt => {
                                 updateObject({ lineWidth: parseFloat(evt.target.value) }, drawModeRef.current.value);
                             }}
@@ -947,20 +955,22 @@ export const Moorhen2DCanvasObjects = () => {
                         drawModeRef.current.value === "fracpath" ||
                         drawModeRef.current.value === "text") && (
                         <Container style={{ height: "2rem", margin: "0.5rem" }}>
-                        <MoorhenStack direction="line">
-                            <label>Colour</label>
-                            <MoorhenColourPicker
-                                colour={existingColour !== null ? existingColour : [1, 0, 0, selectedAlpha]}
-                                setColour={color => {
-                                    setSelectedAlpha(color[3]);
-                                    handleColorChange(rgbToHex(color[0], color[1], color[2]) + componentToHex(Math.floor(color[3] * 255)));
-                                }}
-                                useAlpha={true}
-                                position="bottom"
-                                tooltip="Change colour"
-                            />
-                            {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
-                        </MoorhenStack>
+                            <MoorhenStack direction="line">
+                                <label>Colour</label>
+                                <MoorhenColourPicker
+                                    colour={existingColour !== null ? existingColour : [1, 0, 0, selectedAlpha]}
+                                    setColour={color => {
+                                        setSelectedAlpha(color[3]);
+                                        handleColorChange(
+                                            rgbToHex(color[0], color[1], color[2]) + componentToHex(Math.floor(color[3] * 255))
+                                        );
+                                    }}
+                                    useAlpha={true}
+                                    position="bottom"
+                                    tooltip="Change colour"
+                                />
+                                {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
+                            </MoorhenStack>
                         </Container>
                     )}
                 {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
@@ -991,9 +1001,9 @@ export const Moorhen2DCanvasObjects = () => {
                                         <MoorhenColourPicker
                                             colour={col}
                                             setColour={color => {
-                                                if(color.length===4 && isNaN(color[3])) color[3] =  1.0
-                                                if(color.length===3 ) color.push(1.0)
-                                                console.log(color)
+                                                if (color.length === 4 && isNaN(color[3])) color[3] = 1.0;
+                                                if (color.length === 3) color.push(1.0);
+                                                console.log(color);
                                                 updateObject(
                                                     {
                                                         gradientStops: [
@@ -1083,36 +1093,36 @@ export const Moorhen2DCanvasObjects = () => {
                     </>
                 )}
                 <Container style={{ height: "2rem", margin: "0.3rem" }}>
-                <MoorhenSelect
-                    label="Z-depth"
-                    value={selectedDepth}
-                    onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                        setSelectedDepth(parseInt(evt.target.value));
-                        updateObject({ zIndex: parseInt(evt.target.value) }, drawModeRef.current.value);
-                    }}
-                >
-                    <option key="0" value="0">
-                        0
-                    </option>
-                    <option key="1" value="1">
-                        1
-                    </option>
-                    <option key="2" value="2">
-                        2
-                    </option>
-                    <option key="3" value="3">
-                        3
-                    </option>
-                    <option key="4" value="4">
-                        4
-                    </option>
-                </MoorhenSelect>
+                    <MoorhenSelect
+                        label="Z-depth"
+                        value={selectedDepth}
+                        onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
+                            setSelectedDepth(parseInt(evt.target.value));
+                            updateObject({ zIndex: parseInt(evt.target.value) }, drawModeRef.current.value);
+                        }}
+                    >
+                        <option key="0" value="0">
+                            0
+                        </option>
+                        <option key="1" value="1">
+                            1
+                        </option>
+                        <option key="2" value="2">
+                            2
+                        </option>
+                        <option key="3" value="3">
+                            3
+                        </option>
+                        <option key="4" value="4">
+                            4
+                        </option>
+                    </MoorhenSelect>
                 </Container>
-            {footer}
+                {footer}
             </MoorhenStack>
         </>
     );
-}
+};
 
 export const Moorhen2DCanvasObjectsModal = () => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -1132,7 +1142,7 @@ export const Moorhen2DCanvasObjectsModal = () => {
             overflowX="auto"
             headerTitle="2D Overlay objects"
             resizeNodeRef={resizeNodeRef}
-            body={<Moorhen2DCanvasObjects/>}
+            body={<Moorhen2DCanvasObjects />}
             footer={null}
         />
     );

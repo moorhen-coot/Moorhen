@@ -19,6 +19,7 @@ type MoorhenTextInputBase = {
     placeholder?: string;
     uppercase?: boolean;
     readOnly?: boolean;
+    onSubmit?: () => void;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -60,6 +61,11 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     placeholder={placeholder}
                     style={props.uppercase ? { textTransform: "uppercase" } : null}
                     readOnly={readOnly}
+                    onKeyDown={event => {
+                        if (event.key === "Enter" && props.onSubmit) {
+                            props.onSubmit();
+                        }
+                    }}
                 />
                 {props.button ? (
                     <MoorhenButton icon={props.icon} onClick={props.onClick} className="moorhen__input-text-box-button" />

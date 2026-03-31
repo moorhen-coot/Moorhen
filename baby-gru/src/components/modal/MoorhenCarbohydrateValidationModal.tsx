@@ -9,9 +9,10 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
 
-export const MoorhenCarbohydrateValidationModal = () => {
+export const MoorhenCarbohydrateValidationModal = (props: ModalComponentProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 

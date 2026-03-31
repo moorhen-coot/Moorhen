@@ -5,8 +5,6 @@ import {
     KeyboardDoubleArrowRightOutlined,
 } from "@mui/icons-material";
 import { IconButton, LinearProgress, Slider } from "@mui/material";
-import { SnackbarContent, useSnackbar } from "notistack";
-import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { enqueueSnackbar } from "@/store";
@@ -141,11 +139,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
     }, [props.mapMolNo]);
 
     return (
-        <SnackbarContent
-            ref={ref}
-            className="moorhen-notification-div"
-            style={{ backgroundColor: isDark ? "grey" : "white", color: isDark ? "white" : "grey" }}
-        >
+        <>
             {busyComputingFrames ? (
                 <MoorhenStack gap={1} direction="vertical">
                     <span>Please wait...</span>
@@ -210,7 +204,7 @@ export const MoorhenTomogramSnackBar = forwardRef<
             ) : (
                 <span>Something went wrong...</span>
             )}
-        </SnackbarContent>
+        </>
     );
 });
 

@@ -1,6 +1,5 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
-import { useSnackbar } from 'notistack';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
@@ -50,7 +49,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const dispatch = useDispatch()
     const store = useStore<RootState>()
 
-    const { enqueueSnackbar } = useSnackbar()
 
     const [innerMapLineWidth, setInnerMapLineWidth] = useState<number>(0.75)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)

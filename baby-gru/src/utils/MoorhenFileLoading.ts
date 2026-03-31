@@ -487,7 +487,7 @@ export const autoOpenFiles = async (
 
     if (isMrParse) {
         console.log("I think this is an MrParse directory....");
-        dispatch(showModal(modalKeys.MRPARSE));
+        dispatch(showModal({ key: modalKeys.MRPARSE }));
         loadMrParseFiles(files, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
         return;
     }
@@ -561,7 +561,7 @@ export const autoOpenFiles = async (
                 const fileContents = await file.text();
                 const json = JSON.parse(fileContents);
                 dispatch(setValidationJson(json));
-                dispatch(showModal(modalKeys.JSON_VALIDATION));
+                dispatch(showModal({ key: modalKeys.JSON_VALIDATION }));
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
@@ -614,6 +614,6 @@ export const autoOpenFiles = async (
         moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
     }
     if (isRelionLocresFolder) {
-        dispatch(showModal("colour-map-by-map"));
+        dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));
     }
 };

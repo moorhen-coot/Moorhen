@@ -2,10 +2,9 @@ import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
-import { setShownSidePanel } from "@/store";
+import { setShownSidePanel, showModal } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
-import { ModalKey, showModal } from "../../store/modalsSlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
@@ -77,7 +76,7 @@ export const MoorhenMainMenu = memo(() => {
                     handleClick(menu.label);
                 } else if (menu.type === "modal") {
                     setActiveMenu(null);
-                    dispatch(showModal(menu.modal as ModalKey));
+                    dispatch(showModal({ key: menu.modal, openDocked: menu.args?.openDocked ?? null }));
                 } else if (menu.type === "panel") {
                     setActiveMenu(null);
                     dispatch(setShownSidePanel(menu.panel));
