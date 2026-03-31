@@ -691,3 +691,29 @@ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
 
 install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
+
+# Standalone gemmi WASM module — no pthreads, no coot, no SharedArrayBuffer required
+add_executable(gemmi-wasm gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc)
+set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi)
+target_compile_options(gemmi-wasm PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations)
+set_target_properties(gemmi-wasm PROPERTIES COMPILE_FLAGS "-Wno-deprecated-builtins -Wno-deprecated-declarations")
+target_include_directories(gemmi-wasm PRIVATE
+    ${CMAKE_INSTALL_PREFIX}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${DEPS_INCLUDE_DIRS}
+)
+if(EMIT_TSD)
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'] --emit-tsd gemmi.d.ts)
+else()
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'])
+endif()
+target_link_libraries(gemmi-wasm gemmi_cpp z)
+if(${MEMORY64} MATCHES "1")
+target_link_directories(gemmi-wasm PUBLIC ${CMAKE_INSTALL_PREFIX}/install64/lib)
+else()
+target_link_directories(gemmi-wasm PUBLIC ${CMAKE_INSTALL_PREFIX}/install/lib)
+endif()
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gemmi.wasm ${CMAKE_CURRENT_BINARY_DIR}/gemmi.js
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/wasm)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gemmi.wasm ${CMAKE_CURRENT_BINARY_DIR}/gemmi.js
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/dist/gemmi)
