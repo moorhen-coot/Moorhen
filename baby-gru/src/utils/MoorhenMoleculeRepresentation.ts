@@ -590,11 +590,20 @@ export class MoleculeRepresentation {
         const _style = style ?? this.style;
         let _cid = cid ?? this.cid;
 
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
-            //Now we might not want to use the new method, maybe the old one.
-            //In either case, we need to be able to do something like getAdaptativeBondBuffers
-            //to *exclude* a selection from a drawing.
+            //Now we might not want to use the new method, maybe we should use the old one.
             _cid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0)
+            if (drawMissingLoops) {
+                await this.commandCentre.current.cootCommand(
+                    {
+                        command: "set_draw_missing_residue_loops",
+                        returnType: "status",
+                        commandArgs: [false],
+                    },
+                    false
+                );
+            }
         }
 
         let objects;
@@ -672,6 +681,18 @@ export class MoleculeRepresentation {
                 console.log(`Unrecognised style ${_style}...`);
                 break;
         }
+
+        if(this.restrictToNeighbours&&drawMissingLoops) {
+            await this.commandCentre.current.cootCommand(
+                {
+                    command: "set_draw_missing_residue_loops",
+                    returnType: "status",
+                    commandArgs: [true],
+                },
+                false
+            );
+        }
+
         return objects;
     }
 
