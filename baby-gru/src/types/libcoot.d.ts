@@ -53,7 +53,7 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
-        cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number) => string;
+        cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
     };
     type headerInfoGemmi = {
         title: string;

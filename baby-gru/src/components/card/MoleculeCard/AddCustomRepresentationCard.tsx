@@ -483,12 +483,15 @@ export const AddCustomRepresentationCard = memo(
                     />
                 )}
                 {restrictToNeighbours && (
+                    <MoorhenStack direction="horizontal"  style={{ height: "3rem", margin: "0.3rem" }}>
                     <MoorhenCidInputForm
                         setCid={setNeighboursCid}
                         label="Neighbours selection"
                         defaultValue={props.representation?.neighboursCid ?? ""}
                         allowUseCurrentSelection={true}
                     />
+                    <MoorhenToggle type="switch" label="_unused_" style={{ height: "2rem", margin: "0.1rem" }}/>
+                    </MoorhenStack>
                 )}
                 {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
                     <MoorhenToggle

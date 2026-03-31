@@ -174,7 +174,7 @@ std::string clipperStringAsString(const clipper::String &s){
     return static_cast<std::string>(s);
 }
 
-std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d){
+std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
 
     auto d2 = d*d;
 
@@ -214,7 +214,7 @@ std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, con
                         }
                         if(found_residue) break;
                     }
-                    if(found_residue) sel_str += c.name + "/" + std::to_string(num.value) + "||";
+                    if(found_residue!=excl) sel_str += c.name + "/" + std::to_string(num.value) + "||";
                 }
             }
         }
