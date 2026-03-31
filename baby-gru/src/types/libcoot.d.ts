@@ -53,6 +53,27 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        // Gemmi free functions
+        read_structure_file(filePath: string, format: number): gemmi.Structure;
+        read_mtz_file(filePath: string): gemmi.Mtz;
+        find_tabulated_residue(name: string): gemmi.ResidueInfo;
+        get_spacegroup_by_name(name: string, allow_raw_pointers?: boolean): gemmi.SpaceGroup;
+        guess_coord_data_format(fileContents: string): number;
+        structure_is_ligand(structure: gemmi.Structure): boolean;
+        count_residues_in_selection(structure: gemmi.Structure, selection: gemmi.Selection): number;
+        remove_non_selected_atoms(structure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
+        // JS-friendly wrapper functions
+        metadata_has_double_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        metadata_has_int_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        metadata_has_string_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        selection_get_models(selection: gemmi.Selection, structure: gemmi.Structure): emscriptem.vector<gemmi.Model>;
+        selection_get_chains(selection: gemmi.Selection, model: gemmi.Model): emscriptem.vector<gemmi.Chain>;
+        selection_get_residues(selection: gemmi.Selection, chain: gemmi.Chain): emscriptem.vector<gemmi.Residue>;
+        selection_get_atoms(selection: gemmi.Selection, residue: gemmi.Residue): emscriptem.vector<gemmi.Atom>;
+        // Gemmi enums
+        CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
+        // Gemmi vector constructors
+        VectorString: { new (): emscriptem.vector<string> };
     };
     type headerInfoGemmi = {
         title: string;
@@ -597,6 +618,38 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
+        // Gemmi free functions
+        read_structure_file(filePath: string, format: number): gemmi.Structure;
+        read_mtz_file(filePath: string): gemmi.Mtz;
+        find_tabulated_residue(name: string): gemmi.ResidueInfo;
+        get_spacegroup_by_name(name: string): gemmi.SpaceGroup;
+        guess_coord_data_format(fileContents: string): number;
+        structure_is_ligand(structure: gemmi.Structure): boolean;
+        count_residues_in_selection(structure: gemmi.Structure, selection: gemmi.Selection): number;
+        remove_non_selected_atoms(structure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
+        getSpaceGroupHMAsString(spaceGroup: gemmi.SpaceGroup): string;
+        getSpaceGroupHallAsString(spaceGroup: gemmi.SpaceGroup): string;
+        calculate_mass_model(model: gemmi.Model): number;
+        calculate_mass_chain(chain: gemmi.Chain): number;
+        gemmi_setup_entities(structure: gemmi.Structure): void;
+        remove_ligands_and_waters_structure(structure: gemmi.Structure): void;
+        // JS-friendly wrapper functions
+        metadata_has_double_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        metadata_has_int_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        metadata_has_string_field(metadata: gemmi.Metadata, fieldName: string): boolean;
+        selection_get_models(selection: gemmi.Selection, structure: gemmi.Structure): emscriptem.vector<gemmi.Model>;
+        selection_get_chains(selection: gemmi.Selection, model: gemmi.Model): emscriptem.vector<gemmi.Chain>;
+        selection_get_residues(selection: gemmi.Selection, chain: gemmi.Chain): emscriptem.vector<gemmi.Residue>;
+        selection_get_atoms(selection: gemmi.Selection, residue: gemmi.Residue): emscriptem.vector<gemmi.Atom>;
+        // Gemmi enums
+        CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
+        // Gemmi vector/type constructors
+        VectorString: { new (): emscriptem.vector<string> };
+        Selection: { new (cid: string): gemmi.Selection };
+        NeighborSearch: { new (model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
+        Position: { new (x: number, y: number, z: number): gemmi.Position };
+        Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
+        cifDocument: { new (): gemmi.cifDocument };
     };
     interface DoublePairDoubleJS {
         first: number;
