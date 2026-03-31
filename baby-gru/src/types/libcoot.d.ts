@@ -82,6 +82,8 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_restraints(nef_input:string): string;
+
     };
     type headerInfoGemmi = {
         title: string;

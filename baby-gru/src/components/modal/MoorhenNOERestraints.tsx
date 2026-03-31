@@ -8,13 +8,15 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 // import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
 import pako from "pako";
-import { parseNEF_NOEs } from "../../utils/MoorhenNEFParser_tk";
+// import { parseNEF_NOEs } from "../../utils/MoorhenNEFParser_tk";
 import { MoorhenVectorsModal } from "./MoorhenVectorsModal"
 import { v4 as uuidv4 } from "uuid"
 import { addAtomVector } from "./MoorhenNOEVectors"
 import { MoorhenMolecule } from "@/utils";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice"
-import { useEffect, useState, useRef } from "react" 
+import { useEffect, useState, useRef } from "react"; 
+import { libcootApi} from "../../types/libcoot"
+// let cootModule: libcootApi.CootModule;
 // import { MoorhenReduxStore } from "moorhen"
 
 // ^ this returns MoorhenDraggableModalBase - what is this?
@@ -158,13 +160,16 @@ export const MoorhenNOERestraints = () => {
 , [noeVectors])
 
     const loadNEF = async (files: FileList) => {
+        // let cootModule: libcootApi.CootModule;
+        // console.log(cootModule)
         for (const file of files) {
             if (file.name.endsWith(".gz"))
             {
                 const binFileContents = await file.arrayBuffer()
                 // console.log(binFileContents)
                 const fileContents =  pako.inflate(binFileContents, { to: "string" })
-                var restraintData = parseNEF_NOEs(fileContents)
+                // var restraintData = parseNEF_NOEs(fileContents)
+                var restraintData = window.cootModule.get_nef_restraints(fileContents)
                 const convertedData = convertDataframe(restraintData)
                 console.log(convertedData)
 
@@ -172,8 +177,11 @@ export const MoorhenNOERestraints = () => {
             else {  
                 const fileContents = await file.text()
                 // console.log(fileContents)
-                parseNEF_NOEs(fileContents)
-                var restraintData = parseNEF_NOEs(fileContents)
+                // parseNEF_NOEs(fileContents)
+                
+                // window.cootModule.get_nef_restraints(fileContents)
+                // var restraintData = parseNEF_NOEs(fileContents)
+                var restraintData = window.cootModule.get_nef_restraints(fileContents)
                 const convertedData = convertDataframe(restraintData)
                 console.log(convertedData)
                 

@@ -11,7 +11,7 @@
 // import { addMap } from "../../store/mapsSlice";
 // import { Store } from "@reduxjs/toolkit";
 // import { useSnackbar } from "notistack";
-import { parseNEF_NOEs } from "../../utils/MoorhenNEFParser_tk"
+// import { parseNEF_NOEs } from "../../utils/MoorhenNEFParser_tk"
 // import { MoorhenButton, MoorhenToggle } from "../inputs";
 import { useSnackbar } from "notistack";
 import { Button, Col, Form, Row } from "react-bootstrap";
@@ -23,6 +23,9 @@ import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { libcootApi} from "../../types/libcoot"
+let cootModule: libcootApi.CootModule;
+
 // we want a menu button for the user to insert PDB code and fetch NEF 
 // or upload NEF file - this might be easier e.g. same method as loading map
 // so this is:
@@ -71,7 +74,7 @@ export const ImportNOERestraints = () => {
             if (files.length > 0 ) {
                const fileContents = await files[0].text()
                console.log(fileContents)
-               const parsedNOE = parseNEF_NOEs(fileContents)
+            const parsedNOE = cootModule.get_nef_restraints(fileContents)
                console.log(parsedNOE)
             }
         }     
