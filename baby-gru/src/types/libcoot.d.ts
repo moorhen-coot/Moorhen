@@ -53,6 +53,8 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        get_nef_restraints(nef_input:string): string;
+
     };
     type headerInfoGemmi = {
         title: string;

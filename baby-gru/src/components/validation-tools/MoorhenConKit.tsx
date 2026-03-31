@@ -35,6 +35,12 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const [sequenceText, setSequenceText] = useState<null | string>(null);
     const [sequenceFileName, setSequenceFileName] = useState<null | string>(null);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    
+    // added by tk 
+    const [nefFileContent, setNefFileContent] = useState<string | null>(null);
+    const [NEFMatches, setNEFMatches] = useState<any[]>([]);
+    const [NEFSuccess, setNEFSuccess] = useState<boolean>(false);    
+    // added by tk
 
     const inputMoleculeSelectRef = useRef<HTMLSelectElement>(null);
     const predMoleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -197,6 +203,38 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             setConKitSuccess(true)
 
     }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber,specifySequence,sequenceText,sequenceFileName]);
+
+    const runNEFRestraints = useCallback(async () => {
+        const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
+
+       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
+        if (!nefFileContent) return
+
+        if (input_cif_string.length === 0) {
+            return
+        }
+        const response = (await commandCentre.current.cootCommand(
+            {
+                message: "get_nef_restraints",
+                command: "get_nef_restraints",
+                returnType: "string",
+                commandArgs: [input_cif_string],
+            },
+            false
+        )) as moorhen.WorkerResponse<string>;
+
+        //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
+        const json_string = response.data.result as any as string
+
+        const res = JSON.parse(json_string)
+        setNEFMatches(res)
+        if(res.length===0)
+            setNEFSuccess(false)
+        else
+            setNEFSuccess(true)
+
+    }, [nefFileContent]);
+
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
         const selectedMolecule = molecules.find(molecule => molecule.molNo === evt);
