@@ -866,4 +866,21 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("run_conkit_validate",&run_conkit_validate_with_exception);
 
+    // Fix unbound types for --emit-tsd
+    class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");
+    class_<coot::geometry_distortion_info_pod_container_t>("coot_geometry_distortion_info_pod_container_t");
+    register_vector<coot::geometry_distortion_info_pod_container_t>("Vector_coot_geometry_distortion_info_pod_container_t");
+    register_vector<coot::mutate_insertion_range_info_t>("Vector_coot_mutate_insertion_range_info_t");
+    value_object<std::pair<bool, clipper::Coord_orth>>("pair_bool_Coord_orth")
+        .field("first", &std::pair<bool, clipper::Coord_orth>::first)
+        .field("second", &std::pair<bool, clipper::Coord_orth>::second)
+    ;
+    class_<api::cell_t>("api_cell_t");
+    register_map<std::string, std::string>("MapStringString_2");
+    register_map<std::string, std::vector<coot::simple_rotamer>>("MapStringVectorSimpleRotamer");
+    enum_<gemmi::HowToNameCopiedChain>("HowToNameCopiedChain")
+        .value("Short", gemmi::HowToNameCopiedChain::Short)
+        .value("AddNumber", gemmi::HowToNameCopiedChain::AddNumber)
+        .value("Dup", gemmi::HowToNameCopiedChain::Dup)
+    ;
 }

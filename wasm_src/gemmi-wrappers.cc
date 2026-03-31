@@ -10,14 +10,13 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .function("imag",select_overload<double(void)const>(&std::complex<double>::imag))
     ;
 
-    class_<std::complex<long double>>("complexlongdouble")
-    .constructor<long double, long double>()
-    .constructor<const std::complex<float>&>()
-    //.constructor<const std::complex<double>&>()
-    //.constructor<const std::complex<long double>&>()
-    .function("real",select_overload<long double(void)const>(&std::complex<long double>::real))
-    .function("imag",select_overload<long double(void)const>(&std::complex<long double>::imag))
-    ;
+    // complex<long double> commented out — long double not supported by --emit-tsd
+    // class_<std::complex<long double>>("complexlongdouble")
+    // .constructor<long double, long double>()
+    // .constructor<const std::complex<float>&>()
+    // .function("real",select_overload<long double(void)const>(&std::complex<long double>::real))
+    // .function("imag",select_overload<long double(void)const>(&std::complex<long double>::imag))
+    // ;
 
     //Gemmi from here
     register_vector<gemmi::Selection>("VectorGemmiSelection");
@@ -532,8 +531,8 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .function("sole_residue",&gemmi::Model::sole_residue)
     .function("find_cra",select_overload<gemmi::CRA(const gemmi::AtomAddress&, bool)>(&gemmi::Model::find_cra))
     .function("find_cra_const",select_overload<gemmi::const_CRA(const gemmi::AtomAddress&, bool)const>(&gemmi::Model::find_cra))
-    .function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
-    .function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
+    //.function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all)) // CraProxy not bindable
+    //.function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all)) // ConstCraProxy not bindable
     .function("empty_copy",&gemmi::Model::empty_copy)
     .function("children",select_overload<std::vector<gemmi::Chain>&()>(&gemmi::Model::children))
     .function("children_const",select_overload<const std::vector<gemmi::Chain>&()const>(&gemmi::Model::children))
@@ -997,10 +996,10 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .property("remark_300_detail",&gemmi::Metadata::remark_300_detail)
     .function("has_restr",&gemmi::Metadata::has_restr)
     .function("has_tls",&gemmi::Metadata::has_tls)
-    .function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    .function("has_m33",select_overload<bool(gemmi::SMat33<double> gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    //.function("has_d",...) // pointer-to-member params not supported by --emit-tsd
+    //.function("has_i",...) // pointer-to-member params not supported by --emit-tsd
+    //.function("has_s",...) // pointer-to-member params not supported by --emit-tsd
+    //.function("has_m33",...) // pointer-to-member params not supported by --emit-tsd
     ;
 
     class_<gemmi::SoftwareItem>("SoftwareItem")

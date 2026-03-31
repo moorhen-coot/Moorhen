@@ -280,11 +280,11 @@ EMSCRIPTEN_BINDINGS(gemmi_cif) {
     .function("set_atom_flags",&gemmi::Selection::set_atom_flags)
     .function("remove_selected_residue",&GemmiSelectionRemoveSelectedResidue)
     .function("remove_not_selected_residue",&GemmiSelectionRemoveNotSelectedResidue)
-    .function("first",&gemmi::Selection::first)
-    .function("chains",&gemmi::Selection::chains)
-    .function("models",&gemmi::Selection::models)
-    .function("residues",&gemmi::Selection::residues)
-    .function("atoms",&gemmi::Selection::atoms)
+    //.function("first",&gemmi::Selection::first) // returns pair<Model*, CRA>, not TSD-compatible
+    //.function("chains",&gemmi::Selection::chains) // returns FilterProxy, not TSD-compatible
+    //.function("models",&gemmi::Selection::models) // returns FilterProxy, not TSD-compatible
+    //.function("residues",&gemmi::Selection::residues) // returns FilterProxy, not TSD-compatible
+    //.function("atoms",&gemmi::Selection::atoms) // returns FilterProxy, not TSD-compatible
     //I have no ide what is wrong with these 2.
     //.function("remove_not_selected_atom",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
     //.function("remove_not_selected_residue",select_overload<void(gemmi::Residue&)const>(&gemmi::Selection::remove_not_selected))
