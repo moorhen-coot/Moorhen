@@ -518,7 +518,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
 
     class_<gemmi::Model>("Model")
     .property("num",&gemmi::Model::num)
-    .property("name",&gemmi::Model::num)
+    .property("name",&gemmi::Model::num) // gemmi::Model has no string name; num is used as name
     .property("chains",&gemmi::Model::chains)
     .function("remove_chain",&gemmi::Model::remove_chain)
     .function("merge_chain_parts",&gemmi::Model::merge_chain_parts)

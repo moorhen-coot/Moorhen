@@ -5,6 +5,7 @@ import { emscriptem } from "./emscriptem"
 // Covers: Structure hierarchy, CIF, MTZ, metadata, symmetry, selection, chemistry.
 
 export namespace gemmi {
+    /** Biological assembly with symmetry operators for generating oligomers. */
     interface Assembly extends emscriptem.instance<Assembly> {
       get name(): string;
       set name(value: string);
@@ -45,6 +46,7 @@ export namespace gemmi {
       ensure_asu(_0: boolean): void;
       get_hkl(_0: number): array_int_3;
     }
+    /** An atom with coordinates, element, B-factor, occupancy, altloc. */
     interface Atom extends emscriptem.instance<Atom> {
       get name(): string;
       set name(value: string);
@@ -97,6 +99,7 @@ export namespace gemmi {
       set atom_name(value: string);
       el: El;
     }
+    /** Basic refinement stats: resolution, completeness, R-factors. */
     interface BasicRefinementInfo extends emscriptem.instance<BasicRefinementInfo> {
       resolution_high: number;
       resolution_low: number;
@@ -123,6 +126,7 @@ export namespace gemmi {
     }
     interface CRA extends emscriptem.instance<CRA> {
     }
+    /** CCP4/MRC map file with header and grid data. */
     interface Ccp4 extends Ccp4Base {
       prepare_ccp4_header_except_mode_and_stats(): void;
       update_ccp4_header(_0: number, _1: boolean): void;
@@ -148,6 +152,7 @@ export namespace gemmi {
       get_skew_transformation(): Transform;
       get_extent(): BoxFractional;
     }
+    /** Polymer or non-polymer chain. Contains residues. */
     interface Chain extends emscriptem.instance<Chain> {
       get name(): string;
       set name(value: string);
@@ -171,6 +176,7 @@ export namespace gemmi {
       find_residue_group(_0: SeqId): ResidueGroup;
       is_first_in_group(_0: Residue): boolean;
     }
+    /** Chemical component (monomer library entry) with atoms and restraints. */
     interface ChemComp extends emscriptem.instance<ChemComp> {
       get name(): string;
       set name(value: string);
@@ -233,6 +239,7 @@ export namespace gemmi {
       block: cifBlock;
       apply_to(_0: ChemComp, _1: ChemCompGroup): void;
     }
+    /** Converter from CIF reflection data to MTZ format. */
     interface CifToMtz extends emscriptem.instance<CifToMtz> {
       verbose: boolean;
       force_unmerged: boolean;
@@ -273,6 +280,7 @@ export namespace gemmi {
       label_seq_id_to_auth(_0: OptionalNum): SeqId;
       auth_seq_id_to_label(_0: SeqId): OptionalNum;
     }
+    /** Crystallization conditions: pH, method, temperature. */
     interface CrystalInfo extends emscriptem.instance<CrystalInfo> {
       get id(): string;
       set id(value: string);
@@ -290,6 +298,7 @@ export namespace gemmi {
       rms: number;
       nan_count: number;
     }
+    /** Diffraction source, detector, beamline, wavelength information. */
     interface DiffractionInfo extends emscriptem.instance<DiffractionInfo> {
       get id(): string;
       set id(value: string);
@@ -318,6 +327,7 @@ export namespace gemmi {
       get detector_make(): string;
       set detector_make(value: string);
     }
+    /** Chemical element with atomic properties (number, weight, radii). */
     interface Element extends emscriptem.instance<Element> {
       elem: El;
       ordinal(): number;
@@ -349,6 +359,7 @@ export namespace gemmi {
       length: number;
       value_esd: number;
     }
+    /** Molecular entity (polymer, non-polymer, water) with sequence info. */
     interface Entity extends emscriptem.instance<Entity> {
       get name(): string;
       set name(value: string);
@@ -375,6 +386,7 @@ export namespace gemmi {
       label_seq_begin: OptionalNum;
       label_seq_end: OptionalNum;
     }
+    /** Experimental method and conditions. */
     interface ExperimentInfo extends emscriptem.instance<ExperimentInfo> {
       get method(): string;
       set method(value: string);
@@ -388,12 +400,14 @@ export namespace gemmi {
     interface FTransform extends Transform {
       apply(_0: Fractional): Fractional;
     }
+    /** 3D position in fractional coordinates. Has x, y, z. */
     interface Fractional extends Vec3 {
       wrap_to_unit(): Fractional;
       wrap_to_zero(): Fractional;
       round(): Fractional;
       move_toward_zero_by_one(): void;
     }
+    /** 3D grid (electron density map). */
     interface Grid extends emscriptem.instance<Grid> {
       calculate_spacing(): void;
       set_size_without_checking(_0: number, _1: number, _2: number): void;
@@ -483,6 +497,7 @@ export namespace gemmi {
       residue_idx: number;
       atom_idx: number;
     }
+    /** 3x3 matrix with arithmetic and decomposition operations. */
     interface Mat33 extends emscriptem.instance<Mat33> {
       multiplyMat33(_0: Mat33): Mat33;
       transpose(): Mat33;
@@ -499,6 +514,7 @@ export namespace gemmi {
       multiply_by_diagonal(_0: Vec3): Mat33;
       as_array(): array_native_double_9;
     }
+    /** Structure metadata: refinement stats, experiments, software, crystals. */
     interface Metadata extends emscriptem.instance<Metadata> {
       authors: emscriptem.vector<string>;
       experiments: emscriptem.vector<ExperimentInfo>;
@@ -514,8 +530,10 @@ export namespace gemmi {
       has_restr(): boolean;
       has_tls(): boolean;
     }
+    /** A single model in a structure. Contains chains. */
     interface Model extends emscriptem.instance<Model> {
       num: number;
+      /** Model number (aliased as "name" in embind; gemmi::Model has no string name) */
       name: number;
       chains: emscriptem.vector<Chain>;
       remove_chain(_0: string): void;
@@ -533,6 +551,7 @@ export namespace gemmi {
       find_cra(_0: AtomAddress, _1: boolean): CRA;
       find_cra_const(_0: AtomAddress, _1: boolean): const_CRA;
     }
+    /** Monomer library for chemical component dictionaries. */
     interface MonLib extends emscriptem.instance<MonLib> {
       get monomer_dir(): string;
       set monomer_dir(value: string);
@@ -543,6 +562,7 @@ export namespace gemmi {
       set_monomer_dir(_0: string): void;
       find_ideal_distance(_0: const_CRA, _1: const_CRA): number;
     }
+    /** MTZ reflection file. Contains columns, datasets, batches, cell, symmetry. */
     interface Mtz extends emscriptem.instance<Mtz> {
       get source_path(): string;
       set source_path(value: string);
@@ -606,6 +626,7 @@ export namespace gemmi {
       set_hkl(_0: number, _1: array_int_3): void;
       calculate_min_max_1_d2(): array_double_2;
     }
+    /** MTZ batch header for unmerged data. */
     interface MtzBatch extends emscriptem.instance<MtzBatch> {
       number: number;
       get title(): string;
@@ -623,6 +644,7 @@ export namespace gemmi {
       phi_end(): number;
       matrix_U(): Mat33;
     }
+    /** A single column in an MTZ file (e.g. FP, SIGFP, FWT, PHWT). */
     interface MtzColumn extends emscriptem.instance<MtzColumn> {
       dataset_id: number;
       type: number;
@@ -648,6 +670,7 @@ export namespace gemmi {
       column_index(_0: string): number;
       get_hkl(_0: number): array_int_3;
     }
+    /** MTZ dataset with project/crystal/dataset names and wavelength. */
     interface MtzDataset extends emscriptem.instance<MtzDataset> {
       id: number;
       get project_name(): string;
@@ -675,6 +698,7 @@ export namespace gemmi {
       tr: Transform;
       apply(_0: Position): Position;
     }
+    /** Result of finding the nearest symmetry image of a position. */
     interface NearestImage extends emscriptem.instance<NearestImage> {
       dist_sq: number;
       sym_idx: number;
@@ -682,6 +706,7 @@ export namespace gemmi {
       same_asu(): boolean;
       symmetry_code(_0: boolean): string;
     }
+    /** Spatial neighbor search for atoms within a distance cutoff. */
     interface NeighborSearch extends emscriptem.instance<NeighborSearch> {
       radius_specified: number;
       include_h: boolean;
@@ -689,6 +714,7 @@ export namespace gemmi {
       dist(_0: Position, _1: Position): number;
       populate(_0: boolean): NeighborSearch;
     }
+    /** Symmetry operation (rotation + translation in fractional coordinates). */
     interface Op extends emscriptem.instance<Op> {
       tran: array_int_3;
       rot: array_array_int_3_3;
@@ -715,8 +741,10 @@ export namespace gemmi {
       has_value(): boolean;
       str(_0: number): string;
     }
+    /** 3D position in orthogonal (Angstrom) coordinates. Has x, y, z. */
     interface Position extends Vec3 {
     }
+    /** Refinement statistics: R-factors, resolution, reflection counts, TLS. */
     interface RefinementInfo extends BasicRefinementInfo {
       get id(): string;
       set id(value: string);
@@ -738,6 +766,7 @@ export namespace gemmi {
       get remarks(): string;
       set remarks(value: string);
     }
+    /** Reflection data statistics: resolution, completeness, redundancy. */
     interface ReflectionsInfo extends emscriptem.instance<ReflectionsInfo> {
       resolution_high: number;
       resolution_low: number;
@@ -747,6 +776,7 @@ export namespace gemmi {
       r_sym: number;
       mean_I_over_sigma: number;
     }
+    /** Structure factor CIF block for SF-CIF files. */
     interface ReflnBlock extends emscriptem.instance<ReflnBlock> {
       block: cifBlock;
       get entry_id(): string;
@@ -775,6 +805,7 @@ export namespace gemmi {
       column_index(_0: string): number;
       get_hkl(_0: number): array_int_3;
     }
+    /** A residue (amino acid, nucleotide, ligand, water). Contains atoms. */
     interface Residue extends ResidueId {
       get subchain(): string;
       set subchain(value: string);
@@ -808,6 +839,7 @@ export namespace gemmi {
       matches(_0: ResidueId): boolean;
       matches_noseg(_0: ResidueId): boolean;
     }
+    /** Residue classification: amino acid, nucleotide, water, weight. */
     interface ResidueInfo extends emscriptem.instance<ResidueInfo> {
       kind: ResidueInfoKind;
       one_letter_code: number;
@@ -841,6 +873,7 @@ export namespace gemmi {
       set function(value: string);
       dev_ideal: number;
     }
+    /** Geometric restraints: bonds, angles, torsions, chirality, planes. */
     interface Restraints extends emscriptem.instance<Restraints> {
       bonds: any;
       angles: any;
@@ -904,6 +937,7 @@ export namespace gemmi {
       id3: RestraintsAtomId;
       id4: RestraintsAtomId;
     }
+    /** CID-based atom selection (e.g. "//A/31-33/*"). */
     interface Selection extends emscriptem.instance<Selection> {
       mdl: number;
       chain_ids: SelectionList;
@@ -973,6 +1007,7 @@ export namespace gemmi {
       acc_index: number;
       num: number;
     }
+    /** Small molecule crystal structure (from CIF). */
     interface SmallStructure extends emscriptem.instance<SmallStructure> {
       get name(): string;
       set name(value: string);
@@ -1019,6 +1054,7 @@ export namespace gemmi {
       set date(value: string);
       classification: Classification;
     }
+    /** Crystallographic space group with symmetry operations. */
     interface SpaceGroup extends emscriptem.instance<SpaceGroup> {
       number: number;
       ccp4: number;
@@ -1068,6 +1104,7 @@ export namespace gemmi {
       hbond_atom2: AtomAddress;
       hbond_atom1: AtomAddress;
     }
+    /** Macromolecular structure (PDB/mmCIF). Contains models, cell, metadata, assemblies. */
     interface Structure extends emscriptem.instance<Structure> {
       get name(): string;
       set name(value: string);
@@ -1116,6 +1153,7 @@ export namespace gemmi {
       get details(): string;
       set details(value: string);
     }
+    /** 3x3 rotation matrix + translation vector. */
     interface Transform extends emscriptem.instance<Transform> {
       mat: Mat33;
       vec: Vec3;
@@ -1126,6 +1164,7 @@ export namespace gemmi {
       set_identity(): void;
       approx(_0: Transform, _1: number): boolean;
     }
+    /** Crystallographic unit cell with lattice parameters and orthogonalization. */
     interface UnitCell extends UnitCellParameters {
       volume: number;
       ar: number;
@@ -1183,6 +1222,7 @@ export namespace gemmi {
       get_hkl_limits(_0: number): array_int_3;
       get_ncs_transforms(): emscriptem.vector<FTransform>;
     }
+    /** Unit cell lattice parameters: a, b, c, alpha, beta, gamma. */
     interface UnitCellParameters extends emscriptem.instance<UnitCellParameters> {
       a: number;
       b: number;
@@ -1191,6 +1231,7 @@ export namespace gemmi {
       beta: number;
       gamma: number;
     }
+    /** 3D vector with arithmetic operations (dot, cross, length, normalize). */
     interface Vec3 extends emscriptem.instance<Vec3> {
       x: number;
       y: number;
@@ -1217,6 +1258,7 @@ export namespace gemmi {
       align_pairs: number;
       align_loops: number;
     }
+    /** A CIF data block with tag/value pairs and loops. Use find(), find_values(). */
     interface cifBlock extends emscriptem.instance<cifBlock> {
       get name(): string;
       set name(value: string);
@@ -1239,6 +1281,7 @@ export namespace gemmi {
       init_loop(_0: string, _1: emscriptem.vector<string>): cifLoop;
       init_mmcif_loop(_0: string, _1: emscriptem.vector<string>): cifLoop;
     }
+    /** A single CIF tag values (from find_values or find_loop). */
     interface cifColumn extends emscriptem.instance<cifColumn> {
       length(): number;
       at(_0: number): string;
@@ -1246,6 +1289,7 @@ export namespace gemmi {
       str(_0: number): string;
       col(): number;
     }
+    /** Parsed CIF document containing one or more data blocks. */
     interface cifDocument extends emscriptem.instance<cifDocument> {
       get source(): string;
       set source(value: string);
@@ -1283,6 +1327,7 @@ export namespace gemmi {
       move_row(_0: number, _1: number): void;
       set_all_values(_0: VectorVectorString): void;
     }
+    /** A CIF table (loop) for structured data access by row and column. */
     interface cifTable extends emscriptem.instance<cifTable> {
       positions: emscriptem.vector<number>;
       prefix_length: number;
@@ -1304,6 +1349,7 @@ export namespace gemmi {
       find_column(_0: string): cifColumn;
       erase(): void;
     }
+    /** A single row in a CIF table. Use value_at() to access columns. */
     interface cifTableRow extends emscriptem.instance<cifTableRow> {
       row_index: number;
       value_at_unsafe(_0: number): string;
