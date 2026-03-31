@@ -1797,6 +1797,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<TorsionEntry>("vector<TorsionEntry>");
     register_vector<coot::residue_range_t>("vector_residue_range_t");
     register_vector<coot::geometry_distortion_info_container_t>("vector_geometry_distortion_info_container_t");
+    register_vector<coot::geometry_distortion_info_t>("vector_geometry_distortion_info_t");
 
     value_object<TableEntry>("TableEntry")
       .field("svg", &TableEntry::svg)
