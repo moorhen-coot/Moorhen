@@ -500,3 +500,77 @@ inline void GemmiSelectionRemoveNotSelectedResidue(gemmi::Selection &s, gemmi::R
 inline std::array<double, 9> Mat33ToDoubleArray(const gemmi::Mat33 &mat){
     return {mat[0][0],mat[0][1],mat[0][2],mat[1][0],mat[1][1],mat[1][2],mat[2][0],mat[2][1],mat[2][2]};
 }
+
+// JS-friendly wrappers for methods that use pointer-to-member or return unbindable types
+
+// Metadata::has() wrappers — replace pointer-to-member with string-based dispatch
+inline bool metadata_has_double_field(const gemmi::Metadata& meta, const std::string& field) {
+    for (const auto& ref : meta.refinement) {
+        if (field == "resolution_high" && !std::isnan(ref.resolution_high)) return true;
+        if (field == "resolution_low" && !std::isnan(ref.resolution_low)) return true;
+        if (field == "completeness" && !std::isnan(ref.completeness)) return true;
+        if (field == "r_all" && !std::isnan(ref.r_all)) return true;
+        if (field == "r_work" && !std::isnan(ref.r_work)) return true;
+        if (field == "r_free" && !std::isnan(ref.r_free)) return true;
+        if (field == "cc_fo_fc_work" && !std::isnan(ref.cc_fo_fc_work)) return true;
+        if (field == "cc_fo_fc_free" && !std::isnan(ref.cc_fo_fc_free)) return true;
+        if (field == "mean_b" && !std::isnan(ref.mean_b)) return true;
+        if (field == "luzzati_error" && !std::isnan(ref.luzzati_error)) return true;
+        if (field == "dpi_blow_r" && !std::isnan(ref.dpi_blow_r)) return true;
+        if (field == "dpi_blow_rfree" && !std::isnan(ref.dpi_blow_rfree)) return true;
+        if (field == "dpi_cruickshank_r" && !std::isnan(ref.dpi_cruickshank_r)) return true;
+        if (field == "dpi_cruickshank_rfree" && !std::isnan(ref.dpi_cruickshank_rfree)) return true;
+    }
+    return false;
+}
+
+inline bool metadata_has_int_field(const gemmi::Metadata& meta, const std::string& field) {
+    for (const auto& ref : meta.refinement) {
+        if (field == "reflection_count" && ref.reflection_count != 0) return true;
+        if (field == "rfree_set_count" && ref.rfree_set_count != 0) return true;
+        if (field == "bin_count" && ref.bin_count != 0) return true;
+    }
+    return false;
+}
+
+inline bool metadata_has_string_field(const gemmi::Metadata& meta, const std::string& field) {
+    for (const auto& ref : meta.refinement) {
+        if (field == "id" && !ref.id.empty()) return true;
+        if (field == "cross_validation_method" && !ref.cross_validation_method.empty()) return true;
+        if (field == "rfree_selection_method" && !ref.rfree_selection_method.empty()) return true;
+    }
+    return false;
+}
+
+// Selection filter wrappers — return vectors instead of FilterProxy iterators
+inline std::vector<gemmi::Model> selection_get_models(const gemmi::Selection& sel, gemmi::Structure& st) {
+    std::vector<gemmi::Model> result;
+    for (auto& model : st.models)
+        if (sel.matches(model))
+            result.push_back(model);
+    return result;
+}
+
+inline std::vector<gemmi::Chain> selection_get_chains(const gemmi::Selection& sel, gemmi::Model& model) {
+    std::vector<gemmi::Chain> result;
+    for (auto& chain : model.chains)
+        if (sel.matches(chain))
+            result.push_back(chain);
+    return result;
+}
+
+inline std::vector<gemmi::Residue> selection_get_residues(const gemmi::Selection& sel, gemmi::Chain& chain) {
+    std::vector<gemmi::Residue> result;
+    for (auto& res : chain.residues)
+        if (sel.matches(res))
+            result.push_back(res);
+    return result;
+}
+
+inline std::vector<gemmi::Atom> selection_get_atoms(const gemmi::Selection& sel, gemmi::Residue& res) {
+    std::vector<gemmi::Atom> result;
+    for (auto& atom : res.atoms)
+        if (sel.matches(atom))
+            result.push_back(atom);
+    return result;
+}

@@ -310,4 +310,13 @@ EMSCRIPTEN_BINDINGS(gemmi_cif) {
 
     function("find_tabulated_residue",&gemmi::find_tabulated_residue);
 
+    // JS-friendly wrappers for methods with unbindable signatures
+    function("metadata_has_double_field",&metadata_has_double_field);
+    function("metadata_has_int_field",&metadata_has_int_field);
+    function("metadata_has_string_field",&metadata_has_string_field);
+    function("selection_get_models",&selection_get_models);
+    function("selection_get_chains",&selection_get_chains);
+    function("selection_get_residues",&selection_get_residues);
+    function("selection_get_atoms",&selection_get_atoms);
+
 }

@@ -680,6 +680,33 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st, model, chains, chain, residues, residue, atoms, atom)
     })
 
+    // === Metadata has_field wrapper tests ===
+
+    test("metadata_has_double_field", () => {
+        const st = cootModule.read_structure_file('./5a3h.mmcif', cootModule.CoorFormat.Mmcif)
+        const meta = st.meta
+        expect(cootModule.metadata_has_double_field(meta, 'r_work')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'r_free')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'resolution_high')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'dpi_cruickshank_rfree')).toBeFalsy()
+        cleanUpVariables.push(st)
+    })
+
+    // === Selection filter wrapper tests ===
+
+    test("selection_get_residues", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        const selection = new cootModule.Selection('//A/31-33/*')
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(0)
+
+        const residues = cootModule.selection_get_residues(selection, chain)
+        expect(residues.size()).toBe(3)
+
+        cleanUpVariables.push(st, model, chains, chain, residues)
+    })
+
     test("structure_is_ligand", () => {
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
