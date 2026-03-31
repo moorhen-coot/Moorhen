@@ -308,4 +308,6 @@ EMSCRIPTEN_BINDINGS(gemmi_cif) {
     .function("fasta_code",&gemmi::ResidueInfo::fasta_code)
     ;
 
+    function("find_tabulated_residue",&gemmi::find_tabulated_residue);
+
 }
