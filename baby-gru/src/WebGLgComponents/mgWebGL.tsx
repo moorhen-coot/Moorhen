@@ -1253,7 +1253,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const extensionArray = this.gl.getSupportedExtensions();
 
         if (this.doneEvents === undefined) {
-            // --- Non-drag event listeners (middle click, context menu, keyboard, wheel) ---
+            // --- Non-drag event listeners (hover, middle click, context menu, keyboard, wheel) ---
+            // Hover tracking — DragGesture only fires during drags, so plain mouse
+            // movement (no button held) needs its own listener for doHover / cursor updates
+            self.canvas.addEventListener("pointermove",
+                function (evt) {
+                    if (!self.mouseDown) {
+                        self.doMouseMove(evt, self);
+                    }
+                },
+                false);
             // Middle mouse button (button 1) for recentre-on-atom — not captured by DragGesture
             self.canvas.addEventListener("pointerdown",
                 function (evt) {
@@ -7087,12 +7096,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             molMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
             molMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
             const com = this.getActiveMoleculeCOM();
-            this.activeMolecule.displayObjectsTransformation.centre = com;
+            const tO: [number, number, number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
+            this.activeMolecule.displayObjectsTransformation.centre = tO;
             for (const representation of this.activeMolecule.representations) {
                 const value = representation.buffers
                 for (let ibuf = 0; ibuf < value.length; ibuf++) {
                     value[ibuf].transformMatrixInteractive = molMatrix;
-                    value[ibuf].transformOriginInteractive = com;
+                    value[ibuf].transformOriginInteractive = tO;
                 }
             }
         }
@@ -7173,12 +7183,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
 
             const com = this.getActiveMoleculeCOM();
-            this.activeMolecule.displayObjectsTransformation.centre = com;
+            const tO: [number, number, number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
+            this.activeMolecule.displayObjectsTransformation.centre = tO;
             const dispObjs: moorhen.DisplayObject[][] = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
             for (const value of dispObjs) {
                 for (let ibuf = 0; ibuf < value.length; ibuf++) {
                     value[ibuf].transformMatrixInteractive = theMatrix;
-                    value[ibuf].transformOriginInteractive = com;
+                    value[ibuf].transformOriginInteractive = tO;
                 }
             }
         }

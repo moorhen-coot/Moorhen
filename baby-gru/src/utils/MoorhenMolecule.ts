@@ -1769,7 +1769,7 @@ export class MoorhenMolecule {
                         const atomSerial = atom.serial;
                         const atomHasAltLoc = atom.has_altloc();
                         const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement);
-                        const atomName = atomElementString.length === 2 ? atom.name.padEnd(4, " ") : (" " + atom.name).padEnd(4, " ");
+                        const atomName = atom.name;
                         const centre = this.displayObjectsTransformation.centre;
                         // COM_world = centre - viewOrigin
                         // atomPos = gemmiPos - COM_world

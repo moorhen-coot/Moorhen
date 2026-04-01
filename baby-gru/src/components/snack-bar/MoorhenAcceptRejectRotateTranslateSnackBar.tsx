@@ -40,7 +40,7 @@ export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
                 await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms);
                 dispatch(triggerUpdate(props.moleculeRef.current.molNo));
             }
-            await fragmentMoleculeRef.current.delete(true);
+            await fragmentMoleculeRef.current.delete();
             dispatch(setIsRotatingAtoms(false));
             closeSnackbar(props.id);
         },
