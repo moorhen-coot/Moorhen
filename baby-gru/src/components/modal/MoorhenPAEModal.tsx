@@ -1,43 +1,35 @@
-import { Row } from "react-bootstrap";
-import { useDispatch, useSelector } from "react-redux";
-import { dispatchPersistentStates, usePersistentState } from "../../store/menusSlice";
-import { moorhen } from "../../types/moorhen";
+import { useState } from "react";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenPAEPlot } from "../validation-tools/MoorhenPAEPlot";
 
-export const MoorhenPAEModal = () => {
-    const menu = "moorhenPAEPlotModal";
-
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const dispatch = useDispatch();
-
-    const [modalSize, setModalSize] = usePersistentState<{ width: number; height: number }>(
-        menu,
-        "modalSize",
-        {
-            width: convertRemToPx(20),
-            height: convertRemToPx(42),
-        },
-        false
-    );
+export const MoorhenPAEModal = (props: ModalComponentProps) => {
+    const [modalSize, setModalSize] = useState<{ width: number; height: number }>({ width: 300, height: 900 });
+    const [modalIsDocked, setModalIsDocked] = useState(false);
 
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.PAEPLOT}
+            openDocked={props.openDocked}
             enforceMaxBodyDimensions={false}
+            initialHeight={770}
+            initialWidth={534}
+            lockAspectRatio={true}
             allowDocking
-            overflowY="hidden"
-            overflowX="auto"
             headerTitle="Alphafold PAE Plot"
-            footer={null}
             onResize={(evt, ref, direction, delta, size) => {
                 setModalSize(size);
             }}
-            onResizeStop={() => dispatchPersistentStates(dispatch, menu, [{ key: "modalSize", value: modalSize }])}
-            body={<MoorhenPAEPlot size={modalSize} resizeTrigger={false} />}
+            onDock={state => setModalIsDocked(state === null ? false : true)}
+            body={
+                <MoorhenPAEPlot
+                    size={modalSize}
+                    resizeTrigger={false}
+                    isDocked={modalIsDocked}
+                    loadMoleculeOnOpen={props.modalProps?.loadMoleculeOnOpen as string}
+                />
+            }
         />
     );
 };

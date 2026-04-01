@@ -157,15 +157,11 @@ export const MoorhenLhasaModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.LHASA}
-            left={width / 6}
-            top={height / 3}
-            minHeight={convertViewtoPx(30, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(90, height)}
-            maxWidth={convertViewtoPx(80, width)}
             enforceMaxBodyDimensions={true}
             overflowY="auto"
             overflowX="auto"
+            initialHeight={682}
+            initialWidth={551}
             headerTitle="Lhasa"
             resizeNodeRef={resizeNodeRef}
             onClose={handleClose}
@@ -174,7 +170,7 @@ export const MoorhenLhasaModal = () => {
                 // Unfortunately it seems that the real amount of space is ever-so-slightly smaller because the surrounding padding
                 // is not taken into consideration by this function.
                 const pixel_margin = 20;
-                setLhasaWidth(size.width - pixel_margin);
+                setLhasaWidth(size.width);
                 setLhasaHeight(size.height - pixel_margin);
             }}
             body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} height={lhasaHeight} width={lhasaWidth} />}

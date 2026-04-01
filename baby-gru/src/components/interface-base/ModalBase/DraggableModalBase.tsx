@@ -135,29 +135,34 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 width = savedSize.width;
                 height = savedSize.height;
             } else {
-                width = initialWidth ?? Math.min(rect.width, maxWidth);
-                height = initialHeight ? initialHeight - 48 - 40 : Math.min(rect.height, maxHeight);
+                width = initialWidth ? initialWidth : Math.min(rect.width + marginWidth, maxWidth);
+                height = initialHeight ? initialHeight : Math.min(rect.height + totalNonBodyHeight, maxHeight);
             }
             setSize({
                 width: width,
                 height: height,
             });
+            sizeRef.current = { width, height };
             props.onResize?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 }, { width, height });
             props.onResizeStop?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 });
             aspectRatioRef.current = width / height;
             console.log(`Measured body size: ${rect.width}x${rect.height}`);
             setMeasured(true);
         }
+    }, []);
+
+    useEffect(() => {
         if (openDocked) {
             handleDocking(openDocked);
         }
-    }, []);
+    }, [openDocked]);
 
     const modalRef = useRef<HTMLDivElement>(null);
     const showFooter: boolean = (props.footer ? true : false) || !(docked && lockAspectRatio);
     const headerHeight = 48;
     const footerHeight = showFooter ? 40 : 0;
     const totalNonBodyHeight = headerHeight + footerHeight;
+    const marginWidth = 18;
 
     // Refs to avoid stale closures in event listeners.
     //
@@ -368,7 +373,13 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         }
         const newSize = { width: docked ? size.width : width, height };
         setSize(newSize);
-        onResizeRef.current?.(evt, "bottomRight", null, { width: deltaX, height: deltaY }, newSize);
+        onResizeRef.current?.(
+            evt,
+            "bottomRight",
+            null,
+            { width: deltaX, height: deltaY },
+            { width: newSize.width - marginWidth, height: newSize.height - totalNonBodyHeight }
+        );
     };
 
     // ── Docking & collapsing logic ─────────────────────────────────────
@@ -378,18 +389,28 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             return;
         }
         if (!docked) {
-            unDockRef.current = { position, size };
+            unDockRef.current = { position: position, size: sizeRef.current };
+            const aspect = sizeRef.current.width / sizeRef.current.height;
+            const dockWidth = 300;
+            console.log(
+                `Docking modal to ${side}. Saving position (${position.x}, ${position.y}) and size (${sizeRef.current.width}x${sizeRef.current.height})`
+            );
             if (side === "left") {
                 setPosition({ x: mainMenuIsOpen ? 200 : 26, y: 80 });
             } else if (side === "right") {
-                setPosition({ x: glWidth - 300 - 36, y: 100 });
+                setPosition({ x: glWidth - dockWidth - 36, y: 100 });
             }
             setSize(prev => {
-                const aspect = prev.width / prev.height;
-                return { width: 300, height: 300 / aspect };
+                return { width: dockWidth, height: dockWidth / aspect };
             });
             setDocked(side);
-            onResizeRef.current?.(null, "bottomRight", null, { width: 0, height: 0 }, { width: 300, height: 300 / aspectRatioRef.current });
+            onResizeRef.current?.(
+                null,
+                "bottomRight",
+                null,
+                { width: 0, height: 0 },
+                { width: dockWidth - marginWidth, height: (dockWidth - totalNonBodyHeight) / aspect }
+            );
             onResizeStopRef.current?.(null, "bottomRight", null, { width: 0, height: 0 });
         } else {
             setPosition(unDockRef.current.position);
@@ -427,6 +448,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         return (
             <div
                 ref={bodyRef}
+                className="moorhen__modal-body"
                 style={{
                     visibility: "hidden",
                     position: "absolute",
@@ -456,12 +478,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 opacity: opacity,
                 zIndex: currentZIndex,
                 transform: `translate(${position.x}px, ${position.y}px)`,
-                height: size.height + totalNonBodyHeight,
+                height: size.height,
                 width: size.width,
                 minWidth: minWidth,
-                minHeight: collapse ? 40 : minHeight + totalNonBodyHeight,
+                minHeight: collapse ? 40 : minHeight,
                 maxWidth: maxWidth,
-                maxHeight: collapse ? 43 : maxHeight + totalNonBodyHeight,
+                maxHeight: collapse ? 43 : maxHeight,
             }}
             onMouseOver={() => setOpacity(1.0)}
             onFocus={() => setOpacity(1.0)}
@@ -523,6 +545,12 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 //     maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
                 //     maxWidth: maxWidth,
                 // }}
+                style={{
+                    maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
+                    maxWidth: maxWidth,
+                    overflowY: props.overflowY ?? "auto",
+                    overflowX: props.overflowX ?? "auto",
+                }}
             >
                 {props.body}
                 {additionalChildren}{" "}

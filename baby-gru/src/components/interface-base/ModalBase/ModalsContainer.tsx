@@ -64,6 +64,7 @@ export type ModalKey =
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;
+    modalProps?: { [key: string]: string | number | boolean };
 };
 
 const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
@@ -104,7 +105,9 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals: Extra
     const activeModals = useSelector((state: RootState) => state.modals.activeModals);
     const displayModals = activeModals.map(modalCall => {
         const ModalComponent = modalsMap[modalCall.key];
-        return ModalComponent ? <ModalComponent key={modalCall.key} openDocked={modalCall.openDocked} /> : null;
+        return ModalComponent ? (
+            <ModalComponent key={modalCall.key} openDocked={modalCall.openDocked} modalProps={modalCall.modalProps} />
+        ) : null;
     });
 
     return (

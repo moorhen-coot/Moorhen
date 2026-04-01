@@ -1,6 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
-import { RootState, enqueueSnackbar } from "@/store";
+import { RootState, enqueueSnackbar, showModal } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
@@ -29,15 +29,15 @@ export const FetchOnlineSources = () => {
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
-    const [fetchMap, setFetchMap] = usePersistentState("file", "fetch-map", false, true);
+    const [fetchExtra, setFetchExtra] = usePersistentState("file", "fetch-extra", false, true);
 
     const [remoteSource, setRemoteSource] = useState<string>("PDBe");
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true);
 
     const dispatch = useDispatch();
 
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
+    const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
+    const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {
@@ -55,6 +55,7 @@ export const FetchOnlineSources = () => {
         } else {
             console.log(`Unrecognised remote source! ${remoteSource}`);
         }
+        document.body.click();
     };
 
     const fetchMapFromEMDB = async () => {
@@ -79,7 +80,7 @@ export const FetchOnlineSources = () => {
         const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`;
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
-        if (pdbCode && fetchMap) {
+        if (pdbCode && fetchExtra) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, pdbCode),
                 fetchMapFromURL(mapUrl, `${pdbCode}-map`),
@@ -115,6 +116,9 @@ export const FetchOnlineSources = () => {
                     if (bestEntry > infoJson.length) bestEntry = 0;
                     const coordUrl = infoJson[bestEntry].pdbUrl;
                     fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true);
+                    if (fetchExtra) {
+                        dispatch(showModal({ key: "pae-plot", openDocked: "right", modalProps: { loadMoleculeOnOpen: uniprotID } }));
+                    }
                 }
             } else {
                 dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
@@ -134,7 +138,7 @@ export const FetchOnlineSources = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value;
         const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.cif`;
         const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`;
-        if (pdbCode && fetchMap) {
+        if (pdbCode && fetchExtra) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
                 fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, {
@@ -239,6 +243,12 @@ export const FetchOnlineSources = () => {
         return newMap;
     };
 
+    const fetchExtraLabel =
+        remoteSource === "PDBe" || remoteSource === "PDB-REDO"
+            ? "fetch map files"
+            : remoteSource === "AFDB"
+              ? "open PAE data"
+              : "fetch map files";
     return (
         <>
             <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
@@ -276,11 +286,11 @@ export const FetchOnlineSources = () => {
             <label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching
             </label>
-            {downloadMaps && (
+            {
                 <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
-                    <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" />
+                    <MoorhenToggle checked={fetchExtra} onChange={() => setFetchExtra(!fetchExtra)} label={fetchExtraLabel} />
                 </div>
-            )}
+            }
         </>
     );
 };
