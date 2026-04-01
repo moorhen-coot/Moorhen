@@ -99,6 +99,7 @@ import { gaussianBlurs } from './gaussianBlurs'
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
+import { DragGesture, PinchGesture } from '@use-gesture/vanilla'
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
@@ -306,6 +307,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mouseDown_y: number;
         mouseDownedAt: number;
         mouseMoved: boolean;
+        _touchBaseZoom: number | null;
+        _touchLastAngle: number;
+        _touchLastOrigin: [number, number];
+        _touchLongPressTimer: ReturnType<typeof setTimeout> | null;
         mouseTrackColourBuffer: WebGLBuffer;
         mouseTrackIndexBuffer: WebGLBuffer;
         mouseTrackNormalBuffer: WebGLBuffer;
@@ -1248,22 +1253,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const extensionArray = this.gl.getSupportedExtensions();
 
         if (this.doneEvents === undefined) {
-            self.canvas.addEventListener("mousedown",
+            // --- Non-drag event listeners (middle click, context menu, keyboard, wheel) ---
+            // Middle mouse button (button 1) for recentre-on-atom — not captured by DragGesture
+            self.canvas.addEventListener("pointerdown",
                 function (evt) {
-                    if (self.keysDown['dist_ang_2d']) {
-                        self.doMouseDownMeasure(evt, self);
-                    } else {
+                    if (evt.button === 1) {
                         self.doMouseDown(evt, self);
+                        evt.stopPropagation();
                     }
-                    evt.stopPropagation();
                 },
                 false);
-                self.canvas.addEventListener("mouseup",
+            self.canvas.addEventListener("pointerup",
                 function (evt) {
-                    if (self.keysDown['dist_ang_2d']) {
-                        self.doMouseUpMeasure(evt, self);
-                    } else {
+                    if (evt.button === 1) {
                         self.doMouseUp(evt, self);
+                        evt.stopPropagation();
                     }
                 },
                 false);
@@ -1274,34 +1278,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     evt.preventDefault();
                 },
                 false);
-            self.canvas.addEventListener("mousedown",
-                function (evt) {
-                    if (evt.which === 1) {
-                        self.doClick(evt, self);
-                        evt.stopPropagation();
-                    } else if (evt.which === 2) {
-                        evt.stopPropagation();
-                    } else {
-                        self.doRightClick(evt, self);
-                        evt.stopPropagation();
-                        evt.preventDefault();
-                    }
-                },
-                false);
             self.canvas.addEventListener("dblclick",
                 function (evt) {
                     self.doDoubleClick(evt, self);
-                    evt.stopPropagation();
-                },
-                false);
-            console.log("addEventListener");
-            self.canvas.addEventListener("mousemove",
-                function (evt) {
-                    if (self.keysDown['dist_ang_2d']) {
-                        self.doMouseMoveMeasure(evt, self);
-                    } else {
-                        self.doMouseMove(evt, self);
-                    }
                     evt.stopPropagation();
                 },
                 false);
@@ -1328,56 +1307,133 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     evt.preventDefault();
                 },
                 false);
-            self.canvas.addEventListener('touchstart',
-                function (e) {
-                    const touchobj = e.changedTouches[0];
-                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                    //alert(e.changedTouches.length)
-                    if (e.changedTouches.length === 2) {
-                        evt.shiftKey = true;
-                        evt.altKey = true;
+
+            // --- Unified drag gesture handler (mouse + touch) via @use-gesture ---
+            self._touchBaseZoom = null as number | null;
+            self._touchLastAngle = 0;
+            self._touchLastOrigin = [0, 0];
+            self._touchLongPressTimer = null as ReturnType<typeof setTimeout> | null;
+
+            new DragGesture(self.canvas, (state) => {
+                const { first, last, xy: [x, y], delta: [ddx, ddy], tap, event, pinching, elapsedTime } = state;
+                if (pinching) return; // pinch gesture takes over for two-finger input
+                const nativeEvent = event as PointerEvent;
+                const isTouch = nativeEvent?.pointerType === 'touch';
+
+                if (first) {
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseDownMeasure(nativeEvent, self);
+                    } else {
+                        self.doMouseDown({ pageX: x, pageY: y, button: nativeEvent?.button ?? 0 }, self);
                     }
-                    self.doMouseDown(evt, self);
-                    self.mouseDownedAt = (e.timeStamp)
-                    e.stopPropagation();
-                    e.preventDefault();
-                    // Create a timeout that will check if the user is holding down on the same spot to open the context menu
-                    setTimeout(() => {
-                        if (self.mouseDown && !self.mouseMoved) {
-                            self.doRightClick(evt, self);
+                    if (!isTouch) {
+                        // Mouse: also fire click routing (replicates the old second mousedown listener)
+                        if (nativeEvent?.button === 0) {
+                            self.doClick(nativeEvent, self);
+                        } else if (nativeEvent?.button === 2) {
+                            self.doRightClick(nativeEvent, self);
                         }
-                    }, 1000)
-                }, false)
+                    } else {
+                        // Touch: long-press for context menu
+                        self.mouseDownedAt = Date.now();
+                        const evt = { pageX: x, pageY: y, shiftKey: false, altKey: false, button: 0 };
+                        self._touchLongPressTimer = setTimeout(() => {
+                            if (self.mouseDown && !self.mouseMoved) {
+                                self.doRightClick(evt, self);
+                            }
+                        }, 1000);
+                    }
+                } else if (last) {
+                    if (self._touchLongPressTimer) {
+                        clearTimeout(self._touchLongPressTimer);
+                        self._touchLongPressTimer = null;
+                    }
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseUpMeasure(nativeEvent, self);
+                    } else {
+                        if (isTouch && (tap || elapsedTime < 300)) {
+                            self.doClick({ pageX: x, pageY: y, shiftKey: false, altKey: false, button: 0 }, self);
+                        }
+                        self.doMouseUp({ pageX: x, pageY: y, shiftKey: nativeEvent?.shiftKey ?? false, altKey: nativeEvent?.altKey ?? false, button: nativeEvent?.button ?? 0, which: nativeEvent?.button ?? 0 }, self);
+                    }
+                } else {
+                    // Ongoing drag
+                    if (self.keysDown['dist_ang_2d']) {
+                        self.doMouseMoveMeasure(nativeEvent, self);
+                    } else {
+                        self.doMouseMove(nativeEvent ?? { pageX: x, pageY: y, shiftKey: false, altKey: false, buttons: 1 }, self);
+                    }
+                }
 
-            self.canvas.addEventListener('touchmove',
-                function (e) {
-                    const touchobj = e.touches[0]; // reference first touch point for this event
-                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
-                    if (e.touches.length === 2) {
-                        evt.shiftKey = true;
-                        evt.altKey = true;
-                    }
-                    self.doMouseMove(evt, self);
-                    e.stopPropagation();
-                    e.preventDefault();
-                }, false)
+                if (event) {
+                    event.stopPropagation();
+                    if (isTouch) event.preventDefault();
+                }
+            }, {
+                pointer: { touch: true },
+                filterTaps: true,
+                preventScrollAxis: 'xy',
+            });
 
-            self.canvas.addEventListener('touchend',
-                function (e) {
-                    const touchobj = e.changedTouches[0]; // reference first touch point for this event
-                    const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                    if (e.changedTouches.length === 2) {
-                        evt.shiftKey = true;
-                        evt.altKey = true;
+            new PinchGesture(self.canvas, (state) => {
+                const { first, last, origin: [ox, oy], da: [distance, angle], memo, event } = state;
+                // Only handle touch pointers; mouse/trackpad zoom is handled by the wheel listener
+                if ((event as PointerEvent)?.pointerType === 'mouse') return memo;
+
+                if (first) {
+                    self._touchBaseZoom = self.zoom;
+                    self._touchLastAngle = angle;
+                    self._touchLastOrigin = [ox, oy];
+                    self.mouseDown = true;
+                    self.mouseMoved = false;
+                    if (event) { event.stopPropagation(); event.preventDefault(); }
+                    return { initialDistance: distance };
+                }
+
+                if (last) {
+                    self._touchBaseZoom = null;
+                    self.mouseDown = false;
+                    if (self.reContourMapOnlyOnMouseUp) {
+                        self.handleOriginUpdated(true);
                     }
-                    const deltaTime = e.timeStamp - self.mouseDownedAt;
-                    if (deltaTime < 300) {
-                        self.doClick(evt, self);
-                    }
-                    self.doMouseUp(evt, self);
-                    e.stopPropagation();
-                    e.preventDefault();
-                }, false)
+                    if (event) { event.stopPropagation(); event.preventDefault(); }
+                    return memo;
+                }
+
+                self.mouseMoved = true;
+                const initialDistance = memo?.initialDistance ?? distance;
+
+                // --- Pinch → Zoom ---
+                if (self._touchBaseZoom != null && initialDistance > 0) {
+                    const scale = distance / initialDistance;
+                    let newZoom = self._touchBaseZoom / scale;
+                    if (newZoom < 0.01) newZoom = 0.01;
+                    self.setZoom(newZoom);
+                }
+
+                // --- Twist → Z-rotation ---
+                const angleDelta = (angle - self._touchLastAngle) * Math.PI / 180;
+                self._touchLastAngle = angle;
+                if (Math.abs(angleDelta) > 0.001) {
+                    self.applyZRotation(angleDelta);
+                }
+
+                // --- Two-finger drag → Pan (using extracted method directly) ---
+                const panDx = (ox - self._touchLastOrigin[0]) * self.props.mouseSensitivityFactor;
+                const panDy = (oy - self._touchLastOrigin[1]) * self.props.mouseSensitivityFactor;
+                self._touchLastOrigin = [ox, oy];
+                if (Math.abs(panDx) > 0.01 || Math.abs(panDy) > 0.01) {
+                    self.applyPan(panDx, panDy, self.getMoveFactor());
+                }
+
+                self.drawScene();
+
+                if (event) { event.stopPropagation(); event.preventDefault(); }
+                return memo;
+            }, {
+                pointer: { touch: true },
+                eventOptions: { passive: false },
+            });
         }
         this.doneEvents = true;
 
@@ -6763,7 +6819,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const event_y = event.pageY;
         self.init_y = event.pageY;
         this.currentlyDraggedAtom = null
-        if (self.keysDown['center_atom'] || event.which===2) {
+        if (self.keysDown['center_atom'] || event.altKey || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(displayBuffers.length>0){
                     const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
@@ -6870,25 +6926,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseMove(event, self) {
-        const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
-
-        const centreOfMass = function (atoms) {
-            let totX = 0.0;
-            let totY = 0.0;
-            let totZ = 0.0;
-            if (atoms.length > 0) {
-                for (let iat = 0; iat < atoms.length; iat++) {
-                    totX += atoms[iat].x;
-                    totY += atoms[iat].y;
-                    totZ += atoms[iat].z;
-                }
-                totX /= atoms.length;
-                totY /= atoms.length;
-                totZ /= atoms.length;
-            }
-            return [totX, totY, totZ];
-        }
-
         self.mouseMoved = true;
 
         self.cancelMouseTrack = true;
@@ -6931,96 +6968,31 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
-        const moveFactor = getDeviceScale() * 400.0 / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
+        const moveFactor = self.getMoveFactor();
 
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
-            const invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            const theMatrix = quatToMat4(invQuat);
-            const xshift = vec3.create();
-            vec3.set(xshift, moveFactor * self.dx, 0, 0);
-            const yshift = vec3.create();
-            vec3.set(yshift, 0, moveFactor * self.dy, 0);
-            vec3.transformMat4(xshift, xshift, theMatrix);
-            vec3.transformMat4(yshift, yshift, theMatrix);
-
-            if (!activeMoleculeMotion) {
-                const newOrigin = self.origin.map((coord, coordIndex) => {
-                    return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
-                })
-                self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
-            } else {
-                const newOrigin = this.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
-                    return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
-                })
-                const newOriginSet : [number,number,number] = [ newOrigin[0], newOrigin[1], newOrigin[2]];
-                this.activeMolecule.displayObjectsTransformation.origin = newOriginSet;
-                if (!this.activeMolecule.displayObjectsTransformation.quat) {
-                    this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
-                    quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
-                }
-                const theMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
-                theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
-                theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
-                theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
-                for (const representation of this.activeMolecule.representations) {
-                    const value = representation.buffers
-                    for (let ibuf = 0; ibuf < value.length; ibuf++) {
-                        value[ibuf].transformMatrixInteractive = theMatrix;
-                    }
-                }
-            }
+            self.applyPan(self.dx, self.dy, moveFactor);
             self.drawScene();
             return;
         }
 
         if (event.altKey) {
-            const factor = 1. - self.dy / 50.0;
-            let newZoom = self.zoom * factor;
-            if (newZoom < .01) {
-                newZoom = 0.01;
-            }
-            self.setZoom(newZoom)
+            self.applyZoom(1. - self.dy / 50.0);
             self.drawScene();
             return;
         }
 
         if (event.shiftKey) {
-
             const c = this.canvasRef.current;
             const offset = getOffsetRect(c);
             const frac_x = 2.0*(getDeviceScale()*(event.pageX-offset.left)/this.gl.viewportWidth-0.5);
             const frac_y = -2.0*(getDeviceScale()*(event.pageY-offset.top)/this.gl.viewportHeight-0.5);
-            const zQ = createZQuatFromDX(frac_x*self.dy+frac_y*self.dx);
-            quat4.multiply(self.myQuat, self.myQuat, zQ);
+            self.applyZRotation(frac_x*self.dy+frac_y*self.dx);
 
         } else if (event.buttons === 1) {
 
-            const rot_x_axis = vec3.create()
-            const rot_y_axis = vec3.create()
-            vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
-            vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
-
-            if(this.doThreeWayView&&this.threeWayViewports.length>0){
-                const quats = this.threeWayQuats
-                const viewports = this.threeWayViewports
-                const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0],this.gl_cursorPos[1],quats,viewports)
-                if(mVPQ.quat) {
-                    const theRotMatrix = quatToMat4(mVPQ.quat);
-                    mat4.invert(theRotMatrix,theRotMatrix)
-                    vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
-                    vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
-                }
-            }
-
-            const xQ = createQuatFromAngle(-self.dy,rot_x_axis);
-            const yQ = createQuatFromAngle(-self.dx,rot_y_axis);
-            quat4.multiply(xQ, xQ, yQ);
-
             if (this.currentlyDraggedAtom) {
-
-                // ###############
-                // FILO: COPY PASTED FROM ABOVE
+                // Atom dragging uses pan logic on the draggable molecule
                 const invQuat = quat4.create();
                 quat4Inverse(self.myQuat, invQuat);
                 const theMatrix = quatToMat4(invQuat);
@@ -7041,64 +7013,180 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     quat4.set(this.draggableMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
                 }
 
-                // ###############
-
                 const draggedAtomEvent: moorhen.AtomDraggedEvent = new CustomEvent("atomDragged", { detail: this.currentlyDraggedAtom });
                 document.dispatchEvent(draggedAtomEvent);
                 return
 
-            } else if (!activeMoleculeMotion) {
-                quat4.multiply(self.myQuat, self.myQuat, xQ);
             } else {
-                // ###############
-                //TODO - Move all this somewhere else ...
-
-                const invQuat = quat4.create();
-                quat4Inverse(this.myQuat, invQuat);
-                const invMat = quatToMat4(invQuat);
-                const x_rot = vec3.create();
-                const y_rot = vec3.create();
-                vec3.set(x_rot, 1.0, 0.0, 0.0);
-                vec3.set(y_rot, 0.0, 1.0, 0.0);
-                vec3.transformMat4(x_rot, x_rot, invMat);
-                vec3.transformMat4(y_rot, y_rot, invMat);
-
-                const xQp = createQuatFromDXAngle(-self.dy, x_rot);
-                const yQp = createQuatFromDXAngle(-self.dx, y_rot);
-                quat4.multiply(xQp, xQp, yQp);
-
-                if (!this.activeMolecule.displayObjectsTransformation.quat) {
-                    this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
-                    quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
-                }
-                quat4.multiply(this.activeMolecule.displayObjectsTransformation.quat, this.activeMolecule.displayObjectsTransformation.quat, xQp);
-                const theMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
-                theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
-                theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
-                theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
-                //Just consider one origin.
-                const diff = [0, 0, 0];
-
-                const dispObjs: moorhen.DisplayObject[][]  = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
-                for (const value of dispObjs) {
-                    if (value.length > 0) {
-                        const com = centreOfMass(value[0].atoms);
-                        const diff : [number,number,number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
-                        this.activeMolecule.displayObjectsTransformation.centre = diff;
-                        break;
-                    }
-                }
-                for (const value of dispObjs) {
-                    for (let ibuf = 0; ibuf < value.length; ibuf++) {
-                        value[ibuf].transformMatrixInteractive = theMatrix;
-                        value[ibuf].transformOriginInteractive = diff;
-                    }
-                }
-                // ###############
+                self.applyRotationXY(self.dx, self.dy);
             }
         }
 
         self.drawScene();
+    }
+
+    /**
+     * Pan the view (or active molecule) by the given screen-space deltas.
+     * dx, dy are in sensitivity-adjusted pixels. moveFactor is the
+     * device-scale/canvas factor used to translate screen pixels to world units.
+     */
+    applyPan(dx: number, dy: number, moveFactor: number) {
+        const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) && !this.keysDown['residue_camera_wiggle'];
+        const invQuat = quat4.create();
+        quat4Inverse(this.myQuat, invQuat);
+        const theMatrix = quatToMat4(invQuat);
+        const xshift = vec3.create();
+        vec3.set(xshift, moveFactor * dx, 0, 0);
+        const yshift = vec3.create();
+        vec3.set(yshift, 0, moveFactor * dy, 0);
+        vec3.transformMat4(xshift, xshift, theMatrix);
+        vec3.transformMat4(yshift, yshift, theMatrix);
+
+        if (!activeMoleculeMotion) {
+            const newOrigin: [number, number, number] = [
+                this.origin[0] + (this.zoom * xshift[0] / 8.) - (this.zoom * yshift[0] / 8.),
+                this.origin[1] + (this.zoom * xshift[1] / 8.) - (this.zoom * yshift[1] / 8.),
+                this.origin[2] + (this.zoom * xshift[2] / 8.) - (this.zoom * yshift[2] / 8.),
+            ];
+            this.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
+        } else {
+            const newOrigin = this.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
+                return coord + (this.zoom * xshift[coordIndex] / 8.) - (this.zoom * yshift[coordIndex] / 8.)
+            })
+            const newOriginSet: [number, number, number] = [newOrigin[0], newOrigin[1], newOrigin[2]];
+            this.activeMolecule.displayObjectsTransformation.origin = newOriginSet;
+            if (!this.activeMolecule.displayObjectsTransformation.quat) {
+                this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
+                quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
+            }
+            const molMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
+            molMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
+            molMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
+            molMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
+            for (const representation of this.activeMolecule.representations) {
+                const value = representation.buffers
+                for (let ibuf = 0; ibuf < value.length; ibuf++) {
+                    value[ibuf].transformMatrixInteractive = molMatrix;
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply a zoom by the given multiplicative factor.
+     */
+    applyZoom(factor: number) {
+        let newZoom = this.zoom * factor;
+        if (newZoom < .01) {
+            newZoom = 0.01;
+        }
+        this.setZoom(newZoom);
+    }
+
+    /**
+     * Apply Z-axis rotation by the given angle (in radians).
+     */
+    applyZRotation(angleRad: number) {
+        const zQ = createZQuatFromDX(angleRad);
+        quat4.multiply(this.myQuat, this.myQuat, zQ);
+    }
+
+    /**
+     * Apply X/Y rotation from screen-space deltas (sensitivity-adjusted).
+     * pageX, pageY are needed for the fractional z-rotation variant used with shift key.
+     */
+    applyRotationXY(dx: number, dy: number) {
+        const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) && !this.keysDown['residue_camera_wiggle'];
+
+        const rot_x_axis = vec3.create()
+        const rot_y_axis = vec3.create()
+        vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+        vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+
+        if (this.doThreeWayView && this.threeWayViewports.length > 0) {
+            const quats = this.threeWayQuats
+            const viewports = this.threeWayViewports
+            const mVPQ = this.getThreeWayMatrixAndViewPort(this.gl_cursorPos[0], this.gl_cursorPos[1], quats, viewports)
+            if (mVPQ.quat) {
+                const theRotMatrix = quatToMat4(mVPQ.quat);
+                mat4.invert(theRotMatrix, theRotMatrix)
+                vec3.transformMat4(rot_x_axis, rot_x_axis, theRotMatrix);
+                vec3.transformMat4(rot_y_axis, rot_y_axis, theRotMatrix);
+            }
+        }
+
+        const xQ = createQuatFromAngle(-dy, rot_x_axis);
+        const yQ = createQuatFromAngle(-dx, rot_y_axis);
+        quat4.multiply(xQ, xQ, yQ);
+
+        if (!activeMoleculeMotion) {
+            quat4.multiply(this.myQuat, this.myQuat, xQ);
+        } else {
+            const invQuat = quat4.create();
+            quat4Inverse(this.myQuat, invQuat);
+            const invMat = quatToMat4(invQuat);
+            const x_rot = vec3.create();
+            const y_rot = vec3.create();
+            vec3.set(x_rot, 1.0, 0.0, 0.0);
+            vec3.set(y_rot, 0.0, 1.0, 0.0);
+            vec3.transformMat4(x_rot, x_rot, invMat);
+            vec3.transformMat4(y_rot, y_rot, invMat);
+
+            const xQp = createQuatFromDXAngle(-dy, x_rot);
+            const yQp = createQuatFromDXAngle(-dx, y_rot);
+            quat4.multiply(xQp, xQp, yQp);
+
+            if (!this.activeMolecule.displayObjectsTransformation.quat) {
+                this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
+                quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
+            }
+            quat4.multiply(this.activeMolecule.displayObjectsTransformation.quat, this.activeMolecule.displayObjectsTransformation.quat, xQp);
+            const theMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
+            theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
+            theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
+            theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
+
+            const centreOfMass = function (atoms) {
+                let totX = 0.0;
+                let totY = 0.0;
+                let totZ = 0.0;
+                if (atoms.length > 0) {
+                    for (let iat = 0; iat < atoms.length; iat++) {
+                        totX += atoms[iat].x;
+                        totY += atoms[iat].y;
+                        totZ += atoms[iat].z;
+                    }
+                    totX /= atoms.length;
+                    totY /= atoms.length;
+                    totZ /= atoms.length;
+                }
+                return [totX, totY, totZ];
+            }
+
+            const diff = [0, 0, 0];
+            const dispObjs: moorhen.DisplayObject[][] = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
+            for (const value of dispObjs) {
+                if (value.length > 0) {
+                    const com = centreOfMass(value[0].atoms);
+                    const comDiff: [number, number, number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
+                    this.activeMolecule.displayObjectsTransformation.centre = comDiff;
+                    break;
+                }
+            }
+            for (const value of dispObjs) {
+                for (let ibuf = 0; ibuf < value.length; ibuf++) {
+                    value[ibuf].transformMatrixInteractive = theMatrix;
+                    value[ibuf].transformOriginInteractive = diff;
+                }
+            }
+        }
+    }
+
+    /**
+     * Compute the moveFactor used by pan and drag operations.
+     */
+    getMoveFactor(): number {
+        return getDeviceScale() * 400.0 / this.canvas.height * this.moveFactor / this.props.mouseSensitivityFactor;
     }
 
     doMouseDown(event, self) {
