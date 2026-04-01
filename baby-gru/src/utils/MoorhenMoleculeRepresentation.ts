@@ -118,6 +118,7 @@ export class MoleculeRepresentation {
     cid: string;
     neighboursCid: string;
     restrictToNeighbours: boolean;
+    excludeNeighbours: boolean;
     buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -593,18 +594,17 @@ export class MoleculeRepresentation {
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
             //Now we might not want to use the new method, maybe we should use the old one.
-            const restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,false)
+            const restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
             if(restrictedCid.length>0) _cid = restrictedCid
-            if (drawMissingLoops) {
-                await this.commandCentre.current.cootCommand(
-                    {
-                        command: "set_draw_missing_residue_loops",
-                        returnType: "status",
-                        commandArgs: [false],
-                    },
-                    false
-                );
-            }
+            await this.commandCentre.current.cootCommand(
+                {
+                    command: "set_draw_missing_residue_loops",
+                    returnType: "status",
+                    commandArgs: [false],
+                },
+                false
+            );
+            console.log("Set set_draw_missing_residue_loops to false")
         }
 
         let objects;
@@ -683,6 +683,7 @@ export class MoleculeRepresentation {
                 break;
         }
 
+        console.log("drawMissingLoops",drawMissingLoops)
         if(this.restrictToNeighbours&&drawMissingLoops) {
             await this.commandCentre.current.cootCommand(
                 {
@@ -1223,6 +1224,8 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
+        console.log("getCootSelectionBondBuffers",drawMissingLoops)
         const bondArgs = this.getBondArgs(name);
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>;
         const returnType = name === "VdwSpheres" ? "instanced_mesh_perfect_spheres" : "instanced_mesh";

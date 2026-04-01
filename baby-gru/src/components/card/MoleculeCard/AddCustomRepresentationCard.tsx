@@ -50,6 +50,7 @@ export const AddCustomRepresentationCard = memo(
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
+        const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(props.representation?.excludeNeighbours ?? false);
         const [neighboursCid, setNeighboursCid] = useState<string>("");
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
@@ -110,6 +111,9 @@ export const AddCustomRepresentationCard = memo(
 
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
 
+        const handleExcludeNeighbourhoodSettingsChange = () => {
+            setExcludeNeighbours(!excludeNeighbours);
+        }
         const handleUseNeighbourhoodSettingsChange = () => {
             setRestrictToNeighbours(!restrictToNeighbours);
         }
@@ -284,6 +288,7 @@ export const AddCustomRepresentationCard = memo(
                 } else {
                     representationRef.current.cid = cidSelection;
                     representationRef.current.restrictToNeighbours = restrictToNeighbours;
+                    representationRef.current.excludeNeighbours = excludeNeighbours;
                     representationRef.current.neighboursCid = neighboursCid;
                     representationRef.current.setStyle(representationStyle);
                     representationRef.current.setUseDefaultColourRules(useDefaultColours);
@@ -297,6 +302,7 @@ export const AddCustomRepresentationCard = memo(
                 if (representation) {
                     representation.cid = cidSelection;
                     representation.restrictToNeighbours = restrictToNeighbours;
+                    representation.excludeNeighbours = excludeNeighbours;
                     representation.neighboursCid = neighboursCid;
                     representation.setStyle(styleSelectRef.current.value as moorhen.RepresentationStyles);
                     representation.setUseDefaultColourRules(!colourRule);
@@ -490,7 +496,12 @@ export const AddCustomRepresentationCard = memo(
                         defaultValue={props.representation?.neighboursCid ?? ""}
                         allowUseCurrentSelection={true}
                     />
-                    <MoorhenToggle type="switch" label="_unused_" style={{ height: "2rem", margin: "0.1rem" }}/>
+                    <MoorhenToggle type="switch"
+                        label="exclude"
+                        checked={excludeNeighbours}
+                        style={{ height: "2rem", margin: "0.1rem" }}
+                        onChange={handleExcludeNeighbourhoodSettingsChange}
+                     />
                     </MoorhenStack>
                 )}
                 {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
