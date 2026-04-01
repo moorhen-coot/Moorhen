@@ -7026,6 +7026,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     /**
+     * Compute the centre of mass of the active molecule's buffer atoms.
+     * Returns the COM in buffer space (i.e. world coords + viewOrigin).
+     */
+    getActiveMoleculeCOM(): [number, number, number] {
+        const dispObjs: moorhen.DisplayObject[][] = this.activeMolecule.representations
+            .filter(item => item.style !== 'transformation')
+            .map(item => item.buffers);
+        for (const value of dispObjs) {
+            if (value.length > 0 && value[0].atoms && value[0].atoms.length > 0) {
+                const atoms = value[0].atoms;
+                let totX = 0.0, totY = 0.0, totZ = 0.0;
+                for (let iat = 0; iat < atoms.length; iat++) {
+                    totX += atoms[iat].x;
+                    totY += atoms[iat].y;
+                    totZ += atoms[iat].z;
+                }
+                return [totX / atoms.length, totY / atoms.length, totZ / atoms.length];
+            }
+        }
+        return [0, 0, 0];
+    }
+
+    /**
      * Pan the view (or active molecule) by the given screen-space deltas.
      * dx, dy are in sensitivity-adjusted pixels. moveFactor is the
      * device-scale/canvas factor used to translate screen pixels to world units.
@@ -7063,10 +7086,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             molMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
             molMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
             molMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
+            const com = this.getActiveMoleculeCOM();
+            this.activeMolecule.displayObjectsTransformation.centre = com;
             for (const representation of this.activeMolecule.representations) {
                 const value = representation.buffers
                 for (let ibuf = 0; ibuf < value.length; ibuf++) {
                     value[ibuf].transformMatrixInteractive = molMatrix;
+                    value[ibuf].transformOriginInteractive = com;
                 }
             }
         }
@@ -7146,37 +7172,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
             theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
 
-            const centreOfMass = function (atoms) {
-                let totX = 0.0;
-                let totY = 0.0;
-                let totZ = 0.0;
-                if (atoms.length > 0) {
-                    for (let iat = 0; iat < atoms.length; iat++) {
-                        totX += atoms[iat].x;
-                        totY += atoms[iat].y;
-                        totZ += atoms[iat].z;
-                    }
-                    totX /= atoms.length;
-                    totY /= atoms.length;
-                    totZ /= atoms.length;
-                }
-                return [totX, totY, totZ];
-            }
-
-            const diff = [0, 0, 0];
+            const com = this.getActiveMoleculeCOM();
+            this.activeMolecule.displayObjectsTransformation.centre = com;
             const dispObjs: moorhen.DisplayObject[][] = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
-            for (const value of dispObjs) {
-                if (value.length > 0) {
-                    const com = centreOfMass(value[0].atoms);
-                    const comDiff: [number, number, number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
-                    this.activeMolecule.displayObjectsTransformation.centre = comDiff;
-                    break;
-                }
-            }
             for (const value of dispObjs) {
                 for (let ibuf = 0; ibuf < value.length; ibuf++) {
                     value[ibuf].transformMatrixInteractive = theMatrix;
-                    value[ibuf].transformOriginInteractive = diff;
+                    value[ibuf].transformOriginInteractive = com;
                 }
             }
         }

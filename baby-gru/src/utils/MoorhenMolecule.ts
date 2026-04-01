@@ -1770,10 +1770,12 @@ export class MoorhenMolecule {
                         const atomHasAltLoc = atom.has_altloc();
                         const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement);
                         const atomName = atomElementString.length === 2 ? atom.name.padEnd(4, " ") : (" " + atom.name).padEnd(4, " ");
-                        const diff = this.displayObjectsTransformation.centre;
-                        const x = gemmiAtomPos.x + originState[0] - diff[0];
-                        const y = gemmiAtomPos.y + originState[1] - diff[1];
-                        const z = gemmiAtomPos.z + originState[2] - diff[2];
+                        const centre = this.displayObjectsTransformation.centre;
+                        // COM_world = centre - viewOrigin
+                        // atomPos = gemmiPos - COM_world
+                        const x = gemmiAtomPos.x - centre[0] + originState[0];
+                        const y = gemmiAtomPos.y - centre[1] + originState[1];
+                        const z = gemmiAtomPos.z - centre[2] + originState[2];
                         const origin = this.displayObjectsTransformation.origin;
                         const quat = this.displayObjectsTransformation.quat;
                         if (quat) {
@@ -1781,11 +1783,12 @@ export class MoorhenMolecule {
                             theMatrix[12] = origin[0];
                             theMatrix[13] = origin[1];
                             theMatrix[14] = origin[2];
-                            // And then transform ...
+                            // transPos = R * atomPos + T
                             const atomPos = vec3.create();
                             const transPos = vec3.create();
                             vec3.set(atomPos, x, y, z);
                             vec3.transformMat4(transPos, atomPos, theMatrix);
+                            // result_world = transPos + COM_world
                             movedAtoms.push({
                                 mol_name: String(model.name),
                                 chain_id: chain.name,
@@ -1796,9 +1799,9 @@ export class MoorhenMolecule {
                                 tempFactor: atom.b_iso,
                                 charge: atom.charge,
                                 occupancy: atom.occ,
-                                x: transPos[0] - originState[0] + diff[0],
-                                y: transPos[1] - originState[1] + diff[1],
-                                z: transPos[2] - originState[2] + diff[2],
+                                x: transPos[0] + centre[0] - originState[0],
+                                y: transPos[1] + centre[1] - originState[1],
+                                z: transPos[2] + centre[2] - originState[2],
                                 serial: atomSerial,
                                 has_altloc: atomHasAltLoc,
                                 alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : "",
@@ -1841,6 +1844,7 @@ export class MoorhenMolecule {
         );
         this.displayObjectsTransformation.origin = [0, 0, 0];
         this.displayObjectsTransformation.quat = null;
+        this.displayObjectsTransformation.centre = [0, 0, 0];
         this.setAtomsDirty(true);
         await this.redraw();
     }
