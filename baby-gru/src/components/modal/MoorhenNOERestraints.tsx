@@ -49,20 +49,68 @@ import { libcootApi} from "../../types/libcoot"
 // so how do we access atom list? 
 // what fn uses atom list? presumably loading it in?
 // where is MoorhenMolecule called? If we can use same MoorhenMolecule from state then we can access its atom list etc
+// function convertNEFHydrogen(nefName) {
+//   if ((nefName.includes("x") || nefName.includes("y")) && nefName.includes("%")) {
+//     return []
+//     // this is a placeholder - not sure what to do with e.g. HDx%
+//     // there are a reasonably large amount of ambiguous dihedrals
+//     // seek advice from NMR
+//     // enumerate fully as with others
+//     // add "ambiguous" flag
+//   }
+
+//   // x → 2
+//   if (nefName.includes("x")) {
+//     return [nefName.replace("x", "1")];
+//   }
+
+//   // y → 3
+//   if (nefName.includes("y")) {
+//     return [nefName.replace("y", "2")];
+//   }
+
+//   // wildcard %
+//   if (nefName.endsWith("%")) {
+//     const base = nefName.slice(0, -1);
+//     return [
+//       base + "1",
+//       base + "2",
+//       base + "3"
+//     ];
+//   }
+
+//   // default
+//   return [nefName];
+// }
 function convertNEFHydrogen(nefName) {
+
   if ((nefName.includes("x") || nefName.includes("y")) && nefName.includes("%")) {
-    return []
-    // this is a placeholder - not sure what to do with e.g. HDx%
-    // there are a reasonably large amount of ambiguous dihedrals
-    // seek advice from NMR
+
+    const base = nefName.replace(/[xy]%/, "");
+
+    if (nefName.includes("x")) {
+      return [
+        base + "11",
+        base + "12",
+        base + "13"
+      ];
+    }
+
+    if (nefName.includes("y")) {
+      return [
+        base + "21",
+        base + "22",
+        base + "23"
+      ];
+    }
   }
 
-  // x → 2
+  // x → 1
   if (nefName.includes("x")) {
     return [nefName.replace("x", "1")];
   }
 
-  // y → 3
+  // y → 2
   if (nefName.includes("y")) {
     return [nefName.replace("y", "2")];
   }
@@ -81,13 +129,12 @@ function convertNEFHydrogen(nefName) {
   return [nefName];
 }
 
-
 function loopReplaceProtons(rows, atomN = "atom1") {
     // loops through rows
     // runs convertNEFhydrogen
     // pushes to dataframe
     // returns dataframe
-    const newDF = [];
+    const newDF = []
     rows.forEach(row => { 
         if(row[atomN].includes("%") || row[atomN].includes("x") || row[atomN].includes("y"))
             {
@@ -95,11 +142,14 @@ function loopReplaceProtons(rows, atomN = "atom1") {
             ConvertedName.forEach(convertedRow => {
                 let newRow = {...row}
                 newRow[atomN] = convertedRow
+                newRow.ambiguityFlag = true;
             newDF.push(newRow)
             })
             
         }
-        else{newDF.push(row)}
+        else{                
+            row.ambiguityFlag = false;
+            newDF.push(row)}
     }
 )
 return(newDF)
@@ -108,7 +158,8 @@ return(newDF)
 function convertDataframe(df, pdbAtoms = null) {
 
 //   const newDF = [];
-
+// atom1 and atom2 are not named correctly now the fn is done in c++
+// need to change header names etc
  const atom1Replaced = loopReplaceProtons(df, "atom1")
  const atom2Replaced = loopReplaceProtons(atom1Replaced, "atom2")
 
@@ -140,6 +191,28 @@ const newVector = () => {
     return aVector;
 }
 
+function convertDataHeaders(restraintDict){
+
+    const keyMap = {
+                "_nef_distance_restraint.atom_name_1": "atom1",
+                "_nef_distance_restraint.atom_name_2": "atom2",
+                "_nef_distance_restraint.chain_code_1": "chain1",
+                "_nef_distance_restraint.chain_code_2": "chain2",
+                "_nef_distance_restraint.sequence_code_1": "res1",
+                "_nef_distance_restraint.sequence_code_2": "res2"}
+    const parsed = JSON.parse(restraintDict)
+    const transformed = parsed.map(obj =>
+        Object.fromEntries(
+            Object.entries(keyMap).map(([oldKey, newKey]) => [
+            newKey,
+            obj[oldKey],
+                 ])
+             )
+     )    
+     return(transformed) 
+}
+
+
 
 export const MoorhenNOERestraints = () => {
     const dispatch = useDispatch();
@@ -162,6 +235,7 @@ export const MoorhenNOERestraints = () => {
     const loadNEF = async (files: FileList) => {
         // let cootModule: libcootApi.CootModule;
         // console.log(cootModule)
+           
         for (const file of files) {
             if (file.name.endsWith(".gz"))
             {
@@ -170,7 +244,10 @@ export const MoorhenNOERestraints = () => {
                 const fileContents =  pako.inflate(binFileContents, { to: "string" })
                 // var restraintData = parseNEF_NOEs(fileContents)
                 var restraintData = window.cootModule.get_nef_restraints(fileContents)
-                const convertedData = convertDataframe(restraintData)
+
+                const headedData = convertDataHeaders(restraintData)
+
+                const convertedData = convertDataframe(headedData)
                 console.log(convertedData)
 
             }
@@ -182,7 +259,10 @@ export const MoorhenNOERestraints = () => {
                 // window.cootModule.get_nef_restraints(fileContents)
                 // var restraintData = parseNEF_NOEs(fileContents)
                 var restraintData = window.cootModule.get_nef_restraints(fileContents)
-                const convertedData = convertDataframe(restraintData)
+
+                const headedData = convertDataHeaders(restraintData)
+
+                const convertedData = convertDataframe(headedData)
                 console.log(convertedData)
                 
                 const newVectors = []
@@ -192,6 +272,9 @@ export const MoorhenNOERestraints = () => {
                     newNOEVector.cidFrom = row.chain1 + "/" + row.res1 + "/" + row.atom1
                     newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
                     newNOEVector.uniqueId += "__TAG_NOE_RESTRAINTS"
+                    if (row.ambiguityFlag) {
+                        newNOEVector.vectorColour = { r: 185, g: 255, b: 255 };
+                    }
                     newVectors.push(newNOEVector)
                 })
                 setNOEVectors(newVectors)
