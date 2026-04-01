@@ -1253,7 +1253,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const extensionArray = this.gl.getSupportedExtensions();
 
         if (this.doneEvents === undefined) {
-            // --- Non-drag event listeners (middle click, context menu, keyboard, wheel) ---
+            // --- Non-drag event listeners (hover, middle click, context menu, keyboard, wheel) ---
+            // Hover tracking — DragGesture only fires during drags, so plain mouse
+            // movement (no button held) needs its own listener for doHover / cursor updates
+            self.canvas.addEventListener("pointermove",
+                function (evt) {
+                    if (!self.mouseDown) {
+                        self.doMouseMove(evt, self);
+                    }
+                },
+                false);
             // Middle mouse button (button 1) for recentre-on-atom — not captured by DragGesture
             self.canvas.addEventListener("pointerdown",
                 function (evt) {
