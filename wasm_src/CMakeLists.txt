@@ -569,21 +569,13 @@ FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION
 add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
-if(EMIT_TSD)
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen64.d.ts)
-else()
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
-endif()
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
-if(EMIT_TSD)
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
-else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
-endif()
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
@@ -692,6 +684,7 @@ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
 install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
 
+if(BUILD_GEMMI_STANDALONE)
 # Standalone gemmi WASM module — no pthreads, no coot, no SharedArrayBuffer required
 add_executable(gemmi-wasm gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc)
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi)
@@ -717,3 +710,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gemmi.wasm ${CMAKE_CURRENT_BINARY_DIR}
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gemmi.wasm ${CMAKE_CURRENT_BINARY_DIR}/gemmi.js
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/dist/gemmi)
+endif()
