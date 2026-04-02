@@ -1787,7 +1787,7 @@ export class MoorhenMolecule {
                             vec3.set(atomPos, x, y, z);
                             vec3.transformMat4(transPos, atomPos, theMatrix);
                             movedAtoms.push({
-                                mol_name: model.name,
+                                mol_name: String(model.name),
                                 chain_id: chain.name,
                                 res_no: residueSeqId.str(),
                                 res_name: residue.name,
