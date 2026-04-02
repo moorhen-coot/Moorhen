@@ -1858,6 +1858,65 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Merge a transformed fragment back into this molecule.
+     * Fetches the fragment's PDB string from coot, applies the JS-side transform
+     * to the coordinate columns, replaces the fragment model in coot, then uses
+     * replace_fragment to merge it into this molecule.
+     */
+    async mergeTransformedFragment(fragmentMolecule: moorhen.Molecule, cid: string): Promise<void> {
+        const centre = fragmentMolecule.displayObjectsTransformation.centre;
+        const origin = fragmentMolecule.displayObjectsTransformation.origin;
+        const quat = fragmentMolecule.displayObjectsTransformation.quat;
+        const viewOrigin = this.store.getState().glRef.origin;
+
+        if (quat) {
+            const parentCoordsResponse = await this.commandCentre.current.cootCommand(
+                { returnType: "string", command: "molecule_to_PDB_string", commandArgs: [this.molNo] }, false
+            );
+            const parentPdb = parentCoordsResponse.data.result.result as string;
+            const cidMatch = cid.match(/\/\/(\w+)\/(\d+)/);
+            const cidChain = cidMatch ? cidMatch[1] : null;
+            const cidResNo = cidMatch ? cidMatch[2] : null;
+            const theMatrix = quatToMat4(quat);
+            theMatrix[12] = origin[0];
+            theMatrix[13] = origin[1];
+            theMatrix[14] = origin[2];
+            const transformedLines = parentPdb.split('\n').map(line => {
+                if (line.startsWith('ATOM  ') || line.startsWith('HETATM')) {
+                    const lineChain = line.substring(21, 22).trim();
+                    const lineResNo = line.substring(22, 26).trim();
+                    if (lineChain === cidChain && lineResNo === cidResNo) {
+                        const x = parseFloat(line.substring(30, 38));
+                        const y = parseFloat(line.substring(38, 46));
+                        const z = parseFloat(line.substring(46, 54));
+                        const ax = x - centre[0] + viewOrigin[0];
+                        const ay = y - centre[1] + viewOrigin[1];
+                        const az = z - centre[2] + viewOrigin[2];
+                        const atomPos = vec3.create();
+                        const transPos = vec3.create();
+                        vec3.set(atomPos, ax, ay, az);
+                        vec3.transformMat4(transPos, atomPos, theMatrix);
+                        const nx = (transPos[0] + centre[0] - viewOrigin[0]).toFixed(3).padStart(8);
+                        const ny = (transPos[1] + centre[1] - viewOrigin[1]).toFixed(3).padStart(8);
+                        const nz = (transPos[2] + centre[2] - viewOrigin[2]).toFixed(3).padStart(8);
+                        return line.substring(0, 30) + nx + ny + nz + line.substring(54);
+                    }
+                }
+                return line;
+            });
+            const transformedPdb = transformedLines.join('\n');
+            await this.commandCentre.current.cootCommand(
+                { returnType: "status", command: "replace_molecule_by_model_from_string", commandArgs: [this.molNo, transformedPdb], changesMolecules: [this.molNo] }, true
+            );
+        }
+        this.displayObjectsTransformation.origin = [0, 0, 0];
+        this.displayObjectsTransformation.quat = null;
+        this.displayObjectsTransformation.centre = [0, 0, 0];
+        this.setAtomsDirty(true);
+        await this.redraw();
+    }
+
+    /**
      * Get a list with the names of the chains in the current model
      * @returns {string[]} - A list of chain names in the current structure
      */
