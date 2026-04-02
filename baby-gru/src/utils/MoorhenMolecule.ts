@@ -1426,7 +1426,10 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid?: string,
+        restrictToNeighbours?: boolean,
+        excludeNeighbours?: boolean,
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1441,7 +1444,10 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid: string = "",
+        restrictToNeighbours: boolean = false,
+        excludeNeighbours: boolean = false,
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1462,6 +1468,9 @@ export class MoorhenMolecule {
             representation.setM2tParams(m2tParams);
             representation.setResidueEnvOptions(residueEnvOptions);
             representation.setNonCustomOpacity(nonCustomOpacity);
+            representation.neighboursCid = neighboursCid;
+            representation.restrictToNeighbours = restrictToNeighbours;
+            representation.excludeNeighbours = excludeNeighbours;
         }
 
         representation.setParentMolecule(this);

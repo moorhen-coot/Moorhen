@@ -480,7 +480,7 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 ) : null}
-                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
+                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment","allHBonds"].includes(representationStyle) && (
                     <MoorhenToggle
                         type="switch"
                         label={`In neighbourhood of`}

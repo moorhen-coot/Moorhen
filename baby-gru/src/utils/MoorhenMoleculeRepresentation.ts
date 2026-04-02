@@ -622,7 +622,10 @@ export class MoleculeRepresentation {
                 objects = await this.getCootGaussianSurfaceBuffers();
                 break;
             case "allHBonds":
-                objects = await this.getHBondBuffers(_cid);
+                if(this.restrictToNeighbours)
+                    objects = await this.getHBondBuffers(this.neighboursCid);
+                else
+                    objects = await this.getHBondBuffers(_cid);
                 break;
             case "rama":
                 objects = await this.getRamachandranBallBuffers();
