@@ -31,6 +31,7 @@ export class MoorhenInstance {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand: CootCommandWrapper;
     private menuSystem: MoorhenMenuSystem | null = null;
+    private ready: boolean = false;
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -126,6 +127,10 @@ export class MoorhenInstance {
         return this.menuSystem;
     }
 
+    public isReady(): boolean {
+        return this.ready;
+    }
+
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -198,6 +203,7 @@ export class MoorhenInstance {
         await newCommandCentre.init();
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
+        this.ready = true;
     }
 
     public cleanup(): void {

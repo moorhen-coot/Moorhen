@@ -29,14 +29,14 @@ type MoorhenDraggableModalBaseProps = {
     showCloseButton?: boolean;
     onClose?: () => void | Promise<void>;
     onResize?: (
-        evt: MouseEvent | TouchEvent,
+        evt: MouseEvent | TouchEvent | null,
         direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
         ref: HTMLDivElement | null,
         delta: { width: number; height: number },
         size: { width: number; height: number }
     ) => void;
     onResizeStop?: (
-        evt: MouseEvent | TouchEvent,
+        evt: MouseEvent | TouchEvent | null,
         direction: "top" | "right" | "bottom" | "left" | "topRight" | "bottomRight" | "bottomLeft" | "topLeft",
         ref: HTMLDivElement | null,
         delta: { width: number; height: number }
@@ -124,13 +124,18 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     });
     const [docked, setDocked] = useState<null | "left" | "right">(null);
 
-    const [savedSize, setSavedSize] = usePersistentState("modalSizes", props.modalId, { width: null, height: null }, true);
+    const [savedSize, setSavedSize] = usePersistentState<{ width: number | null; height: number | null }>(
+        "modalSizes",
+        props.modalId,
+        { width: null, height: null },
+        true
+    );
 
     useLayoutEffect(() => {
         if (bodyRef.current) {
             const rect = bodyRef.current.getBoundingClientRect();
             let width: number, height: number;
-            if (savedSize.width) {
+            if (savedSize.width && savedSize.height) {
                 console.log(`Restoring saved size: ${savedSize.width}x${savedSize.height}`);
                 width = savedSize.width;
                 height = savedSize.height;

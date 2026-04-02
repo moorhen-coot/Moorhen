@@ -49,11 +49,11 @@ import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
 import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
 import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
 import { LongJobSnackNotification } from "../snack-bars/LongJobSnackNotification";
-import { MoorhenTomogramSnackBar } from "../snack-bars/MoorhenTomogramSnackBar";
 import { PopupControls } from "../snack-bars/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenDroppable } from "./MoorhenDroppable";
+import "./container.css";
 
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;
@@ -84,6 +84,7 @@ interface ContainerOptionalProps {
     store?: Store;
     allowAddNewFittedLigand?: boolean;
     allowMergeFittedLigand?: boolean;
+    webComponentMode?: boolean;
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -99,6 +100,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         allowMergeFittedLigand = true,
         viewOnly = false,
         aceDRGInstance = null,
+        webComponentMode = false,
     } = props;
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
@@ -205,6 +207,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     // Style append to header at initialization
     useLayoutEffect(() => {
+        if (webComponentMode) {
+            // In web component mode, styles are handled within the shadow DOM, so we can skip appending styles to the document head
+            return;
+        }
         const head = document.head;
         const style: HTMLLinkElement = document.createElement("link");
         style.href = `${urlPrefix}/moorhen.css`;
@@ -212,26 +218,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         style.type = "text/css";
         head.appendChild(style);
     }, []);
-
-    // useLayoutEffect(() => {
-    //     const head = document.head;
-    //     const style: HTMLLinkElement = document.createElement("link");
-
-    //     if (isDark) {
-    //         style.href = `${urlPrefix}/darkly.css`;
-    //     } else {
-    //         style.href = `${urlPrefix}/flatly.css`;
-    //     }
-
-    //     style.rel = "stylesheet";
-    //     // style.async = true;
-    //     style.type = "text/css";
-
-    //     head.appendChild(style);
-    //     return () => {
-    //         head.removeChild(style);
-    //     };
-    // }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
@@ -412,7 +398,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <MoorhenMapsHeadManager />
                     <MoleculesOriginListener />
                     <LongJobSnackNotification />
-
                     <MoorhenDroppable monomerLibraryPath={monomerLibraryPath} timeCapsuleRef={timeCapsuleRef} commandCentre={commandCentre}>
                         <MoorhenWebMG
                             ref={glRef}

@@ -8,7 +8,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
 export const GoTo = () => {
-    const cidRef = useRef<null | HTMLInputElement>(null);
+    const cidRef = useRef<HTMLInputElement>(null!);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [cid, setCid] = useState<string>("");

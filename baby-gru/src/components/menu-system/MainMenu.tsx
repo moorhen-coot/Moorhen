@@ -9,6 +9,7 @@ import { MoorhenIcon, MoorhenSVG } from "../icons";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
+import { useMenuHook } from "./menuHook";
 
 export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
@@ -18,6 +19,8 @@ export const MoorhenMainMenu = memo(() => {
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
     const menuSystem = moorhenInstance.getMenuSystem();
+
+    const menuVersion = useMenuHook();
 
     const handleMainMenuToggle = () => {
         if (isOpen) {
@@ -59,7 +62,7 @@ export const MoorhenMainMenu = memo(() => {
         } else {
             return null;
         }
-    }, [activeMenu, isOpen]);
+    }, [activeMenu, isOpen, menuSystem, menuVersion]);
 
     const menu = useMemo(() => {
         if (!isOpen) return null;
@@ -86,7 +89,7 @@ export const MoorhenMainMenu = memo(() => {
         });
 
         return <div className="moorhen__main-menu-buttons-container">{buttonsList}</div>;
-    }, [isOpen, isDevMode]);
+    }, [isOpen, isDevMode, menuSystem, menuVersion]);
 
     return (
         <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 10 }}>

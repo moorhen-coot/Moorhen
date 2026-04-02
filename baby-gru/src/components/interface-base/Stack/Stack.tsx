@@ -1,3 +1,4 @@
+import { overlaysSlice } from "@/store/overlaysSlice";
 import "./moorhen-stack.css";
 
 type MoorhenStackType = {
@@ -14,23 +15,27 @@ type MoorhenStackType = {
     addMargin?: boolean;
     ref?: React.RefObject<HTMLDivElement>;
     flex?: 1 | 0;
+    overflow?: "auto" | "hidden" | "visible" | "scroll" | "clip";
 };
 
-export const MoorhenStack = ({
-    direction,
-    gap,
-    justify = "flex-start",
-    align = "normal",
-    children,
-    style = null,
-    card = null,
-    className,
-    inputGrid = false,
-    gridWidth = 1,
-    addMargin = false,
-    ref = null,
-    flex = 1,
-}: MoorhenStackType) => {
+export const MoorhenStack = (props: MoorhenStackType) => {
+    const {
+        direction,
+        gap,
+        justify = "flex-start",
+        align = "normal",
+        children,
+        style = null,
+        card = null,
+        className,
+        inputGrid = false,
+        gridWidth = 1,
+        addMargin = false,
+        ref = null,
+        flex = 1,
+        overflow = "visible",
+    } = props;
+
     let mainClass = inputGrid
         ? "moorhen__input-grid"
         : direction === "row" || direction === "line" || direction === "horizontal"
@@ -54,6 +59,7 @@ export const MoorhenStack = ({
                 flex: flex,
                 justifyContent: justify,
                 alignItems: align,
+                overflow: overflow,
                 ...style,
             }}
             ref={ref}

@@ -5,7 +5,7 @@ import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 export type HoveredAtom = {
     molecule: MoorhenMolecule | null;
     cid: string | null;
-    atomInfo: moorhen.AtomInfo;
+    atomInfo: moorhen.AtomInfo | null;
 };
 
 const initialState: {

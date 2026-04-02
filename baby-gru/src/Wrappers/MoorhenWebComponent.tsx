@@ -15,7 +15,7 @@ export class MoorhenWebComponent extends HTMLElement {
     public width: number | string;
     public height: number | string;
     public urlPrefix: string;
-    public onInnit: () => void;
+    public onInit: () => void;
 
     static get observedAttributes() {
         return ["width", "height", "url-prefix"];
@@ -38,7 +38,6 @@ export class MoorhenWebComponent extends HTMLElement {
 
         const loadStylesheets = async () => {
             const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-
             const moorhenCss = await moorhenRes.text();
 
             if ("adoptedStyleSheets" in shadow) {
@@ -70,6 +69,7 @@ export class MoorhenWebComponent extends HTMLElement {
                             moorhenInstanceRef={this.moorhenInstanceRef}
                             setMoorhenDimensions={this.setMoorhenDimensions}
                             urlPrefix={this.urlPrefix}
+                            webComponentMode={true}
                         />
                     </MoorhenProvider>
                 </Provider>
@@ -77,10 +77,12 @@ export class MoorhenWebComponent extends HTMLElement {
         );
 
         const checkRefsReady = () => {
-            if (this.moorhenInstanceRef?.current && this.moorhenInstanceRef?.current.getMenuSystem()) {
+            if (this.moorhenInstanceRef?.current?.isReady()) {
                 clearInterval(refCheckInterval);
                 this.moorhenInstance = this.moorhenInstanceRef.current;
-                this.onInnit();
+                this.onInit();
+            } else {
+                console.warn("Waiting for moorhen instance to be ready...", this.moorhenInstanceRef?.current);
             }
         };
         const refCheckInterval = setInterval(checkRefsReady, 50);

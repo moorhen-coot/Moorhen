@@ -16,4 +16,5 @@ declare global {
         const SVGComponent: React.FC<React.SVGProps<SVGSVGElement>>;
         export default SVGComponent;
     }
+    declare module "*.css";
 }

@@ -101,7 +101,7 @@ const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
 
 export type ExtraDraggableModals = React.JSX.Element[];
 
-export const MoorhenModalsContainer = memo((props: { extraDraggableModals: ExtraDraggableModals }) => {
+export const MoorhenModalsContainer = memo((props: { extraDraggableModals?: ExtraDraggableModals }) => {
     const activeModals = useSelector((state: RootState) => state.modals.activeModals);
     const displayModals = activeModals.map(modalCall => {
         const ModalComponent = modalsMap[modalCall.key];
