@@ -64,10 +64,10 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
     );
 
     useEffect(() => {
-        if (shownPanel && !activePanels.includes(shownPanel)) {
-            setActivePanels(prev => [...prev, shownPanel]);
+        if (shownPanel) {
+            setActivePanels(prev => prev.includes(shownPanel) ? prev : [...prev, shownPanel]);
         }
-    }, [shownPanel, activePanels]);
+    }, [shownPanel]);
 
     //** Resizable logic */
     const handleResizeStart = (evt: React.MouseEvent<HTMLElement, MouseEvent>): void => {
