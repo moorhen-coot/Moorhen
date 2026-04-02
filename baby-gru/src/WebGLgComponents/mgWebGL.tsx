@@ -1324,19 +1324,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             self._touchLongPressTimer = null as ReturnType<typeof setTimeout> | null;
 
             new DragGesture(self.canvas, (state) => {
-                const { first, last, xy: [x, y], delta: [ddx, ddy], tap, event, pinching, elapsedTime } = state;
+                const { first, last, xy: [x, y], delta: [ddx, ddy], event, pinching, elapsedTime, movement: [mx, my] } = state;
                 if (pinching) return; // pinch gesture takes over for two-finger input
                 const nativeEvent = event as PointerEvent;
                 const isTouch = nativeEvent?.pointerType === 'touch';
 
                 if (first) {
+                    // first fires immediately on pointerdown — set up state and
+                    // fire doClick so that e.g. currentlyDraggedAtom is set before
+                    // the first drag event arrives.
                     if (self.keysDown['dist_ang_2d']) {
                         self.doMouseDownMeasure(nativeEvent, self);
                     } else {
                         self.doMouseDown({ pageX: x, pageY: y, button: nativeEvent?.button ?? 0 }, self);
                     }
                     if (!isTouch) {
-                        // Mouse: also fire click routing (replicates the old second mousedown listener)
                         if (nativeEvent?.button === 0) {
                             self.doClick(nativeEvent, self);
                         } else if (nativeEvent?.button === 2) {
@@ -1360,7 +1362,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     if (self.keysDown['dist_ang_2d']) {
                         self.doMouseUpMeasure(nativeEvent, self);
                     } else {
-                        if (isTouch && (tap || elapsedTime < 300)) {
+                        // Tap detection: short elapsed time and negligible movement
+                        const isTap = elapsedTime < 300 && Math.abs(mx) < 3 && Math.abs(my) < 3;
+                        if (isTouch && isTap) {
                             self.doClick({ pageX: x, pageY: y, shiftKey: false, altKey: false, button: 0 }, self);
                         }
                         self.doMouseUp({ pageX: x, pageY: y, shiftKey: nativeEvent?.shiftKey ?? false, altKey: nativeEvent?.altKey ?? false, button: nativeEvent?.button ?? 0, which: nativeEvent?.button ?? 0 }, self);
@@ -1380,7 +1384,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }, {
                 pointer: { touch: true },
-                filterTaps: true,
                 preventScrollAxis: 'xy',
             });
 
