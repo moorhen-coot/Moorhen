@@ -590,12 +590,17 @@ export class MoleculeRepresentation {
     async getBufferObjects(style?: moorhen.RepresentationStyles, cid?: string) {
         const _style = style ?? this.style;
         let _cid = cid ?? this.cid;
+        let restrictedCid = ""
 
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
             //Now we might not want to use the new method, maybe we should use the old one.
-            const restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
-            if(restrictedCid.length>0) _cid = restrictedCid
+            restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
+
+            if(!(["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
+                if(restrictedCid.length>0) _cid = restrictedCid
+            }
+
             await this.commandCentre.current.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
@@ -641,7 +646,7 @@ export class MoleculeRepresentation {
             case "DishyBases":
             case "VdWSurface":
             case "Calpha":
-                objects = await this.getM2TRepresentationBuffers(_style, _cid);
+                objects = await this.getM2TRepresentationBuffers(_style, _cid, restrictedCid);
                 break;
             case "unitCell":
                 objects = this.getUnitCellRepresentationBuffers();
@@ -977,7 +982,7 @@ export class MoleculeRepresentation {
      * @param cidSelection - The CID selection of this representation
      * @returns {object} An object with the style name and CID selection to be passed as arguments to libcoot API
      */
-    getM2tArgs(style: string, cidSelection: string) {
+    getM2tArgs(style: string, cidSelection: string, restrictSelection?: string) {
         let m2tStyle: string;
         let m2tSelection: string;
 
@@ -1031,6 +1036,12 @@ export class MoleculeRepresentation {
 
         if (this.parentMolecule.excludedSelections.length > 0) {
             m2tSelection = `{${m2tSelection} & !{${this.parentMolecule.excludedSelections.join(" | ")}}}`;
+        }
+
+        if(restrictSelection){
+            const re = new RegExp("\\|\\|","g")
+            const m2tRestrict = restrictSelection.replace(re," | ")
+            m2tSelection = `{${m2tSelection} & {${m2tRestrict}}}`;
         }
 
         return {
@@ -1144,8 +1155,8 @@ export class MoleculeRepresentation {
      * @param style
      * @param cidSelection
      */
-    async getM2TRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
-        const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection);
+    async getM2TRepresentationBuffers(style: string, cidSelection?: string, restrictSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
+        const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection, restrictSelection);
 
         await this.applyM2tParams();
 
