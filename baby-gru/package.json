@@ -53,7 +53,7 @@
         "lint:fix": "eslint src/ --fix",
         "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",
         "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
-        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
+        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && cd dist && npm pack && cd ..",
         "build-react": "npm run prebuild && webpack --config webpack.react.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-react-dev": "npm run prebuild && webpack --config webpack.react.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",

@@ -1,5 +1,3 @@
-import { Backdrop } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
@@ -37,7 +35,10 @@ import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
 import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenModalsContainer } from "../interface-base/ModalBase/ModalsContainer";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
@@ -77,7 +78,6 @@ interface ContainerOptionalProps {
     extraDraggableModals?: React.JSX.Element[];
     extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
-    setMoorhenDimensions?: null | (() => [number, number]);
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
     aceDRGInstance?: moorhen.AceDRGInstance | null;
@@ -85,6 +85,8 @@ interface ContainerOptionalProps {
     allowAddNewFittedLigand?: boolean;
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
+    resizeTrigger?: number;
+    size?: [number, number];
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -93,7 +95,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/MoorhenAssets",
         monomerLibraryPath = "./MoorhenAssets/monomers",
-        setMoorhenDimensions = null,
         disableFileUploads = false,
         allowScripting = true,
         allowAddNewFittedLigand = false,
@@ -101,6 +102,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         viewOnly = false,
         aceDRGInstance = null,
         webComponentMode = false,
+        resizeTrigger = 0,
     } = props;
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
@@ -188,8 +190,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const setWindowDimensions = useCallback(() => {
         let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
-        if (setMoorhenDimensions) {
-            [newWidth, newHeight] = setMoorhenDimensions();
+        if (props.size) {
+            [newWidth, newHeight] = props.size;
         }
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
@@ -197,7 +199,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
+    }, [props.size, sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
@@ -359,20 +361,21 @@ export const MoorhenContainer = (props: ContainerProps) => {
     // ========== Loading Screen ==========
     if (!isGlobalInstanceReady) {
         return (
-            <Backdrop sx={theme => ({ color: "#fff", zIndex: theme.zIndex.drawer + 1 })} open={true}>
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "16px",
-                    }}
+            <div style={backgroundStyle} className="moorhen__inner-container">
+                <OverlayModal
+                    isShown={true}
+                    overlay={
+                        <MoorhenStack align="center" justify="center">
+                            <div>Moorhen is loading...</div>
+                            <MoorhenSpinner size="6rem" colour="var(--moorhen-secondary)" />
+                        </MoorhenStack>
+                    }
                 >
-                    <div>Moorhen is loading...</div>
-                    <CircularProgress color="inherit" />
-                </div>
+                    {" "}
+                    <div />
+                </OverlayModal>
                 <MoorhenPreferencesContainer />
-            </Backdrop>
+            </div>
         );
     }
 
