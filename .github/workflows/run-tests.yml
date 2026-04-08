@@ -13,7 +13,7 @@ jobs:
   run_tests:
     runs-on: ubuntu-latest
     env:
-      TARGET_EMSDK_VERSION: 5.0.6
+      TARGET_EMSDK_VERSION: 5.0.5
     timeout-minutes: 240
     steps:
 
