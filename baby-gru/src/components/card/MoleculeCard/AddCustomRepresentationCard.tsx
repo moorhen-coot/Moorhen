@@ -137,7 +137,10 @@ export const AddCustomRepresentationCard = memo(
 
             props.setBusy?.(true);
 
+            const theMolecule = props.molecule
+
             let cidSelection: string;
+            let unRestrictedCidSelection: string;
             switch (ruleType) {
                 case "molecule":
                     cidSelection = "/*/*/";
@@ -147,6 +150,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += "*";
                     }
                     cidSelection += "/";
+                    unRestrictedCidSelection = cidSelection
                     if (representationStyle === "CBs" && sideChainOnly) {
                         cidSelection += "!O,C,N,H";
                     }
@@ -154,11 +158,26 @@ export const AddCustomRepresentationCard = memo(
                     if (representationStyle === "CBs" && notH) {
                         cidSelection += "[!H]";
                     }
-                    cidSelection += ":*";
+
+                    if (representationStyle === "CBs" && restrictToNeighbours) {
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        let extraRestrict = ""
+                        if(sideChainOnly) extraRestrict += "/!O,C,N,H"
+                        if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
+                        if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
+                    } else if (representationStyle === "CAs" && restrictToNeighbours) {
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        cidSelection = restrictedCid
+                    } else {
+                        cidSelection += ":*";
+                    }
+                    /*
+                    //I do not understand this.
                     if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
                         cidSelection += "||(HOH)";
                     }
-
+                    */
                     break;
                 case "chain":
                     cidSelection = `//${chainSelectRef.current.value}/`;
@@ -166,6 +185,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += "(!HOH)";
                     }
                     cidSelection += "/";
+                    unRestrictedCidSelection = cidSelection
                     if (representationStyle === "CBs" && sideChainOnly) {
                         cidSelection += "!O,C,N";
                     }
@@ -173,7 +193,16 @@ export const AddCustomRepresentationCard = memo(
                     if (representationStyle === "CBs" && notH) {
                         cidSelection += "[!H]";
                     }
-                    cidSelection += ":*";
+                    if (representationStyle === "CBs" && restrictToNeighbours) {
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        let extraRestrict = ""
+                        if(sideChainOnly) extraRestrict += "/!O,C,N,H"
+                        if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
+                        if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
+                    } else {
+                        cidSelection += ":*";
+                    }
                     break;
                 case "residue-range":
                     const selectedResidues = sequenceResidueRange;
@@ -480,7 +509,7 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 ) : null}
-                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment","allHBonds"].includes(representationStyle) && (
+                {(["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment","allHBonds"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
                     <MoorhenToggle
                         type="switch"
                         label={`In neighbourhood of`}
@@ -488,7 +517,7 @@ export const AddCustomRepresentationCard = memo(
                         onChange={handleUseNeighbourhoodSettingsChange}
                     />
                 )}
-                {restrictToNeighbours && (
+                {(restrictToNeighbours && (ruleType === "chain" || ruleType === "molecule")) && (
                     <MoorhenStack direction="horizontal"  style={{ height: "3rem", margin: "0.3rem" }}>
                     <MoorhenCidInputForm
                         setCid={setNeighboursCid}

@@ -595,9 +595,9 @@ export class MoleculeRepresentation {
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
             //Now we might not want to use the new method, maybe we should use the old one.
-            restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
-
-            if(!(["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
+            if((["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
+                restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
+            } else {
                 if(restrictedCid.length>0) _cid = restrictedCid
             }
 
@@ -691,7 +691,6 @@ export class MoleculeRepresentation {
                 break;
         }
 
-        console.log("drawMissingLoops",drawMissingLoops)
         if(this.restrictToNeighbours&&drawMissingLoops) {
             await this.commandCentre.current.cootCommand(
                 {
