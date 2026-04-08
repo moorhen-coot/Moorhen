@@ -1,10 +1,10 @@
-import { Form, Row, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
 import { setValidationJson } from "../../store/jsonValidation";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenFileInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
@@ -39,14 +39,12 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
             }}
         >
             <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadJsonFiles(e.target.files);
-                        }}
-                    />
-                </Form.Group>
+                <MoorhenFileInput
+                    accept=".json"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadJsonFiles(e.target.files);
+                    }}
+                />
             </MoorhenStack>
         </MoorhenStack>
     );
@@ -68,13 +66,7 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
             headerTitle="JSON validation"
             resizeNodeRef={resizeNodeRef}
             footer={footerContent}
-            body={
-                <div style={{ height: "100%" }}>
-                    <Row className={"small-validation-tool-container-row"}>
-                        <MoorhenJsonValidation />
-                    </Row>
-                </div>
-            }
+            body={<MoorhenJsonValidation />}
         />
     );
 };

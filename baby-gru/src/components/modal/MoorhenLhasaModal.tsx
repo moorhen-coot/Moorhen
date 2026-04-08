@@ -1,5 +1,3 @@
-import { Backdrop } from "@mui/material";
-import { Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
@@ -12,15 +10,12 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenDraggableModalBase } from "../interface-base";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenDraggableModalBase, MoorhenStack } from "../interface-base";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 
 /// Internal wrapper for use in the scope of this file.
-const LhasaWrapper = (props: {
-    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
-    urlPrefix: string;
-    width?: number;
-    height?: number;
-}) => {
+const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: number }) => {
     const rdkitMoleculePickleList = useSelector((state: moorhen.State) => state.lhasa.rdkitMoleculePickleList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
@@ -28,6 +23,7 @@ const LhasaWrapper = (props: {
     const originState = useSelector((state: moorhen.State) => state.glRef.origin);
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
+    const [busy, setBusy] = useState<boolean>(false);
 
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
@@ -52,7 +48,7 @@ const LhasaWrapper = (props: {
     const smilesCallback = useCallback(
         async (internalLhasaID: number, id: string, smiles: string) => {
             try {
-                props.setBusy(true);
+                setBusy(true);
                 const ligandName = id ?? "LIG";
                 const smilesResult = (await commandCentre.current.cootCommand(
                     {
@@ -65,7 +61,7 @@ const LhasaWrapper = (props: {
 
                 if (!smilesResult.data.result.result.second) {
                     dispatch(enqueueSnackbar({ message: "Unable to read SMILES...", variant: "error" }));
-                    props.setBusy(false);
+                    setBusy(false);
                     return;
                 }
 
@@ -81,7 +77,7 @@ const LhasaWrapper = (props: {
 
                 if (readDictResult.data.result.result !== 1) {
                     dispatch(enqueueSnackbar({ message: "Unable to read dictionary...", variant: "error" }));
-                    props.setBusy(false);
+                    setBusy(false);
                     return;
                 }
 
@@ -109,44 +105,50 @@ const LhasaWrapper = (props: {
                 } else {
                     dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
                 }
-                props.setBusy(false);
+                setBusy(false);
             } catch (err) {
                 console.warn(err);
                 dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
-                props.setBusy(false);
+                setBusy(false);
             }
         },
         [commandCentre, store, monomerLibraryPath]
     );
 
     return isCootAttached ? (
-        <LhasaComponent
-            Lhasa={window.cootModule}
-            show_footer={false}
-            show_top_panel={false}
-            rdkit_molecule_pickle_list={rdkitMoleculePickleList}
-            icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
-            data_path_prefix={`${props.urlPrefix}/`}
-            name_of_host_program="Moorhen"
-            smiles_callback={smilesCallback}
-            dark_mode={isDark}
-            width={props.width}
-            height={props.height}
-        />
+        <OverlayModal
+            isShown={false}
+            overlay={
+                <MoorhenStack justify="center" align="center">
+                    <MoorhenSpinner colour="white" size="4rem" />
+                    <span>Please wait...</span>
+                </MoorhenStack>
+            }
+        >
+            <LhasaComponent
+                Lhasa={window.cootModule}
+                show_footer={false}
+                show_top_panel={false}
+                rdkit_molecule_pickle_list={rdkitMoleculePickleList}
+                icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
+                data_path_prefix={`${props.urlPrefix}/`}
+                name_of_host_program="Moorhen"
+                smiles_callback={smilesCallback}
+                dark_mode={isDark}
+                width={props.width}
+                height={props.height}
+            />
+        </OverlayModal>
     ) : null;
 };
 
 export const MoorhenLhasaModal = () => {
-    const resizeNodeRef = useRef<HTMLDivElement>(null);
-
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [lhasaWidth, setLhasaWidth] = useState<number>(convertRemToPx(37));
     const [lhasaHeight, setLhasaHeight] = useState<number>(convertViewtoPx(30, height));
 
     const urlPrefix = usePaths().urlPrefix;
-
-    const [busy, setBusy] = useState<boolean>(false);
 
     const dispatch = useDispatch();
 
@@ -157,13 +159,9 @@ export const MoorhenLhasaModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.LHASA}
-            enforceMaxBodyDimensions={true}
-            overflowY="auto"
-            overflowX="auto"
             initialHeight={682}
             initialWidth={551}
             headerTitle="Lhasa"
-            resizeNodeRef={resizeNodeRef}
             onClose={handleClose}
             onResize={(_evt, _direction, _div, _delta, size) => {
                 // console.log(`MoorhenLhasaModal::MoorhenDraggableModalBase::onResize() called. Size: ${JSON.stringify(size)}`);
@@ -173,15 +171,7 @@ export const MoorhenLhasaModal = () => {
                 setLhasaWidth(size.width);
                 setLhasaHeight(size.height - pixel_margin);
             }}
-            body={<LhasaWrapper urlPrefix={urlPrefix} setBusy={setBusy} height={lhasaHeight} width={lhasaWidth} />}
-            additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-                    <Stack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
-                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
-                        <span>Please wait...</span>
-                    </Stack>
-                </Backdrop>
-            }
+            body={<LhasaWrapper urlPrefix={urlPrefix} height={lhasaHeight} width={lhasaWidth} />}
         />
     );
 };

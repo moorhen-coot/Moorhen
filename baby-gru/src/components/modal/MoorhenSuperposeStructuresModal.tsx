@@ -76,34 +76,30 @@ const LskqbResidueRangeMatchCard = (props: {
     }, []);
 
     return (
-        <Card style={{ marginTop: "0.5rem", borderStyle: "solid", borderColor: isDark ? "white" : "grey", borderWidth: "1px" }}>
-            <Card.Body style={{ padding: "0.5rem" }}>
-                <Row style={{ display: "flex", justifyContent: "between" }}>
-                    <Col style={{ alignItems: "center", justifyContent: "left", display: "flex", flexDirection: "column" }}>
-                        <Row>Reference</Row>
-                        <Row>{`//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}`}</Row>
-                    </Col>
-                    <Col style={{ alignItems: "center", justifyContent: "left", display: "flex", flexDirection: "column" }}>
-                        <Row>Moving</Row>
-                        <Row>{`//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}`}</Row>
-                    </Col>
-                    {warning && (
-                        <Col style={{ margin: "0", padding: "0", justifyContent: "center", display: "flex", alignItems: "center" }}>
-                            <Tooltip title={warning}>
-                                <WarningAmberOutlined style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} />
-                            </Tooltip>
-                        </Col>
-                    )}
-                    <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                        <Tooltip title="Delete">
-                            <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={props.removeItem}>
-                                <DeleteOutlined />
-                            </IconButton>
-                        </Tooltip>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
+        <>
+            <MoorhenStack card>
+                <Row>Reference</Row>
+                <Row>{`//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}`}</Row>
+            </MoorhenStack>
+            <Col style={{ alignItems: "center", justifyContent: "left", display: "flex", flexDirection: "column" }}>
+                <Row>Moving</Row>
+                <Row>{`//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}`}</Row>
+            </Col>
+            {warning && (
+                <Col style={{ margin: "0", padding: "0", justifyContent: "center", display: "flex", alignItems: "center" }}>
+                    <Tooltip title={warning}>
+                        <WarningAmberOutlined style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} />
+                    </Tooltip>
+                </Col>
+            )}
+            <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
+                <Tooltip title="Delete">
+                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={props.removeItem}>
+                        <DeleteOutlined />
+                    </IconButton>
+                </Tooltip>
+            </Col>
+        </>
     );
 };
 

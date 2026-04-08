@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState } from "@/store";
 import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
@@ -468,114 +468,115 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 {props.body}
             </div>
         );
-    }
+    } else {
+        // Phase 2: the actual visible modal.
 
-    // Phase 2: the actual visible modal.
-    return (
-        <div
-            id={modalIdRef.current}
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            onClick={() => dispatch(focusOnModal(modalIdRef.current))}
-            className="moorhen__modal-base-container"
-            style={{
-                opacity: opacity,
-                zIndex: currentZIndex,
-                transform: `translate(${position.x}px, ${position.y}px)`,
-                height: size.height,
-                width: size.width,
-                minWidth: minWidth,
-                minHeight: collapse ? 40 : minHeight,
-                maxWidth: maxWidth,
-                maxHeight: collapse ? 43 : maxHeight,
-            }}
-            onMouseOver={() => setOpacity(1.0)}
-            onFocus={() => setOpacity(1.0)}
-            onMouseOut={() => {
-                if (transparentModalsOnMouseOut) setOpacity(0.5);
-            }}
-            onBlur={() => {
-                if (transparentModalsOnMouseOut) setOpacity(0.5);
-            }}
-        >
-            <div className="moorhen__modal-header">
-                <button className="moorhen__modal-draggable-button" onMouseDown={handleDragStart}>
-                    {props.headerTitle}
-                </button>
-                <div className={`moorhen__modal-header-buttons`}>
-                    {collapse ? null : additionalHeaderButtons?.map(button => button)}
-                    {allowDocking ? (
-                        docked ? (
-                            <MoorhenButton
-                                type="icon-only"
-                                icon={docked === "left" ? "MatSymArrowMenuOpen" : "MatSymArrowMenuClose"}
-                                size="small"
-                                onClick={() => handleDocking(null)}
-                                tooltip={"Undock"}
-                            />
-                        ) : (
-                            <>
-                                <MoorhenButton
-                                    type="icon-only"
-                                    icon={"MatSymFirstPage"}
-                                    size="small"
-                                    onClick={() => handleDocking("left")}
-                                    tooltip={"Dock to Left side"}
-                                />
-                                <MoorhenButton
-                                    type="icon-only"
-                                    icon={"MatSymLastPage"}
-                                    size="small"
-                                    onClick={() => handleDocking("right")}
-                                    tooltip={"Dock to the Right side"}
-                                />
-                            </>
-                        )
-                    ) : (
-                        ""
-                    )}
-                    <MoorhenButton
-                        type="icon-only"
-                        icon={collapse ? "MatSymAdd" : "MatSymRemove"}
-                        size="small"
-                        onClick={() => setCollapse(!collapse)}
-                    />
-                    {showCloseButton && <MoorhenButton type="icon-only" icon="MatSymClose" size="small" onClick={handleClose} />}
-                </div>
-            </div>
+        return (
             <div
-                className="moorhen__modal-body"
-                // style={{
-                //     maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
-                //     maxWidth: maxWidth,
-                // }}
+                id={modalIdRef.current}
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                onClick={() => dispatch(focusOnModal(modalIdRef.current))}
+                className="moorhen__modal-base-container"
                 style={{
-                    maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
+                    opacity: opacity,
+                    zIndex: currentZIndex,
+                    transform: `translate(${position.x}px, ${position.y}px)`,
+                    height: size.height,
+                    width: size.width,
+                    minWidth: minWidth,
+                    minHeight: collapse ? 40 : minHeight,
                     maxWidth: maxWidth,
-                    overflowY: props.overflowY ?? "auto",
-                    overflowX: props.overflowX ?? "auto",
+                    maxHeight: collapse ? 43 : maxHeight,
+                }}
+                onMouseOver={() => setOpacity(1.0)}
+                onFocus={() => setOpacity(1.0)}
+                onMouseOut={() => {
+                    if (transparentModalsOnMouseOut) setOpacity(0.5);
+                }}
+                onBlur={() => {
+                    if (transparentModalsOnMouseOut) setOpacity(0.5);
                 }}
             >
-                {props.body}
-                {additionalChildren}{" "}
-            </div>
-            {!collapse && showFooter && (
-                <div className="moorhen__modal-footer">
-                    {props.footer}
-                    {"\u00A0\u00A0\u00A0"}
-                    {docked && lockAspectRatio ? null : (
+                <div className="moorhen__modal-header">
+                    <button className="moorhen__modal-draggable-button" onMouseDown={handleDragStart}>
+                        {props.headerTitle}
+                    </button>
+                    <div className={`moorhen__modal-header-buttons`}>
+                        {collapse ? null : additionalHeaderButtons?.map(button => button)}
+                        {allowDocking ? (
+                            docked ? (
+                                <MoorhenButton
+                                    type="icon-only"
+                                    icon={docked === "left" ? "MatSymArrowMenuOpen" : "MatSymArrowMenuClose"}
+                                    size="small"
+                                    onClick={() => handleDocking(null)}
+                                    tooltip={"Undock"}
+                                />
+                            ) : (
+                                <>
+                                    <MoorhenButton
+                                        type="icon-only"
+                                        icon={"MatSymFirstPage"}
+                                        size="small"
+                                        onClick={() => handleDocking("left")}
+                                        tooltip={"Dock to Left side"}
+                                    />
+                                    <MoorhenButton
+                                        type="icon-only"
+                                        icon={"MatSymLastPage"}
+                                        size="small"
+                                        onClick={() => handleDocking("right")}
+                                        tooltip={"Dock to the Right side"}
+                                    />
+                                </>
+                            )
+                        ) : (
+                            ""
+                        )}
                         <MoorhenButton
                             type="icon-only"
-                            icon={docked ? "resizableVertical" : "resizable"}
-                            size="medium"
-                            className="moorhen__modal-stretch-button"
-                            iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
-                            onMouseDown={handleResizeStart}
+                            icon={collapse ? "MatSymAdd" : "MatSymRemove"}
+                            size="small"
+                            onClick={() => setCollapse(!collapse)}
                         />
-                    )}
+                        {showCloseButton && <MoorhenButton type="icon-only" icon="MatSymClose" size="small" onClick={handleClose} />}
+                    </div>
                 </div>
-            )}
-        </div>
-    );
+                <div
+                    className="moorhen__modal-body"
+                    // style={{
+                    //     maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
+                    //     maxWidth: maxWidth,
+                    // }}
+                    style={{
+                        maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
+                        maxWidth: maxWidth,
+                        overflowY: props.overflowY ?? "auto",
+                        overflowX: props.overflowX ?? "auto",
+                    }}
+                >
+                    {props.body}
+                    {additionalChildren}{" "}
+                </div>
+                {!collapse && showFooter && (
+                    <div className="moorhen__modal-footer">
+                        {props.footer}
+                        {"\u00A0\u00A0\u00A0"}
+                        {docked && lockAspectRatio ? null : (
+                            <MoorhenButton
+                                type="icon-only"
+                                icon={docked ? "resizableVertical" : "resizable"}
+                                size="medium"
+                                className="moorhen__modal-stretch-button"
+                                iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
+                                onMouseDown={handleResizeStart}
+                            />
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    }
 };
