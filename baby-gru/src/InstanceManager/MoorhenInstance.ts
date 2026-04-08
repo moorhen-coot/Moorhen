@@ -1,6 +1,7 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
+import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { RootState } from "@/store";
@@ -32,6 +33,7 @@ export class MoorhenInstance {
     public cootCommand: CootCommandWrapper;
     private menuSystem: MoorhenMenuSystem | null = null;
     private ready: boolean = false;
+    private _webComponent: MoorhenWebComponent | null = null;
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
         this.commandCentreRef = React.createRef<CommandCentre>();
@@ -129,6 +131,42 @@ export class MoorhenInstance {
 
     public isReady(): boolean {
         return this.ready;
+    }
+
+    //========================================
+    // Methods to set attributes on the web component from the instance, which will trigger re-render of the react tree when they change
+    set width(value: number | string | null) {
+        if (this._webComponent) {
+            this._webComponent.width = value;
+        }
+    }
+
+    set height(value: number | string | null) {
+        if (this._webComponent) {
+            this._webComponent.height = value;
+        }
+    }
+
+    set urlPrefix(value: string) {
+        if (this._webComponent) {
+            this._webComponent.urlPrefix = value;
+        }
+    }
+
+    set disableFileUploads(value: boolean) {
+        if (this._webComponent) {
+            this._webComponent.disableFileUploads = value;
+        }
+    }
+
+    set viewOnly(value: boolean) {
+        if (this._webComponent) {
+            this._webComponent.viewOnly = value;
+        }
+    }
+
+    setWebComponent(webComponent: MoorhenWebComponent) {
+        this._webComponent = webComponent;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {

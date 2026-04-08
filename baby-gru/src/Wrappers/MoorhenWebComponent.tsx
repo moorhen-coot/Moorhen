@@ -5,19 +5,32 @@ import { MoorhenProvider } from "@/components/MoorhenProvider";
 import { MoorhenContainer } from "@/components/container";
 
 export class MoorhenWebComponent extends HTMLElement {
-    public moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
-    public moorhenInstance!: MoorhenInstance;
-    // public setMoorhenDimensions: null | (() => [number, number]);
-    private _width: number | string | null = null;
-    private _height: number | string | null = null;
-    private _size: [number, number] | null = null;
-    private _urlPrefix: string = "MoorhenAssets";
+    private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
+    private _moorhenInstance: MoorhenInstance | null = null;
+    private _ready: boolean = false;
+
     public onInit: (() => void) | null = null;
     public setMoorhenDimensions: (() => [number, number]) | null = null;
     private _root: ReturnType<typeof createRoot> | null = null;
-    private _resizeTrigger: number = 0;
 
-    // Property getters and setters to handle React property updates
+    constructor() {
+        super();
+        this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+    }
+
+    get moorhenInstance(): MoorhenInstance | null {
+        return this._moorhenInstance;
+    }
+
+    get ready(): boolean {
+        return this._ready;
+    }
+    //---------------------------------------
+    // setter and getter for attributes with side effects to trigger re-render of the react tree when they change
+    private _width: number | string | null = null;
+    private _height: number | string | null = null;
+    private _size: [number, number] | null = null;
+
     get width(): number | string | null {
         return this._width;
     }
@@ -48,6 +61,7 @@ export class MoorhenWebComponent extends HTMLElement {
         this._triggerUpdate("height", String(value), String(oldValue));
     }
 
+    private _urlPrefix: string = "MoorhenAssets";
     get urlPrefix(): string {
         return this._urlPrefix;
     }
@@ -63,24 +77,59 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["width", "height", "url-prefix"];
+        return ["width", "height", "url-prefix", "disable-file-uploads", "view-only"];
+    }
+
+    private _disableFileUploads: boolean = false;
+    get disableFileUploads(): boolean {
+        return this._disableFileUploads;
+    }
+
+    set disableFileUploads(value: boolean) {
+        const oldValue = this._disableFileUploads;
+        this._disableFileUploads = value;
+        this._triggerUpdate("disable-file-uploads", String(value), String(oldValue));
+    }
+
+    private _viewOnly: boolean = false;
+    get viewOnly(): boolean {
+        return this._viewOnly;
+    }
+
+    set viewOnly(value: boolean) {
+        const oldValue = this._viewOnly;
+        this._viewOnly = value;
+        this._triggerUpdate("view-only", String(value), String(oldValue));
     }
 
     public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
         if (name === "width") this.width = newValue;
         if (name === "height") this.height = newValue;
         if (name === "url-prefix") this.urlPrefix = newValue ?? "MoorhenAssets";
+        if (name === "disable-file-uploads") this.disableFileUploads = newValue === "true";
+        if (name === "view-only") this.viewOnly = newValue === "true";
     }
-
+    // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
         if (this._root) {
             this._renderReactTree();
         }
     }
 
-    constructor() {
-        super();
-        this.moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+    private _renderReactTree() {
+        if (!this._root) return;
+        this._root.render(
+            <MoorhenProvider>
+                <MoorhenContainer
+                    moorhenInstanceRef={this._moorhenInstanceRef}
+                    size={this.size ?? undefined}
+                    urlPrefix={this.urlPrefix}
+                    webComponentMode={false}
+                    disableFileUploads={this.disableFileUploads}
+                    viewOnly={this.viewOnly}
+                />
+            </MoorhenProvider>
+        );
     }
 
     public connectedCallback() {
@@ -125,28 +174,15 @@ export class MoorhenWebComponent extends HTMLElement {
         this._renderReactTree();
 
         const checkRefsReady = () => {
-            if (this.moorhenInstanceRef?.current?.isReady()) {
+            if (this._moorhenInstanceRef?.current?.isReady()) {
                 clearInterval(refCheckInterval);
-                this.moorhenInstance = this.moorhenInstanceRef.current;
+                this._moorhenInstance = this._moorhenInstanceRef.current;
                 this.onInit?.();
+                this._moorhenInstance.setWebComponent(this);
+                this._ready = true;
             }
         };
         const refCheckInterval = setInterval(checkRefsReady, 50);
-    }
-
-    private _renderReactTree() {
-        if (!this._root) return;
-        this._root.render(
-            <MoorhenProvider>
-                <MoorhenContainer
-                    moorhenInstanceRef={this.moorhenInstanceRef}
-                    size={this.size ?? undefined}
-                    urlPrefix={this.urlPrefix}
-                    webComponentMode={false}
-                    resizeTrigger={this._resizeTrigger}
-                />
-            </MoorhenProvider>
-        );
     }
 }
 
@@ -158,6 +194,8 @@ export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTML
     width?: number | string;
     height?: number | string;
     "url-prefix"?: string;
+    "disable-file-uploads"?: boolean;
+    "view-only"?: boolean;
 }
 
 declare module "react" {

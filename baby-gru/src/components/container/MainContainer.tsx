@@ -67,11 +67,11 @@ interface ContainerRefs {
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
     moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
-    onInitialisationCompleted?: () => void;
 }
 
 interface ContainerOptionalProps {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
+    onInitialisationCompleted?: () => void;
     disableFileUploads?: boolean;
     urlPrefix?: string;
     viewOnly: boolean;
@@ -81,11 +81,9 @@ interface ContainerOptionalProps {
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
     aceDRGInstance?: moorhen.AceDRGInstance | null;
-    store?: Store;
     allowAddNewFittedLigand?: boolean;
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
-    resizeTrigger?: number;
     size?: [number, number];
 }
 
@@ -102,7 +100,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         viewOnly = false,
         aceDRGInstance = null,
         webComponentMode = false,
-        resizeTrigger = 0,
     } = props;
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
