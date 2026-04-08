@@ -90,7 +90,6 @@ export const CustomRepresentationChip = (props: {
         }
     }
 
-    console.log("A chip",representation.style)
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
