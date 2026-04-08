@@ -118,6 +118,8 @@ export class MoleculeRepresentation {
     cid: string;
     neighboursCid: string;
     restrictToNeighbours: boolean;
+    hbondedToCid: string;
+    hbondedTo: boolean;
     excludeNeighbours: boolean;
     buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -591,6 +593,8 @@ export class MoleculeRepresentation {
         const _style = style ?? this.style;
         let _cid = cid ?? this.cid;
         let restrictedCid = ""
+
+        console.log(this.hbondedToCid)
 
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){

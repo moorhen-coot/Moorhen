@@ -71,6 +71,8 @@ message Representation {
     bool restrictToNeighbours = 8;
     string neighboursCid = 9;
     bool excludeNeighbours = 10;
+    string hbondedToCid = 11;
+    bool hbondedTo = 12;
 }
 
 message MoleculeSessionData {

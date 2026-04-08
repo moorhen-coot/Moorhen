@@ -102,6 +102,8 @@ export type moleculeSessionData = {
         neighboursCid: string;
         restrictToNeighbours: boolean;
         excludeNeighbours: boolean;
+        hbondedToCid: string;
+        hbondedTo: boolean;
     }[];
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: m2tParameters;
@@ -483,6 +485,8 @@ export class MoorhenTimeCapsule {
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
                             excludeNeighbours: item.excludeNeighbours,
+                            hbondedToCid: item.hbondedToCid,
+                            hbondedTo: item.hbondedTo,
                         };
                     }),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
@@ -953,6 +957,8 @@ export class MoorhenTimeCapsule {
                         item.neighboursCid,
                         item.restrictToNeighbours,
                         item.excludeNeighbours,
+                        item.hbondedToCid,
+                        item.hbondedTo,
                     );
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));

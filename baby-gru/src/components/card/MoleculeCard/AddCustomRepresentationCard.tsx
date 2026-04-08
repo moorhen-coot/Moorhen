@@ -50,8 +50,10 @@ export const AddCustomRepresentationCard = memo(
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
+        const [hbondedTo, setHbondedTo] = useState<boolean>(props.representation?.hbondedTo ?? false);
         const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(props.representation?.excludeNeighbours ?? false);
-        const [neighboursCid, setNeighboursCid] = useState<string>("");
+        const [neighboursCid, setNeighboursCid] = useState<string>(props.representation?.neighboursCid ?? "");
+        const [hbondedToCid, setHbondedToCid] = useState<string>(props.representation?.hbondedToCid ??"");
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
@@ -114,8 +116,13 @@ export const AddCustomRepresentationCard = memo(
         const handleExcludeNeighbourhoodSettingsChange = () => {
             setExcludeNeighbours(!excludeNeighbours);
         }
+
         const handleUseNeighbourhoodSettingsChange = () => {
             setRestrictToNeighbours(!restrictToNeighbours);
+        }
+
+        const handleUseHBondedToSettingsChange = () => {
+            setHbondedTo(!hbondedTo);
         }
 
         const handleDefaultRepresentationSettingsChange = () => {
@@ -325,6 +332,8 @@ export const AddCustomRepresentationCard = memo(
                     representationRef.current.restrictToNeighbours = restrictToNeighbours;
                     representationRef.current.excludeNeighbours = excludeNeighbours;
                     representationRef.current.neighboursCid = neighboursCid;
+                    representationRef.current.hbondedTo = hbondedTo;
+                    representationRef.current.hbondedToCid = hbondedToCid;
                     representationRef.current.setStyle(representationStyle);
                     representationRef.current.setUseDefaultColourRules(useDefaultColours);
                     representationRef.current.setColourRules(colourRule ? [colourRule] : null);
@@ -339,6 +348,8 @@ export const AddCustomRepresentationCard = memo(
                     representation.restrictToNeighbours = restrictToNeighbours;
                     representation.excludeNeighbours = excludeNeighbours;
                     representation.neighboursCid = neighboursCid;
+                    representation.hbondedTo = hbondedTo;
+                    representation.hbondedToCid = hbondedToCid;
                     representation.setStyle(styleSelectRef.current.value as moorhen.RepresentationStyles);
                     representation.setUseDefaultColourRules(!colourRule);
                     representation.setColourRules(colourRule ? [colourRule] : null);
@@ -518,7 +529,7 @@ export const AddCustomRepresentationCard = memo(
                 {(["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment","allHBonds"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
                     <MoorhenToggle
                         type="switch"
-                        label={`In neighbourhood of`}
+                        label={`In neighbourhood of...`}
                         checked={restrictToNeighbours}
                         onChange={handleUseNeighbourhoodSettingsChange}
                     />
@@ -537,6 +548,24 @@ export const AddCustomRepresentationCard = memo(
                         style={{ height: "2rem", margin: "0.1rem" }}
                         onChange={handleExcludeNeighbourhoodSettingsChange}
                      />
+                    </MoorhenStack>
+                )}
+                {(["CBs"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
+                    <MoorhenToggle
+                        type="switch"
+                        label={`H-Bonded to...`}
+                        checked={hbondedTo}
+                        onChange={handleUseHBondedToSettingsChange}
+                    />
+                )}
+                {(hbondedTo && (ruleType === "chain" || ruleType === "molecule")) && (
+                    <MoorhenStack direction="horizontal" style={{ height: "3rem", margin: "0.1rem" }}>
+                    <MoorhenCidInputForm
+                        setCid={setHbondedToCid}
+                        label="H-bonded to selection"
+                        defaultValue={props.representation?.hbondedToCid ?? ""}
+                        allowUseCurrentSelection={true}
+                    />
                     </MoorhenStack>
                 )}
                 {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (

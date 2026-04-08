@@ -64,11 +64,18 @@ export const CustomRepresentationChip = (props: {
             selectionName = <>Side Chains</>;
         }
 
-        if (representation.cid.includes("(!HOH)")) {
+        if (representation.restrictToNeighbours) {
             selectionName = (
                 <>
-                    {selectionName}&nbsp;
-                    <div className="moorhen__representation-chip-strike-box">HOH</div>
+                    {selectionName}&nbsp; Neighb. of {representation.neighboursCid}
+                </>
+            );
+        }
+
+        if (representation.hbondedTo) {
+            selectionName = (
+                <>
+                    {selectionName}&nbsp; H-Bonded to {representation.hbondedToCid}
                 </>
             );
         }
@@ -83,6 +90,7 @@ export const CustomRepresentationChip = (props: {
         }
     }
 
+    console.log("A chip",representation.style)
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">

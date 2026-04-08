@@ -1430,6 +1430,8 @@ export class MoorhenMolecule {
         neighboursCid?: string,
         restrictToNeighbours?: boolean,
         excludeNeighbours?: boolean,
+        hbondedToCid?: string,
+        hbondedTo?: boolean,
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1448,10 +1450,14 @@ export class MoorhenMolecule {
         neighboursCid: string = "",
         restrictToNeighbours: boolean = false,
         excludeNeighbours: boolean = false,
+        hbondedToCid: string = "",
+        hbondedTo: boolean = false,
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
         }
+
+        console.log("Add representation",cid,styleOrRepresentation)
 
         let representation: moorhen.MoleculeRepresentation;
 
@@ -1471,6 +1477,8 @@ export class MoorhenMolecule {
             representation.neighboursCid = neighboursCid;
             representation.restrictToNeighbours = restrictToNeighbours;
             representation.excludeNeighbours = excludeNeighbours;
+            representation.hbondedToCid = hbondedToCid;
+            representation.hbondedTo = hbondedTo;
         }
 
         representation.setParentMolecule(this);
