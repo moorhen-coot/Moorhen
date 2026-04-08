@@ -165,6 +165,7 @@ export const AddCustomRepresentationCard = memo(
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
                         const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
@@ -172,12 +173,16 @@ export const AddCustomRepresentationCard = memo(
                     } else {
                         cidSelection += ":*";
                     }
-                    /*
-                    //I do not understand this.
                     if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
-                        cidSelection += "||(HOH)";
+                        if (representationStyle === "CBs" && restrictToNeighbours) {
+                            const waterSelection = "/*/*/(HOH)";
+                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,10.0,excludeNeighbours)
+                            if(restrictedWaterCid.length>2)
+                                cidSelection += "||"+restrictedWaterCid
+                        } else {
+                            cidSelection += "||(HOH)";
+                        }
                     }
-                    */
                     break;
                 case "chain":
                     cidSelection = `//${chainSelectRef.current.value}/`;
@@ -199,6 +204,7 @@ export const AddCustomRepresentationCard = memo(
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else {
                         cidSelection += ":*";
