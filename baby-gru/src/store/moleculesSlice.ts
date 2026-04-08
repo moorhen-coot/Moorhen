@@ -77,7 +77,7 @@ export const moleculesSlice = createSlice({
                 if (
                     state.customRepresentations &&
                     !state.customRepresentations.some(
-                        item => item.style === action.payload.style && item.parentMolecule === action.payload.parentMolecule
+                        item => item.uniqueId === action.payload.uniqueId && item.parentMolecule === action.payload.parentMolecule
                     )
                 ) {
                     if (action.payload.cid === "/*/*/*/*") {
