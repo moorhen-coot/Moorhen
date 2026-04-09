@@ -649,7 +649,6 @@ export class MoleculeRepresentation {
             models.delete()
             if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
         }
-        console.log(_cid)
 
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
