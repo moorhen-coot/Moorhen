@@ -172,6 +172,8 @@ export const AddCustomRepresentationCard = memo(
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        if(!notH&&!sideChainOnly) extraRestrict += "/"
+                        console.log("extraRestrict",extraRestrict)
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
@@ -211,6 +213,7 @@ export const AddCustomRepresentationCard = memo(
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
+                        if(!notH&&!sideChainOnly) extraRestrict += "/"
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else {
