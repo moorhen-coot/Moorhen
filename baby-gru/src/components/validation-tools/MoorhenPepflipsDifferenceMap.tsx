@@ -1,5 +1,4 @@
 import { UnknownAction } from "@reduxjs/toolkit";
-import { Card, Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch, useCallback } from "react";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
@@ -11,8 +10,8 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { cidToSpec, sleep } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const flipPeptide = async (
@@ -110,31 +109,24 @@ export const MoorhenPepflipsDifferenceMap = () => {
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             let cards = newPepflips.map((flip, index) => {
                 return (
-                    <Card key={index} style={{ marginTop: "0.5rem" }}>
-                        <Card.Body style={{ padding: "0.5rem" }}>
-                            <Row style={{ display: "flex", justifyContent: "between" }}>
-                                <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>{flip.buttonLabel}</Col>
-                                <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() =>
-                                            selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)
-                                        }
-                                    >
-                                        View
-                                    </MoorhenButton>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
-                                        }}
-                                    >
-                                        Flip
-                                    </MoorhenButton>
-                                </Col>
-                            </Row>
-                        </Card.Body>
-                    </Card>
+                    <MoorhenStack direction="row" align="center" justify="center">
+                        {flip.buttonLabel}
+
+                        <MoorhenButton
+                            style={{ marginRight: "0.5rem" }}
+                            onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}
+                        >
+                            View
+                        </MoorhenButton>
+                        <MoorhenButton
+                            style={{ marginRight: "0.5rem" }}
+                            onClick={() => {
+                                handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
+                            }}
+                        >
+                            Flip
+                        </MoorhenButton>
+                    </MoorhenStack>
                 );
             });
             if (cards.length > 0) {
@@ -162,20 +154,16 @@ export const MoorhenPepflipsDifferenceMap = () => {
             extraControlFormValue={selectedRmsd}
             menuId="PEPTIDE_FLIPS"
             extraControlForm={
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <Form.Group controlId="rmsdSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                        <MoorhenSlider
-                            minVal={2.5}
-                            maxVal={7.0}
-                            logScale={false}
-                            sliderTitle="RMSD"
-                            stepButtons={0.5}
-                            decimalPlaces={1}
-                            externalValue={selectedRmsd}
-                            setExternalValue={value => setSelectedRmsd(value)}
-                        />
-                    </Form.Group>
-                </Col>
+                <MoorhenSlider
+                    minVal={2.5}
+                    maxVal={7.0}
+                    logScale={false}
+                    sliderTitle="RMSD"
+                    stepButtons={0.5}
+                    decimalPlaces={1}
+                    externalValue={selectedRmsd}
+                    setExternalValue={(value: number) => setSelectedRmsd(value)}
+                />
             }
         />
     );

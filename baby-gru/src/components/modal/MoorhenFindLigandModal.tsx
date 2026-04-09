@@ -8,13 +8,12 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenSpinner } from "../icons";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -126,7 +125,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const mapSelectRef = useRef<HTMLSelectElement | null>(null);
     const useConformersRef = useRef<boolean>(false);
     const fitAnywhereRef = useRef<boolean>(false);
-    const conformerCountRef = useRef<string>(null);
+    const conformerCountRef = useRef<HTMLInputElement>(null);
 
     const [ligandCardMolNoFocus, setLigandCardMolNoFocus] = useState<number>(null);
     const [useConformers, setUseConformers] = useState<boolean>(false);
@@ -162,7 +161,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 !fitAnywhereRef.current,
                 false,
                 useConformersRef.current,
-                parseInt(conformerCountRef.current)
+                parseInt(conformerCountRef.current.value)
             );
             setLigandResults(newMolecules);
         }
@@ -226,15 +225,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 }}
                 label="Flexible ligand"
             />
-            <MoorhenNumberForm
-                ref={conformerCountRef}
-                label="No. of conformers"
-                defaultValue={10}
-                disabled={!useConformers}
-                width="10rem"
-                padding="0"
-                margin="0"
-            />
+            <MoorhenNumberInput ref={conformerCountRef} label="No. of conformers" value={10} disabled={!useConformers} width="10rem" />
             <hr></hr>
             <MoorhenStack flex={1}>
                 {ligandResults?.length > 0 ? <span>Found {ligandResults.length} possible ligand location(s)</span> : null}

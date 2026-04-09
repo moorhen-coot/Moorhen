@@ -18,6 +18,7 @@ type MoorhenNumberInputProps = {
     type?: string;
     labelPosition?: "top" | "left";
     style?: React.CSSProperties;
+    ref?: React.Ref<HTMLInputElement>;
 };
 
 /**
@@ -69,6 +70,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         type = "standard",
         labelPosition = "left",
         style,
+        ref = null,
     } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
@@ -143,6 +145,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
             ) : null}
             <input
                 id="input"
+                ref={ref}
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}

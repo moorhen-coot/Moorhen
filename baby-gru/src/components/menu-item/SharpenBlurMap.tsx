@@ -6,17 +6,16 @@ import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
 
 export const SharpenBlurMap = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const maps = useSelector((state: moorhen.State) => state.maps);
 
-    const factorRef = useRef<string>(null);
-    const resampleFactorRef = useRef<string>(null);
+    const factorRef = useRef<HTMLInputElement>(null);
+    const resampleFactorRef = useRef<HTMLInputElement>(null);
     const selectRef = useRef<HTMLSelectElement>(null);
     const useResampleSwitchRef = useRef<HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
@@ -32,7 +31,7 @@ export const SharpenBlurMap = () => {
         }
 
         const mapNo = parseInt(selectRef.current.value);
-        const bFactor = parseFloat(factorRef.current);
+        const bFactor = parseFloat(factorRef.current.value);
         const newMap = new MoorhenMap(commandCentre, store);
         const selectedMap = maps.find(map => map.molNo === mapNo);
 
@@ -51,7 +50,7 @@ export const SharpenBlurMap = () => {
                 false
             )) as moorhen.WorkerResponse<number>;
         } else {
-            const resampleFactor = parseFloat(resampleFactorRef.current);
+            const resampleFactor = parseFloat(resampleFactorRef.current.value);
             result = (await commandCentre.current.cootCommand(
                 {
                     returnType: "int",
@@ -82,7 +81,7 @@ export const SharpenBlurMap = () => {
     return (
         <>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
-            <MoorhenNumberForm ref={factorRef} label="B-factor to apply" defaultValue={50} allowNegativeValues={true} />
+            <MoorhenNumberInput ref={factorRef} label="B-factor to apply" value={50} allowNegativeValues={true} />
             <MoorhenToggle
                 ref={useResampleSwitchRef}
                 type="switch"
@@ -92,7 +91,7 @@ export const SharpenBlurMap = () => {
                 }}
                 label="Use resample"
             />
-            {useResample && <MoorhenNumberForm ref={resampleFactorRef} label="Resampling factor" defaultValue={1.4} />}
+            {useResample && <MoorhenNumberInput ref={resampleFactorRef} label="Resampling factor" value={1.4} />}
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );

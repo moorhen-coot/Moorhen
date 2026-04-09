@@ -1,4 +1,3 @@
-import { Card, Col, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -103,51 +102,37 @@ export const MoorhenWaterValidation = () => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return (
-                    <Card
-                        key={`${index}/${selectedModel}/${water.model_number}/${water.chain_id}/${water.res_no}`}
-                        style={{ marginTop: "0.5rem" }}
-                    >
-                        <Card.Body style={{ padding: "0.5rem" }}>
-                            <Row style={{ display: "flex", justifyContent: "between" }}>
-                                <Col
-                                    style={{
-                                        alignItems: "center",
-                                        justifyContent: "left",
-                                        display: "flex",
-                                        whiteSpace: "pre",
-                                    }}
-                                >
-                                    {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
-                                </Col>
-                                <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            viewWater(selectedModel, water);
-                                        }}
-                                    >
-                                        View
-                                    </MoorhenButton>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            refineWater(selectedModel, water);
-                                        }}
-                                    >
-                                        Refine
-                                    </MoorhenButton>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            deleteWater(selectedModel, water);
-                                        }}
-                                    >
-                                        Delete
-                                    </MoorhenButton>
-                                </Col>
-                            </Row>
-                        </Card.Body>
-                    </Card>
+                    <>
+                        <MoorhenStack direction="horizontal">
+                            {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
+                        </MoorhenStack>
+                        <MoorhenStack direction="horizontal">
+                            <MoorhenButton
+                                style={{ marginRight: "0.5rem" }}
+                                onClick={() => {
+                                    viewWater(selectedModel, water);
+                                }}
+                            >
+                                View
+                            </MoorhenButton>
+                            <MoorhenButton
+                                style={{ marginRight: "0.5rem" }}
+                                onClick={() => {
+                                    refineWater(selectedModel, water);
+                                }}
+                            >
+                                Refine
+                            </MoorhenButton>
+                            <MoorhenButton
+                                style={{ marginRight: "0.5rem" }}
+                                onClick={() => {
+                                    deleteWater(selectedModel, water);
+                                }}
+                            >
+                                Delete
+                            </MoorhenButton>
+                        </MoorhenStack>
+                    </>
                 );
             });
         } else {
@@ -169,85 +154,81 @@ export const MoorhenWaterValidation = () => {
 
     const extraControls = (
         <>
-            <Row>
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <MoorhenNumberInput
-                        label="B-Factor"
-                        labelPosition="top"
-                        value={bFactorLim}
-                        decimalDigits={1}
-                        type="numberForm"
-                        setValue={newVal => {
-                            setBFactorLim(newVal);
-                            isDirty.current = true;
-                            handleControlFormChange();
-                        }}
-                    />
-                    <MoorhenNumberInput
-                        label="Sigma"
-                        labelPosition="top"
-                        value={sigmaLevel}
-                        decimalDigits={1}
-                        type="numberForm"
-                        setValue={newVal => {
-                            setSigmaLevel(newVal);
-                            isDirty.current = true;
-                            handleControlFormChange();
-                        }}
-                    />
-                    <MoorhenNumberInput
-                        label="Min. dist."
-                        labelPosition="top"
-                        value={minDist}
-                        decimalDigits={1}
-                        type="numberForm"
-                        setValue={newVal => {
-                            setMinDist(newVal);
-                            isDirty.current = true;
-                            handleControlFormChange();
-                        }}
-                    />
-                    <MoorhenNumberInput
-                        label="Max. dist."
-                        labelPosition="top"
-                        value={maxDist}
-                        decimalDigits={1}
-                        type="numberForm"
-                        setValue={newVal => {
-                            setMaxDist(newVal);
-                            isDirty.current = true;
-                            handleControlFormChange();
-                        }}
-                    />
-                </Col>
-            </Row>
-            <Row>
+            <MoorhenStack direction="horizontal" justify="center" align="center">
+                <MoorhenNumberInput
+                    label="B-Factor"
+                    labelPosition="top"
+                    value={bFactorLim}
+                    decimalDigits={1}
+                    type="numberForm"
+                    setValue={newVal => {
+                        setBFactorLim(newVal);
+                        isDirty.current = true;
+                        handleControlFormChange();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="Sigma"
+                    labelPosition="top"
+                    value={sigmaLevel}
+                    decimalDigits={1}
+                    type="numberForm"
+                    setValue={newVal => {
+                        setSigmaLevel(newVal);
+                        isDirty.current = true;
+                        handleControlFormChange();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="Min. dist."
+                    labelPosition="top"
+                    value={minDist}
+                    decimalDigits={1}
+                    type="numberForm"
+                    setValue={newVal => {
+                        setMinDist(newVal);
+                        isDirty.current = true;
+                        handleControlFormChange();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="Max. dist."
+                    labelPosition="top"
+                    value={maxDist}
+                    decimalDigits={1}
+                    type="numberForm"
+                    setValue={newVal => {
+                        setMaxDist(newVal);
+                        isDirty.current = true;
+                        handleControlFormChange();
+                    }}
+                />
+            </MoorhenStack>
+            <MoorhenStack direction="horizontal">
                 <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
-                    <InputGroup className="moorhen-input-group-check" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                        <MoorhenToggle
-                            label="Ignore part. occ."
-                            ref={ignorePartOccRef}
-                            type="switch"
-                            style={{ marginRight: "2rem" }}
-                            checked={ignorePartOcc}
-                            onChange={() => {
-                                setIgnorePartOcc(prev => !prev);
-                                setTriggerDataFetch(prev => !prev);
-                            }}
-                        />
-                        <MoorhenToggle
-                            label="Ignore zero occ."
-                            ref={ignoreZeroOccRef}
-                            type="switch"
-                            checked={ignoreZeroOcc}
-                            onChange={() => {
-                                setIgnoreZeroOcc(prev => !prev);
-                                setTriggerDataFetch(prev => !prev);
-                            }}
-                        />
-                    </InputGroup>
+                    <MoorhenToggle
+                        label="Ignore part. occ."
+                        ref={ignorePartOccRef}
+                        type="switch"
+                        style={{ marginRight: "2rem" }}
+                        checked={ignorePartOcc}
+                        onChange={() => {
+                            setIgnorePartOcc(prev => !prev);
+                            setTriggerDataFetch(prev => !prev);
+                        }}
+                    />
+                    <MoorhenToggle
+                        label="Ignore zero occ."
+                        ref={ignoreZeroOccRef}
+                        type="switch"
+                        checked={ignoreZeroOcc}
+                        onChange={() => {
+                            setIgnoreZeroOcc(prev => !prev);
+                            setTriggerDataFetch(prev => !prev);
+                        }}
+                    />
                 </MoorhenStack>
-            </Row>
+            </MoorhenStack>
         </>
     );
 

@@ -1,5 +1,4 @@
 import { UnknownAction } from "@reduxjs/toolkit";
-import { Button, Card, Col, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import React, { Dispatch, useCallback } from "react";
 import { setShownControl } from "@/store/globalUISlice";
@@ -11,6 +10,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const fillPartialResidue = async (
@@ -100,34 +100,26 @@ export const MoorhenFillMissingAtoms = () => {
             let cards = residueList.map(residue => {
                 const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? "." + residue.insCode : ""}/`;
                 return (
-                    <Card style={{ marginTop: "0.5rem" }} key={label}>
-                        <Card.Body style={{ padding: "0.5rem" }}>
-                            <Row style={{ display: "flex", justifyContent: "between" }}>
-                                <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>{label}</Col>
-                                <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() =>
-                                            selectedMolecule.centreAndAlignViewOn(
-                                                `//${residue.chainId}/${residue.resNum}-${residue.resNum}/`,
-                                                true
-                                            )
-                                        }
-                                    >
-                                        View
-                                    </MoorhenButton>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode);
-                                        }}
-                                    >
-                                        Fill
-                                    </MoorhenButton>
-                                </Col>
-                            </Row>
-                        </Card.Body>
-                    </Card>
+                    <MoorhenStack direction="row" align="center" justify="center">
+                        {label}
+
+                        <MoorhenButton
+                            style={{ marginRight: "0.5rem" }}
+                            onClick={() =>
+                                selectedMolecule.centreAndAlignViewOn(`//${residue.chainId}/${residue.resNum}-${residue.resNum}/`, true)
+                            }
+                        >
+                            View
+                        </MoorhenButton>
+                        <MoorhenButton
+                            style={{ marginRight: "0.5rem" }}
+                            onClick={() => {
+                                handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode);
+                            }}
+                        >
+                            Fill
+                        </MoorhenButton>
+                    </MoorhenStack>
                 );
             });
             if (cards.length > 0) {
