@@ -594,7 +594,22 @@ export class MoleculeRepresentation {
         let _cid = cid ?? this.cid;
         let restrictedCid = ""
 
-        console.log(this.hbondedToCid)
+        if(this.hbondedToCid){
+            _cid = ""
+            const response = await this.commandCentre.current.cootCommand(
+            {
+                returnType: "vector_hbond",
+                command: "get_h_bonds",
+                commandArgs: [this.parentMolecule.molNo, this.hbondedToCid, false],
+            },
+            false
+            );
+            const hBonds = response.data.result.result;
+            hBonds.forEach(hb => {
+                _cid += `${hb.acceptor.chain}/${hb.acceptor.res_no}||${hb.donor.chain}/${hb.donor.res_no}||`
+            })
+            if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
+        }
 
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){

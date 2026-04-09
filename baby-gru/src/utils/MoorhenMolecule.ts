@@ -1457,8 +1457,6 @@ export class MoorhenMolecule {
             await this.fetchDefaultColourRules();
         }
 
-        console.log("Add representation",cid,styleOrRepresentation)
-
         let representation: moorhen.MoleculeRepresentation;
 
         // Check if the first argument is a MoleculeRepresentation instance
