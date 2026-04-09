@@ -1,10 +1,9 @@
-import { Col, Container, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
 import { useCommandCentre } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenFileInput, MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenToggle } from "../inputs/MoorhenToggle/Toggle";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -266,78 +265,78 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     return (
         <>
-            <MoorhenStack direction="row">
-                <MoorhenStack direction="column">
-                    <MoorhenMoleculeSelect
-                        label="Reference structure"
-                        onSelect={sel => handleModelChange(sel, false)}
-                        ref={inputMoleculeSelectRef}
-                    />
-                    <MoorhenChainSelect
-                        width=""
-                        molecules={molecules}
-                        onChange={handleInputChainChange}
-                        selectedCoordMolNo={selectedInputModel}
-                        ref={inputChainSelectRef}
-                        allowedTypes={[1, 2]}
-                    />
-                </MoorhenStack>
-                <MoorhenStack direction="column">
-                    <MoorhenMoleculeSelect
-                        label="Predicted model"
-                        onSelect={sel => handleModelChange(sel, true)}
-                        ref={predMoleculeSelectRef}
-                    />
-                    <MoorhenStack direction="row">
-                        <MoorhenToggle
-                            style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                            label="Specify predicted model chain"
-                            checked={specifyTargetChain}
-                            onChange={e => {
-                                setSpecifyTargetChain(!specifyTargetChain);
-                            }}
+            <div>
+                <MoorhenStack direction="row">
+                    <MoorhenStack direction="column">
+                        <MoorhenMoleculeSelect
+                            label="Reference structure"
+                            onSelect={sel => handleModelChange(sel, false)}
+                            ref={inputMoleculeSelectRef}
                         />
                         <MoorhenChainSelect
                             width=""
-                            disabled={!specifyTargetChain}
-                            label=""
                             molecules={molecules}
-                            onChange={handlePredictedChainChange}
-                            selectedCoordMolNo={selectedPredictedModel}
-                            ref={predChainSelectRef}
+                            onChange={handleInputChainChange}
+                            selectedCoordMolNo={selectedInputModel}
+                            ref={inputChainSelectRef}
                             allowedTypes={[1, 2]}
                         />
                     </MoorhenStack>
+                    <MoorhenStack direction="column">
+                        <MoorhenMoleculeSelect
+                            label="Predicted model"
+                            onSelect={sel => handleModelChange(sel, true)}
+                            ref={predMoleculeSelectRef}
+                        />
+                        <MoorhenStack direction="row">
+                            <MoorhenToggle
+                                style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                                label="Specify predicted model chain"
+                                checked={specifyTargetChain}
+                                onChange={e => {
+                                    setSpecifyTargetChain(!specifyTargetChain);
+                                }}
+                            />
+                            <MoorhenChainSelect
+                                width=""
+                                disabled={!specifyTargetChain}
+                                label=""
+                                molecules={molecules}
+                                onChange={handlePredictedChainChange}
+                                selectedCoordMolNo={selectedPredictedModel}
+                                ref={predChainSelectRef}
+                                allowedTypes={[1, 2]}
+                            />
+                        </MoorhenStack>
+                    </MoorhenStack>
                 </MoorhenStack>
-            </MoorhenStack>
-            <MoorhenToggle
-                style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                label="Renumber residues to assist matching"
-                checked={doRenumber}
-                onChange={e => {
-                    setDoRenumber(!doRenumber);
-                }}
-            />
-            <MoorhenStack direction="row">
                 <MoorhenToggle
                     style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                    label="Specify sequence file (fasta)"
-                    checked={specifySequence}
+                    label="Renumber residues to assist matching"
+                    checked={doRenumber}
                     onChange={e => {
-                        setSpecifySequence(!specifySequence);
+                        setDoRenumber(!doRenumber);
                     }}
                 />
-                <Form.Control
-                    disabled={!specifySequence}
-                    ref={sequenceFileRef}
-                    style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
-                    type="file"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        loadSequenceFile(e.target.files[0]);
-                    }}
-                />
-            </MoorhenStack>
-            <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
+                <MoorhenStack direction="row">
+                    <MoorhenToggle
+                        style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}
+                        label="Specify sequence file (fasta)"
+                        checked={specifySequence}
+                        onChange={e => {
+                            setSpecifySequence(!specifySequence);
+                        }}
+                    />
+                    <MoorhenFileInput
+                        disabled={!specifySequence}
+                        ref={sequenceFileRef}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            loadSequenceFile(e.target.files[0]);
+                        }}
+                    />
+                </MoorhenStack>
+                <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
+            </div>
             {conKitMatches !== null && conKitMatches.length === 0 && !conKitSuccess && (
                 <div style={{ margin: "1.0rem", justifyContent: "left", display: "flex", gap: "0.5rem" }}>
                     <b>ConKit failed to produce any results</b>
