@@ -1,6 +1,29 @@
 import { emscriptem } from "./emscriptem"
 
 export namespace gemmi {
+    interface CRA extends emscriptem.instance<CRA> {
+        chain: Chain
+        residue: Residue
+        atom: Atom
+    }
+    interface const_CRA extends emscriptem.instance<const_CRA> {
+        chain: Chain
+        residue: Residue
+        atom: Atom
+    }
+    interface SeqId extends emscriptem.instance<SeqId> {
+        num: number
+        icode: emscriptem.instance<string>;
+        has_icode: () => boolean;
+        str: () => string;
+    }
+    interface AtomAddress extends emscriptem.instance<AtomAddress> {
+        chain_name: emscriptem.instance<string>;
+        res_id: emscriptem.instance<string>;
+        atom_name: emscriptem.instance<string>;
+        altloc: emscriptem.instance<string>;
+        str: () => string;
+    }
     interface NeighborSearch extends emscriptem.instance<NeighborSearch> {
         populate: (arg0: boolean) => void;
         //find_atoms: (arg0: Position, arg1: string, arg2: number) => emscriptem.vector<Mark>;
@@ -97,6 +120,7 @@ export namespace gemmi {
     interface Model extends emscriptem.instance<Model> {
         name: string;
         chains: emscriptem.vector<Chain>;
+        find_cra_const(atomAddress: AtomAddress, ignore_segment: boolean): const_CRA;
     }
     interface UnitCell extends emscriptem.instance<UnitCell> {
         a: number;

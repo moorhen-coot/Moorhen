@@ -1,6 +1,7 @@
 import { batch } from "react-redux";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice";
+import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
@@ -595,6 +596,7 @@ export class MoleculeRepresentation {
         let restrictedCid = ""
 
         if(this.hbondedToCid){
+
             _cid = ""
             const response = await this.commandCentre.current.cootCommand(
             {
@@ -605,11 +607,49 @@ export class MoleculeRepresentation {
             false
             );
             const hBonds = response.data.result.result;
+
+            const models = this.parentMolecule.gemmiStructure.models
+            const model = models.get(0);
+
             hBonds.forEach(hb => {
-                _cid += `${hb.acceptor.chain}/${hb.acceptor.res_no}||${hb.donor.chain}/${hb.donor.res_no}||`
+                [hb.acceptor,hb.donor].forEach(hbEnd => {
+                    const seqId_acc:gemmi.SeqId = new window.cootModule.SeqId(""+hbEnd.res_no)
+                    const addr_acc:gemmi.AtomAddress = new window.cootModule.AtomAddress(hbEnd.chain,seqId_acc,hbEnd.residue_name,hbEnd.name,0)
+                    const cra_acc:gemmi.const_CRA = model.find_cra_const(addr_acc,false)
+                    const thisResidue = cra_acc.residue
+                    const thisResidueAtoms = thisResidue.atoms
+                    const thisResidueAtomsSize = thisResidueAtoms.size()
+                    let haveO = false
+                    let haveN = false
+                    let haveC = false
+                    for(let iat=0;iat<thisResidueAtomsSize;iat++){
+                        const thisAt = thisResidueAtoms.get(iat)
+                        if(thisAt.name.trim()==="O") haveO = true
+                        if(thisAt.name.trim()==="C") haveC = true
+                        if(thisAt.name.trim()==="N") haveN = true
+                    }
+                    if(haveO&&haveN&&haveC){
+                        //Probable amino acid
+                        if(hbEnd.name.trim()==="O"||hbEnd.name.trim()==="N"||hbEnd.name.trim()==="S"){
+                            _cid += `${hbEnd.chain}/${hbEnd.res_no}/CA,N,C,O||`
+                        } else {
+                            _cid += `${hbEnd.chain}/${hbEnd.res_no}/!N,C,O,H||`
+                        }
+                    } else {
+                        //Anything else
+                        _cid += `${hbEnd.chain}/${hbEnd.res_no}||`
+                    }
+                    thisResidueAtoms.delete()
+                    cra_acc.delete()
+                    addr_acc.delete()
+                    seqId_acc.delete()
+                })
             })
+            model.delete()
+            models.delete()
             if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
         }
+        console.log(_cid)
 
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){

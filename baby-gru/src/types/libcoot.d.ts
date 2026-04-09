@@ -12,6 +12,8 @@ declare global {
 
 export namespace libcootApi {
     type CCP4ModuleType = {
+        SeqId: { new (arg0: string): gemmi.SeqId };
+        AtomAddress: { new (arg0: string, arg1: gemmi.SeqId, arg2: string, arg3: string, arg4: number): gemmi.AtomAddress };
         get_non_selected_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_multi_cids(gemmiStructure: gemmi.Structure, cid: string): emscriptem.vector<string>;
         parse_ligand_dict_info(fileContent: string): emscriptem.vector<{ comp_id: string; dict_contents: string }>;
@@ -595,6 +597,8 @@ export namespace libcootApi {
         MapIntFloat4: { new (): emscriptem.map<[number, number, number, number], number> };
         VectorStringUInt_pair: { new (): emscriptem.vector<{ first: string; second: number }> };
         vector_pair_double_vector_double: { new (): emscriptem.vector<{ first: double; second: emscriptem.vector<double> }> };
+        SeqId: { new (arg0: string): gemmi.SeqId };
+        AtomAddress: { new (arg0: string, arg1: SeqId, arg2: string, arg3: string, arg4: number): gemmi.AtomAddress };
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;

@@ -1341,6 +1341,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::SeqId>("SeqId")
+    .constructor<const std::string&>()
     .property("num",&gemmi::SeqId::num)
     .property("icode",&gemmi::SeqId::icode)
     .function("has_icode",&gemmi::SeqId::has_icode)
@@ -1683,6 +1684,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("reported_distance",&gemmi::Connection::reported_distance)
     ;
     class_<gemmi::AtomAddress>("AtomAddress")
+    .constructor<const std::string&, const gemmi::SeqId&, const std::string&, const std::string&, char>()
     .property("chain_name",&gemmi::AtomAddress::chain_name)
     .property("res_id",&gemmi::AtomAddress::res_id)
     .property("atom_name",&gemmi::AtomAddress::atom_name)
@@ -2199,9 +2201,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::CRA>("CRA")
+    .property("chain",&gemmi::CRA::chain, return_value_policy::reference())
+    .property("residue",&gemmi::CRA::residue, return_value_policy::reference())
+    .property("atom",&gemmi::CRA::atom, return_value_policy::reference())
     ;
 
     class_<gemmi::const_CRA>("const_CRA")
+    .property("chain",&gemmi::const_CRA::chain, return_value_policy::reference())
+    .property("residue",&gemmi::const_CRA::residue, return_value_policy::reference())
+    .property("atom",&gemmi::const_CRA::atom, return_value_policy::reference())
     ;
 
     class_<gemmi::Selection::List>("SelectionList")
@@ -2840,7 +2848,7 @@ GlobWalk
     function("copy_to_assembly_to_new_structure",&copy_to_assembly_to_new_structure);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
-#if (__EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60) || __EMSCRIPTEN_major__ > 3
+#if (__EMSCRIPTEN_MAJOR__ == 3 && __EMSCRIPTEN_MINOR__ == 1 && __EMSCRIPTEN_TINY__ >= 60) || __EMSCRIPTEN_MAJOR__ > 3
     function("read_mtz_file",&gemmi::read_mtz_file,return_value_policy::take_ownership());
 #else
     function("read_mtz_file",&gemmi::read_mtz_file);
@@ -2875,6 +2883,7 @@ GlobWalk
     function("remove_hydrogens_residue",    select_overload<void(gemmi::Residue&)>(&gemmi::remove_hydrogens));
     function("trim_to_alanine_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::trim_to_alanine));
     function("trim_to_alanine_residue",    select_overload<bool(gemmi::Residue&)>(&gemmi::trim_to_alanine));
+    function("atom_str", select_overload<std::string(const gemmi::const_CRA&)>(&gemmi::atom_str));
 
 /*
     function("transform_pos_and_adp", transform_pos_and_adp<ResidueSpan>);
