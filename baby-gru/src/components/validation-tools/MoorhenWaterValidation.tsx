@@ -102,7 +102,7 @@ export const MoorhenWaterValidation = () => {
         if (badWaters) {
             return badWaters.map((water, index) => {
                 return (
-                    <>
+                    <div key={index} style={{ marginBottom: "0.9rem" }}>
                         <MoorhenStack direction="horizontal">
                             {`/${water.model_number}/${water.chain_id}/${water.res_no}(HOH)    ${water.string_user_data}`}
                         </MoorhenStack>
@@ -132,7 +132,7 @@ export const MoorhenWaterValidation = () => {
                                 Delete
                             </MoorhenButton>
                         </MoorhenStack>
-                    </>
+                    </div>
                 );
             });
         } else {
