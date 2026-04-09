@@ -178,7 +178,7 @@ export class MoorhenWebComponent extends HTMLElement {
                 clearInterval(refCheckInterval);
                 this._moorhenInstance = this._moorhenInstanceRef.current;
                 this.onInit?.();
-                this._moorhenInstance.setWebComponent(this);
+                this._moorhenInstance.webComponent = this;
                 this._ready = true;
             }
         };

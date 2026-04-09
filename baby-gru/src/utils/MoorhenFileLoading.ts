@@ -419,7 +419,14 @@ export const loadMrParseUrl = async (
     dispatch(setMrParseModels(newMolecules));
 };
 
-const readCifDictionary = async (file: File, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness) => {
+const readCifDictionary = async (
+    file: File,
+    commandCentre: React.RefObject<moorhen.CommandCentre>,
+    store: MoorhenReduxStoreType,
+    monomerLibraryPath: string,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number
+) => {
     const dictionary = await parseCifDict(file);
     if (dictionary.length === 0) {
         return null;
@@ -461,11 +468,11 @@ const readCifDictionary = async (file: File, commandCentre, store, monomerLibrar
 };
 export const autoOpenFiles = async (
     files: File[],
-    commandCentre,
+    commandCentre: React.RefObject<moorhen.CommandCentre>,
     store: MoorhenReduxStoreType,
-    monomerLibraryPath,
-    backgroundColor,
-    defaultBondSmoothness,
+    monomerLibraryPath: string,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
     dispatch: Dispatch
 ) => {
@@ -493,6 +500,9 @@ export const autoOpenFiles = async (
     }
 
     const moleculesCreated: MoorhenMolecule[] = [];
+    const mapsCreated: MoorhenMap[] = [];
+    const returnValues: { type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[] = [];
+
     for (const file of files) {
         //Structures
         if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
@@ -539,6 +549,7 @@ export const autoOpenFiles = async (
                 await drawModels([newMolecule]);
                 dispatch(addMoleculeList([newMolecule]));
                 moleculesCreated.push(newMolecule);
+                returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
@@ -574,7 +585,7 @@ export const autoOpenFiles = async (
         ) {
             try {
                 const newMap = new MoorhenMap(commandCentre, store);
-                const isDiff = file.name.includes("_fofc.mrc");
+                const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
                     if (file.name.endsWith(".gz")) {
@@ -601,6 +612,8 @@ export const autoOpenFiles = async (
                 if (!isLocres) {
                     dispatch(setActiveMap(newMap));
                 }
+                mapsCreated.push(newMap);
+                returnValues.push({ type: "map", uniqueID: newMap.uniqueId, molNo: newMap.molNo, fileName: file.name });
             } catch (err) {
                 console.warn(err);
                 // dispatch(enqueueSnackbar({ message:"Error reading map files",  variant: "error" }));
@@ -616,4 +629,5 @@ export const autoOpenFiles = async (
     if (isRelionLocresFolder) {
         dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));
     }
+    return returnValues;
 };

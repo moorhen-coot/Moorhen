@@ -4,18 +4,18 @@ import React from "react";
 import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { RootState } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
+import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
+import { StoreExtension } from "./StoreExtension";
 
-export class MoorhenInstance {
-    private dispatch: Dispatch<UnknownAction>;
+export class MoorhenInstance extends StoreExtension {
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
@@ -24,10 +24,7 @@ export class MoorhenInstance {
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private containerRef: React.RefObject<HTMLDivElement> = null;
-    private store: Store;
     private preferences: Preferences;
-    private maps: MoorhenMap[] = [];
-    private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     public cootCommand: CootCommandWrapper;
@@ -36,6 +33,7 @@ export class MoorhenInstance {
     private _webComponent: MoorhenWebComponent | null = null;
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
+        super();
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
@@ -110,14 +108,6 @@ export class MoorhenInstance {
         return this.aceDRGInstance;
     }
 
-    public getStore(): Store<RootState> {
-        return this.store;
-    }
-
-    public getDispatch(): Dispatch<UnknownAction> {
-        return this.dispatch;
-    }
-
     public getContainerRef() {
         return this.containerRef;
     }
@@ -131,6 +121,53 @@ export class MoorhenInstance {
 
     public isReady(): boolean {
         return this.ready;
+    }
+
+    //========================================
+    // Files loading and saving methods
+
+    public async loadFiles(
+        files: File[] | File | FileList | string | string[] | URL | URL[]
+    ): Promise<{ type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[]> {
+        let filesArray: File[] = [];
+        const getFileFromURL = async (url: string | URL): Promise<File> => {
+            const urlString = url instanceof URL ? url.toString() : url;
+            const response = await fetch(urlString);
+            const blob = await response.blob();
+            const filename = urlString.split("/").pop() || "downloaded_file";
+            return new File([blob], filename, { type: blob.type });
+        };
+        const defaultBondSmoothness = this.store.getState().sceneSettings.defaultBondSmoothness;
+        const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
+
+        if (files instanceof File) {
+            filesArray = [files];
+        } else if (files instanceof FileList) {
+            filesArray = Array.from(files);
+        } else if (typeof files === "string") {
+            filesArray = [await getFileFromURL(files)];
+        } else if (Array.isArray(files)) {
+            if (typeof files[0] === "string" || files[0] instanceof URL) {
+                filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
+            } else if (files[0] instanceof File) {
+                filesArray = files as File[];
+            } else {
+                throw new Error("Invalid file input type");
+            }
+        }
+
+        const createdObjects = await autoOpenFiles(
+            filesArray,
+            this.commandCentreRef,
+            this.store,
+            this.paths.monomerLibraryPath,
+            backgroundColor,
+            defaultBondSmoothness,
+            this.timeCapsuleRef,
+            this.dispatch
+        );
+
+        return createdObjects;
     }
 
     //========================================
@@ -165,7 +202,7 @@ export class MoorhenInstance {
         }
     }
 
-    setWebComponent(webComponent: MoorhenWebComponent) {
+    set webComponent(webComponent: MoorhenWebComponent) {
         this._webComponent = webComponent;
     }
 

@@ -229,6 +229,7 @@ export const FetchOnlineSources = () => {
         mapName: string,
         selectedColumns: moorhen.selectedMtzColumns
     ): Promise<moorhen.Map> => {
+        console.log(`Fetching mtz from ${url} with columns:`, selectedColumns);
         const newMap = new MoorhenMap(commandCentre, store);
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns);
