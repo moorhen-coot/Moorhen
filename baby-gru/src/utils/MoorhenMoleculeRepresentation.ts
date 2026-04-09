@@ -591,9 +591,24 @@ export class MoleculeRepresentation {
      * @returns {object[]} The buffer objects for this molecule representation
      */
     async getBufferObjects(style?: moorhen.RepresentationStyles, cid?: string) {
+
         const _style = style ?? this.style;
         let _cid = cid ?? this.cid;
         let restrictedCid = ""
+
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
+
+        if(this.restrictToNeighbours||this.hbondedToCid){
+            await this.commandCentre.current.cootCommand(
+                {
+                    command: "set_draw_missing_residue_loops",
+                    returnType: "status",
+                    commandArgs: [false],
+                },
+                false
+            );
+            console.log("Set set_draw_missing_residue_loops to false")
+        }
 
         if(this.hbondedToCid){
 
@@ -650,7 +665,6 @@ export class MoleculeRepresentation {
             if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
         }
 
-        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
         if(this.restrictToNeighbours){
             //Now we might not want to use the new method, maybe we should use the old one.
             if((["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
@@ -658,16 +672,6 @@ export class MoleculeRepresentation {
             } else {
                 if(restrictedCid.length>0) _cid = restrictedCid
             }
-
-            await this.commandCentre.current.cootCommand(
-                {
-                    command: "set_draw_missing_residue_loops",
-                    returnType: "status",
-                    commandArgs: [false],
-                },
-                false
-            );
-            console.log("Set set_draw_missing_residue_loops to false")
         }
 
         let objects;
