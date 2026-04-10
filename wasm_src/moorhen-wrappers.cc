@@ -296,6 +296,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     .function("privateer_validate",&molecules_container_js::privateer_validate)
+    .function("privateer_calculate_cremer_pople_parameters",&molecules_container_js::privateer_calculate_cremer_pople_parameters)
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
