@@ -314,7 +314,7 @@ export const PictureWizardCard = memo(
                 await createRepresentations();
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar(`Something went wrong while ${mode === "edit" ? "editing" : "creating a new"} custom representation`, {
+                enqueueSnackbar(`Something went wrong while creating a new custom representation`, {
                     variant: "error",
                 });
             }
