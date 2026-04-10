@@ -98,6 +98,9 @@ export const PictureWizardCard = memo(
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
 
         const createRepresentations = async () => {
+
+            let splitLigands = []
+
             if(ruleType==="ligands"){
                 let theLigandSelection = ""
                 if(ligandSelection){
@@ -107,16 +110,18 @@ export const PictureWizardCard = memo(
                 } else {
                     return
                 }
-                if(theLigandSelection){
-                    const splitLigands = theLigandSelection.split("||")
-                    for(let ilig=0; ilig<splitLigands.length; ilig++){
-                        await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false);
-                        await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false);
-                        await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false);
-                    }
-                }
-                await createRepresentation("molecule","CRs","",true,"",false,false);
+                splitLigands = theLigandSelection.split("||")
+            } else if(ruleType==="cid"){
+                splitLigands = cid.split("||")
             }
+            if(splitLigands){
+                for(let ilig=0; ilig<splitLigands.length; ilig++){
+                    await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false);
+                    await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false);
+                    await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false);
+                }
+            }
+            await createRepresentation("molecule","CRs","",true,"",false,false);
         }
 
         const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs"|"allHBonds", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean) => {
@@ -344,7 +349,7 @@ export const PictureWizardCard = memo(
                             )}
                         </MoorhenSelect>
 
-                    {ruleType === "cid" && representationStyle !== "adaptativeBonds" && (
+                    {ruleType === "cid"  && (
                         <MoorhenCidInputForm
                             setCid={setCid}
                             label="Atom selection"
