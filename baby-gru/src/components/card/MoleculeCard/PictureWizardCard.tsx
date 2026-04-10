@@ -6,7 +6,7 @@ import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
 import { RootState } from "@/store";
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
-import { addCustomRepresentation } from "../../../store/moleculesSlice";
+import { addCustomRepresentation, removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
@@ -100,6 +100,14 @@ export const PictureWizardCard = memo(
         const createRepresentations = async () => {
 
             let splitLigands = []
+
+            if(deleteExisting){
+                props.molecule.representations.forEach(rep => {
+                    props.molecule.removeRepresentation(rep.uniqueId)
+                    dispatch(removeCustomRepresentation(rep));
+                })
+                props.molecule.clearBuffersOfStyle("environment");
+            }
 
             if(ruleType==="ligands"){
                 let theLigandSelection = ""
@@ -368,6 +376,11 @@ export const PictureWizardCard = memo(
                         </>
                     )}
                 </MoorhenStack>
+                <MoorhenToggle
+                    label="Delete all existing representations"
+                    checked={deleteExisting}
+                    onChange={() => setDeleteExisting(!deleteExisting)}
+                />
                 <MoorhenButton onClick={handleCreateRepresentation}>{mode === "add" ? "Create" : "Apply"}</MoorhenButton>
             </MoorhenStack>
         );

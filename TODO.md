@@ -6,13 +6,13 @@ Planned features
    - [x] Neighbourhood selections
      - [ ] Neighbourhood distance
    - [x] H-bonded to selections
-   - [ ] Site and ribbons
+   - [x] Site and ribbons
          - [x] Identify ligands (already part of Coot/Moorhen)
          - [x] Draw neighbourhood of each
          - [x] Draw ribbons
          - [x] Draw H-bonds for neighbourhood of each
          - [x] Draw H-bonded main/side chain to each ligand
-         - [ ] Delete previous
+         - [x] Delete previous
 - [ ] Load dictionary without creating molecule.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
