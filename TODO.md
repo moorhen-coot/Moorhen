@@ -2,6 +2,16 @@
 Planned features
 
 ### For 0.23.1
+- [ ] Wizards
+   - [x] Neighbourhood selections
+     - [ ] Neighbouthood distance
+   - [x] H-bonded to selections
+   - [ ] Site and ribbons
+         - Identify ligands
+         - Draw neighbourhood of each
+         - Draw H-bonds for neighbourhood of each
+         - Draw H-bonds to each ligand
+         - Draw ribbons
 - [ ] Load dictionary without creating molecule.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
@@ -9,7 +19,6 @@ Planned features
 - [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
 - [ ] Fix multiview with shadows.
 - [ ] Fix multiview with transparency and edge detect/SSAO.
-- [ ] -DRDK_BUILD_INCHI_SUPPORT=ON ~ Hey! I've done that already! ~ J.S.
 
 ### For 0.23.0
 - [x] Fix SSAO.
