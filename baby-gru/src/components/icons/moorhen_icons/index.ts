@@ -56,6 +56,7 @@ import MatSymChevronR from "./MatSymChevronR.svg"
 import ligand from "./ligand.svg"
 import MatSymArrowLeft from "./MatSymArrowLeft.svg"
 import MatSymDelete from "./MatSymDelete.svg"
+import MatSymWarning from "./MatSymWarning.svg"
 import plus from "./plus.svg"
 import MatSymDoubleArrowUp from "./MatSymDoubleArrowUp.svg"
 import menuModels from "./menuModels.svg"
@@ -131,6 +132,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "ligand": ligand,
  "MatSymArrowLeft": MatSymArrowLeft,
  "MatSymDelete": MatSymDelete,
+ "MatSymWarning": MatSymWarning,
  "plus": plus,
  "MatSymDoubleArrowUp": MatSymDoubleArrowUp,
  "menuModels": menuModels,
@@ -207,6 +209,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "ligand" |
  "MatSymArrowLeft" |
  "MatSymDelete" |
+ "MatSymWarning" |
  "plus" |
  "MatSymDoubleArrowUp" |
  "menuModels" |

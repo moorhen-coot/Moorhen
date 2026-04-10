@@ -1,4 +1,5 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { type AnyAction, type Store, configureStore } from "@reduxjs/toolkit";
+import type { ThunkDispatch } from "redux-thunk";
 import backupSettingsReducer from "./backupSettingsSlice";
 import generalStatesReducer from "./generalStatesSlice";
 import glRefSliceReducer from "./glRefSlice";
@@ -51,17 +52,24 @@ export const reducers = {
     snackBars: snackBarsReducer,
 };
 
-export const _MoorhenReduxStore = configureStore({
-    reducer: reducers,
-    middleware: getDefaultMiddleware =>
-        getDefaultMiddleware({
-            serializableCheck: false,
-        }),
-});
+// Infer RootState directly from reducers object structure (no runtime dependency)
+export type RootState = {
+    [K in keyof typeof reducers]: ReturnType<(typeof reducers)[K]>;
+};
 
-// Get the type of our store variable
-export type MoorhenReduxStoreType = typeof _MoorhenReduxStore;
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<MoorhenReduxStoreType["getState"]>;
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = MoorhenReduxStoreType["dispatch"];
+// Define store type explicitly for proper library exports
+export type MoorhenReduxStoreType = Store<RootState, AnyAction>;
+export type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction>;
+
+// Create store configuration factory for better library usage
+export const createMoorhenStore = () =>
+    configureStore({
+        reducer: reducers,
+        middleware: getDefaultMiddleware =>
+            getDefaultMiddleware({
+                serializableCheck: false,
+            }),
+    });
+
+// Create singleton instance for internal use (used by tests and default export)
+export const _MoorhenReduxStore = createMoorhenStore();

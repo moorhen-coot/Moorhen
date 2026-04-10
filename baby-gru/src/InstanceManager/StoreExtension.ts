@@ -12,6 +12,18 @@ export class StoreExtension {
         return this._store;
     }
 
+    public subscribeToStore = <T>(selector: (state: RootState) => T, callback: (value: T) => void) => {
+        let previousValue = selector(this._store.getState());
+
+        return this._store.subscribe(() => {
+            const newValue = selector(this._store.getState());
+            if (previousValue !== newValue) {
+                previousValue = newValue;
+                callback(newValue);
+            }
+        });
+    };
+
     public set dispatch(value: Dispatch<UnknownAction>) {
         this._dispatch = value;
     }

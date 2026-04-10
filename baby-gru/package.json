@@ -19,6 +19,10 @@
         "./vite-plugin": {
             "types": "./scripts/VitePlugin.d.ts",
             "default": "./scripts/VitePlugin.mjs"
+        },
+        "./hooks": {
+            "types": "./moorhen.d.ts",
+            "default": "./moorhen-hooks.js"
         }
     },
     "homepage": "./",
@@ -52,8 +56,9 @@
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",
-        "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
-        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && cd dist && npm pack && cd ..",
+        "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && npm run build-hooks",
+        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && npm run build-hooks && cd dist && npm pack && cd ..",
+        "build-hooks": "npm run create-version && webpack --config webpack.hooks.config.js --mode production ",
         "build-react": "npm run prebuild && webpack --config webpack.react.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-react-dev": "npm run prebuild && webpack --config webpack.react.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",

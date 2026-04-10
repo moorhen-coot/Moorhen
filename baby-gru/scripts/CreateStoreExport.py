@@ -25,7 +25,7 @@ if os.path.exists(output_file):
 
 with open(output_file,"w") as f:
     f.write(export)
-    f.write("\n// Export store configuration and types\nexport { reducers, _MoorhenReduxStore, type MoorhenReduxStoreType, type RootState, type AppDispatch } from \"./MoorhenReduxStore\";")
+    f.write("\n// Export store configuration and types\nexport { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from \"./MoorhenReduxStore\";")
 
 
 # public exports

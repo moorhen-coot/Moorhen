@@ -256,4 +256,4 @@ export {
 }  from "./glRefSlice";
 
 // Export store configuration and types
-export { reducers, _MoorhenReduxStore, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
+export { reducers,  type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

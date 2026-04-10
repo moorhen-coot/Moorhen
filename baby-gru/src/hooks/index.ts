@@ -3,3 +3,4 @@ export { useFastContourMode } from "./useFastContourMode";
 export { usePersistentState } from "@/store/menusSlice";
 export { useMoorhenInstance } from "../InstanceManager/useMoorhenInstance";
 export { useControlLock } from "./useControlsLock";
+export { useMoorhenSelector } from "./webComponentSelector";

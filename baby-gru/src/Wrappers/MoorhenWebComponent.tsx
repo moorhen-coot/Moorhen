@@ -180,15 +180,19 @@ export class MoorhenWebComponent extends HTMLElement {
                 this.onInit?.();
                 this._moorhenInstance.webComponent = this;
                 this._ready = true;
+                const event = new CustomEvent("moorhenReady", { detail: { id: this.id } });
+                window.dispatchEvent(event);
             }
         };
         const refCheckInterval = setInterval(checkRefsReady, 50);
     }
 }
 
-if (!customElements.get("moorhen-web-component")) {
-    customElements.define("moorhen-web-component", MoorhenWebComponent);
-}
+export const registerMoorhenWebComponent = () => {
+    if (!customElements.get("moorhen-web-component")) {
+        customElements.define("moorhen-web-component", MoorhenWebComponent);
+    }
+};
 
 export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTMLElement> {
     width?: number | string;

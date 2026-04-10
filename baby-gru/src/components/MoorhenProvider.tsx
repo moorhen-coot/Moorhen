@@ -1,17 +1,10 @@
-import { configureStore } from "@reduxjs/toolkit";
 import { Provider } from "react-redux";
 import { ReactNode, useRef } from "react";
-import { reducers } from "@/store";
+import { createMoorhenStore } from "@/store/MoorhenReduxStore";
 import { MoorhenInstanceProvider } from "../InstanceManager";
 
 export const MoorhenProvider = (props: { children: ReactNode }) => {
-    const MoorhenReduxStore = configureStore({
-        reducer: reducers,
-        middleware: getDefaultMiddleware =>
-            getDefaultMiddleware({
-                serializableCheck: false,
-            }),
-    });
+    const MoorhenReduxStore = createMoorhenStore();
     const popoverContainerRef = useRef<HTMLDivElement>(null);
     return (
         <Provider store={MoorhenReduxStore}>
