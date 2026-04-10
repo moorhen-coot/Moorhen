@@ -173,7 +173,6 @@ export const AddCustomRepresentationCard = memo(
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
                         if(!notH&&!sideChainOnly) extraRestrict += "/"
-                        console.log("extraRestrict",extraRestrict)
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
@@ -222,7 +221,6 @@ export const AddCustomRepresentationCard = memo(
                     break;
                 case "residue-range":
                     const selectedResidues = sequenceResidueRange;
-                    console.log("selectedResidues", selectedResidues);
                     cidSelection =
                         selectedResidues && selectedResidues.length === 2
                             ? `//${chainSelectRef.current.value}/${selectedResidues[0]}-${selectedResidues[1]}`

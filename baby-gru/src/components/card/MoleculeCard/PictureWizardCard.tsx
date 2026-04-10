@@ -35,8 +35,6 @@ export const PictureWizardCard = memo(
     }) => {
         const store = useStore<RootState>();
         const applyColourToNonCarbonAtomsSwitchRef = useRef<HTMLInputElement | null>(null);
-        const useDefaultRepresentationSettingsSwitchRef = useRef<HTMLInputElement | null>(null);
-        const ligandFormRef = useRef<HTMLSelectElement | null>(null);
         const backgroundStyleSelectRef = useRef<HTMLSelectElement | null>(null);
         const chainSelectRef = useRef<HTMLSelectElement | null>(null);
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -66,7 +64,6 @@ export const PictureWizardCard = memo(
         const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(
             props.representation?.nonCustomOpacity ? props.representation.nonCustomOpacity : 1.0
         );
-        const [showAlphaSlider, setShowAlphaSlider] = useState<boolean>(false);
         const [colour, setColour] = useState<string>(
             props.representation && !props.representation?.useDefaultColourRules && !props.representation?.colourRules[0]?.isMultiColourRule
                 ? props.representation?.colourRules[0].color
@@ -83,12 +80,10 @@ export const PictureWizardCard = memo(
         const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(null);
 
         const [cid, setCid] = useState<string>("/*/*/*/*:*");
-        const [adaptBondOOF, setAdaptBondOOF] = useState<RepresentationStyles>("CRs");
-        const [adaptDist, setAdaptDist] = useState<number>(props.representation?.residueEnvironmentOptions.adaptiveDist ?? 8.0);
 
-        const [notHOH, setNotHOH] = useState<boolean>(props.representation?.cid?.includes("(!HOH)") ? true : false);
-        const [notH, setNotH] = useState<boolean>(props.representation?.cid?.includes("[!H]") ? true : false);
-        const [sideChainOnly, setSideChainOnly] = useState<boolean>(props.representation?.cid?.includes("!O,C,N") ? true : false);
+        const [backBonerepresentation, setBackBonerepresentation] = useState<RepresentationStyles>("CRs");
+
+        const [deleteExisting, setDeleteExisting] = useState<boolean>(false);
 
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
@@ -103,7 +98,6 @@ export const PictureWizardCard = memo(
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
 
         const createRepresentations = async () => {
-            console.log(ruleType)
             if(ruleType==="ligands"){
                 let theLigandSelection = ""
                 if(ligandSelection){
@@ -113,20 +107,25 @@ export const PictureWizardCard = memo(
                 } else {
                     return
                 }
-                console.log(theLigandSelection)
                 if(theLigandSelection){
                     const splitLigands = theLigandSelection.split("||")
                     for(let ilig=0; ilig<splitLigands.length; ilig++){
                         await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false);
+                        await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false);
+                        await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false);
                     }
                 }
                 await createRepresentation("molecule","CRs","",true,"",false,false);
             }
         }
 
-        const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean) => {
+        const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs"|"allHBonds", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean) => {
 
             props.setBusy?.(true);
+
+            const sideChainOnly = false
+            const notHOH = false
+            const notH = false
 
             const neighboursDistance = 6.0
 
@@ -159,7 +158,6 @@ export const PictureWizardCard = memo(
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
                         if(notH&&sideChainOnly) extraRestrict += "[!H]"
                         if(!notH&&!sideChainOnly) extraRestrict += "/"
-                        console.log("extraRestrict",extraRestrict)
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
@@ -360,7 +358,6 @@ export const PictureWizardCard = memo(
                                 selectedCoordMolNo={props.molecule.molNo}
                                 molecules={[props.molecule]}
                                 allowAll
-                                ref={ligandFormRef}
                                 setValue={setLigandSelection}
                             />
                         </>
