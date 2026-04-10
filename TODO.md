@@ -4,14 +4,14 @@ Planned features
 ### For 0.23.1
 - [ ] Wizards
    - [x] Neighbourhood selections
-     - [ ] Neighbouthood distance
+     - [ ] Neighbourhood distance
    - [x] H-bonded to selections
    - [ ] Site and ribbons
-         - Identify ligands
-         - Draw neighbourhood of each
-         - Draw H-bonds for neighbourhood of each
-         - Draw H-bonds to each ligand
-         - Draw ribbons
+         - [x] Identify ligands (already part of Coot/Moorhen)
+         - [x] Draw neighbourhood of each
+         - [x] Draw ribbons
+         - [ ] Draw H-bonds for neighbourhood of each
+         - [ ] Draw H-bonds to each ligand
 - [ ] Load dictionary without creating molecule.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
