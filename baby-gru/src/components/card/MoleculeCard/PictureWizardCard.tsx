@@ -101,11 +101,13 @@ export const PictureWizardCard = memo(
         const createRepresentations = async () => {
 
             if(deleteExisting){
+                props.setBusy?.(true);
                 props.molecule.representations.forEach(rep => {
                     props.molecule.removeRepresentation(rep.uniqueId)
                     dispatch(removeCustomRepresentation(rep));
                 })
                 props.molecule.clearBuffersOfStyle("environment");
+                props.setBusy?.(false);
             }
 
             let splitLigands = []
@@ -132,16 +134,16 @@ export const PictureWizardCard = memo(
                         await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false,"");
                     }
                 }
-                await createRepresentation("molecule","CRs","",true,"",false,false,"");
+                await createRepresentation("molecule","CRs","",false,"",false,false,"");
             } else if(wizardType==="ribbons") {
                 if(splitLigands){
                     await createRepresentation("cid","CBs","",false,"",false,false,splitLigands.join("||"));
                 }
-                await createRepresentation("molecule","CRs","",true,"",false,false,"");
+                await createRepresentation("molecule","CRs","",false,"",false,false,"");
             } else if(wizardType==="catrace") {
-                await createRepresentation("molecule","CAs","",true,"",false,false,"");
+                await createRepresentation("molecule","CAs","",false,"",false,false,"");
             } else if(wizardType==="bonds") {
-                await createRepresentation("molecule","CBs","",true,"",false,false,"");
+                await createRepresentation("molecule","CBs","",false,"",false,false,"");
             }
         }
 

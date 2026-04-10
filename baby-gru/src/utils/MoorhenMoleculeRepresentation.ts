@@ -460,10 +460,14 @@ export class MoleculeRepresentation {
                     }
                 });
         }
-        this.buffers.forEach(buf => {
-            buf.multiViewGroup = this.parentMolecule.molNo;
-        });
-        this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
+        if(this.buffers){
+            this.buffers.forEach(buf => {
+                buf.multiViewGroup = this.parentMolecule.molNo;
+            });
+            this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
+        } else {
+            this.buffers = []
+        }
     }
 
     /**
@@ -479,11 +483,13 @@ export class MoleculeRepresentation {
             this.setAtomBuffers(atomBuffers);
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
-        this.buffers.forEach(buf => {
-            if (buf.hasOwnProperty("origin")) {
-                buf.origin = selectionCentre;
-            }
-        });
+        if(this.buffers){
+            this.buffers.forEach(buf => {
+                if (buf.hasOwnProperty("origin")) {
+                    buf.origin = selectionCentre;
+                }
+            });
+        }
     }
 
     /**
@@ -663,6 +669,7 @@ export class MoleculeRepresentation {
             model.delete()
             models.delete()
             if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
+            if(_cid.length===0) return []
         }
 
         if(this.restrictToNeighbours){
