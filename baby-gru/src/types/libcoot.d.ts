@@ -48,6 +48,7 @@ export namespace libcootApi {
         get_pdb_string_from_gemmi_struct: (arg0: gemmi.Structure) => string;
         get_mmcif_string_from_gemmi_struct: (arg0: gemmi.Structure) => string;
         validate: (file: string, name: string) => emscriptem.vector<privateer.ResultsEntry>;
+        calculate_cremer_pople_parameters: (file: string, name: string) => emscriptem.vector<privateer.CremerPopleParameters>;
         Selection: { new (cid: string): gemmi.Selection };
         NeighborSearch: { new (model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new (x: number, y: number, z: number): gemmi.Position };
@@ -604,6 +605,7 @@ export namespace libcootApi {
         getTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
+        calculate_cremer_pople_parameters(arg0: string, arg1: string): emscriptem.vector<PrivateerCremerPopleParameters>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         SmallMoleculeCifToMMCif(fileName: string): PairType<string, string>;
         get_coord_header_info(docString: string, path: string): headerInfoGemmi;

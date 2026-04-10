@@ -1161,6 +1161,26 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const privateerCremerPopleParametersToJSArray = (results: emscriptem.vector<privateer.CremerPopleParameters>): privateer.CremerPopleParameters[] => {
+    const data: privateer.CremerPopleParameters[] = [];
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize; i++) {
+        const entry = results.get(i);
+        const entryJS: privateer.CremerPopleParameters = {
+            q: entry.q,
+            phi: entry.phi, 
+            theta: entry.theta,
+            chain_id: entry.chain_id,
+            residue_id: entry.residue_id
+        }
+
+        data.push(entryJS);
+    }
+
+    results.delete();
+    return data;
+}
+
 const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
 
     const journalMapKeys = result.journal.keys();
@@ -1426,6 +1446,9 @@ const doCootCommand = (messageData: {
                 break
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
+                break
+            case 'privateer_cremer_pople_parameters':
+                returnResult = privateerCremerPopleParametersToJSArray(cootResult)
                 break
             case 'status':
             default:
