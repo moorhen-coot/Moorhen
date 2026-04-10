@@ -1,13 +1,12 @@
-import { DeleteOutlined, WarningAmberOutlined } from "@mui/icons-material";
-import { Backdrop, IconButton, Tooltip } from "@mui/material";
-import { Button, Card, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
+import { Backdrop } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { addMolecule, enqueueSnackbar, hideModal } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenIcon, MoorhenSpinner } from "../icons";
+import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
@@ -59,47 +58,42 @@ const LskqbResidueRangeMatchCard = (props: {
             const movMolecule = molecules.find(molecule => molecule.molNo === props.movMolNo);
             if (refMolecule && movMolecule) {
                 const atomsRef = await refMolecule.gemmiAtomsForCid(
-                    `//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}/CA`
+                    `//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}`
                 );
                 const atomsMov = await movMolecule.gemmiAtomsForCid(
-                    `//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}/CA`
+                    `//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}`
                 );
-                if (atomsMov.length !== atomsRef.length) {
+                const caRef = atomsRef.filter(atom => atom.name.trim() === "CA");
+                const caMov = atomsMov.filter(atom => atom.name.trim() === "CA");
+                if (caMov.length !== caRef.length) {
                     setWarning(
-                        `Unequal number of residues selected in the reference (${atomsRef.length} res.) and moving (${atomsMov.length} res.) structures.
-                        Only first ${atomsRef.length < atomsMov.length ? atomsRef.length : atomsMov.length} res. will be used.`
+                        `Unequal number of residues selected in the reference (${caRef.length} res.) and moving (${caMov.length} res.) structures.
+                        Only first ${caRef.length < caMov.length ? caRef.length : caMov.length} res. will be used.`
                     );
                 }
             }
         };
+
         doSanityCheck();
     }, []);
 
     return (
-        <>
-            <MoorhenStack card>
-                <Row>Reference</Row>
-                <Row>{`//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}`}</Row>
+        <MoorhenStack card>
+            <MoorhenStack direction="horizontal" justify="space-between" align="center">
+                <div>
+                    Reference
+                    <br />
+                    {`//${props.item.refChainId}/${props.item.refResidueRange[0]}-${props.item.refResidueRange[1]}`}
+                </div>
+                <div>
+                    Moving
+                    <br />
+                    {`//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}`}
+                </div>
+                {warning && <MoorhenIcon moorhenSVG="MatSymWarning" tooltip={warning} size="medium" />}
+                <MoorhenButton type="icon-only" icon="MatSymDelete" onClick={props.removeItem} tooltip="Delete" />
             </MoorhenStack>
-            <Col style={{ alignItems: "center", justifyContent: "left", display: "flex", flexDirection: "column" }}>
-                <Row>Moving</Row>
-                <Row>{`//${props.item.movChainId}/${props.item.movResidueRange[0]}-${props.item.movResidueRange[1]}`}</Row>
-            </Col>
-            {warning && (
-                <Col style={{ margin: "0", padding: "0", justifyContent: "center", display: "flex", alignItems: "center" }}>
-                    <Tooltip title={warning}>
-                        <WarningAmberOutlined style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} />
-                    </Tooltip>
-                </Col>
-            )}
-            <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                <Tooltip title="Delete">
-                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={props.removeItem}>
-                        <DeleteOutlined />
-                    </IconButton>
-                </Tooltip>
-            </Col>
-        </>
+        </MoorhenStack>
     );
 };
 
@@ -250,73 +244,63 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
     }, [molecules.length]);
 
     const bodyContent = (
-        <MoorhenStack direction="vertical" gap={1} style={{ display: "flex" }}>
-            <Form.Group style={{ margin: "0.5rem" }}>
-                <Form.Label>Algorithm</Form.Label>
-                <FormSelect ref={algorithmSelectRef} value={algortihm} onChange={evt => setAlgorithm(evt.target.value)}>
+        <MoorhenStack direction="vertical">
+            <div>
+                <MoorhenSelect
+                    ref={algorithmSelectRef}
+                    value={algortihm}
+                    onChange={evt => setAlgorithm(evt.target.value)}
+                    label="Superposition algorithm"
+                >
                     <option value={"ssm"}>SSM</option>
                     <option value={"lsqkb"}>LSQKB</option>
-                </FormSelect>
-            </Form.Group>
-            <hr></hr>
-            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex" }}>
-                <Form.Group
-                    key="reference-model-select"
-                    style={{ margin: "0.5rem", width: "100%" }}
-                    controlId="refModelSelect"
-                    className="mb-3"
-                >
-                    <Form.Label>Reference structure</Form.Label>
-                    <MoorhenMoleculeSelect
-                        style={{ width: "100%" }}
-                        ref={refMoleculeSelectRef}
-                        onSelect={sel => handleModelChange(sel, true)}
-                    />
-                    <MoorhenChainSelect
-                        width="100%"
-                        molecules={molecules}
-                        onChange={evt => handleChainChange(evt, true)}
-                        selectedCoordMolNo={selectedRefModel}
-                        allowedTypes={[1, 2]}
-                        ref={refChainSelectRef}
-                    />
-                    {algortihm === "lsqkb" && (
-                        <MoorhenSequenceRangeSlider
-                            ref={refResidueRangeRef}
-                            selectedMolNo={selectedRefModel}
-                            selectedChainId={selectedRefChain}
-                        />
-                    )}
-                </Form.Group>
-                <Form.Group
-                    key="moving-model-select"
-                    style={{ margin: "0.5rem", width: "100%" }}
-                    controlId="movModelSelect"
-                    className="mb-3"
-                >
-                    <Form.Label>Moving structure</Form.Label>
-                    <MoorhenMoleculeSelect
-                        style={{ width: "100%" }}
-                        ref={movMoleculeSelectRef}
-                        onSelect={sel => handleModelChange(sel, false)}
-                    />
-                    <MoorhenChainSelect
-                        width="100%"
-                        molecules={molecules}
-                        onChange={evt => handleChainChange(evt, false)}
-                        selectedCoordMolNo={selectedMovModel}
-                        allowedTypes={[1, 2]}
-                        ref={movChainSelectRef}
-                    />
-                    {algortihm === "lsqkb" && (
-                        <MoorhenSequenceRangeSlider
-                            ref={movResidueRangeRef}
-                            selectedMolNo={selectedMovModel}
-                            selectedChainId={selectedMovChain}
-                        />
-                    )}
-                </Form.Group>
+                </MoorhenSelect>
+                <hr></hr>
+            </div>
+            <MoorhenStack direction="horizontal">
+                <MoorhenMoleculeSelect
+                    label="Reference structure"
+                    style={{ width: "100%" }}
+                    ref={refMoleculeSelectRef}
+                    onSelect={sel => handleModelChange(sel, true)}
+                />
+                <MoorhenChainSelect
+                    width="100%"
+                    molecules={molecules}
+                    onChange={evt => handleChainChange(evt, true)}
+                    selectedCoordMolNo={selectedRefModel}
+                    allowedTypes={[1, 2]}
+                    ref={refChainSelectRef}
+                />
             </MoorhenStack>
+            {algortihm === "lsqkb" && (
+                <MoorhenSequenceRangeSlider ref={refResidueRangeRef} selectedMolNo={selectedRefModel} selectedChainId={selectedRefChain} />
+            )}
+            <hr></hr>
+            <MoorhenStack direction="horizontal">
+                <MoorhenMoleculeSelect
+                    label="Moving structure"
+                    style={{ width: "100%" }}
+                    ref={movMoleculeSelectRef}
+                    onSelect={sel => handleModelChange(sel, false)}
+                />
+                <MoorhenChainSelect
+                    width="100%"
+                    molecules={molecules}
+                    onChange={evt => handleChainChange(evt, false)}
+                    selectedCoordMolNo={selectedMovModel}
+                    allowedTypes={[1, 2]}
+                    ref={movChainSelectRef}
+                />
+            </MoorhenStack>{" "}
+            {algortihm === "lsqkb" && (
+                <MoorhenSequenceRangeSlider
+                    ref={movResidueRangeRef}
+                    selectedMolNo={selectedMovModel}
+                    selectedChainId={selectedMovChain}
+                    style={{ marginBottom: "1rem" }}
+                />
+            )}
             {algortihm === "lsqkb" && (
                 <>
                     <MoorhenButton onClick={handleAddLsqkbMatch}>Add match</MoorhenButton>
@@ -337,47 +321,40 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
                         <span>No matches defined for alignment...</span>
                     )}
                     <hr></hr>
-                    <Form.Label style={{ margin: "0.5rem" }}>Match atoms</Form.Label>
-                    <Form.Group
-                        style={{ margin: "0.5rem", display: "flex", width: "100%", flexDirection: "row", justifyContent: "space-around" }}
-                        controlId="lsqkb-settings"
-                        className="mb-3"
-                    >
-                        <Form.Check
-                            style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
-                            type="radio"
-                            checked={lsqkbMode === "all-atoms"}
-                            onChange={() => {
-                                lsqkbModeRef.current = 0;
-                                setLsqkbMode("all-atoms");
-                            }}
-                            label="All Atoms"
-                        />
-                        <Form.Check
-                            style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
-                            type="radio"
-                            checked={lsqkbMode === "mainchain"}
-                            onChange={() => {
-                                lsqkbModeRef.current = 1;
-                                setLsqkbMode("mainchain");
-                            }}
-                            label="Main Chain"
-                        />
-                        <Form.Check
-                            style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
-                            type="radio"
-                            checked={lsqkbMode === "c-alphas"}
-                            onChange={() => {
-                                lsqkbModeRef.current = 2;
-                                setLsqkbMode("c-alphas");
-                            }}
-                            label="C-Alphas"
-                        />
-                    </Form.Group>
+                    <MoorhenToggle
+                        style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
+                        type="radio"
+                        checked={lsqkbMode === "all-atoms"}
+                        onChange={() => {
+                            lsqkbModeRef.current = 0;
+                            setLsqkbMode("all-atoms");
+                        }}
+                        label="All Atoms"
+                    />
+                    <MoorhenToggle
+                        style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
+                        type="radio"
+                        checked={lsqkbMode === "mainchain"}
+                        onChange={() => {
+                            lsqkbModeRef.current = 1;
+                            setLsqkbMode("mainchain");
+                        }}
+                        label="Main Chain"
+                    />
+                    <MoorhenToggle
+                        style={{ margin: "0.5rem", justifyContent: "inherit", display: "flex", gap: "0.5rem" }}
+                        type="radio"
+                        checked={lsqkbMode === "c-alphas"}
+                        onChange={() => {
+                            lsqkbModeRef.current = 2;
+                            setLsqkbMode("c-alphas");
+                        }}
+                        label="C-Alphas"
+                    />
                     <hr></hr>
                 </>
             )}
-            <Form.Check type="switch" ref={makeCopyOfMovStructCheckRef} label="Move a copy of moving structure" />
+            <MoorhenToggle type="switch" ref={makeCopyOfMovStructCheckRef} label="Move a copy of moving structure" />
         </MoorhenStack>
     );
 
@@ -400,7 +377,7 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
 
     const spinnerContent = (
         <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-            <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+            <MoorhenSpinner colour="white" size="3rem" />
             <span>Calculating...</span>
         </Backdrop>
     );

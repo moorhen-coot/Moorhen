@@ -1,9 +1,7 @@
-import { useDispatch, useSelector } from "react-redux";
-import { useRef } from "react";
+import { useDispatch } from "react-redux";
+import { useRef, useState } from "react";
 import { setValidationJson } from "../../store/jsonValidation";
-import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenFileInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -15,8 +13,7 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
 
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const [isDocked, setIsDocked] = useState(props.openDocked);
 
     const loadJsonFiles = async (files: FileList) => {
         for (const file of files) {
@@ -26,7 +23,7 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
         }
     };
 
-    const footerContent = (
+    const footerContent = !isDocked && (
         <MoorhenStack
             gap={2}
             direction="horizontal"
@@ -52,20 +49,12 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.JSON_VALIDATION}
-            left={width / 6}
-            top={height / 3}
-            minHeight={convertViewtoPx(30, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(70, height)}
-            maxWidth={convertViewtoPx(50, width)}
-            enforceMaxBodyDimensions={true}
             allowDocking={true}
             openDocked={props.openDocked}
-            overflowY="auto"
-            overflowX="auto"
             headerTitle="JSON validation"
             resizeNodeRef={resizeNodeRef}
             footer={footerContent}
+            onDock={setIsDocked}
             body={<MoorhenJsonValidation />}
         />
     );
