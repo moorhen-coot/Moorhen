@@ -8,7 +8,7 @@ Planned features
    - [x] H-bonded to selections
    - [ ] Draw ligands with Bond width 0.15 and "nice" mesh
    - [ ] CA trace and ligands
-   - [ ] Ribbons and ligands
+   - [x] Ribbons and ligands
    - [x] Bonds
    - [x] Site and ribbons
       - [x] Identify ligands (already part of Coot/Moorhen)
