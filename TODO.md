@@ -6,6 +6,8 @@ Planned features
    - [x] Neighbourhood selections
      - [ ] Neighbourhood distance
    - [x] H-bonded to selections
+   - [x] Ribbons
+   - [x] Bonds
    - [x] Site and ribbons
          - [x] Identify ligands (already part of Coot/Moorhen)
          - [x] Draw neighbourhood of each

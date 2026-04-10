@@ -40,6 +40,7 @@ export const PictureWizardCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
+        const [wizardType, setWizardType] = useState<"site-and-ribbons" | "bonds" | "ribbons">("site-and-ribbons")
         const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range">(
             props.representation ? props.representation.interfaceOption.selectionType : "ligands"
         );
@@ -99,8 +100,6 @@ export const PictureWizardCard = memo(
 
         const createRepresentations = async () => {
 
-            let splitLigands = []
-
             if(deleteExisting){
                 props.molecule.representations.forEach(rep => {
                     props.molecule.removeRepresentation(rep.uniqueId)
@@ -109,27 +108,35 @@ export const PictureWizardCard = memo(
                 props.molecule.clearBuffersOfStyle("environment");
             }
 
-            if(ruleType==="ligands"){
-                let theLigandSelection = ""
-                if(ligandSelection){
-                    theLigandSelection = ligandSelection
-                } else if(props.molecule.ligands&&props.molecule.ligands.length>0) {
-                    theLigandSelection = props.molecule.ligands.map(x => x.cid).join("||")
-                } else {
-                    return
+            if(wizardType==="site-and-ribbons") {
+                let splitLigands = []
+
+                if(ruleType==="ligands"){
+                    let theLigandSelection = ""
+                    if(ligandSelection){
+                        theLigandSelection = ligandSelection
+                    } else if(props.molecule.ligands&&props.molecule.ligands.length>0) {
+                        theLigandSelection = props.molecule.ligands.map(x => x.cid).join("||")
+                    } else {
+                        return
+                    }
+                    splitLigands = theLigandSelection.split("||")
+                } else if(ruleType==="cid"){
+                    splitLigands = cid.split("||")
                 }
-                splitLigands = theLigandSelection.split("||")
-            } else if(ruleType==="cid"){
-                splitLigands = cid.split("||")
-            }
-            if(splitLigands){
-                for(let ilig=0; ilig<splitLigands.length; ilig++){
-                    await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false);
-                    await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false);
-                    await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false);
+                if(splitLigands){
+                    for(let ilig=0; ilig<splitLigands.length; ilig++){
+                        await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false);
+                        await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false);
+                        await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false);
+                    }
                 }
+                await createRepresentation("molecule","CRs","",true,"",false,false);
+            } else if(wizardType==="ribbons") {
+                await createRepresentation("molecule","CRs","",true,"",false,false);
+            } else if(wizardType==="bonds") {
+                await createRepresentation("molecule","CBs","",true,"",false,false);
             }
-            await createRepresentation("molecule","CRs","",true,"",false,false);
         }
 
         const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs"|"allHBonds", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean) => {
@@ -336,7 +343,20 @@ export const PictureWizardCard = memo(
         return (
             <MoorhenStack style={{ width: "25rem", margin: "0.5rem" }}>
                 <MoorhenStack inputGrid>
-                        <MoorhenSelect label={"Residue selection"} defaultValue={ruleType} setValue={setRuleType}>
+                        <MoorhenSelect label={"Wizard"} defaultValue={wizardType} setValue={setWizardType}>
+                                <>
+                                    <option value={"site-and-ribbons"} key={"site-and-ribbons"}>
+                                        Binding site and ribbons
+                                    </option>
+                                    <option value={"ribbons"} key={"ribbons"}>
+                                        Ribbons
+                                    </option>
+                                    <option value={"bonds"} key={"bonds"}>
+                                        Bonds
+                                    </option>
+                                </>
+                        </MoorhenSelect>
+                        {wizardType === "site-and-ribbons" && <MoorhenSelect label={"Residue selection"} defaultValue={ruleType} setValue={setRuleType}>
                             {representationStyle === "residue_environment" ? (
                                 <>
                                     <option value={"cid"} key={"cid"}>
@@ -356,8 +376,8 @@ export const PictureWizardCard = memo(
                                 </>
                             )}
                         </MoorhenSelect>
-
-                    {ruleType === "cid"  && (
+                        }
+                    {ruleType === "cid"  && wizardType === "site-and-ribbons" && (
                         <MoorhenCidInputForm
                             setCid={setCid}
                             label="Atom selection"
@@ -365,7 +385,7 @@ export const PictureWizardCard = memo(
                             allowUseCurrentSelection={true}
                         />
                     )}
-                    {ruleType === "ligands" && (
+                    {ruleType === "ligands" && wizardType === "site-and-ribbons" && (
                         <>
                             <MoorhenLigandSelect
                                 selectedCoordMolNo={props.molecule.molNo}
