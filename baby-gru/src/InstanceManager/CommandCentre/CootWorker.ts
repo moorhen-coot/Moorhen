@@ -1321,8 +1321,6 @@ const doCootCommand = (messageData: {
                 break
             default:
                 console.log("Calling",command)
-                console.log("MOLECULES CONTAINER", molecules_container)
-                console.log(molecules_container[command])
                 cootResult = molecules_container[command](...commandArgs)
                 break
         }
