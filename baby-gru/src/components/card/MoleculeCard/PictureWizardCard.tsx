@@ -84,7 +84,7 @@ export const PictureWizardCard = memo(
 
         const [backBonerepresentation, setBackBonerepresentation] = useState<RepresentationStyles>("CRs");
 
-        const [deleteExisting, setDeleteExisting] = useState<boolean>(false);
+        const [deleteExisting, setDeleteExisting] = useState<boolean>(true);
 
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
