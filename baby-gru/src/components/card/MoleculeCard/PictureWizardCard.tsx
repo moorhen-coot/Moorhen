@@ -132,35 +132,34 @@ export const PictureWizardCard = memo(
             if(wizardType==="site-and-ribbons") {
                 if(splitLigands){
                     if(splitLigands.length>3){
-                        await createRepresentation("molecule","CBs",splitLigands.join("||"),true,"",false,false,"");
-                        await createRepresentation("molecule","allHBonds",splitLigands.join("||"),true,"",false,false,"");
-                        await createRepresentation("molecule","CBs","",false,splitLigands.join("||"),true,false,"");
+                        await createRepresentation("molecule","CBs",splitLigands.join("||"),true,"",false,false,"",true);
+                        await createRepresentation("molecule","allHBonds",splitLigands.join("||"),true,"",false,false,"",false);
+                        await createRepresentation("molecule","CBs","",false,splitLigands.join("||"),true,false,"",false);
                     } else {
                         for(let ilig=0; ilig<splitLigands.length; ilig++){
-                            await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false,"");
-                            await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false,"");
-                            await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false,"");
+                            await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false,"",true);
+                            await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false,"",false);
+                            await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false,"",false);
                         }
                     }
                 }
-                await createRepresentation("molecule","CRs","",false,"",false,false,"");
+                await createRepresentation("molecule","CRs","",false,"",false,false,"",false);
             } else if(wizardType==="ribbons") {
                 if(splitLigands){
-                    await createRepresentation("cid","CBs","",false,"",false,false,splitLigands.join("||"));
+                    await createRepresentation("cid","CBs","",false,"",false,false,splitLigands.join("||"),false);
                 }
-                await createRepresentation("molecule","CRs","",false,"",false,false,"");
+                await createRepresentation("molecule","CRs","",false,"",false,false,"",false);
             } else if(wizardType==="catrace") {
-                await createRepresentation("molecule","CAs","",false,"",false,false,"");
+                await createRepresentation("molecule","CAs","",false,"",false,false,"",false);
             } else if(wizardType==="bonds") {
-                await createRepresentation("molecule","CBs","",false,"",false,false,"");
+                await createRepresentation("molecule","CBs","",false,"",false,false,"",false);
             }
         }
 
-        const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs"|"allHBonds", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean, simpleCid: string) => {
+        const createRepresentation = async (theRuleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range", representationStyle: "CBs"|"CRs"|"CAs"|"allHBonds", neighboursCid: string, restrictToNeighbours: boolean, hbondedToCid: string, hbondedTo: boolean, excludeNeighbours: boolean, simpleCid: string, sideChainOnly: boolean) => {
 
             props.setBusy?.(true);
 
-            const sideChainOnly = false
             const notHOH = false
             const notH = false
 
