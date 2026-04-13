@@ -633,7 +633,6 @@ export class MoleculeRepresentation {
                 const splitHBonds = response.data.result.result;
                 hBonds.push(...splitHBonds)
             }
-            console.log(this.hbondedToCid,hBonds)
 
             const models = this.parentMolecule.gemmiStructure.models
             const model = models.get(0);

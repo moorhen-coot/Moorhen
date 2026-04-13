@@ -1,31 +1,19 @@
 # Moorhen TODO
 Planned features
 
-### For 0.23.1
-- [ ] Wizards
-   - [x] Neighbourhood selections
-      - [ ] Neighbourhood distance
-   - [x] H-bonded to selections
-   - [ ] Draw ligands with Bond width 0.15 and "nice" mesh
-   - [ ] CA trace and ligands
-   - [x] Ribbons and ligands
-   - [x] Bonds
-   - [x] Site and ribbons
-      - [x] Identify ligands (already part of Coot/Moorhen)
-      - [x] Draw neighbourhood of each
-      - [x] Draw ribbons
-      - [x] Draw H-bonds for neighbourhood of each
-      - [x] Draw H-bonded main/side chain to each ligand
-      - [x] Delete previous
+### For 1.1.0
 - [ ] Load dictionary without creating molecule.
 - [ ] Ability to set origin/zoom/individual rotation in "Multiple views for different molecules".
 - [ ] Remove glRef from all component props and class constructor args.
-- [ ] simplify File menu to have far fewer entries.
 - [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
 - [ ] Fix multiview with shadows.
 - [ ] Fix multiview with transparency and edge detect/SSAO.
+- [ ] Story-boarded movies.
 
-### For 0.23.0
+### For 1.0.0
+- [ ] Fix "Show controls".
+- [ ] Simplify File menu to have far fewer entries.
+- [x] Picture wizards.
 - [x] Fix SSAO.
 - [x] Improve edge detect.
 - [x] Vectors UI. Drawing code should already be there, mostly.
@@ -36,9 +24,13 @@ Planned features
 - [x] Fix multiview with edge detect.
 - [x] Fix multiview with SSAO.
 - [x] Sensible blur radius (3) for SSAO.
+- [x] -DRDK\_BUILD\_INCHI\_SUPPORT=ON
+- [x] Do not pull whole monomer library - we never use it.
+- [x] MrBump results view.
+- [x] MrParse results view.
 
 ### For 0.22.2
-- [ ] Make ligand environment text labels much bigger.
+- [x] Make ligand environment text labels much bigger.
 
 ### For 0.22.0
 - [x] Fix multiview origins only sometimes correct.
@@ -90,9 +82,6 @@ Planned features
   - [x] Drag and drop MrParse results
 
 ### Todo
-- [ ] Picture wizards.
-- [ ] Story-boarded movies.
-- [ ] Do not pull whole monomer library - we never use it.
 - [ ] Fitting 5-letter ligand truncates name, e.g. A1LU6
 - [ ] Get Structure factors if no map download available.
 - [ ] Undo button on a molecule loaded from SMILES/PubChem with name > 3 letters breaks the structure.
@@ -100,14 +89,12 @@ Planned features
 - [ ] Add Zoom to "Show controls"
 - [ ] Prosmart (this is complicated because of the subprocess model).
   - [ ] Results parsing for starters.
-- [ ] CCP4MG/MrBump. As above results parsing would be good start.
 - [ ] Coloured sequences: https://ebi-webcomponents.github.io/nightingale/#/coloured-sequence
 - [ ] Sequence alignments: https://ebi-webcomponents.github.io/nightingale/#/msa
 - [ ] Secondary structure annotation and other kinds of annotation: https://ebi-webcomponents.github.io/nightingale/#/track
 - [ ] Highlight things other than balls.
 - [ ] Auto scaled shadow box
 - [ ] Lipid cartoons
-- [ ] Images/Legends
 - [ ] Generate Helices
 - [ ] Normal modes
     - [ ] Experimental vs. Theoretical B-values
