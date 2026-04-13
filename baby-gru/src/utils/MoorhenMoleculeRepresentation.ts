@@ -619,15 +619,21 @@ export class MoleculeRepresentation {
         if(this.hbondedToCid){
 
             _cid = ""
-            const response = await this.commandCentre.current.cootCommand(
-            {
-                returnType: "vector_hbond",
-                command: "get_h_bonds",
-                commandArgs: [this.parentMolecule.molNo, this.hbondedToCid, false],
-            },
-            false
-            );
-            const hBonds = response.data.result.result;
+            const hBonds = []
+            const splitHBondedToCids = this.hbondedToCid.split("||")
+            for(let isplit=0;isplit<splitHBondedToCids.length;isplit++){
+                const response = await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "vector_hbond",
+                    command: "get_h_bonds",
+                    commandArgs: [this.parentMolecule.molNo, splitHBondedToCids[isplit], false],
+                },
+                false
+                );
+                const splitHBonds = response.data.result.result;
+                hBonds.push(...splitHBonds)
+            }
+            console.log(this.hbondedToCid,hBonds)
 
             const models = this.parentMolecule.gemmiStructure.models
             const model = models.get(0);
@@ -1426,7 +1432,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     getGemmiAtomPairsBuffers(
-        gemmiAtomPairs: [moorhen.AtomInfo, moorhen.AtomInfo][],
+        gemmiAtomPairs: [{ x: number; y: number; z: number; serial: number | string }, { x: number; y: number; z: number; serial: number | string }][],
         colour: number[],
         labelled: boolean = false
     ): libcootApi.InstancedMeshJS[] {
@@ -1468,53 +1474,40 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getHBondBuffers(cid: string, labelled: boolean = false) {
-        const response = await this.commandCentre.current.cootCommand(
-            {
-                returnType: "vector_hbond",
-                command: "get_h_bonds",
-                commandArgs: [this.parentMolecule.molNo, cid, false],
-            },
-            false
-        );
-        const hBonds = response.data.result.result;
+        const hBonds = []
+        const splitHBondedToCids = cid.split("||")
+        for(let isplit=0;isplit<splitHBondedToCids.length;isplit++){
+            const response = await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "vector_hbond",
+                    command: "get_h_bonds",
+                    commandArgs: [this.parentMolecule.molNo, splitHBondedToCids[isplit], false],
+                },
+                false
+            );
+            const splitHBonds = response.data.result.result;
+            hBonds.push(...splitHBonds)
+        }
 
         const selectedGemmiAtomsPairs = hBonds.map(hbond => {
             const donor = hbond.donor;
             const acceptor = hbond.acceptor;
 
-            const donorAtomInfo = {
-                pos: [donor.x, donor.y, donor.z],
+            const donorAtomInfo: { x: number; y: number; z: number; serial: number | string } = {
                 x: donor.x,
                 y: donor.y,
                 z: donor.z,
-                charge: donor.charge,
-                element: donor.element, // ???
-                name: donor.name,
-                symbol: donor.element, // ???
-                b_iso: donor.b_iso,
                 serial: donor.serial,
-                label: `/${donor.modelId}/${donor.chainName}/${donor.resNum}(${donor.residueName})/${donor.name}${
-                    donor.altLoc === "" ? ":" + String.fromCharCode(donor.altLoc) : ""
-                }`,
             };
 
-            const acceptorAtomInfo = {
-                pos: [acceptor.x, acceptor.y, acceptor.z],
+            const acceptorAtomInfo: { x: number; y: number; z: number; serial: number | string } = {
                 x: acceptor.x,
                 y: acceptor.y,
                 z: acceptor.z,
-                charge: acceptor.charge,
-                element: acceptor.element, // ???
-                name: acceptor.name,
-                symbol: acceptor.element, // ???
-                b_iso: acceptor.b_iso,
                 serial: acceptor.serial,
-                label: `/${acceptor.modelId}/${acceptor.chainName}/${acceptor.resNum}(${acceptor.name})/${
-                    acceptor.name
-                }${acceptor.altLoc === "" ? ":" + String.fromCharCode(acceptor.altLoc) : ""}`,
             };
 
-            const pair = [donorAtomInfo, acceptorAtomInfo];
+            const pair: [{ x: number; y: number; z: number; serial: number | string },{ x: number; y: number; z: number; serial: number | string }] = [donorAtomInfo, acceptorAtomInfo];
             return pair;
         });
 

@@ -128,10 +128,16 @@ export const PictureWizardCard = memo(
             }
             if(wizardType==="site-and-ribbons") {
                 if(splitLigands){
-                    for(let ilig=0; ilig<splitLigands.length; ilig++){
-                        await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false,"");
-                        await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false,"");
-                        await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false,"");
+                    if(splitLigands.length>3){
+                        await createRepresentation("molecule","CBs",splitLigands.join("||"),true,"",false,false,"");
+                        await createRepresentation("molecule","allHBonds",splitLigands.join("||"),true,"",false,false,"");
+                        await createRepresentation("molecule","CBs","",false,splitLigands.join("||"),true,false,"");
+                    } else {
+                        for(let ilig=0; ilig<splitLigands.length; ilig++){
+                            await createRepresentation("molecule","CBs",splitLigands[ilig],true,"",false,false,"");
+                            await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,"",false,false,"");
+                            await createRepresentation("molecule","CBs","",false,splitLigands[ilig],true,false,"");
+                        }
                     }
                 }
                 await createRepresentation("molecule","CRs","",false,"",false,false,"");
