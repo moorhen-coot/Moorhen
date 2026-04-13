@@ -119,6 +119,7 @@ export class MoleculeRepresentation {
     cid: string;
     neighboursCid: string;
     restrictToNeighbours: boolean;
+    neighboursDistance: number;
     hbondedToCid: string;
     hbondedTo: boolean;
     excludeNeighbours: boolean;
@@ -215,6 +216,11 @@ export class MoleculeRepresentation {
         this.hoverColor = [1.0, 0.5, 0.0, 0.35];
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
         this.interfaceOption = { visible: undefined, selectionType: "cid" };
+        this.neighboursCid = ""
+        this.restrictToNeighbours = false
+        this.neighboursDistance = 6.0
+        this.hbondedToCid = ""
+        this.hbondedTo = false
     }
 
     /**
@@ -680,7 +686,7 @@ export class MoleculeRepresentation {
         if(this.restrictToNeighbours){
             //Now we might not want to use the new method, maybe we should use the old one.
             if((["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
-                restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,10.0,this.excludeNeighbours)
+                restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,this.neighboursDistance,this.excludeNeighbours)
             } else {
                 if(restrictedCid.length>0) _cid = restrictedCid
             }

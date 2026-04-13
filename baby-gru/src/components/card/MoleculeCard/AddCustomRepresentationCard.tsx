@@ -14,6 +14,7 @@ import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
+import { MoorhenNumberInput } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
 import { NcsColourSwatch } from "./ColourRuleCard";
@@ -54,6 +55,7 @@ export const AddCustomRepresentationCard = memo(
         const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(props.representation?.excludeNeighbours ?? false);
         const [neighboursCid, setNeighboursCid] = useState<string>(props.representation?.neighboursCid ?? "");
         const [hbondedToCid, setHbondedToCid] = useState<string>(props.representation?.hbondedToCid ??"");
+        const [neighboursDistance, setNeighboursDistance] = useState<number>(6.0);
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
@@ -167,7 +169,7 @@ export const AddCustomRepresentationCard = memo(
                     }
 
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
@@ -176,7 +178,7 @@ export const AddCustomRepresentationCard = memo(
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         cidSelection = restrictedCid
                     } else {
                         cidSelection += ":*";
@@ -184,7 +186,7 @@ export const AddCustomRepresentationCard = memo(
                     if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
                         if (representationStyle === "CBs" && restrictToNeighbours) {
                             const waterSelection = "/*/*/(HOH)";
-                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,10.0,excludeNeighbours)
+                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                             if(restrictedWaterCid.length>2)
                                 cidSelection += "||"+restrictedWaterCid
                         } else {
@@ -207,7 +209,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += "[!H]";
                     }
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,10.0,excludeNeighbours)
+                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
@@ -331,6 +333,7 @@ export const AddCustomRepresentationCard = memo(
                 } else {
                     representationRef.current.cid = cidSelection;
                     representationRef.current.restrictToNeighbours = restrictToNeighbours;
+                    representationRef.current.neighboursDistance = neighboursDistance;
                     representationRef.current.excludeNeighbours = excludeNeighbours;
                     representationRef.current.neighboursCid = neighboursCid;
                     representationRef.current.hbondedTo = hbondedTo;
@@ -347,6 +350,7 @@ export const AddCustomRepresentationCard = memo(
                 if (representation) {
                     representation.cid = cidSelection;
                     representation.restrictToNeighbours = restrictToNeighbours;
+                    representation.neighboursDistance = neighboursDistance;
                     representation.excludeNeighbours = excludeNeighbours;
                     representation.neighboursCid = neighboursCid;
                     representation.hbondedTo = hbondedTo;
@@ -536,6 +540,7 @@ export const AddCustomRepresentationCard = memo(
                     />
                 )}
                 {(restrictToNeighbours && (ruleType === "chain" || ruleType === "molecule")) && (
+                <>
                     <MoorhenStack direction="horizontal"  style={{ height: "3rem", margin: "0.3rem" }}>
                     <MoorhenCidInputForm
                         setCid={setNeighboursCid}
@@ -550,6 +555,17 @@ export const AddCustomRepresentationCard = memo(
                         onChange={handleExcludeNeighbourhoodSettingsChange}
                      />
                     </MoorhenStack>
+                        <MoorhenNumberInput
+                           value={neighboursDistance}
+                           type="number"
+                           label="Neighbours distance:"
+                           onChange={evt => {
+                               try {
+                                   setNeighboursDistance(Number(evt.target.value));
+                               } catch (e) {}
+                           }}
+                        />
+                        </>
                 )}
                 {(["CBs"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
                     <MoorhenToggle

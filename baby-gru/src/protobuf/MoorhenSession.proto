@@ -73,6 +73,7 @@ message Representation {
     bool excludeNeighbours = 10;
     string hbondedToCid = 11;
     bool hbondedTo = 12;
+    float neighboursDistance = 13;
 }
 
 message MoleculeSessionData {

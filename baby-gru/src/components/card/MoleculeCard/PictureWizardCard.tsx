@@ -9,6 +9,7 @@ import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMol
 import { addCustomRepresentation, removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { MoorhenNumberInput } from "../../inputs";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
 import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
@@ -86,6 +87,8 @@ export const PictureWizardCard = memo(
 
         const [deleteExisting, setDeleteExisting] = useState<boolean>(true);
 
+        const [neighboursDistance, setNeighboursDistance] = useState<number>(6.0);
+
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
         const dispatch = useDispatch();
@@ -160,8 +163,6 @@ export const PictureWizardCard = memo(
             const sideChainOnly = false
             const notHOH = false
             const notH = false
-
-            const neighboursDistance = 6.0
 
             const theMolecule = props.molecule
 
@@ -329,6 +330,7 @@ export const PictureWizardCard = memo(
             let rep = new MoleculeRepresentation(representationStyle, cidSelection, commandCentre)
             rep.cid = cidSelection;
             rep.restrictToNeighbours = restrictToNeighbours;
+            rep.neighboursDistance = neighboursDistance;
             rep.excludeNeighbours = excludeNeighbours;
             rep.neighboursCid = neighboursCid;
             rep.hbondedTo = hbondedTo;
@@ -415,6 +417,18 @@ export const PictureWizardCard = memo(
                             />
                         </>
                     )}
+                    {wizardType === "site-and-ribbons" &&
+                        <MoorhenNumberInput
+                           value={neighboursDistance}
+                           type="number"
+                           label="Neighbours distance:"
+                           onChange={evt => {
+                               try {
+                                   setNeighboursDistance(Number(evt.target.value));
+                               } catch (e) {}
+                           }}
+                        />
+                    }
                 </MoorhenStack>
                 <MoorhenToggle
                     label="Delete all existing representations"
