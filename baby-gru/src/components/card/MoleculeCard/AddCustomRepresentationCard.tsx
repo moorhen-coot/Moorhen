@@ -161,7 +161,7 @@ export const AddCustomRepresentationCard = memo(
                     }
                     cidSelection += "/";
                     unRestrictedCidSelection = cidSelection
-                    if (representationStyle === "CBs" && sideChainOnly) {
+                    if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && sideChainOnly) {
                         cidSelection += "!O,C,N,H";
                     }
 
@@ -169,7 +169,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += "[!H]";
                     }
 
-                    if (representationStyle === "CBs" && restrictToNeighbours) {
+                    if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && restrictToNeighbours) {
                         const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
@@ -184,7 +184,7 @@ export const AddCustomRepresentationCard = memo(
                     } else {
                         cidSelection += ":*";
                     }
-                    if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
+                    if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && !notHOH && sideChainOnly) {
                         if (representationStyle === "CBs" && restrictToNeighbours) {
                             const waterSelection = "/*/*/(HOH)";
                             const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
