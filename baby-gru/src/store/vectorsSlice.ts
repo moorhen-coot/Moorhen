@@ -30,6 +30,7 @@ export interface MoorhenVector {
     arrowHeadRadiusScale?: number;
     labelFontSize?: number;
     labelScreenOffsetDistance?: number;
+    visible?: boolean;
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {

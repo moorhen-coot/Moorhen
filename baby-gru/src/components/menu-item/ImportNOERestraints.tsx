@@ -74,7 +74,7 @@ export const ImportNOERestraints = () => {
             if (files.length > 0 ) {
                const fileContents = await files[0].text()
                console.log(fileContents)
-            const parsedNOE = cootModule.get_nef_restraints(fileContents)
+            const parsedNOE = cootModule.get_noe_restraints(fileContents)
                console.log(parsedNOE)
             }
         }     
@@ -98,7 +98,7 @@ export const ImportNOERestraints = () => {
         <>
             <Row>
                 <Form.Group style={{ width: "30rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadNOE" className="mb-3">
-                    <Form.Label>NOE restraints...</Form.Label>
+                    <Form.Label>NEF restraints...</Form.Label>
                     <Form.Control ref={filesRef} type="file" multiple={true} accept=".nef" />
                 </Form.Group>
             </Row>

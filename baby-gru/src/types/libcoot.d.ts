@@ -83,6 +83,9 @@ export namespace libcootApi {
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
         get_nef_restraints(nef_input:string): string;
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
 
     };
     type headerInfoGemmi = {
@@ -630,6 +633,7 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
+<<<<<<< HEAD
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
@@ -665,6 +669,12 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+=======
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
+
+>>>>>>> 054a96346 (NOE, HBond and undefined restraints toggleable)
     };
     interface DoublePairDoubleJS {
         first: number;
