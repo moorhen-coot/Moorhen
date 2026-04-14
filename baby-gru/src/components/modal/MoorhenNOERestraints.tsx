@@ -16,120 +16,128 @@ import { MoorhenMolecule } from "@/utils";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice"
 import { useEffect, useState, useRef } from "react"; 
 import { libcootApi} from "../../types/libcoot"
-// let cootModule: libcootApi.CootModule;
-// import { MoorhenReduxStore } from "moorhen"
-
-// ^ this returns MoorhenDraggableModalBase - what is this?
-// no idea what this does at all
-// so what happens when this is normally called?
-// called by ModalsContainer.tsx, supplies vectors there into modalsMap
-// modalsMap called by MoorhenModalsContainer
-// MoorhenModalsContainer imported into MainContainer
-// MainContainer seems to be menu related
-
-// we need to:
-// define vector template
-// pass relevant info from NOE to template copy
-// use info in copy to lookup atoms via gemmi
-// draw cylinder between looked up atoms 
-// push/ append list of vectors
-// repeat for every line in NOE
-// pass to renderer as full list 
-
-// option one use existing vector rendering
-// option two do it yourself
-// option one should be fewer lines of code
-// need to go through vectorsDraw, vectorsSlice, MoorhenVectorsModal
+import { MoorhenButton, MoorhenToggle } from "../inputs";
 
 
-// can we build dictionary from every atom's AtomInfo vector to lookup that way?
-// so we want to get list of all atoms 
-// and do atom lookup for every elemtn in list
-// and append to dict
-// so how do we access atom list? 
-// what fn uses atom list? presumably loading it in?
-// where is MoorhenMolecule called? If we can use same MoorhenMolecule from state then we can access its atom list etc
-// function convertNEFHydrogen(nefName) {
-//   if ((nefName.includes("x") || nefName.includes("y")) && nefName.includes("%")) {
-//     return []
-//     // this is a placeholder - not sure what to do with e.g. HDx%
-//     // there are a reasonably large amount of ambiguous dihedrals
-//     // seek advice from NMR
-//     // enumerate fully as with others
-//     // add "ambiguous" flag
-//   }
 
-//   // x → 2
-//   if (nefName.includes("x")) {
-//     return [nefName.replace("x", "1")];
-//   }
+function convertNEFHydrogen(nefName, resName) {
 
-//   // y → 3
-//   if (nefName.includes("y")) {
-//     return [nefName.replace("y", "2")];
-//   }
+  const resiTypes = ['ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'ILE', 'LYS', 'MET', 'PHE', 'PRO', 'SER', 'GLY'];
+  const resiTypesVL = ['VAL', 'LEU'];
+  const resiTypesNQ = ['ASN', 'GLN'];
+  const resiTypesHB = ['HIS', 'TRP', 'TYR', 'LEU'];
 
-//   // wildcard %
-//   if (nefName.endsWith("%")) {
-//     const base = nefName.slice(0, -1);
-//     return [
-//       base + "1",
-//       base + "2",
-//       base + "3"
-//     ];
-//   }
+  const results = new Set<string>();
 
-//   // default
-//   return [nefName];
-// }
-function convertNEFHydrogen(nefName) {
+  // ----------------------------
+  // 1. Handle % (ambiguous groups)
+  // ----------------------------
+  if (nefName.endsWith('%')) {
+    const base = nefName.slice(0, -1); // remove %
 
-  if ((nefName.includes("x") || nefName.includes("y")) && nefName.includes("%")) {
-
-    const base = nefName.replace(/[xy]%/, "");
-
-    if (nefName.includes("x")) {
-      return [
-        base + "11",
-        base + "12",
-        base + "13"
-      ];
+    // QQ special cases (VAL/LEU methyls)
+    if (resName === 'VAL' && base === 'HG') {
+      results.add('QQH');
+    }
+    if (resName === 'LEU' && base === 'HD') {
+      results.add('QQD');
     }
 
-    if (nefName.includes("y")) {
-      return [
-        base + "21",
-        base + "22",
-        base + "23"
-      ];
+    // General Q rule reversal (H% -> Q)
+    if (base.includes('H')) {
+      results.add(base.replace(/H/g, 'Q'));
+    }
+
+    // VL methyls (HGx% / HGy%)
+    if (resiTypesVL.includes(resName)) {
+      if (base.endsWith('x')) {
+        const b = base.slice(0, -1);
+        results.add(`${b}11`);
+        results.add(`${b}12`);
+      }
+      if (base.endsWith('y')) {
+        const b = base.slice(0, -1);
+        results.add(`${b}21`);
+        results.add(`${b}22`);
+      }
+    }
+
+    // ILE special methyls
+    if (resName === 'ILE') {
+      if (base === 'HG2') results.add('HG2');
+      if (base === 'HD1') results.add('HD1');
+    }
+
+    // ALA / THR special
+    if (resName === 'ALA' && base === 'HB') {
+      results.add('HB');
+    }
+    if (resName === 'THR' && base === 'HG2') {
+      results.add('HG2');
     }
   }
 
-  // x → 1
-  if (nefName.includes("x")) {
-    return [nefName.replace("x", "1")];
-  }
-
-  // y → 2
-  if (nefName.includes("y")) {
-    return [nefName.replace("y", "2")];
-  }
-
-  // wildcard %
-  if (nefName.endsWith("%")) {
+  // ----------------------------
+  // 2. Handle x / y (stereospecific)
+  // ----------------------------
+  if (nefName.endsWith('x') || nefName.endsWith('y')) {
+    const suffix = nefName.slice(-1); // x or y
     const base = nefName.slice(0, -1);
-    return [
-      base + "1",
-      base + "2",
-      base + "3"
-    ];
+
+    // General resiTypes (H2/H3 ↔ x/y)
+    if (resiTypes.includes(resName)) {
+      if (suffix === 'x') results.add(base + '2');
+      if (suffix === 'y') results.add(base + '3');
+    }
+
+    // ILE HG1 special (HG12/HG13)
+    if (resName === 'ILE' && base.startsWith('HG1')) {
+      if (suffix === 'x') results.add('HG12');
+      if (suffix === 'y') results.add('HG13');
+    }
+
+    // VL carbons (Cx / Cy)
+    if (resiTypesVL.includes(resName) && base.includes('C')) {
+      if (suffix === 'x') results.add(base + '1');
+      if (suffix === 'y') results.add(base + '2');
+    }
+
+    // VL hydrogens (Hx% handled above, but fallback here)
+    if (resiTypesVL.includes(resName) && base.includes('H')) {
+      if (suffix === 'x') {
+        results.add(base + '1');
+        results.add(base + '2');
+      }
+      if (suffix === 'y') {
+        results.add(base + '2');
+        results.add(base + '3');
+      }
+    }
+
+    // ASN/GLN amides (H1/H2)
+    if (resiTypesNQ.includes(resName) && base.includes('H')) {
+      if (suffix === 'x') results.add(base + '1');
+      if (suffix === 'y') results.add(base + '2');
+    }
+
+    // HB special residues
+    if (resiTypesHB.includes(resName) && base === 'HB') {
+      if (suffix === 'x') results.add('HB2');
+      if (suffix === 'y') results.add('HB3');
+    }
   }
 
-  // default
-  return [nefName];
+  // ----------------------------
+  // 3. Default fallback
+  // ----------------------------
+  if (results.size === 0) {
+    return [nefName];
+  }
+
+  return Array.from(results);
 }
 
-function loopReplaceProtons(rows, atomN = "atom1") {
+function loopReplaceProtons(rows, atomN = "atom1", nameN = "name1") {
     // loops through rows
     // runs convertNEFhydrogen
     // pushes to dataframe
@@ -138,7 +146,7 @@ function loopReplaceProtons(rows, atomN = "atom1") {
     rows.forEach(row => { 
         if(row[atomN].includes("%") || row[atomN].includes("x") || row[atomN].includes("y"))
             {
-            const ConvertedName = convertNEFHydrogen(row[atomN])
+            const ConvertedName = convertNEFHydrogen(row[atomN], row[nameN])
             ConvertedName.forEach(convertedRow => {
                 let newRow = {...row}
                 newRow[atomN] = convertedRow
@@ -199,7 +207,9 @@ function convertDataHeaders(restraintDict){
                 "_nef_distance_restraint.chain_code_1": "chain1",
                 "_nef_distance_restraint.chain_code_2": "chain2",
                 "_nef_distance_restraint.sequence_code_1": "res1",
-                "_nef_distance_restraint.sequence_code_2": "res2"}
+                "_nef_distance_restraint.sequence_code_2": "res2",
+                "_nef_distance_restraint.residue_name_1": "name1",
+                "_nef_distance_restraint.residue_name_2": "name2"}
     const parsed = JSON.parse(restraintDict)
     const transformed = parsed.map(obj =>
         Object.fromEntries(
@@ -223,6 +233,22 @@ export const MoorhenNOERestraints = () => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     const [noeVectors, setNOEVectors] = useState<MoorhenVector[]>([])
+    // added to try  to make modular more retraints work 
+    const [isActiveButton, setIsActiveButton] = useState(true);
+    const isNOERef = useRef<undefined | HTMLInputElement>(null);
+    const [isNOE, setIsNOE] = useState<boolean>(false);
+
+    const isHBondRef = useRef<undefined | HTMLInputElement>(null);
+    const [isHBond, setIsHBond] = useState<boolean>(false);
+
+    const isUndefinedRef = useRef<undefined | HTMLInputElement>(null);
+    const [isUndefined, setIsUndefined] = useState<boolean>(false);
+    
+    const [selectedTypes, setSelectedTypes] = useState({
+            noe: false,
+            hbond: false,
+            undefined: false
+        });
 
     useEffect(()=> {
         console.log(noeVectors)
@@ -243,13 +269,54 @@ export const MoorhenNOERestraints = () => {
                 // console.log(binFileContents)
                 const fileContents =  pako.inflate(binFileContents, { to: "string" })
                 // var restraintData = parseNEF_NOEs(fileContents)
-                var restraintData = window.cootModule.get_nef_restraints(fileContents)
+                // var restraintData = window.cootModule.get_noe_restraints(fileContents)
 
-                const headedData = convertDataHeaders(restraintData)
+                // const headedData = convertDataHeaders(restraintData)
 
-                const convertedData = convertDataframe(headedData)
-                console.log(convertedData)
+                // const convertedData = convertDataframe(headedData)
+                let allConvertedData: any[] = [];
 
+                if (selectedTypes.noe) {
+                    const data = window.cootModule.get_noe_restraints(fileContents);
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "NOE"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+
+                if (selectedTypes.hbond) {
+                    const data = window.cootModule.get_hbond_restraints(fileContents);
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "HBOND"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+
+                if (selectedTypes.undefined) {
+                    const data = window.cootModule.get_undefined_restraints(fileContents);
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "UNDEFINED"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+
+                console.log(allConvertedData)
+                const newVectors = []
+                allConvertedData.forEach(row => {
+                    
+                    const newNOEVector = newVector()
+                    newNOEVector.cidFrom = row.chain1 + "/" + row.res1 + "/" + row.atom1
+                    newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
+                    newNOEVector.uniqueId += "__TAG_NOE_RESTRAINTS"
+                    if (row.ambiguityFlag) {
+                        newNOEVector.vectorColour = { r: 185, g: 255, b: 255 };
+                    }
+                    newVectors.push(newNOEVector)
+                })
+                setNOEVectors(newVectors)
             }
             else {  
                 const fileContents = await file.text()
@@ -258,20 +325,62 @@ export const MoorhenNOERestraints = () => {
                 
                 // window.cootModule.get_nef_restraints(fileContents)
                 // var restraintData = parseNEF_NOEs(fileContents)
-                var restraintData = window.cootModule.get_nef_restraints(fileContents)
+                // var restraintData = window.cootModule.get_noe_restraints(fileContents)
 
-                const headedData = convertDataHeaders(restraintData)
+                // const headedData = convertDataHeaders(restraintData)
 
-                const convertedData = convertDataframe(headedData)
-                console.log(convertedData)
+                // const convertedData = convertDataframe(headedData)
+                let allConvertedData: any[] = [];
+
+                if (selectedTypes.noe) {
+                    const data = window.cootModule.get_noe_restraints(fileContents);
+                    console.log(data)
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "noe"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+
+                if (selectedTypes.hbond) {
+                    const data = window.cootModule.get_hbond_restraints(fileContents);
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "hbond"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+
+                if (selectedTypes.undefined) {
+                    const data = window.cootModule.get_undefined_restraints(fileContents);
+                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row,
+                        restraintType: "undefined"
+                    }));
+                    allConvertedData.push(...converted);
+                }
+                console.log(allConvertedData)
                 
                 const newVectors = []
-                convertedData.forEach(row => {
+                allConvertedData.forEach(row => {
                     
                     const newNOEVector = newVector()
                     newNOEVector.cidFrom = row.chain1 + "/" + row.res1 + "/" + row.atom1
                     newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
-                    newNOEVector.uniqueId += "__TAG_NOE_RESTRAINTS"
+                    if (row.restraintType === "noe"){
+                        newNOEVector.uniqueId += "__TAG_NEF_NOE_RESTRAINTS"
+                        newNOEVector.vectorColour = { r: 0, g: 0, b: 0 };
+                    }
+
+                    if (row.restraintType === "hbond"){
+                        newNOEVector.uniqueId += "__TAG_NEF_HBOND_RESTRAINTS"
+                        newNOEVector.vectorColour = { r: 255, g: 255, b: 0 };
+                    }
+
+                    if (row.restraintType === "undefined"){
+                        newNOEVector.uniqueId += "__TAG_NEF_UNDEFINED_RESTRAINTS"
+                        newNOEVector.vectorColour = { r: 130, g: 22, b: 184 };
+                    }
                     if (row.ambiguityFlag) {
                         newNOEVector.vectorColour = { r: 185, g: 255, b: 255 };
                     }
@@ -305,31 +414,88 @@ export const MoorhenNOERestraints = () => {
                 }
             };
 
+    // const footerContent = (
+    //     <MoorhenStack
+    //         gap={2}
+    //         direction="horizontal"
+    //         style={{
+    //             paddingTop: "0.5rem",
+    //             alignItems: "space-between",
+    //             alignContent: "space-between",
+    //             justifyContent: "space-between",
+    //             width: "100%",
+    //         }}
+    //     >
+    //         <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
+    //             <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
+    //                 <Form.Control
+    //                     type="file"
+    //                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+    //                         loadNEF(e.target.files);
+    //                     }}
+    //                 />
+    //             </Form.Group>
+    //         </MoorhenStack>
+    //     </MoorhenStack>
+    // );
     const footerContent = (
         <MoorhenStack
             gap={2}
             direction="horizontal"
             style={{
                 paddingTop: "0.5rem",
-                alignItems: "space-between",
-                alignContent: "space-between",
                 justifyContent: "space-between",
                 width: "100%",
             }}
         >
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
-                    <Form.Control
-                        type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadNEF(e.target.files);
-                        }}
-                    />
-                </Form.Group>
+            {/* LEFT: Checkboxes */}
+            <MoorhenStack gap={2} direction="horizontal">
+                <MoorhenToggle
+                    label={"NOEs"}
+                    name={`NOERestraints`}
+                    type="checkbox"
+                    ref={isNOERef}
+                    checked={selectedTypes.noe}
+                    onChange={e => setSelectedTypes(prev => ({
+                        ...prev,
+                        noe: e.target.checked
+                    }))}
+                />
+                <MoorhenToggle
+                    label={"H bonds"}
+                    name={`HBondRestraints`}
+                    type="checkbox"
+                    ref={isHBondRef}
+                    checked={selectedTypes.hbond}
+                    onChange={e => setSelectedTypes(prev => ({
+                        ...prev,
+                        hbond: e.target.checked
+                    }))}
+                />
+                <MoorhenToggle
+                    label={"Undefined restraints"}
+                    name={`isUndefinedRestraints`}
+                    type="checkbox"
+                    ref={isUndefinedRef}
+                    checked={selectedTypes.undefined}
+                    onChange={e => setSelectedTypes(prev => ({
+                        ...prev,
+                        undefined: e.target.checked
+                    }))}
+                />
             </MoorhenStack>
+
+            {/* RIGHT: File input */}
+            <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="uploadMrParse">
+                <Form.Control
+                    type="file"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadNEF(e.target.files);
+                    }}
+                />
+            </Form.Group>
         </MoorhenStack>
     );
-
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.NOE}
@@ -342,7 +508,7 @@ export const MoorhenNOERestraints = () => {
             enforceMaxBodyDimensions={true}
             overflowY="auto"
             overflowX="auto"
-            headerTitle="NOE Restraints"
+            headerTitle="NEF Restraints"
             resizeNodeRef={resizeNodeRef}
             footer={footerContent}
             body={

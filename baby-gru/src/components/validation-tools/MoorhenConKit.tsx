@@ -37,9 +37,17 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     
     // added by tk 
-    const [nefFileContent, setNefFileContent] = useState<string | null>(null);
-    const [NEFMatches, setNEFMatches] = useState<any[]>([]);
-    const [NEFSuccess, setNEFSuccess] = useState<boolean>(false);    
+    const [noeFileContent, setNOEFileContent] = useState<string | null>(null);
+    const [NOEMatches, setNOEMatches] = useState<any[]>([]);
+    const [NOESuccess, setNOESuccess] = useState<boolean>(false);    
+
+    const [hBondFileContent, setHBondFileContent] = useState<string | null>(null);
+    const [HBondMatches, setHBondMatches] = useState<any[]>([]);
+    const [HBondSuccess, setHBondSuccess] = useState<boolean>(false);  
+
+    const [undefinedFileContent, setUndefinedFileContent] = useState<string | null>(null);
+    const [UndefinedMatches, setUndefinedMatches] = useState<any[]>([]);
+    const [UndefinedSuccess, setUndefinedSuccess] = useState<boolean>(false);  
     // added by tk
 
     const inputMoleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -204,19 +212,19 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
 
     }, [inputMoleculeSelectRef.current, predMoleculeSelectRef.current, inputChainSelectRef.current, predChainSelectRef.current, molecules,specifyTargetChain,doRenumber,specifySequence,sequenceText,sequenceFileName]);
 
-    const runNEFRestraints = useCallback(async () => {
+    const runNOERestraints = useCallback(async () => {
         const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
 
        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
-        if (!nefFileContent) return
+        if (!noeFileContent) return
 
         if (input_cif_string.length === 0) {
             return
         }
         const response = (await commandCentre.current.cootCommand(
             {
-                message: "get_nef_restraints",
-                command: "get_nef_restraints",
+                message: "get_noe_restraints",
+                command: "get_noe_restraints",
                 returnType: "string",
                 commandArgs: [input_cif_string],
             },
@@ -227,13 +235,78 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         const json_string = response.data.result as any as string
 
         const res = JSON.parse(json_string)
-        setNEFMatches(res)
+        setNOEMatches(res)
         if(res.length===0)
-            setNEFSuccess(false)
+            setNOESuccess(false)
         else
-            setNEFSuccess(true)
+            setNOESuccess(true)
 
-    }, [nefFileContent]);
+    }, [noeFileContent]);
+
+    const runHBondRestraints = useCallback(async () => {
+        const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
+
+       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
+        if (!hBondFileContent) return
+
+        if (input_cif_string.length === 0) {
+            return
+        }
+        const response = (await commandCentre.current.cootCommand(
+            {
+                message: "get_hbond_restraints",
+                command: "get_hbond_restraints",
+                returnType: "string",
+                commandArgs: [input_cif_string],
+            },
+            false
+        )) as moorhen.WorkerResponse<string>;
+
+        //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
+        const json_string = response.data.result as any as string
+
+        const res = JSON.parse(json_string)
+        setHBondMatches(res)
+        if(res.length===0)
+            setHBondSuccess(false)
+        else
+            setHBondSuccess(true)
+
+    }, [hBondFileContent]);
+
+
+
+    const runUndefinedRestraints = useCallback(async () => {
+        const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
+
+       const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure)
+        if (!undefinedFileContent) return
+
+        if (input_cif_string.length === 0) {
+            return
+        }
+        const response = (await commandCentre.current.cootCommand(
+            {
+                message: "get_undefined_restraints",
+                command: "get_undefined_restraints",
+                returnType: "string",
+                commandArgs: [input_cif_string],
+            },
+            false
+        )) as moorhen.WorkerResponse<string>;
+
+        //FIXME - Hackery!!! Probably want to type the output from conkit and parse the JSON in the Worker
+        const json_string = response.data.result as any as string
+
+        const res = JSON.parse(json_string)
+        setUndefinedMatches(res)
+        if(res.length===0)
+            setUndefinedSuccess(false)
+        else
+            setUndefinedSuccess(true)
+
+    }, [hBondFileContent]);
+
 
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {

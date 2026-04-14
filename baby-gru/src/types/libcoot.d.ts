@@ -53,7 +53,9 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
-        get_nef_restraints(nef_input:string): string;
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
 
     };
     type headerInfoGemmi = {
@@ -599,7 +601,10 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
-        get_nef_restraints(nef_input:string): string;
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
+
     };
     interface DoublePairDoubleJS {
         first: number;

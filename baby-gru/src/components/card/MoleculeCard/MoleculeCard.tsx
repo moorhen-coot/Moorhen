@@ -29,6 +29,7 @@ import {
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -601,6 +602,33 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
+                                            <MoorhenStack direction="row" align="center">
+                        <MoorhenToggle
+                            onChange={e => handleEnvironmentToggle(e.target.checked)}
+                            checked={displayEnvironment}
+                            disabled={isVisible ? false : true}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    NEF restraints&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>NEF restraints info box</b>
+                                                <br />
+                                                NEF restraints  blurb
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                                }
+                            />
+
+                            <MoorhenPopoverButton tooltip={"Environment settings"} disabled={isVisible ? false : true}>
+                                <NEFRestraintsSettingsPanel molecule={props.molecule} />
+                            </MoorhenPopoverButton>
+                        </MoorhenStack>
+
+
                     </MoorhenStack>
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}

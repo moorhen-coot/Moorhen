@@ -17,6 +17,9 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
     let nAtom = 0
     for(let ivec=0; ivec<vectorsList.length; ivec++) {
         const vec = vectorsList[ivec]
+        if (vec.visible === false){
+            continue
+        }
         let xFromOrig;
         let yFromOrig;
         let zFromOrig;
