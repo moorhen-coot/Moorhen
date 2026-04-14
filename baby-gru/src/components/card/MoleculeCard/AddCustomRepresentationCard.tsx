@@ -533,6 +533,32 @@ export const AddCustomRepresentationCard = memo(
                             />
                         </>
                     )}
+                {restrictToNeighbours && (
+                <>
+                    <MoorhenCidInputForm
+                        setCid={setNeighboursCid}
+                        label="Atom selection"
+                        defaultValue={props.representation?.neighboursCid ?? ""}
+                        allowUseCurrentSelection={true}
+                        height="3rem"
+                    />
+                    <MoorhenToggle type="switch"
+                        label="invert selection"
+                        checked={excludeNeighbours}
+                        style={{ height: "2rem", margin: "0.1rem" }}
+                        onChange={handleExcludeNeighbourhoodSettingsChange}
+                    /><div></div>
+                    <MoorhenNumberInput
+                        value={neighboursDistance}
+                        type="number"
+                        label="Neighbours distance:"
+                        onChange={evt => {
+                               try {
+                                   setNeighboursDistance(Number(evt.target.value));
+                               } catch (e) {}
+                        }}/>
+                </>
+                )}
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
                     <>
@@ -545,34 +571,6 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 ) : null}
-                {restrictToNeighbours && (
-                <>
-                    <MoorhenStack direction="horizontal"  style={{ height: "3rem", margin: "0.3rem" }}>
-                    <MoorhenCidInputForm
-                        setCid={setNeighboursCid}
-                        label="Atom selection"
-                        defaultValue={props.representation?.neighboursCid ?? ""}
-                        allowUseCurrentSelection={true}
-                    />
-                    <MoorhenToggle type="switch"
-                        label="invert"
-                        checked={excludeNeighbours}
-                        style={{ height: "2rem", margin: "0.1rem" }}
-                        onChange={handleExcludeNeighbourhoodSettingsChange}
-                     />
-                    </MoorhenStack>
-                        <MoorhenNumberInput
-                           value={neighboursDistance}
-                           type="number"
-                           label="Neighbours distance:"
-                           onChange={evt => {
-                               try {
-                                   setNeighboursDistance(Number(evt.target.value));
-                               } catch (e) {}
-                           }}
-                        />
-                        </>
-                )}
                 {(["CBs"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
                     <MoorhenToggle
                         type="switch"
