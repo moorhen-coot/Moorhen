@@ -153,7 +153,11 @@ export const AddCustomRepresentationCard = memo(
             switch (ruleType) {
                 case "molecule":
                 case "neighbourhood":
-                    cidSelection = "/*/*/";
+                case "chain":
+                    if(ruleType==="chain")
+                        cidSelection = `//${chainSelectRef.current.value}/`;
+                    else
+                        cidSelection = "/*/*/";
                     if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && notHOH) {
                         cidSelection += "(!HOH)";
                     } else {
@@ -193,33 +197,6 @@ export const AddCustomRepresentationCard = memo(
                         } else {
                             cidSelection += "||(HOH)";
                         }
-                    }
-                    break;
-                case "chain":
-                    cidSelection = `//${chainSelectRef.current.value}/`;
-                    if (representationStyle === "CBs" && notHOH) {
-                        cidSelection += "(!HOH)";
-                    }
-                    cidSelection += "/";
-                    unRestrictedCidSelection = cidSelection
-                    if (representationStyle === "CBs" && sideChainOnly) {
-                        cidSelection += "!O,C,N";
-                    }
-
-                    if (representationStyle === "CBs" && notH) {
-                        cidSelection += "[!H]";
-                    }
-                    if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
-                        let extraRestrict = ""
-                        if(sideChainOnly) extraRestrict += "/!O,C,N,H"
-                        if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
-                        if(notH&&sideChainOnly) extraRestrict += "[!H]"
-                        if(!notH&&!sideChainOnly) extraRestrict += "/"
-                        extraRestrict += ":*"
-                        cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
-                    } else {
-                        cidSelection += ":*";
                     }
                     break;
                 case "residue-range":
@@ -580,7 +557,7 @@ export const AddCustomRepresentationCard = memo(
                         onChange={handleUseHBondedToSettingsChange}
                     />
                 )}
-                {(hbondedTo && (ruleType === "chain" || ruleType === "molecule")) && (
+                {(hbondedTo && (ruleType === "molecule")) && (
                     <MoorhenStack direction="horizontal" style={{ height: "3rem", margin: "0.1rem" }}>
                     <MoorhenCidInputForm
                         setCid={setHbondedToCid}
