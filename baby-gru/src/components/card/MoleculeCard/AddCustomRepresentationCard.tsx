@@ -45,8 +45,8 @@ export const AddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range">(
-            props.representation ? props.representation.interfaceOption.selectionType : "molecule"
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
+            props.representation ? (props.representation?.restrictToNeighbours ? "neighbourhood" : props.representation.interfaceOption.selectionType) : "molecule"
         );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
@@ -111,7 +111,7 @@ export const AddCustomRepresentationCard = memo(
         const representationRef = useRef<MoleculeRepresentation>(
             props.representation ?? new MoleculeRepresentation(representationStyle, "/*/*/*/*:*", commandCentre)
         );
-        representationRef.current.interfaceOption.selectionType = ruleType;
+        representationRef.current.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
 
         const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
 
@@ -152,6 +152,7 @@ export const AddCustomRepresentationCard = memo(
             let unRestrictedCidSelection: string;
             switch (ruleType) {
                 case "molecule":
+                case "neighbourhood":
                     cidSelection = "/*/*/";
                     if (representationStyle === "CBs" && notHOH) {
                         cidSelection += "(!HOH)";
@@ -250,7 +251,7 @@ export const AddCustomRepresentationCard = memo(
                 switch (colourModeSelectRef.current.value) {
                     case "custom":
                         colourRule = new ColourRule(
-                            ruleType,
+                            ruleType !== "neighbourhood" ? ruleType : "molecule",
                             colourRuleCid,
                             colour,
                             props.molecule.commandCentre,
@@ -450,7 +451,17 @@ export const AddCustomRepresentationCard = memo(
                             </option>
                         </MoorhenSelect>
                     ) : (
-                        <MoorhenSelect label={"Residue selection"} defaultValue={ruleType} setValue={setRuleType}>
+                        <MoorhenSelect label={"Residue selection"} defaultValue={ruleType}
+                            setValue={ (e) => {
+                                console.log(e)
+                                setRuleType(e)
+                                if(e==="neighbourhood"){
+                                    setRestrictToNeighbours(true)
+                                } else {
+                                    setRestrictToNeighbours(false)
+                                }
+                            }}
+                            >
                             {representationStyle === "residue_environment" ? (
                                 <>
                                     <option value={"cid"} key={"cid"}>
@@ -473,6 +484,9 @@ export const AddCustomRepresentationCard = memo(
                                             Ligands
                                         </option>
                                     )}
+                                    <option value={"neighbourhood"} key={"neighbourhood"}>
+                                        Neighborhood of
+                                    </option>
                                     <option value={"cid"} key={"cid"}>
                                         Atom selection
                                     </option>
@@ -531,25 +545,17 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 ) : null}
-                {(["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment","allHBonds"].includes(representationStyle) && (ruleType === "chain" || ruleType === "molecule")) && (
-                    <MoorhenToggle
-                        type="switch"
-                        label={`In neighbourhood of...`}
-                        checked={restrictToNeighbours}
-                        onChange={handleUseNeighbourhoodSettingsChange}
-                    />
-                )}
-                {(restrictToNeighbours && (ruleType === "chain" || ruleType === "molecule")) && (
+                {restrictToNeighbours && (
                 <>
                     <MoorhenStack direction="horizontal"  style={{ height: "3rem", margin: "0.3rem" }}>
                     <MoorhenCidInputForm
                         setCid={setNeighboursCid}
-                        label="Neighbours selection"
+                        label="Atom selection"
                         defaultValue={props.representation?.neighboursCid ?? ""}
                         allowUseCurrentSelection={true}
                     />
                     <MoorhenToggle type="switch"
-                        label="exclude"
+                        label="invert"
                         checked={excludeNeighbours}
                         style={{ height: "2rem", margin: "0.1rem" }}
                         onChange={handleExcludeNeighbourhoodSettingsChange}
