@@ -154,7 +154,7 @@ export const AddCustomRepresentationCard = memo(
                 case "molecule":
                 case "neighbourhood":
                     cidSelection = "/*/*/";
-                    if (representationStyle === "CBs" && notHOH) {
+                    if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && notHOH) {
                         cidSelection += "(!HOH)";
                     } else {
                         cidSelection += "*";
@@ -165,7 +165,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += "!O,C,N,H";
                     }
 
-                    if (representationStyle === "CBs" && notH) {
+                    if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && notH) {
                         cidSelection += "[!H]";
                     }
 
@@ -185,7 +185,7 @@ export const AddCustomRepresentationCard = memo(
                         cidSelection += ":*";
                     }
                     if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && !notHOH && sideChainOnly) {
-                        if (representationStyle === "CBs" && restrictToNeighbours) {
+                        if ((representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && restrictToNeighbours) {
                             const waterSelection = "/*/*/(HOH)";
                             const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                             if(restrictedWaterCid.length>2)
@@ -512,7 +512,7 @@ export const AddCustomRepresentationCard = memo(
                             allowedTypes={[1, 2, 3, 4, 5]}
                         />
                     )}
-                    {(ruleType === "chain" || ruleType === "molecule") && representationStyle === "CBs" && (
+                    {(ruleType === "chain" || ruleType === "molecule"|| ruleType === "neighbourhood") && (representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") && (
                         <>
                             <MoorhenToggle label="Hide Waters" checked={notHOH} onChange={() => setNotHOH(!notHOH)} />
                             <MoorhenToggle label="Hide Hydrogens" checked={notH} onChange={() => setNotH(!notH)} />
@@ -521,6 +521,7 @@ export const AddCustomRepresentationCard = memo(
                                 checked={sideChainOnly}
                                 onChange={() => setSideChainOnly(!sideChainOnly)}
                             />
+                            <div></div>
                         </>
                     )}
                     {ruleType === "ligands" && (
