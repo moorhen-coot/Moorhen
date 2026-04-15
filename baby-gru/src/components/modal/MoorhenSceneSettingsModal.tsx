@@ -43,6 +43,7 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
+import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -457,16 +458,23 @@ const LightingPanel = () => {
 
 export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
+    const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
     return (
         <MoorhenStack direction={props.stackDirection}>
+            <MoorhenToggle
+                    label="Use new fog/clip/blur sliders"
+                    checked={newSlidersMode}
+                    onChange={() => setNewSlidersMode(!newSlidersMode)}
+            />
             <MoorhenStack direction="vertical">
-                <ClipFogPanel />
+                {newSlidersMode && <MoorhenSlidersSettings  stackDirection="vertical"/>}
+                {!newSlidersMode && <ClipFogPanel />}
                 <BackgroundColorPanel />
                 <EdgeDetectPanel />
             </MoorhenStack>
             <MoorhenStack direction="vertical">
                 <LightingPanel />
-                {isWebGL2 && <DepthBlurPanel />}
+                {(isWebGL2 && !newSlidersMode) && <DepthBlurPanel />}
                 <OcclusionPanel />
             </MoorhenStack>
         </MoorhenStack>

@@ -8,7 +8,7 @@ import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors" | "overlay2DObjects" | "sceneSettingsII" | (string & {});
+export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors" | "overlay2DObjects" | (string & {});
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
 export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
@@ -37,15 +37,6 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         panelContent: (
             <SidePanelContainer title="Scene Settings">
                 <MoorhenSceneSettings stackDirection="vertical" />
-            </SidePanelContainer>
-        ),
-    },
-    sceneSettingsII: {
-        icon: "MatSymVisibility",
-        label: "SceneSettingsII",
-        panelContent: (
-            <SidePanelContainer title="Side on sliders">
-                <MoorhenSlidersSettings stackDirection="vertical" />
             </SidePanelContainer>
         ),
     },

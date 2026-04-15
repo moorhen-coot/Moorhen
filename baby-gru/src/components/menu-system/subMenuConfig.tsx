@@ -572,12 +572,6 @@ export const subMenuMap: SubMenuMap = {
                 panel: "sceneSettings",
             },
             {
-                id: "scene-sliders",
-                label: "Scene settings MkII...",
-                type: "showPanel",
-                panel: "sceneSettingsII",
-            },
-            {
                 id: "other-scene-settings",
                 label: "Other scene settings...",
                 type: "subMenu",

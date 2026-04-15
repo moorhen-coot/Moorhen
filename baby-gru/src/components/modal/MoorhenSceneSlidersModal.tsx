@@ -857,6 +857,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     return (
         <>
         <MoorhenStack direction={props.stackDirection} card={true}>
+            <span style={{ height: "2rem", margin: "0.2rem" }}>Clip, fog and depth blur</span>
             <Stack gap={1} direction="vertical">
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
