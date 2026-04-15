@@ -12,6 +12,7 @@ import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
+import { MoorhenToggle } from "../inputs";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
@@ -138,7 +139,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
         return (
         <MoorhenStack direction="vertical">
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={resetClippingFogging}
                     onChange={() => {
@@ -146,7 +147,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     }}
                     label="Reset clip and fog on zoom"
                 />
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={useFog}
                     onChange={(e) => {
@@ -163,7 +164,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     }}
                     label={fogLabel}
                 />
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={useClip}
                     onChange={(e) => {
@@ -180,7 +181,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     }}
                     label={clipLabel}
                 />
-                <Form.Check
+                <MoorhenToggle
                     type="switch"
                     checked={useOffScreenBuffers}
                     onChange={() => {
