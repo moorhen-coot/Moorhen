@@ -150,6 +150,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 <MoorhenToggle
                     type="switch"
                     checked={useFog}
+                    disabled={resetClippingFogging}
                     onChange={(e) => {
                         if(useFog){
                             setBackupFogNear(gl_fog_start)
@@ -167,6 +168,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 <MoorhenToggle
                     type="switch"
                     checked={useClip}
+                    disabled={resetClippingFogging}
                     onChange={(e) => {
                         if(useClip){
                             setBackupClipNear(clipStart)
