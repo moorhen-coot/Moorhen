@@ -5,6 +5,7 @@ import { InputGroup } from "react-bootstrap";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
+import { RootState } from "@/store";
 import {
     setAmbient,
     setClipEnd,
@@ -237,7 +238,7 @@ const BackgroundColorPanel = () => {
                 <HexColorInput
                     className="moorhen-hex-input"
                     color={rgbToHex(innerBackgroundColor.r, innerBackgroundColor.g, innerBackgroundColor.b)}
-                    onChange={(hex) => {
+                    onChange={hex => {
                         const [r, g, b, _a] = ColourRule.parseHexToRgba(hex);
                         handleColorChange({ r, g, b });
                     }}
@@ -373,7 +374,6 @@ const ClipFogPanel = () => {
 };
 
 const LightingPanel = () => {
-
     const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition);
     const ambient = useSelector((state: moorhen.State) => state.glRef.ambient);
     const specular = useSelector((state: moorhen.State) => state.glRef.specular);
@@ -458,23 +458,24 @@ const LightingPanel = () => {
 
 export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
+    const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
     return (
         <MoorhenStack direction={props.stackDirection}>
             <MoorhenToggle
-                    label="Use new fog/clip/blur sliders"
-                    checked={newSlidersMode}
-                    onChange={() => setNewSlidersMode(!newSlidersMode)}
+                label="Use new fog/clip/blur sliders"
+                checked={newSlidersMode}
+                onChange={() => setNewSlidersMode(!newSlidersMode)}
             />
             <MoorhenStack direction="vertical">
-                {newSlidersMode && <MoorhenSlidersSettings  stackDirection="vertical"/>}
+                {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" width={panelWidth - 50} />}
                 {!newSlidersMode && <ClipFogPanel />}
                 <BackgroundColorPanel />
                 <EdgeDetectPanel />
             </MoorhenStack>
             <MoorhenStack direction="vertical">
                 <LightingPanel />
-                {(isWebGL2 && !newSlidersMode) && <DepthBlurPanel />}
+                {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
                 <OcclusionPanel />
             </MoorhenStack>
         </MoorhenStack>

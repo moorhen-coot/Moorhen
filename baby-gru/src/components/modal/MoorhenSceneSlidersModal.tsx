@@ -98,7 +98,7 @@ interface SideOnProgramInstanced extends WebGLProgram {
     vertexInstanceOrientationAttribute: GLint;
 }
 
-export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
+export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical", width?: number }) => {
 
     const store = useStore<RootState>()
     const dispatch = useDispatch();
@@ -195,8 +195,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         );
     };
 
-    const plotWidth = 250
-    const plotHeight = 150
+    const plotWidth = props.width ? props.width : 500
+    const plotHeight = plotWidth *0.6
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
 
