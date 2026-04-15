@@ -219,9 +219,15 @@ EMSCRIPTEN_BINDINGS(gemmi_cif) {
     ;
 
     class_<gemmi::CRA>("CRA")
+    .property("chain",&gemmi::CRA::chain, return_value_policy::reference())
+    .property("residue",&gemmi::CRA::residue, return_value_policy::reference())
+    .property("atom",&gemmi::CRA::atom, return_value_policy::reference())
     ;
 
     class_<gemmi::const_CRA>("const_CRA")
+    .property("chain",&gemmi::const_CRA::chain, return_value_policy::reference())
+    .property("residue",&gemmi::const_CRA::residue, return_value_policy::reference())
+    .property("atom",&gemmi::const_CRA::atom, return_value_policy::reference())
     ;
 
     class_<gemmi::Selection::List>("SelectionList")

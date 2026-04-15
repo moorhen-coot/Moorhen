@@ -20,6 +20,7 @@ import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../.
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
+import { PictureWizardCard } from "./PictureWizardCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import {
     MoorhenMoleculeRepresentationSettingsCard,
@@ -469,6 +470,20 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         popoverStyle={{ maxHeight: "100%" }}
                     >
                         <MoorhenMoleculeRepresentationSettingsCard molecule={props.molecule} />
+                    </MoorhenPopoverButton>
+                    <MoorhenPopoverButton
+                        type="default"
+                        icon="MatSymAutoAwesome"
+                        popoverPlacement="left"
+                        tooltip="Picture Wizard - create multiple representations at once"
+                        style={{ width: "5rem" }}
+                    >
+                        <PictureWizardCard
+                            setBusy={setBusyDrawingCustomRepresentation}
+                            urlPrefix={urlPrefix}
+                            molecule={props.molecule}
+                            onApply={() => document.body.click()}
+                        />
                     </MoorhenPopoverButton>
                 </MoorhenStack>
                 {/* <div className="moorhen__molecule_card_representation"> */}

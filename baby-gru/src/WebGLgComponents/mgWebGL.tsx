@@ -184,7 +184,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         background_colour: [number, number, number, number];
         origin: [number, number, number];
         drawEnvBOcc: boolean;
-        environmentAtoms: webGL.clickAtom[][];
+        environmentAtoms: {atom:webGL.clickAtom,label:string}[][];
         labelledAtoms: webGL.clickAtom[][];
         measuredAtoms: webGL.clickAtom[][];
         pixel_data: Uint8Array;
@@ -1823,9 +1823,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.environmentAtoms.push([]);
                 }
                 // The spacing + ")" adjusts the height/baseline so that they are same as click atom labels.
-                atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                const label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
                 //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + " " + atomLabel
-                this.environmentAtoms[this.environmentAtoms.length - 1].push(atom)
+                this.environmentAtoms[this.environmentAtoms.length - 1].push({atom:atom,label:label})
             })
             this.updateLabels()
         }
@@ -5812,7 +5813,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.environmentAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.atom.x,y:atom.atom.y,z:atom.atom.z})
             })
         })
 

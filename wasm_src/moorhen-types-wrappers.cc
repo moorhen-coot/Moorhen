@@ -866,6 +866,8 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("run_conkit_validate",&run_conkit_validate_with_exception);
 
+    function("cidToNeighboursCid",&cidToNeighboursCid);
+
     // Fix unbound types for --emit-tsd
     class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");
     class_<coot::geometry_distortion_info_pod_container_t>("coot_geometry_distortion_info_pod_container_t");

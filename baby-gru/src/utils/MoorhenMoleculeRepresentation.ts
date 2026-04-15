@@ -1,6 +1,7 @@
 import { batch } from "react-redux";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice";
+import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
@@ -51,7 +52,9 @@ export type RepresentationStyles =
 /**
  * Represents a molecule representation
  * @property {string} style - The style of this molecule representation instance
- * @property {string} cid - The CID selection for this colour rule
+ * @property {string} cid - The CID selection
+ * @property {string} restrictToNeighbours - Whether or not to restrict to neighbourhood
+ * @property {string} neighboursCid - The CID for additional selection for neighbourhood
  * @property {moorhen.Molecule} parentMolecule - The molecule assigned to this colour rule
  * @property {string} uniqueId - A unique identifier for this colour rule
  * @property {boolean} visible - Indicates whether the molecule representation is currently visible
@@ -114,6 +117,12 @@ export class MoleculeRepresentation {
     uniqueId: string;
     style: moorhen.RepresentationStyles;
     cid: string;
+    neighboursCid: string;
+    restrictToNeighbours: boolean;
+    neighboursDistance: number;
+    hbondedToCid: string;
+    hbondedTo: boolean;
+    excludeNeighbours: boolean;
     buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -207,6 +216,11 @@ export class MoleculeRepresentation {
         this.hoverColor = [1.0, 0.5, 0.0, 0.35];
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
         this.interfaceOption = { visible: undefined, selectionType: "cid" };
+        this.neighboursCid = ""
+        this.restrictToNeighbours = false
+        this.neighboursDistance = 6.0
+        this.hbondedToCid = ""
+        this.hbondedTo = false
     }
 
     /**
@@ -452,10 +466,14 @@ export class MoleculeRepresentation {
                     }
                 });
         }
-        this.buffers.forEach(buf => {
-            buf.multiViewGroup = this.parentMolecule.molNo;
-        });
-        this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
+        if(this.buffers){
+            this.buffers.forEach(buf => {
+                buf.multiViewGroup = this.parentMolecule.molNo;
+            });
+            this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
+        } else {
+            this.buffers = []
+        }
     }
 
     /**
@@ -471,11 +489,13 @@ export class MoleculeRepresentation {
             this.setAtomBuffers(atomBuffers);
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
-        this.buffers.forEach(buf => {
-            if (buf.hasOwnProperty("origin")) {
-                buf.origin = selectionCentre;
-            }
-        });
+        if(this.buffers){
+            this.buffers.forEach(buf => {
+                if (buf.hasOwnProperty("origin")) {
+                    buf.origin = selectionCentre;
+                }
+            });
+        }
     }
 
     /**
@@ -583,8 +603,95 @@ export class MoleculeRepresentation {
      * @returns {object[]} The buffer objects for this molecule representation
      */
     async getBufferObjects(style?: moorhen.RepresentationStyles, cid?: string) {
+
         const _style = style ?? this.style;
-        const _cid = cid ?? this.cid;
+        let _cid = cid ?? this.cid;
+        let restrictedCid = ""
+
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
+
+        if(this.restrictToNeighbours||this.hbondedToCid){
+            await this.commandCentre.current.cootCommand(
+                {
+                    command: "set_draw_missing_residue_loops",
+                    returnType: "status",
+                    commandArgs: [false],
+                },
+                false
+            );
+            console.log("Set set_draw_missing_residue_loops to false")
+        }
+
+        if(this.hbondedToCid){
+
+            _cid = ""
+            const hBonds = []
+            const splitHBondedToCids = this.hbondedToCid.split("||")
+            for(let isplit=0;isplit<splitHBondedToCids.length;isplit++){
+                const response = await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "vector_hbond",
+                    command: "get_h_bonds",
+                    commandArgs: [this.parentMolecule.molNo, splitHBondedToCids[isplit], false],
+                },
+                false
+                );
+                const splitHBonds = response.data.result.result;
+                hBonds.push(...splitHBonds)
+            }
+
+            const models = this.parentMolecule.gemmiStructure.models
+            const model = models.get(0);
+
+            hBonds.forEach(hb => {
+                [hb.acceptor,hb.donor].forEach(hbEnd => {
+                    const seqId_acc:gemmi.SeqId = new window.cootModule.SeqId(""+hbEnd.res_no)
+                    const addr_acc:gemmi.AtomAddress = new window.cootModule.AtomAddress(hbEnd.chain,seqId_acc,hbEnd.residue_name,hbEnd.name,0)
+                    const cra_acc:gemmi.const_CRA = model.find_cra_const(addr_acc,false)
+                    const thisResidue = cra_acc.residue
+                    const thisResidueAtoms = thisResidue.atoms
+                    const thisResidueAtomsSize = thisResidueAtoms.size()
+                    let haveO = false
+                    let haveN = false
+                    let haveC = false
+                    for(let iat=0;iat<thisResidueAtomsSize;iat++){
+                        const thisAt = thisResidueAtoms.get(iat)
+                        if(thisAt.name.trim()==="O") haveO = true
+                        if(thisAt.name.trim()==="C") haveC = true
+                        if(thisAt.name.trim()==="N") haveN = true
+                    }
+                    if(haveO&&haveN&&haveC){
+                        //Probable amino acid
+                        if(hbEnd.name.trim()==="O"||hbEnd.name.trim()==="N"||hbEnd.name.trim()==="S"){
+                            _cid += `${hbEnd.chain}/${hbEnd.res_no}/CA,N,C,O||`
+                        } else {
+                            _cid += `${hbEnd.chain}/${hbEnd.res_no}/!N,C,O,H||`
+                        }
+                    } else {
+                        //Anything else
+                        _cid += `${hbEnd.chain}/${hbEnd.res_no}||`
+                    }
+                    thisResidueAtoms.delete()
+                    cra_acc.delete()
+                    addr_acc.delete()
+                    seqId_acc.delete()
+                })
+            })
+            model.delete()
+            models.delete()
+            if(_cid.length>2) _cid = _cid.substring(0,_cid.length-2)
+            if(_cid.length===0) return []
+        }
+
+        if(this.restrictToNeighbours){
+            //Now we might not want to use the new method, maybe we should use the old one.
+            if((["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha" ].includes(_style))){
+                restrictedCid = window.cootModule.cidToNeighboursCid(this.parentMolecule.gemmiStructure,_cid,this.neighboursCid,this.neighboursDistance,this.excludeNeighbours)
+            } else {
+                if(restrictedCid.length>0) _cid = restrictedCid
+            }
+        }
+
         let objects;
         switch (_style) {
             case "VdwSpheres":
@@ -600,7 +707,10 @@ export class MoleculeRepresentation {
                 objects = await this.getCootGaussianSurfaceBuffers();
                 break;
             case "allHBonds":
-                objects = await this.getHBondBuffers(_cid);
+                if(this.restrictToNeighbours)
+                    objects = await this.getHBondBuffers(this.neighboursCid);
+                else
+                    objects = await this.getHBondBuffers(_cid);
                 break;
             case "rama":
                 objects = await this.getRamachandranBallBuffers();
@@ -616,7 +726,7 @@ export class MoleculeRepresentation {
             case "DishyBases":
             case "VdWSurface":
             case "Calpha":
-                objects = await this.getM2TRepresentationBuffers(_style, _cid);
+                objects = await this.getM2TRepresentationBuffers(_style, _cid, restrictedCid);
                 break;
             case "unitCell":
                 objects = this.getUnitCellRepresentationBuffers();
@@ -660,6 +770,18 @@ export class MoleculeRepresentation {
                 console.log(`Unrecognised style ${_style}...`);
                 break;
         }
+
+        if(this.restrictToNeighbours&&drawMissingLoops) {
+            await this.commandCentre.current.cootCommand(
+                {
+                    command: "set_draw_missing_residue_loops",
+                    returnType: "status",
+                    commandArgs: [true],
+                },
+                false
+            );
+        }
+
         return objects;
     }
 
@@ -939,7 +1061,7 @@ export class MoleculeRepresentation {
      * @param cidSelection - The CID selection of this representation
      * @returns {object} An object with the style name and CID selection to be passed as arguments to libcoot API
      */
-    getM2tArgs(style: string, cidSelection: string) {
+    getM2tArgs(style: string, cidSelection: string, restrictSelection?: string) {
         let m2tStyle: string;
         let m2tSelection: string;
 
@@ -993,6 +1115,12 @@ export class MoleculeRepresentation {
 
         if (this.parentMolecule.excludedSelections.length > 0) {
             m2tSelection = `{${m2tSelection} & !{${this.parentMolecule.excludedSelections.join(" | ")}}}`;
+        }
+
+        if(restrictSelection){
+            const re = new RegExp("\\|\\|","g")
+            const m2tRestrict = restrictSelection.replace(re," | ")
+            m2tSelection = `{${m2tSelection} & {${m2tRestrict}}}`;
         }
 
         return {
@@ -1106,8 +1234,8 @@ export class MoleculeRepresentation {
      * @param style
      * @param cidSelection
      */
-    async getM2TRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
-        const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection);
+    async getM2TRepresentationBuffers(style: string, cidSelection?: string, restrictSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
+        const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection, restrictSelection);
 
         await this.applyM2tParams();
 
@@ -1189,6 +1317,8 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
+        const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
+        console.log("getCootSelectionBondBuffers",drawMissingLoops)
         const bondArgs = this.getBondArgs(name);
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>;
         const returnType = name === "VdwSpheres" ? "instanced_mesh_perfect_spheres" : "instanced_mesh";
@@ -1307,7 +1437,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     getGemmiAtomPairsBuffers(
-        gemmiAtomPairs: [moorhen.AtomInfo, moorhen.AtomInfo][],
+        gemmiAtomPairs: [{ x: number; y: number; z: number; serial: number | string }, { x: number; y: number; z: number; serial: number | string }][],
         colour: number[],
         labelled: boolean = false
     ): libcootApi.InstancedMeshJS[] {
@@ -1349,53 +1479,40 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getHBondBuffers(cid: string, labelled: boolean = false) {
-        const response = await this.commandCentre.current.cootCommand(
-            {
-                returnType: "vector_hbond",
-                command: "get_h_bonds",
-                commandArgs: [this.parentMolecule.molNo, cid, false],
-            },
-            false
-        );
-        const hBonds = response.data.result.result;
+        const hBonds = []
+        const splitHBondedToCids = cid.split("||")
+        for(let isplit=0;isplit<splitHBondedToCids.length;isplit++){
+            const response = await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "vector_hbond",
+                    command: "get_h_bonds",
+                    commandArgs: [this.parentMolecule.molNo, splitHBondedToCids[isplit], false],
+                },
+                false
+            );
+            const splitHBonds = response.data.result.result;
+            hBonds.push(...splitHBonds)
+        }
 
         const selectedGemmiAtomsPairs = hBonds.map(hbond => {
             const donor = hbond.donor;
             const acceptor = hbond.acceptor;
 
-            const donorAtomInfo = {
-                pos: [donor.x, donor.y, donor.z],
+            const donorAtomInfo: { x: number; y: number; z: number; serial: number | string } = {
                 x: donor.x,
                 y: donor.y,
                 z: donor.z,
-                charge: donor.charge,
-                element: donor.element, // ???
-                name: donor.name,
-                symbol: donor.element, // ???
-                b_iso: donor.b_iso,
                 serial: donor.serial,
-                label: `/${donor.modelId}/${donor.chainName}/${donor.resNum}(${donor.residueName})/${donor.name}${
-                    donor.altLoc === "" ? ":" + String.fromCharCode(donor.altLoc) : ""
-                }`,
             };
 
-            const acceptorAtomInfo = {
-                pos: [acceptor.x, acceptor.y, acceptor.z],
+            const acceptorAtomInfo: { x: number; y: number; z: number; serial: number | string } = {
                 x: acceptor.x,
                 y: acceptor.y,
                 z: acceptor.z,
-                charge: acceptor.charge,
-                element: acceptor.element, // ???
-                name: acceptor.name,
-                symbol: acceptor.element, // ???
-                b_iso: acceptor.b_iso,
                 serial: acceptor.serial,
-                label: `/${acceptor.modelId}/${acceptor.chainName}/${acceptor.resNum}(${acceptor.name})/${
-                    acceptor.name
-                }${acceptor.altLoc === "" ? ":" + String.fromCharCode(acceptor.altLoc) : ""}`,
             };
 
-            const pair = [donorAtomInfo, acceptorAtomInfo];
+            const pair: [{ x: number; y: number; z: number; serial: number | string },{ x: number; y: number; z: number; serial: number | string }] = [donorAtomInfo, acceptorAtomInfo];
             return pair;
         });
 

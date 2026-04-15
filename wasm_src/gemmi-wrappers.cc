@@ -602,6 +602,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     ;
 
     class_<gemmi::SeqId>("SeqId")
+    .constructor<const std::string&>()
     .property("num",&gemmi::SeqId::num)
     .property("icode",&gemmi::SeqId::icode)
     .function("has_icode",&gemmi::SeqId::has_icode)
@@ -944,6 +945,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .property("reported_distance",&gemmi::Connection::reported_distance)
     ;
     class_<gemmi::AtomAddress>("AtomAddress")
+    .constructor<const std::string&, const gemmi::SeqId&, const std::string&, const std::string&, char>()
     .property("chain_name",&gemmi::AtomAddress::chain_name)
     .property("res_id",&gemmi::AtomAddress::res_id)
     .property("atom_name",&gemmi::AtomAddress::atom_name)
