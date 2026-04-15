@@ -4,6 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -142,6 +143,10 @@ export class MoorhenInstance extends StoreExtension {
     //========================================
     // Files loading and saving methods
 
+    public setDefaultRepresentation() {
+        return null;
+    }
+
     public async loadFiles(
         files: File[] | File | FileList | string | string[] | URL | URL[]
     ): Promise<{ type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[]> {
@@ -186,6 +191,76 @@ export class MoorhenInstance extends StoreExtension {
         );
 
         return createdObjects;
+    }
+
+    //========================================
+    // General basics methods
+
+    /* Return the MoorhenMolecule Object corresponding to the given unique ID */
+    public getMolecule(uid: string): MoorhenMolecule {
+        const state = this.store.getState();
+        return state.molecules.moleculeList.filter(molecule => molecule.uniqueId === uid)[0];
+    }
+
+    /** Return the MoorhenMap Object corresponding to the given unique ID */
+    public getMap(uid: string): MoorhenMap {
+        const state = this.store.getState();
+        return state.maps.filter(map => map.uniqueId === uid)[0];
+    }
+
+    /* Center the view on the given x,y,z coordinates */
+    public centerOnCoordinate(x: number, y: number, z: number): void {
+        this.dispatch(setOrigin([x, y, z]));
+    }
+
+    /* Center the view on the given residue, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    public centerOnResidue(chain: string, residueNumber: number, moleculeUID?: string): void {
+        const state = this.store.getState();
+        let molecule: MoorhenMolecule;
+        if (!moleculeUID) {
+            molecule = state.molecules.moleculeList[0];
+        } else {
+            molecule = this.getMolecule(moleculeUID);
+        }
+        molecule.centreOn(`/*/${chain}/${residueNumber}/*:*`);
+    }
+
+    /* Center the view on the given atom, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    public centerOnAtom(chain: string, residueNumber: number, atomName: string, moleculeUID?: string): void {
+        const state = this.store.getState();
+        let molecule: MoorhenMolecule;
+        if (!moleculeUID) {
+            molecule = state.molecules.moleculeList[0];
+        } else {
+            molecule = this.getMolecule(moleculeUID);
+        }
+        molecule.centreOn(`/*/${chain}/${residueNumber}/${atomName}:*`);
+    }
+
+    //========================================
+    // methods with callbacks
+
+    /**
+     * Executes a callback when a new atom is hovered.
+     *
+     * The callback receives the hovered atom molecule unique id, residue number, and atom name.
+     * Returns a function to unsubscribe from the hovered atom changes.
+     * Example:
+     * instance.newAtomHoveredCallback((moleculeID, residueNumber, atomName) => {
+     *     console.log(`New hovered atom: ${atomName} in residue ${residueNumber} of molecule ${moleculeID}`);
+     * });
+     */
+    public newAtomHoveredCallback(callback: (moleculeID: string, residueNumber: string, atomName: string) => void): () => void {
+        const unsubscribe = this.subscribeToStore(
+            state => state.hoveringStates.hoveredAtom,
+            hoveredAtom => {
+                if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.atomInfo) {
+                    callback(hoveredAtom.molecule.uniqueId, hoveredAtom.atomInfo.res_no, hoveredAtom.atomInfo.name);
+                }
+            }
+        );
+
+        return unsubscribe;
     }
 
     //========================================
