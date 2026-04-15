@@ -566,7 +566,7 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
-add_executable(moorhen untar.c moorhen-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
@@ -575,7 +575,7 @@ target_link_directories(moorhen PUBLIC
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
@@ -661,8 +661,10 @@ target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecat
 
 if(${MEMORY64} MATCHES "1")
     set(MOORHEN_MODULE_SUFFIX "64")
+    set(GEMMI_MODULE_SUFFIX "64")
 else()
     set(MOORHEN_MODULE_SUFFIX "")
+    set(GEMMI_MODULE_SUFFIX "")
 endif()
 
 add_custom_target(create_tar ALL COMMAND
@@ -683,3 +685,26 @@ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../moorhen_tests)
 
 install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
+
+# Standalone gemmi WASM module — no pthreads, no coot, no SharedArrayBuffer required
+add_executable(gemmi-wasm gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc gemmi-types-wrappers.cc)
+target_compile_options(gemmi-wasm PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations)
+set_target_properties(gemmi-wasm PROPERTIES COMPILE_FLAGS "-Wno-deprecated-builtins -Wno-deprecated-declarations")
+target_include_directories(gemmi-wasm PRIVATE
+    ${CMAKE_INSTALL_PREFIX}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${DEPS_INCLUDE_DIRS}
+)
+
+
+target_link_libraries(gemmi-wasm gemmi_cpp z)
+if(${MEMORY64} MATCHES "1")
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'])
+set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)
+else()
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'] --emit-tsd gemmi.d.ts)
+set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi)
+endif()
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gemmi${GEMMI_MODULE_SUFFIX}.wasm ${CMAKE_CURRENT_BINARY_DIR}/gemmi${GEMMI_MODULE_SUFFIX}.js
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/wasm)
