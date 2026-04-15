@@ -1,7 +1,8 @@
-import React, { memo } from "react";
-import { SeqElement, Residue } from "./MoorhenSeqViewTypes";
-
-const defaultColour = "rgb(198, 205, 238)";
+import React, { memo, useRef } from "react";
+import { MoorhenStack, MoorhenTooltip } from "../interface-base";
+import { Residue, SeqElement } from "./MoorhenSeqViewTypes";
+import { ResidueBox } from "./ResidueBox";
+import { ValidationTracks } from "./ValidationTracks";
 
 export const SequenceRow = memo(
     (props: {
@@ -14,6 +15,8 @@ export const SequenceRow = memo(
         handleResidueMouseOver?: (evt: React.MouseEvent<HTMLDivElement>) => void;
         handleResidueMouseDown?: (evt: React.MouseEvent<HTMLDivElement>) => void;
         handleResidueMouseUp?: (evt: React.MouseEvent<HTMLDivElement>) => void;
+        showValidationData?: boolean;
+        validationTracks?: string[];
     }) => {
         const {
             sequence,
@@ -25,76 +28,95 @@ export const SequenceRow = memo(
             handleResidueMouseOver,
             handleResidueMouseDown,
             handleResidueMouseUp,
+            showValidationData = true,
+            validationTracks = undefined,
         } = props;
+        const refList: React.RefObject<HTMLDivElement>[] = sequence.residues?.map(() => useRef<HTMLDivElement>(null)) ?? [];
 
-        const renderResidueBox = (sequence: SeqElement, residue: Residue, j: number) => {
-            if (!residue) {
-                return (
-                    <div
-                        key={sequence.molNo + sequence.chain + "empty" + j}
-                        className="moorhen__seqviewer__residue-box msv__empty"
-                        style={{ "--column-width": `${columnWidth}rem` } as React.CSSProperties}
-                    ></div>
-                );
-            } else {
-                const colour = residue.colour ? residue.colour : sequence.colour ? sequence.colour : defaultColour;
-                const colorAlternate = !sequence.blockAlternateColour
-                    ? j % 2 === 0
-                        ? "msv__even"
-                        : "msv__odd"
-                    : "msv__solid";
-                const className = `moorhen__seqviewer__residue-box ${colorAlternate} ${
-                    residue.selected ? "msv__selected" : ""
-                } ${hoveredResidue === residue.resNum ? "msv__hover" : ""} ${isGliding ? "glideSelect" : ""}`;
-                return (
-                    <div
-                        role="button"
-                        key={sequence.molNo + sequence.chain + residue.resNum}
-                        className={className}
-                        style={
-                            {
-                                "--overlay-color": colour,
-                                "--column-width": `${columnWidth}rem`,
-                                fontSize: `${fontSize}rem`,
-                            } as React.CSSProperties
-                        }
-                        data-molname={sequence.molName}
-                        data-molno={sequence.molNo}
-                        data-chain={sequence.chain}
-                        data-resnum={
-                            residue.resNum - (sequence.residuesDisplayOffset ? sequence.residuesDisplayOffset : 0)
-                        }
-                        data-rescode={residue.resCode}
-                        data-rescid={residue.resCID}
-                        onMouseOver={handleResidueMouseOver}
-                        onMouseDown={handleResidueMouseDown}
-                        onMouseUp={handleResidueMouseUp}
-                    >
-                        {!sequence.hideResCode ? (residue.resCode ? residue.resCode : " ") : " "}
-                    </div>
-                );
-            }
-        };
+        const validationTracksLabels = showValidationData
+            ? validationTracks?.map((value, index) => {
+                  return (
+                      <div
+                          className="moorhen__seqviewer__sticky-left-column"
+                          style={{
+                              minWidth: `${nameColumnWidth}rem`,
+                              maxWidth: `${nameColumnWidth}rem`,
+                              height: "1.5rem",
+                              top: `${1 + 1.5 * (index + 1)}rem`,
+                          }}
+                      >
+                          <MoorhenTooltip tooltip={`${value}`}>
+                              <div
+                                  style={{
+                                      display: "flex",
+                                      width: "100%",
+                                      textAlign: "left",
+                                      fontSize: "0.75rem",
+                                      fontStyle: "italic",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      lineHeight: "1",
+                                  }}
+                              >
+                                  {value}
+                              </div>
+                          </MoorhenTooltip>
+                      </div>
+                  );
+              })
+            : null;
+
+        const residueColumns =
+            sequence.residues?.map((residue, j) => (
+                <div
+                    key={sequence.molNo + sequence.chain + (sequence.key ?? "") + `column${j}`}
+                    ref={refList[j]}
+                    style={{ display: "flex", flexDirection: "column" }}
+                >
+                    <ResidueBox
+                        sequence={sequence}
+                        residue={residue}
+                        index={j}
+                        columnWidth={columnWidth}
+                        fontSize={fontSize}
+                        hoveredResidue={hoveredResidue}
+                        isGliding={isGliding}
+                        handleResidueMouseOver={handleResidueMouseOver}
+                        handleResidueMouseDown={handleResidueMouseDown}
+                        handleResidueMouseUp={handleResidueMouseUp}
+                        showValidationData={showValidationData}
+                        validationTracks={validationTracks}
+                    />
+                    {showValidationData && (
+                        <ValidationTracks
+                            sequence={sequence}
+                            residue={residue}
+                            columnWidth={columnWidth}
+                            handleResidueMouseUp={handleResidueMouseUp}
+                            validationTracks={validationTracks}
+                            popoverRef={refList[j]}
+                        />
+                    )}
+                </div>
+            )) ?? [];
 
         return (
-            <div style={{ display: "flex", flexDirection: "row" }} key={sequence.molName + sequence.chain + "_row"}>
+            <MoorhenStack direction="row">
                 <div
                     className="moorhen__seqviewer__sticky-left-column"
                     style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}
                 >
                     {sequence.displayName ? sequence.displayName : `${sequence.chain}`}
                 </div>
+                {validationTracksLabels}
                 <div
                     className="moorhen__seqviewer__left-column-spacer"
                     style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}
-                ></div>
-                <div
-                    className="moorhen__seqviewer__residues-container"
-                    style={{ display: "flex", flexDirection: "row" }}
-                >
-                    {sequence.residues.map((residue, j) => renderResidueBox(sequence, residue, j))}
+                />
+                <div className="moorhen__seqviewer__residues-container" style={{ display: "flex", flexDirection: "row" }}>
+                    {residueColumns}
                 </div>
-            </div>
+            </MoorhenStack>
         );
     }
 );

@@ -3,7 +3,7 @@ import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
+import { RootState } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -107,7 +107,7 @@ export class MoorhenInstance {
         return this.aceDRGInstance;
     }
 
-    public getStore(): MoorhenReduxStoreType {
+    public getStore(): Store<RootState> {
         return this.store;
     }
 

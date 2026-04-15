@@ -167,6 +167,7 @@ export const MoorhenJsonValidation = () => {
         const new_order_keys = [];
         const new_sortable_keys = [];
         if (!validationJson.sections) return;
+        if (Object.keys(validationJson.sections).length===0) return;
         validationJson.sections.map((section, section_index) => {
             new_keys.push(true);
             new_order_keys.push(false);
@@ -283,6 +284,8 @@ export const MoorhenJsonValidation = () => {
             const sections = validationJson.sections;
             title = validationJson.title;
 
+            if (Object.keys(sections).length===0) return { title, cards };
+
             cards.push(
                 sections.map((section, section_index) => {
                     const isOpen = sectionOpen.keys[section_index];
@@ -333,6 +336,9 @@ export const MoorhenJsonValidation = () => {
                             //        and same for  additionalLabel += " ("+issue.badness+")"
                             if (sectionSortable.keys[section_index]) {
                                 additionalLabel += " (" + issue.badness + ")";
+                            }
+                            if(issue["display-metrics"]){
+                                additionalLabel += " " + issue["display-metrics"]
                             }
                             return (
                                 <Table key={index} style={{ margin: "0", padding: "0" }}>

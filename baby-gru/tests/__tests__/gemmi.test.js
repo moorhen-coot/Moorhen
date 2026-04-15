@@ -438,6 +438,275 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
     })
 
+    // === MTZ tests ===
+
+    test("read MTZ file", () => {
+        const mtz = cootModule.read_mtz_file('./5a3h_sigmaa.mtz')
+        expect(mtz.nreflections).toBe(26363)
+        expect(mtz.title).toBe('Output mtz file from refmac')
+        expect(mtz.spacegroup_name).toBe('P 21 21 21')
+        expect(mtz.spacegroup_number).toBe(19)
+        expect(mtz.resolution_high()).toBeCloseTo(1.82, 1)
+        expect(mtz.resolution_low()).toBeCloseTo(14.9, 0)
+        cleanUpVariables.push(mtz)
+    })
+
+    test("MTZ columns", () => {
+        const mtz = cootModule.read_mtz_file('./5a3h_sigmaa.mtz')
+        const columns = mtz.columns
+        expect(columns.size()).toBe(17)
+
+        const col_H = columns.get(0)
+        expect(col_H.label).toBe('H')
+
+        const col_FP = columns.get(4)
+        expect(col_FP.label).toBe('FP')
+        expect(col_FP.has_data()).toBeTruthy()
+        expect(col_FP.size()).toBe(26363)
+        expect(col_FP.stride()).toBe(17)
+
+        const col_FWT = columns.get(10)
+        expect(col_FWT.label).toBe('FWT')
+
+        cleanUpVariables.push(mtz)
+    })
+
+    test("MTZ datasets", () => {
+        const mtz = cootModule.read_mtz_file('./5a3h_sigmaa.mtz')
+        const datasets = mtz.datasets
+        expect(datasets.size()).toBe(2)
+
+        const ds0 = datasets.get(0)
+        expect(ds0.project_name).toBe('HKL_base')
+        expect(ds0.crystal_name).toBe('HKL_base')
+        expect(ds0.wavelength).toBe(0)
+
+        const ds1 = datasets.get(1)
+        expect(ds1.wavelength).toBeCloseTo(1.5418, 3)
+
+        cleanUpVariables.push(mtz)
+    })
+
+    test("MTZ cell", () => {
+        const mtz = cootModule.read_mtz_file('./5a3h_sigmaa.mtz')
+        const cell = mtz.cell
+        expect(cell.a).toBeCloseTo(54.71, 1)
+        expect(cell.b).toBeCloseTo(69.57, 1)
+        expect(cell.c).toBeCloseTo(77.04, 1)
+        expect(cell.alpha).toBeCloseTo(90, 0)
+        expect(cell.beta).toBeCloseTo(90, 0)
+        expect(cell.gamma).toBeCloseTo(90, 0)
+        cleanUpVariables.push(mtz)
+    })
+
+    // === Structure metadata tests ===
+
+    test("structure metadata - refinement", () => {
+        const st = cootModule.read_structure_file('./5a3h.mmcif', cootModule.CoorFormat.Mmcif)
+        const meta = st.meta
+        const refinement = meta.refinement
+        expect(refinement.size()).toBeGreaterThan(0)
+
+        const ref = refinement.get(0)
+        expect(ref.r_work).toBeCloseTo(0.144, 2)
+        expect(ref.r_free).toBeCloseTo(0.186, 2)
+        expect(ref.resolution_high).toBeCloseTo(1.82, 1)
+        expect(ref.resolution_low).toBeCloseTo(15, 0)
+        expect(ref.reflection_count).toBe(27131)
+
+        cleanUpVariables.push(st)
+    })
+
+    test("structure metadata - experiments", () => {
+        const st = cootModule.read_structure_file('./5a3h.mmcif', cootModule.CoorFormat.Mmcif)
+        const meta = st.meta
+        const experiments = meta.experiments
+        expect(experiments.size()).toBeGreaterThan(0)
+
+        const exp = experiments.get(0)
+        expect(exp.method).toBe('X-RAY DIFFRACTION')
+
+        cleanUpVariables.push(st)
+    })
+
+    test("structure metadata - software", () => {
+        const st = cootModule.read_structure_file('./5a3h.mmcif', cootModule.CoorFormat.Mmcif)
+        const meta = st.meta
+        const software = meta.software
+        expect(software.size()).toBeGreaterThan(0)
+
+        cleanUpVariables.push(st)
+    })
+
+    // === CIF document tests ===
+
+    test("CIF document parsing", () => {
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data', '5a3h.mmcif'), 'utf8')
+        const doc = cootModule.read_string(docData)
+        const blocks = doc.blocks
+        expect(blocks.size()).toBe(1)
+
+        const block = blocks.get(0)
+        expect(block.name).toBe('5A3H')
+        expect(block.has_tag('_cell.length_a')).toBeTruthy()
+        expect(block.has_tag('_nonexistent_tag')).toBeFalsy()
+
+        cleanUpVariables.push(doc)
+    })
+
+    test("CIF find_values", () => {
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data', '5a3h.mmcif'), 'utf8')
+        const doc = cootModule.read_string(docData)
+        const block = doc.blocks.get(0)
+
+        const cellA = block.find_values('_cell.length_a')
+        expect(cellA.length()).toBe(1)
+        expect(cellA.str(0)).toBe('54.710')
+
+        cleanUpVariables.push(doc)
+    })
+
+    test("CIF find table", () => {
+        const docData = fs.readFileSync(path.join(__dirname, '..', 'test_data', '5a3h.mmcif'), 'utf8')
+        const doc = cootModule.read_string(docData)
+        const block = doc.blocks.get(0)
+
+        const tags = new cootModule.VectorString()
+        tags.push_back('_atom_site.type_symbol')
+        tags.push_back('_atom_site.label_atom_id')
+        const table = block.find(tags)
+        expect(table.ok()).toBeTruthy()
+        expect(table.length()).toBe(2765)
+        expect(table.width()).toBe(2)
+
+        cleanUpVariables.push(tags, doc)
+    })
+
+    // === ResidueInfo tests ===
+
+    test("ResidueInfo for amino acids", () => {
+        if (typeof cootModule.find_tabulated_residue !== 'function') {
+            console.warn("find_tabulated_residue not yet bound — skipping")
+            return
+        }
+        const ala = cootModule.find_tabulated_residue('ALA')
+        expect(ala.is_amino_acid()).toBeTruthy()
+        expect(ala.is_water()).toBeFalsy()
+        expect(ala.is_nucleic_acid()).toBeFalsy()
+        expect(ala.found()).toBeTruthy()
+        expect(ala.weight).toBeGreaterThan(70)
+        expect(ala.weight).toBeLessThan(100)
+    })
+
+    test("ResidueInfo for water", () => {
+        if (typeof cootModule.find_tabulated_residue !== 'function') return
+        const hoh = cootModule.find_tabulated_residue('HOH')
+        expect(hoh.is_water()).toBeTruthy()
+        expect(hoh.is_amino_acid()).toBeFalsy()
+        expect(hoh.found()).toBeTruthy()
+    })
+
+    test("ResidueInfo for nucleotides", () => {
+        if (typeof cootModule.find_tabulated_residue !== 'function') return
+        const da = cootModule.find_tabulated_residue('DA')
+        expect(da.is_nucleic_acid()).toBeTruthy()
+        expect(da.is_dna()).toBeTruthy()
+        expect(da.is_amino_acid()).toBeFalsy()
+    })
+
+    test("ResidueInfo for unknown residue", () => {
+        if (typeof cootModule.find_tabulated_residue !== 'function') return
+        const unk = cootModule.find_tabulated_residue('ZZZZZ')
+        expect(unk.found()).toBeFalsy()
+    })
+
+    // === SpaceGroup extended tests ===
+
+    test("spacegroup extended properties", () => {
+        const sg = cootModule.get_spacegroup_by_name('P212121')
+        expect(sg.number).toBe(19)
+        expect(sg.ccp4).toBe(19)
+        expect(sg.xhm()).toBe('P 21 21 21')
+        expect(sg.is_sohncke()).toBeTruthy()
+        expect(sg.is_enantiomorphic()).toBeFalsy()
+        expect(sg.is_centrosymmetric()).toBeFalsy()
+
+        const ops = sg.operations()
+        expect(ops.order()).toBe(4)
+
+        cleanUpVariables.push(sg)
+    })
+
+    test("spacegroup centrosymmetric", () => {
+        const sg = cootModule.get_spacegroup_by_name('P-1')
+        expect(sg.is_centrosymmetric()).toBeTruthy()
+        expect(sg.is_sohncke()).toBeFalsy()
+        cleanUpVariables.push(sg)
+    })
+
+    // === UnitCell tests ===
+
+    test("unit cell properties", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        const cell = st.cell
+        expect(cell.a).toBeCloseTo(54.71, 1)
+        expect(cell.is_crystal()).toBeTruthy()
+
+        const vol = cell.volume_per_image()
+        expect(vol).toBeGreaterThan(50000)
+
+        cleanUpVariables.push(st)
+    })
+
+    // === Element tests ===
+
+    test("element properties", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(0)
+        const residues = chain.residues
+        const residue = residues.get(0)
+        const atoms = residue.atoms
+        const atom = atoms.get(0)
+
+        const el = atom.element
+        expect(el.atomic_number()).toBe(7) // Nitrogen
+        expect(el.is_metal()).toBeFalsy()
+        expect(el.is_hydrogen()).toBeFalsy()
+        expect(el.weight()).toBeCloseTo(14.007, 2)
+        expect(el.covalent_r()).toBeGreaterThan(0.5)
+
+        cleanUpVariables.push(st, model, chains, chain, residues, residue, atoms, atom)
+    })
+
+    // === Metadata has_field wrapper tests ===
+
+    test("metadata_has_double_field", () => {
+        const st = cootModule.read_structure_file('./5a3h.mmcif', cootModule.CoorFormat.Mmcif)
+        const meta = st.meta
+        expect(cootModule.metadata_has_double_field(meta, 'r_work')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'r_free')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'resolution_high')).toBeTruthy()
+        expect(cootModule.metadata_has_double_field(meta, 'dpi_cruickshank_rfree')).toBeFalsy()
+        cleanUpVariables.push(st)
+    })
+
+    // === Selection filter wrapper tests ===
+
+    test("selection_get_residues", () => {
+        const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
+        const selection = new cootModule.Selection('//A/31-33/*')
+        const model = st.first_model()
+        const chains = model.chains
+        const chain = chains.get(0)
+
+        const residues = cootModule.selection_get_residues(selection, chain)
+        expect(residues.size()).toBe(3)
+
+        cleanUpVariables.push(st, model, chains, chain, residues)
+    })
+
     test("structure_is_ligand", () => {
         const st_1 = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
         cootModule.gemmi_setup_entities(st_1)
@@ -452,7 +721,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
     })
 })
 
-const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '3j2w.pdb', '3j2w_updated.cif', '8zuv_updated.cif', '6owe.cif']
+const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb', '3j2w.pdb', '3j2w_updated.cif', '8zuv_updated.cif', '6owe.cif', '1cxq.cif', '1cxq_phases.mtz']
 
 const setupFunctions = {
     removeTestDataFromFauxFS: () => {

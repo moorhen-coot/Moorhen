@@ -25,7 +25,6 @@ import {
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
-    readTextFile,
 } from "./utils";
 
 export type ResidueInfo = {
@@ -892,7 +891,7 @@ export class MoorhenMolecule {
      */
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
-            const coordData = await readTextFile(source);
+            const coordData = await source.text()
             let is_small = false;
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
                 is_small = window.CCP4Module.is_small_structure(coordData as string);
@@ -1427,7 +1426,13 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid?: string,
+        restrictToNeighbours?: boolean,
+        excludeNeighbours?: boolean,
+        hbondedToCid?: string,
+        hbondedTo?: boolean,
+        neighboursDistance?: number,
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1442,7 +1447,13 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid: string = "",
+        restrictToNeighbours: boolean = false,
+        excludeNeighbours: boolean = false,
+        hbondedToCid: string = "",
+        hbondedTo: boolean = false,
+        neighboursDistance: number = 6.0,
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1463,6 +1474,12 @@ export class MoorhenMolecule {
             representation.setM2tParams(m2tParams);
             representation.setResidueEnvOptions(residueEnvOptions);
             representation.setNonCustomOpacity(nonCustomOpacity);
+            representation.neighboursCid = neighboursCid;
+            representation.restrictToNeighbours = restrictToNeighbours;
+            representation.excludeNeighbours = excludeNeighbours;
+            representation.hbondedToCid = hbondedToCid;
+            representation.hbondedTo = hbondedTo;
+            representation.neighboursDistance = neighboursDistance;
         }
 
         representation.setParentMolecule(this);
@@ -1788,7 +1805,7 @@ export class MoorhenMolecule {
                             vec3.set(atomPos, x, y, z);
                             vec3.transformMat4(transPos, atomPos, theMatrix);
                             movedAtoms.push({
-                                mol_name: model.name,
+                                mol_name: String(model.name),
                                 chain_id: chain.name,
                                 res_no: residueSeqId.str(),
                                 res_name: residue.name,

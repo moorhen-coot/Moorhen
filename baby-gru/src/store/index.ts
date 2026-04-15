@@ -21,6 +21,7 @@ export {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShownBottomPanel,
 }  from "./globalUISlice";
 export {
     addMolecule,

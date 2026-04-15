@@ -1,6 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
+import { cidToSpec } from "../../utils/utils";
+import { Backdrop } from "@mui/material";
+import { Spinner } from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { addVector, removeVector } from "../../store/vectorsSlice";
 import type { MoorhenVector, VectorsArrowMode, VectorsCoordMode, VectorsDrawMode, VectorsLabelMode } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -12,43 +15,13 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopover";
 
-const MoorhenDeleteVectorMenuItem = (props: {
-    item: moorhen.Map | moorhen.Molecule;
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
+export const MoorhenVectors = () => {
 
-    const dispatch = useDispatch();
+    const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
 
-    const panelContent = (
-        <>
-            <div style={{ width: "10rem", margin: "0.5rem" }} className="mb-3">
-                <span style={{ fontWeight: "bold" }}>Are you sure?</span>
-            </div>
-        </>
-    );
-
-    return (
-        <MoorhenMenuItemPopover
-            textClassName="text-danger"
-            buttonVariant="danger"
-            buttonText="Delete"
-            popoverPlacement="left"
-            popoverContent={panelContent}
-            menuItemText={"Delete vector"}
-            setPopoverIsShown={props.setPopoverIsShown}
-        />
-    );
-};
-
-export const MoorhenVectorsModal = () => {
-    const resizeNodeRef = useRef<HTMLDivElement>(null);
-
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList);
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList.filter(x => !(x.uniqueId.includes("__TAG"))))
 
     const dispatch = useDispatch();
 
@@ -84,6 +57,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uuidv4(),
             vectorColour: { r: 0, g: 0, b: 0 },
             textColour: { r: 0, g: 0, b: 0 },
+            radius: 0.07
         };
         return aVector;
     };
@@ -130,6 +104,8 @@ export const MoorhenVectorsModal = () => {
                     if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = existingVector.drawMode;
                     if (arrowModeRef !== null && typeof arrowModeRef !== "function") arrowModeRef.current.value = existingVector.arrowMode;
                     if (labelModeRef !== null && typeof labelModeRef !== "function") labelModeRef.current.value = existingVector.labelMode;
+                    if (cidFromRef !== null && typeof cidFromRef !== "function") cidFromRef.current.value = existingVector.cidFrom;
+                    if (cidToRef !== null && typeof cidToRef !== "function") cidToRef.current.value = existingVector.cidTo;
                     setCoordsModeButtonState(existingVector.coordsMode);
                 } catch (e) {}
             }
@@ -184,7 +160,7 @@ export const MoorhenVectorsModal = () => {
     );
 
     const footer = (
-        <>
+        <MoorhenStack direction="line">
             {vectorSelectRef.current && selectedOption !== "new" && (
                 <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
                     Delete
@@ -193,7 +169,7 @@ export const MoorhenVectorsModal = () => {
             <MoorhenButton className="m-2" onClick={handleApply}>
                 Apply
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 
     const updateVector = ({
@@ -215,6 +191,7 @@ export const MoorhenVectorsModal = () => {
         uniqueId = undefined,
         vectorColour = undefined,
         textColour = undefined,
+        radius = undefined,
     }) => {
         const newVector: MoorhenVector = {
             coordsMode: coordsMode !== undefined ? coordsMode : theVector.coordsMode,
@@ -235,6 +212,7 @@ export const MoorhenVectorsModal = () => {
             uniqueId: uniqueId !== undefined ? uniqueId : theVector.uniqueId,
             vectorColour: vectorColour !== undefined ? vectorColour : theVector.vectorColour,
             textColour: textColour !== undefined ? textColour : theVector.textColour,
+            radius: radius !== undefined ? radius : theVector.radius,
         };
         setVector(newVector);
     };
@@ -290,15 +268,20 @@ export const MoorhenVectorsModal = () => {
                     <p>From atom</p>
                     <div />
                     <MoorhenMoleculeSelect label="Molecule" onSelect={sel => handleModelChange(sel, false)} />
+                    <MoorhenStack direction="horizontal">
+                    <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(0)}>
+                        Pick atom
+                    </MoorhenButton>
                     <MoorhenTextInput
                         style={{ height: "2rem" }}
                         ref={cidFromRef}
-                        label="Selection"
                         text={theVector.cidFrom}
+                        setText={t => updateVector({ cidFrom: t })}
                         onChange={evt => {
                             updateVector({ cidFrom: evt.target.value });
                         }}
                     />
+                    </MoorhenStack>
                 </MoorhenStack>
             )}
             {theVector.coordsMode === "atoms" && (
@@ -310,14 +293,19 @@ export const MoorhenVectorsModal = () => {
                         style={{ height: "3rem", margin: "0rem" }}
                         onSelect={sel => handleModelChange(sel, true)}
                     />
+                    <MoorhenStack direction="horizontal">
+                    <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(1)}>
+                        Pick atom
+                    </MoorhenButton>
                     <MoorhenTextInput
                         ref={cidToRef}
                         text={theVector.cidTo}
-                        label="Selection"
+                        setText={t => updateVector({ cidTo: t })}
                         onChange={evt => {
                             updateVector({ cidTo: evt.target.value });
                         }}
                     />
+                    </MoorhenStack>
                 </MoorhenStack>
             )}
             {theVector.coordsMode === "points" && (
@@ -470,9 +458,65 @@ export const MoorhenVectorsModal = () => {
                         }}
                     />
                 )}
+                <MoorhenNumberInput
+                   value={theVector.radius}
+                   type="number"
+                   label="Vector width:"
+                   onChange={evt => {
+                       try {
+                           const dum = Number(evt.target.value);
+                           updateVector({ radius: Number(evt.target.value) });
+                       } catch (e) {}
+                   }}
+                />
             </MoorhenStack>
         </>
     );
+
+    const setAtomPickerEventListener = async evt => {
+        const chosenAtom = cidToSpec(evt.detail.label);
+        if(awaitAtomClick===0){
+            updateVector({ cidFrom: chosenAtom.cid })
+            cidFromRef.current.value = chosenAtom.cid
+        } else if(awaitAtomClick===1){
+            updateVector({ cidTo: chosenAtom.cid })
+            cidToRef.current.value = chosenAtom.cid
+        }
+        setAwaitAtomClick(-1);
+    }
+
+    useEffect(() => {
+        if (awaitAtomClick !== -1) {
+            document.addEventListener("atomClicked", setAtomPickerEventListener, { once: true });
+        }
+
+        return () => {
+            if (awaitAtomClick !== -1) {
+                document.removeEventListener("atomClicked", setAtomPickerEventListener);
+            }
+        };
+    }, [awaitAtomClick]);
+
+    return (<>
+                {bodyContent}
+                {footer}
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                        <span>Click on an atom...</span>
+                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
+                            Cancel
+                        </MoorhenButton>
+                    </MoorhenStack>
+                </Backdrop>
+            </>)
+}
+
+export const MoorhenVectorsModal = () => {
+
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     return (
         <MoorhenDraggableModalBase
@@ -480,7 +524,7 @@ export const MoorhenVectorsModal = () => {
             left={width / 6}
             top={height / 3}
             minHeight={50}
-            minWidth={convertRemToPx(37)}
+            minWidth={convertRemToPx(25)}
             maxHeight={convertViewtoPx(70, height)}
             maxWidth={convertViewtoPx(90, width)}
             enforceMaxBodyDimensions={true}
@@ -488,8 +532,8 @@ export const MoorhenVectorsModal = () => {
             overflowX="auto"
             headerTitle="Vectors"
             resizeNodeRef={resizeNodeRef}
-            body={bodyContent}
-            footer={footer}
+            body={<MoorhenVectors/>}
+            footer={null}
         />
     );
 };

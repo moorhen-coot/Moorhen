@@ -1,19 +1,28 @@
 import { useDispatch, useSelector } from "react-redux";
-import React, { Activity, useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState, setEnableAtomHovering, setShownSidePanel } from "@/store";
 import { setSidePanelWidth } from "@/store/globalUISlice";
-import { PanelIDs, PanelsList } from "./SidePanelList";
+import { PanelsList, SidePanelIDs, MoorhenPanel } from "./SidePanelList";
 import { TabsToggle } from "./TabsToggle";
 import "./side-panels.css";
 
-export const MoorhenSidePanel = () => {
+interface MoorhenSidePanelProps {
+    extraSidePanels?: Record<string, MoorhenPanel>;
+}
+
+export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => {
+    const allPanels: Record<string, MoorhenPanel> = useMemo(
+        () => (extraSidePanels ? { ...PanelsList, ...extraSidePanels } : PanelsList),
+        [extraSidePanels]
+    );
     const height = useSelector((state: RootState) => state.sceneSettings.height);
     const [showHintLabel, setShowHintLabel] = useState<boolean>(null);
     const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
     const sidePanelIsOpen = shownPanel !== null;
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [activePanels, setActivePanels] = useState<PanelIDs[]>([]);
+    const [activePanels, setActivePanels] = useState<SidePanelIDs[]>([]);
     const enableAtomHovering = useSelector((state: RootState) => state.hoveringStates.enableAtomHovering);
     const cachedEnableAtomHovering = useRef(false);
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -23,6 +32,7 @@ export const MoorhenSidePanel = () => {
     const maxWidth = 900;
     const [width, setWidth, widthRef] = useStateWithRef(450);
     const [noAnimation, setNoAnimation] = useState(false);
+
     const dispatch = useDispatch();
 
     //Floating labels
@@ -40,7 +50,7 @@ export const MoorhenSidePanel = () => {
     };
 
     const handleRemoveActivePanel = useCallback(
-        (id: PanelIDs) => {
+        (id: SidePanelIDs) => {
             if (activePanels.length === 1) {
                 setShowHintLabel(false);
             }
@@ -54,10 +64,10 @@ export const MoorhenSidePanel = () => {
     );
 
     useEffect(() => {
-        if (shownPanel && !activePanels.includes(shownPanel)) {
-            setActivePanels(prev => [...prev, shownPanel]);
+        if (shownPanel) {
+            setActivePanels(prev => prev.includes(shownPanel) ? prev : [...prev, shownPanel]);
         }
-    }, [shownPanel, activePanels]);
+    }, [shownPanel]);
 
     //** Resizable logic */
     const handleResizeStart = (evt: React.MouseEvent<HTMLElement, MouseEvent>): void => {
@@ -115,8 +125,8 @@ export const MoorhenSidePanel = () => {
     const toggles: React.JSX.Element[] = activePanels.map(id => {
         return (
             <TabsToggle
-                icon={PanelsList[id].icon}
-                label={PanelsList[id].label}
+                icon={allPanels[id].icon}
+                label={allPanels[id].label}
                 id={id}
                 key={`${id}-tab-toggle`}
                 showHintLabel={showHintLabel}
@@ -127,9 +137,9 @@ export const MoorhenSidePanel = () => {
 
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
-            <Activity mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
-                {PanelsList[id].panelContent}
-            </Activity>
+            <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
+                {allPanels[id].panelContent}
+            </ActivityCompat>
         );
     });
 

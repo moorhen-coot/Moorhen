@@ -1,6 +1,6 @@
 # Moorhen
 [![NPM Version](https://badge.fury.io/js/moorhen.svg?style=flat)](https://npmjs.org/package/moorhen)
-[![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/moorhen-coot/Moorhen/actions/workflows/nightly-tests.yml)
+[![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/run-tests.yml/badge.svg)](https://github.com/moorhen-coot/Moorhen/actions/workflows/run-tests.yml)
 [![Inline docs](https://github.com/moorhen-coot/MoorhenOrgBuild/actions/workflows/build-and-deploy.yml/badge.svg)](https://moorhen.org)
 [![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/js-documentation.yml/badge.svg)](https://moorhen-coot.github.io/Moorhen/)
 [![Inline docs](https://github.com/moorhen-coot/wiki/actions/workflows/jekyll.yml/badge.svg)](https://moorhen-coot.github.io/wiki/)
@@ -19,17 +19,17 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* Coot 1.1.19
+* libcoot (commit hash specified in `VERSIONS`; latest release is 1.20) 
 * fftw 2.1.5
-* fftw3 3.3.5
-* gsl 2.7.1
+* fftw3 3.3.10
+* gsl 2.8
 * Boost 1.89.0
 * glm 0.9.9.8
 * Eigen 3.4.0
-* RDKit 2025\_09\_1
+* RDKit 2025\_09\_6
 * graphene 1.10.8
-* libsigc++ 3.6.0
-* Freetype 2.14.1
+* libsigc++ 3.8.0
+* Freetype 2.14.3
 * Jsoncpp 1.9.6
 
 Moorhen is available to use at [https://moorhen.org](https://moorhen.org).
@@ -59,7 +59,7 @@ Binaries are available on the releases page. Please read the instructions there 
 * emsdk/emscripten (Steps 1 and 2 below)
 \
 \
-Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
+Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++ pkg-config` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
 \
 \
 Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86\_64 or aarch64). Tested on Ubuntu 22.04 x86\_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
@@ -70,13 +70,13 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 4.0.15, the 17th September 2025 release.)
+(Moorhen is known to build successfully with emscripten version 5.0.3 - the 14th March 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
 
 3. Get the source:  
-`git clone --recurse-submodules https://github.com/moorhen-coot/Moorhen.git`  
+`git clone https://github.com/moorhen-coot/Moorhen.git`  
 `cd Moorhen`
 
 4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
@@ -84,7 +84,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 <br/>After first checkout you should run the following to build the 32-bit and 64-bit WebAssembly versions of Moorhen:  
 `./moorhen_build.sh`  
 `./moorhen_build.sh  --64bit`  
-This should build all dependencies and then `Moorhen`.
+This should build all dependencies and then build `Moorhen`.
 
 **It is important to build both versions at the moment.**
 
@@ -95,14 +95,19 @@ And then point a web browser at `http://localhost:5173/` .
 
 ## **Updating**
 
-When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+When you wish to update the application from this git repository, do the following steps:
 1. `git pull`
-2. `git submodule update -f --remote --merge`
-3. `cd checkout/coot-1.0`
-4. `git pull`
-5. `cd ../..`
-6. `./moorhen_build.sh moorhen`
-7. `./moorhen_build.sh --64bit moorhen`
+2. `./moorhen_build.sh moorhen`
+3. `./moorhen_build.sh --64bit moorhen`
+
+### **Updating Coot and Lhasa dependencies (for developers)**
+
+When you wish to update the `Coot` (and/or [`Lhasa`](https://github.com/moorhen-coot/LhasaReact)) git repository used for compiling Moorhen, do the following steps:
+1. `./update_git_rev coot`
+2. `./moorhen_build.sh moorhen`
+3. `./moorhen_build.sh --64bit moorhen`
+
+For updating `Lhasa`, substitute `coot` for `lhasa` in the first command: `./update_git_rev lhasa`.
 
 ![Moorhen](wasm_src_frontend/baby_gru.png)
 *The Moorhen application*

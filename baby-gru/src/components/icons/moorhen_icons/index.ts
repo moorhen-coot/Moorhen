@@ -32,6 +32,7 @@ import MatSymCollapse from "./MatSymCollapse.svg"
 import MatSymUndo from "./MatSymUndo.svg"
 import MatSymHelp from "./MatSymHelp.svg"
 import MatSymAdd from "./MatSymAdd.svg"
+import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
 import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
 import MatSymMenu from "./MatSymMenu.svg"
 import MatSymProgressActivity from "./MatSymProgressActivity.svg"
@@ -54,6 +55,8 @@ import MatSymRedo from "./MatSymRedo.svg"
 import MatSymRemove from "./MatSymRemove.svg"
 import MatSymDownload from "./MatSymDownload.svg"
 import menuLigands from "./menuLigands.svg"
+import menuVectors from "./menuVectors.svg"
+import menu2DObjects from "./menu2DObjects.svg"
 
 export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymTiltShiftFilter": MatSymTiltShiftFilter,
@@ -89,6 +92,7 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymUndo": MatSymUndo,
  "MatSymHelp": MatSymHelp,
  "MatSymAdd": MatSymAdd,
+ "MatSymAutoAwesome": MatSymAutoAwesome,
  "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
  "MatSymMenu": MatSymMenu,
  "MatSymProgressActivity": MatSymProgressActivity,
@@ -111,6 +115,8 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymRemove": MatSymRemove,
  "MatSymDownload": MatSymDownload,
  "menuLigands": menuLigands,
+ "menuVectors": menuVectors,
+ "menu2DObjects": menu2DObjects,
  }
 
 export type MoorhenSVG = "MatSymHistory" |
@@ -147,6 +153,7 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymUndo" |
  "MatSymHelp" |
  "MatSymAdd" |
+ "MatSymAutoAwesome" |
  "MatSymRadioButtonUnchecked" |
  "MatSymMenu" |
  "MatSymProgressActivity" |
@@ -168,4 +175,6 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymRedo" |
  "MatSymRemove" |
  "MatSymDownload" |
- "menuLigands"
+ "menuLigands" |
+ "menuVectors" |
+ "menu2DObjects"

@@ -4,9 +4,10 @@ import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRef
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { MoorhenReduxStoreType, RootState } from '../store/MoorhenReduxStore';
+import {  RootState } from '../store/MoorhenReduxStore';
+import { Store } from '@reduxjs/toolkit';
 
-export const appendOtherData = (jsondata: any, store: MoorhenReduxStoreType, skipRebuild?: boolean, name?: string) : any => {
+export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
         const theseTexturedShapes = [];
@@ -601,7 +602,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
     return newBuffers
 }
 
-export const buildBuffers = (displayBuffers:DisplayBuffer[], store: MoorhenReduxStoreType, gl_in: WebGLRenderingContext = null) : void => {
+export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>, gl_in: WebGLRenderingContext = null) : void => {
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth

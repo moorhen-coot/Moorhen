@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { Dispatch } from "react";
-import { AnyAction } from "@reduxjs/toolkit";
+import { AnyAction, Store } from "@reduxjs/toolkit";
 import { EnqueueSnackbar, closeSnackbar } from "notistack";
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
@@ -15,7 +15,7 @@ import { setAtomInfoIds } from "../store/atomInfoCardsSlice";
 import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
 import { cidToSpec, getCentreAtom } from "./utils"
-import { MoorhenReduxStoreType } from '../store/MoorhenReduxStore';
+import { RootState } from '@/store';
 
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
@@ -31,7 +31,7 @@ export const moorhenKeyPress = (
     collectedProps: {
         dispatch: Dispatch<AnyAction>;
         enqueueSnackbar: EnqueueSnackbar;
-        store: MoorhenReduxStoreType
+        store: Store<RootState>;
         hoveredAtom: moorhen.HoveredAtom;
         commandCentre: React.RefObject<moorhen.CommandCentre>;
         activeMap: moorhen.Map;

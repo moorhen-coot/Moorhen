@@ -5,7 +5,6 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { MoorhenReduxStoreType} from "../store/MoorhenReduxStore"
 import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
 import { parseAtomInfoLabel, guid, get_grid , gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
@@ -103,8 +102,9 @@ import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQ
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
-import { Dispatch } from '@reduxjs/toolkit';
+import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
+import { RootState } from '@/store/MoorhenReduxStore';
 
 function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -159,7 +159,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         props: webGL.MGWebGLPropsInterface;
 
         //Other stuff
-        store: MoorhenReduxStoreType
+        store: Store<RootState>;
         dispatch: Dispatch<any>;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
@@ -184,7 +184,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         background_colour: [number, number, number, number];
         origin: [number, number, number];
         drawEnvBOcc: boolean;
-        environmentAtoms: webGL.clickAtom[][];
+        environmentAtoms: {atom:webGL.clickAtom,label:string}[][];
         labelledAtoms: webGL.clickAtom[][];
         measuredAtoms: webGL.clickAtom[][];
         pixel_data: Uint8Array;
@@ -1823,9 +1823,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     this.environmentAtoms.push([]);
                 }
                 // The spacing + ")" adjusts the height/baseline so that they are same as click atom labels.
-                atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                const label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
+                //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + spacing + ")"
                 //atom.label = atom.tempFactor.toFixed(2) + " " + atom.occupancy.toFixed(2) + " " + atomLabel
-                this.environmentAtoms[this.environmentAtoms.length - 1].push(atom)
+                this.environmentAtoms[this.environmentAtoms.length - 1].push({atom:atom,label:label})
             })
             this.updateLabels()
         }
@@ -5697,7 +5698,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     "detail": {
                         atom: displayBuffers[minidx].atoms[minj],
                         buffer: displayBuffers[minidx],
-                        isResidueSelection: self.keysDown['residue_selection']
+                        isResidueSelection: self.keysDown['residue_selection'],
+                        label: atomLabel
                     }
                 });
                 document.dispatchEvent(atomClicked);
@@ -5837,7 +5839,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         self.environmentAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.atom.x,y:atom.atom.y,z:atom.atom.z})
             })
         })
 

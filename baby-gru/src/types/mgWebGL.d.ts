@@ -1,9 +1,9 @@
-import { Dispatch } from "@reduxjs/toolkit";
+import { Dispatch, Store } from "@reduxjs/toolkit";
 //import * as vec3 from 'gl-matrix/vec3';
 //import * as vec4 from 'gl-matrix/vec4';
 import { quat4 } from "gl-matrix";
 import React from "react";
-import { MoorhenReduxStoreType } from "../store/MoorhenReduxStore";
+import { RootState } from "@/store";
 //import * as mat4 from 'gl-matrix/mat4';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
@@ -353,7 +353,7 @@ export namespace webGL {
         width?: number;
         height?: number;
         setDrawQuat: (q: quat4) => void;
-        store: MoorhenReduxStoreType;
+        store: Store<RootState>;
         dispatch: Dispatch;
     }
 

@@ -29,6 +29,7 @@ export const modalKeys = Object.freeze({
     OVERLAYS2D : "overlays-2d",
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
+    CONKIT: "conkit",
 })
 
 export const representationLabelMapping = Object.freeze({
