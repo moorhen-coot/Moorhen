@@ -11,7 +11,7 @@ const initialState: {
     focusHierarchy: [],
 };
 
-export const modalsSlice = createSlice({
+const modalsSlice = createSlice({
     name: "modals",
     initialState: initialState,
     reducers: {

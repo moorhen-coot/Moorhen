@@ -25,7 +25,7 @@ const initialState: {
     paeFileContents: [],
 };
 
-export const sliceNDiceSlice = createSlice({
+const sliceNDiceSlice = createSlice({
     name: "sliceNDice",
     initialState: initialState,
     reducers: {

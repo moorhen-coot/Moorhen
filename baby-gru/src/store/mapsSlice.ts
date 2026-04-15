@@ -1,7 +1,7 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { MoorhenMap } from "../utils/MoorhenMap";
 
-export const mapsSlice = createSlice({
+const mapsSlice = createSlice({
     name: "maps",
     initialState: [] as MoorhenMap[],
     reducers: {
@@ -10,7 +10,7 @@ export const mapsSlice = createSlice({
             return state;
         },
         removeMap: (state, action: PayloadAction<MoorhenMap>) => {
-            return state.filter((item) => item.molNo !== action.payload.molNo);
+            return state.filter(item => item.molNo !== action.payload.molNo);
         },
         emptyMaps: () => {
             return [] as MoorhenMap[];

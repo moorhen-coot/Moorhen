@@ -1,4 +1,3 @@
-import { overlaysSlice } from "@/store/overlaysSlice";
 import "./moorhen-stack.css";
 
 type MoorhenStackType = {

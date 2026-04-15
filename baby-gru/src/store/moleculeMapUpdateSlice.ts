@@ -27,7 +27,7 @@ const initialState: {
     currentScoreDiffs: { rFactor: null, rFree: null, moorhenPoints: null },
 };
 
-export const moleculeMapUpdateSlice = createSlice({
+const moleculeMapUpdateSlice = createSlice({
     name: "moleculeMapUpdateSlice",
     initialState: initialState,
     reducers: {

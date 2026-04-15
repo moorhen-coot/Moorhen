@@ -32,7 +32,7 @@ const initialState: { vectorsList: MoorhenVector[] } = {
     vectorsList: [],
 };
 
-export const vectorsSlice = createSlice({
+const vectorsSlice = createSlice({
     name: "vectors",
     initialState: initialState,
     reducers: {

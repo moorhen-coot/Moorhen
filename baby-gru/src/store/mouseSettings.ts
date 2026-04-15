@@ -10,7 +10,7 @@ const initialState: {
     contourWheelSensitivityFactor: null,
 };
 
-export const defaultMouseSettingsSlice = createSlice({
+const defaultMouseSettingsSlice = createSlice({
     name: "mouseSettings",
     initialState: initialState,
     reducers: {

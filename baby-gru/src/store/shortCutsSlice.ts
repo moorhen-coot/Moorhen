@@ -10,7 +10,7 @@ const initialState: {
     shortCuts: null,
 };
 
-export const shortcutSettingsSlice = createSlice({
+const shortcutSettingsSlice = createSlice({
     name: "shortcutSettings",
     initialState: initialState,
     reducers: {
@@ -29,7 +29,6 @@ export const shortcutSettingsSlice = createSlice({
     },
 });
 
-export const { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } =
-    shortcutSettingsSlice.actions;
+export const { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } = shortcutSettingsSlice.actions;
 
 export default shortcutSettingsSlice.reducer;

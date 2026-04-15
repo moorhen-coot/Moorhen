@@ -67,7 +67,7 @@ const initialState: {
     elementsIndicesRestrict: false,
 };
 
-export const glRefSlice = createSlice({
+const glRefSlice = createSlice({
     name: "glRef",
     initialState: initialState,
     reducers: {

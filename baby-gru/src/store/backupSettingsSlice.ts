@@ -12,7 +12,7 @@ const initialState: {
     modificationCountBackupThreshold: null,
 };
 
-export const backupSettingsSlice = createSlice({
+const backupSettingsSlice = createSlice({
     name: "backupSettings",
     initialState: initialState,
     reducers: {

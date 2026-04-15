@@ -12,7 +12,7 @@ const initialState: {
     availableFonts: [],
 };
 
-export const labelSettingsSlice = createSlice({
+const labelSettingsSlice = createSlice({
     name: "labelSettings",
     initialState: initialState,
     reducers: {

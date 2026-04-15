@@ -14,7 +14,7 @@ const initialState: {
     refinementSelection: "TRIPLE",
 };
 
-export const refinementSettings = createSlice({
+const refinementSettings = createSlice({
     name: "refinementSettings",
     initialState: initialState,
     reducers: {

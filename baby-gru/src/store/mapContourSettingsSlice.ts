@@ -34,7 +34,7 @@ const initialState: {
     reContourMapOnlyOnMouseUp: null,
 };
 
-export const mapContourSettingsSlice = createSlice({
+const mapContourSettingsSlice = createSlice({
     name: "mapContourSettings",
     initialState: initialState,
     reducers: {

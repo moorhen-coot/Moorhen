@@ -18,7 +18,7 @@ const initialState: {
     cursorStyle: "default",
 };
 
-export const hoveringStatesSlice = createSlice({
+const hoveringStatesSlice = createSlice({
     name: "hoveringStates",
     initialState: initialState,
     reducers: {

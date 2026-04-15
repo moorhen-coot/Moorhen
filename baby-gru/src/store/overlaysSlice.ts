@@ -77,7 +77,7 @@ const initialState: {
     callBacks: [],
 };
 
-export const overlaysSlice = createSlice({
+const overlaysSlice = createSlice({
     name: "overlays",
     initialState: initialState,
     reducers: {

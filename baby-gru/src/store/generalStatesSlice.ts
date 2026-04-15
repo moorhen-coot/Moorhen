@@ -76,7 +76,7 @@ const initialState: {
     disableFileUpload: false,
 };
 
-export const generalStatesSlice = createSlice({
+const generalStatesSlice = createSlice({
     name: "generalStates",
     initialState: initialState,
     reducers: {

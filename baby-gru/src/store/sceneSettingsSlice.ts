@@ -86,7 +86,7 @@ const initialState: {
     specifyMultiViewRowsColumns: false,
 };
 
-export const sceneSettingsSlice = createSlice({
+const sceneSettingsSlice = createSlice({
     name: "sceneSettings",
     initialState: initialState,
     reducers: {
