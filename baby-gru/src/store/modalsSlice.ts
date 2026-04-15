@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { ModalComponentProps, ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
 
-type ModalCall = { key: ModalKey } & ModalComponentProps;
+export type ModalCall = { key: ModalKey } & ModalComponentProps;
 
 const initialState: {
     activeModals: ModalCall[];
@@ -18,6 +18,7 @@ export const modalsSlice = createSlice({
         resetActiveModals: () => {
             return initialState;
         },
+        // API
         showModal: (state, action: PayloadAction<ModalCall>) => {
             return {
                 ...state,
@@ -27,15 +28,18 @@ export const modalsSlice = createSlice({
                 ],
             };
         },
+        // API
         hideModal: (state, action: PayloadAction<ModalKey>) => {
             return { ...state, activeModals: [...state.activeModals.filter(item => item.key !== action.payload)] };
         },
+        // API
         focusOnModal: (state, action: PayloadAction<ModalKey>) => {
             return {
                 ...state,
                 focusHierarchy: [action.payload, ...state.focusHierarchy.filter(item => item !== action.payload)],
             };
         },
+        // API
         unFocusModal: (state, action: PayloadAction<string>) => {
             return { ...state, focusHierarchy: [...state.focusHierarchy.filter(item => item !== action.payload)] };
         },

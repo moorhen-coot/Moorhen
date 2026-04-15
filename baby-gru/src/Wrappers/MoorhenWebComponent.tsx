@@ -8,18 +8,30 @@ export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
     private _moorhenInstance: MoorhenInstance | null = null;
     private _ready: boolean = false;
+    private _root: ReturnType<typeof createRoot> | null = null;
 
     public onInit: (() => void) | null = null;
-    public setMoorhenDimensions: (() => [number, number]) | null = null;
-    private _root: ReturnType<typeof createRoot> | null = null;
 
     constructor() {
         super();
         this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
     }
 
-    get moorhenInstance(): MoorhenInstance | null {
-        return this._moorhenInstance;
+    public getMoorhenInstance(): Promise<MoorhenInstance> {
+        if (this._moorhenInstance) {
+            return Promise.resolve(this._moorhenInstance);
+        } else {
+            return new Promise(resolve => {
+                const checkReady = () => {
+                    if (this._ready && this._moorhenInstance) {
+                        resolve(this._moorhenInstance);
+                    } else {
+                        setTimeout(checkReady, 50);
+                    }
+                };
+                checkReady();
+            });
+        }
     }
 
     get ready(): boolean {
@@ -135,19 +147,6 @@ export class MoorhenWebComponent extends HTMLElement {
     public connectedCallback() {
         // shadow context
         const rootElement = document.createElement("div");
-
-        console.log("setDimension fct:", this.setMoorhenDimensions);
-        if (
-            this.setMoorhenDimensions === null &&
-            (this.getAttribute("width") || this.getAttribute("height") || this._width || this._height)
-        ) {
-            this.setMoorhenDimensions = () => {
-                const width = this.getAttribute("width") ?? this._width;
-                const height = this.getAttribute("height") ?? this._height;
-                return [width ? +width : 1, height ? +height : 1];
-            };
-        }
-
         this.appendChild(rootElement); // comment this out  and uncomment the following to use shadow DOM instead of light DOM
         // also set webComponentMode to true in MoorhenContainer props
 

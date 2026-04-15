@@ -45,6 +45,7 @@ const globalUISlice = createSlice({
         setTimeCapsuleBusy: (state, action: PayloadAction<boolean>) => {
             state.isTimeCapsuleBusy = action.payload;
         },
+        // API
         setShowBottomPanel: (state, action: PayloadAction<boolean>) => {
             state.bottomPanelIsShown = action.payload;
         },
@@ -54,12 +55,18 @@ const globalUISlice = createSlice({
         setSearchBarActive: (state, action: PayloadAction<boolean>) => {
             state.isSearchBarActive = action.payload;
         },
+        // API
+        /* Block or unblock shortcuts globally. This is used to prevent shortcut actions from being triggered when the user is typing in an input field, for example. */
         setShortCutsBlocked: (state, action: PayloadAction<boolean>) => {
             state.areShortcutsBlocked = action.payload;
         },
+        // API
+        /* Display the side panel corresponding to the provided ID, or hide the side panel if the payload is null. 
+        @value SidePanelIDs | null */
         setShownSidePanel: (state, action: PayloadAction<SidePanelIDs | null>) => {
             state.shownSidePanel = action.payload;
         },
+        // API
         setSidePanelWidth: (state, action: PayloadAction<number>) => {
             state.sidePanelWidth = action.payload;
         },
@@ -91,6 +98,7 @@ const globalUISlice = createSlice({
             state.selectionToolsActive = false;
             state.shownControl = null;
         },
+        // API
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },

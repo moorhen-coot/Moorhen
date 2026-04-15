@@ -74,6 +74,9 @@ export const glRefSlice = createSlice({
         setElementsIndicesRestrict: (state, action: { payload: boolean; type: string }) => {
             return { ...state, elementsIndicesRestrict: action.payload };
         },
+        // API sceneSettings
+        /* Set the origin of the scene to the provided coordinates.
+        @value [number, number, number] X, Y, Z coordinates */
         setOrigin: (state, action: { payload: [number, number, number]; type: string }) => {
             return { ...state, origin: action.payload };
         },
@@ -89,42 +92,54 @@ export const glRefSlice = createSlice({
         setDraggableMolecule: (state, action: { payload: moorhen.Molecule; type: string }) => {
             return { ...state, draggableMolecule: action.payload };
         },
+        // API sceneSettings
         setLightPosition: (state, action: { payload: [number, number, number, number]; type: string }) => {
             return { ...state, lightPosition: action.payload };
         },
+        // API sceneSettings
         setAmbient: (state, action: { payload: [number, number, number, number]; type: string }) => {
             return { ...state, ambient: action.payload };
         },
+        // API sceneSettings
         setSpecular: (state, action: { payload: [number, number, number, number]; type: string }) => {
             return { ...state, specular: action.payload };
         },
+        // API sceneSettings
         setDiffuse: (state, action: { payload: [number, number, number, number]; type: string }) => {
             return { ...state, diffuse: action.payload };
         },
+        // API sceneSettings
         setSpecularPower: (state, action: { payload: number; type: string }) => {
             return { ...state, specularPower: action.payload };
         },
+        // API sceneSettings
         setZoom: (state, action: { payload: number; type: string }) => {
             return { ...state, zoom: action.payload };
         },
         setQuat: (state, action: { payload: any[]; type: string }) => {
             return { ...state, quat: action.payload };
         },
+        // API sceneSettings
         setFogClipOffset: (state, action: { payload: number; type: string }) => {
             return { ...state, fogClipOffset: action.payload };
         },
+        // API sceneSettings
         setFogStart: (state, action: { payload: number; type: string }) => {
             return { ...state, fogStart: action.payload };
         },
+        // API sceneSettings
         setFogEnd: (state, action: { payload: number; type: string }) => {
             return { ...state, fogEnd: action.payload };
         },
+        // API sceneSettings
         setClipStart: (state, action: { payload: number; type: string }) => {
             return { ...state, clipStart: action.payload };
         },
+        // API sceneSettings
         setClipEnd: (state, action: { payload: number; type: string }) => {
             return { ...state, clipEnd: action.payload };
         },
+        // API sceneSettings
         setHoverSize: (state, action: { payload: number; type: string }) => {
             return { ...state, hoverSize: action.payload };
         },

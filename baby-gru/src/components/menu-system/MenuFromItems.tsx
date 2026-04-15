@@ -120,7 +120,7 @@ const PreferenceChecker = (props: {
 
 const SubMenuPopover = (props: { menu: string; label: string }) => {
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
     const items = menuSystem.getItems(props.menu);
     return (
         <MoorhenMenuItemPopover menuItemText={props.label}>

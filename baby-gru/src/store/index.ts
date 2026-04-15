@@ -97,21 +97,10 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export {
-    setContourWheelSensitivityFactor,
-    setZoomWheelSensitivityFactor,
-    setMouseSensitivity,
-    resetDefaultMouseSettings,
-}  from "./mouseSettings";
+export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
 export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
-export {
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-    resetBackupSettings,
-}  from "./backupSettingsSlice";
+export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
 export {
     setDefaultBackgroundColor,
     setDrawCrosshairs,
@@ -256,4 +245,4 @@ export {
 }  from "./glRefSlice";
 
 // Export store configuration and types
-export { reducers,  type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
+export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

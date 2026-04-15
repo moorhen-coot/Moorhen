@@ -31,10 +31,8 @@ export const moleculeMapUpdateSlice = createSlice({
     name: "moleculeMapUpdateSlice",
     initialState: initialState,
     reducers: {
-        setCurrentScores: (
-            state,
-            action: { payload: { rFactor: number; rFree: number; moorhenPoints: number }; type: string }
-        ) => {
+        // API
+        setCurrentScores: (state, action: { payload: { rFactor: number; rFree: number; moorhenPoints: number }; type: string }) => {
             return {
                 ...state,
                 currentScores: {
@@ -45,10 +43,7 @@ export const moleculeMapUpdateSlice = createSlice({
                         state.currentScores.rFactor === null
                             ? action.payload.rFactor
                             : action.payload.rFactor - state.currentScores.rFactor,
-                    rFree:
-                        state.currentScores.rFree === null
-                            ? action.payload.rFree
-                            : action.payload.rFree - state.currentScores.rFree,
+                    rFree: state.currentScores.rFree === null ? action.payload.rFree : action.payload.rFree - state.currentScores.rFree,
                     moorhenPoints:
                         state.currentScores.moorhenPoints === null
                             ? action.payload.moorhenPoints
@@ -56,9 +51,11 @@ export const moleculeMapUpdateSlice = createSlice({
                 },
             };
         },
+        // API
         resetMoleculeMapUpdates: () => {
             return initialState;
         },
+        // API
         triggerUpdate: (state, action: { payload: number; type: string }) => {
             return {
                 ...state,
@@ -68,25 +65,29 @@ export const moleculeMapUpdateSlice = createSlice({
                 },
             };
         },
+        // API
         setShowScoresToast: (state, action: { payload: boolean; type: string }) => {
             return { ...state, showScoresToast: action.payload };
         },
+
         addMapUpdatingScore: (state, action: { payload: string; type: string }) => {
             return { ...state, defaultUpdatingScores: [...state.defaultUpdatingScores, action.payload] };
         },
         removeMapUpdatingScore: (state, action: { payload: string; type: string }) => {
             return {
                 ...state,
-                defaultUpdatingScores: state.defaultUpdatingScores.filter((item) => item !== action.payload),
+                defaultUpdatingScores: state.defaultUpdatingScores.filter(item => item !== action.payload),
             };
         },
         overwriteMapUpdatingScores: (state, action: { payload: string[]; type: string }) => {
             return { ...state, defaultUpdatingScores: action.payload };
         },
-        enableUpdatingMaps: (state) => {
+        // API
+        enableUpdatingMaps: state => {
             return { ...state, updatingMapsIsEnabled: true };
         },
-        disableUpdatingMaps: (state) => {
+        // API
+        disableUpdatingMaps: state => {
             return {
                 ...state,
                 updatingMapsIsEnabled: false,
@@ -97,6 +98,7 @@ export const moleculeMapUpdateSlice = createSlice({
                 uniqueMaps: [],
             };
         },
+
         setReflectionMap: (state, action: { payload: moorhen.Map; type: string }) => {
             return {
                 ...state,
@@ -140,6 +142,7 @@ export const moleculeMapUpdateSlice = createSlice({
         setConnectedMolecule: (state, action: { payload: moorhen.Molecule; type: string }) => {
             return { ...state, connectedMolecule: action.payload.molNo };
         },
+        // API
         setConnectedMoleculeMolNo: (state, action: { payload: number; type: string }) => {
             return { ...state, connectedMolecule: action.payload };
         },

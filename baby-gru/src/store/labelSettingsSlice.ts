@@ -23,20 +23,23 @@ export const labelSettingsSlice = createSlice({
             return { ...state, availableFonts: [...state.availableFonts, action.payload] };
         },
         removeAvailableFont: (state, action: { payload: string; type: string }) => {
-            return { ...state, availableFonts: state.availableFonts.filter((item) => item !== action.payload) };
+            return { ...state, availableFonts: state.availableFonts.filter(item => item !== action.payload) };
         },
-        emptyAvailableFonts: (state) => {
+        emptyAvailableFonts: state => {
             return { ...state, availableFonts: [] };
         },
         addAvailableFontList: (state, action: { payload: string[]; type: string }) => {
             return { ...state, availableFonts: [...state.availableFonts, ...action.payload] };
         },
+        // API
         setAtomLabelDepthMode: (state, action: { payload: boolean; type: string }) => {
             return { ...state, atomLabelDepthMode: action.payload };
         },
+        // API
         setGLLabelsFontFamily: (state, action: { payload: string; type: string }) => {
             return { ...state, GLLabelsFontFamily: action.payload };
         },
+        // API
         setGLLabelsFontSize: (state, action: { payload: number; type: string }) => {
             return { ...state, GLLabelsFontSize: action.payload };
         },

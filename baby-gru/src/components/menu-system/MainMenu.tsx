@@ -18,7 +18,7 @@ export const MoorhenMainMenu = memo(() => {
     const GLViewportHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
 
     const menuVersion = useMenuHook();
 

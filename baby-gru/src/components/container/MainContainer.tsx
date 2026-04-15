@@ -264,7 +264,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 timeCapsuleMoleculeRef,
                 timeCapsuleMapRef,
                 store,
-                new MoorhenMenuSystem(),
                 props.commandCentre,
                 props.timeCapsuleRef,
 

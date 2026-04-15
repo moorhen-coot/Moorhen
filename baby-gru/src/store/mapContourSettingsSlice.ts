@@ -1,5 +1,6 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { moorhen } from '../types/moorhen';
+import { createSlice } from "@reduxjs/toolkit";
+import { MoorhenMap } from "@/utils/MoorhenMap";
+import { moorhen } from "../types/moorhen";
 
 const initialState: {
     visibleMaps: number[];
@@ -7,7 +8,7 @@ const initialState: {
     mapRadii: { molNo: number; radius: number }[];
     mapFastRadii: { molNo: number; radius: number | null }[];
     mapAlpha: { molNo: number; alpha: number }[];
-    mapStyles: { molNo: number; style: 'solid' | 'lit-lines' | 'lines' }[];
+    mapStyles: { molNo: number; style: "solid" | "lit-lines" | "lines" }[];
     defaultMapSamplingRate: number;
     defaultMapLitLines: boolean;
     mapLineWidth: number;
@@ -34,25 +35,31 @@ const initialState: {
 };
 
 export const mapContourSettingsSlice = createSlice({
-    name: 'mapContourSettings',
+    name: "mapContourSettings",
     initialState: initialState,
     reducers: {
         resetMapContourSettings: () => {
             return initialState;
         },
+        // API
+        /* If true the map will not be re-contoured when moving around, only on mouse up. 
+        helps performance on slower machines */
         setReContourMapOnlyOnMouseUp: (state, action: { payload: boolean; type: string }) => {
             state = { ...state, reContourMapOnlyOnMouseUp: action.payload };
             return state;
         },
-        showMap: (state, action: { payload: moorhen.Map; type: string }) => {
+        // API
+        showMap: (state, action: { payload: MoorhenMap; type: string }) => {
             if (!state.visibleMaps.includes(action.payload.molNo))
                 state = { ...state, visibleMaps: [...state.visibleMaps, action.payload.molNo] };
             return state;
         },
-        hideMap: (state, action: { payload: moorhen.Map; type: string }) => {
+        // API
+        hideMap: (state, action: { payload: MoorhenMap; type: string }) => {
             state = { ...state, visibleMaps: state.visibleMaps.filter(item => item !== action.payload.molNo) };
             return state;
         },
+        // API
         setContourLevel: (state, action: { payload: { molNo: number; contourLevel: number }; type: string }) => {
             state = {
                 ...state,
@@ -60,6 +67,7 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
+        // API
         setMapRadius: (state, action: { payload: { molNo: number; radius: number }; type: string }) => {
             state = {
                 ...state,
@@ -74,6 +82,7 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
+        // API
         setMapAlpha: (state, action: { payload: { molNo: number; alpha: number }; type: string }) => {
             state = {
                 ...state,
@@ -81,7 +90,8 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
-        setMapStyle: (state, action: { payload: { molNo: number; style: 'solid' | 'lit-lines' | 'lines' }; type: string }) => {
+        // API
+        setMapStyle: (state, action: { payload: { molNo: number; style: "solid" | "lit-lines" | "lines" }; type: string }) => {
             state = {
                 ...state,
                 mapStyles: [...state.mapStyles.filter(item => item.molNo !== action.payload.molNo), action.payload],
@@ -111,18 +121,23 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
+        // API
         setDefaultMapSamplingRate: (state, action: { payload: number; type: string }) => {
             return { ...state, defaultMapSamplingRate: action.payload };
         },
+        // API
         setDefaultMapLitLines: (state, action: { payload: boolean; type: string }) => {
             return { ...state, defaultMapLitLines: action.payload };
         },
+        // API
         setMapLineWidth: (state, action: { payload: number; type: string }) => {
             return { ...state, mapLineWidth: action.payload };
         },
+        // API
         setDefaultMapSurface: (state, action: { payload: boolean; type: string }) => {
             return { ...state, defaultMapSurface: action.payload };
         },
+        // API
         setMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,
@@ -130,6 +145,7 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
+        // API
         setNegativeMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,
@@ -137,6 +153,7 @@ export const mapContourSettingsSlice = createSlice({
             };
             return state;
         },
+        // API
         setPositiveMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
             state = {
                 ...state,

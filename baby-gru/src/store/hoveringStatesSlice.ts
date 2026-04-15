@@ -28,6 +28,7 @@ export const hoveringStatesSlice = createSlice({
         setHoveredAtom: (state, action: { payload: HoveredAtom; type: string }) => {
             return { ...state, hoveredAtom: action.payload };
         },
+        // API
         setEnableAtomHovering: (state, action: { payload: boolean; type: string }) => {
             return { ...state, enableAtomHovering: action.payload };
         },

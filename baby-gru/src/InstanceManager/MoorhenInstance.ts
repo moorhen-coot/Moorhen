@@ -27,10 +27,11 @@ export class MoorhenInstance extends StoreExtension {
     private preferences: Preferences;
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    public cootCommand: CootCommandWrapper;
-    private menuSystem: MoorhenMenuSystem | null = null;
+    private _cootCommand: CootCommandWrapper;
+    private _menuSystem: MoorhenMenuSystem;
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
+    private readyCallbacks: Array<() => void | Promise<void>> = [];
 
     constructor(containerRef: React.RefObject<HTMLDivElement>) {
         super();
@@ -40,6 +41,7 @@ export class MoorhenInstance extends StoreExtension {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this._menuSystem = new MoorhenMenuSystem();
         this.containerRef = containerRef;
     }
 
@@ -51,10 +53,27 @@ export class MoorhenInstance extends StoreExtension {
         monomerLibraryPath: "",
     };
 
+    /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
+    public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
+        if (this.isReady()) {
+            return Promise.resolve(callback());
+        } else {
+            return new Promise(resolve => {
+                this.readyCallbacks.push(async () => {
+                    const result = await callback();
+                    resolve(result);
+                });
+            });
+        }
+    }
+
     public setCommandCentre(commandCentre: CommandCentre): void {
         this.commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
-        this.cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+        this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+    }
+    public get cootCommand(): CootCommandWrapper {
+        return this._cootCommand;
     }
 
     public getCommandCentre(): CommandCentre {
@@ -112,11 +131,8 @@ export class MoorhenInstance extends StoreExtension {
         return this.containerRef;
     }
 
-    public getMenuSystem() {
-        if (!this.menuSystem) {
-            console.error("Moorhen menu system need to be initialized before it can be used. by running start instance");
-        }
-        return this.menuSystem;
+    get menuSystem(): MoorhenMenuSystem {
+        return this._menuSystem;
     }
 
     public isReady(): boolean {
@@ -156,15 +172,17 @@ export class MoorhenInstance extends StoreExtension {
             }
         }
 
-        const createdObjects = await autoOpenFiles(
-            filesArray,
-            this.commandCentreRef,
-            this.store,
-            this.paths.monomerLibraryPath,
-            backgroundColor,
-            defaultBondSmoothness,
-            this.timeCapsuleRef,
-            this.dispatch
+        const createdObjects = await this.execWhenReady(() =>
+            autoOpenFiles(
+                filesArray,
+                this.commandCentreRef,
+                this.store,
+                this.paths.monomerLibraryPath,
+                backgroundColor,
+                defaultBondSmoothness,
+                this.timeCapsuleRef,
+                this.dispatch
+            )
         );
 
         return createdObjects;
@@ -223,7 +241,6 @@ export class MoorhenInstance extends StoreExtension {
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         store: Store,
-        menuSystem: MoorhenMenuSystem,
         externalCommandCentreRef?: React.RefObject<CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>,
         timeCapsuleConfig?: {
@@ -236,7 +253,6 @@ export class MoorhenInstance extends StoreExtension {
         this.store = store;
         this.moleculesRef = moleculesRef;
         this.mapsRef = mapsRef;
-        this.menuSystem = menuSystem;
         // == Init Time capsule ==
         const activeMapRef = React.createRef<moorhen.Map>();
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
@@ -279,6 +295,8 @@ export class MoorhenInstance extends StoreExtension {
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
+        await Promise.all(this.readyCallbacks.map(callback => callback()));
+        this.readyCallbacks = [];
     }
 
     public cleanup(): void {

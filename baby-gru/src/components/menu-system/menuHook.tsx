@@ -3,7 +3,7 @@ import { useMoorhenInstance } from "@/InstanceManager";
 
 export const useMenuHook = () => {
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
     const [menuVersion, setMenuVersion] = useState(0);
 
     useEffect(() => {
