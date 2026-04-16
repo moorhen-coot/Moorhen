@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import React, { memo, useMemo } from "react";
+import React, { memo } from "react";
 import { MoorhenShortcutConfigModal } from "@/components/modal/MoorhenShortcutConfigModal";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { Moorhen2DCanvasObjectsModal } from "../../modal/Moorhen2DCanvasObjectsModal";
