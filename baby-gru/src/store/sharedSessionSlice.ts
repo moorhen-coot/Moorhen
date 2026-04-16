@@ -10,7 +10,7 @@ const initialState: {
     showSharedSessionManager: false,
 };
 
-export const sharedSessionSlice = createSlice({
+const sharedSessionSlice = createSlice({
     name: "sharedSession",
     initialState: initialState,
     reducers: {
@@ -29,7 +29,6 @@ export const sharedSessionSlice = createSlice({
     },
 });
 
-export const { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession } =
-    sharedSessionSlice.actions;
+export const { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession } = sharedSessionSlice.actions;
 
 export default sharedSessionSlice.reducer;

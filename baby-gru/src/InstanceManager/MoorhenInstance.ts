@@ -11,6 +11,7 @@ import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
@@ -263,6 +264,32 @@ export class MoorhenInstance extends StoreExtension {
         return unsubscribe;
     }
 
+    // ================= Molecules changed callbacks =================
+
+    private _moleculeChangedCallbacks: { [callbackUID: string]: { applyTo: string; callback: (moleculeUID: string) => void } } = {};
+
+    public newMoleculeChangedCallback(callback: (moleculeUID: string) => void, moleculeUID?: string): () => void {
+        const callbackUID = guid();
+        this._moleculeChangedCallbacks[callbackUID] = { applyTo: moleculeUID ?? "any", callback: callback };
+
+        return () => {
+            delete this._moleculeChangedCallbacks[callbackUID];
+        };
+    }
+
+    public triggerMoleculeChanged(UIDorMolNo: string | number): void {
+        const state = this.store.getState();
+        const molecule =
+            typeof UIDorMolNo === "number" ? state.molecules.moleculeList.filter(mol => mol.molNo === UIDorMolNo)[0] : undefined;
+        const resolvedMoleculeUID = typeof UIDorMolNo === "string" ? UIDorMolNo : molecule?.uniqueId;
+
+        Object.values(this._moleculeChangedCallbacks).forEach(callbackInfo => {
+            if (callbackInfo.applyTo === "any" || callbackInfo.applyTo === resolvedMoleculeUID) {
+                callbackInfo.callback(resolvedMoleculeUID);
+            }
+        });
+    }
+
     //========================================
     // Methods to set attributes on the web component from the instance, which will trigger re-render of the react tree when they change
     set width(value: number | string | null) {
@@ -358,6 +385,9 @@ export class MoorhenInstance extends StoreExtension {
             },
             onCommandStart: () => {
                 this.dispatch(toggleCootCommandStart());
+            },
+            onMoleculeChanged: (cootMolNo: number) => {
+                this.triggerMoleculeChanged(cootMolNo);
             },
         });
         newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
