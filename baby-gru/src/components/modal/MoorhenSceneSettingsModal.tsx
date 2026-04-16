@@ -1,6 +1,7 @@
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
+import { RootState } from "@/store";
 import {
     setAmbient,
     setClipEnd,
@@ -38,6 +39,7 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
+import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -230,7 +232,7 @@ const BackgroundColorPanel = () => {
                     className="moorhen-hex-input"
                     color={rgbToHex(innerBackgroundColor.r, innerBackgroundColor.g, innerBackgroundColor.b)}
                     onChange={hex => {
-                        const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
+                        const [r, g, b, _a] = ColourRule.parseHexToRgba(hex);
                         handleColorChange({ r, g, b });
                     }}
                 />
@@ -362,10 +364,6 @@ const ClipFogPanel = () => {
 };
 
 const LightingPanel = () => {
-    const busyLighting = useRef<boolean>(false);
-    const newLightPosition = useRef<[number, number, number]>(null);
-    const isSetLightPosIsDirty = useRef<boolean>(false);
-
     const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition);
     const ambient = useSelector((state: moorhen.State) => state.glRef.ambient);
     const specular = useSelector((state: moorhen.State) => state.glRef.specular);
@@ -448,16 +446,24 @@ const LightingPanel = () => {
 
 export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
+    const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
+    const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
     return (
         <MoorhenStack direction={props.stackDirection}>
+            <MoorhenToggle
+                label="Use new fog/clip/blur sliders"
+                checked={newSlidersMode}
+                onChange={() => setNewSlidersMode(!newSlidersMode)}
+            />
             <MoorhenStack direction="vertical">
-                <ClipFogPanel />
+                {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" width={panelWidth - 50} />}
+                {!newSlidersMode && <ClipFogPanel />}
                 <BackgroundColorPanel />
                 <EdgeDetectPanel />
             </MoorhenStack>
             <MoorhenStack direction="vertical">
                 <LightingPanel />
-                {isWebGL2 && <DepthBlurPanel />}
+                {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
                 <OcclusionPanel />
             </MoorhenStack>
         </MoorhenStack>

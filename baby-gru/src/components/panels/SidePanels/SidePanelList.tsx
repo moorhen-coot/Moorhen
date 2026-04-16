@@ -1,6 +1,7 @@
 import React from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenSceneSettings } from "../../modal/MoorhenSceneSettingsModal";
+import { MoorhenSlidersSettings } from "../../modal/MoorhenSceneSlidersModal";
 import { MoorhenVectors } from "../../modal/MoorhenVectorsModal";
 import { Moorhen2DCanvasObjects } from "../../modal/Moorhen2DCanvasObjectsModal";
 import { MapsPanel } from "./MapsPanel";

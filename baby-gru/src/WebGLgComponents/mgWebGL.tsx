@@ -1052,7 +1052,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.activeMolecule = null;
         this.draggableMolecule = null;
         this.currentlyDraggedAtom = null;
-        this.fogClipOffset = 250;
+        this.fogClipOffset = 250.0;
         this.doPerspectiveProjection = false;
 
         this.shinyBack = true;
@@ -2624,6 +2624,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const offy = -this.atom_span+(this.fogClipOffset+this.gl_clipPlane0[3])
             this.gl.uniform4fv(program.clipPlane0, [0, 0, -1, offy]);
         }else{
+            //console.log(this.gl_clipPlane0[3],this.gl_clipPlane1[3])
             this.gl.uniform4fv(program.clipPlane0, this.gl_clipPlane0);
         }
         this.gl.uniform4fv(program.clipPlane1, this.gl_clipPlane1);
@@ -3336,9 +3337,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             d += excess;
 
             d /= 2.0
-            d = Math.max(d,60.)
+            d = Math.max(d,60.0)
 
-            mat4.ortho(this.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.);
+            mat4.ortho(this.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.0);
             mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
 
             this.gl.disable(this.gl.CULL_FACE);
@@ -3352,7 +3353,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     //FIXME - with  multiviews
                     mat4.perspective(this.pMatrix, 1.0, 1.0, 100, 1270.0);
                 } else {
-                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    const f = this.gl_clipPlane0[3];
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
                     if(this.currentViewport[2] > this.currentViewport[3]){
                         if(this.doMultiView||this.doThreeWayView||this.doSideBySideStereo||this.doCrossEyedStereo){
@@ -3371,7 +3372,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 100, 1270.0);
                 } else {
                     const b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
-                    const f = this.gl_clipPlane0[3]+this.fogClipOffset;
+                    const f = this.gl_clipPlane0[3];
                     mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
                 }
             }
@@ -4407,20 +4408,45 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        let f = -(this.gl_clipPlane0[3]+this.fogClipOffset);
+        let f = -(this.gl_clipPlane0[3]);
         let b = Math.min(this.gl_clipPlane1[3],this.gl_fog_end);
         if(this.doPerspectiveProjection){
             f = 100
             b = 270
         }
-        //console.log("In blur",f,b,this.blurDepth)
-        const absDepth = this.blurDepth * (1000 - -1000) - 1000;
-        let fracDepth = (absDepth-f)/(b - f);
-        fracDepth = this.blurDepth * 1000 / (b-f) - f/(b-f) - this.fogClipOffset/(b-f);
-        console.log(fracDepth);
-        //console.log(this.blurDepth,fracDepth,b-f,b+f,b,f);
-        if(fracDepth > 1.0) fracDepth = 1.0;
-        if(fracDepth < 0.0) fracDepth = 0.0;
+
+        const displayBuffers = this.store.getState().glRef.displayBuffers
+        let min_x =  1e5;
+        let max_x = -1e5;
+        let min_y =  1e5;
+        let max_y = -1e5;
+        let min_z =  1e5;
+        let max_z = -1e5;
+
+        displayBuffers.forEach(buffer => {
+            if (buffer.visible) {
+                buffer.atoms.forEach(atom => {
+                    if(atom.x>max_x) max_x = atom.x;
+                    if(atom.x<min_x) min_x = atom.x;
+                    if(atom.y>max_y) max_y = atom.y;
+                    if(atom.y<min_y) min_y = atom.y;
+                    if(atom.z>max_z) max_z = atom.z;
+                    if(atom.z<min_z) min_z = atom.z;
+                })
+            }
+        })
+        //console.log(min_x,min_y,min_z,max_x,max_y,max_z)
+        let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+        atom_span = Math.min(1000.0,atom_span);
+        this.atom_span = atom_span;
+
+        //console.log("In blur",f.toFixed(2),b.toFixed(2),this.blurDepth.toFixed(2))
+        const fPrime = f-this.fogClipOffset
+        const bPrime = b-this.fogClipOffset
+        //NB The 1.5 scaling is because it is 2 * 0.75 where 0.75 is scaling in the new widget.
+        const fPrimeFrac = fPrime/(1.5*atom_span)+0.5
+        const bPrimeFrac = bPrime/(1.5*atom_span)+0.5
+        const fracDepth = (this.blurDepth-fPrimeFrac)/(bPrimeFrac-fPrimeFrac)
 
         this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,fracDepth);
         this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);
