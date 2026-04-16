@@ -68,6 +68,12 @@ message Representation {
     CootBondOptions bondOptions = 5;
     M2tParameters m2tParams = 6;
     residueEnvironmentOptions resEnvOptions = 7;
+    bool restrictToNeighbours = 8;
+    string neighboursCid = 9;
+    bool excludeNeighbours = 10;
+    string hbondedToCid = 11;
+    bool hbondedTo = 12;
+    float neighboursDistance = 13;
 }
 
 message MoleculeSessionData {

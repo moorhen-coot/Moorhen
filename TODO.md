@@ -8,12 +8,12 @@ Planned features
 - [ ] Fix strange superposition behaviour noticed with lots of molecules in one-view-per-molecule
 - [ ] Fix multiview with shadows.
 - [ ] Fix multiview with transparency and edge detect/SSAO.
-- [ ] Picture wizards.
 - [ ] Story-boarded movies.
 
 ### For 1.0.0
 - [ ] Fix "Show controls".
 - [ ] Simplify File menu to have far fewer entries.
+- [x] Picture wizards.
 - [x] Fix SSAO.
 - [x] Improve edge detect.
 - [x] Vectors UI. Drawing code should already be there, mostly.

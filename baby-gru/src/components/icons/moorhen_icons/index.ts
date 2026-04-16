@@ -32,6 +32,7 @@ import MatSymCollapse from "./MatSymCollapse.svg"
 import MatSymUndo from "./MatSymUndo.svg"
 import MatSymHelp from "./MatSymHelp.svg"
 import MatSymAdd from "./MatSymAdd.svg"
+import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
 import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
 import MatSymMenu from "./MatSymMenu.svg"
 import MatSymProgressActivity from "./MatSymProgressActivity.svg"
@@ -91,6 +92,7 @@ export const moorhenSVGs = {"MatSymHistory": MatSymHistory,
  "MatSymUndo": MatSymUndo,
  "MatSymHelp": MatSymHelp,
  "MatSymAdd": MatSymAdd,
+ "MatSymAutoAwesome": MatSymAutoAwesome,
  "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
  "MatSymMenu": MatSymMenu,
  "MatSymProgressActivity": MatSymProgressActivity,
@@ -151,6 +153,7 @@ export type MoorhenSVG = "MatSymHistory" |
  "MatSymUndo" |
  "MatSymHelp" |
  "MatSymAdd" |
+ "MatSymAutoAwesome" |
  "MatSymRadioButtonUnchecked" |
  "MatSymMenu" |
  "MatSymProgressActivity" |
