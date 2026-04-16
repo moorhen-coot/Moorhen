@@ -96,6 +96,11 @@ module.exports = (env, argv) => {
                         to: paths.dist,
                         toType: "dir",
                     },
+                    {
+                        from: path.resolve(__dirname, ".npmignore"),
+                        to: paths.dist,
+                        toType: "dir",
+                    },
                 ],
             }),
         ],
