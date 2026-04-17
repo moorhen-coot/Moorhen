@@ -307,6 +307,8 @@ export const MoorhenDevMenu = () => {
         }
     };
 
+    const origin = useSelector((state: RootState) => state.glRef.origin);
+
     // const tomogramTest = () => {
     //     enqueueSnackbar("tomogram", {
     //         variant: "tomogram",
@@ -319,6 +321,7 @@ export const MoorhenDevMenu = () => {
     return (
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
+            Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
             <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal({ key: modalKeys.VECTORS }));
