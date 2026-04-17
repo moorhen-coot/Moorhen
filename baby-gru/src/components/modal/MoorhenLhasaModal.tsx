@@ -52,8 +52,9 @@ const LhasaWrapper = (props: {
         };
     }, [handleCootAttached]);
 
-    const smilesCallback = useCallback(
-        async (internalLhasaID: number, id: string, smiles: string) => {
+    const sendToHostProgramCallback = useCallback(
+        async (internalLhasaID: number, id: string, smiles: string, rdkitPickleBase64: string) => {
+            // TODO: Handle rdkitPickleBase64
             try {
                 props.setBusy(true);
                 const ligandName = id ?? "LIG";
@@ -131,7 +132,7 @@ const LhasaWrapper = (props: {
             icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
             data_path_prefix={`${props.urlPrefix}/`}
             name_of_host_program="Moorhen"
-            smiles_callback={smilesCallback}
+            send_to_host_program_callback={sendToHostProgramCallback}
             dark_mode={isDark}
             width={props.width}
             height={props.height}
