@@ -128,10 +128,22 @@ clearrdkit() {
     echo "Clear rdkit"
     rm -rf ${BUILD_DIR}/rdkit_build
     rm -rf ${INSTALL_DIR}/include/rdkit
-    rm -rf ${INSTALL_DIR}/include/maeparser
-    rm -rf ${INSTALL_DIR}/include/coordgen
     rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
     rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
+}
+
+clearmaeparser() {
+    echo "Clear maeparser"
+    rm -rf ${BUILD_DIR}/maeparser_build
+    rm -rf ${INSTALL_DIR}/include/maeparser
+    rm -rf ${INSTALL_DIR}/lib/libmaeparser.a
+}
+
+clearcoordgen() {
+    echo "Clear coordgen"
+    rm -rf ${BUILD_DIR}/coordgen_build
+    rm -rf ${INSTALL_DIR}/include/coordgen
+    rm -rf ${INSTALL_DIR}/lib/libcoordgen.a
 }
 
 cleareigen() {
@@ -258,6 +270,8 @@ clearall() {
     cleargsl
     clearigraph
     clearjsoncpp
+    clearmaeparser
+    clearcoordgen
     clearrdkit
     cleareigen
     clearccp4
@@ -298,6 +312,10 @@ else
            igraph) clearigraph
                ;;
            jsoncpp) clearjsoncpp
+               ;;
+           maeparser) clearmaeparser
+               ;;
+           coordgen) clearcoordgen
                ;;
            rdkit) clearrdkit
                ;;
@@ -365,6 +383,8 @@ fi
 
 BUILD_GSL=false
 BUILD_BOOST=false
+BUILD_MAEPARSER=false
+BUILD_COORDGEN=false
 BUILD_IGRAPH=false
 BUILD_GEMMI=false
 BUILD_JSONCPP=false
@@ -450,6 +470,18 @@ if test -d ${INSTALL_DIR}/lib/cmake/Boost-${boost_release}; then
     true
 else
     BUILD_BOOST=true
+fi
+
+if test -d ${INSTALL_DIR}/include/maeparser; then
+    true
+else
+    BUILD_MAEPARSER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/coordgen; then
+    true
+else
+    BUILD_COORDGEN=true
 fi
 
 if test -d ${INSTALL_DIR}/include/gemmi; then
@@ -543,6 +575,12 @@ for mod in $MODULES; do
        jsoncpp) echo "Force build jsoncpp"
        BUILD_JSONCPP=true
        ;;
+       maeparser) echo "Force build maeparser"
+       BUILD_MAEPARSER=true
+       ;;
+       coordgen) echo "Force build coordgen"
+       BUILD_COORDGEN=true
+       ;;
        rdkit) echo "Force build rdkit"
        BUILD_RDKIT=true
        ;;
@@ -593,6 +631,8 @@ done
 
 echo "BUILD_GSL        " $BUILD_GSL
 echo "BUILD_BOOST      " $BUILD_BOOST
+echo "BUILD_MAEPARSER  " $BUILD_MAEPARSER
+echo "BUILD_COORDGEN   " $BUILD_COORDGEN
 echo "BUILD_IGRAPH     " $BUILD_IGRAPH
 echo "BUILD_GEMMI      " $BUILD_GEMMI
 echo "BUILD_JSONCPP    " $BUILD_JSONCPP
@@ -673,10 +713,60 @@ if [ $BUILD_BOOST = true ]; then
     emmake make install || fail "Error installing boost, giving up."
 fi
 
+BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-static}; k=${j%-$boost_release}; l=${k#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${l}_DIR=$i; done`
+
+#maeparser
+if [ $BUILD_MAEPARSER = true ]; then
+    getmaeparser
+    mkdir -p ${BUILD_DIR}/maeparser_build
+    cd ${BUILD_DIR}/maeparser_build
+    emcmake cmake \
+        -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release \
+        -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include \
+        ${BOOST_CMAKE_STUFF} \
+        -DBoost_USE_STATIC_LIBS=ON \
+        -DBoost_USE_STATIC_RUNTIME=ON \
+        -DMAEPARSER_BUILD_TESTS=OFF \
+        -DMAEPARSER_BUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/maeparser-$maeparser_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing maeparser, giving up."
+fi
+
+#coordgen
+if [ $BUILD_COORDGEN = true ]; then
+    getcoordgen
+    mkdir -p ${BUILD_DIR}/coordgen_build
+    cd ${BUILD_DIR}/coordgen_build
+    emcmake cmake \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release \
+        -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include \
+        ${BOOST_CMAKE_STUFF} \
+        -DBoost_USE_STATIC_LIBS=ON \
+        -DBoost_USE_STATIC_RUNTIME=ON \
+        -DCOORDGEN_BUILD_SHARED_LIBS=OFF \
+        -DCOORDGEN_BUILD_TESTS=OFF \
+        -DCOORDGEN_BUILD_EXAMPLE=OFF \
+        -DCOORDGEN_USE_MAEPARSER=ON \
+        -DCOORDGEN_RIGOROUS_BUILD=OFF \
+        -Dmaeparser_INCLUDE_DIRS=${INSTALL_DIR}/include \
+        -Dmaeparser_LIBRARIES=${INSTALL_DIR}/lib \
+        -Dmaeparser_DIR=${INSTALL_DIR} \
+        -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/coordgenlibs-$coordgen_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing coordgen, giving up."
+fi
+
 #RDKit
 if [ $BUILD_RDKIT = true ]; then
     getrdkit
-    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
     emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=ON -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
