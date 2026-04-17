@@ -20,12 +20,13 @@ fi
 #This defines geteigen, getgsl, getclipper, etc.
 . ${MOORHEN_SOURCE_DIR}/get_sources_funs
 
-if [ x`uname -s` = x"Darwin" ]; then
-    NUMPROCS=`sysctl -n hw.ncpu`
-else
-    NUMPROCS=`nproc --all`
+if [ -z "$NUMPROCS" ]; then
+  if [ x`uname -s` = x"Darwin" ]; then
+      NUMPROCS=`sysctl -n hw.ncpu`
+  else
+      NUMPROCS=`nproc --all`
+  fi
 fi
-
 
 MEMORY64=0
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
