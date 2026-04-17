@@ -53,9 +53,7 @@ export const reducers = {
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)
-export type RootState = {
-    [K in keyof typeof reducers]: ReturnType<(typeof reducers)[K]>;
-};
+export type RootState = { [K in keyof typeof reducers]: ReturnType<(typeof reducers)[K]> };
 
 // Define store type explicitly for proper library exports
 export type MoorhenReduxStoreType = Store<RootState, AnyAction>;

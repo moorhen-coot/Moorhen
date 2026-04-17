@@ -1,9 +1,11 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { MoorhenMap } from "../utils/MoorhenMap";
 
+const initialState: MoorhenMap[] = [];
+
 const mapsSlice = createSlice({
     name: "maps",
-    initialState: [] as MoorhenMap[],
+    initialState,
     reducers: {
         addMap: (state, action: PayloadAction<MoorhenMap>) => {
             state.push(action.payload);
