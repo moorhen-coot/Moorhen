@@ -98,9 +98,9 @@ export class ScreenRecorder  {
         if (!link) {
             link = document.createElement('a');
             link.id = 'download_video_link';
-            link.download = `${this.videoName}.webm`;
             document.body.appendChild(link);
         }
+        link.download = `${this.videoName}.webm`;
         link.href = url;
         link.click();
     }
@@ -211,9 +211,9 @@ export class ScreenRecorder  {
             if (!link) {
                 link = document.createElement('a');
                 link.id = 'download_image_link';
-                link.download = filename;
                 document.body.appendChild(link);
             }
+            link.download = filename;
             link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
             link.click();
         })
