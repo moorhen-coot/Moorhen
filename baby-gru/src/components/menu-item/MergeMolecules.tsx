@@ -29,7 +29,7 @@ export const MergeMolecules = () => {
     }, [toRef.current, fromRef.current, molecules]);
 
     return (
-        <MoorhenStack direction="column" gap="0.5rem">
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={fromRef} />
             <MoorhenMoleculeSelect molecules={molecules} label="Into molecule" allowAny={false} ref={toRef} />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
