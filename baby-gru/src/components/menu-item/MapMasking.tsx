@@ -12,6 +12,7 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MapMasking = () => {
     const dispatch = useDispatch();
@@ -103,6 +104,7 @@ export const MapMasking = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenSelect
                 label="Create mask by..."
                 ref={maskTypeSelectRef}
@@ -147,6 +149,7 @@ export const MapMasking = () => {
             {!useDefaultMaskRadius && (
                 <MoorhenNumberInput ref={maskRadiusFormRef} value={2.5} label="Mask radius" allowNegativeValues={false} type="number" />
             )}
+            </MoorhenStack>
             <MoorhenToggle
                 ref={useDefaultMaskRadiusRef}
                 type="switch"
