@@ -4,6 +4,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 ("Add simple...");
 
@@ -48,6 +49,7 @@ export const AddSimple = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenSelect label={"Add..."} ref={molTypeSelectRef} defaultValue={"HOH"}>
                 {molTypes.map(type => {
                     return (
@@ -58,6 +60,7 @@ export const AddSimple = () => {
                 })}
             </MoorhenSelect>
             <MoorhenMoleculeSelect allowAny={false} ref={moleculeSelectRef} />
+            </MoorhenStack>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
