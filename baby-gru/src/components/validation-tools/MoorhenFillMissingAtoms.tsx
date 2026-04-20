@@ -100,11 +100,11 @@ export const MoorhenFillMissingAtoms = () => {
             let cards = residueList.map(residue => {
                 const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? "." + residue.insCode : ""}/`;
                 return (
-                    <MoorhenStack direction="row" align="center" justify="center">
-                        {label}
-
+                    <MoorhenStack direction="row" style={{ margin: "0.1rem" }}>
+                    <label style={{ display: "flex", alignItems: "center" }}>{label}</label>
+                    <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
                         <MoorhenButton
-                            style={{ marginRight: "0.5rem" }}
+                            style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
                             onClick={() =>
                                 selectedMolecule.centreAndAlignViewOn(`//${residue.chainId}/${residue.resNum}-${residue.resNum}/`, true)
                             }
@@ -112,13 +112,14 @@ export const MoorhenFillMissingAtoms = () => {
                             View
                         </MoorhenButton>
                         <MoorhenButton
-                            style={{ marginRight: "0.5rem" }}
+                            style={{ display: "flex", marginLeft: "0rem" }}
                             onClick={() => {
                                 handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode);
                             }}
                         >
                             Fill
                         </MoorhenButton>
+                    </MoorhenStack>
                     </MoorhenStack>
                 );
             });
