@@ -8,6 +8,7 @@ import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const RandomJiggleBlur = () => {
     const commandCentre = useCommandCentre();
@@ -88,6 +89,7 @@ export const RandomJiggleBlur = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} onChange={handleModelChange} />
             <MoorhenMapSelect ref={mapSelectRef} maps={maps} onChange={handleMapChange} />
             <MoorhenCidInputForm
@@ -97,6 +99,7 @@ export const RandomJiggleBlur = () => {
                 allowUseCurrentSelection={true}
                 placeholder={cidSelectRef.current ? "" : "Input custom selection e.g. //A,B"}
             />
+            </MoorhenStack>
             <MoorhenSlider
                 sliderTitle="B-Factor"
                 minVal={10}
