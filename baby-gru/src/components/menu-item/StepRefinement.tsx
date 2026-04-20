@@ -12,8 +12,7 @@ export const StepRefinement = () => {
     const [selectedChain, setSelectedChain] = useState<string>("*");
     const selectedMoleculeObj = molecules.find(molecule => molecule.molNo === selectedMolecule);
     const [startAt, setStartAt] = useState<number>(
-        selectedMoleculeObj.sequences.find(sequence => (selectedChain !== "*" ? sequence.chain === selectedChain : true))?.sequence[0]
-            .resNum ?? 1
+        selectedMoleculeObj?.sequences.find(sequence => (selectedChain !== "*" ? sequence.chain === selectedChain : true))?.sequence[0].resNum ?? 1
     );
 
     const onCompleted = () => {
@@ -34,17 +33,20 @@ export const StepRefinement = () => {
 
     return (
         <MoorhenStack inputGrid>
-            <MoorhenMoleculeSelect selected={selectedMolecule} onSelect={setSelectedMolecule} />
+            {selectedMolecule!==null && <MoorhenMoleculeSelect selected={selectedMolecule} onSelect={setSelectedMolecule} />}
+            {selectedMolecule===null && <MoorhenMoleculeSelect/>}
             <MoorhenChainSelect
                 molecules={molecules}
                 selectedCoordMolNo={selectedMolecule}
                 allowAll
                 defaultValue="*"
                 onChange={evt => {
-                    setSelectedChain(evt.target.value);
-                    setStartAt(
-                        selectedMoleculeObj.sequences.find(sequence => sequence.chain === evt.target.value)?.sequence[0].resNum ?? 1
-                    );
+                    if(selectedMolecule){
+                        setSelectedChain(evt.target.value);
+                        setStartAt(
+                            selectedMoleculeObj.sequences.find(sequence => sequence.chain === evt.target.value)?.sequence[0].resNum ?? 1
+                        );
+                    }
                 }}
             />
             <MoorhenNumberInput
