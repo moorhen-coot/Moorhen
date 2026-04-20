@@ -101,7 +101,7 @@ export const MoorhenFillMissingAtoms = () => {
                 const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? "." + residue.insCode : ""}/`;
                 return (
                     <MoorhenStack direction="row" style={{ margin: "0.1rem" }}>
-                    <label style={{ display: "flex", alignItems: "center" }}>{label}</label>
+                    <label style={{ height:"2.1rem", display: "flex", alignItems: "center" }}>{label}</label>
                     <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
                         <MoorhenButton
                             style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}

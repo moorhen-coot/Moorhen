@@ -30,7 +30,7 @@ export const MoorhenUnmodelledBlobs = () => {
         return blobs.map((blob, index) => {
             return (
                 <MoorhenStack gap={"1rem"} direction="row">
-                    <label style={{ display: "flex", alignItems: "center" }}>{`${blob.buttonLabel} ( size: ${blob.featureValue.toFixed(2)} )`}</label>
+                    <label style={{ height:"2.1rem", display: "flex", alignItems: "center" }}>{`${blob.buttonLabel} ( size: ${blob.featureValue.toFixed(2)} )`}</label>
                     <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
                     <MoorhenButton
                         style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
