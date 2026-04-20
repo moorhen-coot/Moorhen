@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { representationLabelMapping } from "../../utils/enums";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 const animationRepresentations = ["CBs", "CAs", "CRs", "gaussian", "MolecularSurface", "VdwSpheres"];
 
@@ -30,7 +31,7 @@ export const CalculateTrajectory = () => {
     }, [molecules, representationStyle, dispatch]);
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenSelect
                 ref={styleSelectRef}
                 label="Style"
@@ -47,6 +48,6 @@ export const CalculateTrajectory = () => {
             </MoorhenSelect>
             <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };
