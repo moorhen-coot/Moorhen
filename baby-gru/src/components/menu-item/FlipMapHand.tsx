@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const FlipMapHand = () => {
     const dispatch = useDispatch();
@@ -62,7 +63,9 @@ export const FlipMapHand = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
+            </MoorhenStack>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
