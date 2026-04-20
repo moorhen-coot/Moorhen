@@ -697,11 +697,8 @@ export const MoorhenMrParseModal = () => {
         >
             <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                 <MoorhenFileInput
-                    /* @ts-expect-error */
-                    directory=""
-                    webkitdirectory="true"
+                    dowebkitdirectory={true}
                     ref={filesRef}
-                    type="file"
                     multiple={true}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         loadMrParseFiles(
