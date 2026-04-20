@@ -4,6 +4,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const MergeMolecules = () => {
     const toRef = useRef<null | HTMLSelectElement>(null);
@@ -28,10 +29,10 @@ export const MergeMolecules = () => {
     }, [toRef.current, fromRef.current, molecules]);
 
     return (
-        <>
+        <MoorhenStack direction="column" gap="0.5rem">
             <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={fromRef} />
             <MoorhenMoleculeSelect molecules={molecules} label="Into molecule" allowAny={false} ref={toRef} />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };
