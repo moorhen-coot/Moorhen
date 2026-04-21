@@ -1,7 +1,5 @@
 import { SaveOutlined } from "@mui/icons-material";
 import { Step, StepButton, StepLabel, Stepper } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useState } from "react";
 import { useCommandAndCapsule, usePaths } from "../../InstanceManager";
@@ -22,8 +20,6 @@ export const MoorhenHistoryMenu = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const loadSession = async (sessionData: string) => {
@@ -39,11 +35,11 @@ export const MoorhenHistoryMenu = () => {
                 dispatch
             );
             if (status === -1) {
-                enqueueSnackbar("Failed to read backup (deprecated format)", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Failed to read backup (deprecated format)", variant: "warning" }));
             }
         } catch (err) {
             console.log(err);
-            enqueueSnackbar("Error loading session", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Error loading session", variant: "error" }));
         }
     };
     const getHistoryStep = useCallback(

@@ -1,4 +1,3 @@
-import { Tooltip } from "@mui/material";
 import { JSX, useRef } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
@@ -12,6 +11,7 @@ type MoorhenButtonPropsTypeBase = {
     onMouseDown?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     onMouseUp?: () => void;
     onMouseLeave?: () => void;
+    onMouseEnter?: () => void;
     disabled?: boolean;
     ref?: React.Ref<HTMLButtonElement>;
     style?: React.CSSProperties;
@@ -53,6 +53,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         onMouseDown,
         onMouseUp,
         onMouseLeave,
+        onMouseEnter,
         disabled = false,
         icon,
         ref,
@@ -64,7 +65,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         tooltipPlacement,
     } = props;
 
-    const tooltipRef = useRef<HTMLDivElement>(null);
+    const internalButtonRef = useRef<HTMLButtonElement>(null);
 
     let size = props.size ? props.size : "medium";
     if (size === "lg" || size === "large") {
@@ -92,6 +93,18 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     const iconSize = type === "toggle" ? "medium" : size;
     const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
 
+    const setButtonRef = (buttonElement: HTMLButtonElement | null) => {
+        internalButtonRef.current = buttonElement;
+        if (!ref) {
+            return;
+        }
+        if (typeof ref === "function") {
+            ref(buttonElement);
+        } else {
+            (ref as React.MutableRefObject<HTMLButtonElement | null>).current = buttonElement;
+        }
+    };
+
     const button = (
         <button
             id={props.id}
@@ -100,12 +113,13 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseLeave}
+            onMouseEnter={onMouseEnter}
             disabled={disabled}
-            ref={ref}
+            ref={setButtonRef}
             style={{ ...props.style }}
             value={props.value}
         >
-            <MoorhenStack ref={tooltipRef} direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
+            <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}
@@ -122,7 +136,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     );
 
     if (tooltip) {
-        return <MoorhenTooltip tooltip={tooltip} link={button} linkRef={tooltipRef} />;
+        return <MoorhenTooltip tooltip={tooltip} placement={tooltipPlacement} link={button} linkRef={internalButtonRef} />;
     } else {
         return button;
     }

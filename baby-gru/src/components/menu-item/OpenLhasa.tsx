@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice";
 import { showModal } from "../../store/modalsSlice";
@@ -24,8 +24,6 @@ export const OpenLhasa = () => {
     const tlcRef = useRef<HTMLInputElement | null>(null);
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const menuItemText = "Open ligand builder...";
 
@@ -58,7 +56,7 @@ export const OpenLhasa = () => {
                     })
                 );
             } else {
-                enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             }
         },
         [commandCentre]
@@ -111,10 +109,10 @@ export const OpenLhasa = () => {
                     }
                 }
             }
-            dispatch(showModal(modalKeys.LHASA));
+            dispatch(showModal({ key: modalKeys.LHASA }));
             document.body.click();
         } catch (err) {
-            enqueueSnackbar("Something went wrong...", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
             console.warn(err);
         }
     }, [molecules, fetchAndAddRdkitPickle]);

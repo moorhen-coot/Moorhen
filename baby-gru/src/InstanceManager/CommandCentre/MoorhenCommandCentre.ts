@@ -81,6 +81,7 @@ export class CommandCentre {
     onCommandStart: null | ((kwargs: any) => void);
     onCommandExit: null | ((kwargs: any) => void);
     onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
+    onMoleculeChanged: null | ((molNo: number) => void);
 
     constructor(urlPrefix: string, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: { [x: string]: any }) {
         this.activeMessages = [];
@@ -93,7 +94,7 @@ export class CommandCentre {
         this.onCommandStart = null;
         this.onCommandExit = null;
         this.onActiveMessagesChanged = null;
-
+        this.onMoleculeChanged = null;
         Object.keys(props).forEach(key => (this[key] = props[key]));
     }
 
@@ -151,6 +152,9 @@ export class CommandCentre {
         if (this.onCommandExit) {
             this.onCommandExit({ ...kwargs, doJournal });
         }
+        if (kwargs.changesMolecules && this.onMoleculeChanged) {
+            kwargs.changesMolecules.forEach(molNo => this.onMoleculeChanged(molNo));
+        }
         return result;
     }
 
@@ -166,6 +170,13 @@ export class CommandCentre {
         const result = await this.postMessage({ message, commandList });
         if (this.onCommandExit) {
             commandList.forEach(commandKwargs => this.onCommandExit(commandKwargs));
+        }
+        if (commandList.some(commandKwargs => commandKwargs.changesMolecules) && this.onMoleculeChanged) {
+            commandList.forEach(commandKwargs => {
+                if (commandKwargs.changesMolecules) {
+                    commandKwargs.changesMolecules.forEach(molNo => this.onMoleculeChanged(molNo));
+                }
+            });
         }
         return result;
     }

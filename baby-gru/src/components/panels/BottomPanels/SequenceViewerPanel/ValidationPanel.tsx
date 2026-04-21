@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
@@ -30,7 +29,7 @@ export const ValidationPanel = () => {
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
-    const { enqueueSnackbar } = useSnackbar();
+
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
@@ -153,9 +152,9 @@ export const ValidationPanel = () => {
 
     const residueSelectionCallback = useCallback(
         selection => {
-            handleResiduesSelection(selection, molecule, dispatch, enqueueSnackbar);
+            handleResiduesSelection(selection, molecule, dispatch);
         },
-        [molecule, dispatch, enqueueSnackbar]
+        [molecule, dispatch]
     );
 
     const handleHoverResidue = useCallback(

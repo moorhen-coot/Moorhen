@@ -1,24 +1,17 @@
-import { Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifferenceMapPeaks";
 
-export const MoorhenDiffMapPeaksModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+export const MoorhenDiffMapPeaksModal = (props: ModalComponentProps) => {
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
 
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.DIFF_MAP_PEAKS}
-            left={width / 6}
-            top={height / 3}
-            minHeight={convertViewtoPx(30, height)}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(90, height)}
-            maxWidth={convertViewtoPx(80, width)}
+            initialWidth={width / 3}
             enforceMaxBodyDimensions={false}
             overflowY="hidden"
             overflowX="auto"
@@ -26,9 +19,7 @@ export const MoorhenDiffMapPeaksModal = () => {
             footer={null}
             body={
                 <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" />
-                    </Row>
+                    <MoorhenDifferenceMapPeaks chartId="diff-map-peaks-chart" />
                 </div>
             }
         />

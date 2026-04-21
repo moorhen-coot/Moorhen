@@ -16,7 +16,7 @@ export const MoorhenSearchBar = () => {
     const [query, setQuery] = useState<string>("");
     const inputRef = useRef<HTMLInputElement>(null);
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
 
     // Set up Fuse.js options for label, keywords, description (priority order)
     const fuseOptions = {

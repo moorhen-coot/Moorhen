@@ -1,9 +1,9 @@
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
 import { addMapUpdatingScore, removeMapUpdatingScore, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const ScoresToastPreferences = () => {
     const dispatch = useDispatch();
@@ -20,41 +20,33 @@ export const ScoresToastPreferences = () => {
     );
 
     return (
-        <>
-            <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={showScoresToast}
-                    onChange={() => {
-                        dispatch(setShowScoresToast(!showScoresToast));
-                    }}
-                    label="Show scores window"
-                />
-            </InputGroup>
-            <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={defaultUpdatingScores.includes("Rfactor")}
-                    onChange={() => handleScoreChange("Rfactor")}
-                    label="Show Rfactor"
-                />
-            </InputGroup>
-            <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={defaultUpdatingScores.includes("Rfree")}
-                    onChange={() => handleScoreChange("Rfree")}
-                    label="Show Rfree"
-                />
-            </InputGroup>
-            <InputGroup style={{ padding: "0rem", width: "15rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={defaultUpdatingScores.includes("Moorhen Points")}
-                    onChange={() => handleScoreChange("Moorhen Points")}
-                    label="Show Moorhen points"
-                />
-            </InputGroup>
-        </>
+        <MoorhenStack gap={"0.25rem"}>
+            <MoorhenToggle
+                type="switch"
+                checked={showScoresToast}
+                onChange={() => {
+                    dispatch(setShowScoresToast(!showScoresToast));
+                }}
+                label="Show scores window"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={defaultUpdatingScores.includes("Rfactor")}
+                onChange={() => handleScoreChange("Rfactor")}
+                label="Show Rfactor"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={defaultUpdatingScores.includes("Rfree")}
+                onChange={() => handleScoreChange("Rfree")}
+                label="Show Rfree"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={defaultUpdatingScores.includes("Moorhen Points")}
+                onChange={() => handleScoreChange("Moorhen Points")}
+                label="Show Moorhen points"
+            />
+        </MoorhenStack>
     );
 };

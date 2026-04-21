@@ -21,6 +21,10 @@ export {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
     setShownBottomPanel,
 }  from "./globalUISlice";
 export {
@@ -55,7 +59,7 @@ export {
     resetMoleculeMapUpdates,
 }  from "./moleculeMapUpdateSlice";
 export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
-export { addVector, removeVector, emptyVectors }  from "./vectorsSlice";
+export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
     addImageOverlay,
     addTextOverlay,
@@ -71,17 +75,8 @@ export {
     removeFracPathOverlay,
 }  from "./overlaysSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates }  from "./hoveringStatesSlice";
-export {
-    attachModalToSideBar,
-    showModal,
-    hideModal,
-    detachModalFromSideBar,
-    focusOnModal,
-    unFocusModal,
-    resetActiveModals,
-    collapseSideBarModal,
-    expandSideBarModal,
-}  from "./modalsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     showMap,
     hideMap,
@@ -102,21 +97,10 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export {
-    setContourWheelSensitivityFactor,
-    setZoomWheelSensitivityFactor,
-    setMouseSensitivity,
-    resetDefaultMouseSettings,
-}  from "./mouseSettings";
+export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
 export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
-export {
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-    resetBackupSettings,
-}  from "./backupSettingsSlice";
+export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
 export {
     setDefaultBackgroundColor,
     setDrawCrosshairs,
@@ -227,7 +211,6 @@ export {
     setRefinementSelection,
     resetRefinementSettings,
 }  from "./refinementSettingsSlice";
-export { setAtomInfoIds }  from "./atomInfoCardsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export {
     setOrigin,
@@ -262,4 +245,4 @@ export {
 }  from "./glRefSlice";
 
 // Export store configuration and types
-export { reducers, _MoorhenReduxStore, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
+export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

@@ -1,34 +1,32 @@
-import { useSnackbar } from "notistack";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useDispatch } from "react-redux";
+import { setShownControl } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
+import { moorhen } from "../../types/moorhen";
+import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
 
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
         props.setOpacity(1);
         props.setOverrideMenuContents(false);
         props.setShowContextMenu(false);
-        enqueueSnackbar("rotamer-change", {
-            variant: "rotamerChange",
-            persist: true,
-            commandCentre: commandCentre,
-            moleculeMolNo: molecule.molNo,
-            chosenAtom: chosenAtom,
-        });
+
+        dispatch(
+            setShownControl({
+                name: "changeRotamer",
+                payload: {
+                    molNo: molecule.molNo,
+                    chosenAtom: chosenAtom,
+                },
+            })
+        );
     };
 
     return (
         <MoorhenContextButtonBase
-            icon={
-                <img
-                    alt="change rotamer"
-                    className="moorhen-context-button__icon"
-                    src={`${props.urlPrefix}/pixmaps/rotamers.svg`}
-                />
-            }
+            icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rotamers.svg`} />}
             toolTipLabel="Change rotamers"
             nonCootCommand={nonCootCommand}
             {...props}

@@ -1,17 +1,14 @@
 import { ApolloClient, ApolloProvider, InMemoryCache, useLazyQuery } from "@apollo/client";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
 import { Backdrop } from "@mui/material";
-import { Store } from "@reduxjs/toolkit";
-import { Button, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { gql } from "../../utils/__graphql__/gql";
 import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
+import { MoorhenSpinner } from "../icons";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -231,7 +228,7 @@ const MoorhenQuerySequence = () => {
             maxWidth={400}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
-                    <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                    <MoorhenSpinner colour="white" size={"3rem"} />
                     <span>Fetching...</span>
                 </Backdrop>
             }
@@ -264,7 +261,7 @@ const MoorhenQuerySequence = () => {
                         sliderTitle="E-Val cutoff"
                         decimalPlaces={1}
                         externalValue={eValCutoff}
-                        setExternalValue={value => setEValCutoff(value)}
+                        setExternalValue={setEValCutoff}
                     />
                     <MoorhenSlider
                         minVal={1}
@@ -273,7 +270,7 @@ const MoorhenQuerySequence = () => {
                         sliderTitle="Seq. Id. cutoff"
                         externalValue={seqIdCutoff}
                         decimalPlaces={0}
-                        setExternalValue={value => setSeqIdCutoff(value)}
+                        setExternalValue={setSeqIdCutoff}
                     />
                     <hr></hr>
                     {data ? (

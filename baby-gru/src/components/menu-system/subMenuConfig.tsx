@@ -1,12 +1,13 @@
 import { MenuItem } from "@mui/material";
-import { ActionCreatorWithOptionalPayload } from "@reduxjs/toolkit";
+import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
+import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
+import { setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
-import type { ModalKey } from "../../store/modalsSlice";
 import {
     setDoPerspectiveProjection,
     setDoSpin,
@@ -18,6 +19,7 @@ import {
     setDrawScaleBar,
 } from "../../store/sceneSettingsSlice";
 import { setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import * as MenuItems from "../menu-item";
 import { SidePanelIDs } from "../panels";
 
@@ -45,11 +47,17 @@ export type MenuItem = BaseMenuItem & {
 export type MenuItemShowModal = BaseMenuItem & {
     type: "showModal";
     modal: ModalKey;
+    args?: ModalComponentProps;
 };
 
 export type MenuItemShowSidePanel = BaseMenuItem & {
     type: "showPanel";
     panel: SidePanelIDs;
+};
+
+export type MenuItemDispatch = BaseMenuItem & {
+    type: "dispatch";
+    action: PayloadAction<any>;
 };
 
 export type MenuItemCustomJSX = BaseMenuItem & {
@@ -86,6 +94,7 @@ export type MenuItemType =
     | PreferenceSwitch
     | MenuItemSubMenu
     | MenuItemShowSidePanel
+    | MenuItemDispatch
     | Separator;
 
 export type SubMenu = {
@@ -143,10 +152,10 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.AssociateReflectionsToMap,
             },
             {
-                type: "customJSX",
+                type: "dispatch",
                 id: "screenshot-menu-item",
                 label: "Screenshot",
-                jsx: MenuItems.Screenshot,
+                action: setShownControl({ name: "screenshot" }),
             },
 
             // {
@@ -186,8 +195,8 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "record-video",
                 label: "Record a video",
-                type: "customJSX",
-                jsx: MenuItems.RecordVideo,
+                type: "dispatch",
+                action: setShownControl({ name: "videoRecorder" }),
             },
             {
                 id: "export",
@@ -361,6 +370,14 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["occupancy"],
                 description: "Set atom occupancy",
                 content: MenuItems.SetOccupancy,
+            },
+            {
+                id: "step-refinement",
+                label: "Step refinement...",
+                type: "popover",
+                keywords: ["step", "refinement"],
+                description: "Perform stepwise refinement",
+                content: MenuItems.StepRefinement,
             },
             {
                 id: "split-models",
@@ -769,8 +786,8 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "configure-shortcuts",
                 label: "Configure shortcuts...",
-                type: "customJSX",
-                jsx: MenuItems.ShowShortcutModal,
+                type: "showModal",
+                modal: "config-shortcuts",
             },
             {
                 id: "labels-font",

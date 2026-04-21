@@ -1,7 +1,8 @@
-import { useSnackbar } from "notistack";
-import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { UnknownAction } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback } from "react";
+import { Dispatch, useCallback } from "react";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { setShownControl } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { usePersistentState } from "../../store/menusSlice";
 import { hideModal } from "../../store/modalsSlice";
@@ -9,10 +10,45 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { cidToSpec, sleep } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
+export const flipPeptide = async (
+    selectedMolecule: moorhen.Molecule,
+    chainId: string,
+    seqNum: number,
+    insCode: string,
+    commandCentre: React.RefObject<CommandCentre>,
+    enableRefineAfterMod: boolean,
+    dispatch: Dispatch<UnknownAction>
+) => {
+    await commandCentre.current.cootCommand(
+        {
+            returnType: "status",
+            command: "flipPeptide_cid",
+            commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ""],
+            changesMolecules: [selectedMolecule.molNo],
+        },
+        true
+    );
+
+    if (enableRefineAfterMod) {
+        await commandCentre.current.cootCommand(
+            {
+                returnType: "status",
+                command: "refine_residues_using_atom_cid",
+                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, "TRIPLE", 4000],
+                changesMolecules: [selectedMolecule.molNo],
+            },
+            true
+        );
+    }
+
+    selectedMolecule.setAtomsDirty(true);
+    await selectedMolecule.redraw();
+    dispatch(triggerUpdate(selectedMolecule.molNo));
+};
 export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
@@ -22,41 +58,11 @@ export const MoorhenPepflipsDifferenceMap = () => {
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
-
-    const flipPeptide = async (selectedMolecule: moorhen.Molecule, chainId: string, seqNum: number, insCode: string) => {
-        await commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "flipPeptide_cid",
-                commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}/C`, ""],
-                changesMolecules: [selectedMolecule.molNo],
-            },
-            true
-        );
-
-        if (enableRefineAfterMod) {
-            await commandCentre.current.cootCommand(
-                {
-                    returnType: "status",
-                    command: "refine_residues_using_atom_cid",
-                    commandArgs: [selectedMolecule.molNo, `//${chainId}/${seqNum}`, "TRIPLE", 4000],
-                    changesMolecules: [selectedMolecule.molNo],
-                },
-                true
-            );
-        }
-
-        selectedMolecule.setAtomsDirty(true);
-        await selectedMolecule.redraw();
-        dispatch(triggerUpdate(selectedMolecule.molNo));
-    };
 
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            flipPeptide(...args);
+            flipPeptide(...args, commandCentre, enableRefineAfterMod, dispatch);
         }
     };
 
@@ -84,32 +90,15 @@ export const MoorhenPepflipsDifferenceMap = () => {
         async (selectedMolecule: moorhen.Molecule, residues: libcootApi.InterestingPlaceDataJS[]) => {
             dispatch(hideModal(modalKeys.PEPTIDE_FLIPS));
             if (selectedMolecule) {
-                const handleStepFlipPeptide = async (cid: string) => {
-                    const resSpec = cidToSpec(cid);
-                    await selectedMolecule.centreAndAlignViewOn(cid, false);
-                    await sleep(1000);
-                    await flipPeptide(selectedMolecule, resSpec.chain_id, resSpec.res_no, resSpec.ins_code);
-                };
-
                 const residueList = residues.map(residue => {
-                    return {
-                        cid: `//${residue.chainId}/${residue.resNum}/`,
-                    };
+                    return `//${residue.chainId}/${residue.resNum}/`;
                 });
-
-                enqueueSnackbar("flip-all-peptides", {
-                    variant: "residueSteps",
-                    persist: true,
-                    residueList: residueList,
-                    sleepTime: 1500,
-                    onStep: handleStepFlipPeptide,
-                    onStart: async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw("rama");
-                    },
-                    onStop: () => {
-                        selectedMolecule.clearBuffersOfStyle("rama");
-                    },
-                });
+                dispatch(
+                    setShownControl({
+                        name: "flipAllPeptides",
+                        payload: { residueList: residueList, selectedMolecule: selectedMolecule.molNo },
+                    })
+                );
             }
         },
         [molecules]
@@ -120,31 +109,26 @@ export const MoorhenPepflipsDifferenceMap = () => {
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             let cards = newPepflips.map((flip, index) => {
                 return (
-                    <Card key={index} style={{ marginTop: "0.5rem" }}>
-                        <Card.Body style={{ padding: "0.5rem" }}>
-                            <Row style={{ display: "flex", justifyContent: "between" }}>
-                                <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>{flip.buttonLabel}</Col>
-                                <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() =>
-                                            selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)
-                                        }
-                                    >
-                                        View
-                                    </MoorhenButton>
-                                    <MoorhenButton
-                                        style={{ marginRight: "0.5rem" }}
-                                        onClick={() => {
-                                            handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
-                                        }}
-                                    >
-                                        Flip
-                                    </MoorhenButton>
-                                </Col>
-                            </Row>
-                        </Card.Body>
-                    </Card>
+                    <MoorhenStack direction="row" style={{ margin: "0.0rem" }}>
+                        <label style={{ height:"2.1rem", margin:"0.1rem", display: "flex", alignItems: "center" }}>{flip.buttonLabel}</label>
+                        <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
+
+                        <MoorhenButton
+                            style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
+                            onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}
+                        >
+                            View
+                        </MoorhenButton>
+                        <MoorhenButton
+                            style={{ display: "flex", marginLeft: "0rem" }}
+                            onClick={() => {
+                                handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
+                            }}
+                        >
+                            Flip
+                        </MoorhenButton>
+                    </MoorhenStack>
+                    </MoorhenStack>
                 );
             });
             if (cards.length > 0) {
@@ -172,20 +156,16 @@ export const MoorhenPepflipsDifferenceMap = () => {
             extraControlFormValue={selectedRmsd}
             menuId="PEPTIDE_FLIPS"
             extraControlForm={
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <Form.Group controlId="rmsdSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                        <MoorhenSlider
-                            minVal={2.5}
-                            maxVal={7.0}
-                            logScale={false}
-                            sliderTitle="RMSD"
-                            stepButtons={0.5}
-                            decimalPlaces={1}
-                            externalValue={selectedRmsd}
-                            setExternalValue={value => setSelectedRmsd(value)}
-                        />
-                    </Form.Group>
-                </Col>
+                <MoorhenSlider
+                    minVal={2.5}
+                    maxVal={7.0}
+                    logScale={false}
+                    sliderTitle="RMSD"
+                    stepButtons={0.5}
+                    decimalPlaces={1}
+                    externalValue={selectedRmsd}
+                    setExternalValue={(value: number) => setSelectedRmsd(value)}
+                />
             }
         />
     );

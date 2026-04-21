@@ -14,7 +14,7 @@ export const GLFont = () => {
     const menuItemText = "Fonts...";
 
     return (
-        <MoorhenStack>
+        <MoorhenStack inputGrid>
             <MoorhenSelect
                 label="Graphics labels font"
                 value={GLLabelsFontFamily}

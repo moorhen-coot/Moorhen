@@ -1,5 +1,4 @@
 import { TextField } from "@mui/material";
-import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
@@ -38,21 +37,19 @@ export const SetMapWeight = (props: { map: moorhen.Map }) => {
 
     return (
         <>
-            <Form.Group>
-                <TextField
-                    style={{ margin: "0.5rem" }}
-                    id="conformer-count"
-                    label="Map weight"
-                    type="number"
-                    variant="standard"
-                    error={isNaN(parseInt(mapWeight)) || parseInt(mapWeight) < 0 || parseInt(mapWeight) === Infinity}
-                    value={mapWeight}
-                    onChange={evt => {
-                        mapWeightRef.current = evt.target.value;
-                        setMapWeight(evt.target.value);
-                    }}
-                />
-            </Form.Group>
+            <TextField
+                style={{ margin: "0.5rem" }}
+                id="conformer-count"
+                label="Map weight"
+                type="number"
+                variant="standard"
+                error={isNaN(parseInt(mapWeight)) || parseInt(mapWeight) < 0 || parseInt(mapWeight) === Infinity}
+                value={mapWeight}
+                onChange={evt => {
+                    mapWeightRef.current = evt.target.value;
+                    setMapWeight(evt.target.value);
+                }}
+            />
             <MoorhenButton variant="secondary" style={{ marginLeft: "0.1rem" }} onClick={estimateMapWeight}>
                 Estimate
             </MoorhenButton>

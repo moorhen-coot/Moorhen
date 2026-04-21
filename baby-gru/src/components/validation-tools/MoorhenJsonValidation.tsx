@@ -1,16 +1,15 @@
 import { CenterFocusWeakOutlined } from "@mui/icons-material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { Box, Button, Checkbox, Collapse, FormControlLabel, Grid, Icon, IconButton } from "@mui/material";
+import { Box, Button, Checkbox, Collapse, FormControlLabel, Grid, IconButton } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { useSnackbar } from "notistack";
-import { Container, Table } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { hsvToRgb, rgbToHsv } from "../../utils/utils";
+import { MoorhenIcon } from "../icons";
 import { MoorhenMoleculeSelect } from "../inputs";
 
 export const MoorhenJsonValidation = () => {
@@ -22,8 +21,6 @@ export const MoorhenJsonValidation = () => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference;
 
@@ -122,29 +119,13 @@ export const MoorhenJsonValidation = () => {
     const flip_side_svg = isDark ? `${urlPrefix}/pixmaps/side-chain-180-dark.svg` : `${urlPrefix}/pixmaps/side-chain-180.svg`;
     const auto_fit_svg = `${urlPrefix}/pixmaps/auto-fit-rotamer.svg`;
 
-    const refineRamaSvgIcon = (
-        <Icon>
-            <img alt="Refine" src={refine_rama_svg} style={{ verticalAlign: "top", height: "100%", width: "100%" }} />
-        </Icon>
-    );
+    const refineRamaSvgIcon = <MoorhenIcon alt="Refine" src={refine_rama_svg} size="medium" isActive />;
 
-    const refineSvgIcon = (
-        <Icon>
-            <img alt="Refine" src={refine_svg} style={{ verticalAlign: "top", height: "100%", width: "100%" }} />
-        </Icon>
-    );
+    const refineSvgIcon = <MoorhenIcon alt="Refine" src={refine_svg} size="medium" isActive />;
 
-    const flipSideSvgIcon = (
-        <Icon>
-            <img alt="Flip side chain" src={flip_side_svg} style={{ verticalAlign: "top", height: "100%", width: "100%" }} />
-        </Icon>
-    );
+    const flipSideSvgIcon = <MoorhenIcon alt="Flip side chain" src={flip_side_svg} size="medium" isActive />;
 
-    const autoFitRotamerSvgIcon = (
-        <Icon>
-            <img alt="Auto fit rotamer" src={auto_fit_svg} style={{ verticalAlign: "top", height: "100%", width: "100%" }} />
-        </Icon>
-    );
+    const autoFitRotamerSvgIcon = <MoorhenIcon alt="Auto fit rotamer" src={auto_fit_svg} size="medium" isActive />;
 
     const toggleSection = (e, key) => {
         e.stopPropagation();
@@ -167,7 +148,7 @@ export const MoorhenJsonValidation = () => {
         const new_order_keys = [];
         const new_sortable_keys = [];
         if (!validationJson.sections) return;
-        if (Object.keys(validationJson.sections).length===0) return;
+        if (Object.keys(validationJson.sections).length === 0) return;
         validationJson.sections.map((section, section_index) => {
             new_keys.push(true);
             new_order_keys.push(false);
@@ -284,7 +265,7 @@ export const MoorhenJsonValidation = () => {
             const sections = validationJson.sections;
             title = validationJson.title;
 
-            if (Object.keys(sections).length===0) return { title, cards };
+            if (Object.keys(sections).length === 0) return { title, cards };
 
             cards.push(
                 sections.map((section, section_index) => {
@@ -337,11 +318,11 @@ export const MoorhenJsonValidation = () => {
                             if (sectionSortable.keys[section_index]) {
                                 additionalLabel += " (" + issue.badness + ")";
                             }
-                            if(issue["display-metrics"]){
-                                additionalLabel += " " + issue["display-metrics"]
+                            if (issue["display-metrics"]) {
+                                additionalLabel += " " + issue["display-metrics"];
                             }
                             return (
-                                <Table key={index} style={{ margin: "0", padding: "0" }}>
+                                <table>
                                     <tbody>
                                         <tr>
                                             <td
@@ -448,12 +429,12 @@ export const MoorhenJsonValidation = () => {
                                             </td>
                                         </tr>
                                     </tbody>
-                                </Table>
+                                </table>
                             );
                         })
                     );
                     return (
-                        <Container key={section_index} style={{ width: "100%", padding: "1px" }}>
+                        <div>
                             <Grid
                                 onClick={e => toggleSection(e, section_index)}
                                 container
@@ -492,7 +473,7 @@ export const MoorhenJsonValidation = () => {
                             <Collapse in={isOpen}>
                                 <Box sx={{ margin: 1 }}>{innerCards}</Box>
                             </Collapse>
-                        </Container>
+                        </div>
                     );
                 })
             );
@@ -503,10 +484,10 @@ export const MoorhenJsonValidation = () => {
     const cards = fetchCardData();
 
     return (
-        <Container>
+        <div>
             <MoorhenMoleculeSelect allowAny={false} ref={intoMoleculeRef} />
             <h5 className="mb-3">{cards.title}</h5>
             {cards.cards}
-        </Container>
+        </div>
     );
 };

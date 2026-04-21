@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -10,6 +9,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MakeMaskedMapsSplitByChain = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -20,8 +20,6 @@ export const MakeMaskedMapsSplitByChain = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
     const store = useStore<RootState>();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const menuItemText = "Split map by chain...";
 
@@ -66,16 +64,18 @@ export const MakeMaskedMapsSplitByChain = () => {
                 })
             );
         } else {
-            enqueueSnackbar("Unable to create mask", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Unable to create mask", variant: "error" }));
         }
         return result;
     };
 
     return (
         <>
+        <MoorhenStack inputGrid>
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
-            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
+        </MoorhenStack>
+        <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

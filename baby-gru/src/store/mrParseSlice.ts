@@ -39,7 +39,7 @@ const initialState: {
     },
 };
 
-export const mrParseSlice = createSlice({
+const mrParseSlice = createSlice({
     name: "mrParse",
     initialState: initialState,
     reducers: {

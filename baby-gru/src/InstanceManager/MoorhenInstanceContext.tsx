@@ -1,5 +1,5 @@
 import React, { ReactNode, createContext, useEffect, useRef } from "react";
-import { MoorhenInstance } from "./MoorhenInstance";
+import { MoorhenInstance } from ".";
 
 // Create the context type
 interface MoorhenInstanceContextType {

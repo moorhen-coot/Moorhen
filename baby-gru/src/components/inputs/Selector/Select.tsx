@@ -13,6 +13,7 @@ export type MoorhenSelectProps = {
     setValue?:
         | ((val: string | number | readonly string[]) => void)
         | React.Dispatch<React.SetStateAction<string | number | readonly string[]>>;
+    style?: React.CSSProperties;
 };
 
 export const MoorhenSelect = (props: MoorhenSelectProps) => {
@@ -25,7 +26,7 @@ export const MoorhenSelect = (props: MoorhenSelectProps) => {
     };
 
     return (
-        <MoorhenStack direction={inline ? "line" : "column"} align="center" gap="0.5rem">
+        <MoorhenStack direction={inline ? "line" : "column"} align="center" gap="0.5rem" style={{ ...props.style }}>
             {label && (
                 <label htmlFor={`Selector-${id}`} className="moorhen__input__label">
                     {label}

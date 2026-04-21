@@ -15,7 +15,7 @@ import { createRef } from 'react'
 import userEvent from '@testing-library/user-event'
 import fetch from 'node-fetch'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
-import { MoorhenModalsContainer } from '../../src/components/container/ModalsContainer'
+import { MoorhenModalsContainer } from '../../src/components/interface-base/ModalBase/ModalsContainer'
 import { MockWebGL } from '../__mocks__/mockWebGL'
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
 import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'

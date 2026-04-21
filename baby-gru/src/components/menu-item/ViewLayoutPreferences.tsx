@@ -1,7 +1,6 @@
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arraySwap, rectSwappingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Col, Form, InputGroup, Row, Tab, Tabs } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
@@ -13,7 +12,8 @@ import {
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { get_grid } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
+import { MoorhenStack, MoorhenTab, MoorhenTabContainer } from "../interface-base";
 
 function SortableItem(props: { id: string; urlPrefix: string }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.id });
@@ -201,72 +201,62 @@ export const ViewLayoutPreferences = () => {
 
     return (
         <>
-            <Tabs defaultActiveKey="onepermol">
-                <Tab eventKey="onepermol" title="One view per molecule">
-                    <InputGroup className="moorhen-input-group-check">
-                        <Form.Check
+            <MoorhenTabContainer defaultActiveId="onepermol">
+                <MoorhenTab id="onepermol" label="One molecule per view">
+                    <MoorhenStack>
+                        <MoorhenToggle
                             type="radio"
                             name="multiviewoptions"
-                            defaultChecked={!specifyMultiViewRowsColumns}
+                            checked={!specifyMultiViewRowsColumns}
                             onChange={e => {
                                 handleChange(e, "auto");
                             }}
                             label="Automatic"
                         />
-                    </InputGroup>
-                    <InputGroup className="moorhen-input-group-check">
-                        <Form.Check
+                        <MoorhenToggle
                             type="radio"
                             name="multiviewoptions"
-                            defaultChecked={specifyMultiViewRowsColumns}
+                            checked={specifyMultiViewRowsColumns}
                             onChange={e => {
                                 handleChange(e, "specify");
                             }}
                             label="Specify"
                         />
-                    </InputGroup>
-                    <Form>
-                        <fieldset disabled={!specifyMultiViewRowsColumns}>
-                            <Form.Group as={Row} className="mb-3" controlId="MoorhenLayoutColsPref">
-                                <Col width="3">
-                                    <Form.Label>Columns</Form.Label>
-                                </Col>
-                                <Col width="12">
-                                    <Form.Control
-                                        min="1"
-                                        step="1"
-                                        type="number"
-                                        value={multiViewColumns}
-                                        onChange={e => dispatch(setMultiViewColumns(parseInt(e.target.value)))}
-                                    />
-                                </Col>
-                            </Form.Group>
-                            <Form.Group as={Row} className="mb-3" controlId="MoorhenLayoutRowsPref">
-                                <Col width="3">
-                                    <Form.Label>Rows</Form.Label>
-                                </Col>
-                                <Col width="12">
-                                    <Form.Control
-                                        min="1"
-                                        step="1"
-                                        type="number"
-                                        value={multiViewRows}
-                                        onChange={e => dispatch(setMultiViewRows(parseInt(e.target.value)))}
-                                    />
-                                </Col>
-                            </Form.Group>
-                        </fieldset>
-                        {molecules.length === 1 && <Form.Label>There is 1 molecule loaded</Form.Label>}
+                        <MoorhenStack inputGrid>
+                            <MoorhenNumberInput
+                                minMax={[1, 100]}
+                                label="Columns"
+                                type="number"
+                                decimalDigits={0}
+                                value={multiViewColumns}
+                                onChange={e => dispatch(setMultiViewColumns(parseInt(e.target.value)))}
+                                disabled={!specifyMultiViewRowsColumns}
+                            />
+                            <MoorhenNumberInput
+                                minMax={[1, 100]}
+                                decimalDigits={0}
+                                label="Rows"
+                                type="number"
+                                value={multiViewRows}
+                                onChange={e => dispatch(setMultiViewRows(parseInt(e.target.value)))}
+                                disabled={!specifyMultiViewRowsColumns}
+                            />
+                        </MoorhenStack>
+                        {molecules.length === 1 && <span>There is 1 molecule loaded</span>}
                         {molecules.length !== 1 && multiViewRows * multiViewColumns >= molecules.length && (
-                            <Form.Label>There are {molecules.length} molecules loaded</Form.Label>
+                            <span>
+                                <br /> There are {molecules.length} molecules loaded
+                            </span>
                         )}
                         {molecules.length !== 1 && multiViewRows * multiViewColumns < molecules.length && (
-                            <Form.Label>There are {molecules.length} molecules loaded (specified grid is too small)</Form.Label>
+                            <span>
+                                <br /> There are {molecules.length} molecules loaded (specified grid is too small)
+                            </span>
                         )}
-                    </Form>
-                    <canvas ref={canvasRef} />
-                </Tab>
-                <Tab eventKey="threeway" title="Three-way view">
+                        <canvas ref={canvasRef} />
+                    </MoorhenStack>
+                </MoorhenTab>
+                <MoorhenTab id="threeway" label="Three-way view">
                     <div>Drag the axes pictures around to rearrange the 3-way view</div>
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={items} strategy={rectSwappingStrategy}>
@@ -277,8 +267,8 @@ export const ViewLayoutPreferences = () => {
                             </Grid>
                         </SortableContext>
                     </DndContext>
-                </Tab>
-            </Tabs>
+                </MoorhenTab>
+            </MoorhenTabContainer>
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );

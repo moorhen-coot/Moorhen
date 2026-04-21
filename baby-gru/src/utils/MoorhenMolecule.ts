@@ -100,6 +100,7 @@ export class MoorhenMolecule {
     name: string;
     molNo: number | null;
     gemmiStructure: gemmi.Structure;
+    private _numberOfModels: number;
     gemmiDocument: gemmi.cifDocument;
     sequences: Sequence[];
     representations: moorhen.MoleculeRepresentation[];
@@ -891,7 +892,7 @@ export class MoorhenMolecule {
      */
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
-            const coordData = await source.text()
+            const coordData = await source.text();
             let is_small = false;
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
                 is_small = window.CCP4Module.is_small_structure(coordData as string);
@@ -1232,7 +1233,7 @@ export class MoorhenMolecule {
             await this.updateAtoms();
         }
 
-        const cid = "/*/*/*/*";
+        const cid = "/*/*/*/*:*";
         const representation = this.representations.find(item => item.style === style && item.cid === cid);
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
@@ -1432,7 +1433,7 @@ export class MoorhenMolecule {
         excludeNeighbours?: boolean,
         hbondedToCid?: string,
         hbondedTo?: boolean,
-        neighboursDistance?: number,
+        neighboursDistance?: number
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1453,7 +1454,7 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0,
+        neighboursDistance: number = 6.0
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -3052,5 +3053,13 @@ export class MoorhenMolecule {
             false
         )) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>;
         return result.data.result.result;
+    }
+
+    get numberOfModels() {
+        if (this._numberOfModels) return this._numberOfModels;
+        const models = this.gemmiStructure.models;
+        this._numberOfModels = models.size();
+        models.delete();
+        return this._numberOfModels;
     }
 }

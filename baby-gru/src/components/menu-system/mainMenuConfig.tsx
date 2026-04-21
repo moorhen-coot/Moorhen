@@ -1,6 +1,6 @@
 import React from "react";
-import { ModalKey } from "../../store/modalsSlice";
 import { MoorhenSVG } from "../icons";
+import { ModalComponentProps, ModalKey } from "../interface-base/ModalBase/ModalsContainer";
 import { SidePanelIDs } from "../panels";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import "./main-menu.css";
@@ -17,6 +17,7 @@ export type MainMenuEntryModal = {
     type: "modal";
     label: string;
     modal: ModalKey;
+    args?: ModalComponentProps;
 } & Icon;
 
 export type MainMenuEntryPanel = {

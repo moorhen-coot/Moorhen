@@ -1,3 +1,4 @@
+import { MoorhenTooltip } from "../interface-base";
 import "./moorhen-icons.css";
 import { moorhenSVGs } from "./moorhen_icons";
 import type { MoorhenSVG } from "./moorhen_icons";
@@ -13,6 +14,7 @@ type BaseIconProps = {
     onMouseLeave?: () => void;
     hover?: boolean;
     variant?: "" | "danger";
+    tooltip?: string;
 };
 
 type MoorhenIconPropsType = BaseIconProps & ({ moorhenSVG: MoorhenSVG; src?: never } | { src: string; moorhenSVG?: never });
@@ -30,6 +32,7 @@ export const MoorhenIcon = ({
     onMouseEnter,
     onMouseLeave,
     variant,
+    tooltip,
 }: MoorhenIconPropsType) => {
     let internalClassName = className ? className : `moorhen__icon `;
 
@@ -48,9 +51,10 @@ export const MoorhenIcon = ({
         internalClassName += " danger";
     }
 
+    let img;
     if (moorhenSVG) {
         const SvgComponent = moorhenSVGs[moorhenSVG];
-        return (
+        img = (
             <span
                 className={internalClassName}
                 style={{ display: "inline-block", lineHeight: 0, ...style }}
@@ -62,7 +66,9 @@ export const MoorhenIcon = ({
                 <SvgComponent className="moorhen__icon" />
             </span>
         );
+    } else {
+        img = <img className={internalClassName} style={{ ...style }} draggable="false" aria-label={alt} src={src} />;
     }
 
-    return <img className={internalClassName} style={{ ...style }} draggable="false" aria-label={alt} src={src} />;
+    return tooltip ? <MoorhenTooltip tooltip={tooltip}>{img}</MoorhenTooltip> : img;
 };

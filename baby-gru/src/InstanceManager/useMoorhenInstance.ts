@@ -1,6 +1,6 @@
-import { useContext } from 'react';
-import { MoorhenInstance } from './MoorhenInstance';
-import { MoorhenInstanceContext } from './MoorhenInstanceContext';
+import { useContext } from "react";
+import { MoorhenInstance } from ".";
+import { MoorhenInstanceContext } from "./MoorhenInstanceContext";
 
 /**
  * Custom hook to access the MoorhenInstance from context
@@ -11,8 +11,8 @@ export const useMoorhenInstance = (): MoorhenInstance => {
 
     if (!context) {
         throw new Error(
-            'useMoorhenInstance must be used within a MoorhenInstanceProvider. ' +
-                'Make sure your component is wrapped with <MoorhenInstanceProvider>.'
+            "useMoorhenInstance must be used within a MoorhenInstanceProvider. " +
+                "Make sure your component is wrapped with <MoorhenInstanceProvider>."
         );
     }
 

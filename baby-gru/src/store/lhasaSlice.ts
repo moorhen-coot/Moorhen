@@ -6,7 +6,7 @@ const initialState: {
     rdkitMoleculePickleList: [],
 };
 
-export const lhasaSlice = createSlice({
+const lhasaSlice = createSlice({
     name: "lhasa",
     initialState: initialState,
     reducers: {
@@ -28,12 +28,10 @@ export const lhasaSlice = createSlice({
         removeRdkitMoleculePickle: (state, action: { payload: string; type: string }) => {
             return {
                 ...state,
-                rdkitMoleculePickleList: [
-                    ...state.rdkitMoleculePickleList.filter((item) => item.id !== action.payload),
-                ],
+                rdkitMoleculePickleList: [...state.rdkitMoleculePickleList.filter(item => item.id !== action.payload)],
             };
         },
-        emptyRdkitMoleculePickleList: (state) => {
+        emptyRdkitMoleculePickleList: state => {
             return {
                 ...state,
                 rdkitMoleculePickleList: [],
@@ -42,7 +40,6 @@ export const lhasaSlice = createSlice({
     },
 });
 
-export const { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList } =
-    lhasaSlice.actions;
+export const { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList } = lhasaSlice.actions;
 
 export default lhasaSlice.reducer;

@@ -1,5 +1,6 @@
-import { useSnackbar } from "notistack";
+import { useDispatch } from "react-redux";
 import { useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useCommandAndCapsule, useTimeCapsule } from "../../InstanceManager";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
@@ -8,8 +9,7 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
     const backupSelectRef = useRef<null | HTMLSelectElement>(null);
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
     const timeCapsule = useTimeCapsule();
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     const retrieveSession = async () => {
         if (backupSelectRef.current.value) {
@@ -19,7 +19,7 @@ export const Backups = (props: { disabled: boolean; loadSession: (sessionDataStr
                 commandCentre.current.history.reset();
                 props.loadSession(backupData);
             } catch (err) {
-                enqueueSnackbar("Error loading the session", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Error loading the session", variant: "error" }));
                 console.log(err);
             }
         }

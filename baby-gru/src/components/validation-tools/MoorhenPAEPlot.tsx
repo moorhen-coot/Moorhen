@@ -1,17 +1,20 @@
-import { SnackbarKey, useSnackbar } from "notistack";
-import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
+import { setShownControl } from "@/store/globalUISlice";
 import { clearResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { moorhen } from "../../types/moorhen";
-import { convertRemToPx, paeToImageData, resizeImageData } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { paeToImageData, resizeImageData } from "../../utils/utils";
+import { MoorhenButton, MoorhenFileInput, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 interface MoorhenPAEProps {
     resizeTrigger?: boolean;
     size?: { width: number; height: number };
+    isDocked?: boolean;
+    loadMoleculeOnOpen?: string;
 }
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
@@ -49,7 +52,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false);
     const [paeModeButtonState, setPaeModeButtonState] = useState<string>("uniprot");
     const [dataName, setDataName] = useState<string>("");
-    const [currentSnackId, setCurrentSnackId] = useState<SnackbarKey | null>(null);
+    const [currentSnackId, setCurrentSnackId] = useState<string | null>(null);
     const [cursorMode, setCursorMode] = useState<string>("drag");
     const [panXY, setPanXY] = useState<{ x: number; y: number }>({ x: -1, y: -1 });
 
@@ -60,9 +63,17 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114;
 
-    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const axesSpace = props.isDocked ? 50 : 75;
+    const fontSize = props.isDocked ? 11 : 16;
+    const legendHeight = props.isDocked ? 40 : 50;
+    const fontSpec = `${fontSize}px arial`;
+    const plotSize = props.size.width - (props.isDocked ? 20 : 30);
 
-    const axesSpace = 75;
+    useEffect(() => {
+        if (props.loadMoleculeOnOpen) {
+            fetchDataFromEBI(props.loadMoleculeOnOpen);
+        }
+    }, []);
 
     const clearRubberBand = () => {
         setClickX(-1);
@@ -91,7 +102,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             }
         } catch (e) {
             console.log(e);
-            enqueueSnackbar("Failed to parse file " + fn.name + " as PAE", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to parse file " + fn.name + " as PAE", variant: "error" }));
         }
     };
 
@@ -123,17 +134,17 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                         setDataName(uniprotID);
                     } else {
                         console.log(paeResponse);
-                        enqueueSnackbar("Failed to fetch PAE file for name: " + uniprotID, { variant: "error" });
+                        dispatch(enqueueSnackbar({ message: "Failed to fetch PAE file for name: " + uniprotID, variant: "error" }));
                     }
                 }
             }
         } catch (e) {
-            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+            dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
             console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
         }
     };
 
-    const fetchDataForLoadedMolecule = async () => {
+    const fetchDataForLoadedMolecule = async (modelNo?: number) => {
         if (selectedModel !== null && selectedModel > -1 && molecules.length > 0) {
             const matchMols = molecules.filter(mol => {
                 return mol.molNo === selectedModel;
@@ -331,14 +342,13 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                             };
                             dispatch(setResidueSelection(newSelection));
                             matchMols[0].drawResidueSelection(newSelection.cid as string);
-                            const snackId = await enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
-                            setCurrentSnackId(snackId);
+                            await dispatch(setShownControl({ name: "selectionTools" }));
+                            setCurrentSnackId("1");
                         }
                     }
                 } else {
                     if (currentSnackId) {
                         dispatch(clearResidueSelection());
-                        await closeSnackbar(currentSnackId);
                         dispatch(setRequestDrawScene(true));
                         setCurrentSnackId(null);
                     }
@@ -442,7 +452,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 ctx.fillStyle = "white";
             }
 
-            ctx.font = "16px arial";
+            ctx.font = fontSpec;
             for (let ival = 0; ival < maxPAE; ival += 5) {
                 const tm = ctx.measureText("" + Math.floor(ival).toFixed(0));
                 const tWidth = tm.width;
@@ -454,7 +464,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.restore();
         };
         plotTheLegend();
-    }, [plotData, backgroundColor, isDark, height, width, props.size]);
+    }, [plotData, backgroundColor, isDark, height, width, props.size, props.isDocked]);
 
     useEffect(() => {
         const plotTheData = async () => {
@@ -550,7 +560,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                 }
             }
 
-            ctx.font = "16px arial";
+            ctx.font = fontSpec;
             for (let ires = 0; ires < plotData.height; ires += 100) {
                 const tm = ctx.measureText("  " + ires);
                 const tWidth = tm.width;
@@ -576,7 +586,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.fillText("Scored residue", resizeImgData.width / 2 + axesSpace - tWidth / 2, canvas.height - tHeight);
             ctx.restore();
             ctx.save();
-            ctx.font = "16px arial";
+            ctx.font = fontSpec;
             const tmVert = ctx.measureText("Aligned residue");
             const tWidthVert = tmVert.width;
             const tHeightVert = tmVert.actualBoundingBoxDescent + tm.actualBoundingBoxAscent;
@@ -593,7 +603,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
             ctx.restore();
         };
         plotTheData();
-    }, [plotData, backgroundColor, isDark, height, width, props.size, clickX, clickY, moveX, moveY, releaseX, releaseY]);
+    }, [plotData, backgroundColor, isDark, height, width, props.size, props.isDocked, clickX, clickY, moveX, moveY, releaseX, releaseY]);
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -609,125 +619,96 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         setSelectedModel(parseInt(evt.target.value));
     };
 
-    const plotHeight = props.size.height - convertRemToPx(18);
-    const plotWidth = props.size.width - convertRemToPx(3);
-    const plotSize = Math.min(plotWidth, plotHeight);
-
     return (
         <>
-            <Row style={{ textAlign: "left" }}>
-                <Col sm={3}>Data source</Col>
-                <InputGroup as={Col} className="mb-3">
-                    <Form.Check
-                        inline
-                        label="Alphafold EBI search"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "uniprot"}
-                        onChange={e => {
-                            handleModeChange(e, "uniprot");
-                        }}
-                    />
-                    <Form.Check
-                        inline
-                        label="PAE File"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "paefile"}
-                        onChange={e => {
-                            handleModeChange(e, "paefile");
-                        }}
-                    />
-                    <Form.Check
-                        inline
-                        label="Loaded molecule"
-                        name="paetypegroup"
-                        type="radio"
-                        checked={paeModeButtonState === "molecule"}
-                        onChange={e => {
-                            handleModeChange(e, "molecule");
-                        }}
-                    />
-                </InputGroup>
-            </Row>
+            {!props.isDocked && (
+                <MoorhenStack style={{ marginBottom: "0.5rem" }}>
+                    DataSource
+                    <MoorhenStack direction="row">
+                        <MoorhenToggle
+                            inline
+                            label="Alphafold EBI search"
+                            name="paetypegroup"
+                            type="radio"
+                            checked={paeModeButtonState === "uniprot"}
+                            onChange={e => {
+                                handleModeChange(e, "uniprot");
+                            }}
+                        />
+                        <MoorhenToggle
+                            inline
+                            label="PAE File"
+                            name="paetypegroup"
+                            type="radio"
+                            checked={paeModeButtonState === "paefile"}
+                            onChange={e => {
+                                handleModeChange(e, "paefile");
+                            }}
+                        />
+                        <MoorhenToggle
+                            inline
+                            label="Loaded molecule"
+                            name="paetypegroup"
+                            type="radio"
+                            checked={paeModeButtonState === "molecule"}
+                            onChange={e => {
+                                handleModeChange(e, "molecule");
+                            }}
+                        />
+                    </MoorhenStack>
+                    {paeModeButtonState === "uniprot" && (
+                        <MoorhenStack direction="row" align="center" justify="flex-start">
+                            <MoorhenTextInput
+                                label="UniProt ID:"
+                                placeholder="e.g. Q12XU1"
+                                text={queryText}
+                                onChange={evt => {
+                                    setQueryText(evt.target.value);
+                                }}
+                                onSubmit={() => fetchData()}
+                                style={{ flex: "0 0 auto" }}
+                            />
 
-            {paeModeButtonState === "uniprot" && (
-                <Row style={{ textAlign: "left", marginBottom: "0.2rem" }} className="align-items-centre">
-                    <Form
-                        onSubmit={evt => {
-                            evt.preventDefault();
-                            fetchData();
-                        }}
-                    >
-                        <Form.Group as={Row} className="mb-3" controlId="formAFUniProt">
-                            <Col sm={3}>
-                                <Form.Label>UniProt</Form.Label>
-                            </Col>
-                            <Col sm={4}>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="e.g. Q12XU1"
-                                    value={queryText}
-                                    onChange={evt => {
-                                        setQueryText(evt.target.value);
-                                    }}
-                                />
-                            </Col>
-                            <Col sm={4}>
-                                <MoorhenButton variant="secondary" disabled={queryText.length === 0} size="sm" onClick={fetchData}>
-                                    Fetch and plot
-                                </MoorhenButton>
-                            </Col>
-                        </Form.Group>
-                    </Form>
-                </Row>
-            )}
-            {paeModeButtonState === "paefile" && (
-                <Row style={{ marginBottom: "0.1rem" }}>
-                    <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadPAE" className="mb-3">
-                        <Form.Control
-                            type="file"
+                            <MoorhenButton variant="secondary" disabled={queryText.length === 0} onClick={fetchData}>
+                                Fetch and plot
+                            </MoorhenButton>
+                        </MoorhenStack>
+                    )}
+                    {paeModeButtonState === "paefile" && (
+                        <MoorhenFileInput
                             multiple={false}
                             accept=".json,.JSON,.pae,.PAE"
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 upLoadPaeFile(e.target.files[0]);
                             }}
                         />
-                    </Form.Group>
-                </Row>
+                    )}
+                    {paeModeButtonState === "molecule" && (
+                        <MoorhenStack direction="row" align="center" justify="flex-start">
+                            <MoorhenMoleculeSelect
+                                selected={selectedModel}
+                                onSelect={sel => setSelectedModel(sel)}
+                                ref={moleculeSelectRef}
+                                style={{ flex: "0 0 auto" }}
+                            />
+                            <MoorhenButton
+                                variant="secondary"
+                                size="sm"
+                                disabled={selectedModel === null || molecules.length === 0 || selectedModel < 0}
+                                onClick={fetchDataForLoadedMolecule}
+                            >
+                                Fetch and plot
+                            </MoorhenButton>
+                        </MoorhenStack>
+                    )}
+                </MoorhenStack>
             )}
-            {paeModeButtonState === "molecule" && (
-                <Row>
-                    <Col sm={3}>Molecule</Col>
-                    <Col sm={4}>
-                        <MoorhenMoleculeSelect selected={selectedModel} onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
-                    </Col>
-                    <Col sm={4}>
-                        <MoorhenButton
-                            variant="secondary"
-                            size="sm"
-                            disabled={selectedModel === null || molecules.length === 0 || selectedModel < 0}
-                            onClick={fetchDataForLoadedMolecule}
-                        >
-                            Fetch and plot
-                        </MoorhenButton>
-                    </Col>
-                </Row>
-            )}
-            <Row>
-                <Col>
-                    <div>
-                        <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
-                    </div>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <div>
-                        <canvas height={50} width={plotSize} ref={canvasLegendRef}></canvas>
-                    </div>
-                </Col>
-            </Row>
+            <div style={{ minWidth: plotSize, minHeight: plotSize }}>
+                <canvas height={plotSize} width={plotSize} ref={canvasRef}></canvas>
+            </div>
+            <div style={{ minWidth: plotSize, minHeight: legendHeight }}>
+                <canvas height={legendHeight} width={plotSize} ref={canvasLegendRef}></canvas>
+            </div>
         </>
     );
 };

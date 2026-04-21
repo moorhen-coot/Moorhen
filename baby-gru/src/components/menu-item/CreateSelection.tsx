@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
+import { enqueueSnackbar, setShownControl } from "@/store";
 import { setResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
@@ -20,8 +20,6 @@ export const CreateSelection = () => {
 
     const menuItemText = "Create a selection...";
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const createSelection = async () => {
         const selectedCid = cidFormRef.current.value;
         if (!selectedCid || !moleculeSelectRef.current.value) {
@@ -39,20 +37,20 @@ export const CreateSelection = () => {
         } catch (err) {
             console.log(err);
             setInvalidCid(true);
-            enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             return;
         }
 
         if (!newSelection) {
             setInvalidCid(true);
-            enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             return;
         }
 
         setInvalidCid(false);
         await molecule.drawResidueSelection(selectedCid);
         dispatch(setResidueSelection(newSelection));
-        enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+        dispatch(setShownControl({ name: "selectionTools" }));
     };
 
     return (

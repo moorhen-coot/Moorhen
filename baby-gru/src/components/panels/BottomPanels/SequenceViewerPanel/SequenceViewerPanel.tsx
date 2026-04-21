@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
@@ -19,7 +18,7 @@ export const SequenceViewerPanel = () => {
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [expand, setExpand] = useState<boolean>(true);
-    const { enqueueSnackbar } = useSnackbar();
+
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
@@ -65,9 +64,9 @@ export const SequenceViewerPanel = () => {
 
     const residueSelectionCallback = useCallback(
         selection => {
-            handleResiduesSelection(selection, molecule, dispatch, enqueueSnackbar);
+            handleResiduesSelection(selection, molecule, dispatch);
         },
-        [molecule, dispatch, enqueueSnackbar]
+        [molecule, dispatch]
     );
 
     const handleHoverResidue = useCallback(

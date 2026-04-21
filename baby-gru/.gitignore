@@ -41,3 +41,5 @@ baby-gru/public/baby-gru/CootWorker.js
 # Ignore PWA related files
 /dev-dist
 .vscode
+
+src/LhasaReact
