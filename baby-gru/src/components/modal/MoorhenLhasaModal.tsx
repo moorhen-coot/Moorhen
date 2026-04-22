@@ -123,6 +123,10 @@ const LhasaWrapper = (props: {
         [commandCentre, store, monomerLibraryPath]
     );
 
+    const bansuCallback = useCallback((internalLhasaID: number, id: string, cif_string: string) => {
+        enqueueSnackbar("TODO: handle incoming data: \n" + cif_string, { variant: "info" });
+    }, [enqueueSnackbar]);
+
     return isCootAttached ? (
         <LhasaComponent
             Lhasa={window.cootModule}
@@ -132,6 +136,7 @@ const LhasaWrapper = (props: {
             icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
             data_path_prefix={`${props.urlPrefix}/`}
             name_of_host_program="Moorhen"
+            bansu_callback={bansuCallback}
             send_to_host_program_callback={sendToHostProgramCallback}
             dark_mode={isDark}
             width={props.width}
