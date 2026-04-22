@@ -327,14 +327,14 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
                             setSpecifySequence(!specifySequence);
                         }}
                     />
-                    <MoorhenFileInput
-                        disabled={!specifySequence}
-                        ref={sequenceFileRef}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadSequenceFile(e.target.files[0]);
-                        }}
-                    />
                 </MoorhenStack>
+                <MoorhenFileInput
+                    disabled={!specifySequence}
+                    ref={sequenceFileRef}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        loadSequenceFile(e.target.files[0]);
+                    }}
+                />
                 <MoorhenButton onClick={runConKit}>Run ConKit</MoorhenButton>
             </div>
             {conKitMatches !== null && conKitMatches.length === 0 && !conKitSuccess && (
