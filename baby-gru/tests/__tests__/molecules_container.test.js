@@ -613,7 +613,7 @@ describe('Testing molecules_container_js', () => {
             tlc, -999999, ...coords
         )
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
-            ligandMolNo, "//", "colorRampChainsScheme", "MolecularSurface", true
+            ligandMolNo, "//", "Chain", "MolecularSurface", true
         )
 
         expect(simpleMesh.vertices.size()).toBeGreaterThan(100)
