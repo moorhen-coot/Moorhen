@@ -74,4 +74,13 @@
     padding-right: 0.5rem;
     padding-bottom: 5px;
     margin-top: auto;
+    padding-left: 0.5rem;
+}
+
+.moorhen__modal-footer-props {
+    overflow-x: hidden;
+    width: 100%;
+}
+.moorhen__modal-resize-button {
+    flex-shrink: 0;
 }

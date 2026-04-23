@@ -24,26 +24,12 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
     };
 
     const footerContent = !isDocked && (
-        <MoorhenStack
-            gap={2}
-            direction="horizontal"
-            style={{
-                paddingTop: "0.5rem",
-                alignItems: "space-between",
-                alignContent: "space-between",
-                justifyContent: "space-between",
-                width: "100%",
+        <MoorhenFileInput
+            accept=".json"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                loadJsonFiles(e.target.files);
             }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <MoorhenFileInput
-                    accept=".json"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        loadJsonFiles(e.target.files);
-                    }}
-                />
-            </MoorhenStack>
-        </MoorhenStack>
+        />
     );
 
     return (
