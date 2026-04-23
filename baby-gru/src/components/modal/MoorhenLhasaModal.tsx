@@ -118,7 +118,7 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
 
     const bansuCallback = useCallback(
         (internalLhasaID: number, id: string, cif_string: string) => {
-            enqueueSnackbar("TODO: handle incoming data: \n" + cif_string, { variant: "info" });
+            dispatch(enqueueSnackbar({ message: "TODO: handle incoming data: \n" + cif_string, variant: "info" }));
         },
         [enqueueSnackbar]
     );
