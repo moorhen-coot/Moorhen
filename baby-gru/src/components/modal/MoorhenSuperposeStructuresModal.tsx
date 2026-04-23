@@ -257,7 +257,7 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
                 </MoorhenSelect>
                 <hr></hr>
             </div>
-            <MoorhenStack direction="horizontal">
+            <MoorhenStack inputGrid>
                 <MoorhenMoleculeSelect
                     label="Reference structure"
                     style={{ width: "100%" }}
@@ -277,9 +277,9 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
                 <MoorhenSequenceRangeSlider ref={refResidueRangeRef} selectedMolNo={selectedRefModel} selectedChainId={selectedRefChain} />
             )}
             <hr></hr>
-            <MoorhenStack direction="horizontal">
+            <MoorhenStack inputGrid>
                 <MoorhenMoleculeSelect
-                    label="Moving structure"
+                    label="Moving structure&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
                     style={{ width: "100%" }}
                     ref={movMoleculeSelectRef}
                     onSelect={sel => handleModelChange(sel, false)}

@@ -394,6 +394,7 @@ export const ImportDictionary = () => {
 
     const panelContent = (
         <>
+            <MoorhenStack inputGrid style={{ margin: "0.2rem" }}>
             <MoorhenFileInput
                 onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     const tlcs = await parseCifDict(e.target.files[0]);
@@ -406,8 +407,8 @@ export const ImportDictionary = () => {
                         setValidDictFile(false);
                     }
                 }}
-            />
-            {!validDictFile && <span>Unable to parse</span>}
+            /><div/>
+            {!validDictFile && (<><span>Unable to parse</span><div/></>)}
             <MoorhenSelect
                 label={"Monomer identifier"}
                 ref={tlcSelectRef}
@@ -422,6 +423,7 @@ export const ImportDictionary = () => {
                     </option>
                 ))}
             </MoorhenSelect>
+            </MoorhenStack>
         </>
     );
 

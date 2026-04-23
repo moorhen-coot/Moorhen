@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const SharpenBlurMap = () => {
     const dispatch = useDispatch();
@@ -80,6 +81,7 @@ export const SharpenBlurMap = () => {
 
     return (
         <>
+        <MoorhenStack inputGrid>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
             <MoorhenNumberInput ref={factorRef} label="B-factor to apply" value={50} allowNegativeValues={true} />
             <MoorhenToggle
@@ -92,7 +94,8 @@ export const SharpenBlurMap = () => {
                 label="Use resample"
             />
             {useResample && <MoorhenNumberInput ref={resampleFactorRef} label="Resampling factor" value={1.4} />}
-            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
+        </MoorhenStack>
+        <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
 };

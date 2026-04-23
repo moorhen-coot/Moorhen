@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { MoorhenInstance } from ".";
+import { MoorhenInstance } from "./MoorhenInstance";
 import { MoorhenInstanceContext } from "./MoorhenInstanceContext";
 
 /**

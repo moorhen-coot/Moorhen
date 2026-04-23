@@ -9,6 +9,7 @@ import { MoorhenNumberInput } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const AddWaters = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -43,11 +44,11 @@ export const AddWaters = () => {
     };
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenNumberInput label="RMSD cutoff" type="number" value={sigmaMap} setValue={val => setSigmaMap(+val)} />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

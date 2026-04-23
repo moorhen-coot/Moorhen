@@ -5,6 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MatchLigands = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -68,6 +69,7 @@ export const MatchLigands = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect
                 label="Reference molecule"
                 molecules={molecules}
@@ -94,6 +96,7 @@ export const MatchLigands = () => {
                 molecules={molecules}
                 selectedCoordMolNo={selectedMovingMolNo}
             />
+            </MoorhenStack>
             <MoorhenButton variant="primary" onClick={matchLigands}>
                 OK
             </MoorhenButton>

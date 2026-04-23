@@ -151,7 +151,7 @@ export const MoorhenContextMenu = (props: {
                     overrideMenuContents
                 ) : (
                     <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
-                        <List>
+
                             {props.viewOnly ? (
                                 <MoorhenMenuItemPopover menuItemText="Background Color..."><BackgroundColor /></MoorhenMenuItemPopover>
                                 
@@ -159,7 +159,7 @@ export const MoorhenContextMenu = (props: {
                                 selectedMolecule &&
                                 chosenAtom && (
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", justifyItems: "center" }}>
-                                        <Tooltip className="moorhen-tooltip" title={toolTip}><>
+
                                                 <MoorhenAutofitRotamerButton {...collectedProps} />
                                                 <MoorhenFlipPeptideButton {...collectedProps} />
                                                 <MoorhenSideChain180Button {...collectedProps} />
@@ -175,12 +175,10 @@ export const MoorhenContextMenu = (props: {
                                                 <MoorhenRotateTranslateZoneButton {...collectedProps} />
                                                 <MoorhenDragAtomsButton {...collectedProps} />
                                                 <MoorhenAddAltConfButton {...collectedProps} />
-                                                <MoorhenConvertCisTransButton {...collectedProps} /></>
-                                        </Tooltip>
+                                                <MoorhenConvertCisTransButton {...collectedProps} />
                                     </div>
                                 )
                             )}
-                        </List>
                     </ClickAwayListener>
                 )}
             </ContextMenu>

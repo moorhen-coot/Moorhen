@@ -3,7 +3,7 @@ import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
 import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
-import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
@@ -35,7 +35,7 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
 
-    constructor(containerRef: React.RefObject<HTMLDivElement>) {
+    constructor(containerRef: React.RefObject<HTMLDivElement>, menuSystem: MoorhenMenuSystem) {
         super();
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
@@ -43,7 +43,7 @@ export class MoorhenInstance extends StoreExtension {
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
-        this._menuSystem = new MoorhenMenuSystem();
+        this._menuSystem = menuSystem;
         this.containerRef = containerRef;
     }
 

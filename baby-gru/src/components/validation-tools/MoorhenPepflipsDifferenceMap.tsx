@@ -109,23 +109,25 @@ export const MoorhenPepflipsDifferenceMap = () => {
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel);
             let cards = newPepflips.map((flip, index) => {
                 return (
-                    <MoorhenStack direction="row" align="center" justify="center">
-                        {flip.buttonLabel}
+                    <MoorhenStack direction="row" style={{ margin: "0.0rem" }}>
+                        <label style={{ height:"2.1rem", margin:"0.1rem", display: "flex", alignItems: "center" }}>{flip.buttonLabel}</label>
+                        <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
 
                         <MoorhenButton
-                            style={{ marginRight: "0.5rem" }}
+                            style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
                             onClick={() => selectedMolecule.centreAndAlignViewOn(`//${flip.chainId}/${flip.resNum}-${flip.resNum}/`, false)}
                         >
                             View
                         </MoorhenButton>
                         <MoorhenButton
-                            style={{ marginRight: "0.5rem" }}
+                            style={{ display: "flex", marginLeft: "0rem" }}
                             onClick={() => {
                                 handleFlip(selectedMolecule, flip.chainId, flip.resNum, flip.insCode);
                             }}
                         >
                             Flip
                         </MoorhenButton>
+                    </MoorhenStack>
                     </MoorhenStack>
                 );
             });

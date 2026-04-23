@@ -1,4 +1,4 @@
-import { MoorhenTooltip } from "../interface-base";
+import { MoorhenTooltip } from "../interface-base/Popovers/Tooltip";
 import "./moorhen-icons.css";
 import { moorhenSVGs } from "./moorhen_icons";
 import type { MoorhenSVG } from "./moorhen_icons";

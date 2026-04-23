@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./NumberInput.css";
 
 type MoorhenNumberInputProps = {

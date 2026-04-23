@@ -25,7 +25,7 @@ The following libraries/programs are compiled to Web Assembly:
 * gsl 2.8
 * Boost 1.89.0
 * glm 0.9.9.8
-* Eigen 3.4.0
+* Eigen 5.0.1
 * RDKit 2025\_09\_6
 * graphene 1.10.8
 * libsigc++ 3.8.0

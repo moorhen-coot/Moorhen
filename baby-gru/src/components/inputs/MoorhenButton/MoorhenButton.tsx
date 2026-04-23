@@ -1,8 +1,8 @@
 import { JSX, useRef } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
-import { MoorhenStack } from "../../interface-base";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./moorhen-button.css";
 
 type MoorhenButtonPropsTypeBase = {
@@ -119,7 +119,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             style={{ ...props.style }}
             value={props.value}
         >
-            <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem" style={{ ...style }}>
+            <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem">
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}

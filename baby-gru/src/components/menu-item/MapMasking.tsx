@@ -1,5 +1,6 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
+import { usePersistentState } from "@/hooks";
 import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
@@ -12,7 +13,7 @@ import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
-import { usePersistentState } from "@/hooks";
+import { MoorhenStack } from "../interface-base";
 
 export const MapMasking = () => {
     const dispatch = useDispatch();
@@ -32,7 +33,6 @@ export const MapMasking = () => {
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidInputRef = useRef<null | HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
-    
 
     const onCompleted = async () => {
         if (!mapSelectRef.current.value || !moleculeSelectRef.current.value) {
@@ -67,7 +67,6 @@ export const MapMasking = () => {
                 break;
         }
 
-        
         const result = (await commandCentre.current.cootCommand(
             {
                 returnType: "status",
@@ -84,74 +83,76 @@ export const MapMasking = () => {
             await newMap.getSuggestedSettings();
             newMap.isDifference = selectedMap.isDifference;
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
-                dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
-                dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
-                dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
-                dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
-                dispatch(hideMap(selectedMap));
-                dispatch(addMap(newMap));
-            ;
+            dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
+            dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
+            dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
+            dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
+            dispatch(hideMap(selectedMap));
+            dispatch(addMap(newMap));
         }
     };
 
     return (
         <>
-            <MoorhenSelect
-                label="Create mask by..."
-                ref={maskTypeSelectRef}
-                defaultValue={"molecule"}
-                onChange={evt => {
-                    setMaskType(evt.target.value);
-                    maskTypeSelectRef.current.value = evt.target.value;
-                }}
-            >
-                <option value={"molecule"} key={"molecule"}>
-                    By molecule
-                </option>
-                <option value={"chain"} key={"chain"}>
-                    By chain
-                </option>
-                <option value={"ligand"} key={"ligand"}>
-                    By ligand
-                </option>
-                <option value={"cid"} key={"cid"}>
-                    By atom selection
-                </option>
-            </MoorhenSelect>
-            <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
-            <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
-            {maskTypeSelectRef.current?.value === "cid" && (
-                <MoorhenCidInputForm width="20rem" margin="0.5rem" ref={cidInputRef} allowUseCurrentSelection={true} />
-            )}
-            {maskTypeSelectRef.current?.value === "chain" && (
-                <MoorhenChainSelect
-                    molecules={molecules}
-                    selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
-                    ref={chainSelectRef}
-                />
-            )}
-            {maskTypeSelectRef.current?.value === "ligand" && (
-                <MoorhenLigandSelect
-                    molecules={molecules}
-                    selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
-                    ref={ligandSelectRef}
-                />
-            )}
-            {!useDefaultMaskRadius && (
-                <MoorhenNumberInput  value={maskRadius} setValue={setMaskRadius} label="Mask radius" allowNegativeValues={false} type="number" />
-            )}
+            <MoorhenStack inputGrid>
+                <MoorhenSelect
+                    label="Create mask by..."
+                    ref={maskTypeSelectRef}
+                    defaultValue={"molecule"}
+                    onChange={evt => {
+                        setMaskType(evt.target.value);
+                        maskTypeSelectRef.current.value = evt.target.value;
+                    }}
+                >
+                    <option value={"molecule"} key={"molecule"}>
+                        By molecule
+                    </option>
+                    <option value={"chain"} key={"chain"}>
+                        By chain
+                    </option>
+                    <option value={"ligand"} key={"ligand"}>
+                        By ligand
+                    </option>
+                    <option value={"cid"} key={"cid"}>
+                        By atom selection
+                    </option>
+                </MoorhenSelect>
+                <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
+                <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
+                {maskTypeSelectRef.current?.value === "cid" && (
+                    <MoorhenCidInputForm width="20rem" margin="0.5rem" ref={cidInputRef} allowUseCurrentSelection={true} />
+                )}
+                {maskTypeSelectRef.current?.value === "chain" && (
+                    <MoorhenChainSelect
+                        molecules={molecules}
+                        selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
+                        ref={chainSelectRef}
+                    />
+                )}
+                {maskTypeSelectRef.current?.value === "ligand" && (
+                    <MoorhenLigandSelect
+                        molecules={molecules}
+                        selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
+                        ref={ligandSelectRef}
+                    />
+                )}
+                {!useDefaultMaskRadius && (
+                    <MoorhenNumberInput
+                        value={maskRadius}
+                        setValue={setMaskRadius}
+                        label="Mask radius"
+                        allowNegativeValues={false}
+                        type="number"
+                    />
+                )}
+            </MoorhenStack>
             <MoorhenToggle
                 type="switch"
                 checked={useDefaultMaskRadius}
                 onChange={() => setUseDefaultMaskRadius(!useDefaultMaskRadius)}
                 label="Use default mask radius"
             />
-            <MoorhenToggle
-                type="switch"
-                checked={invertFlag}
-                onChange={() => setInvertFlag(!invertFlag)}
-                label="Invert mask"
-            />
+            <MoorhenToggle type="switch" checked={invertFlag} onChange={() => setInvertFlag(!invertFlag)} label="Invert mask" />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );

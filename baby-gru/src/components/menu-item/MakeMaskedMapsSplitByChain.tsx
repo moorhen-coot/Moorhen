@@ -9,6 +9,7 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MakeMaskedMapsSplitByChain = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement>(null);
@@ -70,9 +71,11 @@ export const MakeMaskedMapsSplitByChain = () => {
 
     return (
         <>
+        <MoorhenStack inputGrid>
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
-            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
+        </MoorhenStack>
+        <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };
