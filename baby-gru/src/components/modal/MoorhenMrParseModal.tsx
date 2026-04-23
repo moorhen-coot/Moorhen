@@ -923,7 +923,7 @@ export const MoorhenMrParseModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.MRPARSE}
-            initialHeight={700}
+            initialHeight={500}
             initialWidth={748}
             headerTitle="MrParse results"
             footer={footerContent}
