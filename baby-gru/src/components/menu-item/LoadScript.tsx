@@ -1,14 +1,13 @@
-import { Form, Row } from "react-bootstrap";
 import { useRef } from "react";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenFileInput } from "../inputs";
 
 export const LoadScript = () => {
     const filesRef = useRef<null | HTMLInputElement>(null);
 
     const onCompleted = async () => {
         for (const file of filesRef.current.files) {
-            const code = await file.text()
+            const code = await file.text();
             try {
                 const scriptApi = new MoorhenScriptApi();
                 scriptApi.exe(code);
@@ -19,12 +18,9 @@ export const LoadScript = () => {
     };
 
     return (
-        <Row>
-            <Form.Group style={{ width: "30rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadScript" className="mb-3">
-                <Form.Label>Load and execute script</Form.Label>
-                <Form.Control ref={filesRef} type="file" multiple={false} accept=".js" />
-            </Form.Group>
+        <>
+            <MoorhenFileInput label="Load and execute script" ref={filesRef} multiple={false} accept=".js" />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
-        </Row>
+        </>
     );
 };

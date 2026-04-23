@@ -1,10 +1,7 @@
-import { InfoOutlined } from "@mui/icons-material";
 import { TextField } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { Dropdown, Form, InputGroup, OverlayTrigger, SplitButton, Tooltip } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { MoorhenStoreRootState } from "@/moorhen";
+import { RootState, enqueueSnackbar } from "@/store/";
 import { parseCifDict } from "@/utils/MoorhenFileLoading";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -12,8 +9,9 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
 const ImportLigandDictionary = (props: {
     id: string;
@@ -25,7 +23,7 @@ const ImportLigandDictionary = (props: {
     addToMoleculeValueRef: React.MutableRefObject<number>;
     addToMolecule: string;
     setAddToMolecule: React.Dispatch<React.SetStateAction<string>>;
-    tlcValueRef: React.RefObject<string>;
+    tlc: string;
     createRef: React.MutableRefObject<boolean>;
     moleculeSelectRef: React.RefObject<HTMLSelectElement>;
     addToRef: React.RefObject<HTMLSelectElement>;
@@ -35,7 +33,7 @@ const ImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const store = useStore<MoorhenStoreRootState>();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const {
@@ -45,7 +43,7 @@ const ImportLigandDictionary = (props: {
         fetchLigandDict,
         panelContent,
         setAddToMolecule,
-        tlcValueRef,
+        tlc,
         createRef,
         moleculeSelectRef,
         addToRef,
@@ -92,7 +90,7 @@ const ImportLigandDictionary = (props: {
             }
 
             if (createRef.current) {
-                const instanceName = tlcValueRef.current;
+                const instanceName = tlc;
                 const result = (await commandCentre.current.cootCommand(
                     {
                         returnType: "status",
@@ -127,56 +125,30 @@ const ImportLigandDictionary = (props: {
 
             [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)));
         },
-        [
-            moleculeSelectValueRef,
-            createRef,
-            molecules,
-            commandCentre,
-            tlcValueRef,
-            backgroundColor,
-            defaultBondSmoothness,
-            addToMoleculeValueRef,
-        ]
+        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef]
     );
 
     const popoverContent = (
         <>
             {panelContent}
-            <MoorhenMoleculeSelect
-                molecules={molecules}
-                allowAny={true}
-                ref={moleculeSelectRef}
-                label="Make monomer available to"
-                onChange={evt => {
-                    // eslint-disable-next-line react-hooks/react-compiler
-                    moleculeSelectValueRef.current = evt.target.value;
-                }}
-            />
-            <Form.Group key="createInstance" style={{ width: "20rem", margin: "0.5rem" }} controlId="createInstance" className="mb-3">
-                <Form.Label>Create instance on read</Form.Label>
-                <InputGroup>
-                    <SplitButton title={createInstance ? "Yes" : "No"} id="segmented-button-dropdown-1">
-                        <Dropdown.Item
-                            key="Yes"
-                            href="#"
-                            onClick={() => {
-                                createRef.current = true;
-                                setCreateInstance(true);
-                            }}
-                        >
-                            Yes
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                            key="No"
-                            href="#"
-                            onClick={() => {
-                                createRef.current = false;
-                                setCreateInstance(false);
-                            }}
-                        >
-                            No
-                        </Dropdown.Item>
-                    </SplitButton>
+            <MoorhenStack inputGrid>
+                <MoorhenMoleculeSelect
+                    molecules={molecules}
+                    allowAny={true}
+                    ref={moleculeSelectRef}
+                    label="Make monomer available to"
+                    onChange={evt => {
+                        // eslint-disable-next-line react-hooks/react-compiler
+                        moleculeSelectValueRef.current = evt.target.value;
+                    }}
+                />
+
+                <MoorhenToggle
+                    label="Create instance on read"
+                    checked={createInstance}
+                    onChange={() => setCreateInstance(!createInstance)}
+                />
+                {createInstance ? (
                     <MoorhenSelect
                         disabled={!createInstance}
                         ref={addToRef}
@@ -195,8 +167,10 @@ const ImportLigandDictionary = (props: {
                             </option>
                         ))}
                     </MoorhenSelect>
-                </InputGroup>
-            </Form.Group>
+                ) : (
+                    <div />
+                )}
+            </MoorhenStack>
         </>
     );
 
@@ -211,7 +185,7 @@ const ImportLigandDictionary = (props: {
 
     return (
         <>
-            {panelContent}
+            {popoverContent}
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
@@ -220,15 +194,13 @@ const ImportLigandDictionary = (props: {
 export const SMILESToLigand = () => {
     const commandCentre = useCommandCentre();
     const [smile, setSmile] = useState<string>("");
-    const [tlc, setTlc] = useState<string>("");
+    const [tlc, setTlc] = useState<string>("NewLig");
     const [createInstance, setCreateInstance] = useState<boolean>(true);
     const [addToMolecule, setAddToMolecule] = useState<string>("");
     const [conformerCount, setConformerCount] = useState<number>(10);
     const [iterationCount, setIterationCount] = useState<number>(100);
     const [source, setSource] = useState<string>("smiles");
 
-    const smileRef = useRef<null | string>(null);
-    const tlcValueRef = useRef<null | string>(null);
     const createRef = useRef<boolean>(true);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectValueRef = useRef<null | string>(null);
@@ -247,8 +219,6 @@ export const SMILESToLigand = () => {
         setCreateInstance,
         addToMolecule,
         setAddToMolecule,
-        smileRef,
-        tlcValueRef,
         createRef,
         moleculeSelectRef,
         addToRef,
@@ -259,7 +229,7 @@ export const SMILESToLigand = () => {
     const smilesToPDB = async (): Promise<string> => {
         let smilesText = "";
         if (sourceSelectRef.current.value === "pubchem") {
-            const molSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + smileRef.current + "/cids/TXT";
+            const molSearchUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + smile + "/cids/TXT";
             console.log(molSearchUrl);
             const moleculeSearchResponse = await fetch(molSearchUrl);
             const moleculeIds = await moleculeSearchResponse.text();
@@ -270,7 +240,7 @@ export const SMILESToLigand = () => {
             console.log(pubchemSmiles);
             smilesText = pubchemSmiles;
         } else {
-            smilesText = smileRef.current;
+            smilesText = smile;
         }
 
         if (!smilesText) {
@@ -303,7 +273,7 @@ export const SMILESToLigand = () => {
         const response = (await commandCentre.current.cootCommand(
             {
                 command: "smiles_to_pdb",
-                commandArgs: [smilesText, tlcValueRef.current, n_conformer, n_iteration],
+                commandArgs: [smilesText, tlc, n_conformer, n_iteration],
                 returnType: "str_str_pair",
             },
             true
@@ -322,78 +292,63 @@ export const SMILESToLigand = () => {
     };
 
     const panelContent = (
-        <>
-            <Form.Group key="smile" style={{ width: "20rem", margin: "0.5rem" }} controlId="tlc" className="mb-3">
-                <Form.Label>Source...</Form.Label>
-                <OverlayTrigger
-                    placement="right"
-                    overlay={
-                        <Tooltip id="tip-tooltip" className="moorhen-tooltip" style={{ zIndex: 99999 }}>
-                            <em>
-                                By default, a structure will be created from a user inputted SMILES string. Alternatively, a molecule name
-                                can be used in which case the SMILES string will be generated by searching PubChem.
-                            </em>
-                        </Tooltip>
+        <MoorhenStack inputGrid>
+            <span>
+                Source...
+                <MoorhenInfoCard
+                    infoText={
+                        <em>
+                            By default, a structure will be created from a user inputted SMILES string. Alternatively, a molecule name can
+                            be used in which case the SMILES string will be generated by searching PubChem.
+                        </em>
                     }
-                >
-                    <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
-                </OverlayTrigger>
-                <MoorhenSelect ref={sourceSelectRef} value={source} onChange={handleSourceChange}>
-                    <option value={"smiles"}>SMILES</option>
-                    <option value={"pubchem"}>PubChem search</option>
-                </MoorhenSelect>
-            </Form.Group>
-
-            <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="SmilesString" className="mb-3">
-                <Form.Control
-                    value={smile}
-                    type="text"
-                    onChange={e => {
-                        setSmile(e.target.value);
-                        smileRef.current = e.target.value;
-                    }}
                 />
-            </Form.Group>
-            <Form.Group key="tlc" style={{ width: "20rem", margin: "0.5rem" }} controlId="SmilesMoleculeName" className="mb-3">
-                <Form.Label>Assign a name</Form.Label>
-                <Form.Control
-                    value={tlc}
-                    type="text"
-                    onChange={e => {
-                        setTlc(e.target.value);
-                        tlcValueRef.current = e.target.value;
-                    }}
-                />
-            </Form.Group>
-            <Form.Group>
-                <TextField
-                    style={{ margin: "0.5rem", width: "9rem" }}
-                    id="conformer-count"
-                    label="No. of conformers"
-                    type="number"
-                    variant="standard"
-                    error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
-                    value={conformerCount}
-                    onChange={evt => {
-                        conformerCountRef.current = parseInt(evt.target.value);
-                        setConformerCount(parseInt(evt.target.value));
-                    }}
-                />
-                <TextField
-                    style={{ margin: "0.5rem", width: "9rem" }}
-                    id="iteration-count"
-                    label="No. of iterations"
-                    type="number"
-                    variant="standard"
-                    error={isNaN(iterationCount) || iterationCount < 0 || iterationCount === Infinity}
-                    value={iterationCount}
-                    onChange={evt => {
-                        iterationCountRef.current = parseInt(evt.target.value);
-                        setIterationCount(parseInt(evt.target.value));
-                    }}
-                />
-            </Form.Group>
-        </>
+            </span>
+            <MoorhenSelect ref={sourceSelectRef} value={source} onChange={handleSourceChange}>
+                <option value={"smiles"}>SMILES</option>
+                <option value={"pubchem"}>PubChem search</option>
+            </MoorhenSelect>
+            <MoorhenTextInput
+                text={smile}
+                label={source === "smiles" ? "Enter SMILES string" : "Enter molecule name"}
+                onChange={e => {
+                    setSmile(e.target.value);
+                }}
+            />
+            <MoorhenTextInput
+                label="Assign a name"
+                text={tlc}
+                onChange={e => {
+                    setTlc(e.target.value);
+                }}
+            />
+            <TextField
+                style={{ margin: "0.5rem", width: "9rem" }}
+                id="conformer-count"
+                label="No. of conformers"
+                type="number"
+                variant="standard"
+                error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
+                value={conformerCount}
+                onChange={evt => {
+                    conformerCountRef.current = parseInt(evt.target.value);
+                    setConformerCount(parseInt(evt.target.value));
+                }}
+            />
+            <TextField
+                style={{ margin: "0.5rem", width: "9rem" }}
+                id="iteration-count"
+                label="No. of iterations"
+                type="number"
+                variant="standard"
+                error={isNaN(iterationCount) || iterationCount < 0 || iterationCount === Infinity}
+                value={iterationCount}
+                onChange={evt => {
+                    iterationCountRef.current = parseInt(evt.target.value);
+                    setIterationCount(parseInt(evt.target.value));
+                }}
+            />
+        </MoorhenStack>
     );
 
     return (
@@ -409,13 +364,11 @@ export const SMILESToLigand = () => {
 
 export const ImportDictionary = () => {
     const tlcsOfFileRef = useRef<{ comp_id: string; dict_contents: string }[]>([]);
-    const filesRef = useRef<null | HTMLInputElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectValueRef = useRef<null | string>(null);
     const addToRef = useRef<null | HTMLSelectElement>(null);
     const addToMoleculeValueRef = useRef<null | number>(null);
     const tlcSelectRef = useRef<null | HTMLSelectElement>(null);
-    const tlcValueRef = useRef<null | string>(null);
     const createRef = useRef<boolean>(true);
 
     const [tlc, setTlc] = useState<string>("");
@@ -423,8 +376,7 @@ export const ImportDictionary = () => {
     const [createInstance, setCreateInstance] = useState<boolean>(true);
     const [validDictFile, setValidDictFile] = useState<boolean>(true);
     const [tlcsOfFile, setTlcsOfFile] = useState<{ comp_id: string; dict_contents: string }[]>([]);
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     const collectedProps = {
         tlc,
@@ -433,7 +385,6 @@ export const ImportDictionary = () => {
         setCreateInstance,
         addToMolecule,
         setAddToMolecule,
-        tlcValueRef,
         createRef,
         moleculeSelectRef,
         addToRef,
@@ -443,9 +394,8 @@ export const ImportDictionary = () => {
 
     const panelContent = (
         <>
-            <Form.Group
-                style={{ width: "20rem", margin: "0.5rem" }}
-                className="mb-3"
+            <MoorhenStack inputGrid style={{ margin: "0.2rem" }}>
+            <MoorhenFileInput
                 onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     const tlcs = await parseCifDict(e.target.files[0]);
                     if (tlcs.length > 0) {
@@ -453,29 +403,18 @@ export const ImportDictionary = () => {
                         setTlcsOfFile(tlcs);
                         setTlc(tlcs[0].comp_id);
                         setValidDictFile(true);
-                        tlcValueRef.current = tlcs[0].comp_id;
                     } else {
                         setValidDictFile(false);
                     }
                 }}
-            >
-                <Form.Label>Browse...</Form.Label>
-                <Form.Control
-                    ref={filesRef}
-                    type="file"
-                    accept={".cif, .dict, .mmcif"}
-                    multiple={false}
-                    style={{ borderColor: validDictFile ? "#c2c2c2" : "red", borderWidth: validDictFile ? "0.1rem" : "0.15rem" }}
-                />
-                {!validDictFile && <span>Unable to parse</span>}
-            </Form.Group>
+            /><div/>
+            {!validDictFile && (<><span>Unable to parse</span><div/></>)}
             <MoorhenSelect
                 label={"Monomer identifier"}
                 ref={tlcSelectRef}
                 value={tlc}
                 onChange={newVal => {
                     setTlc(newVal.target.value);
-                    tlcValueRef.current = newVal.target.value;
                 }}
             >
                 {tlcsOfFile.map(tlcOfFile => (
@@ -484,17 +423,18 @@ export const ImportDictionary = () => {
                     </option>
                 ))}
             </MoorhenSelect>
+            </MoorhenStack>
         </>
     );
 
     const fetchLigandDict = async (): Promise<string> => {
-        if (filesRef.current.files.length > 0 && tlcValueRef.current) {
-            const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlcValueRef.current);
+        if (tlc) {
+            const ligandInfo = tlcsOfFileRef.current.find(lig => lig.comp_id === tlc);
             if (ligandInfo) {
                 return ligandInfo.dict_contents;
             } else {
                 console.warn(`Unable to parse ligand dictionary`);
-                enqueueSnackbar("Unable to import ligand", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Unable to import ligand", variant: "error" }));
             }
         }
     };

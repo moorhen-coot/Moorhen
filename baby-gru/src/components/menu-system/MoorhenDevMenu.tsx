@@ -1,16 +1,12 @@
-import { MenuItem, Button } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
+import { useCommandCentre } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
-import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
-import { readGzippedTextFile } from "../../utils/utils";
-import { useCommandCentre } from "../../InstanceManager";
 import {
     addCallback,
     addFracPathOverlay,
@@ -21,10 +17,13 @@ import {
     emptyOverlays,
 } from "../../store/overlaysSlice";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
+import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { MoorhenToggle } from "../inputs";
+import { readGzippedTextFile } from "../../utils/utils";
+import { MoorhenFileInput, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
+import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -65,7 +64,6 @@ export const MoorhenDevMenu = () => {
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
-    const { enqueueSnackbar } = useSnackbar();
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
@@ -228,12 +226,7 @@ export const MoorhenDevMenu = () => {
             );
             dispatch(
                 addFracPathOverlay({
-                    path: [
-                        0.7, 0.5,
-                        0.8, 0.9,
-                        0.6, 0.7,
-                        0.7, 0.5,
-                    ],
+                    path: [0.7, 0.5, 0.8, 0.9, 0.6, 0.7, 0.7, 0.5],
                     drawStyle: "fill",
                     fillStyle: "#00ffff77",
                     uniqueId: uuidv4(),
@@ -266,20 +259,14 @@ export const MoorhenDevMenu = () => {
             );
             dispatch(
                 addFracPathOverlay({
-                    path: [
-                        0.0, 0.0,
-                        1.0, 1.0,
-                    ],
+                    path: [0.0, 0.0, 1.0, 1.0],
                     drawStyle: "stroke",
                     uniqueId: uuidv4(),
                 })
             );
             dispatch(
                 addFracPathOverlay({
-                    path: [
-                        0.4, 0.2,
-                        0.8, 0.6,
-                    ],
+                    path: [0.4, 0.2, 0.8, 0.6],
                     drawStyle: "stroke",
                     strokeStyle: "red",
                     lineWidth: 8,
@@ -288,12 +275,7 @@ export const MoorhenDevMenu = () => {
             );
             dispatch(
                 addFracPathOverlay({
-                    path: [
-                        0.2, 0.5,
-                        0.3, 0.9,
-                        0.1, 0.7,
-                        0.2, 0.5,
-                    ],
+                    path: [0.2, 0.5, 0.3, 0.9, 0.1, 0.7, 0.2, 0.5],
                     gradientStops,
                     gradientBoundary: [0.1, 0, 0.3, 0],
                     drawStyle: "gradient",
@@ -325,51 +307,83 @@ export const MoorhenDevMenu = () => {
         }
     };
 
-    const tomogramTest = () => {
-        enqueueSnackbar("tomogram", {
-            variant: "tomogram",
-            persist: true,
-            mapMolNo: 0,
-            anchorOrigin: { vertical: "bottom", horizontal: "center" },
-        });
-    };
+    // const tomogramTest = () => {
+    //     enqueueSnackbar("tomogram", {
+    //         variant: "tomogram",
+    //         persist: true,
+    //         mapMolNo: 0,
+    //         anchorOrigin: { vertical: "bottom", horizontal: "center" },
+    //     });
+    // };
 
     return (
-        <>
-            <MenuItem onClick={tomogramTest}>Tomogram...</MenuItem>
+        <MoorhenStack>
+            {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
+            <MoorhenMenuItem
+                onClick={() => {
+                    dispatch(showModal({ key: modalKeys.VECTORS }));
+                    document.body.click();
+                }}
+            >
+                Vectors
+            </MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => {
+                    dispatch(showModal({ key: modalKeys.OVERLAYS2D }));
+                    document.body.click();
+                }}
+            >
+                2D Overlays
+            </MoorhenMenuItem>
             <hr></hr>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={useGemmi}
-                    onChange={() => {
-                        dispatch(setUseGemmi(!useGemmi));
-                    }}
-                    label="Use gemmi for reading/writing coord files"
-                />
-            </InputGroup>
-
+            <MoorhenToggle
+                type="switch"
+                checked={useGemmi}
+                onChange={() => {
+                    dispatch(setUseGemmi(!useGemmi));
+                }}
+                label="Use gemmi for reading/writing coord files"
+            />
             <hr></hr>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doOutline}
-                    onChange={() => {
-                        dispatch(setDoOutline(!doOutline));
-                    }}
-                    label="Outlines"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={overlaysOn}
-                    onChange={evt => {
-                        loadExampleOverlays(evt);
-                    }}
-                    label="Load example 2D overlays"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={doOutline}
+                onChange={() => {
+                    dispatch(setDoOutline(!doOutline));
+                }}
+                label="Outlines"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={overlaysOn}
+                onChange={evt => {
+                    loadExampleOverlays(evt);
+                }}
+                label="Load example 2D overlays"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={vectorsOn}
+                onChange={evt => {
+                    loadVectorsBunch(evt);
+                }}
+                label="Load a bunch of vectors"
+            />
+            <hr />
+            <MoorhenFileInput
+                label="Load gzipped files"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    loadGzippedFiles(e.target.files);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={doOutline}
+                onChange={() => {
+                    dispatch(setDoOutline(!doOutline));
+                }}
+                label="Outlines"
+            />
             <MoorhenToggle
                 type="switch"
                 checked={toggleValidationPanel}
@@ -378,25 +392,18 @@ export const MoorhenDevMenu = () => {
                 }}
                 label="Show validation panel"
             />
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={vectorsOn}
-                    onChange={evt => {
-                        loadVectorsBunch(evt);
-                    }}
-                    label="Load a bunch of vectors"
-                />
-            </InputGroup>
-            <MenuItem>
-                <Form.Control
-                    type="file"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        loadGzippedFiles(e.target.files);
-                    }}
-                />
-                Gzipped Text Read test
-            </MenuItem>
-        </>
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a success message", variant: "success" }))}>
+                Show Success Snackbar
+            </MoorhenButton>
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a warning message", variant: "warning" }))}>
+                Show Warning Snackbar
+            </MoorhenButton>
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an error message", variant: "error" }))}>
+                Show Error Snackbar
+            </MoorhenButton>
+            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
+                Show Info Snackbar
+            </MoorhenButton>
+        </MoorhenStack>
     );
 };

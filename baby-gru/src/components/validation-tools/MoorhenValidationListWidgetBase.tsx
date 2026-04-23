@@ -1,11 +1,11 @@
 import { LinearProgress } from "@mui/material";
-import { Col, Form, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
@@ -102,37 +102,35 @@ export const MoorhenValidationListWidgetBase = (props: {
     }, [cardData, backgroundColor]);
 
     return (
-        <Fragment>
-            <Form style={{ padding: "0", margin: "0" }}>
-                <Form.Group>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
-                        </Col>
-                        {enableMapSelect && (
-                            <Col>
-                                <MoorhenMapSelect
-                                    filterFunction={filterMapFunction}
-                                    width=""
-                                    onChange={handleMapChange}
-                                    maps={maps}
-                                    ref={mapSelectRef}
-                                    defaultValue={selectedMap}
-                                />
-                            </Col>
-                        )}
-                        {extraControlForm}
-                    </Row>
-                </Form.Group>
-            </Form>
+        <>
+            <MoorhenStack gap={"0.5rem"} flex={0}>
+                {enableMapSelect && (
+                <MoorhenStack inputGrid>
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+
+                    <MoorhenMapSelect
+                        filterFunction={filterMapFunction}
+                        width=""
+                        onChange={handleMapChange}
+                        maps={maps}
+                        ref={mapSelectRef}
+                        defaultValue={selectedMap}
+                    />
+                </MoorhenStack>
+                )}
+                {!enableMapSelect && (
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+                )}
+                {extraControlForm}
+            </MoorhenStack>
             {busy && (
-                <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem" }}>
+                <div>
                     <LinearProgress style={{ width: "95%" }} variant="indeterminate" />
                 </div>
             )}
-            <div style={{ overflowY: "auto", height: "100%", paddingTop: "0.5rem" }}>
+            <MoorhenStack card overflow="auto">
                 {cardList.length > 0 ? cardList : busy ? null : <b>Nothing to show here...</b>}
-            </div>
-        </Fragment>
+            </MoorhenStack>
+        </>
     );
 };

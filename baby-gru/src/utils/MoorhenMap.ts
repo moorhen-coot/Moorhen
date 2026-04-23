@@ -329,7 +329,7 @@ export class MoorhenMap {
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
     async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<moorhen.Map> {
-        this.name = name;
+        this.name = name.replace(".gz", "").replace(".map", "").replace(".mrc", "").replace(".ccp4", ""); //clean up name a bit
         try {
             const reply = await this.commandCentre.current.cootCommand(
                 {

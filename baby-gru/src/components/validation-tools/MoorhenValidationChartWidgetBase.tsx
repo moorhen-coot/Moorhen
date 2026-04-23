@@ -1,6 +1,5 @@
 import { Chart, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { Col, Form, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { Fragment, forwardRef, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
@@ -9,6 +8,7 @@ import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -124,39 +124,30 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
 
     return (
         <Fragment>
-            <Form style={{ padding: "0", margin: "0" }}>
-                <Form.Group>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
-                        </Col>
-                        {enableChainSelect && (
-                            <Col>
-                                <MoorhenChainSelect
-                                    width=""
-                                    onChange={handleChainChange}
-                                    molecules={molecules}
-                                    selectedCoordMolNo={selectedModel}
-                                    allowedTypes={[1, 2]}
-                                    ref={chainSelectRef}
-                                    defaultValue={selectedChain}
-                                />
-                            </Col>
-                        )}
-                        <Col>
-                            <MoorhenMapSelect
-                                width=""
-                                onChange={handleMapChange}
-                                maps={maps}
-                                ref={mapSelectRef}
-                                filterFunction={filterMapFunction}
-                                defaultValue={selectedMap}
-                            />
-                        </Col>
-                        {extraControlForm}
-                    </Row>
-                </Form.Group>
-            </Form>
+            <MoorhenStack direction="row">
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+
+                {enableChainSelect && (
+                    <MoorhenChainSelect
+                        width=""
+                        onChange={handleChainChange}
+                        molecules={molecules}
+                        selectedCoordMolNo={selectedModel}
+                        allowedTypes={[1, 2]}
+                        ref={chainSelectRef}
+                        defaultValue={selectedChain}
+                    />
+                )}
+                <MoorhenMapSelect
+                    width=""
+                    onChange={handleMapChange}
+                    maps={maps}
+                    ref={mapSelectRef}
+                    filterFunction={filterMapFunction}
+                    defaultValue={selectedMap}
+                />
+                {extraControlForm}
+            </MoorhenStack>
             <div className="validation-plot-div">
                 <div style={{ height: "100%" }} className="chartBox" id={`${props.chartId}-box`}>
                     <div

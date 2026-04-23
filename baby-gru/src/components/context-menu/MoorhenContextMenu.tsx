@@ -1,7 +1,6 @@
 import styled, { css } from "styled-components";
-import { ClickAwayListener, FormGroup, List, Tooltip } from "@mui/material";
+import { ClickAwayListener, List, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
-import { Popover, Overlay } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { BackgroundColor} from "../menu-item";
 import { atomInfoToResSpec, convertRemToPx } from "../../utils/utils";
@@ -24,7 +23,7 @@ import { MoorhenRotateTranslateZoneButton } from "./MoorhenRotateTranslateZoneBu
 import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
 import { MoorhenMenuItem } from "../interface-base/MenuItems/MenuItem";
-import { MoorhenMenuItemPopover } from "../interface-base";
+import { MoorhenMenuItemPopover, MoorhenPopover } from "../interface-base";
 
 export type ActionButtonSettings = {
     mutate:"ALA"| "CYS" | "ASP"| "GLU" | "PHE" | "GLY"| "HIS"| "ILE" | "LYS" | "LEU" | "MET" | "ASN" | "PRO" | "GLN" | "ARG" | "SER" | "THR" | "VAL" | "TRP" | "TYR";
@@ -141,9 +140,8 @@ export const MoorhenContextMenu = (props: {
         ...props,
     };
 
-    return (
-        <>
-            <ContextMenu
+    const contextMenu = (
+                   <ContextMenu
                 ref={contextMenuRef}
                 top={overrideMenuContents ? 0 : menuPosition.top}
                 left={overrideMenuContents ? 0 : menuPosition.left}
@@ -153,25 +151,15 @@ export const MoorhenContextMenu = (props: {
                     overrideMenuContents
                 ) : (
                     <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
-                        <List>
+
                             {props.viewOnly ? (
                                 <MoorhenMenuItemPopover menuItemText="Background Color..."><BackgroundColor /></MoorhenMenuItemPopover>
                                 
                             ) : (
                                 selectedMolecule &&
                                 chosenAtom && (
-                                    <div style={{ display: "flex", justifyContent: "center" }}>
-                                        <Tooltip className="moorhen-tooltip" title={toolTip}>
-                                            <FormGroup
-                                                ref={quickActionsFormGroupRef}
-                                                style={{
-                                                    justifyContent: "center",
-                                                    margin: "0px",
-                                                    padding: "0px",
-                                                    width: "18rem",
-                                                }}
-                                                row
-                                            >
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", justifyItems: "center" }}>
+
                                                 <MoorhenAutofitRotamerButton {...collectedProps} />
                                                 <MoorhenFlipPeptideButton {...collectedProps} />
                                                 <MoorhenSideChain180Button {...collectedProps} />
@@ -188,33 +176,28 @@ export const MoorhenContextMenu = (props: {
                                                 <MoorhenDragAtomsButton {...collectedProps} />
                                                 <MoorhenAddAltConfButton {...collectedProps} />
                                                 <MoorhenConvertCisTransButton {...collectedProps} />
-                                            </FormGroup>
-                                        </Tooltip>
                                     </div>
                                 )
                             )}
-                        </List>
                     </ClickAwayListener>
                 )}
             </ContextMenu>
-            {!overrideMenuContents && (
-                <Overlay
-                    placement={menuPosition.placement}
-                    show={showOverlay}
-                    target={quickActionsFormGroupRef.current}
-                >
-                    <Popover
-                        className="context-button-popover"
-                        style={{
-                            borderRadius: "1rem",
-                            boxShadow:
-                                "0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)",
-                        }}
+    );
+
+    return (
+        <>
+            
+
+                    <MoorhenPopover
+                    link={contextMenu}
+                    linkRef={contextMenuRef}
+                    isShown={showOverlay}
+                    setIsShown={setShowOverlay}
+
                     >
-                        <Popover.Body>{overlayContents}</Popover.Body>
-                    </Popover>
-                </Overlay>
-            )}
+                        {overlayContents}
+                    </MoorhenPopover>
+            
         </>
     );
 };

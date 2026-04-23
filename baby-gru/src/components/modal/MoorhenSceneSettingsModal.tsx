@@ -1,7 +1,3 @@
-import { LastPageOutlined } from "@mui/icons-material";
-import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { InputGroup } from "react-bootstrap";
 import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +13,6 @@ import {
     setSpecular,
     setSpecularPower,
 } from "../../store/glRefSlice";
-import { hideModal } from "../../store/modalsSlice";
 import {
     setBackgroundColor,
     setClipCap,
@@ -38,8 +33,8 @@ import {
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { hexToRGB, rgbToHex } from "../../utils/utils";
+import { MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
@@ -57,16 +52,15 @@ const EdgeDetectPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doEdgeDetect}
-                    onChange={() => {
-                        dispatch(setDoEdgeDetect(!doEdgeDetect));
-                    }}
-                    label="Edge detection"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={doEdgeDetect}
+                onChange={() => {
+                    dispatch(setDoEdgeDetect(!doEdgeDetect));
+                }}
+                label="Edge detection"
+            />
+
             <MoorhenSlider
                 isDisabled={!doEdgeDetect}
                 minVal={0}
@@ -123,16 +117,15 @@ const OcclusionPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doSSAO}
-                    onChange={() => {
-                        dispatch(setDoSSAO(!doSSAO));
-                    }}
-                    label="Ambient occlusion"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={doSSAO}
+                onChange={() => {
+                    dispatch(setDoSSAO(!doSSAO));
+                }}
+                label="Ambient occlusion"
+            />
+
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={2.0}
@@ -256,16 +249,15 @@ const DepthBlurPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={useOffScreenBuffers}
-                    onChange={() => {
-                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
-                    }}
-                    label="Depth Blur"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={useOffScreenBuffers}
+                onChange={() => {
+                    dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                }}
+                label="Depth Blur"
+            />
+
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
                 minVal={0.4}
@@ -349,26 +341,24 @@ const ClipFogPanel = () => {
                 }}
                 decimalPlaces={2}
             />
-            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clipping and fogging on zoom"
-                />
-            </InputGroup>
-            <InputGroup style={{ paddingLeft: "0.1rem", paddingBottom: "0.5rem" }}>
-                <MoorhenToggle
-                    type="switch"
-                    checked={clipCap}
-                    onChange={() => {
-                        dispatch(setClipCap(!clipCap));
-                    }}
-                    label="'Clip-cap' perfect spheres"
-                />
-            </InputGroup>
+
+            <MoorhenToggle
+                type="switch"
+                checked={resetClippingFogging}
+                onChange={() => {
+                    dispatch(setResetClippingFogging(!resetClippingFogging));
+                }}
+                label="Reset clipping and fogging on zoom"
+            />
+
+            <MoorhenToggle
+                type="switch"
+                checked={clipCap}
+                onChange={() => {
+                    dispatch(setClipCap(!clipCap));
+                }}
+                label="'Clip-cap' perfect spheres"
+            />
         </MoorhenStack>
     );
 };
@@ -442,16 +432,14 @@ const LightingPanel = () => {
                     }}
                 />
             </MoorhenStack>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={doShadow}
-                    onChange={() => {
-                        dispatch(setDoShadow(!doShadow));
-                    }}
-                    label="Shadows"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="switch"
+                checked={doShadow}
+                onChange={() => {
+                    dispatch(setDoShadow(!doShadow));
+                }}
+                label="Shadows"
+            />
         </MoorhenStack>
     );
 };
@@ -483,51 +471,13 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
 };
 
 export const MoorhenSceneSettingsModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-
-    const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
-
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.SCENE_SETTINGS}
-            left={width / 5}
-            top={height / 6}
             headerTitle="Scene settings"
-            minHeight={convertViewtoPx(60, height)}
-            minWidth={convertRemToPx(40)}
-            maxHeight={convertViewtoPx(75, height)}
-            maxWidth={convertRemToPx(60)}
             enforceMaxBodyDimensions={true}
             body={<MoorhenSceneSettings stackDirection="horizontal" />}
             footer={null}
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={1}>
-                    <MoorhenButton
-                        variant="white"
-                        style={{ margin: "0.1rem", padding: "0.1rem" }}
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.SCENE_SETTINGS));
-                            enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                title: "Scene settings",
-                                modalId: modalKeys.SCENE_SETTINGS,
-                                children: (
-                                    <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
-                                        <MoorhenSceneSettings stackDirection="vertical" />
-                                    </div>
-                                ),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </MoorhenButton>
-                </Tooltip>,
-            ]}
         />
     );
 };

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { MoorhenSpinner } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenInfoCard } from "../../interface-base/Popovers/InfoCard";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./files-input.css";
 
 export type FilesInputProps = {
     label?: string;
+    extraTooltip?: string;
     ref?: React.RefObject<HTMLInputElement>;
     onChange?: ((e: React.ChangeEvent<HTMLInputElement>) => void) | (() => void);
     accept?: string;
@@ -13,10 +15,12 @@ export type FilesInputProps = {
     isLoading?: boolean;
     className?: string;
     style?: React.CSSProperties;
+    disabled?: boolean;
+    dowebkitdirectory?: boolean;
 };
 
 export const MoorhenFileInput = (props: FilesInputProps) => {
-    const { label, ref, onChange, accept, multiple = false, isLoading = false, className, style } = props;
+    const { label, extraTooltip, ref, onChange, accept, multiple = false, isLoading = false, className, style, disabled } = props;
     const [selectedFiles, setSelectedFiles] = useState<string>("No files selected");
 
     const handleSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,30 +42,49 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
 
     return (
         <div>
-            {label && <label htmlFor="upload-form">{label}</label>}
-            <MoorhenStack
-                direction="line"
-                align="center"
-                justify="flex-start"
-                className={className}
-                style={{ marginTop: "0.3rem", marginBottom: "0.5rem", ...style }}
-            >
+            <MoorhenStack direction="line">
+                {label && <label htmlFor="upload-form">{label}</label>}
+                {extraTooltip && (
+                    <>
+                        &nbsp;
+                        <MoorhenInfoCard infoText={extraTooltip} />
+                    </>
+                )}
+            </MoorhenStack>
+            <div className={`moorhen__input-files-container ${className}`} style={{ ...style }}>
                 <label
                     htmlFor="upload-form"
-                    className="moorhen__button__default moorhen__input-files-button"
-                    style={{ cursor: "pointer", height: "2.2rem" }}
+                    className={`moorhen__button__default moorhen__input-files-button ${disabled ? "disabled" : ""}`}
+                    style={{ cursor: disabled ? "default" : "pointer", height: "2.2rem" }}
                 >
                     <MoorhenIcon size="medium" moorhenSVG="MatSymFileOpen" />
                      Browse... 
-                    <input
-                        id="upload-form"
-                        className="moorhen__input-files-upload"
-                        type="file"
-                        accept={accept}
-                        multiple={multiple}
-                        onChange={handleSelection}
-                        ref={ref}
-                    />
+                    {!props.dowebkitdirectory && (
+                        <input
+                            disabled={disabled}
+                            id="upload-form"
+                            className="moorhen__input-files-upload"
+                            type="file"
+                            accept={accept}
+                            multiple={multiple}
+                            onChange={handleSelection}
+                            ref={ref}
+                        />
+                    )}
+                    {props.dowebkitdirectory && (
+                        <input
+                            disabled={disabled}
+                            id="upload-form"
+                            className="moorhen__input-files-upload"
+                            type="file"
+                            accept={accept}
+                            multiple={multiple}
+                            onChange={handleSelection}
+                            ref={ref}
+                            /* @ts-expect-error */
+                            webkitdirectory="true"
+                        />
+                    )}
                 </label>
                 <div className="moorhen__input-files-textfield">
                     <span style={{ flex: 1 }}>{selectedFiles}</span>
@@ -71,7 +94,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
                         </span>
                     )}
                 </div>
-            </MoorhenStack>
+            </div>
         </div>
     );
 };

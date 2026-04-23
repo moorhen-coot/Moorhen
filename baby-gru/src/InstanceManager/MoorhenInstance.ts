@@ -1,20 +1,23 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
+import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
-import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { RootState } from "@/store";
+import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
+import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
+import { StoreExtension } from "./StoreExtension";
 
-export class MoorhenInstance {
-    private dispatch: Dispatch<UnknownAction>;
+export class MoorhenInstance extends StoreExtension {
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
@@ -23,22 +26,24 @@ export class MoorhenInstance {
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private containerRef: React.RefObject<HTMLDivElement> = null;
-    private store: Store;
     private preferences: Preferences;
-    private maps: MoorhenMap[] = [];
-    private molecules: MoorhenMolecule[] = [];
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    public cootCommand: CootCommandWrapper;
-    private menuSystem: MoorhenMenuSystem | null = null;
+    private _cootCommand: CootCommandWrapper;
+    private _menuSystem: MoorhenMenuSystem;
+    private ready: boolean = false;
+    private _webComponent: MoorhenWebComponent | null = null;
+    private readyCallbacks: Array<() => void | Promise<void>> = [];
 
-    constructor(containerRef: React.RefObject<HTMLDivElement>) {
+    constructor(containerRef: React.RefObject<HTMLDivElement>, menuSystem: MoorhenMenuSystem) {
+        super();
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
         this.preferences = new Preferences();
+        this._menuSystem = menuSystem;
         this.containerRef = containerRef;
     }
 
@@ -50,10 +55,27 @@ export class MoorhenInstance {
         monomerLibraryPath: "",
     };
 
+    /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
+    public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
+        if (this.isReady()) {
+            return Promise.resolve(callback());
+        } else {
+            return new Promise(resolve => {
+                this.readyCallbacks.push(async () => {
+                    const result = await callback();
+                    resolve(result);
+                });
+            });
+        }
+    }
+
     public setCommandCentre(commandCentre: CommandCentre): void {
         this.commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
-        this.cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+        this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+    }
+    public get cootCommand(): CootCommandWrapper {
+        return this._cootCommand;
     }
 
     public getCommandCentre(): CommandCentre {
@@ -107,23 +129,201 @@ export class MoorhenInstance {
         return this.aceDRGInstance;
     }
 
-    public getStore(): Store<RootState> {
-        return this.store;
-    }
-
-    public getDispatch(): Dispatch<UnknownAction> {
-        return this.dispatch;
-    }
-
     public getContainerRef() {
         return this.containerRef;
     }
 
-    public getMenuSystem() {
-        if (!this.menuSystem) {
-            console.error("Moorhen menu system need to be initialized before it can be used. by running start instance");
+    get menuSystem(): MoorhenMenuSystem {
+        return this._menuSystem;
+    }
+
+    public isReady(): boolean {
+        return this.ready;
+    }
+
+    //========================================
+    // Files loading and saving methods
+
+    public setDefaultRepresentation() {
+        return null;
+    }
+
+    public async loadFiles(
+        files: File[] | File | FileList | string | string[] | URL | URL[]
+    ): Promise<{ type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[]> {
+        let filesArray: File[] = [];
+        const getFileFromURL = async (url: string | URL): Promise<File> => {
+            const urlString = url instanceof URL ? url.toString() : url;
+            const response = await fetch(urlString);
+            const blob = await response.blob();
+            const filename = urlString.split("/").pop() || "downloaded_file";
+            return new File([blob], filename, { type: blob.type });
+        };
+        const defaultBondSmoothness = this.store.getState().sceneSettings.defaultBondSmoothness;
+        const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
+
+        if (files instanceof File) {
+            filesArray = [files];
+        } else if (files instanceof FileList) {
+            filesArray = Array.from(files);
+        } else if (typeof files === "string") {
+            filesArray = [await getFileFromURL(files)];
+        } else if (Array.isArray(files)) {
+            if (typeof files[0] === "string" || files[0] instanceof URL) {
+                filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
+            } else if (files[0] instanceof File) {
+                filesArray = files as File[];
+            } else {
+                throw new Error("Invalid file input type");
+            }
         }
-        return this.menuSystem;
+
+        const createdObjects = await this.execWhenReady(() =>
+            autoOpenFiles(
+                filesArray,
+                this.commandCentreRef,
+                this.store,
+                this.paths.monomerLibraryPath,
+                backgroundColor,
+                defaultBondSmoothness,
+                this.timeCapsuleRef,
+                this.dispatch
+            )
+        );
+
+        return createdObjects;
+    }
+
+    //========================================
+    // General basics methods
+
+    /* Return the MoorhenMolecule Object corresponding to the given unique ID */
+    public getMolecule(uid: string): MoorhenMolecule {
+        const state = this.store.getState();
+        return state.molecules.moleculeList.filter(molecule => molecule.uniqueId === uid)[0];
+    }
+
+    /** Return the MoorhenMap Object corresponding to the given unique ID */
+    public getMap(uid: string): MoorhenMap {
+        const state = this.store.getState();
+        return state.maps.filter(map => map.uniqueId === uid)[0];
+    }
+
+    /* Center the view on the given x,y,z coordinates */
+    public centerOnCoordinate(x: number, y: number, z: number): void {
+        this.dispatch(setOrigin([x, y, z]));
+    }
+
+    /* Center the view on the given residue, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    public centerOnResidue(chain: string, residueNumber: number, moleculeUID?: string): void {
+        const state = this.store.getState();
+        let molecule: MoorhenMolecule;
+        if (!moleculeUID) {
+            molecule = state.molecules.moleculeList[0];
+        } else {
+            molecule = this.getMolecule(moleculeUID);
+        }
+        molecule.centreOn(`/*/${chain}/${residueNumber}/*:*`);
+    }
+
+    /* Center the view on the given atom, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    public centerOnAtom(chain: string, residueNumber: number, atomName: string, moleculeUID?: string): void {
+        const state = this.store.getState();
+        let molecule: MoorhenMolecule;
+        if (!moleculeUID) {
+            molecule = state.molecules.moleculeList[0];
+        } else {
+            molecule = this.getMolecule(moleculeUID);
+        }
+        molecule.centreOn(`/*/${chain}/${residueNumber}/${atomName}:*`);
+    }
+
+    //========================================
+    // methods with callbacks
+
+    /**
+     * Executes a callback when a new atom is hovered.
+     *
+     * The callback receives the hovered atom molecule unique id, residue number, and atom name.
+     * Returns a function to unsubscribe from the hovered atom changes.
+     * Example:
+     * instance.newAtomHoveredCallback((moleculeID, residueNumber, atomName) => {
+     *     console.log(`New hovered atom: ${atomName} in residue ${residueNumber} of molecule ${moleculeID}`);
+     * });
+     */
+    public newAtomHoveredCallback(callback: (moleculeID: string, residueNumber: string, atomName: string) => void): () => void {
+        const unsubscribe = this.subscribeToStore(
+            state => state.hoveringStates.hoveredAtom,
+            hoveredAtom => {
+                if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.atomInfo) {
+                    callback(hoveredAtom.molecule.uniqueId, hoveredAtom.atomInfo.res_no, hoveredAtom.atomInfo.name);
+                }
+            }
+        );
+
+        return unsubscribe;
+    }
+
+    // ================= Molecules changed callbacks =================
+
+    private _moleculeChangedCallbacks: { [callbackUID: string]: { applyTo: string; callback: (moleculeUID: string) => void } } = {};
+
+    public newMoleculeChangedCallback(callback: (moleculeUID: string) => void, moleculeUID?: string): () => void {
+        const callbackUID = guid();
+        this._moleculeChangedCallbacks[callbackUID] = { applyTo: moleculeUID ?? "any", callback: callback };
+
+        return () => {
+            delete this._moleculeChangedCallbacks[callbackUID];
+        };
+    }
+
+    public triggerMoleculeChanged(UIDorMolNo: string | number): void {
+        const state = this.store.getState();
+        const molecule =
+            typeof UIDorMolNo === "number" ? state.molecules.moleculeList.filter(mol => mol.molNo === UIDorMolNo)[0] : undefined;
+        const resolvedMoleculeUID = typeof UIDorMolNo === "string" ? UIDorMolNo : molecule?.uniqueId;
+
+        Object.values(this._moleculeChangedCallbacks).forEach(callbackInfo => {
+            if (callbackInfo.applyTo === "any" || callbackInfo.applyTo === resolvedMoleculeUID) {
+                callbackInfo.callback(resolvedMoleculeUID);
+            }
+        });
+    }
+
+    //========================================
+    // Methods to set attributes on the web component from the instance, which will trigger re-render of the react tree when they change
+    set width(value: number | string | null) {
+        if (this._webComponent) {
+            this._webComponent.width = value;
+        }
+    }
+
+    set height(value: number | string | null) {
+        if (this._webComponent) {
+            this._webComponent.height = value;
+        }
+    }
+
+    set urlPrefix(value: string) {
+        if (this._webComponent) {
+            this._webComponent.urlPrefix = value;
+        }
+    }
+
+    set disableFileUploads(value: boolean) {
+        if (this._webComponent) {
+            this._webComponent.disableFileUploads = value;
+        }
+    }
+
+    set viewOnly(value: boolean) {
+        if (this._webComponent) {
+            this._webComponent.viewOnly = value;
+        }
+    }
+
+    set webComponent(webComponent: MoorhenWebComponent) {
+        this._webComponent = webComponent;
     }
 
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
@@ -143,7 +343,6 @@ export class MoorhenInstance {
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         store: Store,
-        menuSystem: MoorhenMenuSystem,
         externalCommandCentreRef?: React.RefObject<CommandCentre | null>,
         externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>,
         timeCapsuleConfig?: {
@@ -156,7 +355,6 @@ export class MoorhenInstance {
         this.store = store;
         this.moleculesRef = moleculesRef;
         this.mapsRef = mapsRef;
-        this.menuSystem = menuSystem;
         // == Init Time capsule ==
         const activeMapRef = React.createRef<moorhen.Map>();
         const newTimeCapsule = new MoorhenTimeCapsule(this.moleculesRef, this.mapsRef, activeMapRef, this.store);
@@ -188,6 +386,9 @@ export class MoorhenInstance {
             onCommandStart: () => {
                 this.dispatch(toggleCootCommandStart());
             },
+            onMoleculeChanged: (cootMolNo: number) => {
+                this.triggerMoleculeChanged(cootMolNo);
+            },
         });
         newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
         this.setCommandCentre(newCommandCentre);
@@ -198,6 +399,9 @@ export class MoorhenInstance {
         await newCommandCentre.init();
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
+        this.ready = true;
+        await Promise.all(this.readyCallbacks.map(callback => callback()));
+        this.readyCallbacks = [];
     }
 
     public cleanup(): void {

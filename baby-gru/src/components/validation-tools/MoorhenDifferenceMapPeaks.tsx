@@ -1,25 +1,21 @@
-import { useCallback, useRef, useState } from "react";
-import { Col, Form } from "react-bootstrap";
 import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { useSelector , useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
-import { MoorhenSlider } from "../inputs";
-import { convertViewtoPx } from "../../utils/utils";
-import { moorhen } from "../../types/moorhen";
+import { setOrigin } from "../../store/glRefSlice";
 import { libcootApi } from "../../types/libcoot";
-import { setOrigin } from "../../store/glRefSlice"
+import { moorhen } from "../../types/moorhen";
+import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenSlider } from "../inputs";
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
-
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-
-export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
-
-    const dispatch = useDispatch()
-    const commandCentre = useCommandCentre();;
+export const MoorhenDifferenceMapPeaks = (props: { chartId: string }) => {
+    const dispatch = useDispatch();
+    const commandCentre = useCommandCentre();
     const chartRef = useRef(null);
 
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5);
@@ -119,7 +115,7 @@ export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
                 }
 
                 const peakIndex = points[0].index;
-                dispatch(setOrigin([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ]))
+                dispatch(setOrigin([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ]));
             };
 
             const setTooltipTitle = (args: TooltipItem<ChartType>[]) => {
@@ -181,8 +177,8 @@ export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
             const datasets = [
                 {
                     label: "Difference Map Peaks",
-                    data: plotData.map((peak) => peak.featureValue),
-                    backgroundColor: plotData.map((peak) => colourPalette(peak.featureValue)),
+                    data: plotData.map(peak => peak.featureValue),
+                    backgroundColor: plotData.map(peak => colourPalette(peak.featureValue)),
                     borderWidth: 0,
                     clip: false,
                 },
@@ -257,18 +253,14 @@ export const MoorhenDifferenceMapPeaks = (props: {chartId: string;}) => {
             filterMapFunction={filterMapFunction}
             enableChainSelect={false}
             extraControlForm={
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <Form.Group controlId="rmsdSlider" style={{ margin: "0.5rem", width: "100%" }}>
-                        <MoorhenSlider
-                            minVal={2.5}
-                            maxVal={7.0}
-                            logScale={false}
-                            sliderTitle="RMSD"
-                            externalValue={selectedRmsd}
-                            setExternalValue={(value) => setSelectedRmsd(value)}
-                        />
-                    </Form.Group>
-                </Col>
+                <MoorhenSlider
+                    minVal={2.5}
+                    maxVal={7.0}
+                    logScale={false}
+                    sliderTitle="RMSD"
+                    externalValue={selectedRmsd}
+                    setExternalValue={value => setSelectedRmsd(value)}
+                />
             }
             extraControlFormValue={selectedRmsd}
         />

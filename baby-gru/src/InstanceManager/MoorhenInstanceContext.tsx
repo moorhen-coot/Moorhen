@@ -1,5 +1,6 @@
 import React, { ReactNode, createContext, useEffect, useRef } from "react";
-import { MoorhenInstance } from "./MoorhenInstance";
+import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenInstance } from ".";
 
 // Create the context type
 interface MoorhenInstanceContextType {
@@ -12,11 +13,12 @@ const MoorhenInstanceContext = createContext<MoorhenInstanceContextType | null>(
 // Provider props interface
 interface MoorhenInstanceProviderProps {
     children: ReactNode;
+    menuSystem: MoorhenMenuSystem;
 }
-export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = ({ children }) => {
+export const MoorhenInstanceProvider = (props: MoorhenInstanceProviderProps) => {
     // Create or use provided instance - only created once per provider
     const popOverContainerRef = useRef<HTMLDivElement>(null);
-    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance(popOverContainerRef));
+    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance(popOverContainerRef, props.menuSystem));
 
     // Add cleanup for unmount and HMR
     useEffect(() => {
@@ -31,7 +33,7 @@ export const MoorhenInstanceProvider: React.FC<MoorhenInstanceProviderProps> = (
 
     return (
         <div ref={popOverContainerRef}>
-            <MoorhenInstanceContext.Provider value={contextValue}>{children}</MoorhenInstanceContext.Provider>
+            <MoorhenInstanceContext.Provider value={contextValue}>{props.children}</MoorhenInstanceContext.Provider>
         </div>
     );
 };

@@ -1,14 +1,12 @@
-import { useSnackbar } from "notistack";
-import { Button, Col, Form, Row } from "react-bootstrap";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
-import { useCallback, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { useRef, useState } from "react";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenToggle } from "../inputs";
 
 export const ImportMap = () => {
     const dispatch = useDispatch();
@@ -21,8 +19,6 @@ export const ImportMap = () => {
     const isDiffRef = useRef<undefined | HTMLInputElement>(null);
     const [isActiveButton, setIsActiveButton] = useState(true);
     const [isDiff, setIsDiff] = useState<boolean>(false);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const readMaps = async () => {
         if (filesRef.current.files.length > 0) {
@@ -63,7 +59,7 @@ export const ImportMap = () => {
                 });
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar("Error reading map files", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Error reading map files", variant: "error" }));
                 console.log(`Cannot read files`);
             } finally {
                 document.body.click();
@@ -73,24 +69,15 @@ export const ImportMap = () => {
 
     return (
         <>
-            <Row>
-                <Form.Group style={{ width: "30rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadCCP4Map" className="mb-3">
-                    <Form.Label>CCP4/MRC Map...</Form.Label>
-                    <Form.Control ref={filesRef} type="file" multiple={true} accept=".map, .mrc, .map.gz, .mrc.gz, .ccp4" />
-                </Form.Group>
-            </Row>
-            <Row style={{ marginBottom: "1rem" }}>
-                <Col>
-                    <MoorhenToggle
-                        label={"is diff map"}
-                        name={`isDifference`}
-                        type="checkbox"
-                        ref={isDiffRef}
-                        checked={isDiff}
-                        onChange={e => setIsDiff(e.target.checked)}
-                    />
-                </Col>
-            </Row>
+            <MoorhenFileInput label="CCP4/MRC Map..." ref={filesRef} multiple={true} accept=".map, .mrc, .map.gz, .mrc.gz, .ccp4" />
+            <MoorhenToggle
+                label={"is diff map"}
+                name={`isDifference`}
+                type="checkbox"
+                ref={isDiffRef}
+                checked={isDiff}
+                onChange={e => setIsDiff(e.target.checked)}
+            />
             <MoorhenButton variant="primary" onClick={readMaps} disabled={!isActiveButton}>
                 OK
             </MoorhenButton>

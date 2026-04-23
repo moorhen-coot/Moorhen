@@ -21,7 +21,6 @@
 }
 
 .moorhen__stack_card {
-    width: auto;
     flex: 1;
     border: 1px solid var(--moorhen-border);
     padding: 1rem;

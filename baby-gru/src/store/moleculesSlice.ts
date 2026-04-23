@@ -13,7 +13,7 @@ const initialState: {
     moleculeList: [],
 };
 
-export const moleculesSlice = createSlice({
+const moleculesSlice = createSlice({
     name: "molecules",
     initialState: initialState,
     reducers: {

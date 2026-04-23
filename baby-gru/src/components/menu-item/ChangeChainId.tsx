@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { enqueueSnackbar } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
@@ -17,10 +17,9 @@ export const ChangeChainId = () => {
     const [invalidNewId, setInvalidNewId] = useState<boolean>(false);
     const [selectedChain, setSelectedChain] = useState<string>(null);
     const [selectedModel, setSelectedModel] = useState<number | null>(null);
+    const dispatch = useDispatch();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const handleModelChange = useCallback(
         (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -60,19 +59,19 @@ export const ChangeChainId = () => {
 
     const changeChainId = useCallback(async () => {
         if (!moleculeSelectRef.current.value || !chainSelectRef.current.value || !newChainIdFormRef.current.value) {
-            enqueueSnackbar("Missing input", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Missing input", variant: "warning" }));
             return;
         }
 
         const molecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
         if (!molecule) {
-            enqueueSnackbar("Something went wrong", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "error" }));
             return;
         }
 
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value);
         if (!sequence) {
-            enqueueSnackbar("Something went wrong", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "error" }));
             return;
         }
 
@@ -92,11 +91,11 @@ export const ChangeChainId = () => {
                 document.body.click();
             } else {
                 setInvalidNewId(true);
-                enqueueSnackbar("Not a valid new chain ID", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Not a valid new chain ID", variant: "warning" }));
             }
         } catch (err) {
             setInvalidNewId(true);
-            enqueueSnackbar("Something went wrong", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "error" }));
             console.warn(err);
         }
     }, [molecules]);

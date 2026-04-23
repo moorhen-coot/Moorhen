@@ -2,15 +2,11 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { Button, Form, Stack } from "react-bootstrap";
-import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { LastPageOutlined } from "@mui/icons-material";
 import { moorhen } from "../../types/moorhen";
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
-import { MoorhenReduxStoreType, RootState } from '../../store/MoorhenReduxStore';
+import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle } from "../inputs";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
@@ -19,9 +15,6 @@ import {
     setResetClippingFogging,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { modalKeys } from "../../utils/enums";
-import { hideModal } from "../../store/modalsSlice";
 import {
     setFogStart,
     setFogEnd,
@@ -33,7 +26,6 @@ import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponen
 import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
 import { twod_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/twodshapes-side-on-view-vertex-shader.js';
 import { perfect_sphere_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/perfect-sphere-side-on-view-fragment-shader.js';
-import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
     const box = elem.getBoundingClientRect()
@@ -861,68 +853,66 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         <>
         <MoorhenStack direction={props.stackDirection} card={true}>
             <span style={{ height: "2rem", margin: "0.2rem" }}>Clip, fog and depth blur</span>
-            <Stack gap={1} direction="vertical">
+            <MoorhenStack gap={1} direction="vertical">
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
                 </figure>
                 </div>
-            </Stack>
-            <Stack gap={2} direction="vertical">
+            </MoorhenStack>
+            <MoorhenStack gap={2} direction="vertical">
                 <ClipFogBlurOptionsPanel />
-            </Stack>
+            </MoorhenStack>
         </MoorhenStack>
         </>
     );
 };
 
-export const MoorhenSceneSlidersModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+// export const MoorhenSceneSlidersModal = () => {
+//     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+//     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
-    const dispatch = useDispatch();
+//     const dispatch = useDispatch();
 
-    const { enqueueSnackbar } = useSnackbar();
-
-    return (
-        <MoorhenDraggableModalBase
-            modalId={modalKeys.SCENE_SLIDERS}
-            left={width / 5}
-            top={height / 6}
-            headerTitle="Fog/clip/blur"
-            minHeight={convertViewtoPx(40, height)}
-            minWidth={convertRemToPx(30)}
-            maxHeight={convertViewtoPx(75, height)}
-            maxWidth={convertRemToPx(60)}
-            enforceMaxBodyDimensions={true}
-            body={<MoorhenSlidersSettings stackDirection="vertical" />}
-            footer={null}
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={1}>
-                    <Button
-                        variant="white"
-                        style={{ margin: "0.1rem", padding: "0.1rem" }}
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.SCENE_SLIDERS));
-                            enqueueSnackbar(modalKeys.SCENE_SLIDERS, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                title: "Scene settings",
-                                modalId: modalKeys.SCENE_SLIDERS,
-                                children: (
-                                    <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
-                                        <MoorhenSlidersSettings stackDirection="vertical" />
-                                    </div>
-                                ),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </Button>
-                </Tooltip>,
-            ]}
-        />
-    );
-};
+//     return (
+//         <MoorhenDraggableModalBase
+//             modalId={modalKeys.SCENE_SLIDERS}
+//             left={width / 5}
+//             top={height / 6}
+//             headerTitle="Fog/clip/blur"
+//             minHeight={convertViewtoPx(40, height)}
+//             minWidth={convertRemToPx(30)}
+//             maxHeight={convertViewtoPx(75, height)}
+//             maxWidth={convertRemToPx(60)}
+//             enforceMaxBodyDimensions={true}
+//             body={<MoorhenSlidersSettings stackDirection="vertical" />}
+//             footer={null}
+//             additionalHeaderButtons={[
+//                 <Tooltip title={"Move to side panel"} key={1}>
+//                     <Button
+//                         variant="white"
+//                         style={{ margin: "0.1rem", padding: "0.1rem" }}
+//                         onClick={() => {
+//                             dispatch(hideModal(modalKeys.SCENE_SLIDERS));
+//                             enqueueSnackbar(modalKeys.SCENE_SLIDERS, {
+//                                 variant: "sideBar",
+//                                 persist: true,
+//                                 anchorOrigin: { horizontal: "right", vertical: "bottom" },
+//                                 title: "Scene settings",
+//                                 modalId: modalKeys.SCENE_SLIDERS,
+//                                 children: (
+//                                     <div style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "50vh" }}>
+//                                         <MoorhenSlidersSettings stackDirection="vertical" />
+//                                     </div>
+//                                 ),
+//                             });
+//                         }}
+//                     >
+//                         <LastPageOutlined />
+//                     </Button>
+//                 </Tooltip>,
+//             ]}
+//         />
+//     );
+// };

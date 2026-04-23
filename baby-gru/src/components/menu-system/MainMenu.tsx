@@ -2,14 +2,14 @@ import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
-import { setShownSidePanel } from "@/store";
+import { setShownSidePanel, showModal } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
-import { ModalKey, showModal } from "../../store/modalsSlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
+import { useMenuHook } from "./menuHook";
 
 export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
@@ -18,7 +18,9 @@ export const MoorhenMainMenu = memo(() => {
     const GLViewportHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
+
+    const menuVersion = useMenuHook();
 
     const handleMainMenuToggle = () => {
         if (isOpen) {
@@ -60,7 +62,7 @@ export const MoorhenMainMenu = memo(() => {
         } else {
             return null;
         }
-    }, [activeMenu, isOpen]);
+    }, [activeMenu, isOpen, menuSystem, menuVersion]);
 
     const menu = useMemo(() => {
         if (!isOpen) return null;
@@ -77,7 +79,7 @@ export const MoorhenMainMenu = memo(() => {
                     handleClick(menu.label);
                 } else if (menu.type === "modal") {
                     setActiveMenu(null);
-                    dispatch(showModal(menu.modal as ModalKey));
+                    dispatch(showModal({ key: menu.modal, openDocked: menu.args?.openDocked ?? null }));
                 } else if (menu.type === "panel") {
                     setActiveMenu(null);
                     dispatch(setShownSidePanel(menu.panel));
@@ -87,7 +89,7 @@ export const MoorhenMainMenu = memo(() => {
         });
 
         return <div className="moorhen__main-menu-buttons-container">{buttonsList}</div>;
-    }, [isOpen, isDevMode]);
+    }, [isOpen, isDevMode, menuSystem, menuVersion]);
 
     return (
         <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 10 }}>

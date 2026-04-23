@@ -1281,6 +1281,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         evt.stopPropagation();
                     } else if (evt.which === 2) {
                         evt.stopPropagation();
+                        evt.preventDefault();
                     } else {
                         self.doRightClick(evt, self);
                         evt.stopPropagation();
@@ -6790,6 +6791,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const event_y = event.pageY;
         self.init_y = event.pageY;
         this.currentlyDraggedAtom = null
+        if (event.which === 2) {
+            event.preventDefault();
+        }
         if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(displayBuffers.length>0){
@@ -6961,6 +6965,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const moveFactor = getDeviceScale() * 400.0 / this.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
 
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
+            if (self.mouseDownButton === 1) {
+                event.preventDefault();
+            }
             const invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
             const theMatrix = quatToMat4(invQuat);
@@ -7136,6 +7143,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.mouseDown = true;
         self.mouseDownButton = event.button;
         self.mouseMoved = false;
+        if (event.button === 1) {
+            event.preventDefault();
+        }
     }
 
     handleKeyUp(event, self) {

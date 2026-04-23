@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import "./MoorhenInput.css";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenStack } from "../interface-base/Stack/Stack";
 import { MoorhenToggle } from "./MoorhenToggle/Toggle";
 import React, { useState } from "react";
 
@@ -73,6 +73,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
                     placeholder={placeholder}
                     onChange={handleChange}
                     ref={cidFormRef}
+                    style={{ width: "100%" }}
                     value={selection}
                 />
             </MoorhenStack>

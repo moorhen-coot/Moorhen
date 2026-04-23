@@ -1,6 +1,6 @@
-import { useSnackbar } from "notistack";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { useRef } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setContourLevel } from "../../store/mapContourSettingsSlice";
 import {
@@ -28,8 +28,6 @@ export const ConnectMoleculeToMaps = () => {
     const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.connectedMolecule);
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const menuItemText = "Connect mol. and map for updating...";
 
@@ -102,7 +100,7 @@ export const ConnectMoleculeToMaps = () => {
                 })
             );
         } else {
-            enqueueSnackbar("Missing input data", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Missing input data", variant: "warning" }));
         }
     };
 

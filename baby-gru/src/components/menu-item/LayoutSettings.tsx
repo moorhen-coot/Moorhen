@@ -1,4 +1,3 @@
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import {
     setDoAnaglyphStereo,
@@ -8,7 +7,8 @@ import {
     setDoThreeWayView,
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 export const LayoutSettings = () => {
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo);
@@ -18,8 +18,6 @@ export const LayoutSettings = () => {
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView);
 
     const dispatch = useDispatch();
-
-    const menuItemText = "Layout...";
 
     const handleChange = (event, type) => {
         dispatch(setDoSideBySideStereo(false));
@@ -44,79 +42,68 @@ export const LayoutSettings = () => {
     if (!doMultiView && !doSideBySideStereo && !doCrossEyedStereo && !doAnaglyphStereo && !doThreeWayView) normal = true;
 
     return (
-        <div style={{ width: "18rem" }}>
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    name="multiview"
-                    defaultChecked={doSideBySideStereo}
-                    onChange={e => {
-                        handleChange(e, "sidebyside");
-                    }}
-                    label="Side-by-side stereo"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    name="multiview"
-                    defaultChecked={doCrossEyedStereo}
-                    onChange={e => {
-                        handleChange(e, "crosseyed");
-                    }}
-                    label="Cross-eyed stereo"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    name="multiview"
-                    defaultChecked={doAnaglyphStereo}
-                    onChange={e => {
-                        handleChange(e, "anaglyph");
-                    }}
-                    label="Anaglyph stereo"
-                />
-            </InputGroup>
+        <MoorhenStack>
+            <MoorhenToggle
+                type="radio"
+                name="multiview"
+                checked={doSideBySideStereo}
+                onChange={e => {
+                    handleChange(e, "sidebyside");
+                }}
+                label="Side-by-side stereo"
+            />
+
+            <MoorhenToggle
+                type="radio"
+                name="multiview"
+                checked={doCrossEyedStereo}
+                onChange={e => {
+                    handleChange(e, "crosseyed");
+                }}
+                label="Cross-eyed stereo"
+            />
+            <MoorhenToggle
+                type="radio"
+                name="multiview"
+                checked={doAnaglyphStereo}
+                onChange={e => {
+                    handleChange(e, "anaglyph");
+                }}
+                label="Anaglyph stereo"
+            />
             <hr />
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    className="custom-control-input"
-                    name="multiview"
-                    defaultChecked={doThreeWayView}
-                    onChange={e => {
-                        handleChange(e, "threeway");
-                    }}
-                    label="Three way view"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="radio"
+                className="custom-control-input"
+                name="multiview"
+                checked={doThreeWayView}
+                onChange={e => {
+                    handleChange(e, "threeway");
+                }}
+                label="Three way view"
+            />
             <hr />
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    className="custom-control-input"
-                    name="multiview"
-                    defaultChecked={doMultiView}
-                    onChange={e => {
-                        handleChange(e, "multiview");
-                    }}
-                    label="One view per molecule"
-                />
-            </InputGroup>
+            <MoorhenToggle
+                type="radio"
+                className="custom-control-input"
+                name="multiview"
+                checked={doMultiView}
+                onChange={e => {
+                    handleChange(e, "multiview");
+                }}
+                label="One view per molecule"
+            />
             <hr />
-            <InputGroup className="moorhen-input-group-check">
-                <Form.Check
-                    type="radio"
-                    className="custom-control-input"
-                    name="multiview"
-                    defaultChecked={normal}
-                    onChange={e => {
-                        handleChange(e, "normal");
-                    }}
-                    label="Normal"
-                />
-            </InputGroup>
-        </div>
+            <MoorhenToggle
+                type="radio"
+                className="custom-control-input"
+                name="multiview"
+                checked={normal}
+                onChange={e => {
+                    handleChange(e, "normal");
+                }}
+                label="Normal"
+            />
+        </MoorhenStack>
     );
 };

@@ -21,6 +21,7 @@ export class ScreenRecorder  {
     glRef: React.RefObject<webGL.MGWebGL>;
     store: Store<RootState>;
     _isRecording: boolean;
+    videoName = "moorhen";
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
         this.glRef = glRef; // BUG FIX: assign glRef
@@ -87,13 +88,17 @@ export class ScreenRecorder  {
         this.rec.start();
     }
 
+    setVideoName = (name: string) => {
+        this.videoName = name;
+    }
+
     downloadVideo = async (blob: Blob) => {
         const url = URL.createObjectURL(blob);
         let link: any = document.getElementById('download_video_link');
         if (!link) {
             link = document.createElement('a');
             link.id = 'download_video_link';
-            link.download = "moorhen.webm";
+            link.download = `${this.videoName}.webm`;
             document.body.appendChild(link);
         }
         link.href = url;

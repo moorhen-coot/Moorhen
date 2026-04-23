@@ -12,10 +12,11 @@ import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
 Chart.register(...registerables);
 
-export const MoorhenColourMapByOtherMapModal = () => {
+export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
     const menu = "colour-map-by-other-map-menu-item";
     const dispatch = useDispatch();
     const chartRef = useRef<Chart | null>(null);
@@ -320,17 +321,11 @@ export const MoorhenColourMapByOtherMapModal = () => {
 
     return (
         <MoorhenDraggableModalBase
+            allowDocking={true}
             modalId={modalKeys.COLOR_MAP_BY_MAP}
             body={panelContent}
             headerTitle="Colour map by other map..."
-            left={100}
-            top={100}
-            initialHeight={600}
-            initialWidth={440}
-            minHeight={220}
-            minWidth={360}
-            maxHeight={600}
-            maxWidth={500}
+            openDocked={props.openDocked}
         />
     );
 };

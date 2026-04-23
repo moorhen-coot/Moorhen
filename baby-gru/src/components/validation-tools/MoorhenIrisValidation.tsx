@@ -1,6 +1,5 @@
 import { Iris, IrisAesthetics, IrisData, IrisProps } from "iris-validation";
 import iris_module from "iris-validation-backend";
-import { Col, Form, Row } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
@@ -9,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { convertRemToPx } from "../../utils/MoorhenUtils";
 import { MoorhenMoleculeSelect } from "../inputs/Selector/MoleculeSelector";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MoorhenIrisValidation = (props: {
     sideBarWidth: number;
@@ -149,20 +149,13 @@ export const MoorhenIrisValidation = (props: {
     };
 
     return (
-        <Fragment>
-            <Form style={{ padding: "0", margin: "0" }}>
-                <Form.Group>
-                    <Row style={{ padding: "0", margin: "0" }}>
-                        <Col>
-                            <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
-                        </Col>
-                        <Col>
-                            <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
-                        </Col>
-                    </Row>
-                </Form.Group>
-            </Form>
+        <>
+            <MoorhenStack direction="line">
+                <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={molecules} ref={moleculeSelectRef} />
+
+                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
+            </MoorhenStack>
             {irisData ? <Iris {...iris_props} /> : <>No data</>}
-        </Fragment>
+        </>
     );
 };

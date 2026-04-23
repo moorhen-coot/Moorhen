@@ -1,4 +1,3 @@
-import { Button, Modal } from "react-bootstrap";
 import React, { ErrorInfo } from "react";
 import { MoorhenInstance } from "./InstanceManager";
 import { MoorhenButton } from "./components/inputs";
@@ -66,17 +65,17 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
             head.appendChild(style);
 
             return (
-                <Modal size="lg" show={true} backdrop="static" keyboard={false}>
-                    <Modal.Header>
-                        <Modal.Title>Something went wrong...</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>An error has occurred in Moorhen. You will need to refresh the page to re-start the app.</Modal.Body>
-                    <Modal.Footer>
+                <div>
+                    <div>
+                        <h1>Something went wrong...</h1>
+                    </div>
+                    <div>An error has occurred in Moorhen. You will need to refresh the page to re-start the app.</div>
+                    <div>
                         <MoorhenButton variant="primary" onClick={this.handleBackupDownload.bind(this)}>
                             Download last molecule backup
                         </MoorhenButton>
-                    </Modal.Footer>
-                </Modal>
+                    </div>
+                </div>
             );
         }
 

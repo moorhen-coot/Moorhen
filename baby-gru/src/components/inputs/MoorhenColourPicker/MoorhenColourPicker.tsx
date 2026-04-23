@@ -1,8 +1,9 @@
 import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
 import { useRef, useState } from "react";
 import { hexToRGB, rgbToHex } from "../../../utils/utils";
-import { MoorhenPopover, MoorhenStack } from "../../interface-base";
+import { MoorhenPopover } from "../../interface-base/Popovers/Popover";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
 
 type RGBAColour = [number, number, number] | [number, number, number, number];

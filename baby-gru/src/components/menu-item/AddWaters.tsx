@@ -1,8 +1,7 @@
-import { enqueueSnackbar, useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useRef, useState } from "react";
-import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
-import useStateWithRef from "../../hooks/useStateWithRef";
+import { useRef } from "react";
+import { enqueueSnackbar } from "@/store";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { usePersistentState } from "../../store/menusSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
@@ -10,6 +9,7 @@ import { MoorhenNumberInput } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const AddWaters = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -34,7 +34,7 @@ export const AddWaters = () => {
         console.log("Set sigma to ", sigmaMapRef.current);
         const result = await moorhenInstance.cootCommand.add_water(moleculeMolNo, mapMolNo);
         const added = result.data.result.result;
-        enqueueSnackbar(`Added ${added} water molecules`, { variant: "success" });
+        dispatch(enqueueSnackbar({ message: `Added ${added} water molecules`, variant: "success" }));
         document.body.click();
 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === moleculeMolNo);
@@ -44,11 +44,11 @@ export const AddWaters = () => {
     };
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenNumberInput label="RMSD cutoff" type="number" value={sigmaMap} setValue={val => setSigmaMap(+val)} />
             <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

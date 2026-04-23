@@ -2,8 +2,9 @@
 :root {
     --z-window-base: 300;
     --z-side-panels: 400;
-    --z-menu-base: 500;
-    --z-menu: 510;
+    --z-modals: 500;
+    --z-menu-base: 600;
+    --z-menu: 610;
     --z-popover: 1000;
     --z-tooltip: 2000;
 }

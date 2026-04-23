@@ -83,3 +83,39 @@
     width: auto;
     animation: tooltipSlideIn 0.2s ease-out;
 }
+
+.moorhen__info-card {
+    font-size: 1rem;
+    font-style: italic;
+    width: auto;
+    max-width: 26rem;
+}
+
+.moorhen__info-card > h1 {
+    font-size: 1.5rem;
+    font-style: normal;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__info-card > h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0.75rem 0 0.5rem 0;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__info-card > h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem 0;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__info-card > img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}

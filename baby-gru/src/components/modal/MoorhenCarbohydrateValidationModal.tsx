@@ -1,7 +1,5 @@
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { Button, Row, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { CSSProperties } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -11,15 +9,14 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
 
-export const MoorhenCarbohydrateValidationModal = () => {
+export const MoorhenCarbohydrateValidationModal = (props: ModalComponentProps) => {
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     const dispatch = useDispatch();
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const header = (title: string) => (
         <MoorhenStack direction="horizontal" gap={1}>
@@ -41,9 +38,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
 
     const body = (style: CSSProperties) => (
         <div style={style}>
-            <Row className={"big-validation-tool-container-row"}>
-                <MoorhenCarbohydrateValidation />
-            </Row>
+            <MoorhenCarbohydrateValidation />
         </div>
     );
 
@@ -62,27 +57,7 @@ export const MoorhenCarbohydrateValidationModal = () => {
             headerTitle={header("Carbohydrate validation with Privateer")}
             footer={null}
             body={body({ height: "100%" })}
-            additionalHeaderButtons={[
-                <Tooltip title={"Move to side panel"} key={2}>
-                    <MoorhenButton
-                        variant="white"
-                        style={{ margin: "0.1rem", padding: "0.1rem" }}
-                        onClick={() => {
-                            dispatch(hideModal(modalKeys.CARB_VALIDATION));
-                            enqueueSnackbar(modalKeys.CARB_VALIDATION, {
-                                variant: "sideBar",
-                                persist: true,
-                                anchorOrigin: { horizontal: "right", vertical: "bottom" },
-                                modalId: modalKeys.CARB_VALIDATION,
-                                title: header("Privateer"),
-                                children: body({ overflowY: "scroll", overflowX: "hidden", maxHeight: "30vh" }),
-                            });
-                        }}
-                    >
-                        <LastPageOutlined />
-                    </MoorhenButton>
-                </Tooltip>,
-            ]}
+            allowDocking
         />
     );
 };

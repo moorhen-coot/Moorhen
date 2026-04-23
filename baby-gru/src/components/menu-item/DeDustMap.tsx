@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const DedustMap = () => {
     const dispatch = useDispatch();
@@ -50,7 +51,9 @@ export const DedustMap = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenMapSelect maps={maps} ref={selectRef} />
+            </MoorhenStack>
             <MoorhenButton onClick={onCompleted}>Apply</MoorhenButton>
         </>
     );

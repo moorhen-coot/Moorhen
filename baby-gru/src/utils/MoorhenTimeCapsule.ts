@@ -207,7 +207,7 @@ export class MoorhenTimeCapsule {
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    activeMapRef: React.RefObject<moorhen.Map>;
+    activeMapRef: React.RefObject<moorhen.Map | null>;
     busy: boolean;
     modificationCount: number;
     modificationCountBackupThreshold: number;

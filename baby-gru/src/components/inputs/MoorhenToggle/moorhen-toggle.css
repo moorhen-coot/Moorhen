@@ -56,6 +56,43 @@
     border-radius: 10px;
 }
 
+.moorhen__toggle-radio {
+    position: absolute;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+.moorhen__toggle-radio:before {
+    position: absolute;
+    content: "";
+    height: 10px;
+    width: 10px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-radio {
+    border-color: var(--moorhen-focus);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus-shadow);
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-radio:before {
+    background-color: var(--moorhen-focus);
+}
+
 .moorhen__toggle-slider:before {
     position: absolute;
     bottom: 1px;

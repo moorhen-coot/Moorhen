@@ -1,17 +1,14 @@
 import { ApolloClient, ApolloProvider, InMemoryCache, useLazyQuery } from "@apollo/client";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
 import { Backdrop } from "@mui/material";
-import { Store } from "@reduxjs/toolkit";
-import { Button, Col, Form, FormSelect, Row, Spinner, Stack } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { gql } from "../../utils/__graphql__/gql";
 import { GetPolimerInfoQueryVariables } from "../../utils/__graphql__/graphql";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenQueryHitCard } from "../card/MoorhenSequenceQueryHitCard";
+import { MoorhenSpinner } from "../icons";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
@@ -231,51 +228,54 @@ const MoorhenQuerySequence = () => {
             maxWidth={400}
             additionalChildren={
                 <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
-                    <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                    <MoorhenSpinner colour="white" size={"3rem"} />
                     <span>Fetching...</span>
                 </Backdrop>
             }
             headerTitle="Query using a sequence"
             body={
-                <MoorhenStack>
-                    <MoorhenStack inputGrid addMargin>
-                        <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
-                        <MoorhenChainSelect
-                            width=""
-                            molecules={molecules}
-                            onChange={handleChainChange}
-                            selectedCoordMolNo={selectedModel}
-                            ref={chainSelectRef}
-                            allowedTypes={[1, 2]}
+                <>
+                    <div>
+                        <MoorhenStack inputGrid addMargin>
+                            <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
+                            <MoorhenChainSelect
+                                width=""
+                                molecules={molecules}
+                                onChange={handleChainChange}
+                                selectedCoordMolNo={selectedModel}
+                                ref={chainSelectRef}
+                                allowedTypes={[1, 2]}
+                            />
+                            <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
+                                <option value="PDB" key="PDB">
+                                    PDB
+                                </option>
+                                <option value="AFDB" key="AFDB">
+                                    Predicted Models
+                                </option>
+                            </MoorhenSelect>
+                        </MoorhenStack>
+                        <MoorhenSlider
+                            minVal={0.1}
+                            maxVal={1.0}
+                            logScale={false}
+                            sliderTitle="E-Val cutoff"
+                            decimalPlaces={1}
+                            externalValue={eValCutoff}
+                            setExternalValue={setEValCutoff}
                         />
-                        <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
-                            <option value="PDB" key="PDB">
-                                PDB
-                            </option>
-                            <option value="AFDB" key="AFDB">
-                                Predicted Models
-                            </option>
-                        </MoorhenSelect>
-                    </MoorhenStack>
-                    <MoorhenSlider
-                        minVal={0.1}
-                        maxVal={1.0}
-                        logScale={false}
-                        sliderTitle="E-Val cutoff"
-                        decimalPlaces={1}
-                        externalValue={eValCutoff}
-                        setExternalValue={value => setEValCutoff(value)}
-                    />
-                    <MoorhenSlider
-                        minVal={1}
-                        maxVal={100}
-                        logScale={false}
-                        sliderTitle="Seq. Id. cutoff"
-                        externalValue={seqIdCutoff}
-                        decimalPlaces={0}
-                        setExternalValue={value => setSeqIdCutoff(value)}
-                    />
-                    <hr></hr>
+                        <MoorhenSlider
+                            minVal={1}
+                            maxVal={100}
+                            logScale={false}
+                            sliderTitle="Seq. Id. cutoff"
+                            externalValue={seqIdCutoff}
+                            decimalPlaces={0}
+                            setExternalValue={setSeqIdCutoff}
+                        />
+                        <br />
+                        <hr></hr>
+                    </div>
                     {data ? (
                         <>
                             {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
@@ -299,7 +299,7 @@ const MoorhenQuerySequence = () => {
                             )}
                         </>
                     ) : null}
-                </MoorhenStack>
+                </>
             }
             footer={
                 <>

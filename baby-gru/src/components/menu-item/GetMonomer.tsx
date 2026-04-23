@@ -1,9 +1,8 @@
 import { Autocomplete, CircularProgress, MenuItem, Skeleton, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
@@ -101,8 +100,6 @@ export const GetMonomer = () => {
 
     const originState = useSelector((state: moorhen.State) => state.glRef.origin);
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const filterOptions = useMemo(
         () =>
             createFilterOptions({
@@ -137,7 +134,7 @@ export const GetMonomer = () => {
                 )) as moorhen.WorkerResponse<libcootApi.compoundInfo[]>;
                 monLibListRef.current = table.data.result.result;
             } else {
-                enqueueSnackbar("Unable to fetch ligand names", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Unable to fetch ligand names", variant: "warning" }));
                 setSearchMode("tlc");
             }
             setBusy(false);
@@ -194,7 +191,7 @@ export const GetMonomer = () => {
             if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                 await createNewLigandMolecule(tlc, result.data.result.result, ligandDict);
             } else {
-                enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             }
         },
         [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules, commandCentre]
@@ -248,7 +245,7 @@ export const GetMonomer = () => {
         }
 
         if (!newTlc || !moleculeSelectRef.current.value) {
-            enqueueSnackbar("Something went wrong", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
             return;
         }
 
@@ -264,7 +261,7 @@ export const GetMonomer = () => {
             const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
             await createNewLigandMolecule(newTlc, result.data.result.result, fromMolecule?.getDict(newTlc));
         } else {
-            enqueueSnackbar("Error getting monomer. Missing dictionary?", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             console.log("Error getting monomer. Missing dictionary?");
         }
     }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules]);
@@ -278,7 +275,7 @@ export const GetMonomer = () => {
                 const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
                 await createNewLigandMolecule(tlc, result.data.result.result, fromMolecule?.getDict(tlc));
             } else {
-                enqueueSnackbar("Unable to get monomer. Missing dictionary?", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Unable to get monomer. Missing dictionary?", variant: "warning" }));
             }
         } else if (["remote-monomer-library", "local-monomer-library", "pdbe"].includes(sourceSelectRef.current.value)) {
             const tlc = tlcRef.current.value.toUpperCase();

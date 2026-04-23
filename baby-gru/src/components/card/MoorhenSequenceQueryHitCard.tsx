@@ -1,7 +1,6 @@
-import { enqueueSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useMemo } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -55,7 +54,7 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
                 if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...");
                 return newMolecule;
             } catch (err) {
-                enqueueSnackbar("Failed to read molecule", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Failed to read molecule", variant: "error" }));
                 console.warn(`Cannot fetch molecule from ${url}`);
             }
         },

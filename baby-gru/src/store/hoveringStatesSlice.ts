@@ -5,7 +5,7 @@ import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 export type HoveredAtom = {
     molecule: MoorhenMolecule | null;
     cid: string | null;
-    atomInfo: moorhen.AtomInfo;
+    atomInfo: moorhen.AtomInfo | null;
 };
 
 const initialState: {
@@ -18,7 +18,7 @@ const initialState: {
     cursorStyle: "default",
 };
 
-export const hoveringStatesSlice = createSlice({
+const hoveringStatesSlice = createSlice({
     name: "hoveringStates",
     initialState: initialState,
     reducers: {
@@ -28,6 +28,7 @@ export const hoveringStatesSlice = createSlice({
         setHoveredAtom: (state, action: { payload: HoveredAtom; type: string }) => {
             return { ...state, hoveredAtom: action.payload };
         },
+        // API
         setEnableAtomHovering: (state, action: { payload: boolean; type: string }) => {
             return { ...state, enableAtomHovering: action.payload };
         },

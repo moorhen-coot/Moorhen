@@ -1,6 +1,5 @@
 import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
 import { Backdrop, IconButton, Tooltip } from "@mui/material";
-import { Button, Card, Col, Form, Row, Spinner, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -8,13 +7,13 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
+import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -79,58 +78,43 @@ const LigandHitCard = (props: {
     }, []);
 
     return (
-        <Card
-            style={{
-                marginTop: "0.5rem",
-                borderStyle: "solid",
-                borderColor: isDark ? "white" : "grey",
-                borderWidth: props.ligandCardMolNoFocus === props.ligandMolecule.molNo ? "3px" : "1px",
-            }}
-        >
-            <Card.Body style={{ padding: "0.5rem" }}>
-                <Row style={{ display: "flex", justifyContent: "between" }}>
-                    <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>
-                        <span>{props.ligandMolecule.name}</span>
-                    </Col>
-                    <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                        <Tooltip title="View">
-                            <IconButton
-                                style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                                onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
-                            >
-                                <CenterFocusWeakOutlined />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Refine">
-                            <IconButton
-                                style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                                onClick={() => handleRefinement(props.ligandMolecule)}
-                            >
-                                <CrisisAlertOutlined />
-                            </IconButton>
-                        </Tooltip>
-                        {allowAddNewFittedLigand && (
-                            <Tooltip title="Add to new molecule">
-                                <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleAdd}>
-                                    <DoneOutlined />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {allowMergeFittedLigand && (
-                            <Tooltip title="Merge to molecule">
-                                <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleMerge}>
-                                    <MergeTypeOutlined />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
+        <MoorhenStack card direction="row" align="center">
+            <span>{props.ligandMolecule.name}</span>
+            <Tooltip title="View">
+                <IconButton
+                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
+                    onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
+                >
+                    <CenterFocusWeakOutlined />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Refine">
+                <IconButton
+                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
+                    onClick={() => handleRefinement(props.ligandMolecule)}
+                >
+                    <CrisisAlertOutlined />
+                </IconButton>
+            </Tooltip>
+            {allowAddNewFittedLigand && (
+                <Tooltip title="Add to new molecule">
+                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleAdd}>
+                        <DoneOutlined />
+                    </IconButton>
+                </Tooltip>
+            )}
+            {allowMergeFittedLigand && (
+                <Tooltip title="Merge to molecule">
+                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleMerge}>
+                        <MergeTypeOutlined />
+                    </IconButton>
+                </Tooltip>
+            )}
+        </MoorhenStack>
     );
 };
 
-export const MoorheFindLigandModal = () => {
+export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -141,7 +125,7 @@ export const MoorheFindLigandModal = () => {
     const mapSelectRef = useRef<HTMLSelectElement | null>(null);
     const useConformersRef = useRef<boolean>(false);
     const fitAnywhereRef = useRef<boolean>(false);
-    const conformerCountRef = useRef<string>(null);
+    const conformerCountRef = useRef<HTMLInputElement>(null);
 
     const [ligandCardMolNoFocus, setLigandCardMolNoFocus] = useState<number>(null);
     const [useConformers, setUseConformers] = useState<boolean>(false);
@@ -177,7 +161,7 @@ export const MoorheFindLigandModal = () => {
                 !fitAnywhereRef.current,
                 false,
                 useConformersRef.current,
-                parseInt(conformerCountRef.current)
+                parseInt(conformerCountRef.current.value)
             );
             setLigandResults(newMolecules);
         }
@@ -192,79 +176,58 @@ export const MoorheFindLigandModal = () => {
     }, [ligandResults]);
 
     const bodyContent = (
-        <>
-            <Row style={{ padding: "0", margin: "0" }}>
-                <Col>
-                    <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
-                </Col>
-                <Col>
-                    <MoorhenMoleculeSelect
-                        label="Molecule"
-                        allowAny={false}
-                        ref={intoMoleculeRef}
-                        filterFunction={molecule => !molecule.isLigand}
-                        onChange={handleMoleculeSelectChange}
-                    />
-                </Col>
-                <Col>
-                    <MoorhenMoleculeSelect
-                        label="Ligand"
-                        allowAny={false}
-                        ref={ligandMoleculeRef}
-                        filterFunction={molecule => molecule.isLigand}
-                        onChange={handleMoleculeSelectChange}
-                    />
-                </Col>
-            </Row>
-            <Row style={{ padding: "0", margin: "0" }}>
-                <Col style={{ alignContent: "start", alignItems: "start", display: "flex", flexDirection: "column" }}>
-                    <MoorhenToggle
-                        style={{ margin: "0.5rem" }}
-                        type="radio"
-                        checked={!fitAnywhere}
-                        onChange={() => {
-                            fitAnywhereRef.current = !fitAnywhere;
-                            setFitAnywhere(!fitAnywhere);
-                        }}
-                        label="Search right here"
-                    />
-                    <MoorhenToggle
-                        style={{ margin: "0.5rem" }}
-                        type="radio"
-                        checked={fitAnywhere}
-                        onChange={() => {
-                            fitAnywhereRef.current = !fitAnywhere;
-                            setFitAnywhere(!fitAnywhere);
-                        }}
-                        label="Search everywhere"
-                    />
-                </Col>
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <MoorhenToggle
-                        style={{ margin: "0.5rem" }}
-                        type="switch"
-                        checked={useConformers}
-                        onChange={() => {
-                            useConformersRef.current = !useConformers;
-                            setUseConformers(!useConformers);
-                        }}
-                        label="Flexible ligand"
-                    />
-                </Col>
-                <Col style={{ justifyContent: "center", alignContent: "center", alignItems: "center", display: "flex" }}>
-                    <MoorhenNumberForm
-                        ref={conformerCountRef}
-                        label="No. of conformers"
-                        defaultValue={10}
-                        disabled={!useConformers}
-                        width="10rem"
-                        padding="0"
-                        margin="0"
-                    />
-                </Col>
-            </Row>
+        <MoorhenStack>
+            <MoorhenStack inputGrid>
+                <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
+                <MoorhenMoleculeSelect
+                    label="Molecule"
+                    allowAny={false}
+                    ref={intoMoleculeRef}
+                    filterFunction={molecule => !molecule.isLigand}
+                    onChange={handleMoleculeSelectChange}
+                />
+
+                <MoorhenMoleculeSelect
+                    label="Ligand"
+                    allowAny={false}
+                    ref={ligandMoleculeRef}
+                    filterFunction={molecule => molecule.isLigand}
+                    onChange={handleMoleculeSelectChange}
+                />
+            </MoorhenStack>
+            <MoorhenToggle
+                style={{ margin: "0.5rem" }}
+                type="radio"
+                checked={!fitAnywhere}
+                onChange={() => {
+                    fitAnywhereRef.current = !fitAnywhere;
+                    setFitAnywhere(!fitAnywhere);
+                }}
+                label="Search right here"
+            />
+            <MoorhenToggle
+                style={{ margin: "0.5rem" }}
+                type="radio"
+                checked={fitAnywhere}
+                onChange={() => {
+                    fitAnywhereRef.current = !fitAnywhere;
+                    setFitAnywhere(!fitAnywhere);
+                }}
+                label="Search everywhere"
+            />
+            <MoorhenToggle
+                style={{ margin: "0.5rem" }}
+                type="switch"
+                checked={useConformers}
+                onChange={() => {
+                    useConformersRef.current = !useConformers;
+                    setUseConformers(!useConformers);
+                }}
+                label="Flexible ligand"
+            />
+            <MoorhenNumberInput ref={conformerCountRef} label="No. of conformers" value={10} disabled={!useConformers} width="10rem" />
             <hr></hr>
-            <Row>
+            <MoorhenStack flex={1}>
                 {ligandResults?.length > 0 ? <span>Found {ligandResults.length} possible ligand location(s)</span> : null}
                 {ligandResults?.length > 0 ? (
                     <div style={{ height: "100px", width: "100%" }}>
@@ -285,8 +248,8 @@ export const MoorheFindLigandModal = () => {
                 ) : (
                     <span>No results...</span>
                 )}
-            </Row>
-        </>
+            </MoorhenStack>
+        </MoorhenStack>
     );
 
     const footerContent = (
@@ -308,7 +271,7 @@ export const MoorheFindLigandModal = () => {
 
     const spinnerContent = (
         <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-            <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+            <MoorhenSpinner />
             <span>Finding ligand...</span>
         </Backdrop>
     );
@@ -318,15 +281,14 @@ export const MoorheFindLigandModal = () => {
             modalId={modalKeys.FIT_LIGAND}
             left={width / 6}
             top={height / 6}
-            minHeight={convertViewtoPx(15, height)}
-            minWidth={convertViewtoPx(25, width)}
-            maxHeight={convertViewtoPx(50, height)}
-            maxWidth={convertViewtoPx(50, width)}
+            initialWidth={400}
+            initialHeight={600}
             additionalChildren={spinnerContent}
             headerTitle="Find ligand"
             onClose={handleClose}
             footer={footerContent}
             body={bodyContent}
+            openDocked={props.openDocked}
         />
     );
 };

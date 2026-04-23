@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./NumberInput.css";
 
 type MoorhenNumberInputProps = {
@@ -18,6 +18,7 @@ type MoorhenNumberInputProps = {
     type?: string;
     labelPosition?: "top" | "left";
     style?: React.CSSProperties;
+    ref?: React.Ref<HTMLInputElement>;
 };
 
 /**
@@ -69,6 +70,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         type = "standard",
         labelPosition = "left",
         style,
+        ref = null,
     } = props;
 
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
@@ -143,6 +145,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
             ) : null}
             <input
                 id="input"
+                ref={ref}
                 type={formType}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
@@ -151,7 +154,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                 className={`moorhen__input ${"moorhen__input__precise"} 
                 ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
                 ${isValidRef.current ? "moorhen__input__valid" : "moorhen__input__invalid"} 
-                ${disabled ? "moorhen__input__disabled" : ""}`}
+                ${disabled ? "disabled" : ""}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
                 onBlur={handleBlur}
