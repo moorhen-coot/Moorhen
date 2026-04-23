@@ -317,6 +317,7 @@ ${coot_src}/coot-utils/atom-overlaps.cc
 ${coot_src}/coot-utils/bricks.cc
 ${coot_src}/coot-utils/mutate.cc
 ${coot_src}/coot-utils/elastic.cc
+${coot_src}/coot-utils/edcalc.cc
 ${coot_src}/coot-utils/coot-map-utils.cc
 ${coot_src}/coot-utils/coot-h-bonds.cc
 ${coot_src}/coot-utils/coot-coord-utils-nucleotides.cc
