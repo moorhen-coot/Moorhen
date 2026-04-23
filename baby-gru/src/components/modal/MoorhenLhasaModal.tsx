@@ -45,8 +45,9 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
         };
     }, [handleCootAttached]);
 
-    const smilesCallback = useCallback(
-        async (internalLhasaID: number, id: string, smiles: string) => {
+    const sendToHostProgramCallback = useCallback(
+        async (internalLhasaID: number, id: string, smiles: string, rdkitPickleBase64: string) => {
+            // TODO: Handle rdkitPickleBase64
             try {
                 setBusy(true);
                 const ligandName = id ?? "LIG";
@@ -115,6 +116,13 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
         [commandCentre, store, monomerLibraryPath]
     );
 
+    const bansuCallback = useCallback(
+        (internalLhasaID: number, id: string, cif_string: string) => {
+            enqueueSnackbar("TODO: handle incoming data: \n" + cif_string, { variant: "info" });
+        },
+        [enqueueSnackbar]
+    );
+
     return isCootAttached ? (
         <OverlayModal
             isShown={false}
@@ -133,7 +141,8 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
                 icons_path_prefix={`${props.urlPrefix}/pixmaps/lhasa_icons/icons`}
                 data_path_prefix={`${props.urlPrefix}/`}
                 name_of_host_program="Moorhen"
-                smiles_callback={smilesCallback}
+                bansu_callback={bansuCallback}
+                send_to_host_program_callback={sendToHostProgramCallback}
                 dark_mode={isDark}
                 width={props.width}
                 height={props.height}
