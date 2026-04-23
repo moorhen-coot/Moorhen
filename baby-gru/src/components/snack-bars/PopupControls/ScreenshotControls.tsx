@@ -10,17 +10,12 @@ import "./popup-controls.css";
 
 export const Screenshot = () => {
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
-    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const moorhenInstance = useMoorhenInstance();
     const videoRecorderRef = moorhenInstance.getVideoRecorderRef();
     const showCrosshairs = useSelector((state: RootState) => state.sceneSettings.drawCrosshairs);
-    const [pictureName, setPictureName] = usePersistentState("scrrenshot", "pictureName", "moorhen_screenshot", true);
+    const [pictureName, setPictureName] = usePersistentState("screenshot", "pictureName", "moorhen_screenshot", true);
     const [screenShotHovered, setScreenShotHovered] = useState<boolean>(false);
-
-    const [doTransparentBackground, setDoTransparentBackground] = useState<boolean>(false);
-
-    const doTransparentBackgroundRef = useRef<boolean>(false);
-
+    const [doTransparentBackground, setDoTransparentBackground] = usePersistentState("screenshot", "doTransparentBackground", false, true);
     const dispatch = useDispatch();
 
     const handleScreenShot = async () => {
@@ -28,7 +23,8 @@ export const Screenshot = () => {
         dispatch(setDrawCrosshairs(false));
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("hover"));
         const _pictureName = pictureName !== "" ? pictureName : "moorhen_screenshot";
-        await videoRecorderRef.current?.takeScreenShot(`${_pictureName}.png`, doTransparentBackgroundRef.current);
+
+        await videoRecorderRef.current?.takeScreenShot(`${_pictureName}.png`, doTransparentBackground);
         dispatch(setShownControl(null));
         dispatch(setDrawCrosshairs(showCrosshairs));
     };
@@ -49,8 +45,7 @@ export const Screenshot = () => {
                     type="icon-only"
                     icon={doTransparentBackground ? "MatSymBackgroudDots" : "MatSymBackgroudNoDots"}
                     onClick={() => {
-                        doTransparentBackgroundRef.current = !doTransparentBackgroundRef.current;
-                        setDoTransparentBackground(prev => !prev);
+                        setDoTransparentBackground(!doTransparentBackground);
                     }}
                     tooltip={doTransparentBackground ? "Use opaque background" : "Use transparent background"}
                 />

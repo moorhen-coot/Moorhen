@@ -28,7 +28,8 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
- *
+ *import { MoorhenInstance } from '.';
+
  * // Create a new map
  * const map = new MoorhenMap(commandCentre, glRef);
  *
@@ -753,10 +754,13 @@ export class MoorhenMap {
         style: "solid" | "lines" | "lit-lines"
     ): Promise<void> {
         if (this.isOriginLocked) {
-            x = Math.abs(this.cellCentre[0]);
-            y = Math.abs(this.cellCentre[1]);
-            z = Math.abs(this.cellCentre[2]);
-        }
+            if (this.drawOrigin === null) {
+                this.drawOrigin = [-x, -y, -z];
+            } else {                
+            x = -this.drawOrigin[0];
+            y = -this.drawOrigin[1];
+            z = -this.drawOrigin[2];
+        }}
 
         let returnType: string;
         if (style === "solid") {
@@ -1039,7 +1043,7 @@ export class MoorhenMap {
      * Get the suggested level for this map instance (only for MX maps)
      * @returns {number} The suggested map contour level
      */
-    async fetchSuggestedLevel(): Promise<number> {
+    async fetchSuggestedLevelXtal(): Promise<number> {
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "get_suggested_initial_contour_level",
@@ -1059,13 +1063,49 @@ export class MoorhenMap {
         return result.data.result.result;
     }
 
-    async guessMapRange(): Promise<[number, number]> {
+    async guessMapRangeAndLevel(): Promise<[number, number, number]> {
         const n_bins = 400;
         const histogram = await this.getHistogram(n_bins, 1);
         const maxRange = histogram.bin_width * n_bins - histogram.base;
         const precison = Math.pow(10, -Math.abs(Math.floor(Math.log10(maxRange / 200))));
         this.levelRange = [precison, maxRange];
-        return [precison, maxRange];
+
+        //** this is quite an empirical approach but it looks like it works reasonably well */
+        // Filter out bins with negative density values
+        const filteredData = histogram.counts.reduce<{ counts: number[]; labels: string[] }>(
+            (acc, count, index) => {
+                const binValue = histogram.base + histogram.bin_width * (index + 1);
+                if (binValue >= 0) {
+                    acc.counts.push(count);
+                    acc.labels.push(binValue.toFixed(this.isEM ? 4 : 2));
+                }
+                return acc;
+            },
+            { counts: [], labels: [] }
+        );
+
+        // Convert counts to log10 scale
+        const logData = filteredData.counts.map(count => (count > 0 ? Math.log10(count) : 0));
+
+        // Find the density level where a third of the total log counts are below and two-thirds above
+        const totalLogCount = logData.reduce((sum, value) => sum + value, 0);
+        const halfTotal = totalLogCount / 3;
+        let cumulative = 0;
+        let halfLevelIndex = 0;
+        for (let i = 0; i < logData.length; i++) {
+            cumulative += logData[i];
+            if (cumulative >= halfTotal) {
+                halfLevelIndex = i;
+                break;
+            }
+        }
+        const halfLevel =  histogram.bin_width * (halfLevelIndex + 1);
+
+        if (this.isEM) {
+            this.suggestedContourLevel = halfLevel;
+        }
+
+        return [precison, maxRange, halfLevel];
     }
 
     /**
@@ -1084,14 +1124,10 @@ export class MoorhenMap {
 
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number];
-            if (this.isEM) {
-                this.suggestedContourLevel = response.data.result.result.suggested_contour_level;
-                this.suggestedRadius = response.data.result.result.suggested_radius;
-                this.isOriginLocked = true;
-            }
+
         } else {
-            console.log("Problem finding map centre");
-            this.mapCentre = null;
+            console.log("Problem finding map centre from coot, using cell centre instead");
+            this.mapCentre = this.cellCentre;
         }
 
         return this.mapCentre;
@@ -1121,18 +1157,43 @@ export class MoorhenMap {
         )) as moorhen.WorkerResponse<boolean>;
 
         this.isEM = response.data.result.result;
-
-        await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
-            this.fetchMapCentre(),
-            this.setDefaultColour(),
-            this.fetchMapMean(),
-            !this.isEM && this.fetchSuggestedLevel(),
-            this.guessMapRange(),
-        ]);
+        if (this.isEM) {
+            this.isOriginLocked = true;
+        }
         const headerInfo = await this.fetchCellInfo();
-        this.cellCentre = [headerInfo.cell.a / 2, headerInfo.cell.b / 2, headerInfo.cell.c / 2];
+        this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
+        await Promise.all([
+            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),         
+            this.setDefaultColour(),
+            this.fetchMapCentre(),
+            this.fetchMapMean(),
+            !this.isEM && this.fetchSuggestedLevelXtal(),
+            this.guessMapRangeAndLevel(),
+        ]);
+
+        if (this.isEM) {
+            const result = await this.getMapBoundingSphere(this.suggestedContourLevel);
+            this.mapCentre = result.center.map(coord => -coord) as [number, number, number];
+            this.drawOrigin = result.center.map(coord => -coord) as [number, number, number];
+            this.suggestedRadius = result.radius;}
+
+        }
+
+    async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
+        const result = this.commandCentre.current.cootCommand(
+            {
+                command: "get_map_bounding_sphere",
+                commandArgs: [this.molNo, thresold],
+            },
+            false
+        );
+
+        const response = await result;
+        const results = response.data.result.result;
+        return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
     }
+
+
 
     async fetchMapMean() {
         const result = await this.commandCentre.current.cootCommand(
@@ -1156,6 +1217,12 @@ export class MoorhenMap {
      * Set the view in the centre of this map instance
      */
     async centreOnMap(): Promise<void> {
+        console.log("Centring on map with molNo", this.molNo);
+        console.log("Map centre is", this.mapCentre, "and cell centre is", this.cellCentre, "and draw origin is", this.drawOrigin);
+        if (this.isOriginLocked) {
+            this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
+            return;
+        }
         if (this.mapCentre === null) {
             await this.fetchMapCentre();
             if (this.mapCentre === null) {
