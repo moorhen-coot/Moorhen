@@ -1,5 +1,5 @@
 import React, { useEffect, useId } from "react";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 
 export type MoorhenSelectProps = {
     children: React.ReactNode;

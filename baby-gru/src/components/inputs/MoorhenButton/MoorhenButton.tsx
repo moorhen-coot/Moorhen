@@ -1,8 +1,8 @@
 import { JSX, useRef } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
-import { MoorhenStack } from "../../interface-base";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./moorhen-button.css";
 
 type MoorhenButtonPropsTypeBase = {

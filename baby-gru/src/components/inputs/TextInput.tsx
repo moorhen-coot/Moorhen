@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import React, { useId } from "react";
 import { setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenSVG } from "../icons";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenStack } from "../interface-base/Stack/Stack";
 import { MoorhenButton } from "./MoorhenButton/MoorhenButton";
 
 type MoorhenTextInputBase = {

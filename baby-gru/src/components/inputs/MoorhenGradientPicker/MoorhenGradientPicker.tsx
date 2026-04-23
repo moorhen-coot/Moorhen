@@ -3,7 +3,7 @@ import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
