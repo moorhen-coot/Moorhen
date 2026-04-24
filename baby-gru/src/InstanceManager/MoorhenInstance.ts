@@ -17,6 +17,13 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 
+export type LoadFilesResult = {
+    type: "molecule" | "map";
+    uniqueID: string;
+    molNo: number;
+    fileName: string;
+}[];
+
 export class MoorhenInstance extends StoreExtension {
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -57,7 +64,7 @@ export class MoorhenInstance extends StoreExtension {
 
     /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
     public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
-        if (this.isReady()) {
+        if (this.ready) {
             return Promise.resolve(callback());
         } else {
             return new Promise(resolve => {
@@ -148,50 +155,77 @@ export class MoorhenInstance extends StoreExtension {
         return null;
     }
 
-    public async loadFiles(
-        files: File[] | File | FileList | string | string[] | URL | URL[]
-    ): Promise<{ type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[]> {
-        let filesArray: File[] = [];
-        const getFileFromURL = async (url: string | URL): Promise<File> => {
-            const urlString = url instanceof URL ? url.toString() : url;
-            const response = await fetch(urlString);
-            const blob = await response.blob();
-            const filename = urlString.split("/").pop() || "downloaded_file";
-            return new File([blob], filename, { type: blob.type });
+    public get files() {
+        const store = this.store;
+        const cootCommand = this.cootCommand;
+        const dispatch = this.dispatch;
+        const commandCentreRef = this.commandCentreRef;
+        const paths = this.paths;
+        const timeCapsuleRef = this.timeCapsuleRef;
+        const execWhenReady = this.execWhenReady.bind(this);
+
+        return {
+            async loadFiles(files: File[] | File | FileList | string | string[] | URL | URL[]): Promise<LoadFilesResult> {
+                let filesArray: File[] = [];
+                const getFileFromURL = async (url: string | URL): Promise<File> => {
+                    const urlString = url instanceof URL ? url.toString() : url;
+                    const response = await fetch(urlString);
+                    const blob = await response.blob();
+                    const filename = urlString.split("/").pop() || "downloaded_file";
+                    return new File([blob], filename, { type: blob.type });
+                };
+                const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
+                const backgroundColor = store.getState().sceneSettings.backgroundColor;
+
+                if (files instanceof File) {
+                    filesArray = [files];
+                } else if (files instanceof FileList) {
+                    filesArray = Array.from(files);
+                } else if (typeof files === "string") {
+                    filesArray = [await getFileFromURL(files)];
+                } else if (Array.isArray(files)) {
+                    if (typeof files[0] === "string" || files[0] instanceof URL) {
+                        filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
+                    } else if (files[0] instanceof File) {
+                        filesArray = files as File[];
+                    } else {
+                        throw new Error("Invalid file input type");
+                    }
+                }
+
+                const createdObjects = await execWhenReady(() =>
+                    autoOpenFiles(
+                        filesArray,
+                        commandCentreRef,
+                        store,
+                        paths.monomerLibraryPath,
+                        backgroundColor,
+                        defaultBondSmoothness,
+                        timeCapsuleRef,
+                        dispatch
+                    )
+                );
+
+                return createdObjects;
+            },
+
+            async ligandFromSmiles(smiles: string, ligname: string): Promise<LoadFilesResult> {
+                const pdbString = await cootCommand.get_pdb_from_smiles(smiles, ligname ?? "LIG", 10, 100);
+                return this.loadCifString(pdbString, ligname);
+            },
+
+            loadPDBString(pdbString: string, name: string): Promise<LoadFilesResult> {
+                const blob = new Blob([pdbString], { type: "text/plain" });
+                const file = new File([blob], name + ".pdb", { type: "text/plain" });
+                return this.loadFiles(file);
+            },
+
+            async loadCifString(cifString: string, name: string): Promise<LoadFilesResult> {
+                const blob = new Blob([cifString], { type: "text/plain" });
+                const file = new File([blob], name + ".cif", { type: "text/plain" });
+                return this.loadFiles(file);
+            },
         };
-        const defaultBondSmoothness = this.store.getState().sceneSettings.defaultBondSmoothness;
-        const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
-
-        if (files instanceof File) {
-            filesArray = [files];
-        } else if (files instanceof FileList) {
-            filesArray = Array.from(files);
-        } else if (typeof files === "string") {
-            filesArray = [await getFileFromURL(files)];
-        } else if (Array.isArray(files)) {
-            if (typeof files[0] === "string" || files[0] instanceof URL) {
-                filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
-            } else if (files[0] instanceof File) {
-                filesArray = files as File[];
-            } else {
-                throw new Error("Invalid file input type");
-            }
-        }
-
-        const createdObjects = await this.execWhenReady(() =>
-            autoOpenFiles(
-                filesArray,
-                this.commandCentreRef,
-                this.store,
-                this.paths.monomerLibraryPath,
-                backgroundColor,
-                defaultBondSmoothness,
-                this.timeCapsuleRef,
-                this.dispatch
-            )
-        );
-
-        return createdObjects;
     }
 
     //========================================
@@ -289,6 +323,11 @@ export class MoorhenInstance extends StoreExtension {
             }
         });
     }
+
+    // ================= File Loaded callback =================
+
+    public newLigandCallback() {}
+    public newFilesLoadedCallback() {}
 
     //========================================
     // Methods to set attributes on the web component from the instance, which will trigger re-render of the react tree when they change
