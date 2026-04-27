@@ -8,6 +8,7 @@ show_help() {
 	echo "---"
 	echo "Usage:"
 	echo "    $0 <dependency> [optional commit hash (other than the newest)]"
+	echo "The commit hash should be 10 characters long"
 	echo "Example:"
 	echo "    $0 coot "
 	echo "    $0 lhasa "
