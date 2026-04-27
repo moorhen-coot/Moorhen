@@ -3,10 +3,21 @@
 # This script can be used to update the git commit hash for certain dependencies in VERSIONS
 show_help() {
 	echo "This script is used for updating the git commit hash (in the VERSIONS file) of certain dependencies (like lhasa or coot) to their newest verions. Intended to be used by Moorhen developers."
-	echo "Usage:"
-	echo "    $0 <dependency> [optional commit hash (other than the newest)]"
 	echo "---"
 	echo "Supported dependencies: lhasa, coot"
+	echo "---"
+	echo "Usage:"
+	echo "    $0 <dependency> [optional commit hash (other than the newest)]"
+	echo "Example:"
+	echo "    $0 coot "
+	echo "    $0 lhasa "
+	echo "    $0 coot bcac9be519"
+	echo "    $0 lhasa 896185ae1a"
+	echo "---"
+	echo "Additionally, for Coot, it's possible to specify the fork of Coot to be used:"
+	echo "    $0 coot [[coot fork owner:]optional coot commit hash (other than the newest)]"
+	echo "Example:"
+	echo "    $0 coot hgonomeg:bcac9be519"
 	echo "---"
 	echo "This script requires git, awk, grep, etc. to operate."
 }
@@ -16,6 +27,27 @@ show_help() {
 ### $3 - Branch
 query_current_commit_hash_from_github() {
 	git ls-remote https://github.com/${1}/${2}.git refs/heads/${3} | awk '{print $1}' | cut -c1-10
+}
+
+### $1 -repo
+get_target_fork() {
+	# sh -c "source VERSIONS && echo \$${1}_fork"
+	grep "${1}_fork=" VERSIONS | cut -d'=' -f2 | tr -d '"'
+}
+
+### $1 - dependency
+### $2 - target fork
+update_dep_fork() {
+  old_fork=$(grep "${1}_fork=" VERSIONS | cut -d'=' -f2 | tr -d '"')
+  if [ "$old_fork" = "$2" ]; then
+  	echo "The target fork ($2) is already being used in VERSIONS"
+  else
+    # sed: In-place replace line containing a `string`
+    # sed -i 's/.*string.*/replacement line/' file.txt
+  	sed -i "s/.*${1}_fork.*/${1}_fork=\"${2}\"/" VERSIONS &&\
+  	echo "Updated $1 fork to $2 (from previous fork = $old_fork)" ||\
+  	echo Failed to update fork for $1
+  fi
 }
 
 
@@ -37,16 +69,26 @@ update_dep_hash() {
 case $1 in
 	coot)
   	if [ "x$2" = "x" ]; then
-  		echo Querying newest commit hash for Coot...
-  		commit_hash=$(query_current_commit_hash_from_github pemsley coot main)
+		target_fork=$(get_target_fork coot)
+  		echo Querying newest commit hash for $target_fork/coot/main...
+  		commit_hash=$(query_current_commit_hash_from_github $target_fork coot main)
   		update_dep_hash coot $commit_hash
   	else
-  		update_dep_hash coot $2
+		if $(echo "$2" | grep -q ':'); then
+		    target_fork=$(echo "$2" | cut -d':' -f1)
+			commit_hash=$(echo "$2" | cut -d':' -f2)
+			echo DEBUG:: Colon separated: fork=${target_fork}, commit=${commit_hash}
+			update_dep_fork coot $target_fork
+			update_dep_hash coot $commit_hash
+		else
+			echo DEBUG:: Regular manual hash
+  			update_dep_hash coot $2
+		fi
   	fi
 	;;
 	lhasa)
 	  if [ "x$2" = "x" ]; then
-  		echo Querying newest commit hash for LhasaReact...
+  		  echo Querying newest commit hash for LhasaReact/main...
 		  commit_hash=$(query_current_commit_hash_from_github moorhen-coot LhasaReact main)
 		  update_dep_hash lhasa $commit_hash
   	else
