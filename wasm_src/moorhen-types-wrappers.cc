@@ -11,7 +11,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
       .field("psi", &TorsionEntry::psi)
     ;
 
-    register_vector<TorsionEntry>("vector<TorsionEntry>");
+    register_vector<TorsionEntry>("vector_TorsionEntry");
     register_vector<coot::residue_range_t>("vector_residue_range_t");
     register_vector<coot::geometry_distortion_info_container_t>("vector_geometry_distortion_info_container_t");
     register_vector<coot::geometry_distortion_info_t>("vector_geometry_distortion_info_t");
@@ -702,7 +702,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
         .field("first",&std::pair<symm_trans_t, Cell_Translation>::first)
         .field("second",&std::pair<symm_trans_t, Cell_Translation>::second)
     ;
-    value_object<std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>>("map_residue_spec_t_:density_correlation_stats_info_t_pair")
+    value_object<std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>>("map_residue_spec_t_density_correlation_stats_info_t_pair")
         .field("first",&std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>::first)
         .field("second",&std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>::second)
     ;
