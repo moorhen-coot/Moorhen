@@ -21,6 +21,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <gemmi/read_cif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_pdb.hpp>

@@ -95,6 +95,8 @@ getclipper() {
     else
         echo "Checking out clipper (gemmi branch)"
         git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git || fail "Failed to clone clipper"
+        patch -p1 < ../../patches/clipper-gemmi075.patch || fail "Failed to patch clipper"
+        cd clipper
         echo
     fi
     echo
@@ -142,6 +144,8 @@ getgemmi() {
         git clone https://github.com/project-gemmi/gemmi.git gemmi &&\
         cd gemmi &&\
         git checkout $gemmi_release &&\
+#half.hpp is \r\n which is a pain for patch
+        sed -i'' -e 's/\r//' include/gemmi/third_party/half.hpp
         patch -p1 < ../../patches/gemmi-emscripten-64.patch || fail "Failed to clone and patch gemmi"
     fi
     echo

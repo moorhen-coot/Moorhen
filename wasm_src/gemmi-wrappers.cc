@@ -997,7 +997,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .property("starting_model",&gemmi::Metadata::starting_model)
     .property("remark_300_detail",&gemmi::Metadata::remark_300_detail)
     .function("has_restr",&gemmi::Metadata::has_restr)
-    .function("has_tls",&gemmi::Metadata::has_tls)
+    //.function("has_tls",&gemmi::Metadata::has_tls) // Seems to have gone in 0.7.5
     //.function("has_d",...) // pointer-to-member params not supported by --emit-tsd
     //.function("has_i",...) // pointer-to-member params not supported by --emit-tsd
     //.function("has_s",...) // pointer-to-member params not supported by --emit-tsd

@@ -18,12 +18,19 @@ include_directories("${gemmi_src}/include"
                     "${gemmi_src}/third_party")
 
 add_library(gemmi_cpp
+            ${gemmi_src}/src/ace_cc.cpp
+            ${gemmi_src}/src/ace_graph.cpp
+            ${gemmi_src}/src/acedrg_tables.cpp
             ${gemmi_src}/src/align.cpp
             ${gemmi_src}/src/assembly.cpp
             ${gemmi_src}/src/calculate.cpp
+            ${gemmi_src}/src/ccp4.cpp
             ${gemmi_src}/src/crd.cpp
             ${gemmi_src}/src/ddl.cpp
+            ${gemmi_src}/src/dssp.cpp
             ${gemmi_src}/src/eig3.cpp
+            ${gemmi_src}/src/flat.cpp
+            ${gemmi_src}/src/fprime.cpp
             ${gemmi_src}/src/gz.cpp
             ${gemmi_src}/src/intensit.cpp
             ${gemmi_src}/src/json.cpp
@@ -35,126 +42,140 @@ add_library(gemmi_cpp
             ${gemmi_src}/src/pdb.cpp
             ${gemmi_src}/src/polyheur.cpp
             ${gemmi_src}/src/read_cif.cpp
-            ${gemmi_src}/src/read_map.cpp
             ${gemmi_src}/src/resinfo.cpp
             ${gemmi_src}/src/riding_h.cpp
             ${gemmi_src}/src/select.cpp
             ${gemmi_src}/src/sprintf.cpp
+            ${gemmi_src}/src/symmetry.cpp
+            ${gemmi_src}/src/to_json.cpp
             ${gemmi_src}/src/to_mmcif.cpp
             ${gemmi_src}/src/to_pdb.cpp
             ${gemmi_src}/src/topo.cpp
-            ${gemmi_src}/src/xds_ascii.cpp)
-
+            ${gemmi_src}/src/xds_ascii.cpp
+)
 
 set_target_properties(gemmi_cpp PROPERTIES COMPILE_FLAGS "-pthread -s USE_ZLIB=1" )
 
 set(gemmi_HEADERS
-${gemmi_src}/include/gemmi/addends.hpp
-${gemmi_src}/include/gemmi/align.hpp
-${gemmi_src}/include/gemmi/assembly.hpp
-${gemmi_src}/include/gemmi/asudata.hpp
-${gemmi_src}/include/gemmi/asumask.hpp
-${gemmi_src}/include/gemmi/atof.hpp
-${gemmi_src}/include/gemmi/atox.hpp
-${gemmi_src}/include/gemmi/bessel.hpp
-${gemmi_src}/include/gemmi/binner.hpp
-${gemmi_src}/include/gemmi/blob.hpp
-${gemmi_src}/include/gemmi/bond_idx.hpp
-${gemmi_src}/include/gemmi/c4322.hpp
-${gemmi_src}/include/gemmi/calculate.hpp
-${gemmi_src}/include/gemmi/ccp4.hpp
-${gemmi_src}/include/gemmi/cellred.hpp
-${gemmi_src}/include/gemmi/chemcomp.hpp
-${gemmi_src}/include/gemmi/cif.hpp
-${gemmi_src}/include/gemmi/cif2mtz.hpp
-${gemmi_src}/include/gemmi/cifdoc.hpp
-${gemmi_src}/include/gemmi/contact.hpp
-${gemmi_src}/include/gemmi/crd.hpp
-${gemmi_src}/include/gemmi/ddl.hpp
-${gemmi_src}/include/gemmi/dencalc.hpp
-${gemmi_src}/include/gemmi/dirwalk.hpp
-${gemmi_src}/include/gemmi/ecalc.hpp
-${gemmi_src}/include/gemmi/eig3.hpp
-${gemmi_src}/include/gemmi/elem.hpp
-${gemmi_src}/include/gemmi/enumstr.hpp
-${gemmi_src}/include/gemmi/fail.hpp
-${gemmi_src}/include/gemmi/fileutil.hpp
-${gemmi_src}/include/gemmi/floodfill.hpp
-${gemmi_src}/include/gemmi/formfact.hpp
-${gemmi_src}/include/gemmi/fourier.hpp
-${gemmi_src}/include/gemmi/fprime.hpp
-${gemmi_src}/include/gemmi/fstream.hpp
-${gemmi_src}/include/gemmi/grid.hpp
-${gemmi_src}/include/gemmi/gz.hpp
-${gemmi_src}/include/gemmi/input.hpp
-${gemmi_src}/include/gemmi/intensit.hpp
-${gemmi_src}/include/gemmi/interop.hpp
-${gemmi_src}/include/gemmi/it92.hpp
-${gemmi_src}/include/gemmi/iterator.hpp
-${gemmi_src}/include/gemmi/json.hpp
-${gemmi_src}/include/gemmi/levmar.hpp
-${gemmi_src}/include/gemmi/linkhunt.hpp
-${gemmi_src}/include/gemmi/logger.hpp
-${gemmi_src}/include/gemmi/math.hpp
-${gemmi_src}/include/gemmi/metadata.hpp
-${gemmi_src}/include/gemmi/mmcif.hpp
-${gemmi_src}/include/gemmi/mmcif_impl.hpp
-${gemmi_src}/include/gemmi/mmdb.hpp
-${gemmi_src}/include/gemmi/mmread.hpp
-${gemmi_src}/include/gemmi/mmread_gz.hpp
-${gemmi_src}/include/gemmi/model.hpp
-${gemmi_src}/include/gemmi/modify.hpp
-${gemmi_src}/include/gemmi/monlib.hpp
-${gemmi_src}/include/gemmi/mtz.hpp
-${gemmi_src}/include/gemmi/mtz2cif.hpp
-${gemmi_src}/include/gemmi/neighbor.hpp
-${gemmi_src}/include/gemmi/neutron92.hpp
-${gemmi_src}/include/gemmi/numb.hpp
-${gemmi_src}/include/gemmi/pdb.hpp
-${gemmi_src}/include/gemmi/pdb_id.hpp
-${gemmi_src}/include/gemmi/pirfasta.hpp
-${gemmi_src}/include/gemmi/polyheur.hpp
-${gemmi_src}/include/gemmi/qcp.hpp
-${gemmi_src}/include/gemmi/read_cif.hpp
-${gemmi_src}/include/gemmi/read_map.hpp
-${gemmi_src}/include/gemmi/recgrid.hpp
-${gemmi_src}/include/gemmi/reciproc.hpp
-${gemmi_src}/include/gemmi/refln.hpp
-${gemmi_src}/include/gemmi/resinfo.hpp
-${gemmi_src}/include/gemmi/riding_h.hpp
-${gemmi_src}/include/gemmi/scaling.hpp
-${gemmi_src}/include/gemmi/select.hpp
-${gemmi_src}/include/gemmi/seqalign.hpp
-${gemmi_src}/include/gemmi/seqid.hpp
-${gemmi_src}/include/gemmi/seqtools.hpp
-${gemmi_src}/include/gemmi/serialize.hpp
-${gemmi_src}/include/gemmi/sfcalc.hpp
-${gemmi_src}/include/gemmi/small.hpp
-${gemmi_src}/include/gemmi/smcif.hpp
-${gemmi_src}/include/gemmi/solmask.hpp
-${gemmi_src}/include/gemmi/span.hpp
-${gemmi_src}/include/gemmi/sprintf.hpp
-${gemmi_src}/include/gemmi/stats.hpp
-${gemmi_src}/include/gemmi/symmetry.hpp
-${gemmi_src}/include/gemmi/to_chemcomp.hpp
-${gemmi_src}/include/gemmi/to_cif.hpp
-${gemmi_src}/include/gemmi/to_json.hpp
-${gemmi_src}/include/gemmi/to_mmcif.hpp
-${gemmi_src}/include/gemmi/to_pdb.hpp
-${gemmi_src}/include/gemmi/topo.hpp
-${gemmi_src}/include/gemmi/twin.hpp
-${gemmi_src}/include/gemmi/unitcell.hpp
-${gemmi_src}/include/gemmi/utf.hpp
-${gemmi_src}/include/gemmi/util.hpp
-${gemmi_src}/include/gemmi/version.hpp
-${gemmi_src}/include/gemmi/xds_ascii.hpp
+            ${gemmi_src}/include/gemmi/ace_cc.hpp
+            ${gemmi_src}/include/gemmi/ace_graph.hpp
+            ${gemmi_src}/include/gemmi/acedrg_tables.hpp
+            ${gemmi_src}/include/gemmi/addends.hpp
+            ${gemmi_src}/include/gemmi/align.hpp
+            ${gemmi_src}/include/gemmi/assembly.hpp
+            ${gemmi_src}/include/gemmi/asudata.hpp
+            ${gemmi_src}/include/gemmi/asumask.hpp
+            ${gemmi_src}/include/gemmi/atof.hpp
+            ${gemmi_src}/include/gemmi/atox.hpp
+            ${gemmi_src}/include/gemmi/bessel.hpp
+            ${gemmi_src}/include/gemmi/binner.hpp
+            ${gemmi_src}/include/gemmi/blob.hpp
+            ${gemmi_src}/include/gemmi/bond_idx.hpp
+            ${gemmi_src}/include/gemmi/c4322.hpp
+            ${gemmi_src}/include/gemmi/calculate.hpp
+            ${gemmi_src}/include/gemmi/ccp4.hpp
+            ${gemmi_src}/include/gemmi/cellred.hpp
+            ${gemmi_src}/include/gemmi/chemcomp.hpp
+            ${gemmi_src}/include/gemmi/cif.hpp
+            ${gemmi_src}/include/gemmi/cif2mtz.hpp
+            ${gemmi_src}/include/gemmi/cifdoc.hpp
+            ${gemmi_src}/include/gemmi/contact.hpp
+            ${gemmi_src}/include/gemmi/crd.hpp
+            ${gemmi_src}/include/gemmi/ddl.hpp
+            ${gemmi_src}/include/gemmi/dencalc.hpp
+            ${gemmi_src}/include/gemmi/dirwalk.hpp
+            ${gemmi_src}/include/gemmi/dssp.hpp
+            ${gemmi_src}/include/gemmi/ecalc.hpp
+            ${gemmi_src}/include/gemmi/eig3.hpp
+            ${gemmi_src}/include/gemmi/elem.hpp
+            ${gemmi_src}/include/gemmi/enumstr.hpp
+            ${gemmi_src}/include/gemmi/fail.hpp
+            ${gemmi_src}/include/gemmi/fileutil.hpp
+            ${gemmi_src}/include/gemmi/flat.hpp
+            ${gemmi_src}/include/gemmi/floodfill.hpp
+            ${gemmi_src}/include/gemmi/formfact.hpp
+            ${gemmi_src}/include/gemmi/fourier.hpp
+            ${gemmi_src}/include/gemmi/fprime.hpp
+            ${gemmi_src}/include/gemmi/fstream.hpp
+            ${gemmi_src}/include/gemmi/glob.hpp
+            ${gemmi_src}/include/gemmi/grid.hpp
+            ${gemmi_src}/include/gemmi/gz.hpp
+            ${gemmi_src}/include/gemmi/input.hpp
+            ${gemmi_src}/include/gemmi/intensit.hpp
+            ${gemmi_src}/include/gemmi/interop.hpp
+            ${gemmi_src}/include/gemmi/it92.hpp
+            ${gemmi_src}/include/gemmi/iterator.hpp
+            ${gemmi_src}/include/gemmi/json.hpp
+            ${gemmi_src}/include/gemmi/levmar.hpp
+            ${gemmi_src}/include/gemmi/linkhunt.hpp
+            ${gemmi_src}/include/gemmi/logger.hpp
+            ${gemmi_src}/include/gemmi/math.hpp
+            ${gemmi_src}/include/gemmi/metadata.hpp
+            ${gemmi_src}/include/gemmi/mmcif.hpp
+            ${gemmi_src}/include/gemmi/mmcif_impl.hpp
+            ${gemmi_src}/include/gemmi/mmdb.hpp
+            ${gemmi_src}/include/gemmi/mmread.hpp
+            ${gemmi_src}/include/gemmi/mmread_gz.hpp
+            ${gemmi_src}/include/gemmi/model.hpp
+            ${gemmi_src}/include/gemmi/modify.hpp
+            ${gemmi_src}/include/gemmi/monlib.hpp
+            ${gemmi_src}/include/gemmi/mtz.hpp
+            ${gemmi_src}/include/gemmi/mtz2cif.hpp
+            ${gemmi_src}/include/gemmi/neighbor.hpp
+            ${gemmi_src}/include/gemmi/neutron92.hpp
+            ${gemmi_src}/include/gemmi/numb.hpp
+            ${gemmi_src}/include/gemmi/pdb.hpp
+            ${gemmi_src}/include/gemmi/pdb_id.hpp
+            ${gemmi_src}/include/gemmi/pirfasta.hpp
+            ${gemmi_src}/include/gemmi/polyheur.hpp
+            ${gemmi_src}/include/gemmi/pymol_select.hpp
+            ${gemmi_src}/include/gemmi/qcp.hpp
+            ${gemmi_src}/include/gemmi/read_cif.hpp
+            ${gemmi_src}/include/gemmi/recgrid.hpp
+            ${gemmi_src}/include/gemmi/reciproc.hpp
+            ${gemmi_src}/include/gemmi/refln.hpp
+            ${gemmi_src}/include/gemmi/resinfo.hpp
+            ${gemmi_src}/include/gemmi/riding_h.hpp
+            ${gemmi_src}/include/gemmi/scaling.hpp
+            ${gemmi_src}/include/gemmi/select.hpp
+            ${gemmi_src}/include/gemmi/seqalign.hpp
+            ${gemmi_src}/include/gemmi/seqid.hpp
+            ${gemmi_src}/include/gemmi/seqtools.hpp
+            ${gemmi_src}/include/gemmi/serialize.hpp
+            ${gemmi_src}/include/gemmi/sfcalc.hpp
+            ${gemmi_src}/include/gemmi/small.hpp
+            ${gemmi_src}/include/gemmi/smcif.hpp
+            ${gemmi_src}/include/gemmi/solmask.hpp
+            ${gemmi_src}/include/gemmi/span.hpp
+            ${gemmi_src}/include/gemmi/sprintf.hpp
+            ${gemmi_src}/include/gemmi/stats.hpp
+            ${gemmi_src}/include/gemmi/symmetry.hpp
+            ${gemmi_src}/include/gemmi/to_chemcomp.hpp
+            ${gemmi_src}/include/gemmi/to_cif.hpp
+            ${gemmi_src}/include/gemmi/to_json.hpp
+            ${gemmi_src}/include/gemmi/to_mmcif.hpp
+            ${gemmi_src}/include/gemmi/to_pdb.hpp
+            ${gemmi_src}/include/gemmi/topo.hpp
+            ${gemmi_src}/include/gemmi/twin.hpp
+            ${gemmi_src}/include/gemmi/unitcell.hpp
+            ${gemmi_src}/include/gemmi/utf.hpp
+            ${gemmi_src}/include/gemmi/util.hpp
+            ${gemmi_src}/include/gemmi/version.hpp
+            ${gemmi_src}/include/gemmi/xds2mtz.hpp
+            ${gemmi_src}/include/gemmi/xds_ascii.hpp
 )
 
 set(gemmi_third_party-headers_HEADERS
 ${gemmi_src}/include/gemmi/third_party/fast_float.h
+${gemmi_src}/include/gemmi/third_party/half.hpp
 ${gemmi_src}/include/gemmi/third_party/pocketfft_hdronly.h
 ${gemmi_src}/include/gemmi/third_party/tinydir.h
+${gemmi_src}/third_party/doctest.h
+${gemmi_src}/third_party/linalg.h
+${gemmi_src}/third_party/optionparser.h
 ${gemmi_src}/third_party/sajson.h
+${gemmi_src}/third_party/serializer.h
+${gemmi_src}/third_party/stb_sprintf.h
 )
 
 set(gemmi_third_party_tao-headers_HEADERS

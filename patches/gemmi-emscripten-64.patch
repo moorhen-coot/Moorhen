@@ -1,3 +1,17 @@
+diff --git a/include/gemmi/third_party/half.hpp b/include/gemmi/third_party/half.hpp
+index d802fb68..3565f15c 100644
+--- a/include/gemmi/third_party/half.hpp
++++ b/include/gemmi/third_party/half.hpp
+@@ -193,6 +193,9 @@
+                #define HALF_ENABLE_CPP11_CFENV 1
+        #endif
+ #endif
++#ifdef __EMSCRIPTEN__
++#undef HALF_ENABLE_CPP11_CFENV
++#endif
+ #undef HALF_GCC_VERSION
+ #undef HALF_ICC_VERSION
+ 
 diff --git a/third_party/stb_sprintf.h b/third_party/stb_sprintf.h
 index 28e9d64b..27429a8c 100644
 --- a/third_party/stb_sprintf.h

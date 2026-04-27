@@ -5,6 +5,7 @@
 #include <utility>
 #include <cctype>
 
+#include <gemmi/read_cif.hpp>
 #include "gemmi/to_cif.hpp"
 #include "gemmi/to_mmcif.hpp"
 #include "gemmi/fstream.hpp"

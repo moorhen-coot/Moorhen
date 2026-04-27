@@ -1,0 +1,13 @@
+diff --git a/clipper/gemmi/clipper_gemmi.h b/clipper/gemmi/clipper_gemmi.h
+index 9faabcd..d0034f3 100644
+--- a/clipper/gemmi/clipper_gemmi.h
++++ b/clipper/gemmi/clipper_gemmi.h
+@@ -126,7 +126,7 @@ class GEMMI {
+   static void prepare_gemmi_header( gemmi::Ccp4<ftype32>& mapobj, std::array<int, 3> dim,
+                                     std::array<int, 3> gfms0, std::array<int, 3> grid,
+                                     std::array<int, 3> orderfms, Cell unitcell ) {
+-    mapobj.prepare_ccp4_header_except_mode_and_stats();
++    mapobj.prepare_ccp4_header_except_mode_and_stats(mapobj.grid); //I don't if I have to or should do this.
+     mapobj.set_header_3i32( 1, dim[0], dim[1], dim[2] );
+     mapobj.set_header_3i32( 5, gfms0[0], gfms0[1], gfms0[2] );
+     mapobj.set_header_3i32( 8, grid[0], grid[1], grid[2] );
