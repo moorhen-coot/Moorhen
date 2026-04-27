@@ -77,11 +77,11 @@ case $1 in
 		if $(echo "$2" | grep -q ':'); then
 		    target_fork=$(echo "$2" | cut -d':' -f1)
 			commit_hash=$(echo "$2" | cut -d':' -f2)
-			echo DEBUG:: Colon separated: fork=${target_fork}, commit=${commit_hash}
+			# echo DEBUG:: Colon separated: fork=${target_fork}, commit=${commit_hash}
 			update_dep_fork coot $target_fork
 			update_dep_hash coot $commit_hash
 		else
-			echo DEBUG:: Regular manual hash
+			# echo DEBUG:: Regular manual hash
   			update_dep_hash coot $2
 		fi
   	fi
