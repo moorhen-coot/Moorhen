@@ -16,9 +16,11 @@ show_help() {
 	echo "    $0 lhasa 896185ae1a"
 	echo "---"
 	echo "Additionally, for Coot, it's possible to specify the fork of Coot to be used:"
-	echo "    $0 coot [[coot fork owner:]optional coot commit hash (other than the newest)]"
+	echo "    $0 coot [coot fork owner:][optional coot commit hash (other than the newest)]"
 	echo "Example:"
 	echo "    $0 coot hgonomeg:bcac9be519"
+	echo "    $0 coot hgonomeg:"
+	echo "The last example changes the fork to hgonomeg and pulls the commit hash from th main branch of that fork."
 	echo "---"
 	echo "This script requires git, awk, grep, etc. to operate."
 }
@@ -78,6 +80,10 @@ case $1 in
 		if $(echo "$2" | grep -q ':'); then
 		    target_fork=$(echo "$2" | cut -d':' -f1)
 			commit_hash=$(echo "$2" | cut -d':' -f2)
+			if [ "x$commit_hash" = "x" ]; then
+				echo Querying newest commit hash for $target_fork/coot/main...
+  				commit_hash=$(query_current_commit_hash_from_github $target_fork coot main)
+			fi
 			# echo DEBUG:: Colon separated: fork=${target_fork}, commit=${commit_hash}
 			update_dep_fork coot $target_fork
 			update_dep_hash coot $commit_hash
