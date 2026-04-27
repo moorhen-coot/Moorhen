@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base/Stack/Stack"
 
 export const CreateSelection = () => {
     const dispatch = useDispatch();
@@ -54,7 +55,7 @@ export const CreateSelection = () => {
     };
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} style={{ width: "20rem" }} />
             <MoorhenCidInputForm
                 margin={"0.5rem"}
@@ -66,6 +67,6 @@ export const CreateSelection = () => {
             <MoorhenButton variant="primary" onClick={createSelection}>
                 OK
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };
