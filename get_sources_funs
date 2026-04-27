@@ -351,7 +351,7 @@ getcoot() {
         fi
     else
         echo "Downloading coot-1.0..."
-        git clone --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
+        git clone --branch main "https://github.com/${coot_fork}/coot.git" coot-1.0 &&\
         git -C coot-1.0 fetch origin &&\
         git -C coot-1.0 checkout $coot_commit || fail "Failed to clone and checkout coot-1.0"
     fi
