@@ -562,14 +562,14 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 </div>
                 {!collapse && showFooter && (
                     <div className="moorhen__modal-footer">
-                        {props.footer}
+                        <div className="moorhen__modal-footer-props">{props.footer}</div>
                         {"\u00A0\u00A0\u00A0"}
                         {docked && lockAspectRatio ? null : (
                             <MoorhenButton
                                 type="icon-only"
                                 icon={docked ? "resizableVertical" : "resizable"}
                                 size="medium"
-                                className="moorhen__modal-stretch-button"
+                                className="moorhen__modal-resize-button"
                                 iconStyle={{ cursor: docked ? "ns-resize" : "nwse-resize" }}
                                 onMouseDown={handleResizeStart}
                             />

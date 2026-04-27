@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MoorhenSpinner } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
-import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
+import { MoorhenInfoCard } from "../../interface-base/Popovers/InfoCard";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import "./files-input.css";
 
 export type FilesInputProps = {
@@ -58,32 +59,32 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
                 >
                     <MoorhenIcon size="medium" moorhenSVG="MatSymFileOpen" />
                      Browse... 
-                    {!props.dowebkitdirectory &&
-                    <input
-                        disabled={disabled}
-                        id="upload-form"
-                        className="moorhen__input-files-upload"
-                        type="file"
-                        accept={accept}
-                        multiple={multiple}
-                        onChange={handleSelection}
-                        ref={ref}
-                    />
-                    }
-                    {props.dowebkitdirectory &&
-                    <input
-                        disabled={disabled}
-                        id="upload-form"
-                        className="moorhen__input-files-upload"
-                        type="file"
-                        accept={accept}
-                        multiple={multiple}
-                        onChange={handleSelection}
-                        ref={ref}
-                        /* @ts-expect-error */
-                        webkitdirectory="true"
-                    />
-                    }
+                    {!props.dowebkitdirectory && (
+                        <input
+                            disabled={disabled}
+                            id="upload-form"
+                            className="moorhen__input-files-upload"
+                            type="file"
+                            accept={accept}
+                            multiple={multiple}
+                            onChange={handleSelection}
+                            ref={ref}
+                        />
+                    )}
+                    {props.dowebkitdirectory && (
+                        <input
+                            disabled={disabled}
+                            id="upload-form"
+                            className="moorhen__input-files-upload"
+                            type="file"
+                            accept={accept}
+                            multiple={multiple}
+                            onChange={handleSelection}
+                            ref={ref}
+                            /* @ts-expect-error */
+                            webkitdirectory="true"
+                        />
+                    )}
                 </label>
                 <div className="moorhen__input-files-textfield">
                     <span style={{ flex: 1 }}>{selectedFiles}</span>

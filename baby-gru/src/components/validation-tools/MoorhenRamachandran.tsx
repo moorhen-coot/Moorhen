@@ -551,6 +551,7 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
 
     return (
         <div>
+            <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
             <MoorhenChainSelect
                 width=""
@@ -560,6 +561,7 @@ export const MoorhenRamachandran = (props: MoorhenRamachandranProps) => {
                 ref={chainSelectRef}
                 allowedTypes={[1, 2]}
             />
+            </MoorhenStack>
             <MoorhenStack direction="horizontal" align="center" justify="center">
                 <canvas
                     ref={canvasRef}

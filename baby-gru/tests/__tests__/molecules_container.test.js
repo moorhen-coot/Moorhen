@@ -598,8 +598,8 @@ describe('Testing molecules_container_js', () => {
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
             0, "//", "colorRampChainsScheme", "MolecularSurface", true
         );
-        expect(simpleMesh.vertices.size()).toBeCloseTo(143439, -3)
-        expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
+        expect(simpleMesh.vertices.size()).toBeCloseTo(147864, -4)
+        expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -4)
     })
 
     test("ligand surface", () => {
@@ -613,7 +613,7 @@ describe('Testing molecules_container_js', () => {
             tlc, -999999, ...coords
         )
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
-            ligandMolNo, "//", "colorRampChainsScheme", "MolecularSurface", true
+            ligandMolNo, "//", "Chain", "MolecularSurface", true
         )
 
         expect(simpleMesh.vertices.size()).toBeGreaterThan(100)

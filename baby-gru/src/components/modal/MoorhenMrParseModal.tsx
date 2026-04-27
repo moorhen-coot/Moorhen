@@ -684,37 +684,26 @@ export const MoorhenMrParseModal = () => {
     };
 
     const footerContent = (
-        <MoorhenStack
-            gap={2}
-            direction="horizontal"
-            style={{
-                paddingTop: "0.5rem",
-                alignItems: "space-between",
-                alignContent: "space-between",
-                justifyContent: "space-between",
-                width: "100%",
-            }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <MoorhenFileInput
-                    dowebkitdirectory={true}
-                    ref={filesRef}
-                    multiple={true}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        loadMrParseFiles(
-                            Array.from(e.target.files),
-                            commandCentre,
-                            store,
-                            monomerLibraryPath,
-                            backgroundColor,
-                            defaultBondSmoothness,
-                            dispatch
-                        );
-                    }}
-                />
-            </MoorhenStack>
+        <div>
+            <MoorhenFileInput
+                dowebkitdirectory={true}
+                ref={filesRef}
+                multiple={true}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    loadMrParseFiles(
+                        Array.from(e.target.files),
+                        commandCentre,
+                        store,
+                        monomerLibraryPath,
+                        backgroundColor,
+                        defaultBondSmoothness,
+                        dispatch
+                    );
+                }}
+            />
+
             {false && <MoorhenButton onClick={handleLoadFromUrlExample}>Load from URL example</MoorhenButton>}
-        </MoorhenStack>
+        </div>
     );
 
     const pdbArrow = homologsSortReversed ? <>&darr;</> : <>&uarr;</>;
@@ -923,7 +912,7 @@ export const MoorhenMrParseModal = () => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.MRPARSE}
-            initialHeight={700}
+            initialHeight={500}
             initialWidth={748}
             headerTitle="MrParse results"
             footer={footerContent}

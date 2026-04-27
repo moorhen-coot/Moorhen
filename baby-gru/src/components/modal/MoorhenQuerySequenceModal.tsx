@@ -234,45 +234,48 @@ const MoorhenQuerySequence = () => {
             }
             headerTitle="Query using a sequence"
             body={
-                <MoorhenStack>
-                    <MoorhenStack inputGrid addMargin>
-                        <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
-                        <MoorhenChainSelect
-                            width=""
-                            molecules={molecules}
-                            onChange={handleChainChange}
-                            selectedCoordMolNo={selectedModel}
-                            ref={chainSelectRef}
-                            allowedTypes={[1, 2]}
+                <>
+                    <div>
+                        <MoorhenStack inputGrid addMargin>
+                            <MoorhenMoleculeSelect onChange={handleModelChange} ref={moleculeSelectRef} />
+                            <MoorhenChainSelect
+                                width=""
+                                molecules={molecules}
+                                onChange={handleChainChange}
+                                selectedCoordMolNo={selectedModel}
+                                ref={chainSelectRef}
+                                allowedTypes={[1, 2]}
+                            />
+                            <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
+                                <option value="PDB" key="PDB">
+                                    PDB
+                                </option>
+                                <option value="AFDB" key="AFDB">
+                                    Predicted Models
+                                </option>
+                            </MoorhenSelect>
+                        </MoorhenStack>
+                        <MoorhenSlider
+                            minVal={0.1}
+                            maxVal={1.0}
+                            logScale={false}
+                            sliderTitle="E-Val cutoff"
+                            decimalPlaces={1}
+                            externalValue={eValCutoff}
+                            setExternalValue={setEValCutoff}
                         />
-                        <MoorhenSelect label={"Source"} ref={sourceSelectRef} defaultValue={"PDB"} onChange={handleSourceChange}>
-                            <option value="PDB" key="PDB">
-                                PDB
-                            </option>
-                            <option value="AFDB" key="AFDB">
-                                Predicted Models
-                            </option>
-                        </MoorhenSelect>
-                    </MoorhenStack>
-                    <MoorhenSlider
-                        minVal={0.1}
-                        maxVal={1.0}
-                        logScale={false}
-                        sliderTitle="E-Val cutoff"
-                        decimalPlaces={1}
-                        externalValue={eValCutoff}
-                        setExternalValue={setEValCutoff}
-                    />
-                    <MoorhenSlider
-                        minVal={1}
-                        maxVal={100}
-                        logScale={false}
-                        sliderTitle="Seq. Id. cutoff"
-                        externalValue={seqIdCutoff}
-                        decimalPlaces={0}
-                        setExternalValue={setSeqIdCutoff}
-                    />
-                    <hr></hr>
+                        <MoorhenSlider
+                            minVal={1}
+                            maxVal={100}
+                            logScale={false}
+                            sliderTitle="Seq. Id. cutoff"
+                            externalValue={seqIdCutoff}
+                            decimalPlaces={0}
+                            setExternalValue={setSeqIdCutoff}
+                        />
+                        <br />
+                        <hr></hr>
+                    </div>
                     {data ? (
                         <>
                             {totalNumberOfHits > 0 ? <span>Found {totalNumberOfHits} hits</span> : null}
@@ -296,7 +299,7 @@ const MoorhenQuerySequence = () => {
                             )}
                         </>
                     ) : null}
-                </MoorhenStack>
+                </>
             }
             footer={
                 <>

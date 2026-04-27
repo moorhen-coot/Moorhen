@@ -474,3 +474,31 @@ getboost() {
     fi
     echo
 }
+
+getmaeparser() {
+    cdcheckout
+    if [ -r maeparser-$maeparser_release ]; then
+        echo "Using existing maeparser"
+    else
+        echo "Downloading maeparser source"
+        curl -fL https://github.com/schrodinger/maeparser/archive/refs/tags/v$maeparser_release.tar.gz -o maeparser_$maeparser_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking maeparser source" &&\
+        tar xf "maeparser_$maeparser_release.tar.gz" || fail "Failed to download and unpack maeparser"
+    fi
+    echo
+}
+
+getcoordgen() {
+    cdcheckout
+    if [ -r coordgenlibs-$coordgen_release ]; then
+        echo "Using existing coordgen"
+    else
+        echo "Downloading coordgen source"
+        curl -fL https://github.com/schrodinger/coordgenlibs/archive/refs/tags/v$coordgen_release.tar.gz -o coordgen_$coordgen_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking coordgen source" &&\
+        tar xf "coordgen_$coordgen_release.tar.gz" || fail "Failed to download and unpack coordgen"
+    fi
+    echo
+}

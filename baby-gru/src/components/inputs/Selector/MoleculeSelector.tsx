@@ -2,7 +2,6 @@ import { useSelector } from "react-redux";
 import React from "react";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import { MoorhenStack } from "../../interface-base";
 import { MoorhenSelect } from "./Select";
 import "./selectors.css";
 
