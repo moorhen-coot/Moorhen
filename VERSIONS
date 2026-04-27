@@ -22,5 +22,5 @@ freetype_release="2.14.3"
 jsoncpp_release="1.9.6"
 lhasa_commit="896185ae1a"
 coot_commit="bfe905a611"
-# This is the GitHub repo username of the person who owns the fork of Coot that we use.
+# This is the GitHub repo username of the person who owns the repository of Coot that we use.
 coot_fork="hgonomeg"
