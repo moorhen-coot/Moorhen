@@ -88,6 +88,18 @@ getlibccp4() {
     echo
 }
 
+getxpid() {
+    cdcheckout
+    if [ -r xpid_moorhen ]; then
+        echo "Using existing xpid_moorhen"
+    else
+        echo "Checking out xpid_moorhen"
+        git clone https://github.com/SeanWang5868/xpid_moorhen.git || fail "Failed to clone xpid_moorhen"
+        echo
+    fi
+    echo
+}
+
 getclipper() {
     cdcheckout
     if [ -r clipper ]; then
