@@ -29,6 +29,8 @@
 #include <fstream>
 #include <utility>
 #include <cctype>
+#include <gemmi/stats.hpp>
+#include <gemmi/assembly.hpp>
 #include <gemmi/mmdb.hpp>
 #include <gemmi/mmcif.hpp>
 #include <gemmi/to_mmcif.hpp>

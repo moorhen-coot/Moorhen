@@ -40,6 +40,8 @@ add_library(clipper-core STATIC
 ../../checkout/clipper/clipper/core/test_core.cpp
 ../../checkout/clipper/clipper/core/test_data.cpp
 ../../checkout/clipper/clipper/core/xmap.cpp
+../../checkout/clipper/clipper/core/lxmap.cpp
+../../checkout/clipper/clipper/core/lnxmap.cpp
 )
 
 target_compile_options(clipper-core PUBLIC "-DFFTW_ENABLE_FLOAT")
@@ -86,6 +88,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/map_utils.h
 ${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/resol_fn.h
 ${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/atomsf.h
 ${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/clipper_util.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/lxmap.h
+${CMAKE_CURRENT_SOURCE_DIR}/../../checkout/clipper//clipper/core/lnxmap.h
 )
 
 target_compile_options(clipper-core PUBLIC "-DFFTW_ENABLE_FLOAT")

@@ -1,3 +1,5 @@
+#include <clipper/minimol/minimol_io_gemmi.h>
+#include <clipper/minimol/minimol_utils.h>
 #include <privateer-lib.h>
 #include <privateer-json.h>
 

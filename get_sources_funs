@@ -93,9 +93,8 @@ getclipper() {
     if [ -r clipper ]; then
         echo "Using existing clipper"
     else
-        echo "Checking out clipper (gemmi branch)"
-        git clone -b gemmi https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git || fail "Failed to clone clipper"
-        patch -p1 < ../../patches/clipper-gemmi075.patch || fail "Failed to patch clipper"
+        echo "Checking out clipper (large_maps_support branch)"
+        git clone -b large_maps_support https://ccp4forge.rc-harwell.ac.uk/ccp4/clipper.git || fail "Failed to clone clipper"
         cd clipper
         echo
     fi
