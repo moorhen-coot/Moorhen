@@ -67,8 +67,6 @@ export const MoorhenDevMenu = () => {
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-
     useEffect(() => {
         dispatch(removeVectors(testVectors));
         const myVecs: MoorhenVector[] = [];
