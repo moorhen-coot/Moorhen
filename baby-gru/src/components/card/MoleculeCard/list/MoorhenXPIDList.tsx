@@ -45,10 +45,11 @@ export const MoorhenXPIDList = (props: {
     const dispatch = useDispatch();
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
 
     const [xpidList, setXpidList] = useState<MoorhenXPIDResult[] | null>(null);
     const [xpidVisibleList, setXpidVisibleList] = useState<boolean[] | null>(null);
-    const [vectorsList, setVectorsList] = useState<MoorhenVector[] | null>(null);
+    const [xpidVectorsList, setXpidVectorsList] = useState<MoorhenVector[] | null>(null);
 
     const moorhenGlobalInstance = useMoorhenInstance()
 
@@ -60,8 +61,14 @@ export const MoorhenXPIDList = (props: {
         const visibleList:boolean[]  = []
         interactions.forEach((inter,idx) => {
             const dispInter = inter as MoorhenXPIDResult
-            visibleList.push(false)
             const key = inter.X_id+"_"+inter.H_atom+"_"+inter.X_atom+"_"+inter.X_chain+"_"+inter.X_res+inter.pi_id+"_"+"_"+inter.pi_chain+"_"+inter.pi_res + "_" + idx
+            const matchingKeyVectors = vectorsList.filter(v => {
+                return v.uniqueId===key
+                })
+            if(matchingKeyVectors.length===0)
+                visibleList.push(false)
+            else
+                visibleList.push(true)
             const aVector: MoorhenVector = {
                 coordsMode: "points",
                 labelMode: "none",
@@ -87,7 +94,7 @@ export const MoorhenXPIDList = (props: {
         })
         setXpidList(interactions);
         setXpidVisibleList(visibleList);
-        setVectorsList(theVectors)
+        setXpidVectorsList(theVectors)
         props.setBusy?.(false);
     };
 
@@ -119,14 +126,22 @@ export const MoorhenXPIDList = (props: {
                             const newVisList = [...xpidVisibleList]
                             newVisList[idx] = !newVisList[idx]
                             setXpidVisibleList(newVisList);
-                            dispatch(removeVectors(vectorsList))
-                            const visVectors = vectorsList.filter((vec,vecIdx) => newVisList[vecIdx])
+                            dispatch(removeVectors(xpidVectorsList))
+                            const visVectors = xpidVectorsList.filter((vec,vecIdx) => newVisList[vecIdx])
                             dispatch(addVectors(visVectors))
                         }}/>
                         <MoorhenButton
                             key={"center_"+key}
                             size="accordion"
-                            onClick={() => {moorhenGlobalInstance.centerOnCoordinate(-xpi.X_xyz_x,-xpi.X_xyz_y,-xpi.X_xyz_z)}}
+                            onClick={() => {
+                                const newVisList = [...xpidVisibleList]
+                                newVisList[idx] = true
+                                setXpidVisibleList(newVisList);
+                                dispatch(removeVectors(xpidVectorsList))
+                                const visVectors = xpidVectorsList.filter((vec,vecIdx) => newVisList[vecIdx])
+                                dispatch(addVectors(visVectors))
+                                moorhenGlobalInstance.centerOnCoordinate(-xpi.X_xyz_x,-xpi.X_xyz_y,-xpi.X_xyz_z)
+                            }}
                             type="icon-only"
                             icon="MatSymFilterFocus"
                             tooltip="Center on molecule"
