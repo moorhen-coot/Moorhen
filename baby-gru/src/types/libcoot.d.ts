@@ -77,6 +77,7 @@ export namespace libcootApi {
         CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
         // Gemmi vector constructors
         VectorString: { new (): emscriptem.vector<string> };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
     };
     type headerInfoGemmi = {
         title: string;
@@ -655,6 +656,7 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
     };
     interface DoublePairDoubleJS {
         first: number;
