@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { MoorhenButton } from "@/components/inputs";
+import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
@@ -46,6 +46,7 @@ export const MoorhenXPIDList = (props: {
     const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const [vectorColour, setVectorColour] = useState({ r: 255, g: 0, b: 0 });
 
     const [xpidList, setXpidList] = useState<MoorhenXPIDResult[] | null>(null);
     const [xpidVisibleList, setXpidVisibleList] = useState<boolean[] | null>(null);
@@ -67,8 +68,10 @@ export const MoorhenXPIDList = (props: {
                 })
             if(matchingKeyVectors.length===0)
                 visibleList.push(false)
-            else
+            else {
                 visibleList.push(true)
+                setVectorColour(matchingKeyVectors[0].vectorColour);
+            }
             const aVector: MoorhenVector = {
                 coordsMode: "points",
                 labelMode: "none",
@@ -86,7 +89,7 @@ export const MoorhenXPIDList = (props: {
                 molNoFrom: 0,
                 molNoTo: 0,
                 uniqueId: key,
-                vectorColour: { r: 255, g: 0, b: 0 },
+                vectorColour: vectorColour,
                 textColour: { r: 0, g: 0, b: 0 },
                 radius: 0.1,
             };
@@ -112,22 +115,41 @@ export const MoorhenXPIDList = (props: {
         <MoorhenInfoCard infoText={xpidInfoText} />,
     ];
 
+    const handleColorChange = (color: { r: number; g: number; b: number }) => {
+        setVectorColour(color);
+        dispatch(removeVectors(xpidVectorsList))
+        const newVectors = xpidVectorsList.map(v => Object.assign({}, v, {vectorColour : vectorColour}))
+        setXpidVectorsList(newVectors)
+        dispatch(addVectors(newVectors))
+    };
+
     return (
-        <MoorhenAccordion title="XH-PI Interactions" extraControls={extraControl}>
+        <MoorhenAccordion title="XH-Pi Interactions" extraControls={extraControl}>
             {xpidList === null ? (
                 <LinearProgress variant="indeterminate" />
             ) : xpidList.length > 0 ? (
-                <MoorhenStack inputGrid>
+                <>
+                <MoorhenStack inputGrid gridWidth={3}>
                 <MoorhenButton variant="primary" onClick={() => {
                     const newVisList = Array(xpidVisibleList.length).fill(true)
                     setXpidVisibleList(newVisList);
                     dispatch(addVectors(xpidVectorsList))
-                }}>Show all</MoorhenButton>
+                }}>Show&nbsp;all</MoorhenButton>
                 <MoorhenButton variant="primary" onClick={() => {
                     const newVisList = Array(xpidVisibleList.length).fill(false)
                     setXpidVisibleList(newVisList);
                     dispatch(removeVectors(xpidVectorsList))
-                }}>Hide all</MoorhenButton>
+                }}>Hide&nbsp;all</MoorhenButton>
+                <MoorhenColourPicker
+                    colour={[vectorColour.r, vectorColour.g, vectorColour.b]}
+                    setColour={color => {
+                        handleColorChange({ r: color[0], g: color[1], b: color[2] });
+                    }}
+                    position="right"
+                    tooltip="Change vector colour"
+                />
+                </MoorhenStack>
+                <MoorhenStack inputGrid>
                     {xpidList.map((xpi,idx) => {
                         const key = xpi.X_id+"_"+xpi.H_atom+"_"+xpi.X_atom+"_"+xpi.X_chain+"_"+xpi.X_res+xpi.pi_id+"_"+"_"+xpi.pi_chain+"_"+xpi.pi_res + "_" + idx
                         const text = xpi.X_chain+"/"+xpi.X_id+"("+xpi.X_res+")/"+xpi.X_atom+" -> " +xpi.pi_chain+"/"+xpi.pi_id+"("+xpi.pi_res+")"
@@ -159,9 +181,10 @@ export const MoorhenXPIDList = (props: {
                         </>)
                     })}
                 </MoorhenStack>
+                </>
             ) : (
                 <div>
-                    <b>No XH-PI interactions</b>
+                    <b>No XH-Pi interactions</b>
                 </div>
             )}
         </MoorhenAccordion>
@@ -171,7 +194,7 @@ export const MoorhenXPIDList = (props: {
 const xpidInfoText = (
     <>
         <h1>XPID</h1>
-        <p>This plugin uses XPID Moorhen to generate XH-PI data.</p>
+        <p>This plugin uses XPID Moorhen to generate XH-Pi data.</p>
         <a href="https://github.com/SeanWang5868/xpid_moorhen/tree/main" target="_blank" rel="noreferrer">
             XPID Moorhen source
         </a>
