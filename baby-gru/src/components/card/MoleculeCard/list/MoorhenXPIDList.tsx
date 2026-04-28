@@ -118,6 +118,16 @@ export const MoorhenXPIDList = (props: {
                 <LinearProgress variant="indeterminate" />
             ) : xpidList.length > 0 ? (
                 <MoorhenStack inputGrid>
+                <MoorhenButton variant="primary" onClick={() => {
+                    const newVisList = Array(xpidVisibleList.length).fill(true)
+                    setXpidVisibleList(newVisList);
+                    dispatch(addVectors(xpidVectorsList))
+                }}>Show all</MoorhenButton>
+                <MoorhenButton variant="primary" onClick={() => {
+                    const newVisList = Array(xpidVisibleList.length).fill(false)
+                    setXpidVisibleList(newVisList);
+                    dispatch(removeVectors(xpidVectorsList))
+                }}>Hide all</MoorhenButton>
                     {xpidList.map((xpi,idx) => {
                         const key = xpi.X_id+"_"+xpi.H_atom+"_"+xpi.X_atom+"_"+xpi.X_chain+"_"+xpi.X_res+xpi.pi_id+"_"+"_"+xpi.pi_chain+"_"+xpi.pi_res + "_" + idx
                         const text = xpi.X_chain+"/"+xpi.X_id+"("+xpi.X_res+")/"+xpi.X_atom+" -> " +xpi.pi_chain+"/"+xpi.pi_id+"("+xpi.pi_res+")"
