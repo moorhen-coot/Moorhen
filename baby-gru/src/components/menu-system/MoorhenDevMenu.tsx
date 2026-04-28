@@ -406,14 +406,6 @@ export const MoorhenDevMenu = () => {
             <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
                 Show Info Snackbar
             </MoorhenButton>
-            <MoorhenButton onClick={() => {
-                if(molecules&&molecules.length>0){
-                    const xhpi_inter = window.CCP4Module.detect_xhpi_interactions_json(molecules[0].gemmiStructure)
-                    console.log(xhpi_inter)
-                }
-                }}>
-                Run XPID
-            </MoorhenButton>
         </MoorhenStack>
     );
 };

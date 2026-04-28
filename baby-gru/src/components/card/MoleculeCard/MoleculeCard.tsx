@@ -29,6 +29,7 @@ import {
 } from "./MoleculeRepresentationSettingsCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
+import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
 import "./molecule-card.css";
 
@@ -90,6 +91,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const [busyDrawingCustomRepresentation, setBusyDrawingCustomRepresentation] = useState<boolean>(false);
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false);
     const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false);
+    const [busyLoadingXPID, setBusyLoadingXPID] = useState<boolean>(false);
 
     const [showHeaderInfo, setShowHeaderInfo] = useState<boolean>(false);
 
@@ -651,6 +653,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                             height={convertViewtoPx(40, height)}
                         />
                     )}
+                    <MoorhenXPIDList
+                        setBusy={setBusyLoadingXPID}
+                        molecule={props.molecule}
+                        height={convertViewtoPx(40, height)}
+                    />
                 </div>
             </MoorhenStack>
         </MoorhenAccordion>
