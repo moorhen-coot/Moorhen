@@ -241,6 +241,12 @@ cleargraphene() {
     rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
 }
 
+clearxpid() {
+    echo "Clear xpid_moorhen"
+    rm -rf ${BUILD_DIR}/xpid_moorhen_build
+    rm -rf ${INSTALL_DIR}/include/xpid_moorhen
+}
+
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
@@ -286,6 +292,7 @@ clearall() {
     clearconkit
     clearsigcpp
     cleargraphene
+    clearxpid
     clearmoorhen
 }
 
@@ -343,6 +350,8 @@ else
            sigcpp) clearsigcpp
                ;;
            graphene) cleargraphene
+               ;;
+           xpid) clearxpid
                ;;
            moorhen) clearmoorhen
                ;;
@@ -405,6 +414,7 @@ BUILD_SLICENDICE=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+BUILD_XPID=false
 BUILD_CONKIT=false
 
 if test -d ${INSTALL_DIR}/include/conkit; then
@@ -545,6 +555,12 @@ else
     BUILD_PNG=true
 fi
 
+if test -r ${INSTALL_DIR}/include/xpid_moorhen/core.h; then
+    true
+else
+    BUILD_XPID=true
+fi
+
 if test x"${MEMORY64}" = x"1"; then
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm; then
     true
@@ -627,6 +643,9 @@ for mod in $MODULES; do
        freetype) echo "Force build freetype"
        BUILD_FREETYPE=true
        ;;
+       xpid) echo "Force build xpid_moorhen"
+       BUILD_XPID=true
+       ;;
     esac
 done
 
@@ -654,6 +673,16 @@ echo "BUILD_ZLIB       " $BUILD_ZLIB
 echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 echo "BUILD_CONKIT     " $BUILD_CONKIT
+echo "BUILD_XPID       " $BUILD_XPID
+
+#xpid_moorhen
+if [ $BUILD_XPID = true ]; then
+    getxpid
+    mkdir -p ${BUILD_DIR}/xpid_moorhen_build
+    cd ${BUILD_DIR}/xpid_moorhen_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/xpid_moorhen
+    make install || fail "Error installing getxpid, giving up."
+fi
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then

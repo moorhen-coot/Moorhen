@@ -35,6 +35,9 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     register_vector<TableEntry>("Table");
     // END PRIVATEER
 
+    //Sean Wang's XPID
+    function("detect_xhpi_interactions_json", &xhpi::detect_xhpi_interactions_json);
+
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);

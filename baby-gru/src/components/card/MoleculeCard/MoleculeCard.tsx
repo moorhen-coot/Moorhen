@@ -1,7 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, removeVectors } from "@/store";
 import { useCommandCentre, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -20,16 +20,17 @@ import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../.
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
 import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
-import { PictureWizardCard } from "./PictureWizardCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import {
     MoorhenMoleculeRepresentationSettingsCard,
     ResidueEnvironmentSettingsPanel,
     SymmetrySettingsPanel,
 } from "./MoleculeRepresentationSettingsCard";
+import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -90,6 +91,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const [busyDrawingCustomRepresentation, setBusyDrawingCustomRepresentation] = useState<boolean>(false);
     const [busyLoadingLigands, setBusyLoadingLigands] = useState<boolean>(false);
     const [busyLoadingCarbohydrates, setBusyLoadingCarbohydrates] = useState<boolean>(false);
+    const [busyLoadingXPID, setBusyLoadingXPID] = useState<boolean>(false);
+    const [showXPIDList, setShownXPIDList] = useState<boolean>(props.molecule.moleculeCardState?.showXpidList ?? false);
 
     const [showHeaderInfo, setShowHeaderInfo] = useState<boolean>(false);
 
@@ -147,44 +150,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             redrawMolIfDirty(representationIds);
         }
     };
-
-    // const redrawOriginRepresentations = useCallback(async () => {
-    //     if (isDirty.current) {
-    //         busyRedrawing.current = true;
-    //         isDirty.current = false;
-    //         if (props.molecule.adaptativeBondsEnabled || drawInteractions) {
-    //             const [molecule, cid] = await getCentreAtom(molecules, commandCentre, store);
-    //             if (molecule.molNo === props.molecule.molNo) {
-    //                 if (props.molecule.adaptativeBondsEnabled) {
-    //                     await props.molecule.redrawAdaptativeBonds(cid);
-    //                 }
-    //                 if (drawInteractions) {
-    //                     await props.molecule.drawEnvironment(cid);
-    //                 }
-    //             } else {
-    //                 props.molecule.clearBuffersOfStyle("environment");
-    //             }
-    //         } else {
-    //             props.molecule.clearBuffersOfStyle("environment");
-    //         }
-    //         await props.molecule.drawSymmetry();
-    //         busyRedrawing.current = false;
-    //         await redrawOriginRepresentations();
-    //     }
-    // }, [molecules, props.molecule, drawInteractions, commandCentre]);
-
-    // const handleOriginUpdate = useCallback(() => {
-    //     isDirty.current = true;
-    //     if (!busyRedrawing.current && isVisible) {
-    //         redrawOriginRepresentations();
-    //     }
-    // }, [redrawOriginRepresentations, isVisible]);
-    // useEffect(() => {
-    //     document.addEventListener("originUpdate", handleOriginUpdate);
-    //     return () => {
-    //         document.removeEventListener("originUpdate", handleOriginUpdate);
-    //     };
-    // }, [handleOriginUpdate]);
 
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
@@ -424,6 +389,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const handleToggleXPIDList = value => {
+        setShownXPIDList(value);
+        props.molecule.moleculeCardState.showXpidList = value;
+        if (!value) {
+            const vectorList = store
+                .getState()
+                .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
+            dispatch(removeVectors(vectorList));
+        }
+    };
+
     return (
         <MoorhenAccordion
             title={cardLabel}
@@ -539,6 +515,14 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 <ResidueEnvironmentSettingsPanel molecule={props.molecule} />
                             </MoorhenPopoverButton>
                         </MoorhenStack>
+                        <MoorhenToggle
+                            label="XH-Pi Interaction"
+                            onChange={() => {
+                                handleToggleXPIDList(!showXPIDList);
+                            }}
+                            checked={showXPIDList}
+                            disabled={isVisible ? false : true}
+                        />
 
                         <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "rama")}
@@ -650,6 +634,9 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                             molecule={props.molecule}
                             height={convertViewtoPx(40, height)}
                         />
+                    )}
+                    {showXPIDList && (
+                        <MoorhenXPIDList setBusy={setBusyLoadingXPID} molecule={props.molecule} height={convertViewtoPx(40, height)} />
                     )}
                 </div>
             </MoorhenStack>

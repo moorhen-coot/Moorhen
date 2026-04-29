@@ -36,6 +36,8 @@
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
 
+#include "xpid_moorhen/interface.h"
+
 #include "rotarama.hpp"
 #include "slicendice_cpp/kmeans.h"
 #include "slicendice_cpp/agglomerative.h"
