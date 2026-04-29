@@ -1,13 +1,9 @@
-import { v4 as uuidv4 } from "uuid";
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
-import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
-import { privateer } from "../../../../types/privateer";
-import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
 import { MoorhenToggle } from "@/components/inputs/MoorhenToggle/Toggle"
 import { addVectors, removeVectors, MoorhenVector } from "../../../../store/vectorsSlice";
 import { useMoorhenInstance } from "../../../../InstanceManager";
@@ -62,7 +58,8 @@ export const MoorhenXPIDList = (props: {
         const visibleList:boolean[]  = []
         interactions.forEach((inter,idx) => {
             const dispInter = inter as MoorhenXPIDResult
-            const key = inter.X_id+"_"+inter.H_atom+"_"+inter.X_atom+"_"+inter.X_chain+"_"+inter.X_res+inter.pi_id+"_"+"_"+inter.pi_chain+"_"+inter.pi_res + "_" + idx
+            const key = "__TAG_XPID_" +
+                props.molecule.uniqueId +inter.X_id+"_"+inter.H_atom+"_"+inter.X_atom+"_"+inter.X_chain+"_"+inter.X_res+inter.pi_id+"_"+"_"+inter.pi_chain+"_"+inter.pi_res + "_" + idx
             const matchingKeyVectors = vectorsList.filter(v => {
                 return v.uniqueId===key
                 })
@@ -124,7 +121,7 @@ export const MoorhenXPIDList = (props: {
     };
 
     return (
-        <MoorhenAccordion title="XH-Pi Interactions" extraControls={extraControl}>
+        <MoorhenAccordion title="XH-Pi Interactions" extraControls={extraControl} defaultOpen>
             {xpidList === null ? (
                 <LinearProgress variant="indeterminate" />
             ) : xpidList.length > 0 ? (

@@ -1,7 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, removeVectors } from "@/store";
 import { useCommandCentre, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -389,6 +389,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const handleToggleXPIDList = value => {
+        setShownXPIDList(value);
+        props.molecule.moleculeCardState.showXpidList = value;
+        if (!value) {
+            const vectorList = store
+                .getState()
+                .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
+            dispatch(removeVectors(vectorList));
+        }
+    };
+
     return (
         <MoorhenAccordion
             title={cardLabel}
@@ -507,8 +518,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         <MoorhenToggle
                             label="XH-Pi Interaction"
                             onChange={() => {
-                                setShownXPIDList(!showXPIDList);
-                                props.molecule.moleculeCardState.showXpidList = !showXPIDList;
+                                handleToggleXPIDList(!showXPIDList);
                             }}
                             checked={showXPIDList}
                             disabled={isVisible ? false : true}
