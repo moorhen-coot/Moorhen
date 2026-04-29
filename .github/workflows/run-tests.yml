@@ -70,7 +70,7 @@ jobs:
     - name: Hash dependency versions and build scripts (excluding Coot and Lhasa)
       id: dep_versions
       run: |
-        { grep -v 'lhasa\|coot_commit=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
+        { grep -vE '^#|(lhasa|coot)_(fork|commit)=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
     - name: Cache prebuilt C++ dependencies with sources
       id: cache-cpp-dependencies
       uses: actions/cache@v4
