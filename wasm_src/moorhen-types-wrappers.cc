@@ -31,8 +31,17 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
       .field("torsions", &TableEntry::torsions)
     ;
 
+    value_object<CremerPopleParameters>("CremerPopleParameters") 
+    .field("q", &CremerPopleParameters::q)
+    .field("phi", &CremerPopleParameters::phi)
+    .field("theta", &CremerPopleParameters::theta)
+    .field("chain_id", &CremerPopleParameters::chain_id)
+    .field("residue_id", &CremerPopleParameters::residue_id);
+
     function("validate", &validate);
+    function("calculate_cremer_pople_parameters", &calculate_cremer_pople_parameters);
     register_vector<TableEntry>("Table");
+    register_vector<CremerPopleParameters>("CremerPopleParameterList");
     // END PRIVATEER
 
     function("unpackCootDataFile",&unpackCootDataFile);
