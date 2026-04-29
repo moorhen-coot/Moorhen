@@ -1,3 +1,4 @@
+import { libcootApi } from "@/types/libcoot";
 import { WorkerResponse, cootCommandKwargs } from "./MoorhenCommandCentre";
 
 export type CootValidationData = {
@@ -195,5 +196,20 @@ export class CootCommandWrapper {
         const response = await result;
         const results = response.data.result.result;
         return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
+    }
+
+    async get_pdb_from_smiles(smiles: string, name: string, conformers: number, iterations: number): Promise<string> {
+        const response = (await this.cootCommand(
+            {
+                command: "smiles_to_pdb",
+                commandArgs: [smiles, name, conformers, iterations],
+                returnType: "str_str_pair",
+            },
+            true
+        )) as WorkerResponse<libcootApi.PairType<string, string>>;
+
+        const result = response.data.result.result.second;
+        console.log("pdb from smile", result);
+        return result;
     }
 }

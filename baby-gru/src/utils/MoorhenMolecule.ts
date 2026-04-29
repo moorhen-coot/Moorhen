@@ -100,6 +100,7 @@ export class MoorhenMolecule {
     name: string;
     molNo: number | null;
     gemmiStructure: gemmi.Structure;
+    private _numberOfModels: number;
     gemmiDocument: gemmi.cifDocument;
     sequences: Sequence[];
     representations: moorhen.MoleculeRepresentation[];
@@ -3054,5 +3055,13 @@ export class MoorhenMolecule {
             false
         )) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>;
         return result.data.result.result;
+    }
+
+    get numberOfModels() {
+        if (this._numberOfModels) return this._numberOfModels;
+        const models = this.gemmiStructure.models;
+        this._numberOfModels = models.size();
+        models.delete();
+        return this._numberOfModels;
     }
 }

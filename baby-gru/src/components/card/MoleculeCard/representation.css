@@ -28,3 +28,7 @@
     background: currentColor;
     transform: rotate(-25deg);
 }
+
+.moorhen__model-selector-input {
+    background-color: rgba(66, 66, 66, 0.2);
+}
