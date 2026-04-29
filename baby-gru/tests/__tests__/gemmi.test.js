@@ -67,7 +67,7 @@ describe("Testing gemmi", () => {
         expect(chains.size()).toBe(1)
         expect(chain.name).toBe('A')
         expect(residues.size()).toBe(1)
-        expect(residue_seqId.str()).toBe('1')
+        expect(residue_seqId.str(false)).toBe('1')
         const atoms = residue.atoms
         expect(atoms.size()).toBe(143)
 
@@ -379,7 +379,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         const water = waters.at(0)
         expect(water.name).toBe('HOH')
         const waterSeqId = water.seqid
-        expect(waterSeqId.str()).toBe('901')
+        expect(waterSeqId.str(false)).toBe('901')
 
         cleanUpVariables.push(st, model, chain, chains, water, waters, waterSeqId)
 
@@ -433,7 +433,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(chains_2.size()).toBe(1)
         expect(chain_2.name).toBe('A')
         expect(residues_2.size()).toBe(3)
-        expect(residue_2_seqId.str()).toBe('31')
+        expect(residue_2_seqId.str(false)).toBe('31')
 
         cleanUpVariables.push(st_1, st_2, model_1, chains_1, model_2, chains_2, chain_2, residues_2, residue_2_seqId, residue_2)
     })
