@@ -139,6 +139,7 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
+    moleculeCardState: { showXpidList: boolean };
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = "molecule";
@@ -228,6 +229,7 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.moleculeCardState = { showXpidList: false };
     }
 
     /**
@@ -1432,7 +1434,7 @@ export class MoorhenMolecule {
         excludeNeighbours?: boolean,
         hbondedToCid?: string,
         hbondedTo?: boolean,
-        neighboursDistance?: number,
+        neighboursDistance?: number
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1453,7 +1455,7 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0,
+        neighboursDistance: number = 6.0
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
