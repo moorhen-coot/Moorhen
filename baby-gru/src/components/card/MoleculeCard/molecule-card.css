@@ -9,6 +9,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
+    justify-content: center;
 }
 
 .moorhen__molecule_card_representation-buttons {
