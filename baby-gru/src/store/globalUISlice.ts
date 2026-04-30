@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { BottomPanelIDs, SidePanelIDs } from "@/components/panels";
 import { ShownControl } from "@/components/snack-bars/PopupControls/PopupControlList";
 
+
 const initialState: {
     busy: boolean;
     isTimeCapsuleBusy: boolean;
@@ -16,6 +17,7 @@ const initialState: {
     controlLocked: number | null;
     selectionToolsActive: boolean;
     shownBottomPanel: BottomPanelIDs | null;
+    isClickAwayListenerActive?: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -30,6 +32,7 @@ const initialState: {
     controlLocked: null,
     selectionToolsActive: false,
     shownBottomPanel: "sequences-viewer",
+    isClickAwayListenerActive: true,
 };
 
 const globalUISlice = createSlice({
@@ -102,6 +105,9 @@ const globalUISlice = createSlice({
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },
+        setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
+            state.isClickAwayListenerActive = action.payload;
+        },
     },
 });
 
@@ -120,5 +126,6 @@ export const {
     unlockControls,
     closeResidueSelectionTools,
     setShownBottomPanel,
+    setClickAwayListenerActive,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;
