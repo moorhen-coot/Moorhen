@@ -6,6 +6,7 @@ import MatSymConstruction from "./MatSymConstruction.svg"
 import MatSymLockOpen from "./MatSymLockOpen.svg"
 import MatSymExpand from "./MatSymExpand.svg"
 import MatSymArrowMenuClose from "./MatSymArrowMenuClose.svg"
+import MatSymMyLocation from "./MatSymMyLocation.svg"
 import vanillin from "./vanillin.svg"
 import MatSymFilterFocus from "./MatSymFilterFocus.svg"
 import MatSymClose from "./MatSymClose.svg"
@@ -40,7 +41,6 @@ import MatSymUndo from "./MatSymUndo.svg"
 import MatSymHelp from "./MatSymHelp.svg"
 import MatSymPlayCircled from "./MatSymPlayCircled.svg"
 import MatSymAdd from "./MatSymAdd.svg"
-import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
 import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
 import MatSymMenu from "./MatSymMenu.svg"
 import MatSymProgressActivity from "./MatSymProgressActivity.svg"
@@ -64,6 +64,7 @@ import menuModels from "./menuModels.svg"
 import resizableVertical from "./resizableVertical.svg"
 import resizable from "./resizable.svg"
 import MatSymArrowMenuOpen from "./MatSymArrowMenuOpen.svg"
+import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
 import menuVectors from "./menuVectors.svg"
 import MatSymInfo from "./MatSymInfo.svg"
 import MatSymArrowUpward from "./MatSymArrowUpward.svg"
@@ -83,6 +84,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymLockOpen": MatSymLockOpen,
  "MatSymExpand": MatSymExpand,
  "MatSymArrowMenuClose": MatSymArrowMenuClose,
+ "MatSymMyLocation": MatSymMyLocation,
  "vanillin": vanillin,
  "MatSymFilterFocus": MatSymFilterFocus,
  "MatSymClose": MatSymClose,
@@ -117,7 +119,6 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymHelp": MatSymHelp,
  "MatSymPlayCircled": MatSymPlayCircled,
  "MatSymAdd": MatSymAdd,
- "MatSymAutoAwesome": MatSymAutoAwesome,
  "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
  "MatSymMenu": MatSymMenu,
  "MatSymProgressActivity": MatSymProgressActivity,
@@ -141,6 +142,7 @@ export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "resizableVertical": resizableVertical,
  "resizable": resizable,
  "MatSymArrowMenuOpen": MatSymArrowMenuOpen,
+ "MatSymAutoAwesome": MatSymAutoAwesome,
  "menuVectors": menuVectors,
  "MatSymInfo": MatSymInfo,
  "MatSymArrowUpward": MatSymArrowUpward,
@@ -161,6 +163,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymLockOpen" |
  "MatSymExpand" |
  "MatSymArrowMenuClose" |
+ "MatSymMyLocation" |
  "vanillin" |
  "MatSymFilterFocus" |
  "MatSymClose" |
@@ -195,7 +198,6 @@ export type MoorhenSVG = "menu2DObjects" |
  "MatSymHelp" |
  "MatSymPlayCircled" |
  "MatSymAdd" |
- "MatSymAutoAwesome" |
  "MatSymRadioButtonUnchecked" |
  "MatSymMenu" |
  "MatSymProgressActivity" |
@@ -219,6 +221,7 @@ export type MoorhenSVG = "menu2DObjects" |
  "resizableVertical" |
  "resizable" |
  "MatSymArrowMenuOpen" |
+ "MatSymAutoAwesome" |
  "menuVectors" |
  "MatSymInfo" |
  "MatSymArrowUpward" |

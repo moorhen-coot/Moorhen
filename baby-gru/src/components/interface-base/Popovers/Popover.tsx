@@ -1,8 +1,8 @@
-import { ClickAwayListener } from "@mui/material";
 import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs/MoorhenButton/MoorhenButton";
+import { MoorhenClickAwayListener } from "@/components/interface-base/utils/ClickAwayListener";
 import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
@@ -160,7 +160,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     ) : (
         <>
             {createPortal(
-                <ClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</ClickAwayListener>,
+                <MoorhenClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</MoorhenClickAwayListener>,
                 containerRef.current
             )}
         </>

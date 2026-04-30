@@ -26,6 +26,7 @@ export {
     unlockControls,
     closeResidueSelectionTools,
     setShownBottomPanel,
+    setClickAwayListenerActive,
 }  from "./globalUISlice";
 export {
     addMolecule,
