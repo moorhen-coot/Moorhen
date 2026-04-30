@@ -20,8 +20,8 @@ export interface MoorhenVector {
     zTo: number;
     cidFrom: string;
     cidTo: string;
-    molNoFrom: number;
-    molNoTo: number;
+    molFromUniqueId: string;
+    molToUniqueId: string;
     uniqueId: string;
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
