@@ -3,6 +3,41 @@ import { getMathJaxSVG }  from '../utils/mathJaxUtils'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
+const get1LetterElementPaddedCid = (cid): string  => {
+    let newCid
+    const cidSplit = cid.split("/")
+    const atNameAlt = cidSplit[cidSplit.length-1]
+    cidSplit.pop()
+    const atNameAltSplit = atNameAlt.split(":")
+    const atName = atNameAltSplit[0]
+    if(atName.length===1){
+        newCid = cidSplit.join("/")+"/ "+atName + "  "
+    } else if(atName.length===2){
+        newCid = cidSplit.join("/")+"/ "+atName + " "
+    } else if(atName.length===3){
+        newCid = cidSplit.join("/")+"/ "+atName
+    }
+    if(atNameAltSplit.length>1)
+        newCid += ":"+atNameAltSplit[1]
+    return newCid
+}
+
+const get2LetterElementPaddedCid = (cid): string  => {
+    let newCid
+    const cidSplit = cid.split("/")
+    const atNameAlt = cidSplit[cidSplit.length-1]
+    cidSplit.pop()
+    const atNameAltSplit = atNameAlt.split(":")
+    const atName = atNameAltSplit[0]
+    if(atName.length===2){
+        newCid = cidSplit.join("/")+"/"+atName + "  "
+    } else if(atName.length===3){
+        newCid = cidSplit.join("/")+"/"+atName + " "
+    }
+    if(atNameAltSplit.length>1)
+        newCid += ":"+atNameAltSplit[1]
+    return newCid
+}
 
 export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
@@ -47,6 +82,18 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     try {
                         fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
                         nFromAtoms = fromAtoms.size()
+                        if(nFromAtoms===0 && vec.cidFrom.length!==4){
+                            //Try 4-char padding
+                            fromAtoms.delete()
+                            const newCid = get1LetterElementPaddedCid(vec.cidFrom)
+                            fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
+                            nFromAtoms = fromAtoms.size()
+                            if(nFromAtoms===0){
+                                const newCid2 = get2LetterElementPaddedCid(vec.cidFrom)
+                                fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid2, "" )
+                                nFromAtoms = fromAtoms.size()
+                            }
+                        }
                     } catch(e) {
                         console.log(e)
                     }
@@ -80,6 +127,18 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     try {
                         toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
                         nToAtoms = toAtoms.size()
+                        if(nToAtoms===0 && vec.cidTo.length!==4){
+                            //Try 4-char padding
+                            toAtoms.delete()
+                            const newCid = get1LetterElementPaddedCid(vec.cidTo)
+                            toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
+                            nToAtoms = toAtoms.size()
+                            if(nToAtoms===0){
+                                const newCid2 = get2LetterElementPaddedCid(vec.cidTo)
+                                toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid2, "" )
+                                nToAtoms = toAtoms.size()
+                            }
+                        }
                     } catch(e) {
                         console.log(e)
                     }
