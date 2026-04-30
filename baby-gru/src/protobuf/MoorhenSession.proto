@@ -207,8 +207,8 @@ message MoorhenVector {
   float zTo = 11;
   string cidFrom = 12;
   string cidTo = 13;
-  float molNoFrom = 14;
-  float molNoTo = 15;
+  string molFromUniqueId = 14;
+  string molToUniqueId = 15;
   string uniqueId = 16;
   RGB vectorColour = 17;
   RGB textColour = 18;

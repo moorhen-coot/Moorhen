@@ -859,6 +859,7 @@ export class MoorhenTimeCapsule {
             sessionData.moleculeData?.map(async storedMoleculeData => {
                 const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
+                    newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
                 } else {
                     if (fetchExternalUrl) {

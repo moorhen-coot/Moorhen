@@ -1,10 +1,10 @@
 import { Backdrop } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
 import { addVector, removeVector } from "../../store/vectorsSlice";
 import type { MoorhenVector, VectorsArrowMode, VectorsCoordMode, VectorsDrawMode, VectorsLabelMode } from "../../store/vectorsSlice";
-import { moorhen } from "../../types/moorhen";
+import type { AppDispatch, RootState } from "../../store/MoorhenReduxStore";
 import { modalKeys } from "../../utils/enums";
 import { cidToSpec } from "../../utils/utils";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
@@ -18,15 +18,16 @@ import { MoorhenMenuItemPopover } from "../interface-base/Popovers/MenuItemPopov
 export const MoorhenVectors = () => {
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1);
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
 
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList.filter(x => !x.uniqueId.includes("__TAG")));
+    const vectorsList = useSelector((state: RootState) => state.vectors.vectorsList.filter(x => !x.uniqueId.includes("__TAG")));
 
     const dispatch = useDispatch();
 
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
+    const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const store = useStore<RootState>()
 
     const vectorSelectRef = useRef<null | HTMLSelectElement>(null);
     const drawModeRef = useRef<null | HTMLSelectElement>(null);
@@ -35,6 +36,8 @@ export const MoorhenVectors = () => {
     const labelTextRef = useRef<null | HTMLInputElement>(null);
     const cidFromRef = useRef<null | HTMLInputElement>(null);
     const cidToRef = useRef<null | HTMLInputElement>(null);
+    const fromMoleculeRef = useRef<null | HTMLSelectElement>(null);
+    const toMoleculeRef = useRef<null | HTMLSelectElement>(null);
 
     const newVector = () => {
         const aVector: MoorhenVector = {
@@ -51,8 +54,8 @@ export const MoorhenVectors = () => {
             zTo: 0.0,
             cidFrom: "",
             cidTo: "",
-            molNoFrom: 0,
-            molNoTo: 0,
+            molFromUniqueId: "",
+            molToUniqueId: "",
             uniqueId: uuidv4(),
             vectorColour: { r: 0, g: 0, b: 0 },
             textColour: { r: 0, g: 0, b: 0 },
@@ -100,6 +103,18 @@ export const MoorhenVectors = () => {
                     const existingVector = vectorsList.find(element => element.uniqueId === evt.target.value);
                     updateVector(existingVector);
                     setSelectedOption(existingVector.uniqueId);
+                    if(existingVector.molFromUniqueId){
+                        const molFromIdx = molecules.filter(x => x.uniqueId === existingVector.molToUniqueId)[0]?.molNo
+                        if(molFromIdx>-1 && fromMoleculeRef !== null && typeof fromMoleculeRef !== "function"){
+                            fromMoleculeRef.current.value = molFromIdx+""
+                        }
+                    }
+                    if(existingVector.molToUniqueId){
+                        const molToIdx = molecules.filter(x => x.uniqueId === existingVector.molToUniqueId)[0]?.molNo
+                        if(molToIdx>-1 && toMoleculeRef !== null && typeof toMoleculeRef !== "function"){
+                            toMoleculeRef.current.value = molToIdx+""
+                        }
+                    }
                     if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = existingVector.drawMode;
                     if (arrowModeRef !== null && typeof arrowModeRef !== "function") arrowModeRef.current.value = existingVector.arrowMode;
                     if (labelModeRef !== null && typeof labelModeRef !== "function") labelModeRef.current.value = existingVector.labelMode;
@@ -185,8 +200,8 @@ export const MoorhenVectors = () => {
         zTo = undefined,
         cidFrom = undefined,
         cidTo = undefined,
-        molNoFrom = undefined,
-        molNoTo = undefined,
+        molFromUniqueId = undefined,
+        molToUniqueId = undefined,
         uniqueId = undefined,
         vectorColour = undefined,
         textColour = undefined,
@@ -206,8 +221,8 @@ export const MoorhenVectors = () => {
             zTo: zTo !== undefined ? zTo : theVector.zTo,
             cidFrom: cidFrom !== undefined ? cidFrom : theVector.cidFrom,
             cidTo: cidTo !== undefined ? cidTo : theVector.cidTo,
-            molNoFrom: molNoFrom !== undefined ? molNoFrom : theVector.molNoFrom,
-            molNoTo: molNoTo !== undefined ? molNoTo : theVector.molNoTo,
+            molFromUniqueId: molFromUniqueId !== undefined ? molFromUniqueId : theVector.molFromUniqueId,
+            molToUniqueId: molToUniqueId !== undefined ? molToUniqueId : theVector.molToUniqueId,
             uniqueId: uniqueId !== undefined ? uniqueId : theVector.uniqueId,
             vectorColour: vectorColour !== undefined ? vectorColour : theVector.vectorColour,
             textColour: textColour !== undefined ? textColour : theVector.textColour,
@@ -216,9 +231,9 @@ export const MoorhenVectors = () => {
         setVector(newVector);
     };
 
-    const handleModelChange = (selected: number, isModelTo: boolean) => {
-        if (isModelTo) updateVector({ molNoTo: selected });
-        else updateVector({ molNoFrom: selected });
+    const handleModelChange = (selected: string, isModelTo: boolean) => {
+        if (isModelTo) updateVector({ molToUniqueId: selected });
+        else updateVector({ molFromUniqueId: selected });
     };
 
     const handleModeChange = (event, type) => {
@@ -266,7 +281,7 @@ export const MoorhenVectors = () => {
                 <MoorhenStack card inputGrid>
                     <p>From atom</p>
                     <div />
-                    <MoorhenMoleculeSelect label="Molecule" onSelect={sel => handleModelChange(sel, false)} />
+                    <MoorhenMoleculeSelect ref={fromMoleculeRef} label="Molecule" onSelectUniqueId={sel => handleModelChange(sel, false)} />
                     <MoorhenStack direction="horizontal">
                         <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(0)}>
                             Pick atom
@@ -274,6 +289,8 @@ export const MoorhenVectors = () => {
                         <MoorhenTextInput
                             style={{ height: "2rem" }}
                             ref={cidFromRef}
+                            disabled
+                            placeholder="Click button to pick"
                             text={theVector.cidFrom}
                             setText={t => updateVector({ cidFrom: t })}
                             onChange={evt => {
@@ -288,9 +305,10 @@ export const MoorhenVectors = () => {
                     <p>To atom</p>
                     <div />
                     <MoorhenMoleculeSelect
+                        ref={toMoleculeRef}
                         label="Molecule"
                         style={{ height: "3rem", margin: "0rem" }}
-                        onSelect={sel => handleModelChange(sel, true)}
+                        onSelectUniqueId={sel => handleModelChange(sel, true)}
                     />
                     <MoorhenStack direction="horizontal">
                         <MoorhenButton variant="primary" onClick={() => setAwaitAtomClick(1)}>
@@ -298,6 +316,8 @@ export const MoorhenVectors = () => {
                         </MoorhenButton>
                         <MoorhenTextInput
                             ref={cidToRef}
+                            disabled
+                            placeholder="Click button to pick"
                             text={theVector.cidTo}
                             setText={t => updateVector({ cidTo: t })}
                             onChange={evt => {
@@ -473,13 +493,26 @@ export const MoorhenVectors = () => {
     );
 
     const setAtomPickerEventListener = async evt => {
-        const chosenAtom = cidToSpec(evt.detail.label);
+        const chosenAtom = store.getState().hoveringStates.hoveredAtom
+        const theUniqueId = chosenAtom.molecule.uniqueId
         if (awaitAtomClick === 0) {
-            updateVector({ cidFrom: chosenAtom.cid });
+            updateVector({ cidFrom: chosenAtom.cid, molFromUniqueId: theUniqueId ? theUniqueId : "" });
             cidFromRef.current.value = chosenAtom.cid;
+            if(theUniqueId){
+                const molFromIdx = molecules.filter(x => x.uniqueId === theUniqueId)[0]?.molNo
+                if(molFromIdx>-1 && fromMoleculeRef !== null && typeof fromMoleculeRef !== "function"){
+                    fromMoleculeRef.current.value = molFromIdx+""
+                }
+            }
         } else if (awaitAtomClick === 1) {
-            updateVector({ cidTo: chosenAtom.cid });
+            updateVector({ cidTo: chosenAtom.cid, molToUniqueId: theUniqueId ? theUniqueId : "" });
             cidToRef.current.value = chosenAtom.cid;
+            if(theUniqueId){
+                const molToIdx = molecules.filter(x => x.uniqueId === theUniqueId)[0]?.molNo
+                if(molToIdx>-1 && toMoleculeRef !== null && typeof toMoleculeRef !== "function"){
+                    toMoleculeRef.current.value = molToIdx+""
+                }
+            }
         }
         setAwaitAtomClick(-1);
     };
@@ -514,8 +547,8 @@ export const MoorhenVectors = () => {
 };
 
 export const MoorhenVectorsModal = () => {
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const width = useSelector((state: RootState) => state.sceneSettings.width);
+    const height = useSelector((state: RootState) => state.sceneSettings.height);
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     return (
