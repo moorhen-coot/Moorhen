@@ -3,6 +3,9 @@ import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
 import { RootState, enqueueSnackbar } from "@/store";
+
+import { MoorhenModelSelect } from "@/components/inputs/Selector/MoorhenModelSelect";
+
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -50,6 +53,11 @@ export const AddCustomRepresentationCard = memo(
                     ? "neighbourhood"
                     : props.representation.interfaceOption.selectionType
                 : "molecule"
+
+        const modelSelectRef = useRef<HTMLSelectElement | null>(null);
+
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model">(
+            props.representation ? props.representation.interfaceOption.selectionType : "molecule"
         );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
@@ -249,6 +257,12 @@ export const AddCustomRepresentationCard = memo(
                     break;
                 case "ligands":
                     cidSelection = ligandFormRef.current.value;
+                    break;
+                case "protein-model":
+                    // need a way to select protein model using cidSelection
+                    // cidSelection = /${modelSelectRef.current.value}/*/*/:*
+                    cidSelection = modelSelectRef.current.value;
+
                     break;
                 default:
                     console.warn("Unrecognised residue selection for the custom representation");
@@ -490,6 +504,9 @@ export const AddCustomRepresentationCard = memo(
                                 </>
                             ) : (
                                 <>
+                                    <option value={"protein-model"} key={"protein-model"}>
+                                        Protein model
+                                    </option>
                                     <option value={"molecule"} key={"molecule"}>
                                         All molecule
                                     </option>
@@ -583,6 +600,18 @@ export const AddCustomRepresentationCard = memo(
                         }}/>
                 </>
                 )}
+
+                    {ruleType === "protein-model" && (
+                        <>
+                            <MoorhenModelSelect
+                                selectedCoordMolNo={props.molecule.molNo}
+                                molecules={[props.molecule]}
+                                // allowAll
+                                ref={modelSelectRef}
+                            />
+                        </>
+                    )}
+                    
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
                     <>

@@ -86,6 +86,7 @@ export namespace libcootApi {
         get_noe_restraints(nef_input:string): string;
         get_hbond_restraints(nef_input:string): string;
         get_undefined_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
 
     };
     type headerInfoGemmi = {
@@ -673,6 +674,7 @@ export namespace libcootApi {
         get_noe_restraints(nef_input:string): string;
         get_hbond_restraints(nef_input:string): string;
         get_undefined_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
 
 >>>>>>> 054a96346 (NOE, HBond and undefined restraints toggleable)
     };

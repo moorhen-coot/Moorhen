@@ -89,7 +89,7 @@ bool is64bit(){
 }
 
 
-std::string get_nef_restraints(const std::string &data, const std::string &restraintType){
+std::string get_nef_restraints(const std::string &data, const std::string &sf_category){
 
     auto doc = gemmi::cif::read_string(data);
 
@@ -102,8 +102,15 @@ std::string get_nef_restraints(const std::string &data, const std::string &restr
                 bool isNefRestrains = false;
                 for(const auto& item2 : frame.items){
                     if(item2.type == gemmi::cif::ItemType::Pair) {
-                        if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]==restraintType){
-                            isNefRestrains = true;
+                        // if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]==restraintType){
+                        // used restraint_origin but that is not guaranteed to be present
+                        // so will just read in all restraints 
+                        const std::string full_category = "_" + sf_category + ".sf_category";
+                        std::cout << full_category; 
+                        // if(item2.pair[0]=="_nef_distance_restraint_list.sf_category"&&item2.pair[1]==sf_category){
+                        if(item2.pair[0]==full_category&&item2.pair[1]==sf_category){
+
+                        isNefRestrains = true;
                         }
                     }
                     if(isNefRestrains){
@@ -129,18 +136,23 @@ std::string get_nef_restraints(const std::string &data, const std::string &restr
 
 }
 
+// these three have been changed from specific to general 
+// so two are currently deprecated 
 std::string get_noe_restraints(const std::string &data) {
-    return get_nef_restraints(data, "noe");
+    return get_nef_restraints(data, "nef_distance_restraint_list");
 }
 
 std::string get_hbond_restraints(const std::string &data) {
-    return get_nef_restraints(data, "hbond");
+    return get_nef_restraints(data, "nef_distance_restraint_list");
 }
 
 std::string get_undefined_restraints(const std::string &data) {
-    return get_nef_restraints(data, "undefined");
+    return get_nef_restraints(data, "nef_distance_restraint_list");
 }
 
+std::string get_chem_shift_info(const std::string &data) {
+    return get_nef_restraints(data, "nef_chemical_shift_list");
+}
 
 namespace moorhen {
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
@@ -3018,6 +3030,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_noe_restraints",&get_noe_restraints);
     function("get_hbond_restraints",&get_hbond_restraints);
     function("get_undefined_restraints",&get_undefined_restraints);
+    function("get_chem_shift_info",&get_chem_shift_info);
 
 
 }

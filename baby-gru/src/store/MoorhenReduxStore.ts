@@ -24,6 +24,7 @@ import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
 import vectorsReducer from "./vectorsSlice";
+import chemShiftReducer from "./chemShiftSlice"
 
 export const reducers = {
     molecules: moleculesReducer,
@@ -50,6 +51,7 @@ export const reducers = {
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
     snackBars: snackBarsReducer,
+    chemShifts: chemShiftReducer,
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)

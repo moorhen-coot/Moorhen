@@ -30,7 +30,13 @@ import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+<<<<<<< HEAD
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
+=======
+import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
+import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
+
+>>>>>>> ed5efb46d (Chemical shift display)
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -394,6 +400,56 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             dispatch(removeVectors(vectorList));
         }
     };
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
+        v.uniqueId.includes("__TAG_NEF"))
+    let doShowAllNEF = false 
+
+    vectorsList.forEach(v => {
+        if (v.visible !== false){
+            doShowAllNEF = true
+        }
+    })
+    const [showAllNEF, setShowAllNEF] = useState<boolean>(
+        doShowAllNEF
+    );
+    
+    const newVisibilityChangedVector = (theVector,vis) => {
+                const newVector: MoorhenVector = {
+                    coordsMode: theVector.coordsMode,
+                    labelMode: theVector.labelMode,
+                    labelText: theVector.labelText,
+                    drawMode: theVector.drawMode,
+                    arrowMode: theVector.arrowMode,
+                    xFrom: theVector.xFrom,
+                    yFrom: theVector.yFrom,
+                    zFrom: theVector.zFrom,
+                    xTo: theVector.xTo,
+                    yTo: theVector.yTo,
+                    zTo: theVector.zTo,
+                    cidFrom: theVector.cidFrom,
+                    cidTo: theVector.cidTo,
+                    molNoFrom: theVector.molNoFrom,
+                    molNoTo: theVector.molNoTo,
+                    uniqueId: theVector.uniqueId,
+                    vectorColour: theVector.vectorColour,
+                    textColour: theVector.textColour,
+                    radius: theVector.radius,
+                    visible: vis,
+                };
+                return newVector
+            }
+    const changeVectorVisibility = (type) => {
+        if (type === "All"){
+            vectorsList.forEach(v => {
+                    const newVector = newVisibilityChangedVector(v, !showAllNEF)
+                    dispatch(removeVector(v))
+                    dispatch(addVector(newVector))
+                console.log("Dispatched vectors (NEF)")
+                
+            }
+        )
+        }
+        }
 
     return (
         <MoorhenAccordion
@@ -597,8 +653,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         />
                                             <MoorhenStack direction="row" align="center">
                         <MoorhenToggle
-                            onChange={e => handleEnvironmentToggle(e.target.checked)}
-                            checked={displayEnvironment}
+                            onChange={() => {setShowAllNEF(prev => !prev)
+                                            changeVectorVisibility("All")
+                                        }}
+                            checked={showAllNEF}
                             disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
@@ -606,9 +664,9 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                     <MoorhenInfoCard
                                         infoText={
                                             <>
-                                                <b>NEF restraints info box</b>
+                                                <b>NEF restraints</b>
                                                 <br />
-                                                NEF restraints  blurb
+                                                Visualisation settings for NMR restraints loaded in from NEF files.
                                             </>
                                         }
                                     />
