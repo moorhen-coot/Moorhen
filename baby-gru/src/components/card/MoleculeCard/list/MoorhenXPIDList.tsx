@@ -52,7 +52,9 @@ export const MoorhenXPIDList = (props: {
 
     const validate = async () => {
         props.setBusy?.(true);
-        const result = window.CCP4Module.detect_xhpi_interactions_json(props.molecule.gemmiStructure)
+        const structure = window.CCP4Module.cloneGemmiStructureWithTrimmedAtomNames(props.molecule.gemmiStructure)
+        const result = window.CCP4Module.detect_xhpi_interactions_json(structure)
+        structure.delete()
         const interactions = JSON.parse(result)
         const theVectors = []
         const visibleList:boolean[]  = []

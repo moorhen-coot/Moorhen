@@ -78,6 +78,7 @@ export namespace libcootApi {
         // Gemmi vector constructors
         VectorString: { new (): emscriptem.vector<string> };
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
     };
     type headerInfoGemmi = {
         title: string;
@@ -657,6 +658,7 @@ export namespace libcootApi {
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
     };
     interface DoublePairDoubleJS {
         first: number;
