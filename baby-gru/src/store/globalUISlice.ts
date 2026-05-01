@@ -12,6 +12,7 @@ const initialState: {
     shownSidePanel: SidePanelIDs | null;
     sidePanelWidth: number;
     shownBottomPanel: BottomPanelIDs | null;
+    NMRMode: boolean; 
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -23,6 +24,7 @@ const initialState: {
     shownSidePanel: null,
     sidePanelWidth: 450,
     shownBottomPanel: "sequences-viewer",
+    NMRMode: false,
 };
 
 const globalUISlice = createSlice({
@@ -59,6 +61,9 @@ const globalUISlice = createSlice({
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },
+        setNMRMode: (state, action: PayloadAction<boolean>) => {
+            state.NMRMode = action.payload;
+        },
     },
 });
 
@@ -73,5 +78,6 @@ export const {
     setShownSidePanel,
     setSidePanelWidth,
     setShownBottomPanel,
+    setNMRMode,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

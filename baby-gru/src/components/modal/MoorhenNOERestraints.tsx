@@ -17,8 +17,29 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString
 import { useEffect, useState, useRef } from "react"; 
 import { libcootApi} from "../../types/libcoot"
 import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { setNMRMode } from "@/store";
 
-
+function convertChemShiftDataframe(df){
+    const keyMap = {
+		"_nef_chemical_shift.atom_name" : "atom",
+		"_nef_chemical_shift.chain_code" : "chain",
+		"_nef_chemical_shift.element" : "element",
+		"_nef_chemical_shift.isotope_number" : "isotope",
+		"_nef_chemical_shift.residue_name" : "resname",
+		"_nef_chemical_shift.sequence_code" : "seq",
+		"_nef_chemical_shift.value" : "chemshift",
+		"_nef_chemical_shift.value_uncertainty" : "uncertainty"}
+    const parsed = JSON.parse(df)
+    const transformed = parsed.map(obj =>
+        Object.fromEntries(
+            Object.entries(keyMap).map(([oldKey, newKey]) => [
+            newKey,
+            obj[oldKey],
+                 ])
+             )
+     )    
+     return(transformed) 
+}
 
 function convertNEFHydrogen(nefName, resName) {
 
@@ -133,7 +154,6 @@ function convertNEFHydrogen(nefName, resName) {
   if (results.size === 0) {
     return [nefName];
   }
-
   return Array.from(results);
 }
 
@@ -209,7 +229,8 @@ function convertDataHeaders(restraintDict){
                 "_nef_distance_restraint.sequence_code_1": "res1",
                 "_nef_distance_restraint.sequence_code_2": "res2",
                 "_nef_distance_restraint.residue_name_1": "name1",
-                "_nef_distance_restraint.residue_name_2": "name2"}
+                "_nef_distance_restraint.residue_name_2": "name2",
+                "_nef_distance_restraint.restraint_id": "restraintID"}
     const parsed = JSON.parse(restraintDict)
     const transformed = parsed.map(obj =>
         Object.fromEntries(
@@ -231,6 +252,7 @@ export const MoorhenNOERestraints = () => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);  
 
     const [noeVectors, setNOEVectors] = useState<MoorhenVector[]>([])
     // added to try  to make modular more retraints work 
@@ -251,7 +273,6 @@ export const MoorhenNOERestraints = () => {
         });
 
     useEffect(()=> {
-        console.log(noeVectors)
         dispatch(removeVectors(noeVectors))
         dispatch(addVectors(noeVectors))
 
@@ -260,13 +281,11 @@ export const MoorhenNOERestraints = () => {
 
     const loadNEF = async (files: FileList) => {
         // let cootModule: libcootApi.CootModule;
-        // console.log(cootModule)
            
         for (const file of files) {
             if (file.name.endsWith(".gz"))
             {
                 const binFileContents = await file.arrayBuffer()
-                // console.log(binFileContents)
                 const fileContents =  pako.inflate(binFileContents, { to: "string" })
                 // var restraintData = parseNEF_NOEs(fileContents)
                 // var restraintData = window.cootModule.get_noe_restraints(fileContents)
@@ -303,7 +322,6 @@ export const MoorhenNOERestraints = () => {
                     allConvertedData.push(...converted);
                 }
 
-                console.log(allConvertedData)
                 const newVectors = []
                 allConvertedData.forEach(row => {
                     
@@ -320,7 +338,6 @@ export const MoorhenNOERestraints = () => {
             }
             else {  
                 const fileContents = await file.text()
-                // console.log(fileContents)
                 // parseNEF_NOEs(fileContents)
                 
                 // window.cootModule.get_nef_restraints(fileContents)
@@ -331,10 +348,18 @@ export const MoorhenNOERestraints = () => {
 
                 // const convertedData = convertDataframe(headedData)
                 let allConvertedData: any[] = [];
+                    const chemShifts = window.cootModule.get_chem_shift_info(fileContents);
+                    const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
+                    const chemShiftsEnum = loopReplaceProtons(chemShiftsConverted, "atom", "resname")
+                    // dispatch(setChemShifts(chemShiftsConverted));
+                    dispatch(setNMRMode(true))
+                if (molecules.length > 0){
+                    molecules[0].chemShifts = chemShiftsEnum
+                }
 
+                    
                 if (selectedTypes.noe) {
                     const data = window.cootModule.get_noe_restraints(fileContents);
-                    console.log(data)
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
                         restraintType: "noe"
@@ -359,8 +384,7 @@ export const MoorhenNOERestraints = () => {
                     }));
                     allConvertedData.push(...converted);
                 }
-                console.log(allConvertedData)
-                
+
                 const newVectors = []
                 allConvertedData.forEach(row => {
                     
@@ -383,61 +407,16 @@ export const MoorhenNOERestraints = () => {
                     }
                     if (row.ambiguityFlag) {
                         newNOEVector.vectorColour = { r: 185, g: 255, b: 255 };
+                        newNOEVector.ambiguous = true 
                     }
                     newVectors.push(newNOEVector)
                 })
                 setNOEVectors(newVectors)
             }
-        // const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-//         const molecule = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-// // use MoorhenMolecule to get atoms lookup 
-//         const atomsTotal = MoorhenMolecule[atomCount]
-
-// this should pick first molecule in list of molecules
-            // const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-            // const mol: MoorhenMolecule | undefined = molecules.find(
-            // m => m.molNo === 0
-            // )
-
-            // now we just need to access the atoms in that molecule - how does vector slcie do it?
-        // restraintData.forEach(pair => {
-            // const cidFrom = `${chain1}/${res1}/${atom1}`
-            // this is residue to residue - we need to do atom lookup from the rest 
-            // const cidFrom = pair["res1"]
-            // const cidTo = pair["res2"]
-
-            // addAtomVector(dispatch, molNo, cidFrom, cidTo)
-
-        // })
-                    // const json = JSON.parse(fileContents);
-                    // dispatch(setValidationJson(json));   
                 }
             };
 
-    // const footerContent = (
-    //     <MoorhenStack
-    //         gap={2}
-    //         direction="horizontal"
-    //         style={{
-    //             paddingTop: "0.5rem",
-    //             alignItems: "space-between",
-    //             alignContent: "space-between",
-    //             justifyContent: "space-between",
-    //             width: "100%",
-    //         }}
-    //     >
-    //         <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-    //             <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
-    //                 <Form.Control
-    //                     type="file"
-    //                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-    //                         loadNEF(e.target.files);
-    //                     }}
-    //                 />
-    //             </Form.Group>
-    //         </MoorhenStack>
-    //     </MoorhenStack>
-    // );
+
     const footerContent = (
         <MoorhenStack
             gap={2}

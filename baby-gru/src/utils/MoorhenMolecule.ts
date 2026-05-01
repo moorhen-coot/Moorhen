@@ -52,6 +52,31 @@ export type Sequence = {
     sequence: ResidueInfo[];
 };
 
+export type ChemShift = {
+    atom: string;
+    chain: string;
+    element: string;
+    isotope: number;
+    resname: string;
+    seq: number;
+    chemshift: number;
+    uncertainty?: number;
+    ambiguityFlag: boolean;
+}
+
+export type NEFRestraint = {
+    atom1: string;
+    chain1: string;
+    atom2: string;
+    chain2: string;
+    res1: string;
+    res2: string;
+    name1: number;
+    name2: number;
+    ambiguityFlag: boolean;
+    restraintID: number;
+}
+
 /**
  * Represents a molecule
  * @property {string} name - The name assigned to this molecule instance
@@ -139,6 +164,8 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
+    chemShifts: ChemShift[];
+    NEFRestraints: NEFRestraint[];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = "molecule";
@@ -228,6 +255,8 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.chemShifts = [];
+        this.NEFRestraints = [];
     }
 
     /**

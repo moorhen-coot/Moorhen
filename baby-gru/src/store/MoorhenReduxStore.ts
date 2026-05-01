@@ -23,6 +23,7 @@ import sharedSessionReducer from "./sharedSessionSlice";
 import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
 import vectorsReducer from "./vectorsSlice";
+import chemShiftReducer from "./chemShiftSlice"
 
 export const reducers = {
     molecules: moleculesReducer,
@@ -49,6 +50,7 @@ export const reducers = {
     atomInfoCards: atomInfoCardsReducer,
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
+    chemShifts: chemShiftReducer,
 };
 
 export const _MoorhenReduxStore = configureStore({
