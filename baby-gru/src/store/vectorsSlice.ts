@@ -27,6 +27,7 @@ export interface MoorhenVector {
     textColour: { r: number; g: number; b: number };
     radius?: number;
     visible?: boolean;
+    ambiguous?: boolean
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {
