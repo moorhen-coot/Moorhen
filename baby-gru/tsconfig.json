@@ -29,7 +29,7 @@
         "nginx/*",
         "test/*",
         "src/__tests__/*",
-        "webpack.config.js",
+        "webpack.base.config.js",
         "src/protobuf/MoorhenSession.js"
     ]
 }

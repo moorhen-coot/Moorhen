@@ -3,7 +3,6 @@ const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const { defineReactCompilerLoaderOption, reactCompilerLoader } = require("react-compiler-webpack");
 
 const paths = {
     src: path.resolve(__dirname, "src"),
@@ -53,6 +52,15 @@ const paths = {
 
 module.exports = (env, argv) => {
     return {
+        output: {
+            clean: false,
+            path: paths.dist,
+            publicPath: "./",
+            library: "moorhen",
+            libraryTarget: "umd",
+            umdNamedDefine: true,
+            globalObject: "this",
+        },
         plugins: [
             new webpack.DefinePlugin({
                 process: { env: {} },
@@ -103,40 +111,13 @@ module.exports = (env, argv) => {
                 ],
             }),
         ],
-        entry: path.join(paths.src, "moorhen.ts"),
         target: "web",
         optimization: {
             minimize: argv.mode === "production",
         },
         cache: false,
-        output: {
-            clean: true,
-            filename: "moorhen.js",
-            path: paths.dist,
-            publicPath: "./",
-            library: "moorhen",
-            libraryTarget: "umd",
-            umdNamedDefine: true,
-            globalObject: "this",
-        },
         module: {
             rules: [
-                {
-                    test: /\.tsx$/,
-                    exclude: /node_modules/,
-                    use: [
-                        {
-                            loader: "ts-loader",
-                            options: {
-                                transpileOnly: true,
-                            },
-                        },
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption(),
-                        },
-                    ],
-                },
                 {
                     test: /\.ts$/,
                     use: "ts-loader",
@@ -147,17 +128,7 @@ module.exports = (env, argv) => {
                     exclude: [/node_modules/, path.resolve(paths.src, "index.js"), paths.public],
                     loader: "babel-loader",
                 },
-                {
-                    test: /\.jsx$/,
-                    exclude: /node_modules/,
-                    use: [
-                        "babel-loader",
-                        {
-                            loader: reactCompilerLoader,
-                            options: defineReactCompilerLoaderOption({}),
-                        },
-                    ],
-                },
+
                 {
                     test: /\.svg$/,
                     use: [
@@ -220,13 +191,7 @@ module.exports = (env, argv) => {
                 "@": path.resolve(__dirname, "src"),
             },
         },
-        externals: [
-            function ({ request }, callback) {
-                if (/^react(-dom|-redux)?(\/.*)?$/.test(request) || /^@reduxjs\/toolkit(\/.*)?$/.test(request)) {
-                    return callback(null, "commonjs " + request);
-                }
-                callback();
-            },
-        ],
     };
 };
+
+module.exports.paths = paths;
