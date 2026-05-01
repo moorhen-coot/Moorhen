@@ -10,3 +10,5 @@ src/LhasaReact/*
 tests/*
 MoorhenCidInputForm.tsx
 src/moorhen.ts
+StoreExtension.ts
+MoorhenSceneSlidersModal.tsx

@@ -1,5 +1,5 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
 import { moorhensession } from "../../protobuf/MoorhenSession";
 import { RootState } from "../../store/MoorhenReduxStore";
@@ -20,7 +20,7 @@ export const ManageSession = () => {
     const monomerLibraryPath = useMoorhenInstance().paths.monomerLibraryPath;
     const dispatch = useDispatch();
     const timeCapsule = useTimeCapsule();
-    const { enqueueSnackbar } = useSnackbar();
+
     const enableTimeCapsule = useSelector((state: RootState) => state.backupSettings.enableTimeCapsule);
 
     const handleSessionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +33,7 @@ export const ManageSession = () => {
                 await loadSession(sessionMessage);
             } catch (err) {
                 console.log(err);
-                enqueueSnackbar("Error loading the session", { variant: "error" });
+                dispatch(enqueueSnackbar({ message: "Error loading the session", variant: "error" }));
             }
     };
 
@@ -93,11 +93,11 @@ export const ManageSession = () => {
                 );
             }
             if (status === -1) {
-                enqueueSnackbar("Failed to read backup (deprecated format)", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Failed to read backup (deprecated format)", variant: "warning" }));
             }
         } catch (err) {
             console.log(err);
-            enqueueSnackbar("Error loading session", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Error loading session", variant: "warning" }));
         }
     };
     return (

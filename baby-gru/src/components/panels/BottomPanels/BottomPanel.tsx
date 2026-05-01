@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
-import { Activity, useState } from "react";
+import { useState } from "react";
+import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import { RootState } from "@/store";
 import { BottomPanelIDs, BottomPanelsList } from "./BottomPanelsList";
 import "./bottom-panel.css";
@@ -13,9 +14,9 @@ export const BottomPanelContainer = () => {
 
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
-            <Activity mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
+            <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
                 {BottomPanelsList[id].panelContent}
-            </Activity>
+            </ActivityCompat>
         );
     });
 

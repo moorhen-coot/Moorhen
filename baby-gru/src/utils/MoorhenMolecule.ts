@@ -125,6 +125,7 @@ export class MoorhenMolecule {
     name: string;
     molNo: number | null;
     gemmiStructure: gemmi.Structure;
+    private _numberOfModels: number;
     gemmiDocument: gemmi.cifDocument;
     sequences: Sequence[];
     representations: moorhen.MoleculeRepresentation[];
@@ -166,6 +167,7 @@ export class MoorhenMolecule {
     isMRSearchModel: boolean;
     chemShifts: ChemShift[];
     NEFRestraints: NEFRestraint[];
+    moleculeCardState: { showXpidList: boolean };
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = "molecule";
@@ -257,6 +259,7 @@ export class MoorhenMolecule {
         this.adaptativeBondsRepresentation.setParentMolecule(this);
         this.chemShifts = [];
         this.NEFRestraints = [];
+        this.moleculeCardState = { showXpidList: false };
     }
 
     /**
@@ -920,7 +923,7 @@ export class MoorhenMolecule {
      */
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
-            const coordData = await source.text()
+            const coordData = await source.text();
             let is_small = false;
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
                 is_small = window.CCP4Module.is_small_structure(coordData as string);
@@ -1261,7 +1264,7 @@ export class MoorhenMolecule {
             await this.updateAtoms();
         }
 
-        const cid = "/*/*/*/*";
+        const cid = "/*/*/*/*:*";
         const representation = this.representations.find(item => item.style === style && item.cid === cid);
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
@@ -1455,7 +1458,13 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid?: string,
+        restrictToNeighbours?: boolean,
+        excludeNeighbours?: boolean,
+        hbondedToCid?: string,
+        hbondedTo?: boolean,
+        neighboursDistance?: number
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1470,7 +1479,13 @@ export class MoorhenMolecule {
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number
+        nonCustomOpacity?: number,
+        neighboursCid: string = "",
+        restrictToNeighbours: boolean = false,
+        excludeNeighbours: boolean = false,
+        hbondedToCid: string = "",
+        hbondedTo: boolean = false,
+        neighboursDistance: number = 6.0
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1491,6 +1506,12 @@ export class MoorhenMolecule {
             representation.setM2tParams(m2tParams);
             representation.setResidueEnvOptions(residueEnvOptions);
             representation.setNonCustomOpacity(nonCustomOpacity);
+            representation.neighboursCid = neighboursCid;
+            representation.restrictToNeighbours = restrictToNeighbours;
+            representation.excludeNeighbours = excludeNeighbours;
+            representation.hbondedToCid = hbondedToCid;
+            representation.hbondedTo = hbondedTo;
+            representation.neighboursDistance = neighboursDistance;
         }
 
         representation.setParentMolecule(this);
@@ -1816,7 +1837,7 @@ export class MoorhenMolecule {
                             vec3.set(atomPos, x, y, z);
                             vec3.transformMat4(transPos, atomPos, theMatrix);
                             movedAtoms.push({
-                                mol_name: model.name,
+                                mol_name: String(model.name),
                                 chain_id: chain.name,
                                 res_no: residueSeqId.str(),
                                 res_name: residue.name,
@@ -3063,5 +3084,13 @@ export class MoorhenMolecule {
             false
         )) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>;
         return result.data.result.result;
+    }
+
+    get numberOfModels() {
+        if (this._numberOfModels) return this._numberOfModels;
+        const models = this.gemmiStructure.models;
+        this._numberOfModels = models.size();
+        models.delete();
+        return this._numberOfModels;
     }
 }

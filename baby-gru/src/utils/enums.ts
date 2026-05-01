@@ -24,13 +24,15 @@ export const modalKeys = Object.freeze({
     JSON_VALIDATION: "json-validation",
     MRBUMP: "mrbump",
     MRPARSE: "mrparse",
-    COLOR_MAP_BY_MAP: "colour-map-by-map",
-    VECTORS: "vectors",
-    OVERLAYS2D: "overlays-2d",
-    PAEPLOT: "pae-plot",
+    COLOR_MAP_BY_MAP : "colour-map-by-map",
+    VECTORS : "vectors",
+    OVERLAYS2D : "overlays-2d",
+    PAEPLOT : "pae-plot",
+    SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
     NOE: "NOE"
 });
+
 
 export const representationLabelMapping = Object.freeze({
     rama: "Ramachandran Balls",

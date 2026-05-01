@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base/Stack/Stack"
 
 const menuItemText = "Copy fragment...";
 
@@ -52,7 +53,7 @@ export const CopyFragmentUsingCid = () => {
     }, [residueSelection, molecules]);
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} label="From molecule" allowAny={false} ref={moleculeSelectRef} />
             <MoorhenCidInputForm
                 margin={"0.5rem"}
@@ -66,6 +67,6 @@ export const CopyFragmentUsingCid = () => {
             <MoorhenButton variant="primary" onClick={createSelection}>
                 OK
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

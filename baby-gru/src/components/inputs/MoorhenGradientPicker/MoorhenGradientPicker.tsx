@@ -3,7 +3,7 @@ import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
-import { MoorhenStack } from "../../interface-base";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { gradientPresets } from "./gradientPresets";
 
 type MoorhenGradientPickerType = {
@@ -146,7 +146,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                 </MoorhenButton>
             </MoorhenStack>
 
-            <MoorhenStack direction="column" card gap="0.2rem">
+            <MoorhenStack direction="column" card gap="0.2rem" style={{ overflow: "visible" }}>
                 <MoorhenStack direction="row" align="center" justify="space-between">
                     {colorStops}
                 </MoorhenStack>
@@ -159,6 +159,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                         border: "2px solid #fff",
                         boxShadow: "0 0 0 2px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.15)",
                         backgroundImage: colourGradientImage,
+                        flexShrink: 0,
                     }}
                 />
                 {showValues && (

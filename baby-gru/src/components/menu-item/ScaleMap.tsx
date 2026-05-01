@@ -1,5 +1,4 @@
 import { TextField } from "@mui/material";
-import { Button, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
@@ -25,21 +24,19 @@ export const ScaleMap = (props: { map: moorhen.Map; disabled: boolean }) => {
 
     return (
         <>
-            <Form.Group>
-                <TextField
-                    style={{ margin: "0.5rem" }}
-                    id="conformer-count"
-                    label="Map scale"
-                    type="number"
-                    variant="standard"
-                    error={isNaN(parseInt(mapScale)) || parseInt(mapScale) < 0 || parseInt(mapScale) === Infinity}
-                    value={mapScale}
-                    onChange={evt => {
-                        mapScaleRef.current = evt.target.value;
-                        ScaleMap(evt.target.value);
-                    }}
-                />
-            </Form.Group>
+            <TextField
+                style={{ margin: "0.5rem" }}
+                id="conformer-count"
+                label="Map scale"
+                type="number"
+                variant="standard"
+                error={isNaN(parseInt(mapScale)) || parseInt(mapScale) < 0 || parseInt(mapScale) === Infinity}
+                value={mapScale}
+                onChange={evt => {
+                    mapScaleRef.current = evt.target.value;
+                    ScaleMap(evt.target.value);
+                }}
+            />
             <MoorhenButton variant="primary" style={{ marginLeft: "0.1rem" }} onClick={onCompleted}>
                 Scale Map
             </MoorhenButton>

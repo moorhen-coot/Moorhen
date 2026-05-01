@@ -1,4 +1,3 @@
-import { Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useRef } from "react";
 import { moorhen } from "../../types/moorhen";
@@ -28,13 +27,7 @@ export const MoorhenValidationPlotModal = () => {
             headerTitle="Validation Plot"
             footer={null}
             resizeNodeRef={resizeNodeRef}
-            body={
-                <div style={{ height: "100%" }}>
-                    <Row className={"big-validation-tool-container-row"}>
-                        <MoorhenValidation chartId="validation-plot-chart" />
-                    </Row>
-                </div>
-            }
+            body={<MoorhenValidation chartId="validation-plot-chart" />}
         />
     );
 };

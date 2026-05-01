@@ -1,5 +1,14 @@
 @import "../../../colors.css";
 
+.moorhen__input-files-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 0.3rem;
+    margin-bottom: 0.5rem;
+    width: auto;
+}
 .moorhen__input-files-upload {
     display: none;
 }
@@ -14,7 +23,11 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 18rem;
+    flex: 1;
+    width: 100%;
+    min-width: 9rem;
+    max-width: 18rem;
+    flex-shrink: 1;
     height: 2.2rem;
     margin: 0px;
     padding: 5px;

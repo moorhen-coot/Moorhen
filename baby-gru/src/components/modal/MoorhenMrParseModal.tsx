@@ -1,13 +1,4 @@
-import {
-    CenterFocusWeakOutlined,
-    DownloadOutlined,
-    ExpandMoreOutlined,
-    VisibilityOffOutlined,
-    VisibilityOutlined,
-} from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import Fasta from "biojs-io-fasta";
-import { Button, Container, Form, Stack, Table } from "react-bootstrap";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { RootState } from "@/store";
@@ -30,9 +21,8 @@ import { moorhen } from "../../types/moorhen";
 import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
-import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenButton, MoorhenFileInput } from "../inputs";
+import { MoorhenAccordion, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
@@ -694,42 +684,26 @@ export const MoorhenMrParseModal = () => {
     };
 
     const footerContent = (
-        <MoorhenStack
-            gap={2}
-            direction="horizontal"
-            style={{
-                paddingTop: "0.5rem",
-                alignItems: "space-between",
-                alignContent: "space-between",
-                justifyContent: "space-between",
-                width: "100%",
-            }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <Form.Group style={{ width: "20rem", margin: "0.5rem", padding: "0rem" }} controlId="uploadMrParse" className="mb-3">
-                    <Form.Control
-                        /* @ts-expect-error */
-                        directory=""
-                        webkitdirectory="true"
-                        ref={filesRef}
-                        type="file"
-                        multiple={true}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            loadMrParseFiles(
-                                Array.from(e.target.files),
-                                commandCentre,
-                                store,
-                                monomerLibraryPath,
-                                backgroundColor,
-                                defaultBondSmoothness,
-                                dispatch
-                            );
-                        }}
-                    />
-                </Form.Group>
-            </MoorhenStack>
+        <div>
+            <MoorhenFileInput
+                dowebkitdirectory={true}
+                ref={filesRef}
+                multiple={true}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    loadMrParseFiles(
+                        Array.from(e.target.files),
+                        commandCentre,
+                        store,
+                        monomerLibraryPath,
+                        backgroundColor,
+                        defaultBondSmoothness,
+                        dispatch
+                    );
+                }}
+            />
+
             {false && <MoorhenButton onClick={handleLoadFromUrlExample}>Load from URL example</MoorhenButton>}
-        </MoorhenStack>
+        </div>
     );
 
     const pdbArrow = homologsSortReversed ? <>&darr;</> : <>&uarr;</>;
@@ -744,210 +718,202 @@ export const MoorhenMrParseModal = () => {
     if (mrParseModels.length > 0)
         bodyContent = (
             <>
-                <Accordion
-                    defaultExpanded
-                    className="moorhen-accordion"
-                    disableGutters={true}
-                    elevation={0}
-                    style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}
-                >
-                    <AccordionSummary style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }} expandIcon={<ExpandMoreOutlined />}>
-                        Experimental structures from the PDB
-                    </AccordionSummary>
-                    <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}>
-                        <Table style={{ backgroundColor: isDark ? "#3d3d3d" : "white" }}>
-                            <thead>
-                                <tr>
-                                    {pdbHeaders.map(head => (
-                                        <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>
-                                            {head.label} {head.key === homologsSortField ? pdbArrow : <></>}
-                                        </th>
-                                    ))}
-                                    <th>
-                                        <em>Tools</em>
+                <MoorhenAccordion title="Experimental structures from the PDB" defaultOpen>
+                    <table>
+                        <thead>
+                            <tr>
+                                {pdbHeaders.map(head => (
+                                    <th key={head.key} onClick={() => handlePDBSortingChange(head.key)}>
+                                        {head.label} {head.key === homologsSortField ? pdbArrow : <></>}
                                     </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {homologsJson.toSorted(homologsSortFun).map((homEl, i) => {
-                                    const model_id = homEl.pdb_file;
-                                    const foundModel = mrParseModels.find(
-                                        mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
+                                ))}
+                                <th>
+                                    <em>Tools</em>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {homologsJson.toSorted(homologsSortFun).map((homEl, i) => {
+                                const model_id = homEl.pdb_file;
+                                const foundModel = mrParseModels.find(
+                                    mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
+                                );
+                                if (foundModel) {
+                                    const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
+                                    const handleDownload = async () => {
+                                        await foundModel.downloadAtoms();
+                                    };
+                                    const handleCentering = () => {
+                                        foundModel.centreOn();
+                                    };
+                                    const handleVisibility = () => {
+                                        dispatch(isVisible ? hideMolecule(foundModel) : showMolecule(foundModel));
+                                    };
+                                    return (
+                                        <tr key={i}>
+                                            <td>{homEl.name}</td>
+                                            <td>{homEl.pdb_id}</td>
+                                            <td>{homEl.resolution.toFixed(2)}</td>
+                                            <td>{homEl.region_id}</td>
+                                            <td>{homEl.range}</td>
+                                            <td>{homEl.length}</td>
+                                            <td>{homEl.ellg}</td>
+                                            <td>{homEl.molecular_weight}</td>
+                                            <td>{homEl.rmsd}</td>
+                                            <td>{homEl.seq_ident.toFixed(2)}</td>
+                                            <td>
+                                                <MoorhenStack
+                                                    gap={2}
+                                                    direction="horizontal"
+                                                    style={{
+                                                        paddingTop: "0.5rem",
+                                                        alignItems: "space-between",
+                                                        alignContent: "space-between",
+                                                        justifyContent: "space-between",
+                                                        width: "100%",
+                                                    }}
+                                                >
+                                                    <MoorhenButton
+                                                        key={1}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleVisibility}
+                                                        icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                                                    ></MoorhenButton>
+                                                    <MoorhenButton
+                                                        key={2}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleCentering}
+                                                        icon="MatSymFilterFocus"
+                                                    ></MoorhenButton>
+                                                    <MoorhenButton
+                                                        key={3}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleDownload}
+                                                        icon="MatSymDownload"
+                                                    ></MoorhenButton>
+                                                </MoorhenStack>
+                                            </td>
+                                        </tr>
                                     );
-                                    if (foundModel) {
-                                        const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
-                                        const handleDownload = async () => {
-                                            await foundModel.downloadAtoms();
-                                        };
-                                        const handleCentering = () => {
-                                            foundModel.centreOn();
-                                        };
-                                        const handleVisibility = () => {
-                                            dispatch(isVisible ? hideMolecule(foundModel) : showMolecule(foundModel));
-                                        };
-                                        return (
-                                            <tr key={i}>
-                                                <td>{homEl.name}</td>
-                                                <td>{homEl.pdb_id}</td>
-                                                <td>{homEl.resolution.toFixed(2)}</td>
-                                                <td>{homEl.region_id}</td>
-                                                <td>{homEl.range}</td>
-                                                <td>{homEl.length}</td>
-                                                <td>{homEl.ellg}</td>
-                                                <td>{homEl.molecular_weight}</td>
-                                                <td>{homEl.rmsd}</td>
-                                                <td>{homEl.seq_ident.toFixed(2)}</td>
-                                                <td>
-                                                    <MoorhenStack
-                                                        gap={2}
-                                                        direction="horizontal"
-                                                        style={{
-                                                            paddingTop: "0.5rem",
-                                                            alignItems: "space-between",
-                                                            alignContent: "space-between",
-                                                            justifyContent: "space-between",
-                                                            width: "100%",
-                                                        }}
-                                                    >
-                                                        <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
-                                                            {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                        </MoorhenButton>
-                                                        <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
-                                                            <CenterFocusWeakOutlined />
-                                                        </MoorhenButton>
-                                                        <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
-                                                            <DownloadOutlined />
-                                                        </MoorhenButton>
-                                                    </MoorhenStack>
-                                                </td>
-                                            </tr>
-                                        );
-                                    } else {
-                                        return <tr key={i}></tr>;
-                                    }
-                                })}
-                            </tbody>
-                        </Table>
-                        <Container style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}>
-                            <MoorhenSequenceViewer
-                                sequences={homologsSequencesLists}
-                                onResidueClick={handleClickResidue}
-                                nameColumnWidth={4}
-                                columnWidth={0.45}
-                                fontSize={0.5}
-                                reOrder={false}
-                            ></MoorhenSequenceViewer>
-                        </Container>
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion
-                    defaultExpanded
-                    className="moorhen-accordion"
-                    disableGutters={true}
-                    elevation={0}
-                    style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}
-                >
-                    <AccordionSummary style={{ backgroundColor: isDark ? "#adb5bd" : "#ecf0f1" }} expandIcon={<ExpandMoreOutlined />}>
-                        Structure predictions from the EBI AlphaFold database
-                    </AccordionSummary>
-                    <AccordionDetails style={{ padding: "0.2rem", backgroundColor: isDark ? "#333333" : "white" }}>
-                        <Table style={{ backgroundColor: isDark ? "#3d3d3d" : "white" }}>
-                            <thead>
-                                <tr>
-                                    {afHeaders.map(head => (
-                                        <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>
-                                            {head.label} {head.key === afSortField ? afArrow : <></>}
-                                        </th>
-                                    ))}
-                                    <th>
-                                        <em>Tools</em>
+                                } else {
+                                    return <tr key={i}></tr>;
+                                }
+                            })}
+                        </tbody>
+                    </table>
+
+                    <MoorhenSequenceViewer
+                        sequences={homologsSequencesLists}
+                        onResidueClick={handleClickResidue}
+                        nameColumnWidth={4}
+                        columnWidth={0.45}
+                        fontSize={0.5}
+                        reOrder={false}
+                    ></MoorhenSequenceViewer>
+                </MoorhenAccordion>
+                <MoorhenAccordion defaultOpen title="Structure predictions from the EBI AlphaFold database">
+                    <table>
+                        <thead>
+                            <tr>
+                                {afHeaders.map(head => (
+                                    <th key={head.key} onClick={() => handleAFSortingChange(head.key)}>
+                                        {head.label} {head.key === afSortField ? afArrow : <></>}
                                     </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {afJson.toSorted(afSortFun).map((afEl, i) => {
-                                    const model_id = afEl.pdb_file;
-                                    const foundModel = mrParseModels.find(
-                                        mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
+                                ))}
+                                <th>
+                                    <em>Tools</em>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {afJson.toSorted(afSortFun).map((afEl, i) => {
+                                const model_id = afEl.pdb_file;
+                                const foundModel = mrParseModels.find(
+                                    mod => "models/" + mod.name + ".pdb" === model_id || "homologs/" + mod.name + ".pdb" === model_id
+                                );
+                                if (foundModel) {
+                                    const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
+                                    const handleDownload = async () => {
+                                        await foundModel.downloadAtoms();
+                                    };
+                                    const handleCentering = () => {
+                                        foundModel.centreOn();
+                                    };
+                                    const handleVisibility = () => {
+                                        dispatch(isVisible ? hideMolecule(foundModel) : showMolecule(foundModel));
+                                    };
+                                    return (
+                                        <tr key={i}>
+                                            <td>{afEl.name}</td>
+                                            <td>{afEl.date_made}</td>
+                                            <td>{afEl.range}</td>
+                                            <td>{afEl.length}</td>
+                                            <td>{afEl.avg_plddt.toFixed(2)}</td>
+                                            <td>{afEl.h_score}</td>
+                                            <td>{afEl.seq_ident.toFixed(2)}</td>
+                                            <td>
+                                                <MoorhenStack
+                                                    gap={2}
+                                                    direction="horizontal"
+                                                    style={{
+                                                        paddingTop: "0.5rem",
+                                                        alignItems: "space-between",
+                                                        alignContent: "space-between",
+                                                        justifyContent: "space-between",
+                                                        width: "100%",
+                                                    }}
+                                                >
+                                                    <MoorhenButton
+                                                        key={1}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleVisibility}
+                                                        icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                                                    ></MoorhenButton>
+                                                    <MoorhenButton
+                                                        key={2}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleCentering}
+                                                        icon="MatSymFilterFocus"
+                                                    />
+                                                    <MoorhenButton
+                                                        key={3}
+                                                        size="sm"
+                                                        variant="outlined"
+                                                        onClick={handleDownload}
+                                                        icon="MatSymDownload"
+                                                    />
+                                                </MoorhenStack>
+                                            </td>
+                                        </tr>
                                     );
-                                    if (foundModel) {
-                                        const isVisible = visibleMolecules.indexOf(foundModel.molNo) > -1;
-                                        const handleDownload = async () => {
-                                            await foundModel.downloadAtoms();
-                                        };
-                                        const handleCentering = () => {
-                                            foundModel.centreOn();
-                                        };
-                                        const handleVisibility = () => {
-                                            dispatch(isVisible ? hideMolecule(foundModel) : showMolecule(foundModel));
-                                        };
-                                        return (
-                                            <tr key={i}>
-                                                <td>{afEl.name}</td>
-                                                <td>{afEl.date_made}</td>
-                                                <td>{afEl.range}</td>
-                                                <td>{afEl.length}</td>
-                                                <td>{afEl.avg_plddt.toFixed(2)}</td>
-                                                <td>{afEl.h_score}</td>
-                                                <td>{afEl.seq_ident.toFixed(2)}</td>
-                                                <td>
-                                                    <MoorhenStack
-                                                        gap={2}
-                                                        direction="horizontal"
-                                                        style={{
-                                                            paddingTop: "0.5rem",
-                                                            alignItems: "space-between",
-                                                            alignContent: "space-between",
-                                                            justifyContent: "space-between",
-                                                            width: "100%",
-                                                        }}
-                                                    >
-                                                        <MoorhenButton key={1} size="sm" variant="outlined" onClick={handleVisibility}>
-                                                            {isVisible ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
-                                                        </MoorhenButton>
-                                                        <MoorhenButton key={2} size="sm" variant="outlined" onClick={handleCentering}>
-                                                            <CenterFocusWeakOutlined />
-                                                        </MoorhenButton>
-                                                        <MoorhenButton key={3} size="sm" variant="outlined" onClick={handleDownload}>
-                                                            <DownloadOutlined />
-                                                        </MoorhenButton>
-                                                    </MoorhenStack>
-                                                </td>
-                                            </tr>
-                                        );
-                                    } else {
-                                        return <tr key={i}></tr>;
-                                    }
-                                })}
-                            </tbody>
-                        </Table>
-                        <Container style={{ backgroundColor: isDark ? "#7d7d7d" : "white", color: isDark ? "white" : "black" }}>
-                            <MoorhenSequenceViewer
-                                sequences={afSequencesLists}
-                                onResidueClick={handleClickResidue}
-                                nameColumnWidth={5}
-                                columnWidth={0.45}
-                                fontSize={0.5}
-                                reOrder={false}
-                            ></MoorhenSequenceViewer>
-                        </Container>
-                    </AccordionDetails>
-                </Accordion>
+                                } else {
+                                    return <tr key={i}></tr>;
+                                }
+                            })}
+                        </tbody>
+                    </table>
+                    <MoorhenSequenceViewer
+                        sequences={afSequencesLists}
+                        onResidueClick={handleClickResidue}
+                        nameColumnWidth={5}
+                        columnWidth={0.45}
+                        fontSize={0.5}
+                        reOrder={false}
+                    ></MoorhenSequenceViewer>
+                </MoorhenAccordion>
             </>
         );
 
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.MRPARSE}
-            left={width / 6}
-            top={height / 3}
-            minHeight={50}
-            minWidth={convertRemToPx(37)}
-            maxHeight={convertViewtoPx(70, height)}
-            maxWidth={convertViewtoPx(90, width)}
-            enforceMaxBodyDimensions={true}
-            overflowY="auto"
-            overflowX="auto"
+            initialHeight={500}
+            initialWidth={748}
             headerTitle="MrParse results"
             footer={footerContent}
             resizeNodeRef={resizeNodeRef}

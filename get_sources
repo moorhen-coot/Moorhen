@@ -33,8 +33,11 @@ getgsl
 getcoot
 getlhasa
 getglm
+getmaeparser
+getcoordgen
 getrdkit
 getgraphene
 getsigcpp
 getprivateer
 getboost
+getxpid

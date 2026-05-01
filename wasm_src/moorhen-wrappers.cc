@@ -1,9 +1,4 @@
-/*
- * Copyright 2013 The Emscripten Authors.  All rights reserved.
- * Emscripten is available under two separate licenses, the MIT license and the
- * University of Illinois/NCSA Open Source License.  Both these licenses can be
- * found in the LICENSE file.
- */
+#include "moorhen-wrappers-helpers.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -2206,6 +2201,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("cell",&coot::symmetry_info_t::cell)
     .field("symm_trans",&coot::symmetry_info_t::symm_trans)
     ;
+=======
+EMSCRIPTEN_BINDINGS(moorhen_container) {
+>>>>>>> origin
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("dedust_map",&molecules_container_t::dedust_map)
@@ -2522,6 +2520,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
+<<<<<<< HEAD
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
     .field("height", &texture_as_floats_t::height)
@@ -3034,6 +3033,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_hbond_restraints",&get_hbond_restraints);
     function("get_undefined_restraints",&get_undefined_restraints);
     function("get_chem_shift_info",&get_chem_shift_info);
+
 
 
 }

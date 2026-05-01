@@ -1,5 +1,4 @@
 import { Slider } from "@mui/material";
-import { Form, InputGroup } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -12,6 +11,7 @@ import {
 } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 
 const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
     let [oldMax, oldMin, newMax, newMin]: number[] = [];
@@ -89,54 +89,48 @@ export const MapContourSettings = () => {
     }, [mapSampling]);
 
     return (
-        <>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={defaultMapLitLines}
-                    onChange={() => {
-                        if (!defaultMapLitLines) {
-                            dispatch(setDefaultMapSurface(false));
-                        }
-                        dispatch(setDefaultMapLitLines(!defaultMapLitLines));
-                    }}
-                    label="Show maps as lit lines by default"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={defaultMapSurface}
-                    onChange={() => {
-                        if (!defaultMapSurface) {
-                            dispatch(setDefaultMapLitLines(false));
-                        }
-                        dispatch(setDefaultMapSurface(!defaultMapSurface));
-                    }}
-                    label="Show maps as surface by default"
-                />
-            </InputGroup>
-            <InputGroup className="moorhen-input-group-check">
-                <MoorhenToggle
-                    type="switch"
-                    checked={reContourMapOnlyOnMouseUp}
-                    onChange={() => {
-                        dispatch(setReContourMapOnlyOnMouseUp(!reContourMapOnlyOnMouseUp));
-                    }}
-                    label="Recontour maps only on mouse up"
-                />
-            </InputGroup>
+        <MoorhenStack>
+            <MoorhenToggle
+                type="switch"
+                checked={defaultMapLitLines}
+                onChange={() => {
+                    if (!defaultMapLitLines) {
+                        dispatch(setDefaultMapSurface(false));
+                    }
+                    dispatch(setDefaultMapLitLines(!defaultMapLitLines));
+                }}
+                label="Show maps as lit lines by default"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={defaultMapSurface}
+                onChange={() => {
+                    if (!defaultMapSurface) {
+                        dispatch(setDefaultMapLitLines(false));
+                    }
+                    dispatch(setDefaultMapSurface(!defaultMapSurface));
+                }}
+                label="Show maps as surface by default"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={reContourMapOnlyOnMouseUp}
+                onChange={() => {
+                    dispatch(setReContourMapOnlyOnMouseUp(!reContourMapOnlyOnMouseUp));
+                }}
+                label="Recontour maps only on mouse up"
+            />
+
             <hr></hr>
-            <Form.Group controlId="mapLineWidthSlider" style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
-                <MoorhenSlider
-                    minVal={0.1}
-                    maxVal={1.5}
-                    sliderTitle="Map lines thickness"
-                    externalValue={mapLineWidth}
-                    setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}
-                    decimalPlaces={2}
-                />
-            </Form.Group>
+
+            <MoorhenSlider
+                minVal={0.1}
+                maxVal={1.5}
+                sliderTitle="Map lines thickness"
+                externalValue={mapLineWidth}
+                setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}
+                decimalPlaces={2}
+            />
             <div style={{ padding: "0.5rem" }}>
                 <span>Map sampling rate</span>
                 <Slider
@@ -160,7 +154,7 @@ export const MapContourSettings = () => {
                     })}
                 />
             </div>
-        </>
+        </MoorhenStack>
     );
 };
 ("Map contour settings...");

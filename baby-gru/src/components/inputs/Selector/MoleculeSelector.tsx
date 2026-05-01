@@ -2,12 +2,12 @@ import { useSelector } from "react-redux";
 import React from "react";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import { MoorhenStack } from "../../interface-base";
 import { MoorhenSelect } from "./Select";
 import "./selectors.css";
 
 type MoorhenMoleculeSelectType = {
     onSelect?: (arg0: number) => void | React.Dispatch<React.SetStateAction<number>>;
+    onSelectUniqueId?: (arg0: string) => void | React.Dispatch<React.SetStateAction<string>>;
     onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
     selected?: number;
     molecules?: MoorhenMolecule[];
@@ -22,6 +22,7 @@ type MoorhenMoleculeSelectType = {
 export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     const {
         onSelect = null,
+        onSelectUniqueId = null,
         onChange = null,
         molecules = null,
         allowAny,
@@ -65,6 +66,9 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     }
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
+        if (parseInt(evt.target.value) < moleculesList.length && onSelectUniqueId){
+            onSelectUniqueId(moleculesList[parseInt(evt.target.value)].uniqueId)
+        }
         if (onChange) onChange(evt);
         if (onSelect) onSelect(parseInt(evt.target.value));
     };
@@ -82,6 +86,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             defaultValue={getDefaultValue()}
             onChange={e => handleChange(e)}
             ref={ref}
+            style={style}
         >
             {options}
         </MoorhenSelect>

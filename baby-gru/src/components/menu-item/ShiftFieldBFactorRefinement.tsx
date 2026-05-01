@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const ShiftFieldBFactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -36,7 +37,7 @@ export const ShiftFieldBFactor = () => {
     };
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
             <MoorhenMapSelect
                 maps={maps}
@@ -46,6 +47,6 @@ export const ShiftFieldBFactor = () => {
                 label="Map with reflection data"
             />
             <MoorhenButton onClick={doRefinement}>OK</MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

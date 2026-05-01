@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
+import "./context-menu.css";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -59,7 +60,7 @@ const MoorhenPopoverOptions = (props: {
 
     return (
         <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
-            <MoorhenStack direction="vertical" card style={{ background: "var(--moorhen-background)" }}>
+            <MoorhenStack direction="vertical">
                 <MoorhenSelect label={props.label} key={props.label} ref={selectRef} defaultValue={defaultValue}>
                     {props.options.map(optionName => {
                         return (
@@ -201,15 +202,16 @@ export const MoorhenContextButtonBase = (props: {
 
     return (
         <>
-            <IconButton
-                className="moorhen-context-button"
+            <MoorhenButton
                 onClick={handleClick}
-                onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
-                style={{ backgroundColor: isDark ? "grey" : "white" }}
+                className="moorhen__context-menu-button"
+                // onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
+                // style={{ backgroundColor: isDark ? "grey" : "white" }}
                 disabled={(needsMapData && !activeMap) || (needsAtomData && molecules.length === 0)}
+                tooltip={props.toolTipLabel}
             >
                 {props.icon}
-            </IconButton>
+            </MoorhenButton>
         </>
     );
 };

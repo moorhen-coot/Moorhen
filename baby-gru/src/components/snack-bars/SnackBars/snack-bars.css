@@ -1,0 +1,91 @@
+@import "../../../colors.css";
+
+.moorhen__snack-bars-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    left: 25%;
+    top: 1rem;
+    max-width: 50%;
+    z-index: 1000;
+    max-height: 500px;
+    height: fit-content;
+    overflow: hidden;
+    font-family: var(--moorhen-font-family);
+    user-select: text;
+    justify-content: center;
+    align-items: center;
+}
+
+.moorhen__snack-bar-wrapper {
+    overflow: hidden;
+}
+
+.moorhen__snack-bar {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    min-height: 2.5rem;
+    color: var(--moorhen-primary);
+    background-color: var(--moorhen-background-header);
+    /* border: 1px solid var(--moorhen-border); */
+    border-radius: 0.25rem;
+    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    font-weight: 500;
+    color: white;
+}
+
+.moorhen__snack-bar.success {
+    background-color: #1faf30;
+    /* background-color: var(--moorhen-background); */
+    /* border: 2px solid #22bb33; */
+}
+
+.moorhen__snack-bar.error {
+    background-color: #bb2124;
+    /* background-color: var(--moorhen-background); */
+    /* border: 2px solid #bb2124; */
+}
+
+.moorhen__snack-bar.warning {
+    background-color: #e78700;
+    /* background-color: var(--moorhen-background); */
+    /* border: 2px solid #da983c; */
+}
+
+.moorhen__snack-bar.info {
+    background-color: #1a87a5;
+    /* background-color: var(--moorhen-background); */
+    /* border: 2px solid #70afc0; */
+}
+
+@keyframes moorhen__snack-bar-fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes moorhen__snack-bar-fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes moorhen__snack-bar-collapse {
+    from {
+        max-height: 8rem;
+    }
+    to {
+        max-height: 0;
+    }
+}

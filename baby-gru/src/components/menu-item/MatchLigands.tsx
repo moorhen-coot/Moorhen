@@ -1,11 +1,11 @@
-import { useSnackbar } from "notistack";
-import { Button } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setShownControl } from "@/store/globalUISlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MatchLigands = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -17,10 +17,7 @@ export const MatchLigands = () => {
     const movingMoleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const refLigandSelectRef = useRef<null | HTMLSelectElement>(null);
     const movingLigandSelectRef = useRef<null | HTMLSelectElement>(null);
-
-    const menuItemText = "Match ligands...";
-
-    const { enqueueSnackbar } = useSnackbar();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -57,18 +54,22 @@ export const MatchLigands = () => {
 
         document.body.click();
 
-        enqueueSnackbar("accept-reject-matching-ligand", {
-            variant: "acceptRejectMatchingLigand",
-            persist: true,
-            movingLigandCid: movingLigandSelectRef.current.value,
-            refLigandCid: refLigandSelectRef.current.value,
-            movingMolNo: movingMolecule.molNo,
-            refMolNo: referenceMolecule.molNo,
-        });
+        dispatch(
+            setShownControl({
+                name: "acceptRejectMatchingLigand",
+                payload: {
+                    movingLigandCid: movingLigandSelectRef.current.value,
+                    refLigandCid: refLigandSelectRef.current.value,
+                    movingMolNo: movingMolecule.molNo,
+                    refMolNo: referenceMolecule.molNo,
+                },
+            })
+        );
     }, [molecules]);
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect
                 label="Reference molecule"
                 molecules={molecules}
@@ -95,6 +96,7 @@ export const MatchLigands = () => {
                 molecules={molecules}
                 selectedCoordMolNo={selectedMovingMolNo}
             />
+            </MoorhenStack>
             <MoorhenButton variant="primary" onClick={matchLigands}>
                 OK
             </MoorhenButton>

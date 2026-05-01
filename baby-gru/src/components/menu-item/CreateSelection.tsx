@@ -1,11 +1,12 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
+import { enqueueSnackbar, setShownControl } from "@/store";
 import { setResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenStack } from "../interface-base/Stack/Stack"
 
 export const CreateSelection = () => {
     const dispatch = useDispatch();
@@ -19,8 +20,6 @@ export const CreateSelection = () => {
     const [invalidCid, setInvalidCid] = useState<boolean>(false);
 
     const menuItemText = "Create a selection...";
-
-    const { enqueueSnackbar } = useSnackbar();
 
     const createSelection = async () => {
         const selectedCid = cidFormRef.current.value;
@@ -39,24 +38,24 @@ export const CreateSelection = () => {
         } catch (err) {
             console.log(err);
             setInvalidCid(true);
-            enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             return;
         }
 
         if (!newSelection) {
             setInvalidCid(true);
-            enqueueSnackbar("Unable to parse CID", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Unable to parse CID", variant: "warning" }));
             return;
         }
 
         setInvalidCid(false);
         await molecule.drawResidueSelection(selectedCid);
         dispatch(setResidueSelection(newSelection));
-        enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+        dispatch(setShownControl({ name: "selectionTools" }));
     };
 
     return (
-        <>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={molecules} style={{ width: "20rem" }} />
             <MoorhenCidInputForm
                 margin={"0.5rem"}
@@ -68,6 +67,6 @@ export const CreateSelection = () => {
             <MoorhenButton variant="primary" onClick={createSelection}>
                 OK
             </MoorhenButton>
-        </>
+        </MoorhenStack>
     );
 };

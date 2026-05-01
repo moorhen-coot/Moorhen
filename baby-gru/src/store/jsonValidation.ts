@@ -4,7 +4,7 @@ const initialState: { validationJson: { sections: any; title: string } } = {
     validationJson: { sections: {}, title: "" },
 };
 
-export const jsonValidationSlice = createSlice({
+const jsonValidationSlice = createSlice({
     name: "jsonValidation",
     initialState: initialState,
     reducers: {

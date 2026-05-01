@@ -8,7 +8,6 @@ import {
     SwapVertOutlined,
 } from "@mui/icons-material";
 import { Avatar, Badge, Box, Fade, IconButton, Popper, Slide } from "@mui/material";
-import { Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";

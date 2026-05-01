@@ -1,0 +1,48 @@
+@import "../../../colors.css";
+
+.moorhen__tabs-container {
+    margin: 0.5rem;
+    font-family: var(--moorhen-font-family);
+}
+
+.moorhen__tabs-header {
+    display: flex;
+    margin: 0rem;
+}
+
+.moorhen__tab-button {
+    all: unset;
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 2;
+    transform: translateY(1px);
+    border: 1px solid var(--moorhen-border);
+    background-color: var(--moorhen-background-shaded);
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+}
+
+.moorhen__tab-button:hover {
+    border-color: var(--moorhen-focus);
+    background-color: var(--moorhen-background);
+    border-top: 3px solid var(--moorhen-focus);
+    padding-top: calc(0.25rem - 2px);
+}
+
+.moorhen__tab-button.active {
+    border-bottom: none;
+    background-color: var(--moorhen-background);
+}
+
+.moorhen__tab-panel {
+    width: auto;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    border: 1px solid var(--moorhen-border);
+    padding: 1rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+    padding-bottom: 1.5rem;
+    background-color: var(--moorhen-background);
+}

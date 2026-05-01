@@ -97,6 +97,7 @@ export {
     triggerUpdate,
     resetMoleculeMapUpdates,
 }  from "./moleculeMapUpdateSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
 export {
     addImageOverlay,
@@ -112,20 +113,8 @@ export {
     removeSvgPathOverlay,
     removeFracPathOverlay,
 }  from "./overlaysSlice";
-export {
-    setEnableTimeCapsule,
-    setMakeBackups,
-    setMaxBackupCount,
-    setModificationCountBackupThreshold,
-    resetBackupSettings,
-}  from "./backupSettingsSlice";
-export {
-    setContourWheelSensitivityFactor,
-    setZoomWheelSensitivityFactor,
-    setMouseSensitivity,
-    resetDefaultMouseSettings,
-}  from "./mouseSettings";
-export { setAtomInfoIds }  from "./atomInfoCardsSlice";
+export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
+export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
 export {
     setBusy,
     setTimeCapsuleBusy,
@@ -136,8 +125,16 @@ export {
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
     setShownBottomPanel,
+<<<<<<< HEAD
     setNMRMode,
+=======
+    setClickAwayListenerActive,
+>>>>>>> origin
 }  from "./globalUISlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export { setValidationJson }  from "./jsonValidation";
@@ -156,17 +153,7 @@ export {
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
-export {
-    attachModalToSideBar,
-    showModal,
-    hideModal,
-    detachModalFromSideBar,
-    focusOnModal,
-    unFocusModal,
-    resetActiveModals,
-    collapseSideBarModal,
-    expandSideBarModal,
-}  from "./modalsSlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setAnimateRefine,
     setEnableRefineAfterMod,
@@ -264,4 +251,4 @@ export {
 }  from "./mapContourSettingsSlice";
 
 // Export store configuration and types
-export { reducers, _MoorhenReduxStore, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
+export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

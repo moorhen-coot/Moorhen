@@ -20,12 +20,13 @@ fi
 #This defines geteigen, getgsl, getclipper, etc.
 . ${MOORHEN_SOURCE_DIR}/get_sources_funs
 
-if [ x`uname -s` = x"Darwin" ]; then
-    NUMPROCS=`sysctl -n hw.ncpu`
-else
-    NUMPROCS=`nproc --all`
+if [ -z "$NUMPROCS" ]; then
+  if [ x`uname -s` = x"Darwin" ]; then
+      NUMPROCS=`sysctl -n hw.ncpu`
+  else
+      NUMPROCS=`nproc --all`
+  fi
 fi
-
 
 MEMORY64=0
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
@@ -128,10 +129,22 @@ clearrdkit() {
     echo "Clear rdkit"
     rm -rf ${BUILD_DIR}/rdkit_build
     rm -rf ${INSTALL_DIR}/include/rdkit
-    rm -rf ${INSTALL_DIR}/include/maeparser
-    rm -rf ${INSTALL_DIR}/include/coordgen
     rm -rf ${INSTALL_DIR}/lib/libRDKit*.a
     rm -rf ${INSTALL_DIR}/lib/cmake/rdkit
+}
+
+clearmaeparser() {
+    echo "Clear maeparser"
+    rm -rf ${BUILD_DIR}/maeparser_build
+    rm -rf ${INSTALL_DIR}/include/maeparser
+    rm -rf ${INSTALL_DIR}/lib/libmaeparser.a
+}
+
+clearcoordgen() {
+    echo "Clear coordgen"
+    rm -rf ${BUILD_DIR}/coordgen_build
+    rm -rf ${INSTALL_DIR}/include/coordgen
+    rm -rf ${INSTALL_DIR}/lib/libcoordgen.a
 }
 
 cleareigen() {
@@ -228,6 +241,12 @@ cleargraphene() {
     rm -rf ${INSTALL_DIR}/lib/pkgconfig/graphene-1.0.pc
 }
 
+clearxpid() {
+    echo "Clear xpid_moorhen"
+    rm -rf ${BUILD_DIR}/xpid_moorhen_build
+    rm -rf ${INSTALL_DIR}/include/xpid_moorhen
+}
+
 clearmoorhen() {
     echo "Clear moorhen"
     rm -rf ${BUILD_DIR}/moorhen_build
@@ -258,6 +277,8 @@ clearall() {
     cleargsl
     clearigraph
     clearjsoncpp
+    clearmaeparser
+    clearcoordgen
     clearrdkit
     cleareigen
     clearccp4
@@ -271,6 +292,7 @@ clearall() {
     clearconkit
     clearsigcpp
     cleargraphene
+    clearxpid
     clearmoorhen
 }
 
@@ -299,6 +321,10 @@ else
                ;;
            jsoncpp) clearjsoncpp
                ;;
+           maeparser) clearmaeparser
+               ;;
+           coordgen) clearcoordgen
+               ;;
            rdkit) clearrdkit
                ;;
            eigen) cleareigen
@@ -324,6 +350,8 @@ else
            sigcpp) clearsigcpp
                ;;
            graphene) cleargraphene
+               ;;
+           xpid) clearxpid
                ;;
            moorhen) clearmoorhen
                ;;
@@ -365,6 +393,8 @@ fi
 
 BUILD_GSL=false
 BUILD_BOOST=false
+BUILD_MAEPARSER=false
+BUILD_COORDGEN=false
 BUILD_IGRAPH=false
 BUILD_GEMMI=false
 BUILD_JSONCPP=false
@@ -384,6 +414,7 @@ BUILD_SLICENDICE=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+BUILD_XPID=false
 BUILD_CONKIT=false
 
 if test -d ${INSTALL_DIR}/include/conkit; then
@@ -452,6 +483,18 @@ else
     BUILD_BOOST=true
 fi
 
+if test -d ${INSTALL_DIR}/include/maeparser; then
+    true
+else
+    BUILD_MAEPARSER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/coordgen; then
+    true
+else
+    BUILD_COORDGEN=true
+fi
+
 if test -d ${INSTALL_DIR}/include/gemmi; then
     true
 else
@@ -512,6 +555,12 @@ else
     BUILD_PNG=true
 fi
 
+if test -r ${INSTALL_DIR}/include/xpid_moorhen/core.h; then
+    true
+else
+    BUILD_XPID=true
+fi
+
 if test x"${MEMORY64}" = x"1"; then
 if test -r ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/wasm/moorhen64.wasm; then
     true
@@ -542,6 +591,12 @@ for mod in $MODULES; do
        ;;
        jsoncpp) echo "Force build jsoncpp"
        BUILD_JSONCPP=true
+       ;;
+       maeparser) echo "Force build maeparser"
+       BUILD_MAEPARSER=true
+       ;;
+       coordgen) echo "Force build coordgen"
+       BUILD_COORDGEN=true
        ;;
        rdkit) echo "Force build rdkit"
        BUILD_RDKIT=true
@@ -588,11 +643,16 @@ for mod in $MODULES; do
        freetype) echo "Force build freetype"
        BUILD_FREETYPE=true
        ;;
+       xpid) echo "Force build xpid_moorhen"
+       BUILD_XPID=true
+       ;;
     esac
 done
 
 echo "BUILD_GSL        " $BUILD_GSL
 echo "BUILD_BOOST      " $BUILD_BOOST
+echo "BUILD_MAEPARSER  " $BUILD_MAEPARSER
+echo "BUILD_COORDGEN   " $BUILD_COORDGEN
 echo "BUILD_IGRAPH     " $BUILD_IGRAPH
 echo "BUILD_GEMMI      " $BUILD_GEMMI
 echo "BUILD_JSONCPP    " $BUILD_JSONCPP
@@ -613,6 +673,16 @@ echo "BUILD_ZLIB       " $BUILD_ZLIB
 echo "BUILD_PNG        " $BUILD_PNG
 echo "BUILD_MOORHEN    " $BUILD_MOORHEN
 echo "BUILD_CONKIT     " $BUILD_CONKIT
+echo "BUILD_XPID       " $BUILD_XPID
+
+#xpid_moorhen
+if [ $BUILD_XPID = true ]; then
+    getxpid
+    mkdir -p ${BUILD_DIR}/xpid_moorhen_build
+    cd ${BUILD_DIR}/xpid_moorhen_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/xpid_moorhen
+    make install || fail "Error installing getxpid, giving up."
+fi
 
 #eigen
 if [ $BUILD_LIBEIGEN = true ]; then
@@ -673,13 +743,66 @@ if [ $BUILD_BOOST = true ]; then
     emmake make install || fail "Error installing boost, giving up."
 fi
 
+BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do j=${i%-static}; k=${j%-$boost_release}; l=${k#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${l}_DIR=$i; done`
+
+#maeparser
+if [ $BUILD_MAEPARSER = true ]; then
+    getmaeparser
+    mkdir -p ${BUILD_DIR}/maeparser_build
+    cd ${BUILD_DIR}/maeparser_build
+    emcmake cmake \
+        -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release \
+        -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include \
+        ${BOOST_CMAKE_STUFF} \
+        -DBoost_USE_STATIC_LIBS=ON \
+        -DBoost_USE_STATIC_RUNTIME=ON \
+        -DMAEPARSER_BUILD_TESTS=OFF \
+        -DMAEPARSER_BUILD_SHARED_LIBS=OFF \
+        -DZLIB_ROOT=${INSTALL_DIR} \
+        -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include \
+        -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a \
+        -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/maeparser-$maeparser_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing maeparser, giving up."
+fi
+
+#coordgen
+if [ $BUILD_COORDGEN = true ]; then
+    getcoordgen
+    mkdir -p ${BUILD_DIR}/coordgen_build
+    cd ${BUILD_DIR}/coordgen_build
+    emcmake cmake \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release \
+        -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include \
+        ${BOOST_CMAKE_STUFF} \
+        -DBoost_USE_STATIC_LIBS=ON \
+        -DBoost_USE_STATIC_RUNTIME=ON \
+        -DCOORDGEN_BUILD_SHARED_LIBS=OFF \
+        -DCOORDGEN_BUILD_TESTS=OFF \
+        -DCOORDGEN_BUILD_EXAMPLE=OFF \
+        -DCOORDGEN_USE_MAEPARSER=ON \
+        -DCOORDGEN_RIGOROUS_BUILD=OFF \
+        -Dmaeparser_INCLUDE_DIRS=${INSTALL_DIR}/include \
+        -Dmaeparser_LIBRARIES=${INSTALL_DIR}/lib \
+        -Dmaeparser_DIR=${INSTALL_DIR} \
+        -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/coordgenlibs-$coordgen_release
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing coordgen, giving up."
+fi
+
 #RDKit
 if [ $BUILD_RDKIT = true ]; then
     getrdkit
-    BOOST_CMAKE_STUFF=`for i in ${INSTALL_DIR}/lib/cmake/boost*; do ii=${i%-static}; j=${ii%-$boost_release}; k=${j#${INSTALL_DIR}/lib/cmake/boost_}; echo -Dboost_${k}_DIR=$i; done`
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=ON -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
     # Manually copy coordgen and maeparser headers
@@ -900,13 +1023,14 @@ if [ $BUILD_MOORHEN = true ]; then
     getlhasa
     getmonomers
     getrotarama
+    cd ${MOORHEN_SOURCE_DIR}/baby-gru/
+    npm install
     mkdir -p ${BUILD_DIR}/moorhen_build
     cd ${BUILD_DIR}/moorhen_build
     emcmake cmake -DMEMORY64=${MEMORY64} -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DCMAKE_EXE_LINKER_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include -I${INSTALL_DIR}/include/fftw -I${INSTALL_DIR}/include/rfftw -I${INSTALL_DIR}/include/eigen3 -I${INSTALL_DIR}/include/ssm -I${MOORHEN_SOURCE_DIR}/checkout/glm-0.9.9.8 -I${INSTALL_DIR}/include/privateer -I${INSTALL_DIR}/include/privateer/pybind11" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR} -DCMAKE_PREFIX_PATH=${INSTALL_DIR} -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake -DRDKit_DIR=${INSTALL_DIR}/lib/cmake/rdkit -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include/boost -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release ${BOOST_CMAKE_STUFF} -DEigen3_DIR=${INSTALL_DIR}/share/eigen3/cmake/
-    emmake make -j ${NUMPROCS}
-    emmake make install || fail "Error installing moorhen, giving up."
+    PATH=${MOORHEN_SOURCE_DIR}/baby-gru/node_modules/.bin:$PATH emmake make -j ${NUMPROCS}
+    PATH=${MOORHEN_SOURCE_DIR}/baby-gru/node_modules/.bin:$PATH emmake make install || fail "Error installing moorhen, giving up."
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/
-    npm install
     # NOTE: If you change/add some steps below, make sure to update .github/workflows/run-tests.yml
     # down below in the 'Set up LhasaReact and monomers' step, if needed.
     printf "\e[36mCopying LhasaReact...\e[0m"

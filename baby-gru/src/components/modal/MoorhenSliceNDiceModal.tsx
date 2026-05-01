@@ -1,6 +1,5 @@
-import { CenterFocusWeakOutlined, DownloadOutlined, InfoOutlined, WarningOutlined } from "@mui/icons-material";
-import { Backdrop, IconButton, Slider, Tooltip } from "@mui/material";
-import { Button, Card, Col, Dropdown, Form, FormSelect, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
+import { WarningOutlined } from "@mui/icons-material";
+import { Backdrop, Slider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -21,9 +20,10 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenToggle } from "../inputs";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenButton, MoorhenFileInput, MoorhenPopoverButton, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
@@ -87,58 +87,37 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
     };
 
     return (
-        <Card style={{ marginTop: "0.5rem" }}>
-            <Card.Body style={{ padding: "0.5rem" }}>
-                <Row style={{ display: "flex", justifyContent: "between" }}>
-                    <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>
-                        <span>{props.label}</span>
-                    </Col>
-                    <Col
-                        className="col-4"
-                        style={{
-                            margin: "0",
-                            padding: "0",
-                            justifyContent: "right",
-                            display: "flex",
-                            alignItems: "center",
-                        }}
-                    >
-                        <Slider
-                            aria-label="Min. fragment size"
-                            getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
-                            valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
-                            valueLabelDisplay="auto"
-                            value={minFragmentSize}
-                            onChange={(evt: any, newVal: number) => {
-                                setMinFragmentSize(newVal);
-                                sizeThresholdRef.current = newVal;
-                                isDirty.current = true;
-                                if (!isBusy.current) {
-                                    hideSmallFragments();
-                                }
-                            }}
-                            defaultValue={1}
-                            min={1}
-                            max={20}
-                            style={{ color: themeColor }}
-                        />
-                        <Tooltip title="View">
-                            <IconButton
-                                style={{ marginRight: "0.5rem", color: themeColor }}
-                                onClick={() => props.fragmentMolecule.centreOn("/*/*/*/*", true, true)}
-                            >
-                                <CenterFocusWeakOutlined />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download">
-                            <IconButton style={{ marginRight: "0.5rem", color: themeColor }} onClick={handleDownload}>
-                                <DownloadOutlined />
-                            </IconButton>
-                        </Tooltip>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
+        <MoorhenStack card direction="line" align="center">
+            <span>{props.label}</span>
+            <Slider
+                aria-label="Min. fragment size"
+                getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
+                valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
+                valueLabelDisplay="auto"
+                value={minFragmentSize}
+                onChange={(evt: any, newVal: number) => {
+                    setMinFragmentSize(newVal);
+                    sizeThresholdRef.current = newVal;
+                    isDirty.current = true;
+                    if (!isBusy.current) {
+                        hideSmallFragments();
+                    }
+                }}
+                defaultValue={1}
+                min={1}
+                max={20}
+                style={{ color: themeColor }}
+            />
+            <MoorhenButton
+                onClick={() => props.fragmentMolecule.centreOn("/*/*/*/*", true, true)}
+                variant="outlined"
+                tooltip="view"
+                icon="MatSymFilterFocus"
+                style={{ color: themeColor }}
+            />
+
+            <MoorhenButton onClick={handleDownload} icon="MatSymDownload" variant="outlined" style={{ color: themeColor }} />
+        </MoorhenStack>
     );
 };
 
@@ -500,7 +479,7 @@ export const MoorhenSliceNDiceModal = () => {
 
     const handlePaeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.length > 0) {
-            const fileContents = await e.target.files[0].text()
+            const fileContents = await e.target.files[0].text();
             if (fileContents.length > 0) {
                 paeFileContentsRef.current = fileContents;
                 dispatch(setPaeFileIsUploaded(true));
@@ -524,17 +503,21 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const bodyContent = (
-        <MoorhenStack direction="vertical" gap={1}>
-            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
-                <MoorhenMoleculeSelect
-                    style={{ width: "100%" }}
-                    allowAny={false}
-                    ref={moleculeSelectRef}
-                    onChange={evt => setSelectedMolNo(parseInt(evt.target.value))}
-                />
-                <Form.Group style={{ margin: "0.5rem", width: "100%" }}>
-                    <Form.Label>Clustering algorithm...</Form.Label>
-                    <FormSelect size="sm" ref={clusteringTypeSelectRef} defaultValue={"birch"} onChange={handleClusteringTypeChange}>
+        <>
+            <MoorhenStack direction="vertical">
+                <MoorhenStack direction="horizontal">
+                    <MoorhenMoleculeSelect
+                        allowAny={false}
+                        ref={moleculeSelectRef}
+                        onChange={evt => setSelectedMolNo(parseInt(evt.target.value))}
+                    />
+                    <MoorhenSelect
+                        ref={clusteringTypeSelectRef}
+                        defaultValue={"birch"}
+                        onChange={handleClusteringTypeChange}
+                        label="Clustering algorithm"
+                        style={{ width: "100%" }}
+                    >
                         <option value={"birch"} key={"birch"}>
                             Birch
                         </option>
@@ -547,102 +530,70 @@ export const MoorhenSliceNDiceModal = () => {
                         <option value={"pae"} key={"pae"}>
                             PAE
                         </option>
-                    </FormSelect>
-                </Form.Group>
-            </MoorhenStack>
-            <MoorhenStack direction="horizontal" gap={1} style={{ display: "flex", width: "100%" }}>
-                <div style={{ margin: "0.5rem", padding: "0.2rem", width: "100%" }}>
-                    <MoorhenStack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
-                        <MoorhenToggle
-                            style={{ margin: 0 }}
-                            type="radio"
-                            checked={thresholdType === "af2-plddt"}
-                            onChange={() => {
-                                dispatch(setThresholdType("af2-plddt"));
-                                thresholdTypeRef.current = "af2-plddt";
-                                dispatch(setBFactorThreshold(70));
-                                bFactorThresholdRef.current = 70;
-                                isDirty.current = true;
-                                if (!isBusy.current) {
-                                    trimBfactorThreshold();
-                                }
-                            }}
-                            label="PLDDT"
-                        />
-                        <MoorhenToggle
-                            style={{ margin: 0 }}
-                            type="radio"
-                            checked={thresholdType === "b-factor-norm"}
-                            onChange={() => {
-                                dispatch(setThresholdType("b-factor-norm"));
-                                thresholdTypeRef.current = "b-factor-norm";
-                                dispatch(setBFactorThreshold(moleculeMaxBfactor));
-                                bFactorThresholdRef.current = moleculeMaxBfactor;
-                                isDirty.current = true;
-                                if (!isBusy.current) {
-                                    trimBfactorThreshold();
-                                }
-                            }}
-                            label="B-Factor"
-                        />
-                    </MoorhenStack>
-                    <Slider
-                        aria-label="B-Factor threshold"
-                        getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`}
-                        valueLabelFormat={(newVal: number) =>
-                            thresholdType === "b-factor-norm" ? (
-                                <span>
-                                    {"≤ "}
-                                    {newVal}
-                                </span>
-                            ) : (
-                                <span>≥ {newVal}</span>
-                            )
-                        }
-                        valueLabelDisplay="on"
-                        value={bFactorThreshold}
-                        onChange={(evt: any, newVal: number) => {
-                            dispatch(setBFactorThreshold(newVal));
-                            bFactorThresholdRef.current = newVal;
-                            isDirty.current = true;
-                            if (!isBusy.current) {
-                                trimBfactorThreshold();
-                            }
-                        }}
-                        defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
-                        min={moleculeMinBfactor ? moleculeMinBfactor : 1}
-                        max={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
-                        sx={{
-                            marginTop: "1.7rem",
-                            marginBottom: "0.8rem",
-                            "& .MuiSlider-valueLabel": {
-                                top: -1,
-                                fontSize: 14,
-                                fontWeight: "bold",
-                                color: "grey",
-                                backgroundColor: "unset",
-                            },
-                        }}
-                    />
-                </div>
-                {["kmeans", "agglomerative", "birch", "pae"].includes(clusteringType) && (
-                    <div style={{ margin: "0.5rem", padding: "0.1rem", width: "100%" }}>
-                        <span>Number of slices</span>
+                    </MoorhenSelect>
+                </MoorhenStack>
+                <MoorhenStack direction="horizontal">
+                    <div style={{ margin: "0.5rem", padding: "0.2rem", width: "100%" }}>
+                        <MoorhenStack direction="horizontal" gap={2} style={{ justifyContent: "center" }}>
+                            <MoorhenToggle
+                                style={{ margin: 0 }}
+                                type="radio"
+                                checked={thresholdType === "af2-plddt"}
+                                onChange={() => {
+                                    dispatch(setThresholdType("af2-plddt"));
+                                    thresholdTypeRef.current = "af2-plddt";
+                                    dispatch(setBFactorThreshold(70));
+                                    bFactorThresholdRef.current = 70;
+                                    isDirty.current = true;
+                                    if (!isBusy.current) {
+                                        trimBfactorThreshold();
+                                    }
+                                }}
+                                label="PLDDT"
+                            />
+                            <MoorhenToggle
+                                style={{ margin: 0 }}
+                                type="radio"
+                                checked={thresholdType === "b-factor-norm"}
+                                onChange={() => {
+                                    dispatch(setThresholdType("b-factor-norm"));
+                                    thresholdTypeRef.current = "b-factor-norm";
+                                    dispatch(setBFactorThreshold(moleculeMaxBfactor));
+                                    bFactorThresholdRef.current = moleculeMaxBfactor;
+                                    isDirty.current = true;
+                                    if (!isBusy.current) {
+                                        trimBfactorThreshold();
+                                    }
+                                }}
+                                label="B-Factor"
+                            />
+                        </MoorhenStack>
                         <Slider
-                            aria-label="No. of clusters"
-                            getAriaValueText={(newVal: number) => `${newVal}`}
-                            valueLabelFormat={(newVal: number) => `${newVal}`}
+                            aria-label="B-Factor threshold"
+                            getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`}
+                            valueLabelFormat={(newVal: number) =>
+                                thresholdType === "b-factor-norm" ? (
+                                    <span>
+                                        {"≤ "}
+                                        {newVal}
+                                    </span>
+                                ) : (
+                                    <span>≥ {newVal}</span>
+                                )
+                            }
                             valueLabelDisplay="on"
-                            value={nClusters}
+                            value={bFactorThreshold}
                             onChange={(evt: any, newVal: number) => {
-                                nClustersRef.current = newVal;
-                                dispatch(setNClusters(newVal));
+                                dispatch(setBFactorThreshold(newVal));
+                                bFactorThresholdRef.current = newVal;
+                                isDirty.current = true;
+                                if (!isBusy.current) {
+                                    trimBfactorThreshold();
+                                }
                             }}
-                            marks={true}
-                            defaultValue={5}
-                            step={1}
-                            min={1}
-                            max={10}
+                            defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                            min={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                            max={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
                             sx={{
                                 marginTop: "1.7rem",
                                 marginBottom: "0.8rem",
@@ -656,48 +607,77 @@ export const MoorhenSliceNDiceModal = () => {
                             }}
                         />
                     </div>
-                )}
-            </MoorhenStack>
-            {clusteringType === "pae" && (
-                <Form.Group style={{ margin: "0.5rem", padding: "0.2rem" }} controlId="uploadPAE">
-                    <Form.Label>Upload PAE file</Form.Label>
-                    <Tooltip title="Predicted Aligned Error (PAE) .json file" placement="top">
-                        <InfoOutlined style={{ marginLeft: "0.1rem", marginBottom: "0.2rem", width: "15px", height: "15px" }} />
-                    </Tooltip>
-                    {disableFileUploads ? (
-                        <FormSelect
-                            size="sm"
-                            ref={paeFileSelectFormRef}
-                            onChange={evt => {
-                                if (evt.target.value) {
-                                    paeFileContentsRef.current = evt.target.value;
-                                    dispatch(setPaeFileIsUploaded(true));
-                                }
-                            }}
-                        >
-                            {paeFileContents.map(item => {
-                                return (
-                                    <option key={item.fileName} value={item.fileContents}>
-                                        {item.fileName}
-                                    </option>
-                                );
-                            })}
-                        </FormSelect>
-                    ) : (
-                        <Form.Control
-                            ref={paeFileUploadFormRef}
-                            type="file"
-                            multiple={false}
-                            accept=".json"
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                handlePaeFileUpload(e);
-                            }}
-                        />
+                    {["kmeans", "agglomerative", "birch", "pae"].includes(clusteringType) && (
+                        <div style={{ margin: "0.5rem", padding: "0.1rem", width: "100%" }}>
+                            <span>Number of slices</span>
+                            <Slider
+                                aria-label="No. of clusters"
+                                getAriaValueText={(newVal: number) => `${newVal}`}
+                                valueLabelFormat={(newVal: number) => `${newVal}`}
+                                valueLabelDisplay="on"
+                                value={nClusters}
+                                onChange={(evt: any, newVal: number) => {
+                                    nClustersRef.current = newVal;
+                                    dispatch(setNClusters(newVal));
+                                }}
+                                marks={true}
+                                defaultValue={5}
+                                step={1}
+                                min={1}
+                                max={10}
+                                sx={{
+                                    marginTop: "1.7rem",
+                                    marginBottom: "0.8rem",
+                                    "& .MuiSlider-valueLabel": {
+                                        top: -1,
+                                        fontSize: 14,
+                                        fontWeight: "bold",
+                                        color: "grey",
+                                        backgroundColor: "unset",
+                                    },
+                                }}
+                            />
+                        </div>
                     )}
-                </Form.Group>
-            )}
-            <hr></hr>
-            <Row>
+                </MoorhenStack>
+                {clusteringType === "pae" && (
+                    <MoorhenStack direction="line">
+                        {disableFileUploads ? (
+                            <MoorhenSelect
+                                ref={paeFileSelectFormRef}
+                                onChange={evt => {
+                                    if (evt.target.value) {
+                                        paeFileContentsRef.current = evt.target.value;
+                                        dispatch(setPaeFileIsUploaded(true));
+                                    }
+                                }}
+                            >
+                                {paeFileContents.map(item => {
+                                    return (
+                                        <option key={item.fileName} value={item.fileContents}>
+                                            {item.fileName}
+                                        </option>
+                                    );
+                                })}
+                            </MoorhenSelect>
+                        ) : (
+                            <MoorhenFileInput
+                                label="Upload PAE .json file"
+                                extraTooltip="Predicted Aligned Error (PAE) .json file"
+                                ref={paeFileUploadFormRef}
+                                multiple={false}
+                                accept=".json"
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    handlePaeFileUpload(e);
+                                }}
+                            />
+                        )}
+                    </MoorhenStack>
+                )}
+                <hr></hr>
+            </MoorhenStack>
+
+            <MoorhenStack>
                 {slicingResults?.length > 0 ? <span>Found {slicingResults.length} possible slice(s)</span> : null}
                 {slicingResults?.length > 0 ? (
                     <div style={{ height: "100px", width: "100%" }}>
@@ -714,45 +694,25 @@ export const MoorhenSliceNDiceModal = () => {
                 ) : (
                     <span>No results...</span>
                 )}
-            </Row>
-        </MoorhenStack>
+            </MoorhenStack>
+        </>
     );
 
     const footerContent = (
-        <MoorhenStack
-            gap={2}
-            direction="horizontal"
-            style={{
-                paddingTop: "0.5rem",
-                alignItems: "space-between",
-                alignContent: "space-between",
-                justifyContent: "space-between",
-                width: "100%",
-            }}
-        >
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <SplitButton id="download-slice-n-dice" variant="primary" title="Download all" onClick={() => handleDownload()}>
-                    <Dropdown.Item eventKey="1" onClick={() => handleDownload()}>
-                        As individual files
-                    </Dropdown.Item>
-                    <Dropdown.Item eventKey="2" onClick={() => handleDownload(true)}>
-                        As a single file
-                    </Dropdown.Item>
-                </SplitButton>
-            </MoorhenStack>
-            <MoorhenStack gap={2} direction="horizontal" style={{ alignItems: "center", alignContent: "center", justifyContent: "center" }}>
-                <MoorhenButton variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
-                    Slice
-                </MoorhenButton>
-                <SplitButton id="download-slice-n-dice" variant="info" title="Save & Close" onClick={() => handleClose(true)}>
-                    <Dropdown.Item eventKey="1" onClick={() => handleClose(true)}>
-                        Close and save changes to Moorhen
-                    </Dropdown.Item>
-                    <Dropdown.Item eventKey="2" onClick={() => handleClose()}>
-                        Close without saving
-                    </Dropdown.Item>
-                </SplitButton>
-            </MoorhenStack>
+        <MoorhenStack direction="line" justify="center" gap={"1rem"}>
+            <MoorhenPopoverButton tooltip="Download" icon="MatSymDownload" type="default">
+                <MoorhenStack direction="vertical" align="center" justify="center">
+                    <MoorhenButton onClick={() => handleDownload()}>As individual files</MoorhenButton>
+                    <MoorhenButton onClick={() => handleDownload(true)}>As a single file</MoorhenButton>
+                </MoorhenStack>
+            </MoorhenPopoverButton>
+
+            <MoorhenButton variant="primary" onClick={doSlice} disabled={clusteringType === "pae" && !paeFileIsUploaded}>
+                Slice
+            </MoorhenButton>
+            <MoorhenButton tooltip="Save and close" onClick={() => handleClose(true)} variant="secondary">
+                Save to moorhen
+            </MoorhenButton>
         </MoorhenStack>
     );
 
@@ -768,7 +728,7 @@ export const MoorhenSliceNDiceModal = () => {
         >
             {busy ? (
                 <>
-                    <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                    <MoorhenSpinner colour="white" size={"3rem"} />
                     <span>Slicing...</span>
                 </>
             ) : showError ? (
@@ -781,20 +741,19 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const header = (
-        <MoorhenStack direction="horizontal" gap={1}>
-            <span>Slice-n-Dice</span>
-            <Tooltip
-                title="This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A. et al. (2022) available at bioRxiv."
-                key={1}
-            >
-                <MoorhenButton
-                    variant="white"
-                    style={{ margin: "0.1rem", padding: "0.1rem" }}
-                    onClick={() => window.open("https://doi.org/10.1101/2022.06.30.497974")}
-                >
-                    <InfoOutlined />
-                </MoorhenButton>
-            </Tooltip>
+        <MoorhenStack direction="horizontal">
+            <span>Slice-n-Dice &nbsp;</span>
+            <MoorhenInfoCard
+                infoText={
+                    <span>
+                        This pluggin uses Slice-N-Dice, a software for slicing models into distinct structural units. Preprint Simpkin, A.
+                        et al. (2022) available at bioRxiv. <br />
+                        <a href="https://doi.org/10.1101/2022.06.30.497974" target="_blank" rel="noopener noreferrer">
+                            DOI: 10.1101/2022.06.30.497974
+                        </a>
+                    </span>
+                }
+            />
         </MoorhenStack>
     );
 

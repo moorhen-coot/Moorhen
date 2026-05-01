@@ -1,4 +1,3 @@
-import { ClickAwayListener } from "@mui/material";
 import Fuse from "fuse.js";
 import { useDispatch, useSelector } from "react-redux";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -6,6 +5,7 @@ import { useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenButton } from "../inputs";
+import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 import { MenuFromItems } from "./MenuFromItems";
 import "./search-bar.css";
 import { MenuItemType } from "./subMenuConfig";
@@ -16,7 +16,7 @@ export const MoorhenSearchBar = () => {
     const [query, setQuery] = useState<string>("");
     const inputRef = useRef<HTMLInputElement>(null);
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
 
     // Set up Fuse.js options for label, keywords, description (priority order)
     const fuseOptions = {
@@ -72,7 +72,7 @@ export const MoorhenSearchBar = () => {
         );
     }
     return (
-        <ClickAwayListener onClickAway={handleClick}>
+        <MoorhenClickAwayListener onClickAway={handleClick}>
             <div>
                 <div className={`moorhen__search-bar-open`}>
                     <MoorhenButton type="icon-only" icon="MatSymSearch" onClick={handleClick} size="medium" />
@@ -92,6 +92,6 @@ export const MoorhenSearchBar = () => {
                     </div>
                 )}
             </div>
-        </ClickAwayListener>
+        </MoorhenClickAwayListener>
     );
 };

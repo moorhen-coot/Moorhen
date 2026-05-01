@@ -7,6 +7,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base";
 
 export const MinimizeEnergy = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -94,6 +95,7 @@ export const MinimizeEnergy = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid style={{ margin: "0.2rem" }}>
             <MoorhenSelect
                 label="Selection type..."
                 ref={selectionTypeSelectRef}
@@ -132,6 +134,7 @@ export const MinimizeEnergy = () => {
                     ref={ligandSelectRef}
                 />
             )}
+            </MoorhenStack>
 
             <MoorhenToggle
                 ref={useRamaRestraintsCheckRef}
@@ -140,7 +143,7 @@ export const MinimizeEnergy = () => {
                 onChange={() => {
                     setUseRamaRestraints(!useRamaRestraints);
                 }}
-                label="Use ramachandran restraints"
+                label="Use Ramachandran restraints"
             />
 
             <MoorhenToggle

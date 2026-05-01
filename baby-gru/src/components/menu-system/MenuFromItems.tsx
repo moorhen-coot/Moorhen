@@ -46,7 +46,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                     <MoorhenMenuItem
                         key={menuItem.label}
                         onClick={() => {
-                            dispatch(showModal(menuItem.modal));
+                            dispatch(showModal({ key: menuItem.modal, openDocked: menuItem.args?.openDocked }));
                             document.body.click();
                         }}
                     >
@@ -70,6 +70,18 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                         key={menuItem.label}
                         onClick={() => {
                             dispatch(setShownSidePanel(menuItem.panel));
+                            document.body.click();
+                        }}
+                    >
+                        {menuItem.label}
+                    </MoorhenMenuItem>
+                );
+            } else if (menuItem.type === "dispatch") {
+                return (
+                    <MoorhenMenuItem
+                        key={menuItem.label}
+                        onClick={() => {
+                            dispatch(menuItem.action);
                             document.body.click();
                         }}
                     >
@@ -108,7 +120,7 @@ const PreferenceChecker = (props: {
 
 const SubMenuPopover = (props: { menu: string; label: string }) => {
     const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.getMenuSystem();
+    const menuSystem = moorhenInstance.menuSystem;
     const items = menuSystem.getItems(props.menu);
     return (
         <MoorhenMenuItemPopover menuItemText={props.label}>

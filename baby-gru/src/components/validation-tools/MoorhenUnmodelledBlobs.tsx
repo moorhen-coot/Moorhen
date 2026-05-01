@@ -1,10 +1,10 @@
-import { Button, Card, Col, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { useCommandCentre } from "../../InstanceManager";
 import { setOrigin } from "../../store/glRefSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
+import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 
 export const MoorhenUnmodelledBlobs = () => {
@@ -29,25 +29,19 @@ export const MoorhenUnmodelledBlobs = () => {
     const getCards = (selectedModel: number, selectedMap: number, blobs: libcootApi.InterestingPlaceDataJS[]) => {
         return blobs.map((blob, index) => {
             return (
-                <Card key={index} style={{ marginTop: "0.5rem" }}>
-                    <Card.Body style={{ padding: "0.5rem" }}>
-                        <Row style={{ display: "flex", justifyContent: "between" }}>
-                            <Col style={{ alignItems: "center", justifyContent: "left", display: "flex" }}>
-                                {`${blob.buttonLabel} ( size: ${blob.featureValue.toFixed(2)} )`}
-                            </Col>
-                            <Col className="col-3" style={{ margin: "0", padding: "0", justifyContent: "right", display: "flex" }}>
-                                <MoorhenButton
-                                    style={{ marginRight: "0.5rem" }}
-                                    onClick={() => {
-                                        dispatch(setOrigin([-blob.coordX, -blob.coordY, -blob.coordZ]));
-                                    }}
-                                >
-                                    View
-                                </MoorhenButton>
-                            </Col>
-                        </Row>
-                    </Card.Body>
-                </Card>
+                <MoorhenStack gap={"1rem"} direction="row">
+                    <label style={{ height:"2.1rem", display: "flex", alignItems: "center" }}>{`${blob.buttonLabel} ( size: ${blob.featureValue.toFixed(2)} )`}</label>
+                    <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
+                    <MoorhenButton
+                        style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
+                        onClick={() => {
+                            dispatch(setOrigin([-blob.coordX, -blob.coordY, -blob.coordZ]));
+                        }}
+                    >
+                        View
+                    </MoorhenButton>
+                </MoorhenStack>
+                </MoorhenStack>
             );
         });
     };

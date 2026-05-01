@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { moorhen } from '../types/moorhen';
-import { MoorhenMap } from '../utils/MoorhenMap';
-import { MoorhenMolecule } from '../utils/MoorhenMolecule';
+import { createSlice } from "@reduxjs/toolkit";
+import { moorhen } from "../types/moorhen";
+import { MoorhenMap } from "../utils/MoorhenMap";
+import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 
 export type ResidueSelection = {
     molecule: null | MoorhenMolecule;
@@ -43,10 +43,10 @@ const initialState: {
     devMode: null,
     useGemmi: null,
     userPreferencesMounted: false,
-    appTitle: 'Moorhen',
+    appTitle: "Moorhen",
     cootInitialized: false,
     activeMap: null,
-    theme: 'flatly',
+    theme: "flatly",
 
     showHoverInfo: true,
     residueSelection: {
@@ -76,8 +76,8 @@ const initialState: {
     disableFileUpload: false,
 };
 
-export const generalStatesSlice = createSlice({
-    name: 'generalStates',
+const generalStatesSlice = createSlice({
+    name: "generalStates",
     initialState: initialState,
     reducers: {
         resetGeneralStates: () => {
@@ -89,6 +89,7 @@ export const generalStatesSlice = createSlice({
         setIsAnimatingTrajectory: (state, action: { payload: boolean; type: string }) => {
             return { ...state, isAnimatingTrajectory: action.payload };
         },
+        // API generalOptions
         setShowResidueSelection: (state, action: { payload: boolean; type: string }) => {
             return { ...state, showResidueSelection: action.payload };
         },
@@ -110,12 +111,16 @@ export const generalStatesSlice = createSlice({
         setTheme: (state, action: { payload: string; type: string }) => {
             return { ...state, theme: action.payload };
         },
+        // API generalOptions
+        /* Set the view-only mode of the application. In view-only mode, users can interact with the visualisation but cannot make any modifications to the loaded structures or maps.*/
         setViewOnly: (state, action: { payload: boolean; type: string }) => {
             return { ...state, viewOnly: action.payload };
         },
+        // API globalUI
         setShowHoverInfo: (state, action: { payload: boolean; type: string }) => {
             return { ...state, showHoverInfo: action.payload };
         },
+        // API maps
         setActiveMap: (state, action: { payload: MoorhenMap; type: string }) => {
             return { ...state, activeMap: action.payload };
         },
@@ -128,9 +133,12 @@ export const generalStatesSlice = createSlice({
         setUserPreferencesMounted: (state, action: { payload: boolean; type: string }) => {
             return { ...state, userPreferencesMounted: action.payload };
         },
+        // API globalUI
+        /* Show dev menu and extra tools */
         setDevMode: (state, action: { payload: boolean; type: string }) => {
             return { ...state, devMode: action.payload };
         },
+        // API  generalOptions
         setUseGemmi: (state, action: { payload: boolean; type: string }) => {
             return { ...state, useGemmi: action.payload };
         },
@@ -181,6 +189,8 @@ export const generalStatesSlice = createSlice({
         setAllowMergeFittedLigand: (state, action: { payload: boolean; type: string }) => {
             return { ...state, allowMergeFittedLigand: action.payload };
         },
+        // API  generalOptions
+        /* disable file upload through the interface, API call still works normally */
         setDisableFileUpload: (state, action: { payload: boolean; type: string }) => {
             return { ...state, disableFileUpload: action.payload };
         },

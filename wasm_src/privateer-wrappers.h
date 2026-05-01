@@ -28,7 +28,7 @@ struct TableEntry
 };
 
 
-std::vector<TableEntry> validate(const std::string &file, const std::string &name)
+inline std::vector<TableEntry> validate(const std::string &file, const std::string &name)
 {
 
   char *c_data = (char *)file.c_str();

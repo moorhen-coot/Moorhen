@@ -99,6 +99,12 @@ export type moleculeSessionData = {
         m2tParams: m2tParameters;
         nonCustomOpacity: number;
         resEnvOptions: residueEnvironmentOptions;
+        neighboursCid: string;
+        restrictToNeighbours: boolean;
+        excludeNeighbours: boolean;
+        hbondedToCid: string;
+        hbondedTo: boolean;
+        neighboursDistance: number;
     }[];
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: m2tParameters;
@@ -201,7 +207,7 @@ export class MoorhenTimeCapsule {
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    activeMapRef: React.RefObject<moorhen.Map>;
+    activeMapRef: React.RefObject<moorhen.Map | null>;
     busy: boolean;
     modificationCount: number;
     modificationCountBackupThreshold: number;
@@ -477,6 +483,12 @@ export class MoorhenTimeCapsule {
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             nonCustomOpacity: item.nonCustomOpacity,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
+                            neighboursCid: item.neighboursCid,
+                            restrictToNeighbours: item.restrictToNeighbours,
+                            excludeNeighbours: item.excludeNeighbours,
+                            hbondedToCid: item.hbondedToCid,
+                            hbondedTo: item.hbondedTo,
+                            neighboursDistance: item.neighboursDistance,
                         };
                     }),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
@@ -847,6 +859,7 @@ export class MoorhenTimeCapsule {
             sessionData.moleculeData?.map(async storedMoleculeData => {
                 const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
+                    newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
                 } else {
                     if (fetchExternalUrl) {
@@ -942,7 +955,14 @@ export class MoorhenTimeCapsule {
                         colourRules,
                         item.bondOptions,
                         item.m2tParams,
-                        item.resEnvOptions
+                        item.resEnvOptions,
+                        item.nonCustomOpacity,
+                        item.neighboursCid,
+                        item.restrictToNeighbours,
+                        item.excludeNeighbours,
+                        item.hbondedToCid,
+                        item.hbondedTo,
+                        item.neighboursDistance,
                     );
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));

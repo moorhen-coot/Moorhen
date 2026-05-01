@@ -1,0 +1,8 @@
+@import "../../colors.css";
+
+.moorhen__context-menu-button {
+    background-color: var(--moorhen-background);
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 1.5rem;
+}

@@ -1,9 +1,8 @@
-import { Backdrop } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
-import { SnackbarProvider } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { SnackBars } from "@/components/snack-bars";
+import { enqueueSnackbar } from "@/store";
 import { MoorhenInstance, useCommandAndCapsule, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre";
 import { isDarkBackground } from "../../WebGLgComponents/webGLUtils";
@@ -34,8 +33,13 @@ import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
-import { parseAtomInfoLabel } from "../../utils/utils";
+import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
 import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { MoorhenSpinner } from "../icons";
+import { MoorhenStack } from "../interface-base";
+import { MoorhenModalsContainer } from "../interface-base/ModalBase/ModalsContainer";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
 import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
@@ -43,93 +47,14 @@ import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
 import { MoorhenSidePanel } from "../panels/SidePanels/SidePanel";
-import { MoorhenAcceptRejectDragAtomsSnackBar } from "../snack-bar/MoorhenAcceptRejectDragAtomsSnackBar";
-import { MoorhenAcceptRejectMatchingLigandSnackBar } from "../snack-bar/MoorhenAcceptRejectMatchingLigandSnackBar";
-import { MoorhenAcceptRejectRotateTranslateSnackBar } from "../snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar";
-import { MoorhenAtomInfoSnackBar } from "../snack-bar/MoorhenAtomInfoSnackBar";
-import { MoorhenGoToResidueSnackbar } from "../snack-bar/MoorhenGoToResidueSnackbar";
-import { MoorhenLongJobSnackBar } from "../snack-bar/MoorhenLongJobSnackBar";
-import { MoorhenMapContourLevelSnackBar } from "../snack-bar/MoorhenMapContourLevelSnackBar";
-import { MoorhenModelTrajectorySnackBar } from "../snack-bar/MoorhenModelTrajectorySnackBar";
-import { MoorhenRecordingSnackBar } from "../snack-bar/MoorhenRecordingSnackBar";
-import { MoorhenResidueSelectionSnackBar } from "../snack-bar/MoorhenResidueSelectionSnackBar";
-import { MoorhenResidueStepsSnackBar } from "../snack-bar/MoorhenResidueStepsSnackBar";
-import { MoorhenRotamerChangeSnackBar } from "../snack-bar/MoorhenRotamerChangeSnackbar";
-import { MoorhenScreenshotSnackBar } from "../snack-bar/MoorhenScreenshotSnackBar";
-import { MoorhenSideBar } from "../snack-bar/MoorhenSideBar";
-import { MoorhenSnackBarManager } from "../snack-bar/MoorhenSnackBarManager";
-import { MoorhenTomogramSnackBar } from "../snack-bar/MoorhenTomogramSnackBar";
-import { MoorhenUpdatingMapsManager, MoorhenUpdatingMapsSnackBar } from "../snack-bar/MoorhenUpdatingMapsSnackBar";
+import { ActivityIndicator } from "../snack-bars/ActivityIndicator/ActivityIndicator";
+import { UpdatingMapsManager } from "../snack-bars/ActivityIndicator/UpdatingMaps";
+import { LongJobSnackNotification } from "../snack-bars/LongJobSnackNotification";
+import { PopupControls } from "../snack-bars/PopupControls/PopupControls";
 import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
-import { ActivityIndicator } from "./ActivityIndicator";
 import { cootAPIHelpers } from "./ContainerHelpers";
-import { MoorhenModalsContainer } from "./ModalsContainer";
 import { MoorhenDroppable } from "./MoorhenDroppable";
-
-declare module "notistack" {
-    interface VariantOverrides {
-        goToResidue;
-        screenRecorder: {
-            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-        };
-        residueSelection: true;
-        acceptRejectDraggingAtoms: {
-            moleculeRef: React.RefObject<moorhen.Molecule>;
-            cidRef: React.RefObject<string[]>;
-        };
-        atomInformation: {
-            moleculeRef: moorhen.Molecule;
-            cidRef: string;
-        };
-        acceptRejectRotateTranslateAtoms: {
-            moleculeRef: React.RefObject<moorhen.Molecule>;
-            cidRef: React.RefObject<string>;
-        };
-        acceptRejectMatchingLigand: {
-            refMolNo: number;
-            movingMolNo: number;
-            refLigandCid: string;
-            movingLigandCid: string;
-        };
-        longJobNotification: true;
-        residueSteps: {
-            timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-            residueList: { cid: string }[];
-            onStep: (stepInput) => Promise<void>;
-            onStart?: () => Promise<void> | void;
-            onStop?: () => void;
-            onPause?: () => void;
-            onResume?: () => void;
-            onProgress?: (progress: number) => void;
-            disableTimeCapsule?: boolean;
-            sleepTime?: number;
-        };
-        updatingMaps;
-        modelTrajectory: {
-            moleculeMolNo: number;
-            representationStyle: string;
-        };
-        tomogram: {
-            mapMolNo: number;
-        };
-        mapContourLevel: {
-            mapMolNo: number;
-            mapPrecision: number;
-        };
-        rotamerChange: {
-            moleculeMolNo: number;
-            chosenAtom: moorhen.ResidueSpec;
-        };
-        screenshot: {
-            videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-        };
-        sideBar: {
-            children: React.JSX.Element;
-            modalId: string;
-            title: string | React.JSX.Element;
-        };
-    }
-}
+import "./container.css";
 
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;
@@ -142,24 +67,24 @@ interface ContainerRefs {
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
     moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
-    onInitialisationCompleted?: () => void;
 }
 
 interface ContainerOptionalProps {
     onUserPreferencesChange?: (key: string, value: unknown) => void;
+    onInitialisationCompleted?: () => void;
     disableFileUploads?: boolean;
     urlPrefix?: string;
     viewOnly: boolean;
     extraDraggableModals?: React.JSX.Element[];
     extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
-    setMoorhenDimensions?: null | (() => [number, number]);
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
     aceDRGInstance?: moorhen.AceDRGInstance | null;
-    store?: Store;
     allowAddNewFittedLigand?: boolean;
     allowMergeFittedLigand?: boolean;
+    webComponentMode?: boolean;
+    size?: [number, number];
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -168,13 +93,13 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const {
         urlPrefix = "/MoorhenAssets",
         monomerLibraryPath = "./MoorhenAssets/monomers",
-        setMoorhenDimensions = null,
         disableFileUploads = false,
         allowScripting = true,
         allowAddNewFittedLigand = false,
         allowMergeFittedLigand = true,
         viewOnly = false,
         aceDRGInstance = null,
+        webComponentMode = false,
     } = props;
 
     const innerGlRef = useRef<null | webGL.MGWebGL>(null);
@@ -262,8 +187,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const setWindowDimensions = useCallback(() => {
         let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
-        if (setMoorhenDimensions) {
-            [newWidth, newHeight] = setMoorhenDimensions();
+        if (props.size) {
+            [newWidth, newHeight] = props.size;
         }
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
@@ -271,7 +196,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
+    }, [props.size, sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
@@ -281,6 +206,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     // Style append to header at initialization
     useLayoutEffect(() => {
+        if (webComponentMode) {
+            // In web component mode, styles are handled within the shadow DOM, so we can skip appending styles to the document head
+            return;
+        }
         const head = document.head;
         const style: HTMLLinkElement = document.createElement("link");
         style.href = `${urlPrefix}/moorhen.css`;
@@ -288,26 +217,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         style.type = "text/css";
         head.appendChild(style);
     }, []);
-
-    // useLayoutEffect(() => {
-    //     const head = document.head;
-    //     const style: HTMLLinkElement = document.createElement("link");
-
-    //     if (isDark) {
-    //         style.href = `${urlPrefix}/darkly.css`;
-    //     } else {
-    //         style.href = `${urlPrefix}/flatly.css`;
-    //     }
-
-    //     style.rel = "stylesheet";
-    //     // style.async = true;
-    //     style.type = "text/css";
-
-    //     head.appendChild(style);
-    //     return () => {
-    //         head.removeChild(style);
-    //     };
-    // }, [isDark, isGlobalInstanceReady]);
 
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
@@ -355,7 +264,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 timeCapsuleMoleculeRef,
                 timeCapsuleMapRef,
                 store,
-                new MoorhenMenuSystem(),
                 props.commandCentre,
                 props.timeCapsuleRef,
 
@@ -373,6 +281,16 @@ export const MoorhenContainer = (props: ContainerProps) => {
             dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
+            const shortCuts = store.getState().shortcutSettings.shortCuts;
+
+            const shortCut = JSON.parse(shortCuts as string).show_shortcuts;
+            try {
+                dispatch(enqueueSnackbar({ message: `Press ${getTooltipShortcutLabel(shortCut)} to show help`, variant: "info" }));
+            } catch (error) {
+                console.error("Error parsing shortcuts:", error);
+                const json = JSON.parse(shortCuts);
+                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
+            }
         };
         startupEffect().then(() => {
             if (props.onInitialisationCompleted) {
@@ -430,46 +348,30 @@ export const MoorhenContainer = (props: ContainerProps) => {
         () => ({
             height: Math.floor(GlViewportHeight),
             width: Math.floor(GlViewportWidth),
+            maxHeight: Math.floor(GlViewportHeight),
+            maxWidth: Math.floor(GlViewportWidth),
         }),
         [GlViewportHeight, GlViewportWidth]
     );
 
-    const snackbarComponents = {
-        goToResidue: MoorhenGoToResidueSnackbar,
-        screenRecorder: MoorhenRecordingSnackBar,
-        residueSelection: MoorhenResidueSelectionSnackBar,
-        acceptRejectDraggingAtoms: MoorhenAcceptRejectDragAtomsSnackBar,
-        acceptRejectRotateTranslateAtoms: MoorhenAcceptRejectRotateTranslateSnackBar,
-        acceptRejectMatchingLigand: MoorhenAcceptRejectMatchingLigandSnackBar,
-        longJobNotification: MoorhenLongJobSnackBar,
-        residueSteps: MoorhenResidueStepsSnackBar,
-        updatingMaps: MoorhenUpdatingMapsSnackBar,
-        modelTrajectory: MoorhenModelTrajectorySnackBar,
-        tomogram: MoorhenTomogramSnackBar,
-        mapContourLevel: MoorhenMapContourLevelSnackBar,
-        rotamerChange: MoorhenRotamerChangeSnackBar,
-        screenshot: MoorhenScreenshotSnackBar,
-        sideBar: MoorhenSideBar,
-        atomInformation: MoorhenAtomInfoSnackBar,
-    };
-
     // ========== Loading Screen ==========
     if (!isGlobalInstanceReady) {
         return (
-            <Backdrop sx={theme => ({ color: "#fff", zIndex: theme.zIndex.drawer + 1 })} open={true}>
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "16px",
-                    }}
+            <div style={backgroundStyle} className="moorhen__inner-container">
+                <OverlayModal
+                    isShown={true}
+                    overlay={
+                        <MoorhenStack align="center" justify="center">
+                            <div>Moorhen is loading...</div>
+                            <MoorhenSpinner size="6rem" colour="var(--moorhen-secondary)" />
+                        </MoorhenStack>
+                    }
                 >
-                    <div>Moorhen is loading...</div>
-                    <CircularProgress color="inherit" />
-                </div>
+                    {" "}
+                    <div />
+                </OverlayModal>
                 <MoorhenPreferencesContainer />
-            </Backdrop>
+            </div>
         );
     }
 
@@ -483,44 +385,32 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 id="moorhen-main-container"
                 data-theme={isDark ? "dark" : "light"}
             >
-                <SnackbarProvider
-                    hideIconVariant={false}
-                    autoHideDuration={4000}
-                    maxSnack={20}
-                    anchorOrigin={{ horizontal: "center", vertical: "top" }}
-                    transitionDuration={{ enter: 500, exit: 300 }}
-                    Components={snackbarComponents}
-                    preventDuplicate={true}
-                >
+                <div className="moorhen__viewport-container" style={viewportStyle}>
                     <MoorhenMainMenu />
-
-                    <div style={viewportStyle} className="moorhen__viewport-container">
-                        <ActivityIndicator />
-                        <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                        <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
-                        <MoorhenSnackBarManager />
-                        <MoorhenUpdatingMapsManager />
-                        <MoorhenMapsHeadManager />
-                        <MoleculesOriginListener />
-
-                        <MoorhenDroppable
+                    <PopupControls />
+                    <SnackBars />
+                    <ActivityIndicator />
+                    <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
+                    <AtomClickManager />
+                    <UpdatingMapsManager />
+                    <MoorhenMapsHeadManager />
+                    <MoleculesOriginListener />
+                    <LongJobSnackNotification />
+                    <MoorhenDroppable monomerLibraryPath={monomerLibraryPath} timeCapsuleRef={timeCapsuleRef} commandCentre={commandCentre}>
+                        <MoorhenWebMG
+                            ref={glRef}
                             monomerLibraryPath={monomerLibraryPath}
                             timeCapsuleRef={timeCapsuleRef}
-                            commandCentre={commandCentre}
-                        >
-                            <MoorhenWebMG
-                                ref={glRef}
-                                monomerLibraryPath={monomerLibraryPath}
-                                timeCapsuleRef={timeCapsuleRef}
-                                onAtomHovered={onAtomHovered}
-                                urlPrefix={urlPrefix}
-                                viewOnly={viewOnly}
-                            />
-                        </MoorhenDroppable>
-                    </div>
-                    <BottomPanelContainer />
-                    <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
-                </SnackbarProvider>
+                            onAtomHovered={onAtomHovered}
+                            urlPrefix={urlPrefix}
+                            viewOnly={viewOnly}
+                        />
+                    </MoorhenDroppable>
+                </div>
+                <BottomPanelContainer />
+
+                <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
             </div>
         </>
     );

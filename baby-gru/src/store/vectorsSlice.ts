@@ -20,8 +20,8 @@ export interface MoorhenVector {
     zTo: number;
     cidFrom: string;
     cidTo: string;
-    molNoFrom: number;
-    molNoTo: number;
+    molFromUniqueId: string;
+    molToUniqueId: string;
     uniqueId: string;
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
@@ -33,41 +33,47 @@ const initialState: { vectorsList: MoorhenVector[] } = {
     vectorsList: [],
 };
 
-export const vectorsSlice = createSlice({
+const vectorsSlice = createSlice({
     name: "vectors",
     initialState: initialState,
     reducers: {
+        // API
         addVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
             state = { ...state, vectorsList: [...state.vectorsList, ...action.payload] };
             return state;
         },
+        // API
         addVector: (state, action: { payload: MoorhenVector; type: string }) => {
             state = { ...state, vectorsList: [...state.vectorsList, action.payload] };
             return state;
         },
+        // API
         removeVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
-        const ids = action.payload.map((x) => x.uniqueId)
+            const ids = action.payload.map(x => x.uniqueId);
             state = {
                 ...state,
-                vectorsList: state.vectorsList.filter((item) => !(ids.includes(item.uniqueId))),
+                vectorsList: state.vectorsList.filter(item => !ids.includes(item.uniqueId)),
             };
             return state;
         },
+        // API
         removeVectorsMatchingIDString: (state, action: { payload: string; type: string }) => {
             state = {
                 ...state,
-                vectorsList: state.vectorsList.filter((item) => !(item.uniqueId.includes(action.payload))),
+                vectorsList: state.vectorsList.filter(item => !item.uniqueId.includes(action.payload)),
             };
             return state;
         },
+        // API
         removeVector: (state, action: { payload: MoorhenVector; type: string }) => {
             state = {
                 ...state,
-                vectorsList: state.vectorsList.filter((item) => item.uniqueId !== action.payload.uniqueId),
+                vectorsList: state.vectorsList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
-        emptyVectors: (state) => {
+        // API
+        emptyVectors: state => {
             return initialState;
         },
     },

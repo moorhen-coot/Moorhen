@@ -88,6 +88,18 @@ getlibccp4() {
     echo
 }
 
+getxpid() {
+    cdcheckout
+    if [ -r xpid_moorhen ]; then
+        echo "Using existing xpid_moorhen"
+    else
+        echo "Checking out xpid_moorhen"
+        git clone https://github.com/SeanWang5868/xpid_moorhen.git || fail "Failed to clone xpid_moorhen"
+        echo
+    fi
+    echo
+}
+
 getclipper() {
     cdcheckout
     if [ -r clipper ]; then
@@ -341,6 +353,13 @@ getgsl() {
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
+        if [ "x$(git -C coot-1.0 remote get-url origin)" != "xhttps://github.com/${coot_fork}/coot.git" ]; then
+            echo "Switching remote of existent coot-1.0 to a different repository ($(git -C coot-1.0 remote get-url origin | sed  's_https://github.com/__; s_/coot.git__') -> $coot_fork)"
+            git -C coot-1.0 remote set-url origin "https://github.com/${coot_fork}/coot.git" &&\
+            echo "Remote of coot-1.0 switched successfully" || fail "Failed to switch remote of coot-1.0"
+        else
+            echo "Existing coot-1.0 is pointing to the target repository (${coot_fork}). Proceeding to check commit..."
+        fi
         if [ "x$(git -C coot-1.0 rev-parse --short=10 main)" = "x$coot_commit" ];then
             echo "Using existing coot-1.0"
         else
@@ -351,7 +370,7 @@ getcoot() {
         fi
     else
         echo "Downloading coot-1.0..."
-        git clone --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
+        git clone --branch main "https://github.com/${coot_fork}/coot.git" coot-1.0 &&\
         git -C coot-1.0 fetch origin &&\
         git -C coot-1.0 checkout $coot_commit || fail "Failed to clone and checkout coot-1.0"
     fi
@@ -471,6 +490,34 @@ getboost() {
         echo "Checking out boost"
         curl -fL https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz &&\
         tar xf boost_$boost_release.tar.gz || fail "Failed to download and unpack boost"
+    fi
+    echo
+}
+
+getmaeparser() {
+    cdcheckout
+    if [ -r maeparser-$maeparser_release ]; then
+        echo "Using existing maeparser"
+    else
+        echo "Downloading maeparser source"
+        curl -fL https://github.com/schrodinger/maeparser/archive/refs/tags/v$maeparser_release.tar.gz -o maeparser_$maeparser_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking maeparser source" &&\
+        tar xf "maeparser_$maeparser_release.tar.gz" || fail "Failed to download and unpack maeparser"
+    fi
+    echo
+}
+
+getcoordgen() {
+    cdcheckout
+    if [ -r coordgenlibs-$coordgen_release ]; then
+        echo "Using existing coordgen"
+    else
+        echo "Downloading coordgen source"
+        curl -fL https://github.com/schrodinger/coordgenlibs/archive/refs/tags/v$coordgen_release.tar.gz -o coordgen_$coordgen_release.tar.gz &&\
+        echo &&\
+        echo "Unpacking coordgen source" &&\
+        tar xf "coordgen_$coordgen_release.tar.gz" || fail "Failed to download and unpack coordgen"
     fi
     echo
 }

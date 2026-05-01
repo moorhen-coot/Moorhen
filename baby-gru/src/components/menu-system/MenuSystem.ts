@@ -4,6 +4,7 @@ import { MenuItem, MenuItemType, SubMenu, SubMenuMap, subMenuMap } from "./subMe
 export class MoorhenMenuSystem {
     public subMenuMap: SubMenuMap = {};
     public mainMenuMap: MainMenuMap;
+    private listeners: Set<() => void> = new Set();
 
     constructor() {
         this.mainMenuMap = MainMenu;
@@ -14,8 +15,20 @@ export class MoorhenMenuSystem {
         this.addSubmenu(subMenuMap);
     };
 
+    public subscribe = (listener: () => void): (() => void) => {
+        this.listeners.add(listener);
+        return () => {
+            this.listeners.delete(listener);
+        };
+    };
+
+    private notifyListeners = () => {
+        this.listeners.forEach(listener => listener());
+    };
+
     public cleanup() {
         this.subMenuMap = undefined;
+        this.listeners.clear();
     }
     public getItems(selectedMenu: string) {
         let itemList: MenuItemType[] = [];
@@ -59,6 +72,7 @@ export class MoorhenMenuSystem {
             }
         }
         this.mainMenuMap[position] = mainMenuItem;
+        this.notifyListeners();
     };
 
     /**
@@ -72,6 +86,7 @@ export class MoorhenMenuSystem {
     public addSubmenu = (subMenuMap: SubMenuMap) => {
         Object.assign(this.subMenuMap, subMenuMap);
         this.checkUniqueIds();
+        this.notifyListeners();
     };
 
     /**
@@ -93,6 +108,7 @@ export class MoorhenMenuSystem {
             console.warn(`Moorhen MenuSystem: could not find submenu ${subMenu} to add items to.`);
         }
         this.checkUniqueIds();
+        this.notifyListeners();
     };
 
     /**
@@ -106,6 +122,7 @@ export class MoorhenMenuSystem {
         Object.values(this.subMenuMap).forEach((subMenu: SubMenu) => {
             subMenu.items = subMenu.items.filter((item: MenuItem) => item.id !== id);
         });
+        this.notifyListeners();
     };
 
     private checkUniqueIds = () => {

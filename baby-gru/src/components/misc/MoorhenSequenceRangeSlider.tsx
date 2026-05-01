@@ -1,6 +1,5 @@
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { IconButton, Slider } from "@mui/material";
-import { Stack } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";

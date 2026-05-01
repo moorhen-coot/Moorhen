@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar, showModal } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
@@ -30,17 +29,15 @@ export const FetchOnlineSources = () => {
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
-    const [fetchMap, setFetchMap] = usePersistentState("file", "fetch-map", false, true);
+    const [fetchExtra, setFetchExtra] = usePersistentState("file", "fetch-extra", false, true);
 
     const [remoteSource, setRemoteSource] = useState<string>("PDBe");
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true);
 
     const dispatch = useDispatch();
 
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-
-    const { enqueueSnackbar } = useSnackbar();
+    const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
+    const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {
@@ -58,6 +55,7 @@ export const FetchOnlineSources = () => {
         } else {
             console.log(`Unrecognised remote source! ${remoteSource}`);
         }
+        document.body.click();
     };
 
     const fetchMapFromEMDB = async () => {
@@ -82,7 +80,7 @@ export const FetchOnlineSources = () => {
         const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`;
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
-        if (pdbCode && fetchMap) {
+        if (pdbCode && fetchExtra) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, pdbCode),
                 fetchMapFromURL(mapUrl, `${pdbCode}-map`),
@@ -118,15 +116,18 @@ export const FetchOnlineSources = () => {
                     if (bestEntry > infoJson.length) bestEntry = 0;
                     const coordUrl = infoJson[bestEntry].pdbUrl;
                     fetchMoleculeFromURL(coordUrl, `${uniprotID}`, true);
+                    if (fetchExtra) {
+                        dispatch(showModal({ key: "pae-plot", openDocked: "right", modalProps: { loadMoleculeOnOpen: uniprotID } }));
+                    }
                 }
             } else {
-                enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+                dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
                 console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
                 setIsValidPdbId(false);
                 dispatch(setBusy(false));
             }
         } catch (e) {
-            enqueueSnackbar(`Cannot find EBI AlphaFold server entry for ${uniprotID}`, { variant: "error" });
+            dispatch(enqueueSnackbar({ message: `Cannot find EBI AlphaFold server entry for ${uniprotID}`, variant: "error" }));
             console.log(`Cannot fetch json info from EBI/AF server for ${uniprotID}`);
             setIsValidPdbId(false);
             dispatch(setBusy(false));
@@ -137,7 +138,7 @@ export const FetchOnlineSources = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value;
         const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.cif`;
         const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`;
-        if (pdbCode && fetchMap) {
+        if (pdbCode && fetchExtra) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
                 fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, {
@@ -184,7 +185,7 @@ export const FetchOnlineSources = () => {
             // props.onMoleculeLoad?.(newMolecule);
             return newMolecule;
         } catch (err) {
-            enqueueSnackbar("Failed to read molecule", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to read molecule", variant: "error" }));
             console.log(`Cannot fetch molecule from ${url}`);
             setIsValidPdbId(false);
             dispatch(setBusy(false));
@@ -216,7 +217,7 @@ export const FetchOnlineSources = () => {
             dispatch(setActiveMap(newMap));
         } catch (err) {
             console.warn(err);
-            enqueueSnackbar("Failed to read map", { variant: "warning" });
+            dispatch(enqueueSnackbar({ message: "Failed to read map", variant: "warning" }));
             console.log(`Cannot fetch map from ${url}`);
             dispatch(setBusy(false));
         }
@@ -228,6 +229,7 @@ export const FetchOnlineSources = () => {
         mapName: string,
         selectedColumns: moorhen.selectedMtzColumns
     ): Promise<moorhen.Map> => {
+        console.log(`Fetching mtz from ${url} with columns:`, selectedColumns);
         const newMap = new MoorhenMap(commandCentre, store);
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns);
@@ -235,13 +237,19 @@ export const FetchOnlineSources = () => {
             dispatch(addMap(newMap));
             dispatch(setActiveMap(newMap));
         } catch {
-            enqueueSnackbar("Failed to read mtz", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Failed to read mtz", variant: "error" }));
             console.log(`Cannot fetch mtz from ${url}`);
             dispatch(setBusy(false));
         }
         return newMap;
     };
 
+    const fetchExtraLabel =
+        remoteSource === "PDBe" || remoteSource === "PDB-REDO"
+            ? "fetch map files"
+            : remoteSource === "AFDB"
+              ? "open PAE data"
+              : "fetch map files";
     return (
         <>
             <label htmlFor="fetch-pdbe-form" className="moorhen__input__label-menu">
@@ -279,11 +287,11 @@ export const FetchOnlineSources = () => {
             <label style={{ display: isValidPdbId ? "none" : "block", alignContent: "center", textAlign: "center" }}>
                 Problem fetching
             </label>
-            {downloadMaps && (
+            {
                 <div style={{ marginLeft: "0.9rem", display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
-                    <MoorhenToggle checked={fetchMap} onChange={() => setFetchMap(!fetchMap)} label="fetch data for map" type="checkbox" />
+                    <MoorhenToggle checked={fetchExtra} onChange={() => setFetchExtra(!fetchExtra)} label={fetchExtraLabel} />
                 </div>
-            )}
+            }
         </>
     );
 };

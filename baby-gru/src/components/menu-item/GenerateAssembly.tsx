@@ -32,7 +32,7 @@ export const GenerateAssembly = (props: {
 
     const onCompleted = useCallback(async () => {
         props.setPopoverIsShown(false);
-        const newMolecule = await props.item.generateAssembly(ruleSelectRef.current.value);
+        const newMolecule = await props.item.generateAssembly(ruleSelectRef.current?.value);
         dispatch(addMolecule(newMolecule));
         document.body.click();
     }, []);

@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import React, { useId } from "react";
 import { setShortCutsBlocked } from "../../store/globalUISlice";
 import { MoorhenSVG } from "../icons";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenStack } from "../interface-base/Stack/Stack";
 import { MoorhenButton } from "./MoorhenButton/MoorhenButton";
 
 type MoorhenTextInputBase = {
@@ -18,6 +18,8 @@ type MoorhenTextInputBase = {
     disabled?: boolean;
     placeholder?: string;
     uppercase?: boolean;
+    readOnly?: boolean;
+    onSubmit?: () => void;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -31,7 +33,7 @@ export type MoorhenTextInputButtonProps = MoorhenTextInputBase & {
 };
 
 export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInputButtonProps) => {
-    const { inline = true, ref, isInvalid, disabled = false, placeholder } = props;
+    const { inline = true, ref, isInvalid, disabled = false, placeholder, readOnly = false } = props;
     const id = useId();
     const dispatch = useDispatch();
     const handleBlur = () => {
@@ -40,7 +42,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.onChange ? props.onChange(event) : null;
-        props.setText(event.target.value);
+        props.setText ? props.setText(event.target.value) : null;
     };
     return (
         <MoorhenStack direction={inline ? "line" : "column"} align="center" style={{ ...props.style }}>
@@ -58,6 +60,12 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     disabled={disabled}
                     placeholder={placeholder}
                     style={props.uppercase ? { textTransform: "uppercase" } : null}
+                    readOnly={readOnly}
+                    onKeyDown={event => {
+                        if (event.key === "Enter" && props.onSubmit) {
+                            props.onSubmit();
+                        }
+                    }}
                 />
                 {props.button ? (
                     <MoorhenButton icon={props.icon} onClick={props.onClick} className="moorhen__input-text-box-button" />

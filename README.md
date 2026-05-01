@@ -1,6 +1,6 @@
 # Moorhen
 [![NPM Version](https://badge.fury.io/js/moorhen.svg?style=flat)](https://npmjs.org/package/moorhen)
-[![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/moorhen-coot/Moorhen/actions/workflows/nightly-tests.yml)
+[![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/run-tests.yml/badge.svg)](https://github.com/moorhen-coot/Moorhen/actions/workflows/run-tests.yml)
 [![Inline docs](https://github.com/moorhen-coot/MoorhenOrgBuild/actions/workflows/build-and-deploy.yml/badge.svg)](https://moorhen.org)
 [![Inline docs](https://github.com/moorhen-coot/moorhen/actions/workflows/js-documentation.yml/badge.svg)](https://moorhen-coot.github.io/Moorhen/)
 [![Inline docs](https://github.com/moorhen-coot/wiki/actions/workflows/jekyll.yml/badge.svg)](https://moorhen-coot.github.io/wiki/)
@@ -25,7 +25,7 @@ The following libraries/programs are compiled to Web Assembly:
 * gsl 2.8
 * Boost 1.89.0
 * glm 0.9.9.8
-* Eigen 3.4.0
+* Eigen 5.0.1
 * RDKit 2025\_09\_6
 * graphene 1.10.8
 * libsigc++ 3.8.0

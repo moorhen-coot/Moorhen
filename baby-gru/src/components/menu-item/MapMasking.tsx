@@ -6,13 +6,13 @@ import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
-import { MoorhenNumberForm } from "../select/MoorhenNumberForm";
+import { MoorhenStack } from "../interface-base";
 
 export const MapMasking = () => {
     const dispatch = useDispatch();
@@ -27,7 +27,7 @@ export const MapMasking = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const maskTypeSelectRef = useRef<null | HTMLSelectElement>(null);
     const invertFlagRef = useRef<null | HTMLInputElement>(null);
-    const maskRadiusFormRef = useRef<string>(null);
+    const maskRadiusFormRef = useRef<null | HTMLInputElement>(null);
     const useDefaultMaskRadiusRef = useRef<null | HTMLInputElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -70,12 +70,11 @@ export const MapMasking = () => {
                 break;
         }
 
-        const maskRadius = useDefaultMaskRadiusRef.current.checked ? -1 : parseFloat(maskRadiusFormRef.current);
+        const maskRadius = useDefaultMaskRadiusRef.current.checked ? -1 : parseFloat(maskRadiusFormRef.current?.value || "0");
         if (!maskRadius) {
             console.log("Mask radius is invalid...");
             return;
         }
-
         const result = (await commandCentre.current.cootCommand(
             {
                 returnType: "status",
@@ -105,6 +104,7 @@ export const MapMasking = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenSelect
                 label="Create mask by..."
                 ref={maskTypeSelectRef}
@@ -147,8 +147,9 @@ export const MapMasking = () => {
                 />
             )}
             {!useDefaultMaskRadius && (
-                <MoorhenNumberForm ref={maskRadiusFormRef} defaultValue={2.5} label="Mask radius" allowNegativeValues={false} />
+                <MoorhenNumberInput ref={maskRadiusFormRef} value={2.5} label="Mask radius" allowNegativeValues={false} type="number" />
             )}
+            </MoorhenStack>
             <MoorhenToggle
                 ref={useDefaultMaskRadiusRef}
                 type="switch"

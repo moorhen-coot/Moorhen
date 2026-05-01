@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import React, { useCallback, useMemo } from "react";
 import { RootState } from "../../../../store/MoorhenReduxStore";
@@ -33,7 +32,6 @@ export const MoorhenSequencesAccordion = (props: {
     >;
 }) => {
     const dispatch = useDispatch();
-    const { enqueueSnackbar } = useSnackbar();
 
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 

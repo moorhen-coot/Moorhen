@@ -77,7 +77,7 @@ const initialState: {
     callBacks: [],
 };
 
-export const overlaysSlice = createSlice({
+const overlaysSlice = createSlice({
     name: "overlays",
     initialState: initialState,
     reducers: {
@@ -92,7 +92,7 @@ export const overlaysSlice = createSlice({
         removeImageOverlay: (state, action: { payload: Overlay2DImageSrcFrac; type: string }) => {
             state = {
                 ...state,
-                imageOverlayList: state.imageOverlayList.filter((item) => item.uniqueId !== action.payload.uniqueId),
+                imageOverlayList: state.imageOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
@@ -107,7 +107,7 @@ export const overlaysSlice = createSlice({
         removeLatexOverlay: (state, action: { payload: Overlay2DLatexSrcFrac; type: string }) => {
             state = {
                 ...state,
-                latexOverlayList: state.latexOverlayList.filter((item) => item.uniqueId !== action.payload.uniqueId),
+                latexOverlayList: state.latexOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
@@ -122,7 +122,7 @@ export const overlaysSlice = createSlice({
         removeTextOverlay: (state, action: { payload: Overlay2DTextFrac; type: string }) => {
             state = {
                 ...state,
-                textOverlayList: state.textOverlayList.filter((item) => item.uniqueId !== action.payload.uniqueId),
+                textOverlayList: state.textOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
@@ -137,9 +137,7 @@ export const overlaysSlice = createSlice({
         removeSvgPathOverlay: (state, action: { payload: Overlay2DSvgPath; type: string }) => {
             state = {
                 ...state,
-                svgPathOverlayList: state.svgPathOverlayList.filter(
-                    (item) => item.uniqueId !== action.payload.uniqueId
-                ),
+                svgPathOverlayList: state.svgPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },
@@ -154,9 +152,7 @@ export const overlaysSlice = createSlice({
         removeFracPathOverlay: (state, action: { payload: Overlay2DFracPath; type: string }) => {
             state = {
                 ...state,
-                fracPathOverlayList: state.fracPathOverlayList.filter(
-                    (item) => item.uniqueId !== action.payload.uniqueId
-                ),
+                fracPathOverlayList: state.fracPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
             };
             return state;
         },

@@ -1,7 +1,6 @@
-import { useSnackbar } from "notistack";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { RootState } from "@/store";
+import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
@@ -35,15 +34,13 @@ export const ImportMapCoefficients = () => {
 
     const menuItemText = "Map coefficients...";
 
-    const { enqueueSnackbar } = useSnackbar();
-
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const babyGruMtzWrapper = new MoorhenMtzWrapper();
         try {
             const allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0]);
             setColumns(allColumnNames);
         } catch (err) {
-            enqueueSnackbar("Error reading mtz file", { variant: "error" });
+            dispatch(enqueueSnackbar({ message: "Error reading mtz file", variant: "error" }));
             document.body.click();
         }
     };
@@ -78,7 +75,7 @@ export const ImportMapCoefficients = () => {
                 setCalcStructFact(false);
                 document.body.click();
             } catch (err) {
-                enqueueSnackbar("Error reading mtz file", { variant: "warning" });
+                dispatch(enqueueSnackbar({ message: "Error reading mtz file", variant: "warning" }));
                 console.log(`Cannot read file`);
             }
         }

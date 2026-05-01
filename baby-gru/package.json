@@ -1,9 +1,30 @@
 {
     "name": "moorhen",
-    "version": "0.23.1-alpha.0",
+    "version": "1.0.0-alpha.1",
     "private": false,
     "main": "moorhen.js",
     "types": "moorhen.d.ts",
+    "typesVersions": {
+        "*": {
+            "vite-plugin": [
+                "scripts/VitePlugin.d.ts"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "types": "./moorhen.d.ts",
+            "default": "./moorhen.js"
+        },
+        "./vite-plugin": {
+            "types": "./scripts/VitePlugin.d.ts",
+            "default": "./scripts/VitePlugin.mjs"
+        },
+        "./hooks": {
+            "types": "./moorhen.d.ts",
+            "default": "./moorhen-hooks.js"
+        }
+    },
     "homepage": "./",
     "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Jordan Dialpuri, Jakub Smulski, Lucrezia Catapano, Paul Bond, Clément Dégut, Stuart McNicholas",
     "description": "Moorhen molecular graphics",
@@ -35,8 +56,11 @@
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",
-        "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
-        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
+        "tsc-hooks": "npx tsc --jsx preserve --declaration --emitDeclarationOnly --outDir dist/hooks src/Wrappers/hooks/",
+        "setup-gemmi-dist": "mkdir -p dist/gemmi && cp public/MoorhenAssets/wasm/gemmi.js dist/gemmi/ && cp public/MoorhenAssets/wasm/gemmi.wasm dist/gemmi/ && cp src/types/gemmi-standalone.d.ts dist/gemmi/index.d.ts && echo 'module.exports = require(\"./gemmi.js\");' > dist/gemmi/index.js",
+        "build-webcomponent": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && npm run setup-gemmi-dist && npm run build-hooks",
+        "build-webcomponent-dev": "npm run prebuild && webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh && npm run build-hooks && cd dist && npm pack && cd ..",
+        "build-hooks": "npm run create-version && webpack --config webpack.hooks.config.js --mode production ",
         "build-react": "npm run prebuild && webpack --config webpack.react.config.js --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-react-dev": "npm run prebuild && webpack --config webpack.react.config.js --mode development --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
         "build-release": "npm run prebuild && webpack --mode production --devtool inline-source-map && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
@@ -100,7 +124,6 @@
         "babel-loader": "^10.0.0",
         "babel-preset-react-app": "^10.1.0",
         "biojs-io-fasta": "^0.1.17",
-        "bootstrap": "^5.3.8",
         "chart.js": "^4.5.0",
         "chartjs-plugin-annotation": "^3.1.0",
         "concurrently": "^9.2.1",
@@ -130,8 +153,6 @@
         "prismjs": "^1.30.0",
         "protobufjs": "^7.5.4",
         "protobufjs-cli": "^1.1.3",
-        "react-bootstrap": "^2.10.10",
-        "react-bootstrap-typeahead": "^6.4.1",
         "react-colorful": "^5.6.1",
         "react-draggable": "^4.5.0",
         "react-dropzone": "^14.3.8",

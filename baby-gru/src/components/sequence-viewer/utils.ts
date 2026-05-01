@@ -2,6 +2,7 @@ import { useSelector } from "react-redux";
 import { Dispatch, UnknownAction } from "redux";
 import { useMemo } from "react";
 import { ResidueValidationData, ValidationData } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
+import { setShownControl } from "@/store/globalUISlice";
 import { libcootApi } from "@/types/libcoot";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { type ResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
@@ -190,12 +191,7 @@ export const MoorhenSelectionToSeqViewer = (residueSelection: ResidueSelection):
     return selection;
 };
 
-export const handleResiduesSelection = (
-    selection: ResiduesSelection,
-    molecule: MoorhenMolecule,
-    dispatch: Dispatch<UnknownAction>,
-    enqueueSnackbar: any
-) => {
+export const handleResiduesSelection = (selection: ResiduesSelection, molecule: MoorhenMolecule, dispatch: Dispatch<UnknownAction>) => {
     if (selection.molNo !== molecule.molNo) return;
     const first = Math.min(selection.range[0], selection.range[1]);
     const second = Math.max(selection.range[0], selection.range[1]);
@@ -209,7 +205,7 @@ export const handleResiduesSelection = (
     };
     dispatch(setResidueSelection(newSelection));
     molecule.drawResidueSelection(newSelection.cid as string);
-    enqueueSnackbar("residue-selection", { variant: "residueSelection", persist: true });
+    dispatch(setShownControl({ name: "selectionTools" }));
 };
 
 export const useHoveredResidue = (): {
