@@ -629,7 +629,8 @@ export class MoleculeRepresentation {
             console.log("Set set_draw_missing_residue_loops to false");
         }
 
-        if (this.hbondedToCid) {
+        if (this.hbondedTo&&this.hbondedToCid) {
+            const oldCid = this.restrictToNeighbours ? _cid : ""
             _cid = "";
             const hBonds = [];
             const splitHBondedToCids = this.hbondedToCid.split("||");
@@ -692,6 +693,7 @@ export class MoleculeRepresentation {
             model.delete();
             models.delete();
             if (_cid.length > 2) _cid = _cid.substring(0, _cid.length - 2);
+            if (oldCid.length > 0) _cid += "||" + oldCid
             if (_cid.length === 0) return [];
         }
 
