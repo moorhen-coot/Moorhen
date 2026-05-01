@@ -180,7 +180,7 @@ export const MoorhenLigandCard = (props: {
                     </TableContainer>
                 </Popover>
             )}
-            <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack style={{ width: "20rem" }} direction="vertical" gap={1}>
                 {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                 {calculateQScore && activeMap ? (
                     <div style={{ display: "flex", justifyContent: "center" }}>
