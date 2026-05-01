@@ -6,6 +6,7 @@ import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { clampValue } from "../../misc/helpers";
 import "./NumberInput.css";
 
+
 type MoorhenNumberInputProps = {
     value: number | null;
     setValue?: (newVal: number) => void;
@@ -117,11 +118,14 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
         dispatch(setShortCutsBlocked(true));
-        setInternalValue(clampValue(Number(evt.target.value), ...minMax).toString());
-        const _isValid = checkIsValidInput(evt.target.value);
+        let newValue = evt.target.value;
+        if (minMax) {
+            newValue = clampValue(Number(evt.target.value), ...minMax).toString();
+        }
+        setInternalValue(newValue);
+        const _isValid = checkIsValidInput(newValue);
         if (_isValid && !waitReturn) {
-            const value = clampValue(Number(evt.target.value), ...minMax);
-            props.setValue?.(value);
+            props.setValue?.(Number(newValue));
         }
         if (props.onChange) props.onChange(evt);
     };
