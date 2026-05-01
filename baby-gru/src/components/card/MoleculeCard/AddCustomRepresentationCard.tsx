@@ -53,7 +53,7 @@ export const AddCustomRepresentationCard = memo(
         const [hbondedTo, setHbondedTo] = useState<boolean>(props.representation?.hbondedTo ?? false);
         const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(props.representation?.excludeNeighbours ?? false);
         const [neighboursCid, setNeighboursCid] = useState<string>(props.representation?.neighboursCid ?? "");
-        const [neighboursDistance, setNeighboursDistance] = useState<number>(6.0);
+        const [neighboursDistance, setNeighboursDistance] = useState<number>(props.representation?.neighboursDistance ?? 6.0);
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
@@ -532,7 +532,9 @@ export const AddCustomRepresentationCard = memo(
                         onChange={evt => {
                                try {
                                    setNeighboursDistance(Number(evt.target.value));
-                               } catch (e) {}
+                               } catch (e) {
+                                   console.log("Problem setting neighbours distance")
+                               }
                         }}/>
                 </>
                 )}
