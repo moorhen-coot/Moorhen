@@ -47,18 +47,15 @@ export const AddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
-            props.representation
-                ? props.representation?.restrictToNeighbours
-                    ? "neighbourhood"
-                    : props.representation.interfaceOption.selectionType
-                : "molecule"
 
         const modelSelectRef = useRef<HTMLSelectElement | null>(null);
 
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model">(
-            props.representation ? props.representation.interfaceOption.selectionType : "molecule"
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model" | "neighbourhood">(
+            props.representation ? (props.representation?.restrictToNeighbours ? "neighbourhood" : props.representation.interfaceOption.selectionType) : "molecule"
         );
+
+
+        
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
