@@ -3,14 +3,10 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
-<<<<<<< HEAD
 
 import { MoorhenModelSelect } from "@/components/inputs/Selector/MoorhenModelSelect";
 
-import { RootState } from "@/store";
-=======
 import { RootState, enqueueSnackbar } from "@/store";
->>>>>>> origin
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -51,17 +47,16 @@ export const AddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
-<<<<<<< HEAD
 
         const modelSelectRef = useRef<HTMLSelectElement | null>(null);
 
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model">(
-            props.representation ? props.representation.interfaceOption.selectionType : "molecule"
-=======
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model" | "neighbourhood">(
+            // props.representation ? props.representation.interfaceOption.selectionType : "molecule",
             props.representation ? (props.representation?.restrictToNeighbours ? "neighbourhood" : props.representation.interfaceOption.selectionType) : "molecule"
->>>>>>> origin
         );
+
+
+        
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
@@ -534,7 +529,6 @@ export const AddCustomRepresentationCard = memo(
                             />
                         </>
                     )}
-<<<<<<< HEAD
 
                     {ruleType === "protein-model" && (
                         <>
@@ -547,7 +541,6 @@ export const AddCustomRepresentationCard = memo(
                         </>
                     )}
                     
-=======
                 {restrictToNeighbours && (
                 <>
                     <MoorhenCidInputForm
@@ -576,7 +569,6 @@ export const AddCustomRepresentationCard = memo(
                         }}/>
                 </>
                 )}
->>>>>>> origin
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
                     <>
