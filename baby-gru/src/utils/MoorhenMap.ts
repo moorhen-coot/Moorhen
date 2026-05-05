@@ -756,11 +756,12 @@ export class MoorhenMap {
         if (this.isOriginLocked) {
             if (this.drawOrigin === null) {
                 this.drawOrigin = [-x, -y, -z];
-            } else {                
-            x = -this.drawOrigin[0];
-            y = -this.drawOrigin[1];
-            z = -this.drawOrigin[2];
-        }}
+            } else {
+                x = -this.drawOrigin[0];
+                y = -this.drawOrigin[1];
+                z = -this.drawOrigin[2];
+            }
+        }
 
         let returnType: string;
         if (style === "solid") {
@@ -1099,7 +1100,7 @@ export class MoorhenMap {
                 break;
             }
         }
-        const halfLevel =  histogram.bin_width * (halfLevelIndex + 1);
+        const halfLevel = histogram.bin_width * (halfLevelIndex + 1);
 
         if (this.isEM) {
             this.suggestedContourLevel = halfLevel;
@@ -1124,7 +1125,6 @@ export class MoorhenMap {
 
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number];
-
         } else {
             console.log("Problem finding map centre from coot, using cell centre instead");
             this.mapCentre = this.cellCentre;
@@ -1147,23 +1147,35 @@ export class MoorhenMap {
      * Get suggested contour level, radius and map centre for this map instance
      */
     async getSuggestedSettings(): Promise<void> {
-        const response = (await this.commandCentre.current.cootCommand(
-            {
-                command: "is_EM_map",
-                commandArgs: [this.molNo],
-                returnType: "boolean",
-            },
-            false
-        )) as moorhen.WorkerResponse<boolean>;
+        // const response = (await this.commandCentre.current.cootCommand(
+        //     {
+        //         command: "is_EM_map",
+        //         commandArgs: [this.molNo],
+        //         returnType: "boolean",
+        //     },
+        //     false
+        // )) as moorhen.WorkerResponse<boolean>;
 
-        this.isEM = response.data.result.result;
+        // this.isEM = response.data.result.result;
+
+        const headerInfo = await this.fetchCellInfo();
+        this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
+        console.log(headerInfo);
+        if (
+            headerInfo.cell.alpha < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.alpha > Math.PI / 2 - 0.0001 &&
+            headerInfo.cell.beta < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.beta > Math.PI / 2 - 0.0001 &&
+            headerInfo.cell.gamma < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.gamma > Math.PI / 2 - 0.0001
+        ) {
+            this.isEM = true;
+        }
         if (this.isEM) {
             this.isOriginLocked = true;
         }
-        const headerInfo = await this.fetchCellInfo();
-        this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),         
+            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.setDefaultColour(),
             this.fetchMapCentre(),
             this.fetchMapMean(),
@@ -1175,9 +1187,9 @@ export class MoorhenMap {
             const result = await this.getMapBoundingSphere(this.suggestedContourLevel);
             this.mapCentre = result.center.map(coord => -coord) as [number, number, number];
             this.drawOrigin = result.center.map(coord => -coord) as [number, number, number];
-            this.suggestedRadius = result.radius;}
-
+            this.suggestedRadius = result.radius;
         }
+    }
 
     async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
         const result = this.commandCentre.current.cootCommand(
@@ -1192,8 +1204,6 @@ export class MoorhenMap {
         const results = response.data.result.result;
         return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
     }
-
-
 
     async fetchMapMean() {
         const result = await this.commandCentre.current.cootCommand(

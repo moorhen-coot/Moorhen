@@ -13,6 +13,7 @@ import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { readMRCHeader, readMTZHeader } from "./mapHeaders";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -466,6 +467,7 @@ const readCifDictionary = async (
     }
     return newMonomers;
 };
+
 export const autoOpenFiles = async (
     files: File[],
     commandCentre: React.RefObject<moorhen.CommandCentre>,
@@ -552,6 +554,12 @@ export const autoOpenFiles = async (
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
+            try {
+                const header = await readMTZHeader(file);
+                console.debug("Parsed MTZ header", header);
+            } catch (err) {
+                console.warn("Failed to parse MTZ header", err);
+            }
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
             if (newMaps.length === 0) {
                 dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
@@ -585,6 +593,10 @@ export const autoOpenFiles = async (
         ) {
             try {
                 const newMap = new MoorhenMap(commandCentre, store);
+                if (file.name.endsWith(".mrc") || file.name.endsWith(".mrc.gz")) {
+                    const header = await readMRCHeader(file);
+                    console.debug("Parsed MRC header", header);
+                }
                 const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
