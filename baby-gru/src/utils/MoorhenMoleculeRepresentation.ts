@@ -1208,7 +1208,7 @@ export class MoleculeRepresentation {
             {
                 returnType: "mesh_perm3",
                 command: "get_molecular_representation_mesh",
-                commandArgs: [this.parentMolecule.molNo, cidSelection, "colorRampChainsScheme", style, 2],
+                commandArgs: [this.parentMolecule.molNo, cidSelection, "", style, 2],
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
@@ -1261,7 +1261,7 @@ export class MoleculeRepresentation {
 
         await this.applyM2tParams();
 
-        let colorStyle: string = "colorRampChainsScheme";
+        let colorStyle: string = "";
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
 
@@ -1795,7 +1795,7 @@ export class MoleculeRepresentation {
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_obj",
-                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme],
+                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
@@ -1839,7 +1839,7 @@ export class MoleculeRepresentation {
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_mesh_file",
-                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle, ssUsageScheme, fileType],
+                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme, fileType],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
