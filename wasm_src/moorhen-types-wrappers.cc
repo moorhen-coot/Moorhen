@@ -1,5 +1,23 @@
 #include "moorhen-wrappers-helpers.h"
 
+gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
+
+    gemmi::Structure newStructure = st;
+
+    for(auto &model : newStructure.models) {
+        for (auto &chain : model.chains) {
+            for (auto &residue : chain.residues) {
+                for (auto &atom : residue.atoms) {
+                    atom.name = moorhen::rtrim(moorhen::ltrim(atom.name));
+                }
+            }
+        }
+    }
+
+    return newStructure;
+}
+
+
 EMSCRIPTEN_BINDINGS(moorhen_types) {
         // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
@@ -37,6 +55,8 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     //Sean Wang's XPID
     function("detect_xhpi_interactions_json", &xhpi::detect_xhpi_interactions_json);
+
+    function("cloneGemmiStructureWithTrimmedAtomNames", &cloneGemmiStructureWithTrimmedAtomNames);
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
