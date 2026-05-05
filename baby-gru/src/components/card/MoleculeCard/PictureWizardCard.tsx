@@ -42,7 +42,7 @@ export const PictureWizardCard = memo(
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
         const [wizardType, setWizardType] = useState<"site-and-ribbons" | "bonds" | "ribbons" | "catrace">("site-and-ribbons")
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range">(
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model">(
             props.representation ? props.representation.interfaceOption.selectionType : "ligands"
         );
         const [ligandSelection, setLigandSelection] = useState<string|null>(null)

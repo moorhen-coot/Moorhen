@@ -20,14 +20,10 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-<<<<<<< HEAD
-import { MoorhenToggle } from "../inputs";
 
 import { ImportNOERestraints } from "../menu-item/ImportNOERestraints";
-=======
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenToggle } from "../inputs";
->>>>>>> origin
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 

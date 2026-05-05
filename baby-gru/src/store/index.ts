@@ -130,11 +130,8 @@ export {
     unlockControls,
     closeResidueSelectionTools,
     setShownBottomPanel,
-<<<<<<< HEAD
     setNMRMode,
-=======
     setClickAwayListenerActive,
->>>>>>> origin
 }  from "./globalUISlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export { setValidationJson }  from "./jsonValidation";

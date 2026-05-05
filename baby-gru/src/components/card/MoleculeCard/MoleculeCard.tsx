@@ -30,13 +30,10 @@ import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
-<<<<<<< HEAD
 import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
 import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
 
-=======
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
->>>>>>> origin
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -423,8 +420,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     zTo: theVector.zTo,
                     cidFrom: theVector.cidFrom,
                     cidTo: theVector.cidTo,
-                    molNoFrom: theVector.molNoFrom,
-                    molNoTo: theVector.molNoTo,
+                    molFromUniqueId: theVector.molNoFrom,
+                    molToUniqueId: theVector.molNoTo,
                     uniqueId: theVector.uniqueId,
                     vectorColour: theVector.vectorColour,
                     textColour: theVector.textColour,
