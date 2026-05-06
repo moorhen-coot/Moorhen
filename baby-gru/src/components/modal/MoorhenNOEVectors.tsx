@@ -5,7 +5,7 @@ import type { MoorhenVector, VectorsArrowMode, VectorsCoordMode, VectorsDrawMode
 
 export const addAtomVector = (
   dispatch,
-  molNo: number,
+  molUniqueID: string,
   cidFrom: string,
   cidTo: string
 ) => {
@@ -22,8 +22,8 @@ export const addAtomVector = (
 
     cidFrom,
     cidTo,
-    molNoFrom: molNo,
-    molNoTo: molNo,
+    molFromUniqueId: molUniqueID,
+    molToUniqueId: molUniqueID,
 
     uniqueId: uuidv4(),
 

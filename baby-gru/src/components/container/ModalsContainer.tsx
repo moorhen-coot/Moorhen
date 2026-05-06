@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import React, { memo, useMemo } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
-import { ModalKey } from "../../store/modalsSlice";
+// import { ModalKey } from "../../store/modalsSlice";
 import { Moorhen2DCanvasObjectsModal } from "../modal/Moorhen2DCanvasObjectsModal";
 import { MoorhenCarbohydrateValidationModal } from "../modal/MoorhenCarbohydrateValidationModal";
 import { MoorhenColourMapByOtherMapModal } from "../modal/MoorhenColourMapByOtherMapModal";
@@ -27,18 +27,56 @@ import { MoorhenRamaPlotModal } from "../modal/MoorhenRamaPlotModal";
 import { MoorhenSceneSettingsModal } from "../modal/MoorhenSceneSettingsModal";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { MoorhenSliceNDiceModal } from "../modal/MoorhenSliceNDiceModal";
-import { MoorheSuperposeStructuresModal } from "../modal/MoorhenSuperposeStructuresModal";
+import { MoorhenSuperposeStructuresModal } from "../modal/MoorhenSuperposeStructuresModal";
 import { MoorhenUnmodelledBlobsModal } from "../modal/MoorhenUnmodelledBlobsModal";
 import { MoorhenValidationPlotModal } from "../modal/MoorhenValidationPlotModal";
 import { MoorhenVectorsModal } from "../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../modal/MoorhenWaterValidationModal";
 import { MoorhenNOERestraints} from "../modal/MoorhenNOERestraints"
-const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
+
+export type ModalKey =
+    | "acedrg"
+    | "query-seq"
+    | "scripting"
+    | "show-controls"
+    | "fit-ligand"
+    | "rama-plot"
+    | "diff-map-peaks"
+    | "validation-plot"
+    | "mmrrcc"
+    | "water-validation"
+    | "lig-validation"
+    | "fill-partial-residues"
+    | "pepflips"
+    | "unmodelled-blobs"
+    | "carb-validation"
+    | "slice-n-dice"
+    | "superpose"
+    | "scene-settings"
+    | "lhasa"
+    | "qscore"
+    | "json-validation"
+    | "mrbump"
+    | "mrparse"
+    | "colour-map-by-map"
+    | "vectors"
+    | "overlays-2d"
+    | "conkit"
+    | "pae-plot"
+    | "config-shortcuts"
+    | "NOE";
+
+export type ModalComponentProps = {
+    openDocked?: "left" | "right" | null | undefined;
+    modalProps?: { [key: string]: string | number | boolean };
+};
+
+const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
     acedrg: MoorhenCreateAcedrgLinkModal,
     "query-seq": MoorhenQuerySequenceModal,
     scripting: MoorhenScriptModal,
     "show-controls": MoorhenControlsModal,
-    "fit-ligand": MoorheFindLigandModal,
+    "fit-ligand": MoorhenFindLigandModal,
     "rama-plot": MoorhenRamaPlotModal,
     "diff-map-peaks": MoorhenDiffMapPeaksModal,
     "validation-plot": MoorhenValidationPlotModal,
@@ -55,7 +93,7 @@ const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     "fill-partial-residues": MoorhenFillPartialResiduesModal,
     "scene-settings": MoorhenSceneSettingsModal,
     "slice-n-dice": MoorhenSliceNDiceModal,
-    superpose: MoorheSuperposeStructuresModal,
+    superpose: MoorhenSuperposeStructuresModal,
     lhasa: MoorhenLhasaModal,
     qscore: MoorhenQScoreModal,
     "colour-map-by-map": MoorhenColourMapByOtherMapModal,
@@ -65,15 +103,19 @@ const modalsMap: Record<ModalKey, () => React.JSX.Element> = {
     models: MoorhenModelsModal,
     NOE: MoorhenNOERestraints
     conkit: MoorhenConKitModal,
+    "config-shortcuts": MoorhenShortcutConfigModal,
+    NOE: MoorhenNOERestraints
 };
-// ...existing code...
+
 export type ExtraDraggableModals = React.JSX.Element[];
 
-export const MoorhenModalsContainer = memo((props: { extraDraggableModals: ExtraDraggableModals }) => {
+export const MoorhenModalsContainer = memo((props: { extraDraggableModals?: ExtraDraggableModals }) => {
     const activeModals = useSelector((state: RootState) => state.modals.activeModals);
-    const displayModals = activeModals.map(modalKey => {
-        const ModalComponent = modalsMap[modalKey];
-        return ModalComponent ? <ModalComponent key={modalKey} /> : null;
+    const displayModals = activeModals.map(modalCall => {
+        const ModalComponent = modalsMap[modalCall.key];
+        return ModalComponent ? (
+            <ModalComponent key={modalCall.key} openDocked={modalCall.openDocked} modalProps={modalCall.modalProps} />
+        ) : null;
     });
 
     return (
