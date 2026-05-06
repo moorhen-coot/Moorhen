@@ -210,8 +210,8 @@ const newVector = () => {
         zTo: 0.0,
         cidFrom: "",
         cidTo: "",
-        molNoFrom: 0,
-        molNoTo: 0,
+        molFromUniqueId: "",
+        molToUniqueId: "",
         uniqueId: uuidv4(),
         vectorColour: { r: 0, g: 0, b: 0 },
         textColour: { r: 0, g: 0, b: 0 },
@@ -258,14 +258,17 @@ export const MoorhenNOERestraints = () => {
     // added to try  to make modular more retraints work 
     const [isActiveButton, setIsActiveButton] = useState(true);
     const isNOERef = useRef<undefined | HTMLInputElement>(null);
-    const [isNOE, setIsNOE] = useState<boolean>(false);
+    // const [isNOE, setIsNOE] = useState<boolean>(false);
+    const [isNOE, setIsNOE] = useState<boolean>(true);
 
     const isHBondRef = useRef<undefined | HTMLInputElement>(null);
-    const [isHBond, setIsHBond] = useState<boolean>(false);
+    // const [isHBond, setIsHBond] = useState<boolean>(false);
+    const [isHBond, setIsHBond] = useState<boolean>(true);
 
     const isUndefinedRef = useRef<undefined | HTMLInputElement>(null);
-    const [isUndefined, setIsUndefined] = useState<boolean>(false);
-    
+    // const [isUndefined, setIsUndefined] = useState<boolean>(false);
+    const [isUndefined, setIsUndefined] = useState<boolean>(true);
+ 
     const [selectedTypes, setSelectedTypes] = useState({
             noe: false,
             hbond: false,
@@ -326,6 +329,8 @@ export const MoorhenNOERestraints = () => {
                 allConvertedData.forEach(row => {
                     
                     const newNOEVector = newVector()
+                    newNOEVector.molFromUniqueId = molecules[0].uniqueId
+                    newNOEVector.molToUniqueId = molecules[0].uniqueId
                     newNOEVector.cidFrom = row.chain1 + "/" + row.res1 + "/" + row.atom1
                     newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
                     newNOEVector.uniqueId += "__TAG_NOE_RESTRAINTS"
@@ -335,6 +340,8 @@ export const MoorhenNOERestraints = () => {
                     newVectors.push(newNOEVector)
                 })
                 setNOEVectors(newVectors)
+                dispatch(addVectors(newVectors))
+
             }
             else {  
                 const fileContents = await file.text()
@@ -358,8 +365,11 @@ export const MoorhenNOERestraints = () => {
                 }
 
                     
-                if (selectedTypes.noe) {
+                // if (selectedTypes.noe) {
+                if (true) {
+
                     const data = window.cootModule.get_noe_restraints(fileContents);
+                    
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
                         restraintType: "noe"
@@ -367,7 +377,9 @@ export const MoorhenNOERestraints = () => {
                     allConvertedData.push(...converted);
                 }
 
-                if (selectedTypes.hbond) {
+                // if (selectedTypes.hbond) {
+                if (true) {
+
                     const data = window.cootModule.get_hbond_restraints(fileContents);
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
@@ -376,7 +388,9 @@ export const MoorhenNOERestraints = () => {
                     allConvertedData.push(...converted);
                 }
 
-                if (selectedTypes.undefined) {
+                // if (selectedTypes.undefined) {
+                if (true) {
+
                     const data = window.cootModule.get_undefined_restraints(fileContents);
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
@@ -384,11 +398,14 @@ export const MoorhenNOERestraints = () => {
                     }));
                     allConvertedData.push(...converted);
                 }
-
+                console.log(allConvertedData)
                 const newVectors = []
                 allConvertedData.forEach(row => {
                     
                     const newNOEVector = newVector()
+                    newNOEVector.molFromUniqueId = molecules[0].uniqueId
+                    newNOEVector.molToUniqueId = molecules[0].uniqueId
+
                     newNOEVector.cidFrom = row.chain1 + "/" + row.res1 + "/" + row.atom1
                     newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
                     if (row.restraintType === "noe"){
@@ -410,8 +427,12 @@ export const MoorhenNOERestraints = () => {
                         newNOEVector.ambiguous = true 
                     }
                     newVectors.push(newNOEVector)
+                    console.log(newNOEVector)
                 })
                 setNOEVectors(newVectors)
+                dispatch(addVectors(newVectors))
+                console.log(newVectors)
+                
             }
                 }
             };
@@ -428,8 +449,8 @@ export const MoorhenNOERestraints = () => {
             }}
         >
             {/* LEFT: Checkboxes */}
-            <MoorhenStack gap={2} direction="horizontal">
-                <MoorhenToggle
+            {/* <MoorhenStack gap={2} direction="horizontal"> */}
+                {/* <MoorhenToggle
                     label={"NOEs"}
                     name={`NOERestraints`}
                     type="checkbox"
@@ -461,8 +482,8 @@ export const MoorhenNOERestraints = () => {
                         ...prev,
                         undefined: e.target.checked
                     }))}
-                />
-            </MoorhenStack>
+                /> */}
+            {/* </MoorhenStack> */}
 
             {/* RIGHT: File input */}
             <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="uploadMrParse">

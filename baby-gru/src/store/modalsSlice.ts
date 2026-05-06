@@ -1,39 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { ModalComponentProps, ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
-
-
-export type ModalKey =
-    | "models"
-    | "maps"
-    | "acedrg"
-    | "query-seq"
-    | "scripting"
-    | "show-controls"
-    | "fit-ligand"
-    | "rama-plot"
-    | "diff-map-peaks"
-    | "validation-plot"
-    | "mmrrcc"
-    | "water-validation"
-    | "lig-validation"
-    | "fill-partial-residues"
-    | "pepflips"
-    | "unmodelled-blobs"
-    | "carb-validation"
-    | "slice-n-dice"
-    | "superpose"
-    | "scene-settings"
-    | "lhasa"
-    | "qscore"
-    | "json-validation"
-    | "mrbump"
-    | "mrparse"
-    | "colour-map-by-map"
-    | "vectors"
-    | "overlays-2d"
-    | "NOE"
-    | "conkit"
-    | "pae-plot";
+// import { ModalComponentProps } from "../../ModalsContainer.tsx";
 export type ModalCall = { key: ModalKey } & ModalComponentProps;
 
 const initialState: {

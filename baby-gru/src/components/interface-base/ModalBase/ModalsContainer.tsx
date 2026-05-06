@@ -30,7 +30,7 @@ import { MoorhenUnmodelledBlobsModal } from "../../modal/MoorhenUnmodelledBlobsM
 import { MoorhenValidationPlotModal } from "../../modal/MoorhenValidationPlotModal";
 import { MoorhenVectorsModal } from "../../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../../modal/MoorhenWaterValidationModal";
-
+import { MoorhenNOERestraints } from "../../modal/MoorhenNOERestraints"
 export type ModalKey =
     | "acedrg"
     | "query-seq"
@@ -60,7 +60,8 @@ export type ModalKey =
     | "overlays-2d"
     | "conkit"
     | "pae-plot"
-    | "config-shortcuts";
+    | "config-shortcuts"
+    | "NOE";
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;
@@ -97,6 +98,7 @@ const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,
+    NOE: MoorhenNOERestraints
 };
 
 export type ExtraDraggableModals = React.JSX.Element[];
