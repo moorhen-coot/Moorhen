@@ -26,6 +26,11 @@ export interface MoorhenVector {
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
     radius?: number;
+    dashSpacing?: number;
+    arrowHeadLength?: number;
+    arrowHeadRadiusScale?: number;
+    labelFontSize?: number;
+    labelScreenOffsetX?: number;
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {

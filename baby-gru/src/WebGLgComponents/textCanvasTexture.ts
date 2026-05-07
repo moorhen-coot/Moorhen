@@ -269,7 +269,8 @@ export class TextCanvasTexture {
     }
 
     removeBigTextureTextImage(textObject,uuid=null) {
-        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        const screenOffsetX = textObject.screenOffsetX ?? 0.0;
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font+"_"+screenOffsetX
         if(uuid) key += "-"+uuid;
         if(key in this.refI) {
             this.bigTextureTexOrigins[this.refI[key]] = [];
@@ -284,7 +285,8 @@ export class TextCanvasTexture {
 
         const background_colour = this.store.getState().sceneSettings.backgroundColor
 
-        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        const screenOffsetX = textObject.screenOffsetX ?? 0.0;
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font+"_"+screenOffsetX
         if(uuid) key += "-"+uuid;
 
         const fontSize = parseInt(textObject.font);
@@ -306,7 +308,7 @@ export class TextCanvasTexture {
         } else {
             t = this.addTextToBigTexture(textObject.text,colour,textObject.font);
         }
-        const s = [fontSize*this.canvasBig.width / this.canvasBig.height * (t[2]-t[0]), fontSize*(t[3]-t[1]), 1.0];
+        const s = [fontSize*this.canvasBig.width / this.canvasBig.height * (t[2]-t[0]), fontSize*(t[3]-t[1]), screenOffsetX];
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);
         this.bigTextureScalings.push(s)

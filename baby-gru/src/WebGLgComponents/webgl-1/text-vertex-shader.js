@@ -18,7 +18,8 @@ var text_instanced_vertex_shader_source = `
 
     void main(void) {
 
-      vec4 theVert = vec4(offset,1.0)+uMVINVMatrix*vec4(pixelZoom*size*aVertexPosition,1.0);
+      vec3 textOffset = vec3(size.x, size.y, 0.0) * aVertexPosition + vec3(size.z, 0.0, 0.0);
+      vec4 theVert = vec4(offset,1.0)+uMVINVMatrix*vec4(pixelZoom*textOffset,1.0);
       theVert.a = 1.0;
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
