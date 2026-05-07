@@ -1,9 +1,7 @@
 {
     "name": "moorhen",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.3",
     "private": false,
-    "main": "moorhenWebComponent.js",
-    "types": "moorhen.d.ts",
     "typesVersions": {
         "*": {
             "vite-plugin": [
@@ -13,20 +11,20 @@
     },
     "exports": {
         "./react-lib": {
-            "types": "./moorhen.d.ts",
+            "types": "./types/src/moorhen.d.ts",
             "default": "./moorhen-react-lib.js"
         },
         "./web-component": {
-            "types": "./moorhen.d.ts",
+            "types": "./types/src/WebComponent/entry.d.ts",
             "default": "./moorhen.js"
         },
         "./vite-plugin": {
             "types": "./scripts/VitePlugin.d.ts",
             "default": "./scripts/VitePlugin.mjs"
         },
-        "./hooks": {
-            "types": "./moorhen.d.ts",
-            "default": "./moorhen-hooks.js"
+        "./web-component/utils": {
+            "types": "./types/src/WebComponent/utils/entry.d.ts",
+            "default": "./MoorhenWebComponentUtils.js"
         }
     },
     "homepage": "./",
@@ -51,7 +49,7 @@
         "transpile-graphql-codegen": "if ! test -r src/utils/__graphql__/gql.ts; then  npx graphql-codegen; fi",
         "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
-        "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
+        "transpile-ts-worker": "npx tsc --ignoreConfig --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "transpile-ts-worker-jest": "npx tsc --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/MoorhenAssets/wasm//CootWorker.js && sed -i.bak '/importScripts.*;/d' public/MoorhenAssets/wasm/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "start": "vite --config vite.config.mts",
@@ -59,16 +57,15 @@
         "build-vite": "vite build",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
-        "dts-bundle": "npx dts-bundle-generator -o dist/moorhen.d.ts src/moorhen.ts --no-check",
-        "tsc-hooks": "npx tsc --jsx preserve --declaration --emitDeclarationOnly --outDir dist/hooks src/Wrappers/hooks/",
         "setup-gemmi-dist": "mkdir -p dist/gemmi && cp public/MoorhenAssets/wasm/gemmi.js dist/gemmi/ && cp public/MoorhenAssets/wasm/gemmi.wasm dist/gemmi/ && cp src/types/gemmi-standalone.d.ts dist/gemmi/index.d.ts && echo 'module.exports = require(\"./gemmi.js\");' > dist/gemmi/index.js",
+        "emit-declarations": "npx tsc --strict false  --emitDeclarationOnly; npx tsc-alias; sed -i 's|import(\"\\.\\./|import(\"./src/|g' dist/types/moorhen.d.ts",
         "build-webcomponent": "webpack --config webpack.webcomponent.config.js --mode production --devtool source-map",
         "build-webcomponent-dev": "webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map",
-        "build-hooks": "webpack --config webpack.hooks.config.js --mode production ",
+        "build-utils": "webpack --config webpack.utils.config.js --mode production ",
         "build-react": "webpack --config webpack.react.config.js --mode production --devtool source-map",
         "build-react-dev": "webpack --config webpack.react.config.js --mode development --devtool inline-source-map",
-        "build-release": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent\"  \"npm run build-react\" \"npm run build-hooks\" && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
-        "build-release-dev": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent-dev\"  \"npm run build-react-dev\" \"npm run build-hooks\" && npm run dts-bundle && ./scripts/fix_old_namespace.sh",
+        "build-release": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent\"  \"npm run build-react\" \"npm run build-utils\" && npm run emit-declarations",
+        "build-release-dev": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent-dev\"  \"npm run build-react-dev\" \"npm run build-utils\" && npm run emit-declarations",
         "build-and-pack": "npm run build-release && cd dist && npm pack && cd ..",
         "build-and-pack-dev": "npm run build-release-dev && cd dist && npm pack && cd ..",
         "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
@@ -140,8 +137,8 @@
         "@babel/plugin-transform-object-rest-spread": "^7.28.4",
         "@babel/preset-env": "^7.28.3",
         "@babel/preset-react": "^7.27.1",
-        "@eslint/css": "^0.12.0",
-        "@eslint/js": "^9.37.0",
+        "@eslint/css": "^1.2.0",
+        "@eslint/js": "^9.39.0",
         "@graphql-codegen/cli": "^6.0.0",
         "@graphql-codegen/client-preset": "^5.1.0",
         "@reduxjs/toolkit": "^2.9.0",
@@ -156,8 +153,8 @@
         "@types/node": "^24.7.1",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.1",
-        "@typescript-eslint/eslint-plugin": "^8.46.0",
-        "@typescript-eslint/parser": "^8.46.0",
+        "@typescript-eslint/eslint-plugin": "^8.59.1",
+        "@typescript-eslint/parser": "^8.59.1",
         "@vitejs/plugin-react": "^5.0.4",
         "@vitejs/plugin-react-swc": "^4.3.0",
         "babel-loader": "^10.0.0",
@@ -167,13 +164,12 @@
         "css-loader": "^7.1.2",
         "docdash": "^2.0.2",
         "dts-bundle-generator": "^9.5.1",
-        "eslint": "^9.37.0",
+        "eslint": "^9.39.0",
         "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-jest": "^29.0.1",
+        "eslint-plugin-jest": "^29.15.2",
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-react": "^7.37.5",
-        "eslint-plugin-react-hooks": "^7.0.0",
-        "eslint-plugin-react-hooks-extra": "^2.0.6",
+        "eslint-plugin-react-hooks": "^7.1.1",
         "eslint-plugin-react-perf": "^3.3.3",
         "eslint-plugin-react-refresh": "^0.4.23",
         "eslint-plugin-react-you-might-not-need-an-effect": "^0.5.6",
@@ -190,7 +186,7 @@
         "nodemon": "^3.1.10",
         "protobufjs-cli": "^1.1.3",
         "react": "^19.2.0",
-        "react-compiler-webpack": "^0.2.1",
+        "react-compiler-webpack": "^1.0.0",
         "react-dom": "^19.2.0",
         "react-redux": "^9.2.0",
         "sass": "^1.93.2",
@@ -200,17 +196,17 @@
         "ts-jest": "^29.4.5",
         "ts-loader": "^9.5.4",
         "ts-node": "^10.9.2",
-        "typescript": "^5.9.3",
-        "vite": "^7.1.9",
+        "tsc-alias": "^1.8.17",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.10",
         "vite-plugin-checker": "^0.11.0",
         "vite-plugin-cross-origin-isolation": "^0.1.6",
-        "vite-plugin-pwa": "^1.0.3",
         "vite-plugin-svgr": "^4.5.0",
         "vite-plugin-top-level-await": "^1.6.0",
         "vite-plugin-wasm": "^3.5.0",
         "wait-on": "^9.0.1",
-        "webpack": "^5.102.1",
-        "webpack-cli": "^6.0.1",
+        "webpack": "^5.106.2",
+        "webpack-cli": "^7.0.2",
         "webpack-dev-server": "^5.2.2",
         "worker-loader": "^3.0.8"
     }

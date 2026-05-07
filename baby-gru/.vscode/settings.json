@@ -38,8 +38,5 @@
         "statusBar.noFolderForeground": "#F6FAFD"
     },
     "cmake.ignoreCMakeListsMissing": true,    "files.associations": { "*.json": "jsonc" },
-    "files.exclude": {
-        "**/tsDist/**": true,
-        "**/src/moorhen.tsx": true
-    }
+
 }
