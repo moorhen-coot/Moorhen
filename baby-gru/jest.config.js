@@ -5,11 +5,13 @@ module.exports = {
         {
             displayName: "api-utils",
             testMatch: ["<rootDir>/tests/__tests__/*.test.js"],
+            setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             transformIgnorePatterns: ["node_modules/(?!(uuid|node-fetch)/)"],
         },
         {
             displayName: "react-components",
             testMatch: ["<rootDir>/tests/__tests__/*.test.jsx"],
+            setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             testEnvironment: "jsdom",
             preset: "ts-jest",
             transform: {
