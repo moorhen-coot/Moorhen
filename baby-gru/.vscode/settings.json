@@ -37,9 +37,12 @@
         "statusBar.noFolderBackground": "#0F3046",
         "statusBar.noFolderForeground": "#F6FAFD"
     },
-    "cmake.ignoreCMakeListsMissing": true,    "files.associations": { "*.json": "jsonc" },
+    "cmake.ignoreCMakeListsMissing": true,
+    "files.associations": { "*.json": "jsonc" },
     "files.exclude": {
         "**/tsDist/**": true,
         "**/src/moorhen.tsx": true
-    }
+    },
+    "html.autoClosingTags": false,
+    "js/ts.autoClosingTags.enabled": false
 }
