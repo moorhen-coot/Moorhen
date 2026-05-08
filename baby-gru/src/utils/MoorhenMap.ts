@@ -1158,10 +1158,11 @@ export class MoorhenMap {
 
         // this.isEM = response.data.result.result;
 
-        const headerInfo = await this.fetchCellInfo();
+        const headerInfo = await this.fetchHeaderInfo();
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
-        console.log(headerInfo);
+        console.log("headerInfo", headerInfo);
         if (
+            headerInfo.spacegroup === "P 1" &&
             headerInfo.cell.alpha < Math.PI / 2 + 0.0001 &&
             headerInfo.cell.alpha > Math.PI / 2 - 0.0001 &&
             headerInfo.cell.beta < Math.PI / 2 + 0.0001 &&
