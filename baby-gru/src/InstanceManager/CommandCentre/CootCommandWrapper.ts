@@ -183,17 +183,4 @@ export class CootCommandWrapper {
         return (await result).data.result.result as CootValidationData;
     }
 
-    async getMapBoundingSphere(imol: number, thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
-        const result = this.cootCommand(
-            {
-                command: "get_map_bounding_sphere",
-                commandArgs: [imol, thresold],
-            },
-            false
-        );
-
-        const response = await result;
-        const results = response.data.result.result;
-        return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
-    }
 }
