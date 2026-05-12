@@ -180,7 +180,7 @@ export const MoorhenLigandCard = (props: {
                     </TableContainer>
                 </Popover>
             )}
-            <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack direction="vertical">
                 {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                 {calculateQScore && activeMap ? (
                     <div style={{ display: "flex", justifyContent: "center" }}>
@@ -207,17 +207,17 @@ export const MoorhenLigandCard = (props: {
                     {!flev_placeholder && (
                         <MoorhenButton
                             onClick={() => {
-                                let link: any = document.getElementById("download_flev_svg_link");
+                                let link: any = document.getElementById("download_ligand_svg_link");
                                 if (!link) {
                                     link = document.createElement("a");
-                                    link.id = "download_flev_svg_link";
+                                    link.id = "download_ligand_svg_link";
                                     document.body.appendChild(link);
                                 }
-                                const file = new Blob([ligand.flev_svg], {
+                                const file = new Blob([ligand.svg], {
                                     type: "image/svg+xml",
                                 });
                                 link.href = URL.createObjectURL(file);
-                                link.download = ligand.resName + "_flev.svg";
+                                link.download = ligand.resName + "_ligand.svg";
                                 link.click();
                             }}
                         >
@@ -265,11 +265,30 @@ export const MoorhenLigandCard = (props: {
                     <MoorhenPopoverButton
                         type="default"
                         label="Show 2D Environement view"
-                        popoverStyle={{ width: "40rem" }}
+                        popoverStyle={{ maxWidth: "40rem" }}
                         popoverPlacement="left"
                         closeButton
                     >
-                        {parse(ligand.flev_svg)}
+                        <div className="moorhen__flev-container">{parse(ligand.flev_svg)}</div>
+                        <MoorhenButton
+                            onClick={() => {
+                                let link: any = document.getElementById("download_flev_svg_link");
+                                if (!link) {
+                                    link = document.createElement("a");
+                                    link.id = "download_flev_svg_link";
+                                    document.body.appendChild(link);
+                                }
+                                const file = new Blob([ligand.flev_svg], {
+                                    type: "image/svg+xml",
+                                });
+                                link.href = URL.createObjectURL(file);
+                                link.download = ligand.resName + "_flev.svg";
+                                link.click();
+                            }}
+                        >
+                            <DownloadOutlined />
+                            Download image (svg)
+                        </MoorhenButton>
                     </MoorhenPopoverButton>
                 )}
         </MoorhenStack>
