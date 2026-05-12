@@ -3,6 +3,7 @@
     "compilerOptions": {
         "strictNullChecks": false,
         "noImplicitAny": false,
+        "strict": false,
         "outDir": "./dist/types/",
         "module": "esnext",
         "target": "es2022",
@@ -34,6 +35,7 @@
         "test/*",
         "src/__tests__/*",
         "webpack.base.config.js",
-        "src/protobuf/MoorhenSession.js"
+        "src/protobuf/MoorhenSession.js",
+        "src/LhasaReact/*"
     ]
 }
