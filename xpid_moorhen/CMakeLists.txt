@@ -9,5 +9,6 @@ install(FILES
      ${xpid_moorhen_src}/core.h
      ${xpid_moorhen_src}/geometry.h
      ${xpid_moorhen_src}/interface.h
+     ${xpid_moorhen_src}/topology.h
      DESTINATION include/xpid_moorhen
 )
