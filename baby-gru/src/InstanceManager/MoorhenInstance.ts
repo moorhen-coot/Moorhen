@@ -163,10 +163,21 @@ export class MoorhenInstance extends StoreExtension {
         const paths = this.paths;
         const timeCapsuleRef = this.timeCapsuleRef;
         const execWhenReady = this.execWhenReady.bind(this);
+        const _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
 
         return {
             async loadFiles(
-                files: File[] | File | FileList | string | string[] | URL | URL[] | { url: string | URL; filename: string }[]
+                files:
+                    | File[]
+                    | File
+                    | FileList
+                    | string
+                    | string[]
+                    | URL
+                    | URL[]
+                    | { url: string | URL; filename: string }[]
+                    | { url: string | URL; filename: string },
+                origin?: string
             ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
                 const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
@@ -185,6 +196,13 @@ export class MoorhenInstance extends StoreExtension {
                     filesArray = Array.from(files);
                 } else if (typeof files === "string") {
                     filesArray = [await getFileFromURL(files)];
+                } else if (typeof files[0] === "object" && "url" in files[0]) {
+                    filesArray = [
+                        await getFileFromURL(
+                            (files as { url: string | URL; filename: string }).url,
+                            (files as { url: string | URL; filename: string }).filename
+                        ),
+                    ];
                 } else if (Array.isArray(files)) {
                     if (typeof files[0] === "string" || files[0] instanceof URL) {
                         filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
@@ -192,10 +210,12 @@ export class MoorhenInstance extends StoreExtension {
                         filesArray = files as File[];
                     } else if (typeof files[0] === "object" && "url" in files[0]) {
                         filesArray = await Promise.all(
-                            (files as { url: string | URL; filename?: string }[]).map(file => getFileFromURL(file.url, file.filename))
+                            (files as { url: string | URL; filename: string }[]).map(file => getFileFromURL(file.url, file.filename))
                         );
                     } else {
-                        throw new Error("Invalid file input type");
+                        console.warn(
+                            "Unrecognized file input format, expected array of strings, URLs, Files, or objects with url and filename properties."
+                        );
                     }
                 }
 
@@ -214,7 +234,10 @@ export class MoorhenInstance extends StoreExtension {
                     )
                 );
 
-                return createdObjects;
+                for (const callbacks of Object.values(_filesLoadedCallbacks)) {
+                    callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
+                }
+                return createdObjects as LoadFilesResult;
             },
 
             async ligandFromSmiles(smiles: string, ligname: string): Promise<LoadFilesResult> {
@@ -233,19 +256,15 @@ export class MoorhenInstance extends StoreExtension {
                 const file = new File([blob], name + ".cif", { type: "text/plain" });
                 return this.loadFiles(file);
             },
-        };
 
-        // async  loadFilesFromURLWithMetadata(files: {url: string | URL; filename?: string , isDifference?: boolean}[]): Promise<LoadFilesResult> {
-        //         const getFileFromURL = async (file: {url: string | URL; filename?: string }): Promise<File> => {
-        //             const urlString = file.url instanceof URL ? file.url.toString() : file.url;
-        //             const response = await fetch(urlString);
-        //             const blob = await response.blob();
-        //             const filename = file.filename || urlString.split("/").pop() || "downloaded_file";
-        //             return new File([blob], filename, { type: blob.type });
-        //         };
-        //         const readyFiles= await Promise.all(files.map(file => getFileFromURL(file)));
-        //         return this.loadFiles(readyFiles);
-        // }
+            newFilesLoadedCallback(callback: (filesLoaded: LoadFilesResult, origin: string) => void): () => void {
+                const callbackUID = guid();
+                _filesLoadedCallbacks[callbackUID] = { callback: callback };
+                return () => {
+                    delete _filesLoadedCallbacks[callbackUID];
+                };
+            },
+        };
     }
 
     //========================================
