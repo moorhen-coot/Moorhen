@@ -17,7 +17,6 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 
-
 export type LoadFilesResult = {
     type: "molecule" | "map";
     uniqueID: string;
@@ -166,14 +165,16 @@ export class MoorhenInstance extends StoreExtension {
         const execWhenReady = this.execWhenReady.bind(this);
 
         return {
-            async loadFiles(files: File[] | File | FileList | string | string[] | URL | URL[]): Promise<LoadFilesResult> {
+            async loadFiles(
+                files: File[] | File | FileList | string | string[] | URL | URL[] | { url: string | URL; filename?: string }[]
+            ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
-                const getFileFromURL = async (url: string | URL): Promise<File> => {
+                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
                     const urlString = url instanceof URL ? url.toString() : url;
                     const response = await fetch(urlString);
                     const blob = await response.blob();
-                    const filename = urlString.split("/").pop() || "downloaded_file";
-                    return new File([blob], filename, { type: blob.type });
+                    const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                    return new File([blob], finalFilename, { type: blob.type });
                 };
                 const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
                 const backgroundColor = store.getState().sceneSettings.backgroundColor;
@@ -189,6 +190,10 @@ export class MoorhenInstance extends StoreExtension {
                         filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
                     } else if (files[0] instanceof File) {
                         filesArray = files as File[];
+                    } else if (typeof files[0] === "object" && "url" in files[0]) {
+                        filesArray = await Promise.all(
+                            (files as { url: string | URL; filename?: string }[]).map(file => getFileFromURL(file.url, file.filename))
+                        );
                     } else {
                         throw new Error("Invalid file input type");
                     }
@@ -227,6 +232,18 @@ export class MoorhenInstance extends StoreExtension {
                 return this.loadFiles(file);
             },
         };
+
+        // async  loadFilesFromURLWithMetadata(files: {url: string | URL; filename?: string , isDifference?: boolean}[]): Promise<LoadFilesResult> {
+        //         const getFileFromURL = async (file: {url: string | URL; filename?: string }): Promise<File> => {
+        //             const urlString = file.url instanceof URL ? file.url.toString() : file.url;
+        //             const response = await fetch(urlString);
+        //             const blob = await response.blob();
+        //             const filename = file.filename || urlString.split("/").pop() || "downloaded_file";
+        //             return new File([blob], filename, { type: blob.type });
+        //         };
+        //         const readyFiles= await Promise.all(files.map(file => getFileFromURL(file)));
+        //         return this.loadFiles(readyFiles);
+        // }
     }
 
     //========================================
