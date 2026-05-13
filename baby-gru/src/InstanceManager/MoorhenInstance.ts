@@ -199,6 +199,8 @@ export class MoorhenInstance extends StoreExtension {
                     }
                 }
 
+                console.log("Files to load: ", filesArray);
+
                 const createdObjects = await execWhenReady(() =>
                     autoOpenFiles(
                         filesArray,
