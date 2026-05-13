@@ -206,7 +206,6 @@ export type Overlay2DSessionData = {
 export class MoorhenTimeCapsule {
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map | null>;
     busy: boolean;
     modificationCount: number;
@@ -962,7 +961,7 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance,
+                        item.neighboursDistance
                     );
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
@@ -1194,7 +1193,6 @@ export class MoorhenTimeCapsule {
         maps: moorhen.Map[],
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {

@@ -11,7 +11,7 @@ import { MoorhenWebComponent } from "../MoorhenWebComponent";
  */
 export const useWebComponentInstanceRef = (elementID: string) => {
     const instanceRef = useRef<MoorhenInstance | null>(null);
-    const [_, setInstanceReady] = useState(false);
+    const [ready, setInstanceReady] = useState(false);
 
     useEffect(() => {
         const getInstance = async () => {
@@ -25,5 +25,5 @@ export const useWebComponentInstanceRef = (elementID: string) => {
         getInstance();
     }, []);
 
-    return instanceRef;
+    return [ready, instanceRef];
 };
