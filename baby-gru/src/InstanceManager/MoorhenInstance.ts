@@ -166,7 +166,7 @@ export class MoorhenInstance extends StoreExtension {
 
         return {
             async loadFiles(
-                files: File[] | File | FileList | string | string[] | URL | URL[] | { url: string | URL; filename?: string }[]
+                files: File[] | File | FileList | string | string[] | URL | URL[] | { url: string | URL; filename: string }[]
             ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
                 const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
