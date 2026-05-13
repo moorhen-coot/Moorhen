@@ -891,6 +891,8 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("cidToNeighboursCid",&cidToNeighboursCid);
 
+    function("getRibbonsMeshResidueMapping",&getRibbonsMeshResidueMapping);
+
     // Fix unbound types for --emit-tsd
     class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");
     class_<coot::geometry_distortion_info_pod_container_t>("coot_geometry_distortion_info_pod_container_t");

@@ -35,6 +35,7 @@
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
+#include <gemmi/metadata.hpp>
 
 #include "xpid_moorhen/interface.h"
 
@@ -48,7 +49,11 @@
 #include "conkit/conkit_validate.h"
 #include "json/json.h"
 
+#include <array>
+#include <limits>
+#include <wasm_simd128.h>
 #include <math.h>
+
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
 #endif
@@ -1779,6 +1784,467 @@ inline void unpackCootDataFile(const std::string &fileName, bool doUnzip, const 
 }
 
 std::pair<std::string,std::string> SmallMoleculeCifToMMCif(const std::string &small_molecule_cif);
+
+/*
+
+// -------------------------------------
+// Main function
+// -------------------------------------
+inline std::string getRibbonsMeshResidueMapping(
+    gemmi::Structure &st,
+    const emscripten::val &verts,
+    const emscripten::val &idxs)
+{
+    // -----------------------------
+    // Input conversion
+    // -----------------------------
+    std::vector<float> vec = convertJSArrayToNumberVector<float>(verts);
+    std::vector<unsigned> idx_vec = convertJSArrayToNumberVector<unsigned>(idxs);
+
+    const auto &model = st.models[0];
+    Json::Value root;
+
+    // -----------------------------
+    // Collect CA atoms
+    // -----------------------------
+    std::vector<std::pair<std::array<float,3>, std::string>> CAs;
+    CAs.reserve(1024);
+
+    for (const auto &chain : model.chains) {
+        for (const auto &residue : chain.residues) {
+            if (residue.entity_type != gemmi::EntityType::Polymer)
+                continue;
+
+            const auto &ca_atom = residue.find_atom("CA", '*');
+            if (!ca_atom) continue;
+
+            std::array<float,3> pos = {
+                (float)ca_atom->pos.x,
+                (float)ca_atom->pos.y,
+                (float)ca_atom->pos.z
+            };
+
+            std::string key = chain.name + "/" +
+                std::to_string(residue.seqid.num.value);
+
+            if (residue.seqid.icode != ' ')
+                key += "." + std::string(1, residue.seqid.icode);
+
+            CAs.emplace_back(pos, key);
+            root[key] = Json::Value(Json::arrayValue);
+        }
+    }
+
+    // -----------------------------
+    // Precompute vertices
+    // -----------------------------
+    size_t nVerts = vec.size() / 3;
+    std::vector<std::array<float,3>> vertices(nVerts);
+
+    for (size_t i = 0; i < nVerts; ++i) {
+        vertices[i] = {
+            vec[3*i], vec[3*i+1], vec[3*i+2]
+        };
+    }
+
+    // -------------------------------------
+    // SIMD segment batches (4 at a time)
+    // -------------------------------------
+    struct SegmentBatch {
+        v128_t x, y, z;
+        v128_t dx, dy, dz;
+        v128_t d2;
+        Json::Value* buckets[4];
+    };
+
+    std::vector<SegmentBatch> batches;
+    batches.reserve(CAs.size() / 4 + 1);
+
+    for (size_t i = 1; i < CAs.size(); i += 4) {
+
+        alignas(16) float x[4], y[4], z[4];
+        alignas(16) float dx[4], dy[4], dz[4];
+        alignas(16) float d2[4];
+        Json::Value* buckets[4];
+
+        for (int j = 0; j < 4; ++j) {
+            size_t idx = i + j;
+
+            if (idx >= CAs.size()) {
+                x[j]=y[j]=z[j]=0.f;
+                dx[j]=dy[j]=dz[j]=0.f;
+                d2[j]=1.f;
+                buckets[j]=nullptr;
+                continue;
+            }
+
+            const auto &a = CAs[idx-1].first;
+            const auto &b = CAs[idx].first;
+
+            float ddx = b[0] - a[0];
+            float ddy = b[1] - a[1];
+            float ddz = b[2] - a[2];
+            float dd2 = ddx*ddx + ddy*ddy + ddz*ddz;
+
+            x[j] = a[0];
+            y[j] = a[1];
+            z[j] = a[2];
+
+            dx[j] = ddx;
+            dy[j] = ddy;
+            dz[j] = ddz;
+            d2[j] = (dd2 < 1e-6f) ? 1.f : dd2;
+
+            buckets[j] = &root[CAs[idx].second];
+        }
+
+        SegmentBatch batch;
+        batch.x  = wasm_v128_load(x);
+        batch.y  = wasm_v128_load(y);
+        batch.z  = wasm_v128_load(z);
+        batch.dx = wasm_v128_load(dx);
+        batch.dy = wasm_v128_load(dy);
+        batch.dz = wasm_v128_load(dz);
+        batch.d2 = wasm_v128_load(d2);
+
+        for (int j=0;j<4;++j)
+            batch.buckets[j] = buckets[j];
+
+        batches.push_back(batch);
+    }
+
+    // -----------------------------
+    // Main loop (SIMD 4-segment)
+    // -----------------------------
+    for (size_t idx = 0; idx < idx_vec.size(); idx += 3) {
+
+        const auto &v0 = vertices[idx_vec[idx]];
+        const auto &v1 = vertices[idx_vec[idx+1]];
+        const auto &v2 = vertices[idx_vec[idx+2]];
+
+        for (const auto &batch : batches) {
+
+            // Broadcast v0
+            v128_t vx = wasm_f32x4_splat(v0[0]);
+            v128_t vy = wasm_f32x4_splat(v0[1]);
+            v128_t vz = wasm_f32x4_splat(v0[2]);
+
+            // AP
+            v128_t APx = wasm_f32x4_sub(vx, batch.x);
+            v128_t APy = wasm_f32x4_sub(vy, batch.y);
+            v128_t APz = wasm_f32x4_sub(vz, batch.z);
+
+            // Bounding check
+            v128_t limit = wasm_f32x4_splat(2.5f);
+
+            v128_t mask =
+                wasm_v128_or(
+                    wasm_v128_or(
+                        wasm_f32x4_gt(wasm_f32x4_abs(APx), limit),
+                        wasm_f32x4_gt(wasm_f32x4_abs(APy), limit)),
+                    wasm_f32x4_gt(wasm_f32x4_abs(APz), limit));
+
+            if (wasm_i32x4_all_true(mask))
+                continue;
+
+            // dot
+            v128_t dot =
+                wasm_f32x4_add(
+                    wasm_f32x4_add(
+                        wasm_f32x4_mul(APx, batch.dx),
+                        wasm_f32x4_mul(APy, batch.dy)),
+                    wasm_f32x4_mul(APz, batch.dz));
+
+            v128_t t = wasm_f32x4_div(dot, batch.d2);
+
+            // |t| >= 1
+            v128_t mask_t =
+                wasm_f32x4_ge(
+                    wasm_f32x4_abs(t),
+                    wasm_f32x4_splat(1.0f));
+
+            // distance²
+            v128_t len2 =
+                wasm_f32x4_add(
+                    wasm_f32x4_add(
+                        wasm_f32x4_mul(APx, APx),
+                        wasm_f32x4_mul(APy, APy)),
+                    wasm_f32x4_mul(APz, APz));
+
+            v128_t dist2 =
+                wasm_f32x4_sub(
+                    len2,
+                    wasm_f32x4_mul(
+                        wasm_f32x4_mul(t, t),
+                        batch.d2));
+
+            v128_t mask_d =
+                wasm_f32x4_ge(
+                    dist2,
+                    wasm_f32x4_splat(7.0f));
+
+            v128_t reject =
+                wasm_v128_or(mask, wasm_v128_or(mask_t, mask_d));
+
+            int bitmask = wasm_i32x4_bitmask(reject);
+
+            for (int lane = 0; lane < 4; ++lane) {
+                if (!(bitmask & (1 << lane))) {
+                    auto *bucket = batch.buckets[lane];
+                    if (!bucket) continue;
+
+                    bucket->append(idx_vec[idx]);
+                    bucket->append(idx_vec[idx+1]);
+                    bucket->append(idx_vec[idx+2]);
+                }
+            }
+        }
+    }
+
+    // -----------------------------
+    // Output JSON
+    // -----------------------------
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "";
+    return Json::writeString(builder, root);
+}
+*/
+
+inline std::string getRibbonsMeshResidueMapping(
+    gemmi::Structure &st,
+    const emscripten::val &verts,
+    const emscripten::val &idxs)
+{
+    // Convert input
+    std::vector<float> vec = convertJSArrayToNumberVector<float>(verts);
+    std::vector<unsigned> idx_vec = convertJSArrayToNumberVector<unsigned>(idxs);
+
+    const auto &model = st.models[0];
+
+    Json::Value root;
+
+    // -----------------------------
+    // Collect CA positions
+    // -----------------------------
+    std::vector<std::pair<std::array<float,3>, std::string>> CAs;
+    CAs.reserve(1024);
+
+    for (const auto &chain : model.chains) {
+        for (const auto &residue : chain.residues) {
+            if (residue.entity_type == gemmi::EntityType::Polymer) {
+
+                const auto &ca_atom = residue.find_atom("CA", '*');
+                if (!ca_atom)
+                    continue;
+
+                std::array<float,3> pos = {
+                    static_cast<float>(ca_atom->pos.x),
+                    static_cast<float>(ca_atom->pos.y),
+                    static_cast<float>(ca_atom->pos.z)
+                };
+
+                std::string key = chain.name + "/" +
+                                  std::to_string(residue.seqid.num.value);
+
+                if (residue.seqid.icode != ' ')
+                    key += "." + std::string(1, residue.seqid.icode);
+
+                CAs.emplace_back(pos, key);
+                root[key] = Json::Value(Json::arrayValue);
+            }
+        }
+    }
+
+    // -----------------------------
+    // Precompute vertices
+    // -----------------------------
+    const size_t nVerts = vec.size() / 3;
+    std::vector<std::array<float,3>> vertices(nVerts);
+
+    for (size_t i = 0; i < nVerts; ++i) {
+        vertices[i] = {
+            vec[3*i],
+            vec[3*i + 1],
+            vec[3*i + 2]
+        };
+    }
+
+    // -----------------------------
+    // Precompute CA segments
+    // -----------------------------
+    struct CASegment {
+        float x, y, z;
+        float dx, dy, dz;
+        float d2;
+        Json::Value* bucket;
+    };
+
+    std::vector<CASegment> segments;
+    segments.reserve(CAs.size());
+
+    for (size_t i = 1; i < CAs.size(); ++i) {
+        const auto &a = CAs[i-1].first;
+        const auto &b = CAs[i].first;
+
+        CASegment s;
+        s.x = a[0]; s.y = a[1]; s.z = a[2];
+        s.dx = b[0] - a[0];
+        s.dy = b[1] - a[1];
+        s.dz = b[2] - a[2];
+        s.d2 = s.dx*s.dx + s.dy*s.dy + s.dz*s.dz;
+
+        // Avoid division by zero
+        if (s.d2 < 1e-6f)
+            continue;
+
+        s.bucket = &root[CAs[i].second];
+
+        segments.push_back(s);
+    }
+
+    // -----------------------------
+    // Main loop (optimized)
+    // -----------------------------
+    for (size_t idx = 0; idx < idx_vec.size(); idx += 3) {
+
+        const auto &v0 = vertices[idx_vec[idx]];
+        const auto &v1 = vertices[idx_vec[idx+1]];
+        const auto &v2 = vertices[idx_vec[idx+2]];
+
+        for (const auto &s : segments) {
+
+            // Vector from CA0 → vertex
+            float AP0x = v0[0] - s.x;
+            float AP0y = v0[1] - s.y;
+            float AP0z = v0[2] - s.z;
+
+            // Fast reject first vertex
+            if (fabs(AP0x) > 2.5f || fabs(AP0y) > 2.5f || fabs(AP0z) > 2.5f)
+                continue;
+
+            float AP1x = v1[0] - s.x;
+            float AP1y = v1[1] - s.y;
+            float AP1z = v1[2] - s.z;
+
+            float AP2x = v2[0] - s.x;
+            float AP2y = v2[1] - s.y;
+            float AP2z = v2[2] - s.z;
+
+            // Bounding reject
+            if (fabs(AP1x) > 2.5f || fabs(AP1y) > 2.5f || fabs(AP1z) > 2.5f ||
+                fabs(AP2x) > 2.5f || fabs(AP2y) > 2.5f || fabs(AP2z) > 2.5f)
+                continue;
+
+            // Projection onto CA segment
+            float dot0 = AP0x*s.dx + AP0y*s.dy + AP0z*s.dz;
+            float dot1 = AP1x*s.dx + AP1y*s.dy + AP1z*s.dz;
+            float dot2 = AP2x*s.dx + AP2y*s.dy + AP2z*s.dz;
+
+            float t0 = dot0 / s.d2;
+            float t1 = dot1 / s.d2;
+            float t2 = dot2 / s.d2;
+
+            // Reject outside segment
+            if (fabs(t0) >= 1.f || fabs(t1) >= 1.f || fabs(t2) >= 1.f)
+                continue;
+
+            // Distance from axis
+            float d0 = (AP0x*AP0x + AP0y*AP0y + AP0z*AP0z) - t0*t0*s.d2;
+            float d1 = (AP1x*AP1x + AP1y*AP1y + AP1z*AP1z) - t1*t1*s.d2;
+            float d2 = (AP2x*AP2x + AP2y*AP2y + AP2z*AP2z) - t2*t2*s.d2;
+
+            if (d0 < 7.f && d1 < 7.f && d2 < 7.f) {
+                s.bucket->append(idx_vec[idx]);
+                s.bucket->append(idx_vec[idx+1]);
+                s.bucket->append(idx_vec[idx+2]);
+            }
+        }
+    }
+
+    // -----------------------------
+    // JSON output
+    // -----------------------------
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "";
+    return Json::writeString(builder, root);
+}
+
+/*
+inline std::string getRibbonsMeshResidueMapping(gemmi::Structure &st, const emscripten::val &verts, const emscripten::val &idxs){
+
+    std::vector<float> vec = convertJSArrayToNumberVector<float>(verts);
+    std::vector<unsigned> idx_vec = convertJSArrayToNumberVector<unsigned>(idxs);
+
+    const auto &model = st.models[0];
+
+    Json::Value root;
+
+    std::vector<std::pair<std::array<float,3>,std::string>> CAs;
+
+    for(const auto &chain : model.chains){
+        for(const auto &residue : chain.residues){
+            if(residue.entity_type == gemmi::EntityType::Polymer){
+                const auto &ca_atom = residue.find_atom("CA",'*');
+                if(ca_atom){
+                    auto resNum = std::to_string(residue.seqid.num.value);
+                    std::array<float,3> pos = std::array<float,3>{static_cast<float>(ca_atom->pos.x),static_cast<float>(ca_atom->pos.y),static_cast<float>(ca_atom->pos.z)};
+                    std::pair<std::array<float,3>,std::string> thePair;
+                    thePair.first = pos;
+                    thePair.second = chain.name+std::string("/")+resNum;
+                    if(residue.seqid.icode!=' ')
+                        thePair.second += std::string(".") += std::string{residue.seqid.icode};
+                    CAs.push_back(thePair);
+                    Json::Value triangles_json;
+                    root[thePair.second] = triangles_json;
+                }
+            }
+        }
+    }
+
+    for(unsigned idx=0; idx<idx_vec.size(); idx+=3){
+        const auto &idx0 = idx_vec[idx];
+        const auto &idx1 = idx_vec[idx+1];
+        const auto &idx2 = idx_vec[idx+2];
+        std::array<float,3> v0 = {vec[3*idx0],vec[3*idx0+1],vec[3*idx0+2]};
+        std::array<float,3> v1 = {vec[3*idx1],vec[3*idx1+1],vec[3*idx1+2]};
+        std::array<float,3> v2 = {vec[3*idx2],vec[3*idx2+1],vec[3*idx2+2]};
+        for(unsigned iCA=1; iCA<CAs.size(); iCA++){
+            const auto &CA0 = CAs[iCA-1].first;
+            const auto &CA1 = CAs[iCA].first;
+            const std::array<float,3> CADiff = {CA1[0]-CA0[0],CA1[1]-CA0[1],CA1[2]-CA0[2]};
+            const std::array<float,3> AP0 = {v0[0]-CA0[0],v0[1]-CA0[1],v0[2]-CA0[2]};
+            const std::array<float,3> AP1 = {v1[0]-CA0[0],v1[1]-CA0[1],v1[2]-CA0[2]};
+            const std::array<float,3> AP2 = {v2[0]-CA0[0],v2[1]-CA0[1],v2[2]-CA0[2]};
+            if(!isnan(AP0[0])&&!isnan(AP0[1])&&!isnan(AP0[2])&&!isnan(AP1[0])&&!isnan(AP1[1])&&!isnan(AP0[2])&&!isnan(AP1[0])&&!isnan(AP1[1])&&!isnan(AP0[2])){
+                if(abs(AP0[0])>2.5||abs(AP0[1])>2.5||abs(AP0[2])>2.5||abs(AP1[0])>2.5||abs(AP1[1])>2.5||abs(AP1[2])>2.5||abs(AP2[0])>2.5||abs(AP2[1])>2.5||abs(AP2[2])>2.5) continue;
+                const auto CADiffDotCADiff = CADiff[0] * CADiff[0] + CADiff[1] * CADiff[1] + CADiff[2] * CADiff[2];
+                const auto AP0DotAP0 = AP0[0] * AP0[0] + AP0[1] * AP0[1] + AP0[2] * AP0[2];
+                const auto AP1DotAP1 = AP1[0] * AP1[0] + AP1[1] * AP1[1] + AP1[2] * AP1[2];
+                const auto AP2DotAP2 = AP2[0] * AP2[0] + AP2[1] * AP2[1] + AP2[2] * AP2[2];
+                const auto t0 = (AP0[0] * CADiff[0] + AP0[1] * CADiff[1] + AP0[2] * CADiff[2]) / (CADiffDotCADiff);
+                const auto t1 = (AP1[0] * CADiff[0] + AP1[1] * CADiff[1] + AP1[2] * CADiff[2]) / (CADiffDotCADiff);
+                const auto t2 = (AP2[0] * CADiff[0] + AP2[1] * CADiff[1] + AP2[2] * CADiff[2]) / (CADiffDotCADiff);
+                const auto dsquared0 = AP0DotAP0 - t0 * t0 * CADiffDotCADiff;
+                const auto dsquared1 = AP1DotAP1 - t1 * t1 * CADiffDotCADiff;
+                const auto dsquared2 = AP2DotAP2 - t2 * t2 * CADiffDotCADiff;
+                if(dsquared0<7.0&&dsquared1<7.0&dsquared2<7.0){
+                    if(abs(t0)<1.0&&abs(t1)<1.0&&abs(t2)<1.0){
+                        root[CAs[iCA].second].append(idx0);
+                        root[CAs[iCA].second].append(idx1);
+                        root[CAs[iCA].second].append(idx2);
+                    }
+                }
+            }
+        }
+    }
+
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = ""; // If you want whitespace-less output
+    const std::string json_string = Json::writeString(builder, root);
+
+    return json_string;
+}
+*/
 
 inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
 

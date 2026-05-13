@@ -44,10 +44,10 @@ export const windowCootCCP4Loader = (src: string) => {
                 /* eslint-disable no-undef */
                 createCoot64Module({
                     print(t) {
-                        console.debug(["output", t]);
+                        console.debug(t);
                     },
                     printErr(t) {
-                        console.error(["output", t]);
+                        console.error(t);
                     },
                 })
                     .then(onModuleLoaded)

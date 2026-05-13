@@ -1291,6 +1291,29 @@ export class MoleculeRepresentation {
             resultBufferObjects = ribbonBufferObjects;
         }
 
+        if(this.parentMolecule&&this.parentMolecule.gemmiStructure){
+            const structure = window.CCP4Module.cloneGemmiStructureWithTrimmedAtomNames(this.parentMolecule.gemmiStructure)
+            //This will only makes sense for Ribbons at the moment.
+            console.log("########################################")
+            console.log("########################################")
+            console.log(this.parentMolecule.gemmiStructure)
+            console.log(resultBufferObjects)
+            resultBufferObjects.forEach(buffer => {
+                for(let ibuf=0; ibuf<buffer.vert_tri.length; ibuf++){
+                    console.log(buffer.vert_tri[ibuf])
+                    const t1 = performance.now()
+                    const meshResidueMapping = window.cootModule.getRibbonsMeshResidueMapping(
+                        structure,
+                        buffer.vert_tri[ibuf][0], buffer.idx_tri[ibuf][0]
+                    )
+                    //console.log(meshResidueMapping)
+                    console.log("Time to do getRibbonsMeshResidueMapping",performance.now()-t1)
+                }
+            })
+            console.log("########################################")
+            console.log("########################################")
+        }
+
         return resultBufferObjects;
     }
 

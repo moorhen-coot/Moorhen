@@ -704,6 +704,66 @@ export const getCone = (cylinder_accu: number): [number[], number[], number[]] =
     return [thisPos, thisNorm, thisIdxs];
 };
 
+export const getPyramid = (): [number[], number[], number[]] => {
+    return getCone(4)
+}
+
+export const getTetrahedron = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getCube = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getOctahedron = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getDodecahedron = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getIcosahedron = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getBuckyBall = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getSphere = (): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
+export const getTorus = (accu: number): [number[], number[], number[]] => {
+    const thisPos = [];
+    const thisNorm = [];
+    const thisIdxs = [];
+    return [thisPos, thisNorm, thisIdxs];
+}
+
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
     const thisPos = [];
     const thisNorm = [];
