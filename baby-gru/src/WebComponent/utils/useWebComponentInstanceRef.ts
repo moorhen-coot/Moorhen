@@ -9,7 +9,7 @@ import { MoorhenWebComponent } from "../MoorhenWebComponent";
  * @param elementID
  * @returns A ref object containing the MoorhenInstance once Moorhen is ready.
  */
-export const useWebComponentInstanceRef = (elementID: string) => {
+export const useWebComponentInstanceRef = (elementID: string): [boolean, React.RefObject<MoorhenInstance>] => {
     const instanceRef = useRef<MoorhenInstance | null>(null);
     const [isReady, setInstanceReady] = useState(false);
 
@@ -25,5 +25,5 @@ export const useWebComponentInstanceRef = (elementID: string) => {
         getInstance();
     }, []);
 
-    return { isReady, instanceRef };
+    return [isReady, instanceRef];
 };
