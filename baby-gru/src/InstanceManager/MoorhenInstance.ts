@@ -278,7 +278,8 @@ export class MoorhenInstance extends StoreExtension {
         const dispatch = this.dispatch;
 
         return {
-            loadSessionData(sessionData: backupSession, fetchExternalUrl: (uniqueId: string) => Promise<string>): Promise<number> {
+            loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
+                timecapsuleRef.current?.setBusy(true);
                 const result = MoorhenTimeCapsule.loadSessionData(
                     sessionData,
                     monomerLibraryPath,
@@ -290,6 +291,9 @@ export class MoorhenInstance extends StoreExtension {
                     dispatch,
                     fetchExternalUrl
                 );
+                result.finally(() => {
+                    timecapsuleRef.current?.setBusy(false);
+                });
                 return result;
             },
         };
