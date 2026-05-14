@@ -65,6 +65,11 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
+export type MenuItemActualCustomJSX = BaseMenuItem & {
+    type: "actualCustomJSX";
+    jsx: React.JSX.Element;
+};
+
 export type MenuItemSlider = BaseMenuItem & {
     type: "customJSX";
     jsx: (aeg0: any) => React.JSX.Element;
@@ -95,6 +100,7 @@ export type MenuItemType =
     | MenuItemSubMenu
     | MenuItemShowSidePanel
     | MenuItemDispatch
+    | MenuItemActualCustomJSX
     | Separator;
 
 export type SubMenu = {
