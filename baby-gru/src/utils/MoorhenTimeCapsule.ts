@@ -797,6 +797,7 @@ export class MoorhenTimeCapsule {
                 return -1;
             }
         }
+        timeCapsuleRef.current.setBusy(true);
 
         // Delete current scene
         molecules.forEach(molecule => {
@@ -1129,6 +1130,7 @@ export class MoorhenTimeCapsule {
             });
         }
 
+        timeCapsuleRef.current.setBusy(false);
         return 0;
     }
 
