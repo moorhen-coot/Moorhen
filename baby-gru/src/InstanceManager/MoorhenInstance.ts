@@ -197,7 +197,7 @@ export class MoorhenInstance extends StoreExtension {
                     filesArray = Array.from(files);
                 } else if (typeof files === "string") {
                     filesArray = [await getFileFromURL(files)];
-                } else if (typeof files[0] === "object" && "url" in files[0]) {
+                } else if (typeof files === "object" && "url" in files) {
                     filesArray = [
                         await getFileFromURL(
                             (files as { url: string | URL; filename: string }).url,
