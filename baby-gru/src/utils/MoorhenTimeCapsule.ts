@@ -216,47 +216,6 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: Store;
     onIsBusyChange: (arg0: boolean) => void;
-    getBackupLabel: (key: backupKey) => string;
-    loadSessionData: (
-        sessionData: backupSession,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromArrayBuffer: (
-        sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromProtoMessage: (
-        sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromJsonString: (
-        sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,

@@ -10,7 +10,7 @@ import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
-import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { MoorhenTimeCapsule, backupSession } from "@/utils/MoorhenTimeCapsule";
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
@@ -268,6 +268,33 @@ export class MoorhenInstance extends StoreExtension {
         };
     }
 
+    public get session() {
+        const commandCentreRef = this.commandCentreRef;
+        const monomerLibraryPath = this.paths.monomerLibraryPath;
+        const moleculesList = this.getMoleculeList();
+        const mapsList = this.getMapList();
+        const timecapsuleRef = this.timeCapsuleRef;
+        const store = this.store;
+        const dispatch = this.dispatch;
+
+        return {
+            loadSessionData(sessionData: backupSession, fetchExternalUrl: (uniqueId: string) => Promise<string>): Promise<number> {
+                const result = MoorhenTimeCapsule.loadSessionData(
+                    sessionData,
+                    monomerLibraryPath,
+                    moleculesList,
+                    mapsList,
+                    commandCentreRef,
+                    timecapsuleRef,
+                    store,
+                    dispatch,
+                    fetchExternalUrl
+                );
+                return result;
+            },
+        };
+    }
+
     //========================================
     // General basics methods
 
@@ -275,6 +302,16 @@ export class MoorhenInstance extends StoreExtension {
     public getMolecule(uid: string): MoorhenMolecule {
         const state = this.store.getState();
         return state.molecules.moleculeList.filter(molecule => molecule.uniqueId === uid)[0];
+    }
+
+    public getMoleculeList(): MoorhenMolecule[] {
+        const state = this.store.getState();
+        return state.molecules.moleculeList;
+    }
+
+    public getMapList(): MoorhenMap[] {
+        const state = this.store.getState();
+        return state.maps;
     }
 
     /** Return the MoorhenMap Object corresponding to the given unique ID */
