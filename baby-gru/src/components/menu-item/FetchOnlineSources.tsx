@@ -82,14 +82,9 @@ export const FetchOnlineSources = () => {
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
         if (pdbCode && fetchExtra) {
-            // Promise.all([
-            //     fetchMoleculeFromURL(coordUrl, pdbCode),
-            //     fetchMapFromURL(mapUrl, `${pdbCode}-map`),
-            //     fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true),
-            // ]);
-            moorhenInstance.files.loadFiles([coordUrl, mapUrl, diffMapUrl]);
+            moorhenInstance.files.loadFiles([coordUrl, mapUrl, diffMapUrl], "PDBe");
         } else if (pdbCode) {
-            moorhenInstance.files.loadFiles(coordUrl);
+            moorhenInstance.files.loadFiles(coordUrl, "PDBe");
         }
     };
 

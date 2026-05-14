@@ -25,6 +25,7 @@ export type LoadFilesResult = {
 }[];
 
 export class MoorhenInstance extends StoreExtension {
+    private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
@@ -163,7 +164,7 @@ export class MoorhenInstance extends StoreExtension {
         const paths = this.paths;
         const timeCapsuleRef = this.timeCapsuleRef;
         const execWhenReady = this.execWhenReady.bind(this);
-        const _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
+        const filesLoadedCallbacks = this._filesLoadedCallbacks;
 
         return {
             async loadFiles(
@@ -234,7 +235,7 @@ export class MoorhenInstance extends StoreExtension {
                     )
                 );
 
-                for (const callbacks of Object.values(_filesLoadedCallbacks)) {
+                for (const callbacks of Object.values(filesLoadedCallbacks)) {
                     callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
                 }
                 return createdObjects as LoadFilesResult;
@@ -259,9 +260,9 @@ export class MoorhenInstance extends StoreExtension {
 
             newFilesLoadedCallback(callback: (filesLoaded: LoadFilesResult, origin: string) => void): () => void {
                 const callbackUID = guid();
-                _filesLoadedCallbacks[callbackUID] = { callback: callback };
+                filesLoadedCallbacks[callbackUID] = { callback: callback };
                 return () => {
-                    delete _filesLoadedCallbacks[callbackUID];
+                    delete filesLoadedCallbacks[callbackUID];
                 };
             },
         };
