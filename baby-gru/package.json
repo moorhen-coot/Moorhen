@@ -58,7 +58,7 @@
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "setup-gemmi-dist": "mkdir -p dist/gemmi && cp public/MoorhenAssets/wasm/gemmi.js dist/gemmi/ && cp public/MoorhenAssets/wasm/gemmi.wasm dist/gemmi/ && cp src/types/gemmi-standalone.d.ts dist/gemmi/index.d.ts && echo 'module.exports = require(\"./gemmi.js\");' > dist/gemmi/index.js",
-        "emit-declarations": "npx tsc  --emitDeclarationOnly; npx tsc-alias; sed -i 's|import(\"\\.\\./|import(\"./src/|g' dist/types/moorhen.d.ts",
+        "emit-declarations": "npx tsc  --emitDeclarationOnly; npx tsc-alias; sed -i.bak 's|import(\"\\.\\./|import(\"./src/|g' dist/types/moorhen.d.ts",
         "build-webcomponent": "webpack --config webpack.webcomponent.config.js --mode production --devtool source-map",
         "build-webcomponent-dev": "webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map",
         "build-utils": "webpack --config webpack.utils.config.js --mode production ",
