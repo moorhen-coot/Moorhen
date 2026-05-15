@@ -136,7 +136,7 @@ export class MoorhenWebComponent extends HTMLElement {
                     moorhenInstanceRef={this._moorhenInstanceRef}
                     size={this.size ?? undefined}
                     urlPrefix={this.urlPrefix}
-                    webComponentMode={false}
+                    webComponentMode={true}
                     disableFileUploads={this.disableFileUploads}
                     viewOnly={this.viewOnly}
                 />
@@ -147,27 +147,27 @@ export class MoorhenWebComponent extends HTMLElement {
     public connectedCallback() {
         // shadow context
         const rootElement = document.createElement("div");
-        this.appendChild(rootElement); // comment this out  and uncomment the following to use shadow DOM instead of light DOM
+        // this.appendChild(rootElement); // comment this out  and uncomment the following to use shadow DOM instead of light DOM
         // also set webComponentMode to true in MoorhenContainer props
 
-        // const shadow = this.attachShadow({ mode: "open" });
-        // shadow.appendChild(rootElement);
+        const shadow = this.attachShadow({ mode: "open" });
+        shadow.appendChild(rootElement);
 
-        // const loadStylesheets = async () => {
-        //     const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-        //     const moorhenCss = await moorhenRes.text();
+        const loadStylesheets = async () => {
+            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
+            const moorhenCss = await moorhenRes.text();
 
-        //     if ("adoptedStyleSheets" in shadow) {
-        //         const moorhenSheet = new CSSStyleSheet();
-        //         moorhenSheet.replaceSync(moorhenCss);
-        //         shadow.adoptedStyleSheets = [moorhenSheet];
-        //     } else {
-        //         const moorhenStyle = document.createElement("style");
-        //         moorhenStyle.textContent = moorhenCss;
-        //         (shadow as ShadowRoot).appendChild(moorhenStyle);
-        //     }
-        // };
-        // loadStylesheets();
+            if ("adoptedStyleSheets" in shadow) {
+                const moorhenSheet = new CSSStyleSheet();
+                moorhenSheet.replaceSync(moorhenCss);
+                shadow.adoptedStyleSheets = [moorhenSheet];
+            } else {
+                const moorhenStyle = document.createElement("style");
+                moorhenStyle.textContent = moorhenCss;
+                (shadow as ShadowRoot).appendChild(moorhenStyle);
+            }
+        };
+        loadStylesheets();
 
         this._root = createRoot(rootElement);
         this._renderReactTree();
@@ -189,16 +189,16 @@ export class MoorhenWebComponent extends HTMLElement {
 
 /**
  * Registers the Moorhen web component for use in the DOM.
- * 
+ *
  * This function must be called before using the web component, typically in the main entry point of your app (e.g. index.tsx).
- * 
+ *
  * @example
  * // Call to register the web component
  * registerMoorhenWebComponent();
- * 
+ *
  * // Then use the web component in your HTML
  * <moorhen-web-component width="800" height="600" />
- * 
+ *
  * @example
  * // For TypeScript React apps, add this type declaration:
  * declare module "react" {
@@ -222,5 +222,3 @@ export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTML
     "disable-file-uploads"?: boolean;
     "view-only"?: boolean;
 }
-
-
