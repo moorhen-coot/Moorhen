@@ -1,12 +1,4 @@
 import {
-    CenterFocusStrongOutlined,
-    DownloadOutlined,
-    ExpandMoreOutlined,
-    HelpOutlined,
-    RadioButtonCheckedOutlined,
-    RadioButtonUncheckedOutlined,
-} from "@mui/icons-material";
-import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
@@ -220,8 +212,8 @@ export const MoorhenLigandCard = (props: {
                                 link.download = ligand.resName + "_ligand.svg";
                                 link.click();
                             }}
+                            icon="MatSymFileDownload"
                         >
-                            <DownloadOutlined />
                             Download image (svg)
                         </MoorhenButton>
                     )}
@@ -232,8 +224,8 @@ export const MoorhenLigandCard = (props: {
                     })}
                 </MoorhenStack>
                 {ligand.chem_comp_info?.length > 0 && (
-                    <MoorhenButton variant="secondary" onClick={() => setShowInfoTable(prev => !prev)}>
-                        <HelpOutlined style={{ marginRight: "0.5rem" }} />
+                    <MoorhenButton variant="secondary" onClick={() => setShowInfoTable(prev => !prev)} icon="MatSymHelp">
+                        
                         Show info
                     </MoorhenButton>
                 )}
@@ -285,8 +277,8 @@ export const MoorhenLigandCard = (props: {
                                 link.download = ligand.resName + "_flev.svg";
                                 link.click();
                             }}
+                            icon="MatSymFileDownload"
                         >
-                            <DownloadOutlined />
                             Download image (svg)
                         </MoorhenButton>
                     </MoorhenPopoverButton>

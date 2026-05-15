@@ -44,5 +44,5 @@
         "**/src/moorhen.tsx": true
     },
     "html.autoClosingTags": false,
-    "js/ts.autoClosingTags.enabled": false
+    "js/ts.autoClosingTags.enabled": false,
 }

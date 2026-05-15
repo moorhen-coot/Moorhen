@@ -1,4 +1,3 @@
-import { GrainOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
@@ -10,20 +9,11 @@ import { addCustomRepresentation, removeCustomRepresentation } from "../../../st
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import { MoorhenNumberInput } from "../../inputs";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
-import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS,} from "../../../utils/enums";
+import { getMultiColourRuleArgs, } from "../../../utils/utils";
+import { MoorhenButton,MoorhenSelect,  MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
-import { NcsColourSwatch } from "./ColourRuleCard";
-import {
-    BondSettingsPanel,
-    MolSurfSettingsPanel,
-    ResidueEnvironmentSettingsPanel,
-    RibbonSettingsPanel,
-} from "./MoleculeRepresentationSettingsCard";
 
 export const PictureWizardCard = memo(
     (props: {

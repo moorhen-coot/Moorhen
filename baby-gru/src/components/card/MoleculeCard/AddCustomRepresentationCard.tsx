@@ -1,4 +1,3 @@
-import { GrainOutlined } from "@mui/icons-material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
@@ -23,6 +22,7 @@ import {
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
 } from "./MoleculeRepresentationSettingsCard";
+import { MoorhenIcon } from "@/components/icons";
 
 export const AddCustomRepresentationCard = memo(
     (props: {
@@ -765,17 +765,7 @@ export const AddCustomRepresentationCard = memo(
                                         applyColourChange={applyNcsColourChange}
                                     />
                                 ) : (
-                                    <GrainOutlined
-                                        style={{
-                                            height: "30px",
-                                            width: "30px",
-                                            padding: 0,
-                                            borderStyle: "solid",
-                                            borderColor: "#ced4da",
-                                            borderWidth: "3px",
-                                            borderRadius: "8px",
-                                        }}
-                                    />
+                                    <MoorhenIcon moorhenSVG="MatSymGrain" size="large"/>
                                 )
                             ) : colourMode === "custom" ? (
                                 <MoorhenColourPicker

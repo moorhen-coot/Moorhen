@@ -1,4 +1,3 @@
-import { SaveOutlined } from "@mui/icons-material";
 import { Step, StepButton, StepLabel, Stepper } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useState } from "react";
@@ -8,6 +7,7 @@ import type { HistoryEntry } from "../../utils/MoorhenHistory";
 import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
+import { RootState } from "../../store";
 
 export const MoorhenHistoryMenu = () => {
     const [historyHead, setHistoryHead] = useState(0);
@@ -15,10 +15,10 @@ export const MoorhenHistoryMenu = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
 
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const maps = useSelector((state: moorhen.State) => state.maps);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const height = useSelector((state: RootState) => state.sceneSettings.height);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const maps = useSelector((state: RootState) => state.maps);
+    const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
@@ -85,7 +85,7 @@ export const MoorhenHistoryMenu = () => {
                                             padding: "0.5rem",
                                         }}
                                     >
-                                        <SaveOutlined />
+                                        save icon
                                     </div>
                                 )}
                             </MoorhenStack>
