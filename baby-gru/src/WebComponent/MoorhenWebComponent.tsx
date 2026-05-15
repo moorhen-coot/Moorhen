@@ -8,13 +8,18 @@ export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
     private _moorhenInstance: MoorhenInstance | null = null;
     private _ready: boolean = false;
-    private _root: ReturnType<typeof createRoot> | null = null;
+    private _rootElement: HTMLDivElement;
+    private _reactRoot: ReturnType<typeof createRoot> | null = null;
+    
 
     public onInit: (() => void) | null = null;
 
     constructor() {
         super();
         this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+        this._rootElement = document.createElement("div");
+        const shadow = this.attachShadow({ mode: "open" });
+        shadow.appendChild(this._rootElement);
     }
 
     public getMoorhenInstance(): Promise<MoorhenInstance> {
@@ -123,14 +128,14 @@ export class MoorhenWebComponent extends HTMLElement {
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
-        if (this._root) {
+        if (this._reactRoot) {
             this._renderReactTree();
         }
     }
 
     private _renderReactTree() {
-        if (!this._root) return;
-        this._root.render(
+        if (!this._reactRoot) return;
+        this._reactRoot.render(
             <MoorhenProvider>
                 <MoorhenContainer
                     moorhenInstanceRef={this._moorhenInstanceRef}
@@ -144,16 +149,8 @@ export class MoorhenWebComponent extends HTMLElement {
         );
     }
 
-    public connectedCallback() {
-        // shadow context
-        const rootElement = document.createElement("div");
-        // this.appendChild(rootElement); // comment this out  and uncomment the following to use shadow DOM instead of light DOM
-        // also set webComponentMode to true in MoorhenContainer props
-
-        const shadow = this.attachShadow({ mode: "open" });
-        shadow.appendChild(rootElement);
-
-        const loadStylesheets = async () => {
+    private async loadStylesheets()  {
+            const shadow = this.shadowRoot!;
             const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
             const moorhenCss = await moorhenRes.text();
 
@@ -167,11 +164,14 @@ export class MoorhenWebComponent extends HTMLElement {
                 (shadow as ShadowRoot).appendChild(moorhenStyle);
             }
         };
-        loadStylesheets();
 
-        this._root = createRoot(rootElement);
+    public async connectedCallback() {
+
+        await this.loadStylesheets();
+
+        if (!this._reactRoot) {
+        this._reactRoot = createRoot(this._rootElement);
         this._renderReactTree();
-
         const checkRefsReady = () => {
             if (this._moorhenInstanceRef?.current?.isReady()) {
                 clearInterval(refCheckInterval);
@@ -185,6 +185,9 @@ export class MoorhenWebComponent extends HTMLElement {
         };
         const refCheckInterval = setInterval(checkRefsReady, 50);
     }
+    else {
+        this._renderReactTree();
+    }}
 }
 
 /**

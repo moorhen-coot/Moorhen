@@ -60,6 +60,7 @@
         "transpile-ts-worker-jest": "npx tsc --ignoreConfig --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/MoorhenAssets/wasm//CootWorker.js && sed -i.bak '/importScripts.*;/d' public/MoorhenAssets/wasm/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "start": "vite --config vite.config.mts",
+        "start:webcomponent": "vite --config vite.WebC.config.mts",
         "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "build-vite": "vite build",
         "lint": "eslint src/",
