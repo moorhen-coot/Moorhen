@@ -10,6 +10,7 @@ export class MoorhenWebComponent extends HTMLElement {
     private _ready: boolean = false;
     private _rootElement: HTMLDivElement;
     private _reactRoot: ReturnType<typeof createRoot> | null = null;
+    private _parentElementRef: React.RefObject<HTMLElement | null>;
     
 
     public onInit: (() => void) | null = null;
@@ -19,7 +20,14 @@ export class MoorhenWebComponent extends HTMLElement {
         this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
         this._rootElement = document.createElement("div");
         const shadow = this.attachShadow({ mode: "open" });
+        if (!this.style.display) this.style.display = "block";
+        if (!this.style.width) this.style.width = "100%";
+        // if (!this.style.height) this.style.height = "100%";
+        if (!this.style.flex) this.style.flex = "1 1 auto";
         shadow.appendChild(this._rootElement);
+        this._parentElementRef = React.createRef<HTMLElement | null>();
+        this._parentElementRef.current = this;
+
     }
 
     public getMoorhenInstance(): Promise<MoorhenInstance> {
@@ -133,6 +141,8 @@ export class MoorhenWebComponent extends HTMLElement {
         }
     }
 
+    
+
     private _renderReactTree() {
         if (!this._reactRoot) return;
         this._reactRoot.render(
@@ -144,6 +154,7 @@ export class MoorhenWebComponent extends HTMLElement {
                     webComponentMode={true}
                     disableFileUploads={this.disableFileUploads}
                     viewOnly={this.viewOnly}
+                    parentElementRef={this._parentElementRef}
                 />
             </MoorhenProvider>
         );

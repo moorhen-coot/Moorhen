@@ -1,14 +1,44 @@
 <!DOCTYPE html>
-    </head>
-    <body>
-        <main>
-        Moorhen WebComponent test page
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        html,
+        body,
+        main {
+            height: 100%;
+            margin: 0;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0rem;
+            box-sizing: border-box;
+            gap: 0.5rem;
+        }
+
+        .intro {
+            flex: 0 0 auto;
+        }
+
+    </style>
+</head>
+<body>
+    <main>
         <script type="module">
-        import { registerMoorhenWebComponent } from "./src/WebComponent/entry";
-        registerMoorhenWebComponent();
+            import { registerMoorhenWebComponent } from "./src/WebComponent/entry";
+            registerMoorhenWebComponent();
         </script>
 
-            <moorhen-web-component id="moorhen-test"></moorhen-web-component>
-        </main>
-    </body>
+        <div class="intro">
+            <h1>Moorhen Web Component Test</h1>
+            <p>This page is for testing the Moorhen Web Component in isolation.</p>
+        </div>
+        <moorhen-web-component id="moorhen-test"></moorhen-web-component>
+    </main>
+</body>
+
 </html>
