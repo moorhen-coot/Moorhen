@@ -275,8 +275,7 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        //const $this = this likely not needed here
+    loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
         const reflectionData = await source.arrayBuffer();
         const asUIntArray = new Uint8Array(reflectionData);
         await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns);

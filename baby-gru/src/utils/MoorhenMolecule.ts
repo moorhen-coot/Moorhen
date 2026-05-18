@@ -1467,11 +1467,13 @@ export class MoorhenMolecule {
         // Check if the first argument is a MoleculeRepresentation instance
         if (styleOrRepresentation instanceof MoleculeRepresentation) {
             representation = styleOrRepresentation;
+            representation.setParentMolecule(this);
         } else {
             // Create a new representation from individual parameters
             const style = styleOrRepresentation as moorhen.RepresentationStyles;
             representation = new MoleculeRepresentation(style, cid, this.commandCentre);
             representation.isCustom = isCustom;
+            representation.setParentMolecule(this);
             representation.setColourRules(colourRules);
             representation.setBondOptions(bondOptions);
             representation.setM2tParams(m2tParams);
@@ -1485,7 +1487,6 @@ export class MoorhenMolecule {
             representation.neighboursDistance = neighboursDistance;
         }
 
-        representation.setParentMolecule(this);
         await representation.draw();
         this.representations.push(representation);
         await this.drawSymmetry(false);

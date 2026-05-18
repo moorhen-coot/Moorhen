@@ -65,6 +65,11 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
+export type MenuItemHTMLSlot = BaseMenuItem & {
+    type: "HTMLslot";
+    slotName: string;
+};
+
 export type MenuItemSlider = BaseMenuItem & {
     type: "customJSX";
     jsx: (aeg0: any) => React.JSX.Element;
@@ -95,6 +100,7 @@ export type MenuItemType =
     | MenuItemSubMenu
     | MenuItemShowSidePanel
     | MenuItemDispatch
+    | MenuItemHTMLSlot
     | Separator;
 
 export type SubMenu = {
@@ -110,6 +116,7 @@ export const subMenuMap: SubMenuMap = {
     file: {
         label: "Files",
         items: [
+            { id: "slotTest", label: "slot test", type: "HTMLslot", slotName: "test-slot" },
             {
                 id: "auto-load",
                 label: "Auto load files",
