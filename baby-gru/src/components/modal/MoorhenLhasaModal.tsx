@@ -13,6 +13,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenSpinner } from "../icons";
 import { MoorhenDraggableModalBase, MoorhenStack } from "../interface-base";
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import "../../LhasaReact/src/index.scss";
 
 /// Internal wrapper for use in the scope of this file.
 const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: number }) => {

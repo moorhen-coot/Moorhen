@@ -22,8 +22,13 @@ export class MoorhenWebComponent extends HTMLElement {
         const shadow = this.attachShadow({ mode: "open" });
         if (!this.style.display) this.style.display = "block";
         if (!this.style.width) this.style.width = "100%";
-        // if (!this.style.height) this.style.height = "100%";
         if (!this.style.flex) this.style.flex = "1 1 auto";
+        if (!this.style.minHeight) this.style.minHeight = "0";
+        if (!this.style.minWidth) this.style.minWidth = "0";
+        this._rootElement.style.width = "100%";
+        this._rootElement.style.height = "100%";
+        this._rootElement.style.minHeight = "0";
+        this._rootElement.style.minWidth = "0";
         shadow.appendChild(this._rootElement);
         this._parentElementRef = React.createRef<HTMLElement | null>();
         this._parentElementRef.current = this;

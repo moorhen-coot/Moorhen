@@ -174,8 +174,9 @@ module.exports = (env, argv) => {
                 },
                 {
                     test: /\.s[ac]ss$/,
+                    sideEffects: true,
                     use: [
-                        "style-loader",
+                        MiniCssExtractPlugin.loader,
                         "css-loader",
                         {
                             loader: "sass-loader",

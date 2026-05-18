@@ -215,6 +215,27 @@ export const MoorhenContainer = (props: ContainerProps) => {
         setWindowDimensions();
     }, [setWindowDimensions]);
 
+    useLayoutEffect(() => {
+        if (props.size) {
+            return;
+        }
+
+        const parent = props.parentElementRef?.current;
+        if (!parent || typeof ResizeObserver === "undefined") {
+            return;
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            setWindowDimensions();
+        });
+
+        resizeObserver.observe(parent);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [props.size, props.parentElementRef, setWindowDimensions]);
+
     useWindowEventListener("resize", setWindowDimensions);
 
     // Style append to header at initialization
