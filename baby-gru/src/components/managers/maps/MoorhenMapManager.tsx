@@ -1,6 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useEffect, useMemo, useRef } from "react";
-import { MoorhenInstance, useMoorhenInstance } from "@/InstanceManager";
+import { useMoorhenInstance } from "@/InstanceManager";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
@@ -33,6 +33,10 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
         return map;
     });
+
+    if (!map) {
+        return null;
+    }
 
     const activeMapMolNo = useSelector((state: RootState) => {
         const activeMap = state.generalStates.activeMap;
@@ -74,7 +78,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     const mapContourLevel = useSelector((state: RootState) => {
         const mapContourItem = state.mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo);
-        return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
+        return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.003;
     });
 
     const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: RootState) => {
@@ -140,32 +144,27 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/
-        const intiliaseMap = async () => {
+        const intialiseMap = async () => {
             let mapRadius = map?.suggestedRadius * 1.2 || 15;
-            if (map?.isEM) {
-                const boundingSphere = await moorhenInstance.cootCommand.get_map_bounding_sphere(mapMolNo, map?.suggestedContourLevel);
-                const maxRadius = Math.max(map?.headerInfo.cell.a, map?.headerInfo.cell.b, map?.headerInfo.cell.c) / 2;
-                mapRadius = Math.min(boundingSphere.radius, maxRadius);
-                map.drawOrigin = boundingSphere.center;
-                console.log(`Map bounding sphere center: ${boundingSphere.center}, radius: ${boundingSphere.radius}`);
-            }
+
+            const storeContourLevel = store.getState().mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo)?.contourLevel;
 
             let contourLevel = 1;
-            if (map?.isEM) {
+            if (map.isEM) {
                 contourLevel = map?.isDifference ? 5 * map.mapRmsd : map?.suggestedContourLevel;
             } else {
                 contourLevel = map?.isDifference ? 3 * map.mapRmsd : 1 * map.mapRmsd;
             }
 
-            if (map?.showOnLoad) {
+            if (map.showOnLoad) {
                 dispatch(showMap(map));
                 dispatch(setMapRadius({ molNo: mapMolNo, radius: mapRadius }));
                 dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
-                dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: contourLevel }));
+                dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: storeContourLevel ?? contourLevel }));
                 dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
             }
         };
-        intiliaseMap();
+        intialiseMap();
     }, []);
 
     useEffect(() => {

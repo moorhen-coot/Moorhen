@@ -36,12 +36,15 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
     const debounceDelayMs = 25; // Adjust this value as needed
     const debounceRepeatTime = 50;
 
+    const mapOrigin = props.map.drawOrigin || props.map.mapCentre || [0, 0, 0];
     const distanceFromOrigin = Math.sqrt(
-        Math.pow(props.map.mapCentre[0] - origin[0], 2) +
-            Math.pow(props.map.mapCentre[1] - origin[1], 2) +
-            Math.pow(props.map.mapCentre[2] - origin[2], 2)
+        Math.pow(mapOrigin[0] - origin[0], 2) +
+            Math.pow(mapOrigin[1] - origin[1], 2) +
+            Math.pow(mapOrigin[2] - origin[2], 2)
     );
+    console.log
     const outOfMap = distanceFromOrigin > mapRadius - 8 * zoomLevel && props.map.isOriginLocked;
+    console.log("Distance from map origin:", distanceFromOrigin, "Map radius:", mapRadius, "Zoom level:", zoomLevel, "Out of map bounds:", outOfMap);
 
     const handleWheelContourLevel = useCallback(
         (evt: moorhen.WheelContourLevelEvent) => {
