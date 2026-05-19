@@ -69,6 +69,7 @@
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
 #include "coot-utils/coot-align.hh"
+#include "coot-utils/coot-coord-utils-gemmi.hh"
 
 #include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -588,6 +589,16 @@ class molecules_container_js : public molecules_container_t {
         std::string molecule_to_mmCIF_string_with_gemmi(int imol){
             mmdb::Manager *mol = get_mol(imol);
             auto st = gemmi::copy_from_mmdb(mol);
+            //* this remove mmdb atom padding, this shouldn't be usefull copy_from_mmdb should be fixed.
+            for (gemmi::Model& model : st.models) {
+                for (gemmi::Chain& chain : model.chains) {
+                    for (gemmi::Residue& residue : chain.residues) {
+                        for (gemmi::Atom& atom : residue.atoms) {
+                            atom.name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        }
+                    }
+                }
+            }
             std::ostringstream os;
             gemmi::cif::write_cif_to_stream(os, gemmi::make_mmcif_document(st));
             os.flush();
