@@ -305,15 +305,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const dropDownMenu: React.JSX.Element = (
         <MoorhenStack>
-            <MoorhenMenuItem
-                key={6}
-                onClick={() => {
-                    document.body.click();
-                    handleShowInfo();
-                }}
+            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%"}}
             >
-                Header info
-            </MoorhenMenuItem>
+                <MoorhenHeaderInfoCard molecule={props.molecule}/>
+            </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Rename Molecule">
                 <RenameDisplayObject key="rename" setCurrentName={handleRename} item={props.molecule} />
             </MoorhenMenuItemPopover>
@@ -604,12 +599,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}
                 {/* </div> */}
-                <MoorhenHeaderInfoCard
-                    anchorEl={cardHeaderDivRef}
-                    molecule={props.molecule}
-                    show={showHeaderInfo}
-                    setShow={setShowHeaderInfo}
-                />
                 <div>
                     {/* <MoorhenSequencesAccordion
                         setBusy={setBusyLoadingSequences}
