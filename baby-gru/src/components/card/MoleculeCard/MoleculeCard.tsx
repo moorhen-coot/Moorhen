@@ -305,7 +305,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const dropDownMenu: React.JSX.Element = (
         <MoorhenStack>
-            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%"}}
+            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto"}}
             >
                 <MoorhenHeaderInfoCard molecule={props.molecule}/>
             </MoorhenMenuItemPopover>

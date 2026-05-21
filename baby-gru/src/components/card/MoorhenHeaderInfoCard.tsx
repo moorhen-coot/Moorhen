@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { libcootApi } from "../../types/libcoot";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenSpinner } from "../icons";
 import { MoorhenGrid } from "../interface-base/Stack/Grid";
+import { MoorhenMolecule } from "@/utils";
 
-export const MoorhenHeaderInfoCard = (props: { molecule: moorhen.Molecule }) => {
+export const MoorhenHeaderInfoCard = (props: { molecule: MoorhenMolecule }) => {
     const [title, setTitle] = useState<string | null>(null);
     const [compoundLines, setCompoundLines] = useState<string[]>([]);
     const [authorJournal, setAuthorJournal] = useState<libcootApi.AuthorJournal[]>([]);
@@ -17,7 +16,6 @@ export const MoorhenHeaderInfoCard = (props: { molecule: moorhen.Molecule }) => 
             setAuthorJournal(headerInfo.author_journal);
             setCompoundLines(headerInfo.compound_lines);
             setBusy(false);
-            console.log(headerInfo.author_journal);
         };
         setBusy(true);
         fetchHeaderInfo();
@@ -39,53 +37,58 @@ export const MoorhenHeaderInfoCard = (props: { molecule: moorhen.Molecule }) => 
             const auth = item.author;
             const journ = item.journal;
 
-            const journal_stanza_this = journ.map((item, idx) => {
+
+            const journalItems = journ.flatMap((item, idx) => {
                 if (item.startsWith("pdbx_database_id_DOI") && item.split(/(?<=^\S+)\s/).length > 1) {
                     const doi = "https://doi.org/" + item.split(/(?<=^\S+)\s/)[1].trim();
-                    return (
-                        <p style={{ margin: 0 }} key={idx}>
-                            <a href={doi} target="_blank" rel="noopener noreferrer">
+                    return ([
+                        <div  key={idx}>DOI</div>,
+                            <a href={doi} target="_blank" rel="noopener noreferrer" key="DOI">
                                 {item}
                             </a>
-                        </p>
+                    ]
                     );
                 } else if (item.startsWith("pdbx_database_id_PubMed") && item.split(/(?<=^\S+)\s/).length > 1) {
                     const doi = "https://pubmed.ncbi.nlm.nih.gov/" + item.split(/(?<=^\S+)\s/)[1].trim();
-                    return (
-                        <p style={{ margin: 0 }} key={idx}>
-                            <a href={doi} target="_blank" rel="noopener noreferrer">
+                    return ([
+                        <div key={idx}>PubMed id</div>,
+                            <a href={doi} target="_blank" rel="noopener noreferrer" key={`pmid-${idx}`}>
                                 {item}
-                            </a>
-                        </p>
+                            </a>]
+                        
                     );
                 } else {
-                    return (
-                        <p style={{ margin: 0 }} key={idx}>
-                            {item}
-                        </p>
+                    const title = item.split(":")[0].trim();
+                    const content = item.split(":").slice(1).join(":").trim();
+                    return ([
+                        <div key={`title-${idx}`}>
+                            {title}
+                        </div>,
+                        <div key={`content-${idx}`}>
+                            {content}
+                        </div>]
                     );
                 }
             });
 
             let row_style = { backgroundColor: "rgba(233, 233, 233, 0.3)" };
             if (idx % 2 == 0) row_style = { backgroundColor: "white" };
-            return (
-                <>
-                        {journal_stanza_this}
-                </>
-            );
+            return journalItems
+
         });
+    console.log(auth_journal_stanza);
 
     let last_row_style = { backgroundColor: "rgba(233, 233, 233, 0.3)" };
     if (authorJournal.length % 2 == 0) last_row_style = { backgroundColor: "white" };
     return (
 
-        <MoorhenGrid columns={2} table >
+        <MoorhenGrid columns={2} table titleColumn>
             <div>Title</div>
             <div>{title}</div>
             <div>Authors</div>
             <div style={{textWrap: "balance"}}>{authorJournal.map(item => item.author).flat().join(", ")}</div>
-            <div>Primary Citation</div> <div>{auth_journal_stanza}</div>
+            <div>Primary Citation</div><div/>
+            {auth_journal_stanza}
             <div>Compound</div>
             <div>
                 {compoundLines.map((item, idx) => (
