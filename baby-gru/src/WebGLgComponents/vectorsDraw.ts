@@ -16,6 +16,9 @@ const get1LetterElementPaddedCid = (cid): string  => {
         newCid = cidSplit.join("/")+"/ "+atName + " "
     } else if(atName.length===3){
         newCid = cidSplit.join("/")+"/ "+atName
+    } else if(atName.length===4){
+        //Try unpadding ...
+        newCid = cidSplit.join("/")+"/"+atName.trim()
     }
     if(atNameAltSplit.length>1)
         newCid += ":"+atNameAltSplit[1]
@@ -33,6 +36,9 @@ const get2LetterElementPaddedCid = (cid): string  => {
         newCid = cidSplit.join("/")+"/"+atName + "  "
     } else if(atName.length===3){
         newCid = cidSplit.join("/")+"/"+atName + " "
+    } else if(atName.length===4){
+        //Try unpadding ...
+        newCid = cidSplit.join("/")+"/"+atName.trim()
     }
     if(atNameAltSplit.length>1)
         newCid += ":"+atNameAltSplit[1]
@@ -83,7 +89,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                         fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
                         nFromAtoms = fromAtoms.size()
                         if(nFromAtoms===0 && vec.cidFrom.length!==4){
-                            //Try 4-char padding
+                            //Try 4-char padding/unpadding
                             fromAtoms.delete()
                             const newCid = get1LetterElementPaddedCid(vec.cidFrom)
                             fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
@@ -128,7 +134,7 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                         toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
                         nToAtoms = toAtoms.size()
                         if(nToAtoms===0 && vec.cidTo.length!==4){
-                            //Try 4-char padding
+                            //Try 4-char padding/unpadding
                             toAtoms.delete()
                             const newCid = get1LetterElementPaddedCid(vec.cidTo)
                             toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
