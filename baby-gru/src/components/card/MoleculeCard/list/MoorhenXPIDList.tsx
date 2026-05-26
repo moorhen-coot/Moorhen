@@ -6,7 +6,7 @@ import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/in
 import { moorhen } from "../../../../types/moorhen";
 import { MoorhenToggle } from "@/components/inputs/MoorhenToggle/Toggle"
 import { addVectors, removeVectors, MoorhenVector } from "../../../../store/vectorsSlice";
-import { useMoorhenInstance } from "../../../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../../../InstanceManager";
 
 export interface MoorhenXPIDResult {
     H_atom : string
@@ -33,129 +33,43 @@ export interface MoorhenXPIDResult {
     theta : number
 }
 
-const XPID_MONOMER_ROOT = "data/ccp4_lib/data/monomers";
-const XPID_STANDARD_MONOMER_PROBE = `${XPID_MONOMER_ROOT}/p/PHE.cif`;
 const XPID_DEFAULT_VECTOR_RADIUS = 0.055;
 const XPID_DEFAULT_DASH_SPACING = 0.22;
 const XPID_ARROW_HEAD_LENGTH = 0.42;
 const XPID_ARROW_HEAD_RADIUS_SCALE = 2.2;
 const XPID_DISTANCE_LABEL_FONT_SIZE = 20;
-const XPID_DISTANCE_LABEL_SCREEN_OFFSET_X = 0.25;
+const XPID_DISTANCE_LABEL_SCREEN_OFFSET_DISTANCE = 0.12;
 const XPID_DISTANCE_DECIMALS = 2;
-let xpidCootDataPromise: Promise<void> | null = null;
 
-const wasmPathExists = (path: string) => {
-    try {
-        (window.CCP4Module as any).FS.stat(path);
-        return true;
-    } catch (_err) {
-        return false;
-    }
-};
-
-const ensureWasmDirectory = (dirPath: string) => {
-    const parts = dirPath.split("/").filter(part => part.length > 0);
-    let currentPath = "";
-    parts.forEach(part => {
-        currentPath = currentPath ? `${currentPath}/${part}` : part;
-        try {
-            (window.CCP4Module as any).FS.mkdir(currentPath);
-        } catch (_err) {
-            // Existing MEMFS directories throw; that is fine here.
-        }
-    });
-};
-
-const ensureXpidCootDataAvailable = async (urlPrefix: string) => {
-    if (wasmPathExists(XPID_STANDARD_MONOMER_PROBE)) return;
-    if (xpidCootDataPromise) return xpidCootDataPromise;
-
-    xpidCootDataPromise = (async () => {
-        const normalisedUrlPrefix = urlPrefix?.replace(/\/$/, "") || "/MoorhenAssets";
-        const response = await fetch(`${normalisedUrlPrefix}/data.tar.gz`);
-        if (!response.ok) {
-            throw new Error(`Unable to fetch Moorhen data archive from ${normalisedUrlPrefix}/data.tar.gz`);
-        }
-
-        const fileData = new Uint8Array(await response.arrayBuffer());
-        const doUnzip = fileData[0] === 0x1F && fileData[1] === 0x8B;
-        const tarFileName = doUnzip ? "data.tar.gz" : "data.tar";
-        const unzipName = doUnzip ? "data_tmp/data.tar" : "";
-
-        ensureWasmDirectory("data_tmp");
-        try {
-            window.CCP4Module.FS_unlink(`data_tmp/${tarFileName}`);
-        } catch (_err) {
-            // The archive is only cached transiently while unpacking.
-        }
-
-        window.CCP4Module.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
-        try {
-            (window.CCP4Module as any).unpackCootDataFile(`data_tmp/${tarFileName}`, doUnzip, unzipName, "");
-        } finally {
-            try {
-                window.CCP4Module.FS_unlink(`data_tmp/${tarFileName}`);
-            } catch (_err) {
-                // Unpacking may already have moved or removed the temporary file.
-            }
-        }
-
-        if (!wasmPathExists(XPID_STANDARD_MONOMER_PROBE)) {
-            console.warn(`XPID could not find ${XPID_STANDARD_MONOMER_PROBE} after unpacking Moorhen data.`);
-        }
-    })().catch(err => {
-        xpidCootDataPromise = null;
-        throw err;
-    });
-
-    return xpidCootDataPromise;
-};
-
-const cacheXpidMonomerDict = (compId: string, dictionary: string) => {
-    const upperCompId = compId.trim().toUpperCase();
-    if (!upperCompId || !dictionary) return;
-
-    const targetDir = `${XPID_MONOMER_ROOT}/${upperCompId[0].toLowerCase()}`;
-    const targetPath = `${targetDir}/${upperCompId}.cif`;
-    ensureWasmDirectory(targetDir);
-
-    try {
-        window.CCP4Module.FS_unlink(targetPath);
-    } catch (_err) {
-        // The dictionary may not have been cached before.
-    }
-    window.CCP4Module.FS_createDataFile(targetDir, `${upperCompId}.cif`, new TextEncoder().encode(dictionary), true, true);
-};
-
-const cacheXpidMoleculeDictionaries = async (molecule: moorhen.Molecule) => {
+const getXpidMoleculeDictionaries = async (molecule: moorhen.Molecule) => {
     try {
         await molecule.loadMissingMonomers();
     } catch (_err) {
-        // XPID can still run with the dictionaries already bundled in Moorhen.
+        // XPID can still run with the dictionaries already bundled in the worker.
     }
 
-    const cachedCompIds = new Set<string>();
-    Object.entries(molecule.ligandDicts ?? {}).forEach(([compId, dictionary]) => {
-        cachedCompIds.add(compId.toUpperCase());
-        cacheXpidMonomerDict(compId, dictionary);
-    });
-
+    const ligandDicts = { ...(molecule.ligandDicts ?? {}) };
     const ligandCompIds = [...new Set((molecule.ligands ?? [])
         .map(ligand => ligand.resName?.trim().toUpperCase())
         .filter((compId): compId is string => Boolean(compId)))];
 
     await Promise.all(ligandCompIds
-        .filter(compId => !cachedCompIds.has(compId))
+        .filter(compId => !Object.hasOwn(ligandDicts, compId))
         .map(async compId => {
             if (!molecule.monomerLibraryPath) return;
             try {
                 const response = await fetch(`${molecule.monomerLibraryPath}/${compId[0].toLowerCase()}/${compId}.cif`);
                 if (!response.ok) return;
-                cacheXpidMonomerDict(compId, await response.text());
+                const dictionary = await response.text();
+                if (dictionary.includes("data_")) {
+                    ligandDicts[compId] = dictionary;
+                }
             } catch (_err) {
-                // Missing dictionaries should not block XPID
+                // Missing ligand dictionaries should not block XPID.
             }
         }));
+
+    return ligandDicts;
 };
 
 const formatXpidDistanceLabel = (interaction: MoorhenXPIDResult) => {
@@ -178,20 +92,28 @@ export const MoorhenXPIDList = (props: {
     const [xpidVisibleList, setXpidVisibleList] = useState<boolean[] | null>(null);
     const [xpidVectorsList, setXpidVectorsList] = useState<MoorhenVector[] | null>(null);
 
-    const moorhenGlobalInstance = useMoorhenInstance()
+    const commandCentre = useCommandCentre();
+    const moorhenGlobalInstance = useMoorhenInstance();
 
     const validate = async () => {
         props.setBusy?.(true);
         try {
-            try {
-                await ensureXpidCootDataAvailable(moorhenGlobalInstance.paths.urlPrefix);
-            } catch (err) {
-                console.warn("XPID could not unpack Moorhen data into the main WASM module.", err);
+            const ligandDicts = await getXpidMoleculeDictionaries(props.molecule);
+            const coordString = props.molecule.gemmiStructure && !props.molecule.gemmiStructure.isDeleted()
+                ? props.molecule.gemmiStructure.as_string()
+                : null;
+            const response = (await commandCentre.current.cootCommand(
+                {
+                    returnType: "string",
+                    command: "shim_detect_xhpi_interactions",
+                    commandArgs: [props.molecule.molNo, ligandDicts, coordString],
+                },
+                false
+            )) as moorhen.WorkerResponse<string>;
+            if (response.data.result.status !== "Completed") {
+                throw new Error(`XPID failed with status ${response.data.result.status}`);
             }
-            await cacheXpidMoleculeDictionaries(props.molecule);
-            const structure = window.CCP4Module.cloneGemmiStructureWithTrimmedAtomNames(props.molecule.gemmiStructure)
-            const result = window.CCP4Module.detect_xhpi_interactions_json(structure)
-            structure.delete()
+            const result = response.data.result.result;
             const interactions = JSON.parse(result) as MoorhenXPIDResult[]
             const theVectors: MoorhenVector[] = []
             const visibleList:boolean[]  = []
@@ -232,7 +154,7 @@ export const MoorhenXPIDList = (props: {
                     arrowHeadLength: XPID_ARROW_HEAD_LENGTH,
                     arrowHeadRadiusScale: XPID_ARROW_HEAD_RADIUS_SCALE,
                     labelFontSize: XPID_DISTANCE_LABEL_FONT_SIZE,
-                    labelScreenOffsetX: XPID_DISTANCE_LABEL_SCREEN_OFFSET_X,
+                    labelScreenOffsetDistance: XPID_DISTANCE_LABEL_SCREEN_OFFSET_DISTANCE,
                 };
                 theVectors.push(aVector)
             })

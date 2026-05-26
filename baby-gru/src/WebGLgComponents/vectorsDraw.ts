@@ -181,7 +181,13 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 : 15
             const arrowHeadLength = vec.arrowHeadLength ?? 1.0
             const arrowHeadRadiusScale = vec.arrowHeadRadiusScale ?? 2.0
-            const labelScreenOffsetX = vec.labelScreenOffsetX ?? 0.0
+            const labelScreenOffsetDistance = vec.labelScreenOffsetDistance ?? 0.0
+            const labelScreenOffset = {
+                screenOffsetVectorX: xToOrig - xFromOrig,
+                screenOffsetVectorY: yToOrig - yFromOrig,
+                screenOffsetVectorZ: zToOrig - zFromOrig,
+                screenOffsetDistance: labelScreenOffsetDistance,
+            }
             if(window.devicePixelRatio){
                 fnSize *= window.devicePixelRatio
                 labelScale *= window.devicePixelRatio
@@ -205,29 +211,29 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 const myImageData = ctx.getImageData(0, 0, img.width*labelScale,img.height*labelScale)
 
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
                 }
             } else {
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,screenOffsetX:labelScreenOffsetX},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
                 }
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){
