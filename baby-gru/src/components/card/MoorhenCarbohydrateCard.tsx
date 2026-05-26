@@ -10,7 +10,7 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
 
     const handleClick = useCallback(async e => {
         if(molecule&&carbohydrate&&carbohydrate.id.length>0&&carbohydrate.id.split("_").length===2){
-            const res_chain = carbohydrate.id.split("_")[1].split("/")
+            const res_chain = carbohydrate.id.split("_")[0].split("/")
             const res = res_chain[0].split("-")
             const chain = res_chain[1]
             if(res.length===2&&res[0].length>0&&res[1].length>0&&chain.length>0){
