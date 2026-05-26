@@ -175,6 +175,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
     const originState =  store.getState().glRef.origin
 
     const [quat, setQuat] = useState<quat4>(initQuat)
+    const [zoom, setZoom] = useState<number>(1.0)
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
     const [moveX, setMoveX] = useState<number>(-1)
@@ -223,7 +224,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -30, 30, -30 * height/width, 30 * height/width, -100.0, 100.0);
+        mat4.ortho(pMatrix, -30*zoom, 30*zoom, -30*zoom * height/width, 30*zoom * height/width, -100.0, 100.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -326,17 +327,30 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const [x,y] = getXY(evt)
 
         if(mouseHeldDown){
-            const rot_x_axis = vec3.create()
-            const rot_y_axis = vec3.create()
-            vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
-            vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
-            setOldXY([x,y])
-            const xQ = createQuatFromAngle(oldXY[1]-y,rot_x_axis);
-            const yQ = createQuatFromAngle(oldXY[0]-x,rot_y_axis);
-            quat4.multiply(xQ, xQ, yQ);
-            const newQuat = quat4.create();
-            quat4.multiply(newQuat, quat, xQ);
-            setQuat(newQuat)
+            if(!evt.altKey){
+                const rot_x_axis = vec3.create()
+                const rot_y_axis = vec3.create()
+                vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+                vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+                setOldXY([x,y])
+                const xQ = createQuatFromAngle(oldXY[1]-y,rot_x_axis);
+                const yQ = createQuatFromAngle(oldXY[0]-x,rot_y_axis);
+                quat4.multiply(xQ, xQ, yQ);
+                const newQuat = quat4.create();
+                quat4.multiply(newQuat, quat, xQ);
+                setQuat(newQuat)
+            } else {
+                const factor = 1.0 + (oldXY[1]-y) / 50.0;
+                let newZoom = zoom * factor;
+                if (newZoom < 0.1) {
+                    newZoom = 0.1;
+                }
+                if (newZoom > 5.0) {
+                    newZoom = 5.0;
+                }
+                setOldXY([x,y])
+                setZoom(newZoom)
+            }
         }
 
     }
@@ -393,7 +407,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
 
     useEffect(() => {
         plotTheData()
-    }, [canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
+    }, [canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,zoom])
 
     return (
         <>
