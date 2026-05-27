@@ -10,7 +10,6 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
 
     const plotWidth = props.width ? props.width : 500
     const plotHeight = plotWidth
-    const mesh = getSphereMesh(1)
 
     const getMesh = () => {
         //This needs to be changed to get the appropriate mesh for this molecule?
