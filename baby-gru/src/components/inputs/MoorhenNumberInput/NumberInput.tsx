@@ -5,6 +5,7 @@ import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { clampValue } from "../../misc/helpers";
 import "./NumberInput.css";
+import { MoorhenClickAwayListener } from "@/components/interface-base/utils/ClickAwayListener";
 
 
 type MoorhenNumberInputProps = {
@@ -84,7 +85,6 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const decimalDigits = integer ? 0 : (props.decimalDigits ?? 2);
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
-    const isValidRef = useRef<boolean>(true);
     const dispatch = useDispatch();
 
     let displayValue: string = "";
@@ -113,15 +113,28 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         return true;
     };
 
-    isValidRef.current = checkIsValidInput(displayValue);
+    const commitInputValue = () => {
+        let valueToCommit = internalValue;
+        const numericValue = Number(internalValue);
+        if (minMax != null && !isNaN(numericValue) && isFinite(numericValue)) {
+            valueToCommit = clampValue(numericValue, ...minMax).toString();
+            if (valueToCommit !== internalValue) {
+                setInternalValue(valueToCommit);
+            }
+        }
+
+        if (checkIsValidInput(valueToCommit)) {
+            props.setValue?.(Number(valueToCommit));
+        }
+
+        setIsUserInteracting(false);
+        dispatch(setShortCutsBlocked(false));
+    };
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
         dispatch(setShortCutsBlocked(true));
-        let newValue = evt.target.value;
-        if (minMax) {
-            newValue = clampValue(Number(evt.target.value), ...minMax).toString();
-        }
+        const newValue = evt.target.value;
         setInternalValue(newValue);
         const _isValid = checkIsValidInput(newValue);
         if (_isValid && !waitReturn) {
@@ -133,23 +146,22 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
-            if (checkIsValidInput(internalValue)) {
-                props.setValue?.(Number(internalValue));
-            }
-            setIsUserInteracting(false);
-            dispatch(setShortCutsBlocked(false));
+            commitInputValue();
         }
     };
 
-    const handleBlur = () => {
-        setIsUserInteracting(false);
-        dispatch(setShortCutsBlocked(false));
-    };
+    const handleFocus = () => {
+        setIsUserInteracting(true);
+        dispatch(setShortCutsBlocked(true))
+        setInternalValue(props.value?.toFixed(decimalDigits) ?? "");
+    }
+
 
     const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     const input = (
+
         <input
             id="input"
             ref={ref}
@@ -160,12 +172,12 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
             style={{ width: inputWidth }}
             className={`moorhen__input ${"moorhen__input__precise"} 
                 ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
-                ${isValidRef.current ? "moorhen__input__valid" : "moorhen__input__invalid"} 
+                ${checkIsValidInput(displayValue) ? "moorhen__input__valid" : "moorhen__input__invalid"} 
                 ${disabled ? "disabled" : ""} ${className}`}
             onChange={handleChange}
             onKeyDown={handleReturn}
-            onBlur={handleBlur}
-            onFocus={() => dispatch(setShortCutsBlocked(true))}
+            onBlur={commitInputValue}
+            onFocus={handleFocus}
         />
     );
 

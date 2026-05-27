@@ -144,6 +144,13 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const [thumb2Position, setThumb2Position] = useState(0);
     const thumb2Ref = useRef<HTMLDivElement>(null);
 
+    const blurActiveTextInput = () => {
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLInputElement && activeElement.type !== "range") {
+            activeElement.blur();
+        }
+    };
+
     function handleSetValue(newVal: number) {
         if (props.type === "range") {
             if(newVal > props.value2) {
@@ -193,6 +200,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     }, []);
 
     const handleTrackClick = (evt: React.MouseEvent<HTMLDivElement>) => {
+        blurActiveTextInput();
         if (!trackRef.current) return;
         const rect = trackRef.current.getBoundingClientRect();
         const clickPosition = evt.clientX - rect.left;
@@ -273,6 +281,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     };
 
     const handleStartDragging = (evt: React.MouseEvent<HTMLElement, MouseEvent>, thumbIndex: number) => {
+        blurActiveTextInput();
         evt.preventDefault();
         evt.stopPropagation();
         beginPointerTracking(evt, e => handleThumbDrag(e, thumbIndex), thumbIndex);
