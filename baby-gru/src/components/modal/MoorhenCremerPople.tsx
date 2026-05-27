@@ -307,14 +307,9 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
 
     const [quat, setQuat] = useState<quat4>(initQuat)
     const [zoom, setZoom] = useState<number>(1.0)
-    const [clickX, setClickX] = useState<number>(-1)
-    const [clickY, setClickY] = useState<number>(-1)
-    const [moveX, setMoveX] = useState<number>(-1)
-    const [moveY, setMoveY] = useState<number>(-1)
-    const [releaseX, setReleaseX] = useState<number>(-1)
-    const [releaseY, setReleaseY] = useState<number>(-1)
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [oldXY, setOldXY] = useState<[number,number]>([-1,-1])
+    const [moveDist, setMoveDist] = useState<number>(-1)
 
     const [myBuffers, setMyBuffers] = useState<DisplayBuffer[]>([])
 
@@ -329,7 +324,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const canvasWebGL = canvasRefWebGL.current
         const gl = canvasWebGL.getContext("webgl2")
 
-        const theBuffers = createOtherDataOtherContext(genSphere(10),gl)
+        const theBuffers = createOtherDataOtherContext(genSphere(1),gl)
         buildBuffers(theBuffers,store,gl)
         setMyBuffers(theBuffers)
 
@@ -355,7 +350,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -30*zoom, 30*zoom, -30*zoom * height/width, 30*zoom * height/width, -100.0, 100.0);
+        mat4.ortho(pMatrix, -window.devicePixelRatio*zoom, window.devicePixelRatio*zoom, -window.devicePixelRatio*zoom * height/width, window.devicePixelRatio*zoom * height/width, -100.0, 100.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -446,6 +441,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const [x,y] = getXY(evt)
 
         setOldXY([x,y])
+        setMoveDist(0)
 
         setMouseHeldDown(true)
 
@@ -463,7 +459,6 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
                 const rot_y_axis = vec3.create()
                 vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
                 vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
-                setOldXY([x,y])
                 const xQ = createQuatFromAngle(oldXY[1]-y,rot_x_axis);
                 const yQ = createQuatFromAngle(oldXY[0]-x,rot_y_axis);
                 quat4.multiply(xQ, xQ, yQ);
@@ -479,24 +474,26 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
                 if (newZoom > 5.0) {
                     newZoom = 5.0;
                 }
-                setOldXY([x,y])
                 setZoom(newZoom)
             }
+            const newDist = moveDist + Math.abs(oldXY[0]-y) + Math.abs(oldXY[1]-y)
+            setMoveDist(newDist)
         }
-
+        setOldXY([x,y])
     }
 
-    const handleMouseUp = useCallback(async(evt) => {
+    const handleMouseUp =(evt) => {
 
         setMouseHeldDown(false)
 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
-        setReleaseX(x)
-        setReleaseY(y)
+        if(moveDist<4){
+            console.log("click",zoom*(x/plotWidth-0.5),zoom*(y/plotHeight-0.5))
+        }
 
-    },[clickX,clickY,releaseX,releaseY])
+    }
 
     useEffect(() => {
 
@@ -530,7 +527,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         const sphereFragmentShader = getShader(gl, perfect_sphere_side_on_view_fragment_shader_source, "fragment");
         sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
-        const theBuffers = createOtherDataOtherContext(genSphere(10),gl)
+        const theBuffers = createOtherDataOtherContext(genSphere(1),gl)
         buildBuffers(theBuffers,store,gl)
         setMyBuffers(theBuffers)
 
@@ -538,7 +535,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
 
     useEffect(() => {
         plotTheData()
-    }, [canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,zoom])
+    }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom])
 
     return (
         <>
