@@ -73,7 +73,7 @@ export const MoorhenCarbohydrateList = (props: {
                     {carbohydrateList.map(carbohydrate => {
                         return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />;
                     })}
-                <MoorhenCremerPople stackDirection="vertical" width={300}/>
+                <MoorhenCremerPople stackDirection="vertical" width={300} molecule={props.molecule}/>
                 </>
             ) : (
                 <div>
