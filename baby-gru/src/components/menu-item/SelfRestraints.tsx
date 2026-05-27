@@ -128,7 +128,7 @@ export const SelfRestraints = () => {
                 sliderTitle="Max. dist."
                 minVal={4}
                 maxVal={6}
-                showMinMaxVal={false}
+                showLabels={false}
                 logScale={false}
                 value={maxDist}
                 stepButtons={0.25}

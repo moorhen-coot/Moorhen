@@ -104,7 +104,7 @@ export const RandomJiggleBlur = () => {
                 sliderTitle="B-Factor"
                 minVal={10}
                 maxVal={400}
-                showMinMaxVal={false}
+                showLabels={false}
                 logScale={false}
                 stepButtons={25}
                 value={bFactor}
@@ -115,7 +115,7 @@ export const RandomJiggleBlur = () => {
                 sliderTitle="No. of trials"
                 minVal={10}
                 maxVal={5000}
-                showMinMaxVal={false}
+                showLabels={false}
                 logScale={false}
                 stepButtons={100}
                 value={noTrials}
@@ -126,7 +126,7 @@ export const RandomJiggleBlur = () => {
                 sliderTitle="Scale factor"
                 minVal={1}
                 maxVal={6}
-                showMinMaxVal={false}
+                showLabels={false}
                 logScale={false}
                 stepButtons={1}
                 value={scaleFactor}

@@ -1,12 +1,10 @@
 import { useDispatch } from "react-redux";
-import { useRef, useState } from "react";
+import {  useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { clampValue } from "../../misc/helpers";
 import "./NumberInput.css";
-import { MoorhenClickAwayListener } from "@/components/interface-base/utils/ClickAwayListener";
-
 
 type MoorhenNumberInputProps = {
     value: number | null;
@@ -152,16 +150,14 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
 
     const handleFocus = () => {
         setIsUserInteracting(true);
-        dispatch(setShortCutsBlocked(true))
+        dispatch(setShortCutsBlocked(true));
         setInternalValue(props.value?.toFixed(decimalDigits) ?? "");
-    }
-
+    };
 
     const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     const input = (
-
         <input
             id="input"
             ref={ref}

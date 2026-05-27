@@ -61,6 +61,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
             type="icon-only"
             size="small"
             disabled={isDisabled}
+            style={isDisabled ? { opacity: 0.6 } : {}}
         />
     );
 }

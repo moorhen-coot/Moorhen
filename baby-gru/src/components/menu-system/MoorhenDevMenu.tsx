@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect,  useState } from "react";
+import { useEffect, useState } from "react";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -56,8 +56,8 @@ export const MoorhenDevMenu = () => {
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
-    const [sliderValue, setSliderValue] = useState(1)
-    const [sliderValue2, setSliderValue2] = useState(9)
+    const [sliderValue, setSliderValue] = useState(1);
+    const [sliderValue2, setSliderValue2] = useState(9);
     useEffect(() => {
         dispatch(removeVectors(testVectors));
         const myVecs: MoorhenVector[] = [];
@@ -386,8 +386,27 @@ export const MoorhenDevMenu = () => {
                 }}
                 label="Show validation panel"
             />
-            <MoorhenSlider value={sliderValue} setValue={setSliderValue}  minVal={0} maxVal={10}
-             showMinMaxVal={true} usePreciseInput={true} value2={sliderValue2} setValue2={setSliderValue2} type="range"/>
+            <MoorhenSlider
+                value={sliderValue}
+                setValue={setSliderValue}
+                minVal={0}
+                maxVal={100}
+                showLabels={true}
+                usePreciseInput={true}
+                value2={sliderValue2}
+                setValue2={setSliderValue2}
+                type="range"
+                sliderTitle="test"
+                labels={[
+                    { value: 0, label: "0" },
+                    { value: 25, label: "25" },
+                    { value: 50, label: "50" },
+                    { value: 75, label: "75" },
+                    { value: 100, label: "100" }
+                ]}
+                step={5}
+            
+            />
         </MoorhenStack>
     );
 };

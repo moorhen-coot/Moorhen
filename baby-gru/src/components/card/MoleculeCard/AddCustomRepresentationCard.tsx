@@ -667,7 +667,7 @@ export const AddCustomRepresentationCard = memo(
                                 props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.adaptiveDist = value;
                                 props.molecule.adaptativeBondsRepresentation.redraw();
                             }}
-                            showMinMaxVal={false}
+                            showLabels={false}
                             stepButtons={0.5}
                             minVal={1}
                             maxVal={15}

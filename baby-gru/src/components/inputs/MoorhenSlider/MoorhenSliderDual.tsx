@@ -17,7 +17,7 @@ type MoorhenSliderProps<T extends number | [number, number]> = {
     maxVal?: number;
     sliderTitle?: string;
     decimalPlaces?: number;
-    showMinMaxVal?: boolean;
+    showLabels?: boolean;
     showButtons?: boolean;
     stepButtons?: number;
     isDisabled?: boolean;
@@ -70,7 +70,7 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
  * @prop {number} [decimalPlaces=0]
  *   Number of decimal places to display for the value.
  *
- * @prop {boolean} [showMinMaxVal=true]
+ * @prop {boolean} [showLabels=true]
  *   Whether to display the min and max values below the slider.
  *
  * @prop {boolean} [showButtons=true]
@@ -104,7 +104,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         logScale = false,
         decimalPlaces = 0,
         sliderTitle = "",
-        showMinMaxVal = true,
+        showLabels = true,
         isDisabled = false,
         usePreciseInput = false,
         showButtons = true,
@@ -278,7 +278,7 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         max={logScale ? Math.log10(maxVal) : maxVal}
                         step={precision}
                     />
-                    {showMinMaxVal ? (
+                    {showLabels ? (
                         <div className={"moorhen__slider__minMaxVal"}>
                             <span>{toFixedNoZero(minVal, decimalPlaces)}</span>
                             <span>{toFixedNoZero(maxVal, decimalPlaces)}</span>

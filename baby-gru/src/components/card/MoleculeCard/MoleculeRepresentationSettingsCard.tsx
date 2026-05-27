@@ -89,7 +89,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Bond width"
                 value={bondWidth}
                 setValue={value => setBondWidth(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.05}
                 maxVal={0.5}
@@ -100,7 +100,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Radius-Bond ratio"
                 value={atomRadiusBondRatio}
                 setValue={value => setAtomRadiusBondRatio(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={1.0}
                 maxVal={3.5}
@@ -215,7 +215,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Gauss. Surf. Sigma"
                 value={surfaceSigma}
                 setValue={value => setSurfaceSigma(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
@@ -226,7 +226,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Gauss. Surf. Contour Level"
                 value={surfaceLevel}
                 setValue={value => setSurfaceLevel(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 minVal={0.01}
                 maxVal={10}
                 logScale={false}
@@ -236,7 +236,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Gauss. Surf. Box Radius"
                 value={surfaceRadius}
                 setValue={value => setSurfaceRadius(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 minVal={0.01}
                 maxVal={10}
                 logScale={false}
@@ -246,7 +246,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Gauss. Surf. Grid Scale"
                 value={surfaceGridScale}
                 setValue={value => setSurfaceGridScale(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={1.5}
@@ -257,7 +257,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Gauss. Surf. B-Factor"
                 value={surfaceBFactor}
                 setValue={value => setSurfaceBFactor(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0}
                 maxVal={100}
@@ -361,7 +361,7 @@ export const SymmetrySettingsPanel = (props: {
                 sliderTitle="Symmetry Radius"
                 value={symmetryRadius}
                 setValue={value => setSymmetryRadius(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={5}
                 minVal={0.01}
                 maxVal={100}
@@ -488,7 +488,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Coil Thickness"
                 value={ribbonCoilThickness}
                 setValue={value => setRibbonCoilThickness(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={2}
@@ -499,7 +499,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Helix Width"
                 value={ribbonHelixWidth}
                 setValue={value => setRibbonHelixWidth(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -510,7 +510,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Strand Width"
                 value={ribbonStrandWidth}
                 setValue={value => setRibbonStrandWidth(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -521,7 +521,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Arrow Width"
                 value={ribbonArrowWidth}
                 setValue={value => setRibbonArrowWidth(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -532,7 +532,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Nucleotides Width"
                 value={ribbonDNARNAWidth}
                 setValue={value => setRibbonDNARNAWidth(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -543,7 +543,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Ribbon Axial Sampling"
                 value={ribbonAxialSampling}
                 setValue={value => setRibbonAxialSampling(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0}
                 maxVal={15}
@@ -554,7 +554,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Nucl. Dish Angular Sampling"
                 value={dishStyleAngularSampling}
                 setValue={value => setDishStyleAngularSampling(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={1}
                 minVal={1}
                 maxVal={64}
@@ -635,7 +635,7 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Mol. Surf. Probe Radius"
                 value={surfaceStyleProbeRadius}
                 setValue={value => setSurfaceStyleProbeRadius(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -646,7 +646,7 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Mol. Surf. Radius Multiplier"
                 value={ballsStyleRadiusMultiplier}
                 setValue={value => setBallsStyleRadiusMultiplier(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -707,7 +707,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Cylinder Angular Sampling"
                 value={cylindersStyleAngularSampling}
                 setValue={setCylindersStyleAngularSampling}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
@@ -718,7 +718,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Cylinder Radius"
                 value={cylindersStyleCylinderRadius}
                 setValue={setCylindersStyleCylinderRadius}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -729,7 +729,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 sliderTitle="Cylinder Ball Radius"
                 value={cylindersStyleBallRadius}
                 setValue={setCylindersStyleBallRadius}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
@@ -818,7 +818,7 @@ export const ResidueEnvironmentSettingsPanel = (props: MoleculeSettingPanelProps
                 sliderTitle="Max Distance"
                 value={maxDist}
                 setValue={value => setMaxDist(value)}
-                showMinMaxVal={false}
+                showLabels={false}
                 stepButtons={0.5}
                 minVal={2}
                 maxVal={4.5}

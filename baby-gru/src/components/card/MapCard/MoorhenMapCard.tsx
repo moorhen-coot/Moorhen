@@ -221,7 +221,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         <MoorhenSlider
                             minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
                             maxVal={props.map.levelRange[1]}
-                            showMinMaxVal={false}
+                            showLabels={false}
                             decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
                             showButtons={true}
                             logScale={true}
