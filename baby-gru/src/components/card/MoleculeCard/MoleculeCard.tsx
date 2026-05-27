@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+import { MoorhenLinearProgress } from "../../icons";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
@@ -474,7 +474,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                     );
                                 })}
                         </>
-                        {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
+                        {busyDrawingCustomRepresentation && <MoorhenLinearProgress style={{ margin: "0.5rem" }} />}
                     </div>
                     {/* <hr style={{ margin: "0.5rem" }}></hr> */}
                 </MoorhenStack>

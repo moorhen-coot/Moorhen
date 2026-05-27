@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
@@ -6,6 +6,7 @@ import { useCommandCentre } from "../../../../InstanceManager";
 import { moorhen } from "../../../../types/moorhen";
 import { LigandInfo } from "../../../../utils/MoorhenMolecule";
 import { MoorhenLigandCard } from "../../MoorhenLigandCard";
+import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 
 export const MoorhenLigandList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -71,7 +72,7 @@ export const MoorhenLigandList = (props: {
     return (
         <>
             {ligandList === null ? (
-                <LinearProgress variant="indeterminate" />
+                <MoorhenLinearProgress />
             ) : ligandList.length > 0 ? (
                 <MoorhenStack>
                     {ligandList.map(ligand => {
