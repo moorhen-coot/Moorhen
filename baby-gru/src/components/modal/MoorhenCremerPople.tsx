@@ -26,6 +26,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
             quat4Inverse(quat,invQuat)
             const invMat = quatToMat4(invQuat)
             const p = vec3.create();
+            //The -y is because y-axis is reversed in the WebGL canvas.
             vec3.set(p, p_x, -p_y, p_z);
             vec3.transformMat4(p, p, invMat);
             console.log(p[0],p[1],p[2])
