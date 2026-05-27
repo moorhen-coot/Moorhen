@@ -163,8 +163,8 @@ export const MinimizeEnergy = () => {
                     maxVal={100}
                     decimalPlaces={2}
                     logScale={true}
-                    externalValue={ramaWeight}
-                    setExternalValue={value => setRamaWeight(value)}
+                    value={ramaWeight}
+                    setValue={value => setRamaWeight(value)}
                 />
             </div>
             <div style={{ display: useTorsionRestraints ? "" : "none" }}>
@@ -175,8 +175,8 @@ export const MinimizeEnergy = () => {
                     maxVal={10}
                     decimalPlaces={2}
                     logScale={true}
-                    externalValue={torsionWeight}
-                    setExternalValue={setTorsionWeight}
+                    value={torsionWeight}
+                    setValue={setTorsionWeight}
                 />
             </div>
             <MoorhenSlider
@@ -185,8 +185,8 @@ export const MinimizeEnergy = () => {
                 maxVal={100}
                 logScale={false}
                 decimalPlaces={0}
-                externalValue={nIterations}
-                setExternalValue={value => setNIterations(value)}
+                value={nIterations}
+                setValue={value => setNIterations(value)}
             />
             <MoorhenSlider
                 sliderTitle="Number of cycles"
@@ -194,8 +194,8 @@ export const MinimizeEnergy = () => {
                 maxVal={100}
                 logScale={false}
                 decimalPlaces={0}
-                externalValue={ncyc}
-                setExternalValue={value => setNcyc(value)}
+                value={ncyc}
+                setValue={value => setNcyc(value)}
             />
             <p />
             <MoorhenButton variant="primary" onClick={minimizeEnergy}>

@@ -1,12 +1,13 @@
-import { useRef } from 'react';
+import { useEffect, useRef} from 'react';
 import { MoorhenButton } from '..';
 import { clampValue } from '../../misc/helpers';
+import { useStateWithRef } from '@/hooks/useStateWithRef';
 
 type PlusMinusButtonProps = {
     step: number;
     setButtonIsDown?: (isDown: boolean) => void;
-    externalValue: number;
-    setExternalValue: (value: number) => void;
+    value: number;
+    setValue: (value: number) => void;
     minVal: number;
     maxVal: number;
     isDisabled?: boolean;
@@ -17,18 +18,21 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
     const { step, minVal, maxVal, isDisabled, logScale = false } = props;
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const currentValueRef = useRef<number>(props.externalValue);
-    currentValueRef.current = logScale ? Math.log10(props.externalValue) : props.externalValue;
+    const valueRef = useRef(props.value);
+    useEffect(() => {
+        valueRef.current = props.value;
+    }, [props.value]);
 
     const buttonEffect = () => {
         const newValue = clampValue(
-            logScale ? Math.pow(10, currentValueRef.current + step) : currentValueRef.current + step,
+            logScale ? Math.pow(10, valueRef.current + step) : valueRef.current + step,
             minVal,
             maxVal
         );
-        currentValueRef.current = newValue;
-        props.setExternalValue(newValue);
+        valueRef.current = newValue;
+        props.setValue(newValue);
     };
+
 
     const handleMouseDown = (): void => {
         buttonEffect();

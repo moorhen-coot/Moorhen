@@ -226,8 +226,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             showButtons={true}
                             logScale={true}
                             isDisabled={!mapIsVisible}
-                            externalValue={mapContourLevel}
-                            setExternalValue={newVal => {
+                            value={mapContourLevel}
+                            setValue={newVal => {
                                 handleContourLevelChange(newVal);
                             }}
                             piWaitReturn={true}

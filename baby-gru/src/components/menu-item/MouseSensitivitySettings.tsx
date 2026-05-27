@@ -25,8 +25,8 @@ const SensitivitySettingsPanel = () => {
                 logScale={false}
                 sliderTitle="Mouse sensitivity"
                 stepButtons={0.01}
-                externalValue={mouseSensitivity}
-                setExternalValue={value => dispatch(setMouseSensitivity(value))}
+                value={mouseSensitivity}
+                setValue={value => dispatch(setMouseSensitivity(value))}
                 decimalPlaces={2}
             />
 
@@ -36,8 +36,8 @@ const SensitivitySettingsPanel = () => {
                 logScale={false}
                 sliderTitle="Mouse wheel zoom sensitivity"
                 stepButtons={0.1}
-                externalValue={zoomWheelSensitivityFactor}
-                setExternalValue={value => dispatch(setZoomWheelSensitivityFactor(value))}
+                value={zoomWheelSensitivityFactor}
+                setValue={value => dispatch(setZoomWheelSensitivityFactor(value))}
                 decimalPlaces={2}
             />
 
@@ -46,8 +46,8 @@ const SensitivitySettingsPanel = () => {
                 maxVal={10}
                 logScale={true}
                 sliderTitle="Mouse wheel map contour sensitivity"
-                externalValue={contourWheelSensitivityFactor}
-                setExternalValue={value => dispatch(setContourWheelSensitivityFactor(value))}
+                value={contourWheelSensitivityFactor}
+                setValue={value => dispatch(setContourWheelSensitivityFactor(value))}
                 decimalPlaces={2}
             />
         </MoorhenStack>

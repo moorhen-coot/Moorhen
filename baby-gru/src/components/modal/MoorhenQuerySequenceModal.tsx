@@ -261,17 +261,17 @@ const MoorhenQuerySequence = () => {
                             logScale={false}
                             sliderTitle="E-Val cutoff"
                             decimalPlaces={1}
-                            externalValue={eValCutoff}
-                            setExternalValue={setEValCutoff}
+                            value={eValCutoff}
+                            setValue={setEValCutoff}
                         />
                         <MoorhenSlider
                             minVal={1}
                             maxVal={100}
                             logScale={false}
                             sliderTitle="Seq. Id. cutoff"
-                            externalValue={seqIdCutoff}
+                            value={seqIdCutoff}
                             decimalPlaces={0}
-                            setExternalValue={setSeqIdCutoff}
+                            setValue={setSeqIdCutoff}
                         />
                         <br />
                         <hr></hr>

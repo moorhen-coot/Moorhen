@@ -107,8 +107,8 @@ export const RandomJiggleBlur = () => {
                 showMinMaxVal={false}
                 logScale={false}
                 stepButtons={25}
-                externalValue={bFactor}
-                setExternalValue={value => setBFactor(value)}
+                value={bFactor}
+                setValue={value => setBFactor(value)}
                 decimalPlaces={0}
             />
             <MoorhenSlider
@@ -118,8 +118,8 @@ export const RandomJiggleBlur = () => {
                 showMinMaxVal={false}
                 logScale={false}
                 stepButtons={100}
-                externalValue={noTrials}
-                setExternalValue={value => setNoTrials(value)}
+                value={noTrials}
+                setValue={value => setNoTrials(value)}
                 decimalPlaces={0}
             />
             <MoorhenSlider
@@ -129,8 +129,8 @@ export const RandomJiggleBlur = () => {
                 showMinMaxVal={false}
                 logScale={false}
                 stepButtons={1}
-                externalValue={scaleFactor}
-                setExternalValue={value => setScaleFactor(value)}
+                value={scaleFactor}
+                setValue={value => setScaleFactor(value)}
                 decimalPlaces={0}
             />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>

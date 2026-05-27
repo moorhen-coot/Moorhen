@@ -130,10 +130,10 @@ export const SelfRestraints = () => {
                 maxVal={6}
                 showMinMaxVal={false}
                 logScale={false}
-                externalValue={maxDist}
+                value={maxDist}
                 stepButtons={0.25}
                 decimalPlaces={2}
-                setExternalValue={value => setMaxDist(value)}
+                setValue={value => setMaxDist(value)}
             />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>

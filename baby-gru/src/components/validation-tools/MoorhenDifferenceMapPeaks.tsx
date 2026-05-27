@@ -258,8 +258,8 @@ export const MoorhenDifferenceMapPeaks = (props: { chartId: string }) => {
                     maxVal={7.0}
                     logScale={false}
                     sliderTitle="RMSD"
-                    externalValue={selectedRmsd}
-                    setExternalValue={value => setSelectedRmsd(value)}
+                    value={selectedRmsd}
+                    setValue={value => setSelectedRmsd(value)}
                 />
             }
             extraControlFormValue={selectedRmsd}

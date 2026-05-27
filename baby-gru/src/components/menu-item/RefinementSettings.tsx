@@ -171,8 +171,8 @@ export const RefinementSettings = () => {
                 maxVal={100}
                 decimalPlaces={2}
                 logScale={true}
-                externalValue={ramaWeight}
-                setExternalValue={value => setRamaWeight(value)}
+                value={ramaWeight}
+                setValue={value => setRamaWeight(value)}
             />
             <MoorhenSlider
                 isDisabled={!useTorsionRestraints}
@@ -181,8 +181,8 @@ export const RefinementSettings = () => {
                 maxVal={10}
                 decimalPlaces={2}
                 logScale={true}
-                externalValue={torsionWeight}
-                setExternalValue={value => setTorsionWeight(value)}
+                value={torsionWeight}
+                setValue={value => setTorsionWeight(value)}
             />
         </MoorhenStack>
     ) : (

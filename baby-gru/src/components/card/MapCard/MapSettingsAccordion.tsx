@@ -68,8 +68,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             isDisabled={!props.mapIsVisible}
             usePreciseInput={true}
             showMinMaxVal={false}
-            externalValue={props.mapStyle === "solid" ? surfaceAlpha : props.mapStyle === "lines" ? meshAlpha : litAlpha}
-            setExternalValue={
+            value={props.mapStyle === "solid" ? surfaceAlpha : props.mapStyle === "lines" ? meshAlpha : litAlpha}
+            setValue={
                 props.mapStyle === "solid"
                     ? value => setSurfaceAlpha(value)
                     : props.mapStyle === "lines"
@@ -160,8 +160,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         stepButtons={1}
                         sliderTitle="Radius:"
                         isDisabled={!props.mapIsVisible}
-                        externalValue={props.mapRadius}
-                        setExternalValue={newVal => {
+                        value={props.mapRadius}
+                        setValue={newVal => {
                             dispatch(
                                 setMapRadius({
                                     molNo: props.map.molNo,

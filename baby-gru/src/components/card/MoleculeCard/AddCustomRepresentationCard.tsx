@@ -661,8 +661,8 @@ export const AddCustomRepresentationCard = memo(
                     <MoorhenStack card>
                         <MoorhenSlider
                             sliderTitle="Neighbouring Res. Dist."
-                            externalValue={adaptDist}
-                            setExternalValue={(value: number) => {
+                            value={adaptDist}
+                            setValue={(value: number) => {
                                 setAdaptDist(value);
                                 props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.adaptiveDist = value;
                                 props.molecule.adaptativeBondsRepresentation.redraw();
@@ -842,8 +842,8 @@ export const AddCustomRepresentationCard = memo(
                                 decimalPlaces={2}
                                 logScale={false}
                                 sliderTitle="Opacity"
-                                externalValue={nonCustomOpacity}
-                                setExternalValue={(newVal: number) => handleOpacityChange(newVal)}
+                                value={nonCustomOpacity}
+                                setValue={(newVal: number) => handleOpacityChange(newVal)}
                             />
                         </MoorhenStack>
                     </>

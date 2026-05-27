@@ -127,8 +127,8 @@ export const MapContourSettings = () => {
                 minVal={0.1}
                 maxVal={1.5}
                 sliderTitle="Map lines thickness"
-                externalValue={mapLineWidth}
-                setExternalValue={(val: number) => dispatch(setMapLineWidth(val))}
+                value={mapLineWidth}
+                setValue={(val: number) => dispatch(setMapLineWidth(val))}
                 decimalPlaces={2}
             />
             <div style={{ padding: "0.5rem" }}>

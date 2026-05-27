@@ -163,8 +163,8 @@ export const MoorhenPepflipsDifferenceMap = () => {
                     sliderTitle="RMSD"
                     stepButtons={0.5}
                     decimalPlaces={1}
-                    externalValue={selectedRmsd}
-                    setExternalValue={(value: number) => setSelectedRmsd(value)}
+                    value={selectedRmsd}
+                    setValue={(value: number) => setSelectedRmsd(value)}
                 />
             }
         />

@@ -10,8 +10,8 @@ import { toFixedNoZero } from "../../misc/helpers";
 import "./MoorhenSlider.css";
 
 type MoorhenSliderProps<T extends number | [number, number]> = {
-    externalValue: T; // value passed from parent
-    setExternalValue: (value: T) => void;
+    value: T; // value passed from parent
+    setValue: (value: T) => void;
     logScale?: boolean;
     minVal?: number;
     maxVal?: number;
@@ -49,10 +49,10 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
  *
  * @template T - The value type, either number or [number, number] for range sliders.
  *
- * @prop {T} externalValue
+ * @prop {T} value
  *   The current value of the slider, controlled by the parent. Can be a single number or a tuple for range sliders.
  *
- * @prop {function} setExternalValue
+ * @prop {function} setValue
  *   Callback to update the value in the parent component. Receives the new value as argument. Returns void.
  *
  * @prop {boolean} [logScale=false]
@@ -135,17 +135,17 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
         [props.stepButtons]
     );
 
-    const isRange = Array.isArray(props.externalValue);
-    const displayValue = logScale ? log10ofT(props.externalValue) : props.externalValue;
+    const isRange = Array.isArray(props.value);
+    const displayValue = logScale ? log10ofT(props.value) : props.value;
 
     const handleChange = (newValue: T) => {
-        props.setExternalValue(logScale ? pow10ofT(newValue) : newValue); // external value is changed by logscale
+        props.setValue(logScale ? pow10ofT(newValue) : newValue); // external value is changed by logscale
     };
 
     const handleSliderChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         const newSliderValue = +evt.target.value;
         if (isRange) {
-            const currentValue = props.externalValue as [number, number];
+            const currentValue = props.value as [number, number];
             handleChange([newSliderValue, currentValue[1]] as T);
         } else {
             handleChange(newSliderValue as T);
@@ -160,8 +160,8 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
                             label={sliderTitle}
-                            value={props.externalValue as number}
-                            setValue={(newVal) => props.setExternalValue(+newVal as T)}
+                            value={props.value as number}
+                            setValue={(newVal) => props.setValue(+newVal as T)}
                             waitReturn={piWaitReturn}
                             decimalDigits={decimalPlaces}
                             width={piWidth ? piWidth : 2.5 + 0.6 * decimalPlaces + "rem"}
@@ -175,10 +175,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <div>
                         <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
-                            value={props.externalValue[0]}
+                            value={props.value[0]}
                             setValue={(newVal) => {
-                                const currentValue = props.externalValue as [number, number];
-                                props.setExternalValue([+newVal, currentValue[1]] as T);
+                                const currentValue = props.value as [number, number];
+                                props.setValue([+newVal, currentValue[1]] as T);
                             }}
                             waitReturn={piWaitReturn}
                             decimalDigits={decimalPlaces}
@@ -189,10 +189,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         <span style={{ margin: "0 5px" }}>{sliderTitle}:</span>
                         <MoorhenNumberInput
                             allowNegativeValues={minVal < 0}
-                            value={props.externalValue[1]}
+                            value={props.value[1]}
                             setValue={(newVal) => {
-                                const currentValue = props.externalValue as [number, number];
-                                props.setExternalValue([currentValue[0], +newVal] as T);
+                                const currentValue = props.value as [number, number];
+                                props.setValue([currentValue[0], +newVal] as T);
                             }}
                             waitReturn={piWaitReturn}
                             decimalDigits={decimalPlaces}
@@ -212,10 +212,10 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                 <label className={"moorhen__slider__label"} htmlFor="slider">
                     {sliderTitle}:{" "}
                     {isRange
-                        ? `${(props.externalValue as [number, number])[0].toFixed(decimalPlaces)} - ${(props.externalValue as [number, number])[1].toFixed(
+                        ? `${(props.value as [number, number])[0].toFixed(decimalPlaces)} - ${(props.value as [number, number])[1].toFixed(
                               decimalPlaces
                           )}`
-                        : (props.externalValue as number).toFixed(decimalPlaces)}
+                        : (props.value as number).toFixed(decimalPlaces)}
                 </label>
             );
         } else return drawPreciseInput();
@@ -234,11 +234,11 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                         <PlusMinusButton
                             step={side === "L" ? -stepButtons : +stepButtons}
                             setButtonIsDown={setButtonIsDown}
-                            externalValue={props.externalValue[side === "L" ? 0 : 1]}
-                            setExternalValue={(newValue: number) => {
-                                const currentArray = props.externalValue as [number, number];
+                            value={props.value[side === "L" ? 0 : 1]}
+                            setValue={(newValue: number) => {
+                                const currentArray = props.value as [number, number];
                                 const newArray = side === "L" ? ([newValue, currentArray[1]] as T) : ([currentArray[0], newValue] as T);
-                                props.setExternalValue(newArray);
+                                props.setValue(newArray);
                             }}
                             minVal={minVal}
                             maxVal={maxVal}
@@ -249,8 +249,8 @@ export const MoorhenSlider = <T extends number | [number, number]>(props: Moorhe
                     <PlusMinusButton
                         step={side === "L" ? -stepButtons : +stepButtons}
                         setButtonIsDown={setButtonIsDown}
-                        externalValue={props.externalValue as number}
-                        setExternalValue={(newValue: number) => props.setExternalValue(newValue as T)}
+                        value={props.value as number}
+                        setValue={(newValue: number) => props.setValue(newValue as T)}
                         minVal={minVal}
                         maxVal={maxVal}
                         isDisabled={isDisabled}
