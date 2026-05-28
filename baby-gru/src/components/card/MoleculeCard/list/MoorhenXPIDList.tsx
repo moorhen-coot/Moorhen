@@ -182,7 +182,7 @@ export const MoorhenXPIDList = (props: {
 
     const xpidTitle = xpidList === null
         ? "XH-\u03C0 Interactions"
-        : `XH-\u03C0 Interactions (detected ${xpidList.length} totally)`;
+        : `XH-\u03C0 Interactions (detected ${xpidList.length} in total)`;
 
     const replaceDisplayedVectors = (newVectors: MoorhenVector[], visibleList = xpidVisibleList) => {
         if (!xpidVectorsList || !visibleList) return;
