@@ -389,23 +389,46 @@ export const MoorhenDevMenu = () => {
             <MoorhenSlider
                 value={sliderValue}
                 setValue={setSliderValue}
-                minVal={0}
+                minVal={10}
                 maxVal={100}
-                showLabels={true}
                 usePreciseInput={true}
                 value2={sliderValue2}
                 setValue2={setSliderValue2}
                 type="range"
                 sliderTitle="test"
+                showLabels={true}
                 labels={[
-                    { value: 0, label: "0" },
-                    { value: 25, label: "25" },
-                    { value: 50, label: "50" },
-                    { value: 75, label: "75" },
-                    { value: 100, label: "100" }
+                    { value: 10, label: "", tick: true },
+                    { value: 25, label: "custom", tick: true, colour: "red" },
+                    { value: 50, label: "label", tick: true },
+                    { value: 75, label: "75", tick: true },
+                    { value: 100, label: "100", tick: true, colour: "blue" },
                 ]}
-                step={5}
-            
+                step={1}
+                showTicks={true}
+                tickSpacing={5}
+                // majorTickSpacing={25}
+            />
+             <MoorhenSlider
+                value={sliderValue}
+                setValue={setSliderValue}
+                minVal={1}
+                maxVal={10000}
+                usePreciseInput={true}
+                sliderTitle="log test"
+                showLabels={true}
+                logScale={true}
+                labels={[
+                    { value: 1, label: "", tick: true },
+                    { value: 10, label: "", tick: true, colour: "red" },
+                    { value: 100, label: "", tick: true },
+                    { value: 1000, label: "", tick: true },
+                    { value: 10000, label: "", tick: true, colour: "blue" },
+                ]}
+                // step={1}
+                showTicks={true}
+                tickSpacing={5}
+                majorTickSpacing={10}
             />
         </MoorhenStack>
     );

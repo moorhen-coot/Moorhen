@@ -1,7 +1,6 @@
 import { useEffect, useRef} from 'react';
 import { MoorhenButton } from '..';
 import { clampValue } from '../../misc/helpers';
-import { useStateWithRef } from '@/hooks/useStateWithRef';
 
 type PlusMinusButtonProps = {
     step: number;
@@ -25,7 +24,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
 
     const buttonEffect = () => {
         const newValue = clampValue(
-            logScale ? Math.pow(10, valueRef.current + step) : valueRef.current + step,
+            logScale ? Math.pow(10, Math.log10(valueRef.current) + step) : valueRef.current + step,
             minVal,
             maxVal
         );
@@ -51,6 +50,13 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
         intervalRef.current = null;
         props.setButtonIsDown(false);
     };
+
+    useEffect(() => {
+        return () => {
+            clearInterval(intervalRef.current);
+            clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     return (
         <MoorhenButton

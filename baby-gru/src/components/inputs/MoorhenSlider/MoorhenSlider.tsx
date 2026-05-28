@@ -1,4 +1,3 @@
-import { getTableHeadUtilityClass } from "@mui/material";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
 import { clampValue, toFixedNoZero } from "../../misc/helpers";
@@ -21,19 +20,12 @@ type MoorhenSliderPropsBase = {
     piWidth?: string | number;
     piWaitReturn?: boolean;
     piMinMax?: [number, number];
-    labels?: { value: number; label: string }[];
+    labels?: { value: number; label: string; tick?: boolean; colour?: string }[];
     showTicks?: boolean;
     tickSpacing?: number;
+    majorTickSpacing?: number;
     step?: number;
 };
-
-type MoorhenSliderSteps = {
-    type: "steps";
-    steps: number[];
-    minVal?: never;
-    maxVal?: never;
-    value2?: never;
-} & MoorhenSliderPropsBase;
 
 type MoorhenSliderRange = {
     type: "range";
@@ -51,7 +43,7 @@ type MoorhenSliderDefault = {
     value2?: never;
 } & MoorhenSliderPropsBase;
 
-type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderSteps | MoorhenSliderRange;
+type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
 
 function log10ofT<T extends number | [number, number]>(val: T): T {
     if (Array.isArray(val)) {
@@ -135,14 +127,13 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         piWidth,
         piWaitReturn = true,
         showTicks = false,
-        tickSpacing,
+        minVal = 0,
+        maxVal = 100,
+        tickSpacing = 5,
+        majorTickSpacing,
         step,
     } = props;
 
-    const steps = props.type === "steps" ? (props.steps.sort((a, b) => a - b) ?? []) : [];
-    const minVal = props.type === "default" || props.type === "range" || props.type === undefined ? (props.minVal ?? 0) : steps[0];
-    const maxVal =
-        props.type === "default" || props.type === "range" || props.type === undefined ? (props.maxVal ?? 100) : steps[steps.length - 1];
     const piMinMax: [number, number] = [minVal, maxVal];
     const trackRef = useRef<HTMLDivElement>(null);
     const thumbRef = useRef<HTMLDivElement>(null);
@@ -158,6 +149,14 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             activeElement.blur();
         }
     };
+
+    let labels = props.labels;
+    if (!labels && showLabels) {
+        labels = [
+            { value: minVal, label: toFixedNoZero(minVal, decimalPlaces) },
+            { value: maxVal, label: toFixedNoZero(maxVal, decimalPlaces) },
+        ];
+    }
 
     function handleSetValue(newVal: number) {
         let appliedVal = newVal;
@@ -187,7 +186,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
     }
 
-    function calculateThumbPosition(value: number) {
+    function calculatePositionOnSlider(value: number) {
         if (maxVal === minVal) return 0;
 
         const percent = logScale
@@ -201,25 +200,19 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         return Math.max(0, Math.min(100, percent));
     }
 
-    function getLabelPosition(index: number) {
-        const indexesLen = props.labels ? props.labels.length : 0;
-        if (indexesLen <= 1) return 0;
-        const percent = (index / (indexesLen - 1)) * 100;
-        return Math.max(0, Math.min(100, percent));
-    }
-
     useEffect(() => {
-        setThumbPosition(calculateThumbPosition(props.value));
+        setThumbPosition(calculatePositionOnSlider(props.value));
     }, [props.value, minVal, maxVal, logScale]);
 
     useEffect(() => {
-        setThumb2Position(calculateThumbPosition(props.value2));
+        if (props.type !== "range") return;
+        setThumb2Position(calculatePositionOnSlider(props.value2));
     }, [props.value2, minVal, maxVal, logScale]);
 
     useLayoutEffect(() => {
-        setThumbPosition(calculateThumbPosition(props.value));
+        setThumbPosition(calculatePositionOnSlider(props.value));
         if (props.type === "range") {
-            setThumb2Position(calculateThumbPosition(props.value2));
+            setThumb2Position(calculatePositionOnSlider(props.value2));
         }
     }, []);
 
@@ -229,7 +222,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         if (!trackRef.current) return;
         const rect = trackRef.current.getBoundingClientRect();
         const clickPosition = evt.clientX - rect.left;
-        const sliderSize = trackRef.current.clientWidth;
+        const sliderSize = trackRef.current.clientWidth > 0 ? trackRef.current.clientWidth : 1;
         let newValue;
         if (logScale) {
             const logMin = Math.log10(minVal);
@@ -280,16 +273,12 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     };
 
     const abortControllerRef = useRef<AbortController | null>(null);
-    const dragStartPos = useRef<{ x: number; y: number } | null>(null);
-    const dragStartValue = useRef<number>(props.value);
 
     const beginPointerTracking = (evt: React.MouseEvent | MouseEvent, onMove: (e: PointerEvent) => void, thumbIndex: number) => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
         abortControllerRef.current = new AbortController();
-        dragStartPos.current = { x: evt.pageX, y: evt.pageY };
-        dragStartValue.current = thumbIndex === 2 && props.type === "range" ? props.value2 : props.value;
         window.addEventListener("pointermove", onMove, {
             signal: abortControllerRef.current.signal,
             passive: false,
@@ -317,13 +306,18 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const handleThumbDrag = (evt: PointerEvent, thumbIndex: number) => {
         evt.preventDefault();
         evt.stopPropagation();
-        if (!dragStartPos.current || !trackRef.current) return;
+        if (!trackRef.current) return;
 
-        const sliderSize = trackRef.current.clientWidth;
-        const deltaX = evt.pageX - dragStartPos.current.x;
-        const valueDelta = (deltaX / sliderSize) * (logScale ? Math.log10(maxVal) - Math.log10(minVal) : maxVal - minVal);
-        const nextValue = logScale ? log10ofT(dragStartValue.current) + valueDelta : dragStartValue.current + valueDelta;
-        handleChange(parseFloat(nextValue.toFixed(decimalPlaces)), thumbIndex);
+        const rect = trackRef.current.getBoundingClientRect();
+        const sliderSize = trackRef.current.clientWidth > 0 ? trackRef.current.clientWidth : 1;
+        const pointerX = clampValue(evt.clientX - rect.left, 0, sliderSize);
+        const ratio = pointerX / sliderSize;
+
+        const nextValue = logScale
+            ? ratio * (Math.log10(maxVal) - Math.log10(minVal)) + Math.log10(minVal)
+            : ratio * (maxVal - minVal) + minVal;
+
+        handleChange(logScale ? nextValue : parseFloat(nextValue.toFixed(decimalPlaces)), thumbIndex);
     };
 
     const drawTitle = () => {
@@ -418,102 +412,114 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         );
     }
 
-    // const getTickPosition = (value: number) => {
-    //     if (maxVal === minVal) return 0;
-    //     if (logScale) {
-    //         return (100 * (Math.log10(value) - Math.log10(minVal))) / (Math.log10(maxVal) - Math.log10(minVal));
-    //     }
-    //     return (100 * (value - minVal)) / (maxVal - minVal);
-    // };
+    const numOfMajorTicks = logScale
+        ? Math.floor((Math.log10(maxVal) - Math.log10(minVal)) / majorTickSpacing) + 1
+        : Math.floor((maxVal - minVal) / majorTickSpacing) + 1;
+    console.log("numOfMajorTicks", numOfMajorTicks);
+    function getTickValue(index: number, spacing: number, isMajor = false) {
+        let val: number;
+        if (!logScale) {
+            return (val = Math.ceil(minVal / spacing) * spacing + index * spacing);
+        } else if (isMajor) {
+            return (val = Math.ceil(minVal / spacing) * spacing + index * spacing * Math.pow(10, index));
+        }
+    }
 
     return (
         <>
-            <div className={"moorhen__slider__container"}>
+            <MoorhenStack>
                 {drawTitle()}
-                <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
-                <div className={`moorhen__slider-track-container ${buttonIsDown ? "moorhen__slider-track-container-active" : ""}`}>
-                    <input
-                        type="range"
-                        className={"moorhen__slider-builtin"}
-                        disabled={isDisabled}
-                        value={logScale ? log10ofT(props.value) : props.value}
-                        onChange={props.setValue ? evt => handleChange(+evt.target.value, 1) : undefined}
-                        min={logScale ? Math.log10(minVal) : minVal}
-                        max={logScale ? Math.log10(maxVal) : maxVal}
-                        step={precision}
-                    />
-                    {props.type === "range" && (
+                <MoorhenStack direction="row" align="center" justify="center" gap={20}>
+                    <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
+                    <div className={`moorhen__slider-track-container ${buttonIsDown ? "moorhen__slider-track-container-active" : ""}`}>
                         <input
                             type="range"
                             className={"moorhen__slider-builtin"}
                             disabled={isDisabled}
-                            value={logScale ? log10ofT(props.value2) : props.value2}
-                            onChange={props.setValue2 ? evt => handleChange(+evt.target.value, 2) : undefined}
+                            value={logScale ? log10ofT(props.value) : props.value}
+                            onChange={props.setValue ? evt => handleChange(+evt.target.value, 1) : undefined}
                             min={logScale ? Math.log10(minVal) : minVal}
                             max={logScale ? Math.log10(maxVal) : maxVal}
                             step={precision}
                         />
-                    )}
+                        {props.type === "range" && (
+                            <input
+                                type="range"
+                                className={"moorhen__slider-builtin"}
+                                disabled={isDisabled}
+                                value={logScale ? log10ofT(props.value2) : props.value2}
+                                onChange={props.setValue2 ? evt => handleChange(+evt.target.value, 2) : undefined}
+                                min={logScale ? Math.log10(minVal) : minVal}
+                                max={logScale ? Math.log10(maxVal) : maxVal}
+                                step={precision}
+                            />
+                        )}
 
-                    <div
-                        className={`moorhen__slider-track ${isDisabled ? "disabled" : ""}`}
-                        ref={trackRef}
-                        role="slider"
-                        onClick={handleTrackClick}
-                    />
-                    {props.type === "range" && (
                         <div
-                            className={`moorhen__slider-track-fill ${isDisabled ? "disabled" : ""}`}
-                            style={{ left: `${thumbPosition}%`, width: `${thumb2Position - thumbPosition}%` }}
+                            className={`moorhen__slider-track ${isDisabled ? "disabled" : ""}`}
+                            ref={trackRef}
+                            onClick={handleTrackClick}
                         />
-                    )}
-                    <div
-                        className={`moorhen__slider-thumb ${isDisabled ? "disabled" : ""}`}
-                        ref={thumbRef}
-                        style={{ left: `${thumbPosition}%` }}
-                        onMouseDown={evt => handleStartDragging(evt, 1)}
-                    />
-                    {props.type === "range" && (
+                        {props.type === "range" && (
+                            <div
+                                className={`moorhen__slider-track-fill ${isDisabled ? "disabled" : ""}`}
+                                style={{ left: `${thumbPosition}%`, width: `${thumb2Position - thumbPosition}%` }}
+                            />
+                        )}
                         <div
                             className={`moorhen__slider-thumb ${isDisabled ? "disabled" : ""}`}
-                            ref={thumb2Ref}
-                            style={{ left: `${thumb2Position}%` }}
-                            onMouseDown={evt => handleStartDragging(evt, 2)}
+                            ref={thumbRef}
+                            style={{ left: `${thumbPosition}%` }}
+                            onMouseDown={evt => handleStartDragging(evt, 1)}
                         />
-                    )}
-                    {showTicks && (
-                        <div className="moorhen__slider__ticks">
-                            <span className="moorhen__slider__tick" />
-                        </div>
-                    )}
-                    {showLabels ? (
+                        {props.type === "range" && (
+                            <div
+                                className={`moorhen__slider-thumb ${isDisabled ? "disabled" : ""}`}
+                                ref={thumb2Ref}
+                                style={{ left: `${thumb2Position}%` }}
+                                onMouseDown={evt => handleStartDragging(evt, 2)}
+                            />
+                        )}
                         <div className={"moorhen__slider__labels-bottom"}>
-                            {props.labels ? (
-                                props.labels.map((label, index) => (
+                            {showTicks &&
+                                Array.from({ length: Math.floor((maxVal - minVal) / tickSpacing) + 1 }, (_, i) => (
+                                    <span
+                                        key={i}
+                                        className="moorhen__slider__tick"
+                                        style={{
+                                            left: `${calculatePositionOnSlider(getTickValue(i, tickSpacing))}%`,
+                                        }}
+                                    />
+                                ))}
+                            {showTicks &&
+                                majorTickSpacing &&
+                                Array.from({ length: numOfMajorTicks }, (_, i) => (
+                                    <span
+                                        key={i}
+                                        className="moorhen__slider__major-tick"
+                                        style={{
+                                            left: `${calculatePositionOnSlider(getTickValue(i, majorTickSpacing, true))}%`,
+                                        }}
+                                    />
+                                ))}
+                            {showLabels &&
+                                labels.map((label, index) => (
                                     <span
                                         key={index}
-                                        className="moorhen__slider__label-bottom"
+                                        className={"moorhen__slider__label-bottom " + (label.tick ? "tick" : "")}
                                         style={{
-                                            left: `${calculateThumbPosition(label.value)}%`,
-                                            transform: `translateX(-${index === 0 ? 0 : index === props.labels.length - 1 ? 100 : 50}%)`,
+                                            left: `${calculatePositionOnSlider(label.value)}%`,
+                                            color: label.colour ? label.colour : "inherit",
                                         }}
                                     >
-                                        {label.label}
+                                        {label.label !== "" ? label.label : label.value.toFixed(decimalPlaces)}
                                     </span>
-                                ))
-                            ) : (
-                                <>
-                                    <span className="moorhen__slider__label-bottom">{toFixedNoZero(minVal, decimalPlaces)}</span>
-                                    <span className="moorhen__slider__label-bottom" style={{ right: 0 }}>
-                                        {toFixedNoZero(maxVal, decimalPlaces)}
-                                    </span>
-                                </>
-                            )}
+                                ))}
                         </div>
-                    ) : null}
-                </div>
-                <div className={"moorhen__slider__rightPanel"}>{drawSidePanels("R")}</div>
-            </div>
+                    </div>
+                    <div className={"moorhen__slider__rightPanel"}>{drawSidePanels("R")}</div>
+                </MoorhenStack>
+            </MoorhenStack>
         </>
     );
 };

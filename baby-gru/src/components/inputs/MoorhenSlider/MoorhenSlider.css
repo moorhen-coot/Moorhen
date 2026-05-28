@@ -1,5 +1,10 @@
 @import "../../../colors.css";
 
+:root {
+    --moorhen-slider-thumb-size: 20px;
+    --moorhen-slider-track-height: 8px;
+}
+
 .moorhen__slider__container {
     display: grid;
     grid-template-columns: 24px auto 24px;
@@ -36,8 +41,6 @@
 
 .moorhen__slider__labels-bottom {
     display: flex;
-    /* justify-content: space-between; */
-    align-items: center;
     position: relative;
     top: 0.7rem;
     font-size: 0.9rem;
@@ -49,15 +52,46 @@
     position: absolute;
     font-size: inherit;
     color: var(--moorhen-primary);
+    transform: translateX(-50%);
+    top: -0.5rem;
 }
 
-:root {
-    --moorhen-slider-thumb-size: 20px;
-    --moorhen-slider-track-height: 8px;
+.moorhen__slider__label-bottom.tick::after {
+    content: "";
+    position: absolute;
+    width: 3px;
+    height: 7px;
+    background: var(--moorhen-primary);
+    top: -0.2rem;
+    transform: translateX(50%);
+    right: 50%;
+    z-index: 4;
 }
+
+.moorhen__slider__tick, .moorhen__slider__major-tick {
+    position: absolute;
+    width: 2px;
+    height: 6px;
+    background: var(--moorhen-border);
+    top: -0.7rem;
+    transform: translateX(-50%);
+}
+
+.moorhen__slider__major-tick {
+    width: 3px;
+    height: 7px;
+    background: var(--moorhen-primary);
+}
+
 
 .moorhen__slider-builtin {
-    display: none;
+    position:absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
 }
 
 .moorhen__slider-track-container {
@@ -88,7 +122,8 @@
 
 .moorhen__slider-track {
     appearance: none;
-    width: 100%;
+    width: calc(100% + var(--moorhen-slider-thumb-size));
+    transform: translateX(-10px);
     height: var(--moorhen-slider-track-height);
     border-radius: var(--moorhen-slider-track-height);
     background: var(--moorhen-background);
@@ -97,6 +132,7 @@
     -webkit-transition: 0.5s;
     transition: opacity 0.5s;
     cursor: pointer;
+
 }
 
 .moorhen__slider-track.disabled {
@@ -120,6 +156,7 @@
 .moorhen__slider-thumb {
     position: absolute;
     margin: 0;
+    z-index: 2;
     top: -50%;
     transform: translateX(-50%);
     width: var(--moorhen-slider-thumb-size);
@@ -142,20 +179,4 @@
 
 .moorhen__slider.column {
     flex-direction: column;
-}
-
-.moorhen__slider__ticks {
-    display: flex;
-    padding: 0.2rem;
-    margin-left: 0.8rem;
-    margin-right: 0rem;
-    font: inherit;
-    height: 0.2rem;
-}
-
-.moorhen__slider__tick {
-    width: 3px;
-    height: 6px;
-    background: var(--moorhen-primary);
-    opacity: 0.8;
 }
