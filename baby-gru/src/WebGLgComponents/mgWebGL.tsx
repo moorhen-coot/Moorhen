@@ -156,7 +156,7 @@ function initGL(canvas) {
 export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //Props
-        props: webGL.MGWebGLPropsInterface;
+        declare props: webGL.MGWebGLPropsInterface;
 
         //Other stuff
         store: Store<RootState>;
@@ -235,7 +235,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         showCrosshairs: boolean;
         showScaleBar: boolean;
         showFPS: boolean;
-        state:  {width: number, height: number };
+        declare state:  {width: number, height: number };
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
