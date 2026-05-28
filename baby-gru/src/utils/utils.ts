@@ -766,7 +766,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     maxDist: number = 4.0,
     dashed: boolean = true,
     style: "cylinder" | "cone" = "cylinder",
-    individualSizes?: number[]
+    individualSizes?: number[],
+    dashedSteps: number = 15
 ) => {
     const atomPairs = atoms;
 
@@ -780,7 +781,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     const totInstanceUseColours = [];
     const totInstancePrimTypes = [];
 
-    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? 15 : 1, 16) : getCone(16);
+    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? dashedSteps : 1, 16) : getCone(16);
 
     const thisInstance_sizes = [];
     const thisInstance_colours = [];
