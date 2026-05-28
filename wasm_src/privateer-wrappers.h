@@ -143,3 +143,54 @@ inline std::vector<TableEntry> validate(const std::string &file, const std::stri
 //   std::cout << "[Privateer] No Glycans Found" << std::endl;
   return {};
 }
+
+struct CremerPopleParameters {
+  double q;
+  double phi; 
+  double theta;
+  std::string chain_id; 
+  std::string residue_id; 
+};
+
+
+inline std::vector<CremerPopleParameters> calculate_cremer_pople_parameters(const std::string& file, const std::string& name) {
+
+  char *c_data = (char *)file.c_str();
+  size_t size = file.length();
+
+  if (size == 0) {
+    return {};
+  }
+
+  ::gemmi::Structure structure = ::gemmi::read_structure_from_char_array(c_data, size, name);
+  clipper::GEMMIfile gemmi_file;
+  gemmi_file.set_gemmi_structure(structure);
+  clipper::MiniMol mol;
+  gemmi_file.import_minimol(mol);
+
+  const clipper::MAtomNonBond &manb = clipper::MAtomNonBond(mol, 1.0); // was 1.0
+
+  clipper::MGlycology mgl = clipper::MGlycology(mol, false, ""); // <- use this constructor if you do not want to use torsions DB
+
+  std::vector<clipper::MGlycan> list_of_glycans = mgl.get_list_of_glycans();
+
+  if (list_of_glycans.empty()) return {};
+
+  std::vector<CremerPopleParameters> cremer_pople_dataset  = {};
+
+  for (auto& glycan: list_of_glycans) {
+
+    const std::vector<clipper::MSugar> sugars = glycan.get_sugars();
+    for (auto& sugar: sugars) {
+      std::vector<clipper::ftype> cremer_pople_params = sugar.cremer_pople_params();
+      CremerPopleParameters parameters = {
+       cremer_pople_params[0], cremer_pople_params[1], cremer_pople_params[2], glycan.get_chain(), std::to_string(sugar.get_seqnum())
+      };
+
+      cremer_pople_dataset.emplace_back(parameters);
+    }
+
+  }
+  return cremer_pople_dataset;
+
+}
