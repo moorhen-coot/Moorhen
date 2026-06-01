@@ -8,7 +8,7 @@ import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
-import { MoorhenToggle } from "../inputs";
+import { MoorhenToggle, MoorhenSlider } from "../inputs";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
@@ -20,6 +20,7 @@ import {
     setFogEnd,
     setClipStart,
     setClipEnd,
+    setBlurSize,
 } from "../../store/glRefSlice";
 import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
 import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
@@ -101,6 +102,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
+    const blurSize = useSelector((state: moorhen.State) => state.glRef.blurSize);
 
     const [useFog, setUseFog] = useState<boolean>(true);
     const [useClip, setUseClip] = useState<boolean>(true);
@@ -126,66 +128,6 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
              <span style={{display: "inline-block", width:"100px"}}>Fog</span>
              <span style={{color: "yellow", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
          </>
-
-    const ClipFogBlurOptionsPanel = () => {
-
-        return (
-        <MoorhenStack direction="vertical">
-                <MoorhenToggle
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clip and fog on zoom"
-                />
-                <MoorhenToggle
-                    type="switch"
-                    checked={useFog}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useFog){
-                            setBackupFogNear(gl_fog_start)
-                            setBackupFogFar(gl_fog_end)
-                            dispatch(setFogStart(fogOffNear));
-                            dispatch(setFogEnd(fogOffFar));
-                        } else {
-                            dispatch(setFogStart(backupFogNear));
-                            dispatch(setFogEnd(backupFogFar));
-                        }
-                        setUseFog(e.target.checked)
-                    }}
-                    label={fogLabel}
-                />
-                <MoorhenToggle
-                    type="switch"
-                    checked={useClip}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useClip){
-                            setBackupClipNear(clipStart)
-                            setBackupClipFar(clipEnd)
-                            dispatch(setClipStart(1.5*atomSpan));
-                            dispatch(setClipEnd(1.5*atomSpan));
-                        } else {
-                            dispatch(setClipStart(backupClipNear));
-                            dispatch(setClipEnd(backupClipFar));
-                        }
-                        setUseClip(e.target.checked)
-                    }}
-                    label={clipLabel}
-                />
-                <MoorhenToggle
-                    type="switch"
-                    checked={useOffScreenBuffers}
-                    onChange={() => {
-                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
-                    }}
-                    label={blurLabel}
-                />
-            </MoorhenStack>
-        );
-    };
 
     const plotWidth = props.width ? props.width : 500
     const plotHeight = plotWidth *0.6
@@ -862,9 +804,73 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 </div>
             </MoorhenStack>
             <MoorhenStack gap={2} direction="vertical">
-                <ClipFogBlurOptionsPanel />
+                <MoorhenToggle
+                    type="switch"
+                    checked={resetClippingFogging}
+                    onChange={() => {
+                        dispatch(setResetClippingFogging(!resetClippingFogging));
+                    }}
+                    label="Reset clip and fog on zoom"
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={useFog}
+                    disabled={resetClippingFogging}
+                    onChange={(e) => {
+                        if(useFog){
+                            setBackupFogNear(gl_fog_start)
+                            setBackupFogFar(gl_fog_end)
+                            dispatch(setFogStart(fogOffNear));
+                            dispatch(setFogEnd(fogOffFar));
+                        } else {
+                            dispatch(setFogStart(backupFogNear));
+                            dispatch(setFogEnd(backupFogFar));
+                        }
+                        setUseFog(e.target.checked)
+                    }}
+                    label={fogLabel}
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={useClip}
+                    disabled={resetClippingFogging}
+                    onChange={(e) => {
+                        if(useClip){
+                            setBackupClipNear(clipStart)
+                            setBackupClipFar(clipEnd)
+                            dispatch(setClipStart(1.5*atomSpan));
+                            dispatch(setClipEnd(1.5*atomSpan));
+                        } else {
+                            dispatch(setClipStart(backupClipNear));
+                            dispatch(setClipEnd(backupClipFar));
+                        }
+                        setUseClip(e.target.checked)
+                    }}
+                    label={clipLabel}
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={useOffScreenBuffers}
+                    onChange={() => {
+                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                    }}
+                    label={blurLabel}
+                />
+                <MoorhenSlider
+                    isDisabled={!useOffScreenBuffers}
+                    minVal={1.0}
+                    maxVal={12.0}
+                    logScale={false}
+                    sliderTitle="Blur size"
+                    externalValue={blurSize}
+                    setExternalValue={newValue => {
+                        dispatch(setBlurSize(newValue))
+                    }}
+                    stepButtons={1}
+                    decimalPlaces={0}
+                />
             </MoorhenStack>
-        </MoorhenStack>
+            </MoorhenStack>
         </>
     );
 };

@@ -33,6 +33,7 @@ const initialState: {
     canvasSize: [number, number];
     rttFramebufferSize: [number, number];
     elementsIndicesRestrict: boolean;
+    blurSize: number;
 } = {
     origin: [0, 0, 0],
     isWebGL2: false,
@@ -65,6 +66,7 @@ const initialState: {
     canvasSize: [0, 0],
     rttFramebufferSize: [0, 0],
     elementsIndicesRestrict: false,
+    blurSize: 3
 };
 
 const glRefSlice = createSlice({
@@ -188,6 +190,9 @@ const glRefSlice = createSlice({
                 },
             };
         },
+        setBlurSize: (state, action: { payload: number; type: string }) => {
+            return { ...state, blurSize: action.payload };
+        },
     },
 });
 
@@ -221,6 +226,7 @@ export const {
     setRttFramebufferSize,
     setCanvasSize,
     setElementsIndicesRestrict,
+    setBlurSize,
 } = glRefSlice.actions;
 
 export default glRefSlice.reducer;
