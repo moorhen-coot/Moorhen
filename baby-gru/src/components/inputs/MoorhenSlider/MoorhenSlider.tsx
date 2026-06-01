@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
 import { clampValue, toFixedNoZero } from "../../misc/helpers";
 import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
@@ -24,6 +24,10 @@ type MoorhenSliderPropsBase = {
     showTicks?: boolean;
     tickSpacing?: number;
     majorTickSpacing?: number;
+    logMinorTickStep?: number;
+    logMajorTickBase?: number;
+    autoLabelMajorTicks?: boolean;
+    tickInside?: boolean;
     step?: number;
 };
 
@@ -112,6 +116,18 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
  *
  * @prop {[number, number]} [piMinMax]
  *   Min and max value constraints for the precise input field. Defaults to [minVal, maxVal].
+ *
+ * @prop {number} [tickSpacing=5]
+ *   Linear-scale spacing between minor ticks.
+ *
+ * @prop {number} [majorTickSpacing]
+ *   Linear-scale spacing between major ticks.
+ *
+ * @prop {number} [logMinorTickStep]
+ *   Log-scale mantissa increment within each decade. For example, `1` gives 2..9, 20..90, 200..900.
+ *
+ * @prop {number} [logMajorTickBase]
+ *   Log-scale base mantissa for major ticks. For example, `1` gives 1, 10, 100, 1000.
  */
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
@@ -131,8 +147,15 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         maxVal = 100,
         tickSpacing = 5,
         majorTickSpacing,
+        logMinorTickStep,
+        logMajorTickBase,
+        autoLabelMajorTicks,
+        tickInside = false,
         step,
     } = props;
+
+    const resolvedTickSpacing = logScale ? (logMinorTickStep ?? tickSpacing) : tickSpacing;
+    const resolvedMajorTickSpacing = logScale ? (logMajorTickBase ?? majorTickSpacing) : majorTickSpacing;
 
     const piMinMax: [number, number] = [minVal, maxVal];
     const trackRef = useRef<HTMLDivElement>(null);
@@ -150,13 +173,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
     };
 
-    let labels = props.labels;
-    if (!labels && showLabels) {
-        labels = [
-            { value: minVal, label: toFixedNoZero(minVal, decimalPlaces) },
-            { value: maxVal, label: toFixedNoZero(maxVal, decimalPlaces) },
-        ];
-    }
+
 
     function handleSetValue(newVal: number) {
         let appliedVal = newVal;
@@ -412,24 +429,89 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         );
     }
 
-    const numOfMajorTicks = logScale
-        ? Math.floor((Math.log10(maxVal) - Math.log10(minVal)) / majorTickSpacing) + 1
-        : Math.floor((maxVal - minVal) / majorTickSpacing) + 1;
-    console.log("numOfMajorTicks", numOfMajorTicks);
-    function getTickValue(index: number, spacing: number, isMajor = false) {
-        let val: number;
+    const majorTickValues = useMemo(() => {
+        if (!resolvedMajorTickSpacing) return [];
+
         if (!logScale) {
-            return (val = Math.ceil(minVal / spacing) * spacing + index * spacing);
-        } else if (isMajor) {
-            return (val = Math.ceil(minVal / spacing) * spacing + index * spacing * Math.pow(10, index));
+            return Array.from({ length: Math.floor((maxVal - minVal) / resolvedMajorTickSpacing) + 1 }, (_, index) =>
+                Math.ceil(minVal / resolvedMajorTickSpacing) * resolvedMajorTickSpacing + index * resolvedMajorTickSpacing
+            );
         }
+
+        const ticks: number[] = [];
+        const firstExponent = Math.ceil(Math.log10(minVal / resolvedMajorTickSpacing));
+        const lastExponent = Math.floor(Math.log10(maxVal / resolvedMajorTickSpacing));
+
+        for (let exponent = firstExponent; exponent <= lastExponent; exponent++) {
+            const tickValue = resolvedMajorTickSpacing * Math.pow(10, exponent);
+            if (tickValue >= minVal && tickValue <= maxVal) {
+                ticks.push(tickValue);
+            }
+        }
+
+        return ticks;
+    }, [minVal, maxVal, resolvedMajorTickSpacing, logScale]);
+
+    const minorTickValues = useMemo(() => {
+        if (!resolvedTickSpacing) return [];
+
+        if (!logScale) {
+            return Array.from({ length: Math.floor((maxVal - minVal) / resolvedTickSpacing) + 1 }, (_, index) =>
+                Math.ceil(minVal / resolvedTickSpacing) * resolvedTickSpacing + index * resolvedTickSpacing
+            );
+        }
+
+        const ticks: number[] = [];
+        const majorTickValueSet = new Set(majorTickValues.map(value => value.toPrecision(12)));
+        const decadeStart = Math.floor(Math.log10(minVal));
+        const decadeEnd = Math.ceil(Math.log10(maxVal));
+        const minMultiplier = resolvedMajorTickSpacing ?? 1;
+        const maxMultiplier = minMultiplier * 10;
+
+        for (let exponent = decadeStart; exponent <= decadeEnd; exponent++) {
+            const scale = Math.pow(10, exponent);
+            const firstMultiplier = Math.max(
+                minMultiplier,
+                Math.ceil(minVal / scale / resolvedTickSpacing) * resolvedTickSpacing
+            );
+            const lastMultiplier = Math.min(
+                maxMultiplier - resolvedTickSpacing,
+                Math.floor(maxVal / scale / resolvedTickSpacing) * resolvedTickSpacing
+            );
+
+            for (let multiplier = firstMultiplier; multiplier <= lastMultiplier; multiplier += resolvedTickSpacing) {
+                const tickValue = multiplier * scale;
+
+                if (tickValue >= minVal && tickValue <= maxVal && !majorTickValueSet.has(tickValue.toPrecision(12))) {
+                    ticks.push(tickValue);
+                }
+            }
+        }
+
+        return ticks;
+    }, [minVal, maxVal, resolvedTickSpacing, resolvedMajorTickSpacing, majorTickValues, logScale]);
+
+    let labels = props.labels ? [...props.labels] : undefined;
+    if (!labels && showLabels) {
+        labels = [
+            // { value: minVal, label: toFixedNoZero(minVal, decimalPlaces) },
+            // { value: maxVal, label: toFixedNoZero(maxVal, decimalPlaces) },
+        ];
+    }
+    if (showLabels && autoLabelMajorTicks) {
+        console.log("majorTickValues", majorTickValues);
+        for (const tick of majorTickValues) {
+            console.log("tick", tick);
+            labels?.push({ value: tick, label: tick.toString() });
+        }
+
     }
 
     return (
         <>
             <MoorhenStack>
                 {drawTitle()}
-                <MoorhenStack direction="row" align="center" justify="center" gap={20}>
+                <MoorhenStack direction="row">
                     <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
                     <div className={`moorhen__slider-track-container ${buttonIsDown ? "moorhen__slider-track-container-active" : ""}`}>
                         <input
@@ -480,25 +562,25 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                                 onMouseDown={evt => handleStartDragging(evt, 2)}
                             />
                         )}
-                        <div className={"moorhen__slider__labels-bottom"}>
+                        <div className={"moorhen__slider__labels-container"}>
                             {showTicks &&
-                                Array.from({ length: Math.floor((maxVal - minVal) / tickSpacing) + 1 }, (_, i) => (
+                                minorTickValues.map((tickValue, index) => (
                                     <span
-                                        key={i}
-                                        className="moorhen__slider__tick"
+                                        key={index}
+                                        className={"moorhen__slider__tick " + (tickInside ? "inside" : "")}
                                         style={{
-                                            left: `${calculatePositionOnSlider(getTickValue(i, tickSpacing))}%`,
+                                            left: `${calculatePositionOnSlider(tickValue)}%`,
                                         }}
                                     />
                                 ))}
                             {showTicks &&
-                                majorTickSpacing &&
-                                Array.from({ length: numOfMajorTicks }, (_, i) => (
+                                resolvedMajorTickSpacing &&
+                                majorTickValues.map((tickValue, index) => (
                                     <span
-                                        key={i}
-                                        className="moorhen__slider__major-tick"
+                                        key={index}
+                                        className={"moorhen__slider__major-tick " + (tickInside ? "inside" : "")}
                                         style={{
-                                            left: `${calculatePositionOnSlider(getTickValue(i, majorTickSpacing, true))}%`,
+                                            left: `${calculatePositionOnSlider(tickValue)}%`,
                                         }}
                                     />
                                 ))}

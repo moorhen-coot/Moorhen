@@ -176,7 +176,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             onChange={isOpen => (props.onCollapseToggle ? props.onCollapseToggle(props.map.molNo, isOpen) : () => {})}
             open={props.isOpen}
         >
-            <MoorhenStack direction="vertical" gap={1}>
+            <MoorhenStack direction="vertical">
                 <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}
@@ -188,7 +188,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     >
                         {props.map === activeMap ? "Active\u00A0\u00A0" : "Inactive"}
                     </MoorhenButton>
-                    <MoorhenStack direction="vertical" style={{ justifyContent: "center" }}>
+                    <MoorhenStack direction="vertical" gap={"0.5rem"} style={{ justifyContent: "center" }}>
                         <MoorhenStack direction="row" justify="center" align="center">
                             <MoorhenNumberInput
                                 style={{ justifyContent: "center" }}
@@ -221,7 +221,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                         <MoorhenSlider
                             minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
                             maxVal={props.map.levelRange[1]}
-                            showLabels={false}
                             decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
                             showButtons={true}
                             logScale={true}
@@ -231,6 +230,10 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                                 handleContourLevelChange(newVal);
                             }}
                             piWaitReturn={true}
+                            showTicks
+                            logMajorTickBase={1}
+                            autoLabelMajorTicks
+                            logMinorTickStep={1}
                         />
                     </MoorhenStack>
                 </MoorhenStack>

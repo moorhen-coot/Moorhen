@@ -398,37 +398,41 @@ export const MoorhenDevMenu = () => {
                 sliderTitle="test"
                 showLabels={true}
                 labels={[
-                    { value: 10, label: "", tick: true },
-                    { value: 25, label: "custom", tick: true, colour: "red" },
-                    { value: 50, label: "label", tick: true },
-                    { value: 75, label: "75", tick: true },
-                    { value: 100, label: "100", tick: true, colour: "blue" },
+                    { value: 10, label: "", tick: false },
+                    { value: 25, label: "custom", tick: false, colour: "red" },
+                    { value: 50, label: "label", tick: false },
+                    { value: 75, label: "75", tick: false },
+                    { value: 100, label: "100", tick: false, colour: "blue" },
                 ]}
                 step={1}
                 showTicks={true}
                 tickSpacing={5}
-                // majorTickSpacing={25}
+                majorTickSpacing={25}
             />
              <MoorhenSlider
                 value={sliderValue}
                 setValue={setSliderValue}
-                minVal={1}
+                minVal={0.1}
                 maxVal={10000}
                 usePreciseInput={true}
                 sliderTitle="log test"
                 showLabels={true}
                 logScale={true}
-                labels={[
-                    { value: 1, label: "", tick: true },
-                    { value: 10, label: "", tick: true, colour: "red" },
-                    { value: 100, label: "", tick: true },
-                    { value: 1000, label: "", tick: true },
-                    { value: 10000, label: "", tick: true, colour: "blue" },
-                ]}
+                decimalPlaces={1}
+                // labels={[
+                //     { value: 0.1, label: "", tick: false },
+                //     { value: 1, label: "", tick: false },
+                //     { value: 10, label: "", tick: false, colour: "red" },
+                //     { value: 100, label: "", tick: false },
+                //     { value: 1000, label: "", tick: false },
+                //     { value: 10000, label: "", tick: false, colour: "blue" },
+                // ]}
                 // step={1}
                 showTicks={true}
-                tickSpacing={5}
-                majorTickSpacing={10}
+                logMinorTickStep={1}
+                logMajorTickBase={1}
+                // tickInside={true}
+                autoLabelMajorTicks
             />
         </MoorhenStack>
     );
