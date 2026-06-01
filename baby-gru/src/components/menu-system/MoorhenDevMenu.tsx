@@ -417,7 +417,7 @@ export const MoorhenDevMenu = () => {
                 usePreciseInput={true}
                 sliderTitle="log test"
                 showLabels={true}
-                logScale={true}
+                scale="log"
                 decimalPlaces={1}
                 // labels={[
                 //     { value: 0.1, label: "", tick: false },
@@ -433,6 +433,33 @@ export const MoorhenDevMenu = () => {
                 logMajorTickBase={1}
                 // tickInside={true}
                 autoLabelMajorTicks
+            />
+                         <MoorhenSlider
+                value={sliderValue}
+                setValue={setSliderValue}
+                minVal={-10}
+                maxVal={10000}
+                usePreciseInput={true}
+                sliderTitle="asinh test"
+                showLabels={true}
+                scale="asinh"
+                decimalPlaces={1}
+                labels={[
+                    { value: -10, label: "", tick: true},
+                    { value: -1, label: "", tick: true},
+                    { value: 0, label: "", tick: true},
+                    { value: 1, label: "", tick: true },
+                    { value: 10, label: "", tick: true, colour: "red" },
+                    { value: 100, label: "", tick: true },
+                    { value: 1000, label: "", tick: true },
+                    { value: 10000, label: "", tick: true },
+                ]}
+                // step={1}
+                // showTicks={true}
+                logMinorTickStep={1}
+                logMajorTickBase={1}
+                // tickInside={true}
+                // autoLabelMajorTicks
             />
         </MoorhenStack>
     );

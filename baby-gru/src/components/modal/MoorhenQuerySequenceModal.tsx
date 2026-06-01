@@ -258,7 +258,7 @@ const MoorhenQuerySequence = () => {
                         <MoorhenSlider
                             minVal={0.1}
                             maxVal={1.0}
-                            logScale={false}
+                            scale="linear"
                             sliderTitle="E-Val cutoff"
                             decimalPlaces={1}
                             value={eValCutoff}
@@ -267,7 +267,7 @@ const MoorhenQuerySequence = () => {
                         <MoorhenSlider
                             minVal={1}
                             maxVal={100}
-                            logScale={false}
+                            scale="linear"
                             sliderTitle="Seq. Id. cutoff"
                             value={seqIdCutoff}
                             decimalPlaces={0}

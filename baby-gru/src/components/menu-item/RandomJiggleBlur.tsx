@@ -105,7 +105,7 @@ export const RandomJiggleBlur = () => {
                 minVal={10}
                 maxVal={400}
                 showLabels={false}
-                logScale={false}
+                scale="linear"
                 stepButtons={25}
                 value={bFactor}
                 setValue={value => setBFactor(value)}
@@ -116,7 +116,7 @@ export const RandomJiggleBlur = () => {
                 minVal={10}
                 maxVal={5000}
                 showLabels={false}
-                logScale={false}
+                scale="linear"
                 stepButtons={100}
                 value={noTrials}
                 setValue={value => setNoTrials(value)}
@@ -127,7 +127,7 @@ export const RandomJiggleBlur = () => {
                 minVal={1}
                 maxVal={6}
                 showLabels={false}
-                logScale={false}
+                scale="linear"
                 stepButtons={1}
                 value={scaleFactor}
                 setValue={value => setScaleFactor(value)}

@@ -129,7 +129,7 @@ export const SelfRestraints = () => {
                 minVal={4}
                 maxVal={6}
                 showLabels={false}
-                logScale={false}
+                scale="linear"
                 value={maxDist}
                 stepButtons={0.25}
                 decimalPlaces={2}

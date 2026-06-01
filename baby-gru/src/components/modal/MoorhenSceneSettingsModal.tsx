@@ -65,7 +65,7 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Depth scale"
                 value={edgeDetectDepthScale}
                 setValue={val => dispatch(setEdgeDetectDepthScale(val))}
@@ -76,7 +76,7 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Normal scale"
                 value={edgeDetectNormalScale}
                 setValue={val => dispatch(setEdgeDetectNormalScale(val))}
@@ -87,7 +87,7 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={10.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Depth threshold"
                 value={edgeDetectDepthThreshold}
                 setValue={val => dispatch(setEdgeDetectDepthThreshold(val))}
@@ -98,7 +98,7 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Normal threshold"
                 value={edgeDetectNormalThreshold}
                 setValue={val => dispatch(setEdgeDetectNormalThreshold(val))}
@@ -129,7 +129,7 @@ const OcclusionPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={2.0}
-                logScale={false}
+                scale="linear"
                 isDisabled={!doSSAO}
                 sliderTitle="Occlusion radius"
                 value={ssaoRadius}
@@ -140,7 +140,7 @@ const OcclusionPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 isDisabled={!doSSAO}
                 sliderTitle="Occlusion effect"
                 value={ssaoBias}
@@ -262,7 +262,7 @@ const DepthBlurPanel = () => {
                 isDisabled={!useOffScreenBuffers}
                 minVal={0.4}
                 maxVal={0.6}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Blur depth"
                 value={depthBlurDepth}
                 setValue={val => dispatch(setDepthBlurDepth(val))}
@@ -273,7 +273,7 @@ const DepthBlurPanel = () => {
                 isDisabled={!useOffScreenBuffers}
                 minVal={2}
                 maxVal={16}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Blur radius"
                 value={depthBlurRadius}
                 setValue={val => dispatch(setDepthBlurRadius(val))}
@@ -300,7 +300,7 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Front clip"
                 value={clipStart}
                 setValue={newValue => {
@@ -311,7 +311,7 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Back clip"
                 value={clipEnd}
                 setValue={newValue => {
@@ -322,7 +322,7 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Front zFog"
                 value={fogClipOffset - gl_fog_start}
                 setValue={newValue => {
@@ -333,7 +333,7 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Back zFog"
                 value={gl_fog_end - fogClipOffset}
                 setValue={newValue => {
@@ -379,7 +379,7 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Diffuse"
                 value={diffuse[0]}
                 setValue={newValue => {
@@ -391,7 +391,7 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Specular"
                 value={specular[0]}
                 setValue={newValue => {
@@ -403,7 +403,7 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Ambient"
                 value={ambient[0]}
                 setValue={newValue => {
@@ -415,7 +415,7 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={1.0}
                 maxVal={600.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Specular power"
                 value={specularPower}
                 setValue={newValue => {

@@ -8,7 +8,7 @@ import { PlusMinusButton } from "./PlusMinusButton";
 type MoorhenSliderPropsBase = {
     value: number; // value passed from parent
     setValue: ((value: number) => void) | React.Dispatch<React.SetStateAction<number>>;
-    logScale?: boolean;
+    scale?: "linear" | "log" | "asinh";
     sliderTitle?: string;
     sliderPrecision?: number;
     decimalPlaces?: number;
@@ -49,20 +49,20 @@ type MoorhenSliderDefault = {
 
 type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
 
-function log10ofT<T extends number | [number, number]>(val: T): T {
+function log10ofT<T extends number | [number, number]>(val: T, resolveScaling: (v: number) => number): T {
     if (Array.isArray(val)) {
-        return [Math.log10(val[0]), Math.log10(val[1])] as T;
+        return [resolveScaling(val[0]), resolveScaling(val[1])] as T;
     } else {
-        return Math.log10(val) as T;
+        return resolveScaling(val) as T;
     }
 }
 
-function pow10ofT<T extends number | [number, number]>(val: T): T {
+function pow10ofT<T extends number | [number, number]>(val: T, resolveInverseScaling: (v: number) => number): T {
     // pow 10 for value of type T
     if (Array.isArray(val)) {
-        return [Math.pow(10, val[0]), Math.pow(10, val[1])] as T;
+        return [resolveInverseScaling(val[0]), resolveInverseScaling(val[1])] as T;
     } else {
-        return Math.pow(10, val) as T;
+        return resolveInverseScaling(val) as T;
     }
 }
 
@@ -132,7 +132,7 @@ function pow10ofT<T extends number | [number, number]>(val: T): T {
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const {
-        logScale = false,
+        scale = "linear",
         decimalPlaces = 0,
         sliderTitle,
         sliderPrecision = null,
@@ -153,6 +153,26 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         tickInside = false,
         step,
     } = props;
+    const logScale = scale === "log" || scale === "asinh";
+
+    const resolveScaling = (value: number) => {
+        if (scale === "log") {
+            return Math.log10(value);
+        } else if (scale === "asinh") {
+            return Math.asinh(value);
+        } else {
+            return value;
+        }
+    }
+    const resolveInverseScaling = (value: number) => {
+        if (scale === "log") {
+            return Math.pow(10, value);
+        } else if (scale === "asinh") {
+            return Math.sinh(value);
+        } else {
+            return value;
+        }
+    }   
 
     const resolvedTickSpacing = logScale ? (logMinorTickStep ?? tickSpacing) : tickSpacing;
     const resolvedMajorTickSpacing = logScale ? (logMajorTickBase ?? majorTickSpacing) : majorTickSpacing;
@@ -207,7 +227,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         if (maxVal === minVal) return 0;
 
         const percent = logScale
-            ? ((Math.log10(value) - Math.log10(minVal)) / (Math.log10(maxVal) - Math.log10(minVal))) * 100
+            ? ((resolveScaling(value) - resolveScaling(minVal)) / (resolveScaling(maxVal) - resolveScaling(minVal))) * 100
             : ((value - minVal) / (maxVal - minVal)) * 100;
 
         if (!Number.isFinite(percent)) {
@@ -242,10 +262,10 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         const sliderSize = trackRef.current.clientWidth > 0 ? trackRef.current.clientWidth : 1;
         let newValue;
         if (logScale) {
-            const logMin = Math.log10(minVal);
-            const logMax = Math.log10(maxVal);
+            const logMin = resolveScaling(minVal);
+            const logMax = resolveScaling(maxVal);
             const logValue = (clickPosition / sliderSize) * (logMax - logMin) + logMin;
-            newValue = Math.pow(10, logValue);
+            newValue = resolveInverseScaling(logValue);      
         } else {
             newValue = (clickPosition / sliderSize) * (maxVal - minVal) + minVal;
         }
@@ -263,7 +283,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     function getStepButtons() {
         if (props.stepButtons) {
             if (logScale) {
-                return (Math.log10(maxVal) - Math.log10(minVal)) / props.stepButtons;
+                return (resolveScaling(maxVal) - resolveScaling(minVal)) / props.stepButtons;
             } else {
                 return props.stepButtons;
             }
@@ -271,7 +291,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             return step;
         } else {
             if (logScale) {
-                return (Math.log10(maxVal) - Math.log10(minVal)) / 100;
+                return (resolveScaling(maxVal) - resolveScaling(minVal)) / 100;
             } else {
                 const hundredStep = (maxVal - minVal) / 100;
                 return hundredStep < precision ? precision : hundredStep;
@@ -283,9 +303,9 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
     const handleChange = (newValue: number, thumbIndex: number) => {
         if (thumbIndex === 2 && props.type === "range") {
-            handleSetValue2(clampValue(logScale ? pow10ofT(newValue) : newValue, minVal, maxVal));
+            handleSetValue2(clampValue(logScale ? pow10ofT(newValue, resolveInverseScaling) : newValue, minVal, maxVal));
         } else {
-            handleSetValue(clampValue(logScale ? pow10ofT(newValue) : newValue, minVal, maxVal));
+            handleSetValue(clampValue(logScale ? pow10ofT(newValue, resolveInverseScaling) : newValue, minVal, maxVal));
         }
     };
 
@@ -331,7 +351,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         const ratio = pointerX / sliderSize;
 
         const nextValue = logScale
-            ? ratio * (Math.log10(maxVal) - Math.log10(minVal)) + Math.log10(minVal)
+            ? ratio * (resolveScaling(maxVal) - resolveScaling(minVal)) + resolveScaling(minVal)
             : ratio * (maxVal - minVal) + minVal;
 
         handleChange(logScale ? nextValue : parseFloat(nextValue.toFixed(decimalPlaces)), thumbIndex);
@@ -433,29 +453,48 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         if (!resolvedMajorTickSpacing) return [];
 
         if (!logScale) {
+            // Linear scale
             return Array.from({ length: Math.floor((maxVal - minVal) / resolvedMajorTickSpacing) + 1 }, (_, index) =>
                 Math.ceil(minVal / resolvedMajorTickSpacing) * resolvedMajorTickSpacing + index * resolvedMajorTickSpacing
             );
         }
 
         const ticks: number[] = [];
-        const firstExponent = Math.ceil(Math.log10(minVal / resolvedMajorTickSpacing));
-        const lastExponent = Math.floor(Math.log10(maxVal / resolvedMajorTickSpacing));
 
-        for (let exponent = firstExponent; exponent <= lastExponent; exponent++) {
-            const tickValue = resolvedMajorTickSpacing * Math.pow(10, exponent);
-            if (tickValue >= minVal && tickValue <= maxVal) {
-                ticks.push(tickValue);
+        if (scale === "log") {
+            // Log scale - use powers of 10
+            const firstExponent = Math.ceil(Math.log10(minVal / resolvedMajorTickSpacing));
+            const lastExponent = Math.floor(Math.log10(maxVal / resolvedMajorTickSpacing));
+
+            for (let exponent = firstExponent; exponent <= lastExponent; exponent++) {
+                const tickValue = resolvedMajorTickSpacing * Math.pow(10, exponent);
+                if (tickValue >= minVal && tickValue <= maxVal) {
+                    ticks.push(tickValue);
+                }
+            }
+        } else if (scale === "asinh") {
+            // Asinh scale - use linear spacing in asinh space
+            const scaledMin = Math.asinh(minVal);
+            const scaledMax = Math.asinh(maxVal);
+            const numTicks = Math.floor((scaledMax - scaledMin) / resolvedMajorTickSpacing) + 1;
+
+            for (let i = 0; i < numTicks; i++) {
+                const scaledValue = scaledMin + i * resolvedMajorTickSpacing;
+                const tickValue = Math.sinh(scaledValue);
+                if (tickValue >= minVal && tickValue <= maxVal) {
+                    ticks.push(tickValue);
+                }
             }
         }
 
         return ticks;
-    }, [minVal, maxVal, resolvedMajorTickSpacing, logScale]);
+    }, [minVal, maxVal, resolvedMajorTickSpacing, scale]);
 
     const minorTickValues = useMemo(() => {
         if (!resolvedTickSpacing) return [];
 
         if (!logScale) {
+            // Linear scale
             return Array.from({ length: Math.floor((maxVal - minVal) / resolvedTickSpacing) + 1 }, (_, index) =>
                 Math.ceil(minVal / resolvedTickSpacing) * resolvedTickSpacing + index * resolvedTickSpacing
             );
@@ -463,24 +502,42 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
         const ticks: number[] = [];
         const majorTickValueSet = new Set(majorTickValues.map(value => value.toPrecision(12)));
-        const decadeStart = Math.floor(Math.log10(minVal));
-        const decadeEnd = Math.ceil(Math.log10(maxVal));
-        const minMultiplier = resolvedMajorTickSpacing ?? 1;
-        const maxMultiplier = minMultiplier * 10;
 
-        for (let exponent = decadeStart; exponent <= decadeEnd; exponent++) {
-            const scale = Math.pow(10, exponent);
-            const firstMultiplier = Math.max(
-                minMultiplier,
-                Math.ceil(minVal / scale / resolvedTickSpacing) * resolvedTickSpacing
-            );
-            const lastMultiplier = Math.min(
-                maxMultiplier - resolvedTickSpacing,
-                Math.floor(maxVal / scale / resolvedTickSpacing) * resolvedTickSpacing
-            );
+        if (scale === "log") {
+            // Log scale - mantissa-based ticks
+            const decadeStart = Math.floor(Math.log10(minVal));
+            const decadeEnd = Math.ceil(Math.log10(maxVal));
+            const minMultiplier = resolvedMajorTickSpacing ?? 1;
+            const maxMultiplier = minMultiplier * 10;
 
-            for (let multiplier = firstMultiplier; multiplier <= lastMultiplier; multiplier += resolvedTickSpacing) {
-                const tickValue = multiplier * scale;
+            for (let exponent = decadeStart; exponent <= decadeEnd; exponent++) {
+                const scaleMult = Math.pow(10, exponent);
+                const firstMultiplier = Math.max(
+                    minMultiplier,
+                    Math.ceil(minVal / scaleMult / resolvedTickSpacing) * resolvedTickSpacing
+                );
+                const lastMultiplier = Math.min(
+                    maxMultiplier - resolvedTickSpacing,
+                    Math.floor(maxVal / scaleMult / resolvedTickSpacing) * resolvedTickSpacing
+                );
+
+                for (let multiplier = firstMultiplier; multiplier <= lastMultiplier; multiplier += resolvedTickSpacing) {
+                    const tickValue = multiplier * scaleMult;
+
+                    if (tickValue >= minVal && tickValue <= maxVal && !majorTickValueSet.has(tickValue.toPrecision(12))) {
+                        ticks.push(tickValue);
+                    }
+                }
+            }
+        } else if (scale === "asinh") {
+            // Asinh scale - use linear spacing in asinh space
+            const scaledMin = Math.asinh(minVal);
+            const scaledMax = Math.asinh(maxVal);
+            const numTicks = Math.floor((scaledMax - scaledMin) / resolvedTickSpacing) + 1;
+
+            for (let i = 0; i < numTicks; i++) {
+                const scaledValue = scaledMin + i * resolvedTickSpacing;
+                const tickValue = Math.sinh(scaledValue);
 
                 if (tickValue >= minVal && tickValue <= maxVal && !majorTickValueSet.has(tickValue.toPrecision(12))) {
                     ticks.push(tickValue);
@@ -489,7 +546,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
 
         return ticks;
-    }, [minVal, maxVal, resolvedTickSpacing, resolvedMajorTickSpacing, majorTickValues, logScale]);
+    }, [minVal, maxVal, resolvedTickSpacing, resolvedMajorTickSpacing, majorTickValues, scale]);
 
     let labels = props.labels ? [...props.labels] : undefined;
     if (!labels && showLabels) {
@@ -518,10 +575,10 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                             type="range"
                             className={"moorhen__slider-builtin"}
                             disabled={isDisabled}
-                            value={logScale ? log10ofT(props.value) : props.value}
+                            value={logScale ? log10ofT(props.value, resolveScaling) : props.value}
                             onChange={props.setValue ? evt => handleChange(+evt.target.value, 1) : undefined}
-                            min={logScale ? Math.log10(minVal) : minVal}
-                            max={logScale ? Math.log10(maxVal) : maxVal}
+                            min={logScale ? resolveScaling(minVal) : minVal}
+                            max={logScale ? resolveScaling(maxVal) : maxVal}
                             step={precision}
                         />
                         {props.type === "range" && (
@@ -529,10 +586,10 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                                 type="range"
                                 className={"moorhen__slider-builtin"}
                                 disabled={isDisabled}
-                                value={logScale ? log10ofT(props.value2) : props.value2}
+                                value={logScale ? log10ofT(props.value2, resolveScaling) : props.value2}
                                 onChange={props.setValue2 ? evt => handleChange(+evt.target.value, 2) : undefined}
-                                min={logScale ? Math.log10(minVal) : minVal}
-                                max={logScale ? Math.log10(maxVal) : maxVal}
+                                min={logScale ? resolveScaling(minVal) : minVal}
+                                max={logScale ? resolveScaling(maxVal) : maxVal}
                                 step={precision}
                             />
                         )}

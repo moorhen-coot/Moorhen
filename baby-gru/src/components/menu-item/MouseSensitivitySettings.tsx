@@ -22,7 +22,7 @@ const SensitivitySettingsPanel = () => {
             <MoorhenSlider
                 minVal={0.01}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Mouse sensitivity"
                 stepButtons={0.01}
                 value={mouseSensitivity}
@@ -33,7 +33,7 @@ const SensitivitySettingsPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={9.9}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Mouse wheel zoom sensitivity"
                 stepButtons={0.1}
                 value={zoomWheelSensitivityFactor}
@@ -44,7 +44,7 @@ const SensitivitySettingsPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={10}
-                logScale={true}
+                scale="log"
                 sliderTitle="Mouse wheel map contour sensitivity"
                 value={contourWheelSensitivityFactor}
                 setValue={value => dispatch(setContourWheelSensitivityFactor(value))}

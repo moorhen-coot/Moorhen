@@ -159,7 +159,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
                 <MoorhenSlider
                     minVal={2.5}
                     maxVal={7.0}
-                    logScale={false}
+                    scale="linear"
                     sliderTitle="RMSD"
                     stepButtons={0.5}
                     decimalPlaces={1}

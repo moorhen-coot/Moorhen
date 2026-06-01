@@ -223,7 +223,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             maxVal={props.map.levelRange[1]}
                             decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
                             showButtons={true}
-                            logScale={true}
+                            scale="log"
                             isDisabled={!mapIsVisible}
                             value={mapContourLevel}
                             setValue={newVal => {

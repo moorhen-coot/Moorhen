@@ -162,7 +162,7 @@ export const MinimizeEnergy = () => {
                     minVal={0.1}
                     maxVal={100}
                     decimalPlaces={2}
-                    logScale={true}
+                    scale="log"
                     value={ramaWeight}
                     setValue={value => setRamaWeight(value)}
                 />
@@ -174,7 +174,7 @@ export const MinimizeEnergy = () => {
                     minVal={0.1}
                     maxVal={10}
                     decimalPlaces={2}
-                    logScale={true}
+                    scale="log"
                     value={torsionWeight}
                     setValue={setTorsionWeight}
                 />
@@ -183,7 +183,7 @@ export const MinimizeEnergy = () => {
                 sliderTitle="Number of iterations"
                 minVal={1}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
                 value={nIterations}
                 setValue={value => setNIterations(value)}
@@ -192,7 +192,7 @@ export const MinimizeEnergy = () => {
                 sliderTitle="Number of cycles"
                 minVal={1}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
                 value={ncyc}
                 setValue={value => setNcyc(value)}

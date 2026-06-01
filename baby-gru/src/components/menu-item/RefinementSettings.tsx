@@ -170,7 +170,7 @@ export const RefinementSettings = () => {
                 minVal={0.1}
                 maxVal={100}
                 decimalPlaces={2}
-                logScale={true}
+                scale="log"
                 value={ramaWeight}
                 setValue={value => setRamaWeight(value)}
             />
@@ -180,7 +180,7 @@ export const RefinementSettings = () => {
                 minVal={0.1}
                 maxVal={10}
                 decimalPlaces={2}
-                logScale={true}
+                scale="log"
                 value={torsionWeight}
                 setValue={value => setTorsionWeight(value)}
             />

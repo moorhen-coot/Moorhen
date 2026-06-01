@@ -93,7 +93,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.05}
                 maxVal={0.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -104,7 +104,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={1.0}
                 maxVal={3.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenToggle type="switch" checked={showAniso} onChange={() => setShowAniso(prev => !prev)} label="Show Thermal ellipsoids" />
@@ -219,7 +219,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
@@ -229,7 +229,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 showLabels={false}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
@@ -239,7 +239,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 showLabels={false}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
@@ -250,7 +250,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={1.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -261,7 +261,7 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={1}
                 minVal={0}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
         </MoorhenStack>
@@ -365,7 +365,7 @@ export const SymmetrySettingsPanel = (props: {
                 stepButtons={5}
                 minVal={0.01}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
         </MoorhenStack>
@@ -492,7 +492,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={2}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -503,7 +503,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -514,7 +514,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -525,7 +525,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -536,7 +536,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -547,7 +547,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={1}
                 minVal={0}
                 maxVal={15}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
             <MoorhenSlider
@@ -558,7 +558,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={1}
                 minVal={1}
                 maxVal={64}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
 
@@ -639,7 +639,7 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -650,7 +650,7 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>
@@ -711,7 +711,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
             <MoorhenSlider
@@ -722,7 +722,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
@@ -733,7 +733,7 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>
@@ -822,7 +822,7 @@ export const ResidueEnvironmentSettingsPanel = (props: MoleculeSettingPanelProps
                 stepButtons={0.5}
                 minVal={2}
                 maxVal={4.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>

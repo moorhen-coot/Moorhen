@@ -63,7 +63,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         <MoorhenSlider
             minVal={0.01}
             maxVal={1.0}
-            logScale={false}
+            scale="linear"
             sliderTitle="Opacity"
             isDisabled={!props.mapIsVisible}
             usePreciseInput={true}
@@ -156,7 +156,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         maxVal={maxRadius}
                         showLabels={false}
                         showButtons={true}
-                        logScale={false}
+                        scale="linear"
                         stepButtons={1}
                         sliderTitle="Radius:"
                         isDisabled={!props.mapIsVisible}

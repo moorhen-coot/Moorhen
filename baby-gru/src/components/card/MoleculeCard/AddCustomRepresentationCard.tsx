@@ -671,7 +671,7 @@ export const AddCustomRepresentationCard = memo(
                             stepButtons={0.5}
                             minVal={1}
                             maxVal={15}
-                            logScale={false}
+                            scale="linear"
                             decimalPlaces={2}
                         />
                     </MoorhenStack>
@@ -840,7 +840,7 @@ export const AddCustomRepresentationCard = memo(
                                 maxVal={1.0}
                                 showButtons={false}
                                 decimalPlaces={2}
-                                logScale={false}
+                                scale="linear"
                                 sliderTitle="Opacity"
                                 value={nonCustomOpacity}
                                 setValue={(newVal: number) => handleOpacityChange(newVal)}
