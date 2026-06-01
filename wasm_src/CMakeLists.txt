@@ -453,6 +453,12 @@ ${coot_src}/coot-utils/gl-matrix-eigensystem.cc
 glycoblocks.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
+${coot_src}/cremer-pople-sphere/data_sphere.cc
+            ${coot_src}/cremer-pople-sphere/density_map.cc
+            ${coot_src}/cremer-pople-sphere/primitives.cc
+            ${coot_src}/cremer-pople-sphere/ring.cc
+            ${coot_src}/cremer-pople-sphere/scene.cc
+
 )
 
 add_library(coot STATIC
@@ -466,7 +472,7 @@ set(ENV{EM_PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
 set(ENV{PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
 
 include(FindPkgConfig)
-pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp igraph)
+pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp)
 
 find_package(RDKit REQUIRED)
 find_package(Boost COMPONENTS iostreams thread serialization system REQUIRED)
@@ -484,6 +490,7 @@ target_include_directories(coot PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
     ${GSL_INCLUDE_DIRS}
     ${DEPS_INCLUDE_DIRS}
+    ${RDKIT_INCLUDE_DIRS}
 )
 
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
@@ -496,6 +503,7 @@ Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.C
 
 FILE(MAKE_DIRECTORY "data/COOT_BACKUP/")
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
+FILE(MAKE_DIRECTORY "data/coot/data/carbohydrate/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/g")
@@ -564,6 +572,8 @@ FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
+FILE(COPY ${coot_src}/data/n-glycan-validated.bin DESTINATION data/coot/data/carbohydrate )
+FILE(COPY ${coot_src}/data/n-glycan-validated-rscc.bin DESTINATION data/coot/data/carbohydrate )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
@@ -655,6 +665,7 @@ target_include_directories(moorhen PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
     ${CMAKE_CURRENT_SOURCE_DIR}/../wasm_src_frontend
     ${DEPS_INCLUDE_DIRS}
+    ${RDKIT_INCLUDE_DIRS}
 )
 
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
