@@ -11,29 +11,34 @@ type PlusMinusButtonProps = {
     maxVal: number;
     isDisabled?: boolean;
     logScale?: boolean;
+    allowedValues?: number[];
 };
 
 export function PlusMinusButton(props: PlusMinusButtonProps) {
-    const { step, minVal, maxVal, isDisabled, logScale = false } = props;
+    const { step, minVal, maxVal, isDisabled, logScale = false, allowedValues = null } = props;
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const valueRef = useRef(props.value);
-    useEffect(() => {
-        valueRef.current = props.value;
-    }, [props.value]);
 
     const buttonEffect = () => {
-        const newValue = clampValue(
+        let newValue: number;
+        if (allowedValues ){
+            const currentIndex = allowedValues.findIndex(val => val === valueRef.current);
+            newValue = allowedValues[currentIndex +step]
+            console.log("current index", currentIndex, "new value", newValue)
+        } else {
+        newValue = clampValue(
             logScale ? Math.pow(10, Math.log10(valueRef.current) + step) : valueRef.current + step,
             minVal,
             maxVal
-        );
+        );}
         valueRef.current = newValue;
         props.setValue(newValue);
     };
 
 
     const handleMouseDown = (): void => {
+        valueRef.current = props.value;
         buttonEffect();
         props.setButtonIsDown(true);
 

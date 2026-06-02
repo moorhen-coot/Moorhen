@@ -13,22 +13,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
-const convertPercentageToSamplingRate = (oldValue: number, reverse: boolean = false) => {
-    let [oldMax, oldMin, newMax, newMin]: number[] = [];
-    if (reverse) {
-        [oldMax, oldMin, newMax, newMin] = [4.0, 1.5, 100, 1];
-    } else {
-        [oldMax, oldMin, newMax, newMin] = [100, 1, 4.0, 1.5];
-    }
-
-    const oldRange = oldMax - oldMin;
-    const newRange = newMax - newMin;
-    const newValue = ((oldValue - oldMin) * newRange) / oldRange + newMin;
-
-    return newValue;
-};
-
-const samplingRateMarks = [1, 13, 25, 40, 60, 80, 100];
+const samplingRateValues = [1.5, 1.8, 2.1, 2.5, 3.0, 3.5, 4.0];
 
 export const MapContourSettings = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
@@ -40,13 +25,13 @@ export const MapContourSettings = () => {
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp);
     const commandCentre = useCommandCentre();
 
-    const [mapSampling, setMapSampling] = useState<number>(() => convertPercentageToSamplingRate(defaultMapSamplingRate, true));
+    const [mapSampling, setMapSampling] = useState<number>(defaultMapSamplingRate);
 
     const dispatch = useDispatch();
 
     useEffect(() => {
         const setMapSamplingRate = async () => {
-            const newSamplingRate = convertPercentageToSamplingRate(mapSampling);
+            const newSamplingRate = mapSampling;
 
             if (newSamplingRate !== defaultMapSamplingRate) {
                 await commandCentre.current.cootCommand(
@@ -132,25 +117,18 @@ export const MapContourSettings = () => {
                 decimalPlaces={2}
             />
             <div style={{ padding: "0.5rem" }}>
-                <span>Map sampling rate</span>
-                <Slider
+                <MoorhenSlider
+                    sliderTitle="Map sampling rate"
+                    minVal={1.5}
+                    maxVal={4.0}
+                    scale="asinh"
+                    showTitleValue={false}
                     aria-label="Map sampling rate"
                     value={mapSampling}
-                    onChange={(evt, value: number) => {
-                        setMapSampling(value);
-                    }}
-                    valueLabelFormat={value => {
-                        const samplingRate = convertPercentageToSamplingRate(value);
-                        return samplingRate.toFixed(1).toString();
-                    }}
-                    getAriaValueText={value => {
-                        const samplingRate = convertPercentageToSamplingRate(value);
-                        return samplingRate.toFixed(1).toString();
-                    }}
-                    step={null}
-                    valueLabelDisplay="auto"
-                    marks={samplingRateMarks.map(mark => {
-                        return { value: mark, label: convertPercentageToSamplingRate(mark).toFixed(1).toString() };
+                    setValue={(value: number) => setMapSampling(value)}
+                    allowedValues={samplingRateValues}
+                    labels={samplingRateValues.map(mark => {
+                        return { value: mark, label: mark.toFixed(1).toString(), tick: true };
                     })}
                 />
             </div>

@@ -30,6 +30,7 @@ type MoorhenSliderPropsBase = {
     tickInside?: boolean;
     step?: number;
     showTitleValue?: boolean;
+    allowedValues?: number[];
 };
 
 type MoorhenSliderRange = {
@@ -154,6 +155,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         autoLabelMajorTicks,
         tickInside = false,
         step,
+        allowedValues = null,
     } = props;
     const logScale = scale === "log" || scale === "asinh";
 
@@ -206,6 +208,14 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             const stepsFromMin = Math.round((appliedVal - minVal) / step);
             appliedVal = minVal + stepsFromMin * step;
         }
+        if (allowedValues) {
+            
+            if (allowedValues.length > 0) {
+                const closestValue = allowedValues.reduce((prev, curr) => (Math.abs(curr - appliedVal) < Math.abs(prev - appliedVal) ? curr : prev));
+                appliedVal = closestValue;
+            }
+        }
+            
         props.setValue(+appliedVal);
     }
 
@@ -269,14 +279,18 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         } else {
             newValue = (clickPosition / sliderSize) * (maxVal - minVal) + minVal;
         }
+        handleValueClick(+newValue);
+    };
+
+    const handleValueClick = (value: number) => {
         if (props.type === "range") {
-            if (Math.abs(newValue - props.value) < Math.abs(newValue - props.value2)) {
-                handleSetValue(clampValue(newValue, minVal, props.value2));
+            if (Math.abs(value - props.value) < Math.abs(value - props.value2)) {
+                handleSetValue(clampValue(value, minVal, props.value2));
             } else {
-                handleSetValue2(clampValue(newValue, props.value, maxVal));
+                handleSetValue2(clampValue(value, props.value, maxVal));
             }
         } else {
-            handleSetValue(parseFloat(newValue.toFixed(decimalPlaces)));
+            handleSetValue(+value);
         }
     };
 
@@ -289,6 +303,8 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             }
         } else if (step) {
             return step;
+        } else if (allowedValues) {
+            return 1;
         } else {
             if (logScale) {
                 return (resolveScaling(maxVal) - resolveScaling(minVal)) / 100;
@@ -417,6 +433,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 {" "}
                 <PlusMinusButton
                     step={+stepButtons}
+                    allowedValues={allowedValues}
                     setButtonIsDown={setButtonIsDown}
                     value={side === "L" ? props.value : props.value2}
                     setValue={side === "L" ? handleSetValue : handleSetValue2}
@@ -427,6 +444,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 />{" "}
                 <PlusMinusButton
                     step={-stepButtons}
+                    allowedValues={allowedValues}
                     setButtonIsDown={setButtonIsDown}
                     value={side === "L" ? props.value : props.value2}
                     setValue={side === "L" ? handleSetValue : handleSetValue2}
@@ -439,6 +457,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         ) : (
             <PlusMinusButton
                 step={side === "L" ? -stepButtons : +stepButtons}
+                allowedValues={allowedValues}
                 setButtonIsDown={setButtonIsDown}
                 value={props.value as number}
                 setValue={handleSetValue}
@@ -450,7 +469,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         );
     }
 
-    const majorTickValues = useMemo(() => {
+    const majorTickValues = function() {
         if (!resolvedMajorTickSpacing) return [];
 
         if (!logScale) {
@@ -490,9 +509,9 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
 
         return ticks;
-    }, [minVal, maxVal, resolvedMajorTickSpacing, scale]);
+    }();
 
-    const minorTickValues = useMemo(() => {
+    const minorTickValues = function(){
         if (!resolvedTickSpacing) return [];
 
         if (!logScale) {
@@ -546,7 +565,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
 
         return ticks;
-    }, [minVal, maxVal, resolvedTickSpacing, resolvedMajorTickSpacing, majorTickValues, scale]);
+    }();
 
     let labels = props.labels ? [...props.labels] : undefined;
     if (!labels && showLabels) {
@@ -642,16 +661,19 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                                 ))}
                             {showLabels &&
                                 labels.map((label, index) => (
-                                    <span
+                                    <button
                                         key={index}
                                         className={"moorhen__slider__label-bottom " + (label.tick ? "tick" : "")}
                                         style={{
                                             left: `${calculatePositionOnSlider(label.value)}%`,
                                             color: label.colour ? label.colour : "inherit",
                                         }}
+                                        onClick={() => {
+                                            handleValueClick(label.value);
+                                        }}
                                     >
                                         {label.label !== "" ? label.label : label.value.toFixed(decimalPlaces)}
-                                    </span>
+                                    </button>
                                 ))}
                         </div>
                     </div>

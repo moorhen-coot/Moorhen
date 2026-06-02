@@ -154,7 +154,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         setInternalValue(props.value?.toFixed(decimalDigits) ?? "");
     };
 
-    const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
+    const inputWidth = width ? width : `${3 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
     const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
 
     const input = (

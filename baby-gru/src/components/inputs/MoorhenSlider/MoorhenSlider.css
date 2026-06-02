@@ -36,7 +36,9 @@
 
 
 .moorhen__slider__label-bottom {
+    all: unset;
     position: absolute;
+    cursor: pointer; 
     font-size: inherit;
     color: var(--moorhen-primary);
     transform: translateX(-50%);
