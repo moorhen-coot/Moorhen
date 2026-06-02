@@ -141,6 +141,7 @@ export class MoorhenMolecule {
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
     moleculeCardState: { showXpidList: boolean };
+    DNATCO_info: any; //FIXME = type this
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = "molecule";
@@ -152,6 +153,7 @@ export class MoorhenMolecule {
         this.molNo = null;
         this.coordsFormat = null;
         this.gemmiStructure = null;
+        this.DNATCO_info = null;
         this.gemmiDocument = null;
         this.sequences = [];
         this.headerInfo = null;
@@ -494,8 +496,21 @@ export class MoorhenMolecule {
     }
 
     /**
-     * Update the cached gemmi structure for this molecule
+     * Update the DNATCO data for this molecule
      */
+    async parseDNATCO(coordString: string): Promise<void> {
+        if(this.coordsFormat === "mmcif"){
+            console.log("This is mmcif, we have a chance...")
+            try {
+                const res = JSON.parse(window.CCP4Module.parseDNATCO(coordString))
+                this.DNATCO_info = res
+                console.log(this.DNATCO_info)
+            } catch (err) {
+                console.warn(err)
+            }
+        }
+    }
+
     async updateGemmiStructure(coordString: string): Promise<void> {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
@@ -1020,6 +1035,7 @@ export class MoorhenMolecule {
             )) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>;
             this.molNo = response.data.result.result.first;
             this.coordsFormat = response.data.result.result.second;
+            this.parseDNATCO(coordData as string)
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -1222,6 +1238,12 @@ export class MoorhenMolecule {
         } catch (err) {
             console.log(err);
             console.warn("Issue parsing coordinates into Gemmi structure", coordString);
+        }
+        try {
+            this.parseDNATCO(coordString)
+        } catch(err) {
+            console.log(err);
+            console.warn("Issue parsing coordinates for ", coordString);
         }
         this.atomsDirty = false;
     }

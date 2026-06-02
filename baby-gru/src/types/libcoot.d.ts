@@ -80,6 +80,7 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        parseDNATCO(arg0: string): string;
     };
     type headerInfoGemmi = {
         title: string;
@@ -661,6 +662,7 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        parseDNATCO(arg0: string): string;
     };
     interface DoublePairDoubleJS {
         first: number;
