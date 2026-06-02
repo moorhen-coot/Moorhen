@@ -1,8 +1,7 @@
-import { TextField } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput } from "../inputs";
 
 export const ScaleMap = (props: { map: moorhen.Map; disabled: boolean }) => {
     const mapScaleRef = useRef<null | string>(null);
@@ -24,14 +23,12 @@ export const ScaleMap = (props: { map: moorhen.Map; disabled: boolean }) => {
 
     return (
         <>
-            <TextField
+            <MoorhenNumberInput
                 style={{ margin: "0.5rem" }}
-                id="conformer-count"
                 label="Map scale"
                 type="number"
-                variant="standard"
-                error={isNaN(parseInt(mapScale)) || parseInt(mapScale) < 0 || parseInt(mapScale) === Infinity}
-                value={mapScale}
+                // error={isNaN(parseInt(mapScale)) || parseInt(mapScale) < 0 || parseInt(mapScale) === Infinity}
+                value={+mapScale}
                 onChange={evt => {
                     mapScaleRef.current = evt.target.value;
                     ScaleMap(evt.target.value);

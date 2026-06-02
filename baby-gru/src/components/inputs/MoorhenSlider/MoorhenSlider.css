@@ -75,8 +75,8 @@
 
 .moorhen__slider__major-tick.inside,
 .moorhen__slider__tick.inside {
-    top: -18px;
-    height: 6px;
+    top: -8px;
+    height: 8px;
 }
 
 .moorhen__slider-builtin {

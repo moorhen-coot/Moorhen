@@ -1,16 +1,16 @@
-import { Slider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenButton, MoorhenSelect } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenStack } from "../interface-base/Stack/Stack"
+import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { RootState } from "@/WebComponent/entry";
 
 export const MultiplyBfactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -18,10 +18,9 @@ export const MultiplyBfactor = () => {
     const cidFormRef = useRef<null | HTMLInputElement>(null);
     const ruleSelectRef = useRef<null | HTMLSelectElement>(null);
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null);
-    const bfactorValueRef = useRef<null | number>(0);
 
     const dispatch = useDispatch();
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
 
     const [cid, setCid] = useState<string>("");
     const [invalidCid, setInvalidCid] = useState<boolean>(false);
@@ -48,7 +47,7 @@ export const MultiplyBfactor = () => {
     );
 
     useEffect(() => {
-        let selectedMolecule: moorhen.Molecule;
+        let selectedMolecule: MoorhenMolecule;
         if (molecules.length === 0) {
             setSelectedModel(null);
             setSelectedChain(null);
@@ -63,24 +62,8 @@ export const MultiplyBfactor = () => {
         }
     }, [molecules]);
 
-    const convertValue = (value: number) => {
-        if (value >= 0) {
-            return `+${value + 1}0%`;
-        }
-        return `${value}0%`;
-    };
-
-    const handleBFactorChange = (evt: any, newValue: number) => {
-        setBfactor(newValue);
-        if (newValue >= 0) {
-            bfactorValueRef.current = 1 + (newValue + 1) / 10;
-        } else {
-            bfactorValueRef.current = 1 - -newValue / 10;
-        }
-    };
-
     const multiplyBfactor = async () => {
-        if (!moleculeSelectRef.current.value || !ruleSelectRef.current?.value || bfactorValueRef.current === null) {
+        if (!moleculeSelectRef.current.value || !ruleSelectRef.current?.value ) {
             console.warn("Missing data, doing nothing...");
             return;
         }
@@ -115,7 +98,7 @@ export const MultiplyBfactor = () => {
             await commandCentre.current.cootCommand(
                 {
                     command: "multiply_residue_temperature_factors",
-                    commandArgs: [selectedMolecule.molNo, cid, bfactorValueRef.current],
+                    commandArgs: [selectedMolecule.molNo, cid, 1 + bfactor/100],
                     returnType: "status",
                 },
                 false
@@ -124,7 +107,7 @@ export const MultiplyBfactor = () => {
             selectedMolecule.setAtomsDirty(true);
             await selectedMolecule.redraw();
             dispatch(triggerRedrawEnv(true));
-            document.body.click();
+            // document.body.click();
         } else {
             if (ruleSelectRef.current.value === "cid") setInvalidCid(true);
             console.warn(`Invalid selection of type ${ruleSelectRef.current.value}`);
@@ -176,32 +159,20 @@ export const MultiplyBfactor = () => {
                 />
             )}
         </MoorhenStack>
-            <div style={{ paddingLeft: "2rem", paddingRight: "2rem", paddingTop: "0.1rem", paddingBottom: "0.1rem" }}>
-                <Slider
+        <br/>
+                <MoorhenSlider
                     aria-label="Factor"
-                    getAriaValueText={convertValue}
-                    valueLabelFormat={convertValue}
-                    valueLabelDisplay="on"
+                    // getAriaValueText={convertValue}
+                    // valueLabelFormat={convertValue}
+                    // valueLabelDisplay="on"
+                    sliderTitle="Change B by "
+                    sliderTitleUnit="%"
                     value={bfactor}
-                    onChange={handleBFactorChange}
-                    marks={true}
-                    defaultValue={0}
-                    step={1}
-                    min={-9}
-                    max={9}
-                    sx={{
-                        marginTop: "1.7rem",
-                        marginBottom: "0.8rem",
-                        "& .MuiSlider-valueLabel": {
-                            top: -1,
-                            fontSize: 14,
-                            fontWeight: "bold",
-                            color: "grey",
-                            backgroundColor: "unset",
-                        },
-                    }}
+                    setValue={setBfactor}
+                    step={10}
+                    minVal={-90}
+                    maxVal={90}
                 />
-            </div>
             <MoorhenButton variant="primary" onClick={multiplyBfactor}>
                 OK
             </MoorhenButton>

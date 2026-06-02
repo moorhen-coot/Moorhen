@@ -1,4 +1,3 @@
-import { Slider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";

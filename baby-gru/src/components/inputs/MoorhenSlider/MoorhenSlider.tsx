@@ -31,6 +31,7 @@ type MoorhenSliderPropsBase = {
     step?: number;
     showTitleValue?: boolean;
     allowedValues?: number[];
+    sliderTitleUnit?: string;
 };
 
 type MoorhenSliderRange = {
@@ -156,6 +157,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         tickInside = false,
         step,
         allowedValues = null,
+        sliderTitleUnit
     } = props;
     const logScale = scale === "log" || scale === "asinh";
 
@@ -415,7 +417,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             return (
                 <label className={"moorhen__slider__label"} htmlFor="slider">
                     {sliderTitle}
-                    {showTitleValue && `: ${props.value.toFixed(decimalPlaces)}`}
+                    {showTitleValue && `: ${props.value.toFixed(decimalPlaces)}`}{sliderTitleUnit ?? null}
                     {showTitleValue && props.type === "range" ? ` - ${props.value2.toFixed(decimalPlaces)}` : ""}
                 </label>
             );

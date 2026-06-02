@@ -109,8 +109,8 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
     const makeCopyOfMovStructCheckRef = useRef<null | HTMLInputElement>(null);
     const algorithmSelectRef = useRef<null | HTMLSelectElement>(null);
     const lsqkbModeRef = useRef<number>(0);
-    const movResidueRangeRef = useRef<[number, number]>([1, 100]);
-    const refResidueRangeRef = useRef<[number, number]>([1, 100]);
+    const [movResidueRange, setMovResidueRange] = useState<[number, number]>([1, 100]);
+    const [refResidueRange, setRefResidueRange] = useState<[number, number]>([1, 100]);
 
     const [lsqkbResidueRanges, setLsqkbResidueRanges] = useReducer(lsqkbResidueRangesReducer, initialLsqkbResidueRanges);
     const [selectedRefModel, setSelectedRefModel] = useState<null | number>(null);
@@ -189,17 +189,17 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
         }
     };
 
-    const handleAddLsqkbMatch = useCallback(() => {
+    const handleAddLsqkbMatch = () => {
         const refMolecule = molecules.find(molecule => molecule.molNo === parseInt(refMoleculeSelectRef.current.value));
         const movMolecule = molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value));
         if (refMolecule && movMolecule) {
             const refSequence = refMolecule.sequences.find(sequence => sequence.chain === refChainSelectRef.current.value);
             const movSequence = movMolecule.sequences.find(sequence => sequence.chain === movChainSelectRef.current.value);
             if (refSequence && movSequence) {
-                const refStartResNum = refSequence.sequence[refResidueRangeRef.current[0] - 1]?.resNum;
-                const refEndResNum = refSequence.sequence[refResidueRangeRef.current[1] - 1]?.resNum;
-                const movStartResNum = movSequence.sequence[movResidueRangeRef.current[0] - 1]?.resNum;
-                const movEndResNum = movSequence.sequence[movResidueRangeRef.current[1] - 1]?.resNum;
+                const refStartResNum = refSequence.sequence[refResidueRange[0] - 1]?.resNum;
+                const refEndResNum = refSequence.sequence[refResidueRange[1] - 1]?.resNum;
+                const movStartResNum = movSequence.sequence[movResidueRange[0] - 1]?.resNum;
+                const movEndResNum = movSequence.sequence[movResidueRange[1] - 1]?.resNum;
                 const newMatch = {
                     refChainId: refChainSelectRef.current.value,
                     movChainId: movChainSelectRef.current.value,
@@ -213,7 +213,7 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
         } else {
             dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
         }
-    }, [molecules]);
+    };
 
     useEffect(() => {
         if (molecules.length === 0) {
@@ -274,7 +274,7 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
                 />
             </MoorhenStack>
             {algortihm === "lsqkb" && (
-                <MoorhenSequenceRangeSlider ref={refResidueRangeRef} selectedMolNo={selectedRefModel} selectedChainId={selectedRefChain} />
+                <MoorhenSequenceRangeSlider setRange={setRefResidueRange} selectedMolNo={selectedRefModel} selectedChainId={selectedRefChain} />
             )}
             <hr></hr>
             <MoorhenStack inputGrid>
@@ -295,10 +295,9 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
             </MoorhenStack>{" "}
             {algortihm === "lsqkb" && (
                 <MoorhenSequenceRangeSlider
-                    ref={movResidueRangeRef}
+                    setRange={setMovResidueRange}
                     selectedMolNo={selectedMovModel}
                     selectedChainId={selectedMovChain}
-                    style={{ marginBottom: "1rem" }}
                 />
             )}
             {algortihm === "lsqkb" && (
@@ -385,12 +384,6 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.SUPERPOSE_MODELS}
-            left={width / 6}
-            top={height / 6}
-            minHeight={convertViewtoPx(15, height)}
-            minWidth={convertViewtoPx(25, width)}
-            maxHeight={convertViewtoPx(50, height)}
-            maxWidth={convertViewtoPx(50, width)}
             headerTitle="Superpose structures"
             footer={footerContent}
             body={bodyContent}
