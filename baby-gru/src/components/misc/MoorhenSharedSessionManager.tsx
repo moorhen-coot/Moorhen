@@ -10,7 +10,7 @@ import {
 import { Avatar, Badge, Box, Fade, IconButton, Popper, Slide } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap, emptyMaps } from "../../store/mapsSlice";
 import { addMolecule, emptyMolecules } from "../../store/moleculesSlice";
@@ -32,6 +32,7 @@ export const MoorhenSharedSessionManager = (props: {
 }) => {
     const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
+    const urlPrefix = usePaths().urlPrefix;
 
     const hoveredAtom = useSelector((state: moorhen.State) => state.hoveringStates.hoveredAtom);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -262,7 +263,7 @@ export const MoorhenSharedSessionManager = (props: {
                                                     <img
                                                         style={{ width: "25px", height: "20px" }}
                                                         className="moorhen-navbar-menu-item-icon"
-                                                        src={`./baby-gru/pixmaps/MoorhenLogo.png`}
+                                                        src={`${urlPrefix}/pixmaps/MoorhenLogo.png`}
                                                         alt="user"
                                                     />
                                                 </Avatar>
