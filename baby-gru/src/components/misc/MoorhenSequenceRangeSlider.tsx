@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { RootState } from "@/store/MoorhenReduxStore";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenStack } from "../interface-base";
@@ -85,34 +85,8 @@ export const MoorhenSequenceRangeSlider = (props: {
                     showTicks
                     usePreciseInput
                     piWidth={80}
-                    // getAriaValueText={convertValue}
-                    // valueLabelFormat={convertValue}
-                    // valueLabelDisplay="on"
                     minVal={minMaxValues[0]}
                     maxVal={minMaxValues[1]}
-                    // marks={true}
-                    // sx={{
-                    //     marginTop: "1.7rem",
-                    //     marginBottom: "0.8rem",
-                    //     '& .MuiSlider-thumb[data-index="1"]': {
-                    //         "& .MuiSlider-valueLabel": {
-                    //             top: "-0.7rem",
-                    //             fontSize: 14,
-                    //             fontWeight: "bold",
-                    //             color: "grey",
-                    //             backgroundColor: "unset",
-                    //         },
-                    //     },
-                    //     '& .MuiSlider-thumb[data-index="0"]': {
-                    //         "& .MuiSlider-valueLabel": {
-                    //             top: "3.5rem",
-                    //             fontSize: 14,
-                    //             fontWeight: "bold",
-                    //             color: "grey",
-                    //             backgroundColor: "unset",
-                    //         },
-                    //     },
-                    // }}
                 />
             </MoorhenStack>
         </div>

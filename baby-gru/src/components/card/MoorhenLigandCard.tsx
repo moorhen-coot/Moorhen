@@ -18,8 +18,9 @@ import { moorhen } from "../../types/moorhen";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
 import { convertViewtoPx, guid } from "../../utils/utils";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../inputs";
-import { MoorhenAccordion, MoorhenStack } from "../interface-base";
+import {  MoorhenStack } from "../interface-base";
 import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
+import { MoorhenLinearProgress } from "../icons";
 
 export const MoorhenLigandCard = (props: {
     ligand: LigandInfo;
@@ -179,7 +180,7 @@ export const MoorhenLigandCard = (props: {
                         {qScore ? (
                             <span>Q-Score: {qScore.toFixed(2)}</span>
                         ) : (
-                            <LinearProgress variant="indeterminate" style={{ width: "50%" }} />
+                            <MoorhenLinearProgress />
                         )}
                     </div>
                 ) : null}
@@ -196,7 +197,7 @@ export const MoorhenLigandCard = (props: {
                     >
                         Show
                     </MoorhenButton>
-                    {!flev_placeholder && (
+                    {ligand.svg && (
                         <MoorhenButton
                             onClick={() => {
                                 let link: any = document.getElementById("download_ligand_svg_link");

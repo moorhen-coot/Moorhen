@@ -1,4 +1,3 @@
-import { LinearProgress } from "@mui/material";
 import { useSelector } from "react-redux";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { usePersistentState } from "../../store/menusSlice";
@@ -6,6 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
+import { MoorhenLinearProgress } from "../icons";
 
 export const MoorhenValidationListWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
@@ -125,7 +125,7 @@ export const MoorhenValidationListWidgetBase = (props: {
             </MoorhenStack>
             {busy && (
                 <div>
-                    <LinearProgress style={{ width: "95%" }} variant="indeterminate" />
+                    <MoorhenLinearProgress style={{ width: "95%" }} />
                 </div>
             )}
             <MoorhenStack card overflow="auto">

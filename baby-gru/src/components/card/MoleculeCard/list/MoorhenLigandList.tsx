@@ -60,7 +60,6 @@ export const MoorhenLigandList = (props: {
                 ...ligand,
             });
         }
-
         setLigandList(ligandList);
         props.setBusy?.(false);
     }

@@ -1,7 +1,6 @@
-import { CameraAlt, CloseOutlined, Photo, PhotoOutlined } from "@mui/icons-material";
-import { IconButton, Tooltip } from "@mui/material";
+
 import { useDispatch, useSelector } from "react-redux";
-import { useRef, useState } from "react";
+import {  useState } from "react";
 import { useMoorhenInstance, usePersistentState } from "@/hooks";
 import { RootState, setDrawCrosshairs, setHoveredAtom, setShownControl } from "@/store";
 import { MoorhenButton, MoorhenTextInput } from "../../inputs";

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";

@@ -22,6 +22,8 @@ import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
+import { LinearProgress } from "@mui/material";
+import { MoorhenLinearProgress } from "../icons";
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -461,6 +463,12 @@ export const MoorhenDevMenu = () => {
                 // tickInside={true}
                 // autoLabelMajorTicks
             />
+
+            {/* <LinearProgress/> */}
+
+            <MoorhenLinearProgress />
+
+            <MoorhenLinearProgress value={50}/>
         </MoorhenStack>
     );
 };
