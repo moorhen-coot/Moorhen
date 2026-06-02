@@ -1,4 +1,3 @@
-import { Slider } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoleculeRepresentation, MoorhenMolecule } from "@/utils";
@@ -111,39 +110,19 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
             <MoorhenToggle type="switch" checked={showOrtep} onChange={() => setShowOrtep(prev => !prev)} label="Ortep style" />
             {/* <MoorhenToggle type="switch" checked={showHs} onChange={() => setShowHs(prev => !prev)} label="Show Hs" /> */}
             <span>Bond Smoothness</span>
-            <Slider
+            <MoorhenSlider
                 aria-label="Smoothness"
-                style={{ width: "80%", marginLeft: "2rem" }}
                 value={bondSmoothness}
-                onChange={(evt, value: number) => {
-                    setBondSmoothness(value);
-                }}
-                valueLabelFormat={value => {
-                    switch (value) {
-                        case 1:
-                            return "Coarse";
-                        case 50:
-                            return "Nice";
-                        default:
-                            return "Smooth";
-                    }
-                }}
-                getAriaValueText={value => {
-                    switch (value) {
-                        case 1:
-                            return "Coarse";
-                        case 50:
-                            return "Nice";
-                        default:
-                            return "Smooth";
-                    }
-                }}
-                step={null}
-                valueLabelDisplay="auto"
-                marks={[
-                    { value: 1, label: "Coarse" },
-                    { value: 50, label: "Nice" },
-                    { value: 100, label: "Smooth" },
+                setValue={
+                    setBondSmoothness
+                }
+                sliderTitle="Bond Smoothness"
+                showTitleValue={false}
+                step={50}
+                labels={[
+                    { value: 1, label: "Coarse", tick:true },
+                    { value: 50, label: "Nice", tick:true },
+                    { value: 100, label: "Smooth", tick:true },
                 ]}
             />
         </MoorhenStack>
