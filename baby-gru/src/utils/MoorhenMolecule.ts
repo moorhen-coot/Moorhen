@@ -500,7 +500,6 @@ export class MoorhenMolecule {
      */
     async parseDNATCO(coordString: string): Promise<void> {
         if(this.coordsFormat === "mmcif"){
-            console.log("This is mmcif, we have a chance...")
             try {
                 const res = JSON.parse(window.CCP4Module.parseDNATCO(coordString))
                 this.DNATCO_info = res

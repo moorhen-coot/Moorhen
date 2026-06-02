@@ -134,6 +134,12 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         });
     });
 
+    const displayDNATCO = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "dnatco";
+        });
+    });
+
     const symmetrySettingsProps = {
         symmetryRadius,
         setSymmetryRadius,
@@ -594,6 +600,25 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                                 <b>Restraints</b>
                                                 <br />
                                                 Display the self restraints
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                            }
+                        />
+                        <MoorhenToggle
+                            onChange={e => handleToolsToggle(e.target.checked, "dnatco")}
+                            checked={displayDNATCO}
+                            disabled={isVisible ? false : true}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    DNATCO base pairs&nbsp;
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>DNATCO base pairs</b>
+                                                <br />
+                                                Display base-pairs as determined by DNATCO
                                             </>
                                         }
                                     />

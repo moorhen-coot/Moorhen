@@ -47,7 +47,8 @@ export type RepresentationStyles =
     | "adaptativeBonds"
     | "StickBases"
     | "residue_environment"
-    | "transformation";
+    | "transformation"
+    | "dnatco"
 
 /**
  * Represents a molecule representation
@@ -319,6 +320,7 @@ export class MoleculeRepresentation {
             "hover",
             "CDs",
             "restraints",
+            "dnatco",
         ].includes(style);
         this.styleHasSymmetry = ![
             "residueSelection",
@@ -738,6 +740,9 @@ export class MoleculeRepresentation {
                 break;
             case "glycoBlocks":
                 objects = await this.getGlycoBlockBuffers(_cid);
+                break;
+            case "dnatco":
+                objects = await this.getDNATCOBuffers();
                 break;
             case "CRs":
             case "MolecularSurface":
@@ -1464,14 +1469,18 @@ export class MoleculeRepresentation {
             { x: number; y: number; z: number; serial: number | string },
         ][],
         colour: number[],
-        labelled: boolean = false
+        labelled: boolean = false,
+        minDist: number = 1.9,
+        maxDist: number = 4.0,
+        size: number = 0.07,
+        dashed: boolean = true,
     ): libcootApi.InstancedMeshJS[] {
         const atomColours = {};
         gemmiAtomPairs.forEach(atom => {
             atomColours[`${atom[0].serial}`] = colour;
             atomColours[`${atom[1].serial}`] = colour;
         });
-        const objects = [gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled)];
+        const objects = [gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, size, atomColours, labelled, minDist, maxDist,dashed)];
         return objects;
     }
 
@@ -1614,6 +1623,42 @@ export class MoleculeRepresentation {
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
+    async getDNATCOBuffers() {
+        const atomPairs = []
+        for(const bp of this.parentMolecule.DNATCO_info["base_pair_list"]){
+            const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C1'"
+            const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C1'"
+            const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
+            const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
+            const start = selectedGemmiAtoms_1[0]
+            const end = selectedGemmiAtoms_2[0]
+            const startAtomInfo = {
+                pos: [start.x, start.y, start.z],
+                x: start.x,
+                y: start.y,
+                z: start.z,
+                serial: start.serial,
+            };
+
+            const endAtomInfo = {
+                pos: [end.x, end.y, end.z],
+                x: end.x,
+                y: end.y,
+                z: end.z,
+                serial: end.serial,
+            };
+            const pair = [startAtomInfo, endAtomInfo];
+            atomPairs.push(pair)
+        }
+        const objects = this.getGemmiAtomPairsBuffers(atomPairs, [0.3, 0.7, 0.3, 1.0], false, 7.0, 13.0, 0.2, false)
+        return objects;
+    }
+
+    /**
+     * Get representation buffers for the rama-balls representation
+     * @param {string} cid - The CID selection for this representation
+     * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
+     */
     async getRamachandranBallBuffers() {
         const response = (await this.commandCentre.current.cootCommand(
             {
@@ -1626,6 +1671,7 @@ export class MoleculeRepresentation {
         const objects = [response.data.result.result];
         return objects;
     }
+
 
     /**
      * Get representation buffers for the gaussian surf. representation
