@@ -891,7 +891,8 @@ export const gemmiAtomsToCirclesSpheresInfo = (
     atoms: moorhen.AtomInfo[],
     size: number,
     primType: string,
-    colourScheme: { [x: string]: any[] }
+    colourScheme: { [x: string]: any[] },
+    doHoverAtoms: boolean = true
 ) => {
     const sphere_sizes = [];
     const sphere_col_tri = [];
@@ -922,7 +923,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
 
     if (primType === "PERFECT_SPHERES") {
         return {
-            atoms: [[sphere_atoms]],
+            atoms: [doHoverAtoms?[sphere_atoms]:[[]]],
             instance_sizes: [[sphere_sizes]],
             instance_origins: [[sphere_vert_tri]],
             instance_use_colors: [[totInstanceUseColours]],
@@ -935,7 +936,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
         };
     } else {
         return {
-            atoms: [[sphere_atoms]],
+            atoms: [doHoverAtoms?[sphere_atoms]:[[]]],
             sizes: [[sphere_sizes]],
             col_tri: [[sphere_col_tri]],
             norm_tri: [[[]]],

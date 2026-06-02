@@ -1624,8 +1624,17 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getDNATCOBuffers() {
-        const atomPairs = []
-        for(const bp of this.parentMolecule.DNATCO_info["base_pair_list"]){
+        const wc_atomPairs = []
+        const other_atomPairs = []
+        const cis_midPoints = []
+        const trans_midPoints = []
+        const bpl = this.parentMolecule.DNATCO_info["base_pair_list"]
+        const bpa = this.parentMolecule.DNATCO_info["base_pair_annotation"]
+        for(const bp of bpl){
+            const ba = bpa.filter(ba => ba.base_pair_id===bp.base_pair_id)[0]
+            const orientation = ba.orientation
+            const base_1_edge = ba.base_1_edge
+            const base_2_edge = ba.base_2_edge
             const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C1'"
             const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C1'"
             const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
@@ -1647,11 +1656,39 @@ export class MoleculeRepresentation {
                 z: end.z,
                 serial: end.serial,
             };
+            const midAtomInfo = {
+                pos: [(end.x+start.x)*0.5, (end.y+start.y)*0.5, (end.z+start.z)*0.5],
+                x: (end.x+start.x)*0.5,
+                y: (end.y+start.y)*0.5,
+                z: (end.z+start.z)*0.5,
+                serial: start.serial+"_"+end.serial,
+            };
             const pair = [startAtomInfo, endAtomInfo];
-            atomPairs.push(pair)
+            if(base_1_edge==="Watson-Crick"&&base_2_edge==="Watson-Crick")
+                wc_atomPairs.push(pair)
+            else
+                other_atomPairs.push(pair)
+            if(orientation==="cis")
+                cis_midPoints.push(midAtomInfo)
+            else
+                trans_midPoints.push(midAtomInfo)
         }
-        const objects = this.getGemmiAtomPairsBuffers(atomPairs, [0.3, 0.7, 0.3, 1.0], false, 7.0, 13.0, 0.2, false)
-        return objects;
+        const wc_objects = this.getGemmiAtomPairsBuffers(wc_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 13.0, 0.2, false)
+        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 13.0, 0.2, false)
+
+        const sphere_size = 0.3;
+        const cis_atomColours = {};
+        cis_midPoints.forEach(atom => {
+            cis_atomColours[`${atom.serial}`] = [1.0,1.0,1.0,1.0];
+        });
+        const cis_sphere_objects = [gemmiAtomsToCirclesSpheresInfo(cis_midPoints, sphere_size, "PERFECT_SPHERES", cis_atomColours,false)];
+        const trans_atomColours = {};
+        trans_midPoints.forEach(atom => {
+            trans_atomColours[`${atom.serial}`] = [0.0,0.0,0.0,1.0];
+        });
+        const trans_sphere_objects = [gemmiAtomsToCirclesSpheresInfo(trans_midPoints, sphere_size, "PERFECT_SPHERES", trans_atomColours,false)];
+
+        return [...wc_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
     }
 
     /**
