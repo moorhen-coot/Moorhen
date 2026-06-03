@@ -157,6 +157,11 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
 
     const inputWidth = width ? width : `${3 + 0.6 * decimalDigits}rem`;
     const showButtons = type === "number" || type === "numberForm";
+    if (showButtons) {
+        if (!props.setValue) {
+            console.warn("MoorhenNumberInput: 'setValue' prop is required when using displaying buttons");
+        }
+    }
     const buttonStyle: React.CSSProperties = {
         display: "flex",
         justifyContent: "center",
@@ -165,15 +170,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         border: "1px solid var(--moorhen-border)",
         borderRadius: "0.2rem",
     };
-    // display: "inline-flex",
-    // alignItems: "center",
-    // flexDirection: "row",
-    // flexWrap: "nowrap",
-    // whiteSpace: "nowrap",
-    // width: "fit-content",
-    // maxWidth: "100%",
-    // flex: "0 0 auto",
-    // columnGap: "0.1rem",
+
     const input = (
         <MoorhenStack
             direction="row"

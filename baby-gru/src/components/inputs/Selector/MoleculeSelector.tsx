@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
 import { MoorhenSelect } from "./Select";
@@ -35,6 +35,15 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
 
     const storeMolecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const moleculesList = molecules ? molecules : storeMolecules;
+    const [internalSelected, setInternalSelected] = useState<number>(undefined);
+
+    useEffect(() => {
+        if (moleculesList.length > 0 && internalSelected === undefined) {
+            setInternalSelected(moleculesList[0].molNo);
+            onSelect?.(moleculesList[0].molNo);
+            onSelectUniqueId?.(moleculesList[0].uniqueId);
+        }
+    },[moleculesList])
 
     let disabled: boolean = props.disabled;
 

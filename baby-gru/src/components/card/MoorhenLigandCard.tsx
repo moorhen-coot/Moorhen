@@ -1,8 +1,4 @@
 import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    LinearProgress,
     Popover,
     Table,
     TableBody,
@@ -114,10 +110,14 @@ export const MoorhenLigandCard = (props: {
 
     let flev_placeholder = true;
     if (ligand && ligand.flev_svg) flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model");
-
+    console.log("Chem comp info", ligand.chem_comp_info);
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return (
         <MoorhenStack card>
+            
+            {/* FIX ME : this is using MUI and need to be replaced but get_gphl_chem_comp_info seem to never return anything...
+            
+            
             {ligand.chem_comp_info?.length > 0 && (
                 <Popover
                     anchorOrigin={{ vertical: "center", horizontal: "center" }}
@@ -172,7 +172,7 @@ export const MoorhenLigandCard = (props: {
                         </Table>
                     </TableContainer>
                 </Popover>
-            )}
+            )} */}
             <MoorhenStack direction="vertical">
                 {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                 {calculateQScore && activeMap ? (

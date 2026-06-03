@@ -21,7 +21,7 @@ type MoorhenCidInputFormPropsType = {
     allowUseCurrentSelection?: boolean;
     ref?: React.Ref<HTMLInputElement>;
     inline?: boolean
-    setCid?: React.Dispatch<React.SetStateAction<string>>
+    setCid?: React.Dispatch<React.SetStateAction<string>> | ((newCid: string) => void);
     allowPickAtom?: boolean
 };
 
@@ -71,6 +71,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
     const atomClickedListener = (evt: Event) => {
         const hoveredAtom = store.getState().hoveringStates.hoveredAtom
         setSelection(hoveredAtom ? hoveredAtom.cid : "")
+        props.setCid?.(hoveredAtom ? hoveredAtom.cid : "")
         stopPicking();
     }
 

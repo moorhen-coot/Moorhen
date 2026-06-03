@@ -124,7 +124,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     };
     const dropDownMenu: React.JSX.Element = (
         <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
-            <MoorhenMenuItem onClick={handleCopyMap}>Copy Map</MoorhenMenuItem>
+            <MoorhenMenuItem onClick={() => {handleCopyMap()}}>Copy Map</MoorhenMenuItem>
             <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
             <MoorhenMenuItemPopover disabled={!mapIsVisible} menuItemText="Set Map Weight">
                 <SetMapWeight key="set-map-weight" map={props.map} />
