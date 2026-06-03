@@ -25,7 +25,6 @@ type MoorhenNumberInputProps = {
     integer?: boolean;
     tooltip?: string;
     className?: string;
-
 };
 
 /**
@@ -157,7 +156,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     };
 
     const inputWidth = width ? width : `${3 + 0.6 * decimalDigits}rem`;
-    const showButtons = (type === "number" || type === "numberForm");
+    const showButtons = type === "number" || type === "numberForm";
     const buttonStyle: React.CSSProperties = {
         display: "flex",
         justifyContent: "center",
@@ -165,16 +164,32 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         height: "1rem",
         border: "1px solid var(--moorhen-border)",
         borderRadius: "0.2rem",
-    }
+    };
+    // display: "inline-flex",
+    // alignItems: "center",
+    // flexDirection: "row",
+    // flexWrap: "nowrap",
+    // whiteSpace: "nowrap",
+    // width: "fit-content",
+    // maxWidth: "100%",
+    // flex: "0 0 auto",
+    // columnGap: "0.1rem",
     const input = (
-        <>
+        <MoorhenStack
+            direction="row"
+            flex={0}
+            align="center"
+            style={{
+                width: "fit-content",
+            }}
+        >
             <input
                 id="input"
                 ref={ref}
                 step={Math.pow(10, -decimalDigits)}
                 disabled={disabled}
                 value={displayValue}
-                style={{ width: inputWidth }}
+                style={{ width: inputWidth, marginRight: showButtons ? "0.1rem" : 0, ...style }}
                 className={`moorhen__input ${"moorhen__input__precise"} 
                 ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
                 ${checkIsValidInput(displayValue) ? "moorhen__input__valid" : "moorhen__input__invalid"} 
@@ -184,11 +199,26 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                 onBlur={commitInputValue}
                 onFocus={handleFocus}
             />
-            
-{showButtons &&             (<MoorhenStack direction="column" align="center" style={{ marginLeft: "0.1rem" }}>
-            <PlusMinusButton step={Math.pow(10, -decimalDigits)} value={props.value} setValue={props.setValue} type="arrow" style={buttonStyle}/>
-            <PlusMinusButton step={-Math.pow(10, -decimalDigits)} value={props.value} setValue={props.setValue} type="arrow" style={buttonStyle}/>
-        </MoorhenStack>)}</>
+
+            {showButtons && (
+                <MoorhenStack direction="column" align="center" style={{ marginLeft: "0.1rem" }}>
+                    <PlusMinusButton
+                        step={Math.pow(10, -decimalDigits)}
+                        value={props.value}
+                        setValue={props.setValue}
+                        type="arrow"
+                        style={buttonStyle}
+                    />
+                    <PlusMinusButton
+                        step={-Math.pow(10, -decimalDigits)}
+                        value={props.value}
+                        setValue={props.setValue}
+                        type="arrow"
+                        style={buttonStyle}
+                    />
+                </MoorhenStack>
+            )}
+        </MoorhenStack>
     );
 
     return (
