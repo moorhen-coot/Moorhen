@@ -140,7 +140,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
                 <input
                     type="text"
                     className={`${"moorhen__input"} ${invalidCid ? "moorhen__input.invalid" : ""}`}
-                    placeholder={placeholder}
+                    placeholder={"click on the target to pick"}
                     onChange={handleChange}
                     ref={cidFormRef}
                     style={{ width: "100%" }}
