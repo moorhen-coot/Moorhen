@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 

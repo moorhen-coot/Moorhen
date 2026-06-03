@@ -1,13 +1,14 @@
 import { useSelector, useStore } from "react-redux";
-import { moorhen } from "../../types/moorhen";
-import "./MoorhenInput.css";
-import { MoorhenStack } from "../interface-base/Stack/Stack";
-import { MoorhenToggle } from "./MoorhenToggle/Toggle";
-import React, { useState } from "react";
-import { MoorhenButton } from "./MoorhenButton/MoorhenButton";
+import { moorhen } from "../../../types/moorhen";
+import "../MoorhenInput.css";
+import { MoorhenStack } from "../../interface-base/Stack/Stack";
+import { MoorhenToggle } from "../MoorhenToggle/Toggle";
+import React, { useEffect, useRef, useState } from "react";
+import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
 import {  RootState } from "@/store";
 import { usePauseClickAwayListener } from "@/hooks/pauseClickAwayListener";
-import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import { OverlayModal } from "../../interface-base/ModalBase/OverlayModal";
+import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 
 type MoorhenCidInputFormPropsType = {
     height?: string;
@@ -22,7 +23,11 @@ type MoorhenCidInputFormPropsType = {
     ref?: React.Ref<HTMLInputElement>;
     inline?: boolean
     setCid?: React.Dispatch<React.SetStateAction<string>> | ((newCid: string) => void);
+    setMolecule? : React.Dispatch<React.SetStateAction<MoorhenMolecule>> | ((newMolecules: MoorhenMolecule) => void);
+    setMoleculeUniqueId?: React.Dispatch<React.SetStateAction<string>> | ((newMoleculeUniqueId: string) => void);
     allowPickAtom?: boolean
+    selectedUniqueId?: number;
+    value?: string;
 };
 
 export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
@@ -36,17 +41,25 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
     invalidCid = false,
     allowUseCurrentSelection = false,
     onChange,
+    setMolecule,
+    setMoleculeUniqueId,
     ref: cidFormRef,
     inline = true,
     allowPickAtom = true,
+    value,
 } = props
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const showResidueSelection = useSelector((state: moorhen.State) => state.generalStates.showResidueSelection);
-    const [selection, setSelection] = useState<string>(defaultValue)
+    const [selection, setSelection] = useState<string>(value ?? defaultValue)
     const [useSelection, setUseSelection] = useState(false)
     const [iseAtomPicking, setIsAtomPicking] = useState(false)
     const store = useStore<RootState>()
     const [pauseClickAwayListener, resumeClickAwayListener] = usePauseClickAwayListener();
+    const atomClickedListenerRef = useRef<((evt: Event) => void) | null>(null);
+
+    useEffect(() => {
+        setSelection(value ?? defaultValue);
+    }, [value, defaultValue]);
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -57,23 +70,49 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
     };
 
     const handlePickAtom = () => {
-        document.addEventListener("atomClicked", atomClickedListener as EventListener)
+        atomClickedListenerRef.current = () => {
+            const hoveredAtom = store.getState().hoveringStates.hoveredAtom
+            if (!hoveredAtom || !hoveredAtom.molecule) {
+                stopPicking();
+                return;
+            }
+
+            const molecule = hoveredAtom.molecule
+            if (setMolecule) {
+                setMolecule(molecule)
+            }
+            if (setMoleculeUniqueId) {
+                setMoleculeUniqueId(molecule.uniqueId)
+                console.log("Setting molecule unique id to", molecule.uniqueId)
+            }
+
+            const clickedCid = hoveredAtom.cid ? hoveredAtom.cid : "";
+            setSelection(clickedCid)
+            props.setCid?.(clickedCid)
+            stopPicking();
+        };
+
+        document.addEventListener("atomClicked", atomClickedListenerRef.current as EventListener)
         pauseClickAwayListener();
         setIsAtomPicking(true);
     }
 
     const stopPicking = () => {
-        document.removeEventListener("atomClicked", atomClickedListener as EventListener)
+        if (atomClickedListenerRef.current) {
+            document.removeEventListener("atomClicked", atomClickedListenerRef.current as EventListener)
+            atomClickedListenerRef.current = null;
+        }
         setIsAtomPicking(false);
         resumeClickAwayListener();
     }
 
-    const atomClickedListener = (evt: Event) => {
-        const hoveredAtom = store.getState().hoveringStates.hoveredAtom
-        setSelection(hoveredAtom ? hoveredAtom.cid : "")
-        props.setCid?.(hoveredAtom ? hoveredAtom.cid : "")
-        stopPicking();
-    }
+    useEffect(() => {
+        return () => {
+            if (atomClickedListenerRef.current) {
+                document.removeEventListener("atomClicked", atomClickedListenerRef.current as EventListener)
+            }
+        };
+    }, []);
 
     const handleFillCurrentSelection = () => {
         let cid: string = ""

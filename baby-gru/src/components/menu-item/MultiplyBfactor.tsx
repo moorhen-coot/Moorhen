@@ -5,7 +5,7 @@ import { triggerRedrawEnv } from "../../store/glRefSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenStack } from "../interface-base/Stack/Stack"

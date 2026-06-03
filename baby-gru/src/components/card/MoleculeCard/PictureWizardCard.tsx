@@ -12,7 +12,7 @@ import { MoorhenNumberInput } from "../../inputs";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS,} from "../../../utils/enums";
 import { getMultiColourRuleArgs, } from "../../../utils/utils";
 import { MoorhenButton,MoorhenSelect,  MoorhenToggle } from "../../inputs";
-import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
 
 export const PictureWizardCard = memo(

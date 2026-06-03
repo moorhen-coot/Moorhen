@@ -4,7 +4,7 @@ import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenStack } from "../interface-base";

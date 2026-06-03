@@ -6,7 +6,7 @@ import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../../inputs";
-import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { MoorhenColorSwatch } from "../../misc/MoorhenColorSwatch";
