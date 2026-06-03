@@ -1624,6 +1624,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getDNATCOBuffers() {
+        const unpaired = []
         const normal_atomPairs = []
         const other_atomPairs = []
         const cis_midPoints = []
@@ -1634,8 +1635,8 @@ export class MoleculeRepresentation {
             const ba = bpa.filter(ba => ba.base_pair_id===bp.base_pair_id)[0]
             const orientation = ba.orientation
             const bp_class = ba.class
-            const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C1'"
-            const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C1'"
+            const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C3'"
+            const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C3'"
             const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
             const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
             const start = selectedGemmiAtoms_1[0]
@@ -1672,8 +1673,8 @@ export class MoleculeRepresentation {
             else
                 trans_midPoints.push(midAtomInfo)
         }
-        const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 13.0, 0.2, false)
-        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 13.0, 0.2, false)
+        const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 15.0, 0.2, false)
+        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 15.0, 0.2, false)
 
         const sphere_size = 0.3;
         const cis_atomColours = {};
@@ -1703,14 +1704,46 @@ export class MoleculeRepresentation {
                     const residueSeqId = residue.seqid;
                     const resinfo = window.cootModule.find_tabulated_residue(residue.name)
                     if(resinfo.is_dna()||resinfo.is_rna()){
-                        let isMatched = false
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()
                             const bplMatch = bpl.filter(bp =>
                                 (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum)||
                                 (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum)
                             )
-                            if(bplMatch.length>0) isMatched = true
+                            if(bplMatch.length===0){
+                                const up_1 = "/1/"+chain.name+"/"+seqNum+"/C3'"
+                                let up_2 = ""
+                                if(residue.name==="A"||residue.name==="G"){
+                                    up_2 = "/1/"+chain.name+"/"+seqNum+"/N1"
+                                    //const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/[N1,C2,N3,C4,C5,C6]"
+                                } else if (residue.name==="T"||residue.name==="U"){
+                                    up_2 = "/1/"+chain.name+"/"+seqNum+"/O4"
+                                } else if (residue.name==="C"){
+                                    up_2 = "/1/"+chain.name+"/"+seqNum+"/N4"
+                                }
+                                if(up_2){
+                                    const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
+                                    const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
+                                    const start = selectedGemmiAtoms_1[0]
+                                    const end = selectedGemmiAtoms_2[0]
+                                    const startAtomInfo = {
+                                        pos: [start.x, start.y, start.z],
+                                        x: start.x,
+                                        y: start.y,
+                                        z: start.z,
+                                        serial: start.serial,
+                                    };
+                                    const endAtomInfo = {
+                                        pos: [end.x, end.y, end.z],
+                                        x: end.x,
+                                        y: end.y,
+                                        z: end.z,
+                                        serial: end.serial,
+                                    };
+                                    const pair = [startAtomInfo, endAtomInfo];
+                                    unpaired.push(pair)
+                                }
+                            }
                         } else {
                             const seqNum = residueSeqId.str().substr(0,residueSeqId.str().length-1)
                             const icode = residueSeqId.str()[residueSeqId.str().length-1]
@@ -1718,10 +1751,40 @@ export class MoleculeRepresentation {
                                 (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum&&bp.PDB_ins_code_1===icode)||
                                 (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum&&bp.PDB_ins_code_2===icode)
                             )
-                            if(bplMatch.length>0) isMatched = true
-                        }
-                        if(!isMatched){
-                            console.log(chain.name+"/"+residueSeqId.str()+" is ummatched - I should draw a cuboid thingy.")
+                            if(bplMatch.length===0){
+                                const fullSeqNum = residueSeqId.str()
+                                const up_1 = "/1/"+chain.name+"/"+fullSeqNum+"/C3'"
+                                let up_2 = ""
+                                if(residue.name==="A"||residue.name==="G"){
+                                    up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/N1"
+                                } else if (residue.name==="T"||residue.name==="U"){
+                                    up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/O4"
+                                } else if (residue.name==="C"){
+                                    up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/N4"
+                                }
+                                if(up_2){
+                                    const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
+                                    const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
+                                    const start = selectedGemmiAtoms_1[0]
+                                    const end = selectedGemmiAtoms_2[0]
+                                    const startAtomInfo = {
+                                        pos: [start.x, start.y, start.z],
+                                        x: start.x,
+                                        y: start.y,
+                                        z: start.z,
+                                        serial: start.serial,
+                                    };
+                                    const endAtomInfo = {
+                                        pos: [end.x, end.y, end.z],
+                                        x: end.x,
+                                        y: end.y,
+                                        z: end.z,
+                                        serial: end.serial,
+                                    };
+                                    const pair = [startAtomInfo, endAtomInfo];
+                                    unpaired.push(pair)
+                                }
+                            }
                         }
                     }
                     residue.delete();
@@ -1734,8 +1797,9 @@ export class MoleculeRepresentation {
             chains.delete();
         //}
         models.delete();
+        const unpaired_objects = this.getGemmiAtomPairsBuffers(unpaired, [0.7, 0.2, 0.7, 1.0], false, 2.0, 15.0, 0.4, false)
 
-        return [...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
+        return [...unpaired_objects,...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
     }
 
     /**
