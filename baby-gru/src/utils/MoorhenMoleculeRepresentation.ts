@@ -1,3 +1,4 @@
+import { vec3Create,NormalizeVec3,vec3Cross } from '../WebGLgComponents/mgMaths';
 import { batch } from "react-redux";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice";
@@ -1624,6 +1625,44 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getDNATCOBuffers() {
+        const ringNormal = (points) => {
+            const ls = []
+            const ns = []
+            for(let i=1;i<points.length;i++){
+                const d = vec3Create([
+                    points[i].x -  points[i-1].x,
+                    points[i].y -  points[i-1].y,
+                    points[i].z -  points[i-1].z,
+                ])
+                NormalizeVec3(d)
+                ls.push(d)
+            }
+            const d = vec3Create([
+                points[0].x -  points[points.length-1].x,
+                points[0].y -  points[points.length-1].y,
+                points[0].z -  points[points.length-1].z,
+            ])
+            NormalizeVec3(d)
+            ls.push(d)
+            for(let i=1;i<ls.length;i++){
+                const n = vec3Create([0,0,0])
+                vec3Cross(ls[i],ls[i-1],n)
+                ns.push(n)
+            }
+            const n = vec3Create([0,0,0])
+            vec3Cross(ls[0],ls[ls.length-1],n)
+            ns.push(n)
+            const ntot = [0,0,0]
+            ns.forEach(n => {
+                ntot[0] += n[0]
+                ntot[1] += n[1]
+                ntot[2] += n[2]
+            })
+            ntot[0] /= ns.length
+            ntot[1] /= ns.length
+            ntot[2] /= ns.length
+            return ntot
+        }
         const unpaired = []
         const normal_atomPairs = []
         const other_atomPairs = []
@@ -1715,13 +1754,16 @@ export class MoleculeRepresentation {
                                 let up_2 = ""
                                 if(residue.name==="A"||residue.name==="G"){
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/N1"
-                                    //const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/[N1,C2,N3,C4,C5,C6]"
                                 } else if (residue.name==="T"||residue.name==="U"){
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/O4"
                                 } else if (residue.name==="C"){
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/N4"
                                 }
                                 if(up_2){
+                                    const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/N1,C2,N3,C4,C5,C6"
+                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
+                                    const n = ringNormal(selectedGemmiAtoms_ring)
+                                    console.log(n)
                                     const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
                                     const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
                                     const start = selectedGemmiAtoms_1[0]
