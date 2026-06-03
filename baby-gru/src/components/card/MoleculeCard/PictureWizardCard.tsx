@@ -416,11 +416,7 @@ export const PictureWizardCard = memo(
                            value={neighboursDistance}
                            type="number"
                            label="Neighbours distance:"
-                           onChange={evt => {
-                               try {
-                                   setNeighboursDistance(Number(evt.target.value));
-                               } catch (e) {}
-                           }}
+                           setValue={setNeighboursDistance}
                         />
                     }
                 </MoorhenStack>
