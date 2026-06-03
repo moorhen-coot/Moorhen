@@ -4,7 +4,7 @@ import "./menu-item.css";
 interface MoorhenMenuItemProps {
     children: ReactNode;
     selected?: boolean;
-    onClick?: () => void;
+    onClick?: (e) => void | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     ref?: React.Ref<HTMLButtonElement>;
     id?: string;
     disabled?: boolean;
@@ -21,11 +21,21 @@ interface MoorhenMenuItemProps {
  * @param props.onClick - Optional click handler for the button.
  */
 export const MoorhenMenuItem: React.FC<MoorhenMenuItemProps> = props => {
+    const { ref = null } = props;
+    const [animation, setAnimation] = React.useState<boolean>(false);
+    const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        props.onClick?.(event);
+        setAnimation(true);
+        setTimeout(() => setAnimation(false), 1000);
+    }
+    
+    
     const className = !props.disabled
         ? `moorhen__menu-item ${props.selected ? `moorhen__menu-item-selected` : ``}`
         : `moorhen__menu-item-disabled`;
     return (
-        <button className={className} onClick={props.onClick} ref={props.ref} disabled={props.disabled} style={{ ...props.style }}>
+        <button className={className} onClick={onClick} ref={ref} disabled={props.disabled} style={{ ...props.style }}>
+            {animation && <span className={`moorhen__menu-item-animation`} />}
             {props.children}
         </button>
     );

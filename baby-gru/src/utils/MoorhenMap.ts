@@ -73,6 +73,7 @@ export class MoorhenMap {
     mapRmsd: number;
     mapMean: number;
     suggestedMapWeight: number;
+    mapWeight: number;
     otherMapForColouring: { molNo: number; min: number; max: number };
     diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
@@ -101,6 +102,7 @@ export class MoorhenMap {
         this.mapRmsd = null;
         this.mapMean = null;
         this.suggestedMapWeight = null;
+        this.mapWeight = 0;
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
@@ -117,19 +119,32 @@ export class MoorhenMap {
     /**
      * Helper function to set this map instance as the "active" map for refinement
      */
-    async setActive(): Promise<void> {
-        await this.commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "set_imol_refinement_map",
-                commandArgs: [this.molNo],
-            },
-            false
-        );
-        if (this.suggestedMapWeight === null) {
-            await this.estimateMapWeight();
+    private _isActive: boolean;
+    async setActive(activate: boolean) {
+        if (activate) {
+            await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_imol_refinement_map",
+                    commandArgs: [this.molNo],
+                },
+                false
+            );
+            if (this.suggestedMapWeight === null) {
+                await this.estimateMapWeight();
+            }
+            if (!this.mapWeight) {
+                this.mapWeight = this.suggestedMapWeight;
+            }
+            await this.setMapWeight();
+            this._isActive = true;
+        } else {
+            this._isActive = false;
         }
-        await this.setMapWeight();
+    }
+
+    get active() {
+        return this._isActive;
     }
 
     /**
@@ -469,21 +484,25 @@ export class MoorhenMap {
      * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
-    setMapWeight(weight?: number): Promise<moorhen.WorkerResponse> {
+    setMapWeight(weight?: number) {
         let newWeight: number;
         if (typeof weight !== "undefined") {
             newWeight = weight;
         } else {
-            newWeight = this.suggestedMapWeight;
+            newWeight = this.mapWeight;
         }
-        return this.commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "set_map_weight",
-                commandArgs: [newWeight],
-            },
-            false
-        );
+
+        console.log(`Setting map weight to ${newWeight}`);
+        if (this.active) {
+            this.commandCentre.current.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_map_weight",
+                    commandArgs: [newWeight],
+                },
+                false
+            );
+        }
     }
 
     /**
@@ -755,11 +774,12 @@ export class MoorhenMap {
         if (this.isOriginLocked) {
             if (this.drawOrigin === null) {
                 this.drawOrigin = [-x, -y, -z];
-            } else {                
-            x = -this.drawOrigin[0];
-            y = -this.drawOrigin[1];
-            z = -this.drawOrigin[2];
-        }}
+            } else {
+                x = -this.drawOrigin[0];
+                y = -this.drawOrigin[1];
+                z = -this.drawOrigin[2];
+            }
+        }
 
         let returnType: string;
         if (style === "solid") {
@@ -1098,7 +1118,7 @@ export class MoorhenMap {
                 break;
             }
         }
-        const halfLevel =  histogram.bin_width * (halfLevelIndex + 1);
+        const halfLevel = histogram.bin_width * (halfLevelIndex + 1);
 
         if (this.isEM) {
             this.suggestedContourLevel = halfLevel;
@@ -1123,7 +1143,6 @@ export class MoorhenMap {
 
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number];
-
         } else {
             console.log("Problem finding map centre from coot, using cell centre instead");
             this.mapCentre = this.cellCentre;
@@ -1135,11 +1154,13 @@ export class MoorhenMap {
     /**
      * Estimate the map weight based on the map rmsd
      */
-    async estimateMapWeight(): Promise<void> {
-        if (this.mapRmsd === null) {
-            await this.fetchMapRmsd();
-        }
-        this.suggestedMapWeight = (50 * 0.3) / this.mapRmsd;
+    estimateMapWeight() {
+        // if (this.mapRmsd === null) {
+        //     await this.fetchMapRmsd();
+        // }
+        const weight = (50 * 0.3) / this.mapRmsd;
+        this.suggestedMapWeight = weight;
+        return weight;
     }
 
     /**
@@ -1162,7 +1183,7 @@ export class MoorhenMap {
         const headerInfo = await this.fetchCellInfo();
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),         
+            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.setDefaultColour(),
             this.fetchMapCentre(),
             this.fetchMapMean(),
@@ -1174,9 +1195,9 @@ export class MoorhenMap {
             const result = await this.getMapBoundingSphere(this.suggestedContourLevel);
             this.mapCentre = result.center.map(coord => -coord) as [number, number, number];
             this.drawOrigin = result.center.map(coord => -coord) as [number, number, number];
-            this.suggestedRadius = result.radius;}
-
+            this.suggestedRadius = result.radius;
         }
+    }
 
     async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
         const result = this.commandCentre.current.cootCommand(
@@ -1191,8 +1212,6 @@ export class MoorhenMap {
         const results = response.data.result.result;
         return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
     }
-
-
 
     async fetchMapMean() {
         const result = await this.commandCentre.current.cootCommand(

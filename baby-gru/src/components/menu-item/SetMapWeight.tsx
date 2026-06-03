@@ -1,54 +1,39 @@
-import { TextField } from "@mui/material";
 import { useSelector } from "react-redux";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenButton } from "../inputs";
+import { useCallback, useEffect, useState } from "react";
+import { MoorhenButton, MoorhenNumberInput } from "../inputs";
+import { RootState } from "@/store";
+import { MoorhenMap } from "@/utils/MoorhenMap";
 
-export const SetMapWeight = (props: { map: moorhen.Map }) => {
-    const mapWeightRef = useRef<null | string>(null);
-    const [mapWeight, setMapWeight] = useState<string>(null);
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+export const SetMapWeight = (props: { map: MoorhenMap }) => {
+    const [mapWeight, setMapWeight] = useState<number>(props.map.mapWeight ?? props.map.suggestedMapWeight);
+    const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
 
-    const menuItemText = "Set map weight...";
+    const estimateMapWeight = () => {
+        const weight = props.map.estimateMapWeight();
+        console.log(`Estimated map weight is ${weight}`);
+        setMapWeight(weight);
+    };
 
-    useEffect(() => {
-        props.map.estimateMapWeight().then(_ => {
-            mapWeightRef.current = props.map.suggestedMapWeight.toFixed(2).toString();
-            setMapWeight(props.map.suggestedMapWeight.toFixed(2).toString());
-        });
-    }, []);
+    const onCompleted = async () => {
 
-    const estimateMapWeight = useCallback(async () => {
-        await props.map.estimateMapWeight();
-        mapWeightRef.current = props.map.suggestedMapWeight.toFixed(2).toString();
-        setMapWeight(props.map.suggestedMapWeight.toFixed(2).toString());
-    }, [props.map]);
-
-    const onCompleted = useCallback(async () => {
-        if (isNaN(parseInt(mapWeightRef.current)) || parseInt(mapWeightRef.current) < 0 || parseInt(mapWeightRef.current) === Infinity) {
-            return;
-        }
-        props.map.suggestedMapWeight = parseInt(mapWeightRef.current);
-        if (props.map.molNo === activeMap.molNo) {
-            props.map.setMapWeight();
-        }
+        props.map.setMapWeight(mapWeight);
         document.body.click();
-    }, [props.map]);
+    };
 
     return (
         <>
-            <TextField
-                style={{ margin: "0.5rem" }}
-                id="conformer-count"
+            <MoorhenNumberInput
                 label="Map weight"
                 type="number"
-                variant="standard"
-                error={isNaN(parseInt(mapWeight)) || parseInt(mapWeight) < 0 || parseInt(mapWeight) === Infinity}
+                // error={isNaN(parseInt(mapWeight)) || parseInt(mapWeight) < 0 || parseInt(mapWeight) === Infinity}
                 value={mapWeight}
-                onChange={evt => {
-                    mapWeightRef.current = evt.target.value;
-                    setMapWeight(evt.target.value);
-                }}
+                setValue={setMapWeight}
+                width="6rem"
+                integer
+                // onChange={evt => {
+                //     mapWeightRef.current = evt.target.value;
+                //     setMapWeight(evt.target.value);
+                // }}
             />
             <MoorhenButton variant="secondary" style={{ marginLeft: "0.1rem" }} onClick={estimateMapWeight}>
                 Estimate

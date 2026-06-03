@@ -1,4 +1,4 @@
-import { JSX, useRef } from "react";
+import { JSX, useRef, useState } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
@@ -49,7 +49,6 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     const {
         type = "default",
         label,
-        onClick,
         onMouseDown,
         onMouseUp,
         onMouseLeave,
@@ -92,6 +91,13 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
     const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
+    const [animation, setAnimation] = useState<boolean>(false);
+    
+    const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        props.onClick?.(event);
+        setAnimation(true);
+        setTimeout(() => setAnimation(false), 1000);
+    }
 
     const setButtonRef = (buttonElement: HTMLButtonElement | null) => {
         internalButtonRef.current = buttonElement;
@@ -116,10 +122,12 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             onMouseEnter={onMouseEnter}
             disabled={disabled}
             ref={setButtonRef}
-            style={{ ...props.style }}
+            style={{ ...style }}
             value={props.value}
         >
+            {animation && <span className={`moorhen__button__animation`} />}
             <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem">
+                
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}

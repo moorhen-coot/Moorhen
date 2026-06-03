@@ -5,42 +5,56 @@ import { clampValue } from '../../misc/helpers';
 type PlusMinusButtonProps = {
     step: number;
     setButtonIsDown?: (isDown: boolean) => void;
-    value: number;
-    setValue: (value: number) => void;
-    minVal: number;
-    maxVal: number;
+    value: number | null | undefined;
+    setValue?: (value: number) => void;
+    minVal?: number;
+    maxVal?: number;
     isDisabled?: boolean;
     logScale?: boolean;
     allowedValues?: number[];
+    type?: "arrow" | "round";
+    style?: React.CSSProperties;
 };
 
 export function PlusMinusButton(props: PlusMinusButtonProps) {
     const { step, minVal, maxVal, isDisabled, logScale = false, allowedValues = null } = props;
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const valueRef = useRef(props.value);
+    const valueRef = useRef<number>(props.value ?? 0);
+
+    const clampIfBounded = (value: number): number => {
+        if (minVal === undefined || maxVal === undefined) {
+            return value;
+        }
+        return clampValue(value, minVal, maxVal);
+    };
 
     const buttonEffect = () => {
+        if (!props.setValue) {
+            return;
+        }
+
         let newValue: number;
         if (allowedValues ){
             const currentIndex = allowedValues.findIndex(val => val === valueRef.current);
-            newValue = allowedValues[currentIndex +step]
-            console.log("current index", currentIndex, "new value", newValue)
+            const nextIndex = currentIndex + step;
+            newValue = allowedValues[nextIndex] ?? valueRef.current;
         } else {
-        newValue = clampValue(
-            logScale ? Math.pow(10, Math.log10(valueRef.current) + step) : valueRef.current + step,
-            minVal,
-            maxVal
-        );}
+            const steppedValue = logScale
+                ? Math.pow(10, Math.log10(valueRef.current) + step)
+                : valueRef.current + step;
+            newValue = clampIfBounded(steppedValue);
+        }
+
         valueRef.current = newValue;
         props.setValue(newValue);
     };
 
 
     const handleMouseDown = (): void => {
-        valueRef.current = props.value;
+        valueRef.current = props.value ?? 0;
         buttonEffect();
-        props.setButtonIsDown(true);
+        props.setButtonIsDown?.(true);
 
         timeoutRef.current = setTimeout(() => {
             intervalRef.current = setInterval(() => {
@@ -53,7 +67,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
         clearInterval(intervalRef.current);
         clearTimeout(timeoutRef.current);
         intervalRef.current = null;
-        props.setButtonIsDown(false);
+        props.setButtonIsDown?.(false);
     };
 
     useEffect(() => {
@@ -63,16 +77,18 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
         };
     }, []);
 
+    const icon = props.type === "arrow" ? (step > 0 ? 'MatSymChevronUp' : 'MatSymChevronDown') : (step > 0 ? 'plus' : 'minus');
+
     return (
         <MoorhenButton
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            icon={step > 0 ? 'plus' : 'minus'}
+            icon={icon}
             type="icon-only"
             size="small"
             disabled={isDisabled}
-            style={isDisabled ? { opacity: 0.6 } : {}}
+            style={{ opacity: isDisabled ? 0.6 : 1, ...props.style }}
         />
     );
 }

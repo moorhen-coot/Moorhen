@@ -338,8 +338,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }, [width, height]);
 
     useEffect(() => {
+        for (const map of maps ) {
+            map.setActive(false)
+        }
         if (activeMap && commandCentre.current) {
-            activeMap.setActive();
+            activeMap.setActive(true);
             if (activeMap.isEM) {
                 dispatch(setRefinementSelection("SPHERE"));
             } else {
