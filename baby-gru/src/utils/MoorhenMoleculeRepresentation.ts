@@ -1624,7 +1624,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getDNATCOBuffers() {
-        const wc_atomPairs = []
+        const normal_atomPairs = []
         const other_atomPairs = []
         const cis_midPoints = []
         const trans_midPoints = []
@@ -1633,8 +1633,7 @@ export class MoleculeRepresentation {
         for(const bp of bpl){
             const ba = bpa.filter(ba => ba.base_pair_id===bp.base_pair_id)[0]
             const orientation = ba.orientation
-            const base_1_edge = ba.base_1_edge
-            const base_2_edge = ba.base_2_edge
+            const bp_class = ba.class
             const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C1'"
             const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C1'"
             const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
@@ -1664,8 +1663,8 @@ export class MoleculeRepresentation {
                 serial: start.serial+"_"+end.serial,
             };
             const pair = [startAtomInfo, endAtomInfo];
-            if(base_1_edge==="Watson-Crick"&&base_2_edge==="Watson-Crick")
-                wc_atomPairs.push(pair)
+            if(bp_class.endsWith("G-C")||bp_class.endsWith("C-G")||bp_class.endsWith("A-T")||bp_class.endsWith("T-A")||bp_class.endsWith("A-U")||bp_class.endsWith("U-A"))
+                normal_atomPairs.push(pair)
             else
                 other_atomPairs.push(pair)
             if(orientation==="cis")
@@ -1673,8 +1672,8 @@ export class MoleculeRepresentation {
             else
                 trans_midPoints.push(midAtomInfo)
         }
-        const wc_objects = this.getGemmiAtomPairsBuffers(wc_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 13.0, 0.2, false)
-        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 13.0, 0.2, false)
+        const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 13.0, 0.2, false)
+        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 13.0, 0.2, false)
 
         const sphere_size = 0.3;
         const cis_atomColours = {};
@@ -1688,7 +1687,55 @@ export class MoleculeRepresentation {
         });
         const trans_sphere_objects = [gemmiAtomsToCirclesSpheresInfo(trans_midPoints, sphere_size, "PERFECT_SPHERES", trans_atomColours,false)];
 
-        return [...wc_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
+        const models = this.parentMolecule.gemmiStructure.models;
+        //const modelsSize = models.size();
+
+        //for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
+            const model = models.get(0);
+            const chains = model.chains;
+            const chainsSize = chains.size();
+            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
+                const chain = chains.get(chainIndex);
+                const residues = chain.residues;
+                const residuesSize = residues.size();
+                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                    const residue = residues.get(residueIndex);
+                    const residueSeqId = residue.seqid;
+                    const resinfo = window.cootModule.find_tabulated_residue(residue.name)
+                    if(resinfo.is_dna()||resinfo.is_rna()){
+                        let isMatched = false
+                        if(!residueSeqId.has_icode()){
+                            const seqNum = residueSeqId.str()
+                            const bplMatch = bpl.filter(bp =>
+                                (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum)||
+                                (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum)
+                            )
+                            if(bplMatch.length>0) isMatched = true
+                        } else {
+                            const seqNum = residueSeqId.str().substr(0,residueSeqId.str().length-1)
+                            const icode = residueSeqId.str()[residueSeqId.str().length-1]
+                            const bplMatch = bpl.filter(bp =>
+                                (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum&&bp.PDB_ins_code_1===icode)||
+                                (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum&&bp.PDB_ins_code_2===icode)
+                            )
+                            if(bplMatch.length>0) isMatched = true
+                        }
+                        if(!isMatched){
+                            console.log(chain.name+"/"+residueSeqId.str()+" is ummatched - I should draw a cuboid thingy.")
+                        }
+                    }
+                    residue.delete();
+                    residueSeqId.delete();
+                }
+                chain.delete();
+                residues.delete();
+            }
+            model.delete();
+            chains.delete();
+        //}
+        models.delete();
+
+        return [...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
     }
 
     /**

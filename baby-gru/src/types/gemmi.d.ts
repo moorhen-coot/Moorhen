@@ -1411,8 +1411,9 @@ export namespace gemmi {
         serial: number;
         has_altloc: () => boolean;
     }
-    interface ResidueSeqId extends emscriptem.instance<ResidueSeqId> {
+    interface ResidueSeqId extends emscriptem.instance<SeqId> {
         str: () => string;
+        has_icode: () => boolean;
         num: { value: number };
     }
     interface Residue extends emscriptem.instance<Residue> {
