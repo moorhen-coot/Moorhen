@@ -1775,7 +1775,7 @@ export class MoleculeRepresentation {
                                     const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
-                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
+                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], 1.0, 0.4, cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
                                 }
                             }
                         } else {
@@ -1806,7 +1806,7 @@ export class MoleculeRepresentation {
                                     const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
-                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
+                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], 1.0, 0.4, cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
                                 }
                             }
                         }

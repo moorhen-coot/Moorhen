@@ -888,7 +888,7 @@ export const gemmiAtomPairsToCylindersInfo = (
         };
 };
 
-export const extendCuboidMesh = ( start: vec3, end: vec3, up: vec3, col: [number,number,number,number], cuboid_points: number[], cuboid_colours: number[], cuboid_normals: number[], cuboid_idxs: number[], cuboid_idx_base: number) => {
+export const extendCuboidMesh = ( start: vec3, end: vec3, up: vec3, col: [number,number,number,number], xscale: number, yscale: number, cuboid_points: number[], cuboid_colours: number[], cuboid_normals: number[], cuboid_idxs: number[], cuboid_idx_base: number) => {
     const d = vec3Create([
             start[0] -  end[0],
             start[1] -  end[1],
@@ -899,35 +899,35 @@ export const extendCuboidMesh = ( start: vec3, end: vec3, up: vec3, col: [number
     vec3Cross(up,d,right)
     NormalizeVec3(right)
     vec3Cross(right,d,up)
-    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
-    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
-    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
-    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
+    cuboid_points.push(start[0]-up[0]*yscale-right[0]*xscale,start[1]-up[1]*yscale-right[1]*xscale,start[2]-up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(start[0]-up[0]*yscale+right[0]*xscale,start[1]-up[1]*yscale+right[1]*xscale,start[2]-up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(start[0]+up[0]*yscale+right[0]*xscale,start[1]+up[1]*yscale+right[1]*xscale,start[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(start[0]+up[0]*yscale-right[0]*xscale,start[1]+up[1]*yscale-right[1]*xscale,start[2]+up[2]*yscale-right[2]*xscale)
 
-    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
-    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
-    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
-    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
+    cuboid_points.push(end[0]-up[0]*yscale-right[0]*xscale,end[1]-up[1]*yscale-right[1]*xscale,end[2]-up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(end[0]-up[0]*yscale+right[0]*xscale,end[1]-up[1]*yscale+right[1]*xscale,end[2]-up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale+right[0]*xscale,end[1]+up[1]*yscale+right[1]*xscale,end[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale-right[0]*xscale,end[1]+up[1]*yscale-right[1]*xscale,end[2]+up[2]*yscale-right[2]*xscale)
 
-    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
-    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
-    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
-    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
+    cuboid_points.push(start[0]+up[0]*yscale+right[0]*xscale,start[1]+up[1]*yscale+right[1]*xscale,start[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(start[0]+up[0]*yscale-right[0]*xscale,start[1]+up[1]*yscale-right[1]*xscale,start[2]+up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale+right[0]*xscale,end[1]+up[1]*yscale+right[1]*xscale,end[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale-right[0]*xscale,end[1]+up[1]*yscale-right[1]*xscale,end[2]+up[2]*yscale-right[2]*xscale)
 
-    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
-    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
-    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
-    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
+    cuboid_points.push(start[0]-up[0]*yscale+right[0]*xscale,start[1]-up[1]*yscale+right[1]*xscale,start[2]-up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(start[0]-up[0]*yscale-right[0]*xscale,start[1]-up[1]*yscale-right[1]*xscale,start[2]-up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(end[0]-up[0]*yscale+right[0]*xscale,end[1]-up[1]*yscale+right[1]*xscale,end[2]-up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]-up[0]*yscale-right[0]*xscale,end[1]-up[1]*yscale-right[1]*xscale,end[2]-up[2]*yscale-right[2]*xscale)
 
-    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
-    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
-    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
-    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
+    cuboid_points.push(start[0]-up[0]*yscale-right[0]*xscale,start[1]-up[1]*yscale-right[1]*xscale,start[2]-up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(start[0]+up[0]*yscale-right[0]*xscale,start[1]+up[1]*yscale-right[1]*xscale,start[2]+up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale-right[0]*xscale,end[1]+up[1]*yscale-right[1]*xscale,end[2]+up[2]*yscale-right[2]*xscale)
+    cuboid_points.push(end[0]-up[0]*yscale-right[0]*xscale,end[1]-up[1]*yscale-right[1]*xscale,end[2]-up[2]*yscale-right[2]*xscale)
 
-    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
-    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
-    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
-    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
+    cuboid_points.push(start[0]-up[0]*yscale+right[0]*xscale,start[1]-up[1]*yscale+right[1]*xscale,start[2]-up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(start[0]+up[0]*yscale+right[0]*xscale,start[1]+up[1]*yscale+right[1]*xscale,start[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]+up[0]*yscale+right[0]*xscale,end[1]+up[1]*yscale+right[1]*xscale,end[2]+up[2]*yscale+right[2]*xscale)
+    cuboid_points.push(end[0]-up[0]*yscale+right[0]*xscale,end[1]-up[1]*yscale+right[1]*xscale,end[2]-up[2]*yscale+right[2]*xscale)
 
     for(let icol=0;icol<24;icol++){
         cuboid_colours.push(...col)
