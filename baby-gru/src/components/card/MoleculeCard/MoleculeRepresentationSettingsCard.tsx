@@ -393,7 +393,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
     const [ribbonAxialSampling, setRibbonAxialSampling] = useState<number>(
         molecule ? molecule.defaultM2tParams.ribbonStyleAxialSampling : representation.m2tParams.ribbonStyleAxialSampling
     );
-    const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases">(
+    const [nucleotideRibbonStyle, setNucleotideRibbonStyle] = useState<"DishyBases" | "StickBases" | "None" >(
         molecule ? molecule.defaultM2tParams.nucleotideRibbonStyle : representation.m2tParams.nucleotideRibbonStyle
     );
     const [dishStyleAngularSampling, setDishStyleAngularSampling] = useState<number>(
@@ -574,10 +574,11 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
             <MoorhenSelect
                 label="Nucleotide ribbon style"
                 value={nucleotideRibbonStyle}
-                onChange={evt => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases")}
+                onChange={evt => setNucleotideRibbonStyle(evt.target.value as "DishyBases" | "StickBases" | "None" )}
             >
                 <option value={"StickBases"}>Sticks</option>
                 <option value={"DishyBases"}>Dishes</option>
+                <option value={"None"}>None</option>
             </MoorhenSelect>
         </MoorhenStack>
     );

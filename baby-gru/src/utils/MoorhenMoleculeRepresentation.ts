@@ -93,7 +93,7 @@ export type m2tParameters = {
     cylindersStyleBallRadius: number;
     surfaceStyleProbeRadius: number;
     ballsStyleRadiusMultiplier: number;
-    nucleotideRibbonStyle: "StickBases" | "DishyBases";
+    nucleotideRibbonStyle: "StickBases" | "DishyBases" | "None";
     dishStyleAngularSampling: number;
     ssUsageScheme: number;
 };
@@ -1693,8 +1693,6 @@ export class MoleculeRepresentation {
                 orig_start.y + t2*(orig_end.y - orig_start.y),
                 orig_start.z + t2*(orig_end.z - orig_start.z),
             ]
-            console.log(start)
-            console.log(end)
 
             const startAtomInfo = {
                 pos: [start[0], start[1], start[2]],
