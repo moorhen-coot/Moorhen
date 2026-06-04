@@ -55,6 +55,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     //Sean Wang's XPID
     function("detect_xhpi_interactions_json", &xhpi::detect_xhpi_interactions_json);
+    function("detect_xhpi_interactions_json_with_monomer_library", &xhpi::detect_xhpi_interactions_json_with_monomer_library);
 
     function("cloneGemmiStructureWithTrimmedAtomNames", &cloneGemmiStructureWithTrimmedAtomNames);
 

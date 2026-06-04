@@ -511,7 +511,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                             </MoorhenPopoverButton>
                         </MoorhenStack>
                         <MoorhenToggle
-                            label="XH-Pi Interaction"
+                            label={`XH-\u03C0 Interaction`}
                             onChange={() => {
                                 handleToggleXPIDList(!showXPIDList);
                             }}

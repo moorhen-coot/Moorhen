@@ -147,6 +147,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 width: width,
                 height: height,
             });
+            setPosition({ x: glWidth - width - 550 > 0 ? 550 : glWidth - width  , y: top });
             sizeRef.current = { width, height };
             props.onResize?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 }, { width, height });
             props.onResizeStop?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 });
