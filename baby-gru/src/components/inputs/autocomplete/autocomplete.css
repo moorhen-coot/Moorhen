@@ -1,0 +1,9 @@
+
+.moorhen__autocomplete-popover{
+    background-color: var(--moorhen-input-background);
+}
+
+.moorhen__autocomplete-input{
+    width: 100%;
+    height: 2.5rem;
+}

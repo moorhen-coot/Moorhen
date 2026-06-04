@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenAutoComplete } from "../inputs/autocomplete/AutoComplete";
+import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 
@@ -26,14 +27,11 @@ const shortCutMouseActions = {
 
 export const MoorhenControlsModal = (props: ModalComponentProps) => {
     const _shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const urlPrefix = usePaths().urlPrefix;
 
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
     const [svgString, setSvgString] = useState<string | null>(null);
-    const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
+    const [currentKey, setCurrentKey] = useState<string>(null);
 
     const shortCuts = useMemo(() => {
         const shortCuts: { [key: string]: { modifiers: string[]; keyPress: string; label: string } } = _shortCuts
@@ -68,16 +66,13 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
         []
     );
 
-    const handleMouseHover = (key: string, isMouseEnter: boolean = null) => {
+    const handleMouseHover = (key: string) => {
         const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
         if (!svg) {
             return;
         }
 
-        if (isMouseEnter && autoCompleteValue !== "") {
-            setAutoCompleteValue("");
-        }
-
+        setCurrentKey(key);
         const modifiers = [];
         if (shortCuts[key].modifiers.includes("shiftKey")) modifiers.push("Shift");
         if (shortCuts[key].modifiers.includes("ctrlKey")) modifiers.push("Ctrl");
@@ -89,19 +84,42 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
         elementsToHighlight.forEach(elementId => {
             const svgElement: SVGElement = svg.getElementById(elementId);
             if (svgElement) {
-                svgElement.style.fill = isMouseEnter === true || isMouseEnter === null ? "#f55142" : "#ffffffff";
-            }
+                svgElement.style.fill = "rgb(230, 43, 43)";}
         });
 
         if (Object.hasOwn(shortCutMouseActions, key)) {
             shortCutMouseActions[key].forEach((svgId: string) => {
                 const svgElement: SVGElement = svg.getElementById(svgId);
                 if (svgElement) {
-                    svgElement.style.display = isMouseEnter ? "block" : "none";
+                    svgElement.style.display = "block" 
                 }
             });
         }
     };
+
+    const clearMouseHighlights = () => {
+        const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
+        if (!svg) {
+            return;
+        }
+        const elementsToClear = Object.keys(shortCuts).reduce((acc, key) => {
+            const modifiers = [];
+            if (shortCuts[key].modifiers.includes("shiftKey")) modifiers.push("Shift");
+            if (shortCuts[key].modifiers.includes("ctrlKey")) modifiers.push("Ctrl");
+            if (shortCuts[key].modifiers.includes("metaKey")) modifiers.push("Meta");
+            if (shortCuts[key].modifiers.includes("altKey")) modifiers.push("Alt");
+            if (shortCuts[key].keyPress === " ") modifiers.push("Space");
+            return [...acc, ...modifiers, shortCuts[key].keyPress];
+        }, [] as string[]);
+
+        elementsToClear.forEach(elementId => {
+            const svgElement: SVGElement = svg.getElementById(elementId);
+            if (svgElement) {
+                svgElement.style.fill = "#ffffffff";
+            }
+        });
+    };
+    
 
     return (
         <MoorhenDraggableModalBase
@@ -119,9 +137,9 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
                                         className="moorhen__stack_card"
                                         key={key}
                                         onMouseEnter={() => {
-                                            handleMouseHover(key, true);
+                                            clearMouseHighlights();
+                                            handleMouseHover(key);
                                         }}
-                                        onMouseLeave={() => handleMouseHover(key, false)}
                                     >
                                         <span style={{ fontWeight: "bold" }}>{`${shortCuts[key].label}`}</span>
                                     </div>
@@ -129,61 +147,25 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
                             })}
                     </MoorhenStack>
                     <MoorhenStack direction="column" style={{ width: "80%" }}>
-                        <Autocomplete
-                            style={{ paddingTop: "0.5rem" }}
-                            disablePortal
-                            selectOnFocus
-                            clearOnBlur
-                            handleHomeEndKeys
-                            freeSolo
-                            includeInputInList
-                            filterSelectedOptions
-                            size="small"
-                            value={autoCompleteValue}
-                            open={autocompleteOpen}
-                            onClose={() => setAutocompleteOpen(false)}
-                            onOpen={() => setAutocompleteOpen(true)}
-                            renderInput={params => (
-                                <TextField
-                                    {...params}
-                                    label="Search"
-                                    InputProps={{
-                                        ...params.InputProps,
+                        <MoorhenAutoComplete
+                            setAutocompleteOpen={setAutocompleteOpen}
+                            autocompleteOpen={autocompleteOpen}
+                            searchItems={Object.keys(shortCuts)?.map(key => ({ key: key, ...shortCuts[key] }))}
+                            keys={[{ name: "label", weight: 1 }]}
+                            resultsRenderer={result => (
+                                <MoorhenMenuItem
+                                    key={result.label}
+                                    onClick={_evt => {
+                                        clearMouseHighlights();
+                                        handleMouseHover(result.key);
+                                        setAutocompleteOpen(false);
                                     }}
-                                />
+                                >
+                                    {result.label}
+                                </MoorhenMenuItem>
                             )}
-                            renderOption={(props, key: string) => {
-                                return (
-                                    <MenuItem
-                                        key={key}
-                                        onClick={_evt => {
-                                            setAutoCompleteValue(shortCuts[key].label);
-                                            setAutocompleteOpen(false);
-                                            handleMouseHover(key);
-                                        }}
-                                    >
-                                        {shortCuts[key].label}
-                                    </MenuItem>
-                                );
-                            }}
-                            options={Object.keys(shortCuts)}
-                            filterOptions={filterOptions}
-                            sx={{
-                                "& .MuiInputBase-root": {
-                                    backgroundColor: isDark ? "#222" : "white",
-                                    color: isDark ? "white" : "#222",
-                                },
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: isDark ? "white" : "grey",
-                                },
-                                "& .MuiButtonBase-root": {
-                                    color: isDark ? "white" : "grey",
-                                },
-                                "& .MuiFormLabel-root": {
-                                    color: isDark ? "white" : "#222",
-                                },
-                            }}
                         />
+                        <span style={{ margin: "1rem", fontWeight: "bold" }}>{currentKey ? shortCuts[currentKey].label : ""}</span>
                         <div style={{ display: "flex" }}>{svgString ? parse(svgString) : null}</div>
                     </MoorhenStack>
                 </MoorhenStack>
