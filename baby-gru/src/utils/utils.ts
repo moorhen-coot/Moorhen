@@ -1,6 +1,7 @@
 import { hexToRgb } from "@mui/material";
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
+import { vec3Create,NormalizeVec3,vec3Cross } from '../WebGLgComponents/mgMaths';
 import JSZip from "jszip";
 import pako from "pako";
 import { CommandCentre, WorkerResponse } from "@/InstanceManager/CommandCentre";
@@ -886,6 +887,99 @@ export const gemmiAtomPairsToCylindersInfo = (
             instance_orientations: [totInstance_orientations],
         };
 };
+
+export const extendCuboidMesh = ( start: vec3, end: vec3, up: vec3, col: [number,number,number,number], cuboid_points: number[], cuboid_colours: number[], cuboid_normals: number[], cuboid_idxs: number[], cuboid_idx_base: number) => {
+    const d = vec3Create([
+            start[0] -  end[0],
+            start[1] -  end[1],
+            start[2] -  end[2],
+    ])
+    NormalizeVec3(d)
+    const right = vec3Create([0,0,0])
+    vec3Cross(up,d,right)
+    NormalizeVec3(right)
+    vec3Cross(right,d,up)
+    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
+    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
+    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
+    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
+
+    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
+    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
+    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
+    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
+
+    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
+    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
+    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
+    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
+
+    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
+    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
+    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
+    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
+
+    cuboid_points.push(start[0]-up[0]-right[0],start[1]-up[1]-right[1],start[2]-up[2]-right[2])
+    cuboid_points.push(start[0]+up[0]-right[0],start[1]+up[1]-right[1],start[2]+up[2]-right[2])
+    cuboid_points.push(end[0]+up[0]-right[0],end[1]+up[1]-right[1],end[2]+up[2]-right[2])
+    cuboid_points.push(end[0]-up[0]-right[0],end[1]-up[1]-right[1],end[2]-up[2]-right[2])
+
+    cuboid_points.push(start[0]-up[0]+right[0],start[1]-up[1]+right[1],start[2]-up[2]+right[2])
+    cuboid_points.push(start[0]+up[0]+right[0],start[1]+up[1]+right[1],start[2]+up[2]+right[2])
+    cuboid_points.push(end[0]+up[0]+right[0],end[1]+up[1]+right[1],end[2]+up[2]+right[2])
+    cuboid_points.push(end[0]-up[0]+right[0],end[1]-up[1]+right[1],end[2]-up[2]+right[2])
+
+    for(let icol=0;icol<24;icol++){
+        cuboid_colours.push(...col)
+    }
+
+    cuboid_normals.push(d[0], d[1], d[2])
+    cuboid_normals.push(d[0], d[1], d[2])
+    cuboid_normals.push(d[0], d[1], d[2])
+    cuboid_normals.push(d[0], d[1], d[2])
+
+    cuboid_normals.push(-d[0], -d[1], -d[2])
+    cuboid_normals.push(-d[0], -d[1], -d[2])
+    cuboid_normals.push(-d[0], -d[1], -d[2])
+    cuboid_normals.push(-d[0], -d[1], -d[2])
+
+    cuboid_normals.push(up[0], up[1], up[2])
+    cuboid_normals.push(up[0], up[1], up[2])
+    cuboid_normals.push(up[0], up[1], up[2])
+    cuboid_normals.push(up[0], up[1], up[2])
+
+    cuboid_normals.push(-up[0], -up[1], -up[2])
+    cuboid_normals.push(-up[0], -up[1], -up[2])
+    cuboid_normals.push(-up[0], -up[1], -up[2])
+    cuboid_normals.push(-up[0], -up[1], -up[2])
+
+    cuboid_normals.push(-right[0], -right[1], -right[2])
+    cuboid_normals.push(-right[0], -right[1], -right[2])
+    cuboid_normals.push(-right[0], -right[1], -right[2])
+    cuboid_normals.push(-right[0], -right[1], -right[2])
+
+    cuboid_normals.push(right[0], right[1], right[2])
+    cuboid_normals.push(right[0], right[1], right[2])
+    cuboid_normals.push(right[0], right[1], right[2])
+    cuboid_normals.push(right[0], right[1], right[2])
+
+    cuboid_idxs.push(cuboid_idx_base+0,cuboid_idx_base+2,cuboid_idx_base+1)
+    cuboid_idxs.push(cuboid_idx_base+0,cuboid_idx_base+3,cuboid_idx_base+2)
+    cuboid_idxs.push(cuboid_idx_base+4,cuboid_idx_base+6,cuboid_idx_base+7)
+    cuboid_idxs.push(cuboid_idx_base+4,cuboid_idx_base+5,cuboid_idx_base+6)
+
+    cuboid_idxs.push(cuboid_idx_base+8,cuboid_idx_base+9,cuboid_idx_base+10)
+    cuboid_idxs.push(cuboid_idx_base+9,cuboid_idx_base+11,cuboid_idx_base+10)
+    cuboid_idxs.push(cuboid_idx_base+12,cuboid_idx_base+14,cuboid_idx_base+13)
+    cuboid_idxs.push(cuboid_idx_base+13,cuboid_idx_base+14,cuboid_idx_base+15)
+
+    cuboid_idxs.push(cuboid_idx_base+16,cuboid_idx_base+18,cuboid_idx_base+17)
+    cuboid_idxs.push(cuboid_idx_base+16,cuboid_idx_base+19,cuboid_idx_base+18)
+    cuboid_idxs.push(cuboid_idx_base+20,cuboid_idx_base+21,cuboid_idx_base+22)
+    cuboid_idxs.push(cuboid_idx_base+20,cuboid_idx_base+22,cuboid_idx_base+23)
+
+    return cuboid_idx_base + 24
+}
 
 export const gemmiAtomsToCirclesSpheresInfo = (
     atoms: moorhen.AtomInfo[],

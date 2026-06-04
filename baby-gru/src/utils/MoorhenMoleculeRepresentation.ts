@@ -16,6 +16,7 @@ import {
     gemmiAtomPairsToCylindersInfo,
     gemmiAtomsToCirclesSpheresInfo,
     getCubeLines,
+    extendCuboidMesh,
     guid,
 } from "./utils";
 
@@ -1663,7 +1664,6 @@ export class MoleculeRepresentation {
             ntot[2] /= ns.length
             return ntot
         }
-        const unpaired = []
         const normal_atomPairs = []
         const other_atomPairs = []
         const cis_midPoints = []
@@ -1730,6 +1730,12 @@ export class MoleculeRepresentation {
         const models = this.parentMolecule.gemmiStructure.models;
         //const modelsSize = models.size();
 
+        const cuboid_points = []
+        const cuboid_colours = []
+        const cuboid_normals = []
+        let cuboid_idxs = []
+        let cuboid_idx_base = 0
+
         //for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
             const model = models.get(0);
             const chains = model.chains;
@@ -1761,29 +1767,15 @@ export class MoleculeRepresentation {
                                 }
                                 if(up_2){
                                     const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/N1,C2,N3,C4,C5,C6"
-                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
-                                    const n = ringNormal(selectedGemmiAtoms_ring)
-                                    console.log(n)
                                     const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
                                     const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
-                                    const start = selectedGemmiAtoms_1[0]
-                                    const end = selectedGemmiAtoms_2[0]
-                                    const startAtomInfo = {
-                                        pos: [start.x, start.y, start.z],
-                                        x: start.x,
-                                        y: start.y,
-                                        z: start.z,
-                                        serial: start.serial,
-                                    };
-                                    const endAtomInfo = {
-                                        pos: [end.x, end.y, end.z],
-                                        x: end.x,
-                                        y: end.y,
-                                        z: end.z,
-                                        serial: end.serial,
-                                    };
-                                    const pair = [startAtomInfo, endAtomInfo];
-                                    unpaired.push(pair)
+
+                                    const start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
+                                    const end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
+                                    const up = ringNormal(selectedGemmiAtoms_ring)
+
+                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
                                 }
                             }
                         } else {
@@ -1805,26 +1797,16 @@ export class MoleculeRepresentation {
                                     up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/N4"
                                 }
                                 if(up_2){
+                                    const ring_atoms_cid = "/1/"+chain.name+"/"+fullSeqNum+"/N1,C2,N3,C4,C5,C6"
                                     const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
                                     const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
-                                    const start = selectedGemmiAtoms_1[0]
-                                    const end = selectedGemmiAtoms_2[0]
-                                    const startAtomInfo = {
-                                        pos: [start.x, start.y, start.z],
-                                        x: start.x,
-                                        y: start.y,
-                                        z: start.z,
-                                        serial: start.serial,
-                                    };
-                                    const endAtomInfo = {
-                                        pos: [end.x, end.y, end.z],
-                                        x: end.x,
-                                        y: end.y,
-                                        z: end.z,
-                                        serial: end.serial,
-                                    };
-                                    const pair = [startAtomInfo, endAtomInfo];
-                                    unpaired.push(pair)
+
+                                    const start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
+                                    const end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
+                                    const up = ringNormal(selectedGemmiAtoms_ring)
+
+                                    cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
                                 }
                             }
                         }
@@ -1839,9 +1821,16 @@ export class MoleculeRepresentation {
             chains.delete();
         //}
         models.delete();
-        const unpaired_objects = this.getGemmiAtomPairsBuffers(unpaired, [0.7, 0.2, 0.7, 1.0], false, 2.0, 15.0, 0.4, false)
 
-        return [...unpaired_objects,...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
+        const unpaird_cuboid_objects = [{
+            prim_types: [["TRIANGLES"]],
+            idx_tri: [[cuboid_idxs]],
+            vert_tri: [[cuboid_points]],
+            norm_tri: [[cuboid_normals]],
+            col_tri: [[cuboid_colours]]
+        }]
+
+        return [...unpaird_cuboid_objects,...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
     }
 
     /**
