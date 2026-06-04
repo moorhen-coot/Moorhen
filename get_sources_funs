@@ -141,6 +141,7 @@ getmmdb2() {
         rm -f mmdb2 &&\
         ln -s mmdb2-$mmdb_release mmdb2 &&\
         patch -p0 < ../patches/mmdb-emsdk500.patch || fail "Failed to download, unpack and patch mmdb2"
+        patch -p0 < ../patches/mmdb-rna.patch || fail "Failed to download, unpack and patch mmdb2"
     fi
     echo
 }
