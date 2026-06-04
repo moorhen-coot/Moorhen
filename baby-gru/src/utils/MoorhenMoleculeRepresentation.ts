@@ -1770,8 +1770,20 @@ export class MoleculeRepresentation {
                                     const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
                                     const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
 
-                                    const start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
-                                    const end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const orig_start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
+                                    const orig_end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const t1 = 0.25
+                                    const t2 = 0.75
+                                    const start = [
+                                    orig_start[0] + t1*(orig_end[0] - orig_start[0]),
+                                    orig_start[1] + t1*(orig_end[1] - orig_start[1]),
+                                    orig_start[2] + t1*(orig_end[2] - orig_start[2]),
+                                    ]
+                                    const end = [
+                                    orig_start[0] + t2*(orig_end[0] - orig_start[0]),
+                                    orig_start[1] + t2*(orig_end[1] - orig_start[1]),
+                                    orig_start[2] + t2*(orig_end[2] - orig_start[2]),
+                                    ]
                                     const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
@@ -1801,8 +1813,20 @@ export class MoleculeRepresentation {
                                     const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
                                     const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
 
-                                    const start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
-                                    const end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const orig_start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
+                                    const orig_end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
+                                    const t1 = 0.25
+                                    const t2 = 0.75
+                                    const start = [
+                                    orig_start[0] + t1*(orig_end[0] - orig_start[0]),
+                                    orig_start[1] + t1*(orig_end[1] - orig_start[1]),
+                                    orig_start[2] + t1*(orig_end[2] - orig_start[2]),
+                                    ]
+                                    const end = [
+                                    orig_start[0] + t2*(orig_end[0] - orig_start[0]),
+                                    orig_start[1] + t2*(orig_end[1] - orig_start[1]),
+                                    orig_start[2] + t2*(orig_end[2] - orig_start[2]),
+                                    ]
                                     const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
