@@ -1,4 +1,3 @@
-import { Autocomplete, CircularProgress, MenuItem, Skeleton, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +9,8 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenInfoCard, MoorhenPopover, MoorhenStack } from "../interface-base";
+import { MoorhenAutoComplete } from "../inputs/autocomplete/AutoComplete";
+import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack } from "../interface-base";
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
@@ -18,59 +18,66 @@ const CompoundAutoCompleteOption = (props: {
     setValue: (newVal: string) => void;
 }) => {
     const [ligandSVG, setLigandSVG] = useState<string>("");
-    const [isShown, setIsShown] = useState<boolean>(false);
+    // const [isShown, setIsShown] = useState<boolean>(false);
 
-    const tooltip = useMemo(() => {
-        return (
-            <div
-                style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "column",
-                }}
-            >
-                <div style={{ maxWidth: "300px", maxHeight: "300px", overflow: "hidden" }}>
-                    {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
-                </div>
-                <br></br>
-                <strong>{props.compoundName}</strong>
-            </div>
-        );
-    }, [ligandSVG]);
+    // const tooltip = useMemo(() => {
+    //     return (
+    //         <div
+    //             style={{
+    //                 width: "100%",
+    //                 display: "flex",
+    //                 alignItems: "center",
+    //                 justifyContent: "center",
+    //                 flexDirection: "column",
+    //             }}
+    //         >
+    //             <div style={{ maxWidth: "300px", maxHeight: "300px", overflow: "hidden" }}>
+    //                 {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
+    //             </div>
+    //             <br></br>
+    //             <strong>{props.compoundName}</strong>
+    //         </div>
+    //     );
+    // }, [ligandSVG]);
 
     useEffect(() => {
         const fetchLigandSVG = async () => {
             const threeLetterCode = props.monLibListRef.current.find(item => item.name === props.compoundName)?.three_letter_code;
-            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_300.svg`);
+            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_100.svg`);
             const text = await response.text();
             setLigandSVG(text);
         };
         fetchLigandSVG();
-    }, []);
+    }, [props.compoundName, props.monLibListRef]);
 
-    const popoverLinkRef = useRef<HTMLButtonElement>(null);
+    // const popoverLinkRef = useRef<HTMLButtonElement>(null);
 
-    const popoverLink = (
-        <button
-            ref={popoverLinkRef}
-            onMouseEnter={() => setIsShown(true)}
-            onMouseLeave={() => setIsShown(false)}
-            onClick={() => props.setValue(props.compoundName)}
-            style={{ all: "unset", width: "18rem", height: "6rem", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-            <div style={{ width: "100px", height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
-            </div>
-            <span style={{ width: "12rem", textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{props.compoundName}</span>
-        </button>
-    );
+    // const popoverLink = (
+    //     <button
+    //         ref={popoverLinkRef}
+    //         // onMouseEnter={() => setIsShown(true)}
+    //         // onMouseLeave={() => setIsShown(false)}
+    //         onClick={() => props.setValue(props.compoundName)}
+    //     >
+    //         <div>
+    //             {ligandSVG ? parse(ligandSVG) : null}
+    //         </div>
+    //         <span>{props.compoundName}</span>
+    //     </button>
+    // );
 
     return (
-        <MoorhenPopover link={popoverLink} linkRef={popoverLinkRef} isShown={isShown} setIsShown={setIsShown} popoverPlacement="right">
-            {tooltip}
-        </MoorhenPopover>
+        <MoorhenMenuItem
+            key={`compound-${props.compoundName}`}
+            onClick={() => props.setValue(props.compoundName)}
+            style={{ backgroundColor: "var(--moorhen-background)" }}
+        >
+            {ligandSVG ? parse(ligandSVG) : null}
+            {props.compoundName}{" "}
+        </MoorhenMenuItem>
+        // <MoorhenPopover link={popoverLink} linkRef={popoverLinkRef} isShown={isShown} setIsShown={setIsShown} popoverPlacement="right">
+        //     {tooltip}
+        // </MoorhenPopover>
     );
 };
 
@@ -83,11 +90,9 @@ export const GetMonomer = () => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const tlcRef = useRef<HTMLInputElement>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
     const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([]);
-    const autoCompleteRef = useRef<string | null>(null);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
 
     const [source, setSource] = useState<string>("default");
@@ -95,20 +100,11 @@ export const GetMonomer = () => {
     const [busy, setBusy] = useState<boolean>(false);
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
+    const [tlc, setTlc] = useState<string>("");
 
     const dispatch = useDispatch();
 
     const originState = useSelector((state: moorhen.State) => state.glRef.origin);
-
-    const filterOptions = useMemo(
-        () =>
-            createFilterOptions({
-                ignoreCase: true,
-                matchFrom: "start",
-                limit: 5,
-            }),
-        []
-    );
 
     const handleSourceChange = evt => {
         setSource(evt.target.value);
@@ -239,13 +235,14 @@ export const GetMonomer = () => {
 
         let newTlc: string;
         if (searchModeSelectRef.current.value === "tlc") {
-            newTlc = tlcRef.current.value.toUpperCase();
+            newTlc = autoCompleteValue.toUpperCase();
         } else {
-            newTlc = monLibListRef.current.find(item => item.name === autoCompleteRef.current)?.three_letter_code;
+            newTlc = monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code;
         }
 
         if (!newTlc || !moleculeSelectRef.current.value) {
             dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
+            console.warn("No TLC or molecule selected, doing nothing...");
             return;
         }
 
@@ -264,11 +261,11 @@ export const GetMonomer = () => {
             dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             console.log("Error getting monomer. Missing dictionary?");
         }
-    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules]);
+    }, [autoCompleteValue, getMonomerFromLibcootAPI, createNewLigandMolecule, molecules]);
 
     const onCompleted = useCallback(async () => {
         if (sourceSelectRef.current.value === "libcoot-api") {
-            const tlc = tlcRef.current.value.toUpperCase();
+            const tlc = autoCompleteValue.toUpperCase();
             const fromMolNo = parseInt(moleculeSelectRef.current.value);
             const result = await getMonomerFromLibcootAPI(tlc, fromMolNo);
             if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
@@ -278,15 +275,13 @@ export const GetMonomer = () => {
                 dispatch(enqueueSnackbar({ message: "Unable to get monomer. Missing dictionary?", variant: "warning" }));
             }
         } else if (["remote-monomer-library", "local-monomer-library", "pdbe"].includes(sourceSelectRef.current.value)) {
-            const tlc = tlcRef.current.value.toUpperCase();
+            const tlc = autoCompleteValue.toUpperCase();
             await fetchLigandDict(sourceSelectRef.current.value, tlc);
         } else {
             await defaultGetMonomer();
         }
         document.body.click();
-    }, [molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule]);
-
-    const menuItemText = "Get monomer...";
+    }, [autoCompleteValue, molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule]);
 
     return (
         <MoorhenStack inputGrid>
@@ -320,83 +315,59 @@ export const GetMonomer = () => {
                 </MoorhenSelect>
             )}
             {searchMode === "tlc" ? (
-                <>
-                    <MoorhenTextInput ref={tlcRef} uppercase label="Monomer identifier" />
-                </>
-            ) : (
                 <MoorhenStack direction="line">
-                    <label>Compound Name</label>
-                    <Autocomplete
-                        disablePortal
-                        selectOnFocus
-                        clearOnBlur
-                        handleHomeEndKeys
-                        freeSolo
-                        includeInputInList
-                        filterSelectedOptions
-                        size="small"
-                        loading={busy}
+                    <label>{"Three letter code"}</label>
+                    <MoorhenAutoComplete
                         value={autoCompleteValue}
-                        open={autocompleteOpen}
-                        style={{ width: "18rem" }}
-                        onClose={() => setAutocompleteOpen(false)}
-                        onOpen={() => setAutocompleteOpen(true)}
-                        renderInput={params => (
-                            <TextField
-                                {...params}
-                                label="Search"
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <>
-                                            {busy ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </>
-                                    ),
+                        setValue={setAutoCompleteValue}
+                        autocompleteOpen={autocompleteOpen}
+                        setAutocompleteOpen={setAutocompleteOpen}
+                        searchItems={monLibListRef.current}
+                        maxResults={5}
+                        keys={[
+                            { name: "three_letter_code", weight: 1 },
+                        ]}
+                        resultsRenderer={result => (
+                            <CompoundAutoCompleteOption
+                                compoundName={result.name}
+                                monLibListRef={monLibListRef}
+                                setValue={newVal => {
+                                    setAutoCompleteValue(newVal);
+                                    setAutocompleteOpen(false);
                                 }}
                             />
                         )}
-                        renderOption={(props, option: string) => {
-                            return (
-                                <CompoundAutoCompleteOption
-                                    key={option}
-                                    compoundName={option}
-                                    monLibListRef={monLibListRef}
-                                    setValue={newVal => {
-                                        autoCompleteRef.current = newVal;
-                                        setAutoCompleteValue(newVal);
-                                        setAutocompleteOpen(false);
-                                    }}
-                                />
-                            );
-                        }}
-                        options={monLibListRef.current.map(item => item.name)}
-                        filterOptions={filterOptions}
-                        onChange={(evt, newSelection: string) => {
-                            autoCompleteRef.current = newSelection;
-                            if (newSelection === null) {
-                                setAutoCompleteValue(newSelection);
-                            }
-                            setAutocompleteOpen(false);
-                        }}
-                        sx={{
-                            "& .MuiInputBase-root": {
-                                backgroundColor: isDark ? "#222" : "white",
-                                color: isDark ? "white" : "#222",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: isDark ? "white" : "grey",
-                            },
-                            "& .MuiButtonBase-root": {
-                                color: isDark ? "white" : "grey",
-                            },
-                            "& .MuiFormLabel-root": {
-                                color: isDark ? "white" : "#222",
-                            },
-                        }}
+                    />
+                </MoorhenStack>
+            ) : (
+                <MoorhenStack direction="line">
+                    <label>{"Compound name"}</label>
+                    <MoorhenAutoComplete
+                        autocompleteOpen={autocompleteOpen}
+                        setAutocompleteOpen={setAutocompleteOpen}
+                        searchItems={monLibListRef.current}
+                        value={autoCompleteValue}
+                        setValue={setAutoCompleteValue}
+                        maxResults={5}
+                        keys={[
+                            { name: "name", weight: 0.9 },
+                            { name: "three_letter_code", weight: 0.1 },
+                        ]}
+                        resultsRenderer={result => (
+                            <CompoundAutoCompleteOption
+                                compoundName={result.name}
+                                monLibListRef={monLibListRef}
+                                setValue={newVal => {
+                                    setAutoCompleteValue(result.name);
+                                    setTlc(result.three_letter_code);
+                                    setAutocompleteOpen(false);
+                                }}
+                            />
+                        )}
                     />
                 </MoorhenStack>
             )}
+
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </MoorhenStack>
     );

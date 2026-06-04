@@ -7,3 +7,12 @@
     width: 100%;
     height: 2.5rem;
 }
+
+.moorhen__autocomplete-results-container {
+    /* display:flex;
+    flex-direction: column; */
+    position: fixed;
+    height: auto;
+    overflow-y: auto;
+    max-height: 200px;
+}

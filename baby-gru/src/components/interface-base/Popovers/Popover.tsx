@@ -45,6 +45,14 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const containerRef = useMoorhenInstance().getContainerRef();
     const positionRef = useRef<{ left: number; top: number } | null>(null);
 
+    const getOverflowScore = (left: number, top: number, width: number, height: number): number => {
+        const overflowLeft = Math.max(0, -left);
+        const overflowTop = Math.max(0, -top);
+        const overflowRight = Math.max(0, left + width - window.innerWidth);
+        const overflowBottom = Math.max(0, top + height - window.innerHeight);
+        return overflowLeft + overflowTop + overflowRight + overflowBottom;
+    };
+
     const calculatePosition = (overridePosition: PlacementType = null) => {
         if (!isShown || !props.linkRef.current || !popoverRef.current) {
             return;
@@ -52,7 +60,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         const buttonRect = props.linkRef.current.getBoundingClientRect();
         const popoverRect = !overridePopoverSize ? popoverRef.current.getBoundingClientRect() : overridePopoverSize;
-        
+
         if (linkPositionRef.current && popoverSizeRef.current) {
             if (
                 Math.abs(buttonRect.left - linkPositionRef.current.left) <= 2 &&
@@ -61,7 +69,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
                 Math.abs(popoverRect.height - popoverSizeRef.current.height) <= 2
             ) {
                 return;
-            }    
+            }
         }
         linkPositionRef.current = { left: buttonRect.left, top: buttonRect.top };
         popoverSizeRef.current = { width: popoverRect.width, height: popoverRect.height };
@@ -69,27 +77,39 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         const placement = overridePosition ? overridePosition : popoverPlacement;
 
-        let left: number;
-        if (type === "autocomplete") {
-            left = buttonRect.left;
-        } else if (placement === "left") {
-            left = buttonRect.left - popoverRect.width - extraSpace;
-        } else if (placement === "right") {
-            left = buttonRect.right + extraSpace;
-        } else {
-            left = buttonRect.right - buttonRect.width / 2 - popoverRect.width / 2;
+        function calculateLeft(placement) {
+            let left: number;
+            if (type === "autocomplete") {
+                left = buttonRect.left;
+            } else if (placement === "left") {
+                left = buttonRect.left - popoverRect.width - extraSpace;
+            } else if (placement === "right") {
+                left = buttonRect.right + extraSpace;
+            } else {
+                left = buttonRect.right - buttonRect.width / 2 - popoverRect.width / 2;
+            }
+            return left;
         }
 
-        let top: number;
-        if (placement === "bottom") {
-            top = buttonRect.bottom + extraSpace;
-        } else if (placement === "top") {
-            top = buttonRect.top - popoverRect.height - extraSpace;
-        } else {
-            top = buttonRect.top + buttonRect.height / 2 - popoverRect.height / 2;
+        function calculateTop(placement) {
+            let top: number;
+            if (placement === "bottom") {
+                top = buttonRect.bottom + extraSpace;
+            } else if (placement === "top") {
+                top = buttonRect.top - popoverRect.height - extraSpace;
+            } else {
+                top = buttonRect.top + buttonRect.height / 2 - popoverRect.height / 2;
+            }
+            return top;
         }
 
-        // Flip the popover to the other side if it's out of screen
+        const left = calculateLeft(placement);
+
+        const top = calculateTop(placement);
+
+        const currentOverflowScore = getOverflowScore(left, top, popoverRect.width, popoverRect.height);
+
+        // Flip the popover only when the alternative side has less viewport overflow.
         if (overridePosition === null && allowAutoFlip) {
             let newPlacement: PlacementType | null = null;
 
@@ -104,9 +124,15 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             }
 
             if (newPlacement !== null) {
-                setPopoverPlacement(newPlacement);
-                calculatePosition(newPlacement);
-                return;
+                let candidateLeft = calculateLeft(newPlacement);
+                let candidateTop = calculateTop(newPlacement);
+
+                const candidateOverflowScore = getOverflowScore(candidateLeft, candidateTop, popoverRect.width, popoverRect.height);
+
+                if (candidateOverflowScore < currentOverflowScore && newPlacement !== popoverPlacement) {
+                    setPopoverPlacement(newPlacement);
+                    return;
+                }
             }
         }
 
