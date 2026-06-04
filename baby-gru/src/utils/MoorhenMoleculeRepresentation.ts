@@ -1678,29 +1678,45 @@ export class MoleculeRepresentation {
             const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C3'"
             const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
             const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
-            const start = selectedGemmiAtoms_1[0]
-            const end = selectedGemmiAtoms_2[0]
+            const orig_start = selectedGemmiAtoms_1[0]
+            const orig_end = selectedGemmiAtoms_2[0]
+
+            const t1 = 0.3
+            const t2 = 0.7
+            const start = [
+                orig_start.x + t1*(orig_end.x - orig_start.x),
+                orig_start.y + t1*(orig_end.y - orig_start.y),
+                orig_start.z + t1*(orig_end.z - orig_start.z),
+            ]
+            const end = [
+                orig_start.x + t2*(orig_end.x - orig_start.x),
+                orig_start.y + t2*(orig_end.y - orig_start.y),
+                orig_start.z + t2*(orig_end.z - orig_start.z),
+            ]
+            console.log(start)
+            console.log(end)
+
             const startAtomInfo = {
-                pos: [start.x, start.y, start.z],
-                x: start.x,
-                y: start.y,
-                z: start.z,
-                serial: start.serial,
+                pos: [start[0], start[1], start[2]],
+                x: start[0],
+                y: start[1],
+                z: start[2],
+                serial: orig_start.serial,
             };
 
             const endAtomInfo = {
-                pos: [end.x, end.y, end.z],
-                x: end.x,
-                y: end.y,
-                z: end.z,
-                serial: end.serial,
+                pos: [end[0], end[1], end[2]],
+                x: end[0],
+                y: end[1],
+                z: end[2],
+                serial: orig_end.serial,
             };
             const midAtomInfo = {
-                pos: [(end.x+start.x)*0.5, (end.y+start.y)*0.5, (end.z+start.z)*0.5],
-                x: (end.x+start.x)*0.5,
-                y: (end.y+start.y)*0.5,
-                z: (end.z+start.z)*0.5,
-                serial: start.serial+"_"+end.serial,
+                pos: [(orig_end.x+orig_start.x)*0.5, (orig_end.y+orig_start.y)*0.5, (orig_end.z+orig_start.z)*0.5],
+                x: (orig_end.x+orig_start.x)*0.5,
+                y: (orig_end.y+orig_start.y)*0.5,
+                z: (orig_end.z+orig_start.z)*0.5,
+                serial: orig_start.serial+"_"+orig_end.serial,
             };
             const pair = [startAtomInfo, endAtomInfo];
             if(bp_class.endsWith("G-C")||bp_class.endsWith("C-G")||bp_class.endsWith("A-T")||bp_class.endsWith("T-A")||bp_class.endsWith("A-U")||bp_class.endsWith("U-A"))
@@ -1712,10 +1728,10 @@ export class MoleculeRepresentation {
             else
                 trans_midPoints.push(midAtomInfo)
         }
-        const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 7.0, 15.0, 0.2, false)
-        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 7.0, 15.0, 0.2, false)
+        const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 2.0, 15.0, 0.32, false)
+        const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 2.0, 15.0, 0.32, false)
 
-        const sphere_size = 0.3;
+        const sphere_size = 0.4;
         const cis_atomColours = {};
         cis_midPoints.forEach(atom => {
             cis_atomColours[`${atom.serial}`] = [1.0,1.0,1.0,1.0];
