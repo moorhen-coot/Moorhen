@@ -44,7 +44,6 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
     );
     console.log
     const outOfMap = distanceFromOrigin > mapRadius - 8 * zoomLevel && props.map.isOriginLocked;
-    console.log("Distance from map origin:", distanceFromOrigin, "Map radius:", mapRadius, "Zoom level:", zoomLevel, "Out of map bounds:", outOfMap);
 
     const handleWheelContourLevel = useCallback(
         (evt: moorhen.WheelContourLevelEvent) => {
