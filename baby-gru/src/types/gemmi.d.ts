@@ -1025,6 +1025,13 @@ export namespace gemmi {
       has_icode(): number;
       str(): string;
     }
+    interface ModRes extends emscriptem.instance<ModRes> {
+      chain_name: string;
+      parent_comp_id: string;
+      mod_id: string;
+      details: string;
+      res_id: ResidueId;
+    }
     interface Sheet extends emscriptem.instance<Sheet> {
       get name(): string;
       set name(value: string);
@@ -1132,6 +1139,7 @@ export namespace gemmi {
       hbond_atom2: AtomAddress;
       hbond_atom1: AtomAddress;
     }
+    interface CoorFormat { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
     /** Macromolecular structure (PDB/mmCIF). Contains models, cell, metadata, assemblies. */
     interface Structure extends emscriptem.instance<Structure> {
       get name(): string;
@@ -1151,6 +1159,7 @@ export namespace gemmi {
       origx: Transform;
       resolution: number;
       raw_remarks: emscriptem.vector<string>;
+      mod_residues: emscriptem.vector<ModRes>;
       input_format: CoorFormat;
       get_info(_0: string): string;
       renumber_models(): void;

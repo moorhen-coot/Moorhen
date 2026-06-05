@@ -19,6 +19,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     // ;
 
     //Gemmi from here
+    register_vector<gemmi::ModRes>("VectorGemmiModRes");
     register_vector<gemmi::Selection>("VectorGemmiSelection");
     register_vector<gemmi::GridOp>("VectorGemmiGridOp");
     //register_vector<gemmi::NeighborSearch::Mark*>("VectorGemmiNeighborSearchMark");
@@ -1129,6 +1130,7 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .property("resolution",&gemmi::Structure::resolution)
     .property("raw_remarks",&gemmi::Structure::raw_remarks)
     .property("input_format",&gemmi::Structure::input_format)
+    .property("mod_residues",&gemmi::Structure::mod_residues)
     .function("get_info",&gemmi::Structure::get_info)
     .function("renumber_models",&gemmi::Structure::renumber_models)
     .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
@@ -1140,6 +1142,14 @@ EMSCRIPTEN_BINDINGS(gemmi_core) {
     .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
     .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
     .function("as_string",&get_mmcif_string_from_gemmi_struct)
+    ;
+
+    class_<gemmi::ModRes>("ModRes")
+    .property("chain_name",&gemmi::ModRes::chain_name)
+    .property("res_id",&gemmi::ModRes::res_id)
+    .property("parent_comp_id",&gemmi::ModRes::parent_comp_id)
+    .property("mod_id",&gemmi::ModRes::mod_id)
+    .property("details",&gemmi::ModRes::details)
     ;
 
     class_<gemmi::NearestImage>("NearestImage")

@@ -1744,6 +1744,20 @@ export class MoleculeRepresentation {
         const models = this.parentMolecule.gemmiStructure.models;
         //const modelsSize = models.size();
 
+        //Construct a simple dictionary of the modified residues
+        const modres = this.parentMolecule.gemmiStructure.mod_residues;
+        const modResSize = modres.size();
+        const modres_js = {}
+        for (let modResIndex = 0; modResIndex < modResSize; modResIndex++) {
+            const mod = modres.get(modResIndex);
+            const res_id = mod.res_id
+            const res_id_name = mod.res_id.name
+            modres_js[res_id_name] = mod.parent_comp_id
+            res_id.delete()
+            mod.delete()
+        }
+        modres.delete()
+
         const cuboid_points = []
         const cuboid_colours = []
         const cuboid_normals = []
@@ -1762,7 +1776,7 @@ export class MoleculeRepresentation {
                     const residue = residues.get(residueIndex);
                     const residueSeqId = residue.seqid;
                     const resinfo = window.cootModule.find_tabulated_residue(residue.name)
-                    if(resinfo.is_dna()||resinfo.is_rna()){//FIXME - I think this fails for some rna types.
+                    if(resinfo.is_dna()||resinfo.is_rna()||["A","C","G","T","U"].indexOf(modres_js[residue.name])>-1){
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()
                             const bplMatch = bpl.filter(bp =>
