@@ -31,7 +31,8 @@ export namespace libcootApi {
         structure_is_ligand(gemmiStructure: gemmi.Structure): boolean;
         count_residues_in_selection(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): number;
         remove_non_selected_atoms(gemmiStructure: gemmi.Structure, selection: gemmi.Selection): gemmi.Structure;
-        check_polymer_type(polymerConst: emscriptem.instance<number>): { value: number };
+        check_polymer_type(resspanConst: gemmi.ConstResidueSpan, ignore_entity_type: boolean):  gemmi.PolymerType ;
+        check_polymer_type_non_const(resspan: gemmi.ResidueSpan, ignore_entity_type: boolean):  gemmi.PolymerType ;
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
         has_hydrogen(model: gemmi.Model): number;

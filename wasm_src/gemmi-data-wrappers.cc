@@ -1,5 +1,9 @@
 #include "gemmi-wrappers-helpers.h"
 
+gemmi::PolymerType check_polymer_type_non_const(const gemmi::ResidueSpan& span, bool ignore_entity_type) {
+    return gemmi::check_polymer_type(std::as_const(span), ignore_entity_type);
+}
+
 EMSCRIPTEN_BINDINGS(gemmi_data) {
     class_<gemmi::SmallStructure::Site>("SmallStructureSite")
     .property("label",&gemmi::SmallStructure::Site::label)
@@ -567,6 +571,7 @@ GlobWalk
     function("shorten_chain_names", &gemmi::shorten_chain_names);
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
     function("check_polymer_type", &gemmi::check_polymer_type);
+    function("check_polymer_type_non_const", &check_polymer_type_non_const);
     function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
     function("gemmi_add_entity_types",select_overload<void(gemmi::Structure&, bool)>(&gemmi::add_entity_types));
     function("remove_alternative_conformations_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_alternative_conformations));

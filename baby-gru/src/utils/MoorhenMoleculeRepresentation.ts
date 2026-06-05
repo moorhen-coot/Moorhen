@@ -1680,8 +1680,6 @@ export class MoleculeRepresentation {
             const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
             const orig_start = selectedGemmiAtoms_1[0]
             const orig_end = selectedGemmiAtoms_2[0]
-            console.log(orig_start)
-            console.log(orig_end)
 
             const t1 = 0.3
             const t2 = 0.7
@@ -1772,9 +1770,13 @@ export class MoleculeRepresentation {
             const chainsSize = chains.size();
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex);
+                const poly = chain.get_polymer()
+                const polyType = window.CCP4Module.check_polymer_type_non_const(poly,true)
+                const isNucleotide = (polyType.value === 4||polyType.value === 3)? true : false
+                poly.delete()
                 const residues = chain.residues;
                 const residuesSize = residues.size();
-                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                for (let residueIndex = 0; residueIndex < residuesSize && isNucleotide; residueIndex++) {
                     const residue = residues.get(residueIndex);
                     const residueSeqId = residue.seqid;
                     const resinfo = window.cootModule.find_tabulated_residue(residue.name)
