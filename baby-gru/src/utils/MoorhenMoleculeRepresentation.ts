@@ -1674,12 +1674,14 @@ export class MoleculeRepresentation {
             const ba = bpa.filter(ba => ba.base_pair_id===bp.base_pair_id)[0]
             const orientation = ba.orientation
             const bp_class = ba.class
-            const cid_1 = "/"+bp.PDB_model_number+"/"+bp.asym_id_1+"/"+bp.seq_id_1+"/C3'"
-            const cid_2 = "/"+bp.PDB_model_number+"/"+bp.asym_id_2+"/"+bp.seq_id_2+"/C3'"
+            const cid_1 = "/"+bp.PDB_model_number+"/"+bp.auth_asym_id_1+"/"+bp.auth_seq_id_1+"/C3'"
+            const cid_2 = "/"+bp.PDB_model_number+"/"+bp.auth_asym_id_2+"/"+bp.auth_seq_id_2+"/C3'"
             const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
             const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
             const orig_start = selectedGemmiAtoms_1[0]
             const orig_end = selectedGemmiAtoms_2[0]
+            console.log(orig_start)
+            console.log(orig_end)
 
             const t1 = 0.3
             const t2 = 0.7
@@ -1780,8 +1782,8 @@ export class MoleculeRepresentation {
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()
                             const bplMatch = bpl.filter(bp =>
-                                (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum)||
-                                (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum)
+                                (bp.auth_asym_id_1===chain.name&&bp.auth_seq_id_1===seqNum)||
+                                (bp.auth_asym_id_2===chain.name&&bp.auth_seq_id_2===seqNum)
                             )
                             if(bplMatch.length===0){
                                 const up_1 = "/1/"+chain.name+"/"+seqNum+"/C3'"
@@ -1825,8 +1827,8 @@ export class MoleculeRepresentation {
                             const seqNum = residueSeqId.str().substr(0,residueSeqId.str().length-1)
                             const icode = residueSeqId.str()[residueSeqId.str().length-1]
                             const bplMatch = bpl.filter(bp =>
-                                (bp.asym_id_1===chain.name&&bp.seq_id_1===seqNum&&bp.PDB_ins_code_1===icode)||
-                                (bp.asym_id_2===chain.name&&bp.seq_id_2===seqNum&&bp.PDB_ins_code_2===icode)
+                                (bp.auth_asym_id_1===chain.name&&bp.auth_seq_id_1===seqNum&&bp.PDB_ins_code_1===icode)||
+                                (bp.auth_asym_id_2===chain.name&&bp.auth_seq_id_2===seqNum&&bp.PDB_ins_code_2===icode)
                             )
                             if(bplMatch.length===0){
                                 const fullSeqNum = residueSeqId.str()
