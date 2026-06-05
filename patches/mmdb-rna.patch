@@ -5,13 +5,13 @@
    const int nSolventNames    = 12;
    const int nAminoacidNames  = 23;
 -  const int nNucleotideNames = 24;
-+  const int nNucleotideNames = 37;
++  const int nNucleotideNames = 53;
  
    DefineStructure(AAProperty);
  
 --- mmdb2/mmdb2/mmdb_tables.cpp	2026-06-04 15:15:58
 +++ mmdb2/mmdb2/mmdb_tables.cpp	2026-06-04 15:16:14
-@@ -577,7 +577,10 @@
+@@ -577,7 +577,12 @@
       "A",  "C",  "G",  "I",   "T",   "U",
      "+A", "+C", "+G", "+I",  "+T",  "+U",
      "DA", "DC", "DG", "DI",  "DT",  "DU",
@@ -19,6 +19,8 @@
 +    "RA", "RC", "RG", "RU", "5NC", "TYD",
 +    "1MA","2MG","M2G","OMC","OMG", "OMU",
 +    "5MU","5MC","7MG","H2U","PSU", "YYG",
-+    "YG"
++    "YG", "UR3","4SU","4OC","MA6", "6MZ",
++    "CCC","2MA","1MG","5BU","MIA", "DOC",
++    "8OG","5CM","3DR","BRU","CBR"
    };
 
