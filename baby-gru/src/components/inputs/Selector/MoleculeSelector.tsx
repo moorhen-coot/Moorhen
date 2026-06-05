@@ -45,11 +45,19 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     const selectedMolNo = selectedMolecule !== undefined ? selectedMolecule : internalSelected;
     const setSelectedMolNo = setSelectedMolecule ? setSelectedMolecule : setInternalSelected;
 
+
+    const getDefaultValue = () => {
+        if (allowAny) return -999999;
+        if (selectedMolNo) return selectedMolNo;    
+        return 0;
+    };
+
     useEffect(() => {
-        if (moleculesList.length > 0 && (selectedMolNo === undefined || selectedMolNo === -1)) {
-            setSelectedMolNo(moleculesList[0].molNo);
-            onSelect?.(moleculesList[0].molNo);
-            onSelectUniqueId?.(moleculesList[0].uniqueId);
+        if (selectedMolNo === undefined || selectedMolNo === -1) {
+            const newMolNo = getDefaultValue();
+            setSelectedMolNo(newMolNo);
+            onSelect?.(newMolNo);
+            onSelectUniqueId?.(newMolNo.toString());
         }
     },[moleculesList])
 
@@ -73,7 +81,14 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         }
     });
 
-    if (props.allowAny && options.length !== 0) {
+    if (options.length === 0) {
+        disabled = true;
+        options.push(
+            <option disabled value={allowAny ? -999999 : 0} key={0}>
+                No molecules loaded
+            </option>
+        );
+    } else if (props.allowAny && options.length !== 0) {
         options.push(
             <option value={-999999} key={-999999}>
                 Any molecule
@@ -81,14 +96,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         );
     }
 
-    if (options.length === 0) {
-        disabled = true;
-        options.push(
-            <option disabled value={0} key={0}>
-                No molecules loaded
-            </option>
-        );
-    }
+
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedMolNo = parseInt(evt.target.value);
@@ -101,11 +109,6 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         setSelectedMolNo(selectedMolNo);
     };
 
-    const getDefaultValue = () => {
-        if (selectedMolNo !== undefined) return selectedMolNo;
-        if (allowAny && options.length > 0 && !disabled) return -999999;
-        return 0;
-    };
 
     return (
         <MoorhenSelect

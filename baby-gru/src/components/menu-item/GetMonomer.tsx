@@ -100,7 +100,7 @@ export const GetMonomer = () => {
     const [busy, setBusy] = useState<boolean>(false);
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
-    const [selectedMolecule, setSelectedMolecule] = useState<number>(-1);
+    const [selectedMolecule, setSelectedMolecule] = useState<number | undefined>(undefined);
     const [tlc, setTlc] = useState<string>("");
 
     const dispatch = useDispatch();
@@ -232,15 +232,16 @@ export const GetMonomer = () => {
     );
 
     const defaultGetMonomer = useCallback(async () => {
-        const fromMolNo = selectedMolecule;
-
+        const fromMolNo = selectedMolecule
+        
         let newTlc: string;
         if (searchModeSelectRef.current.value === "tlc") {
             newTlc = autoCompleteValue.toUpperCase();
         } else {
             newTlc = monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code;
         }
-
+        console.log("Selected molecule number:", fromMolNo , "tlc:", newTlc);
+        
         if (!newTlc || fromMolNo === -1) {
             dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
             console.warn("No TLC or molecule selected, doing nothing...");
