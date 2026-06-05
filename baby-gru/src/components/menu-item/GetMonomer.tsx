@@ -90,7 +90,7 @@ export const GetMonomer = () => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
-    const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
+    // const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
     const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([]);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -100,6 +100,7 @@ export const GetMonomer = () => {
     const [busy, setBusy] = useState<boolean>(false);
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
+    const [selectedMolecule, setSelectedMolecule] = useState<number>(-1);
     const [tlc, setTlc] = useState<string>("");
 
     const dispatch = useDispatch();
@@ -231,7 +232,7 @@ export const GetMonomer = () => {
     );
 
     const defaultGetMonomer = useCallback(async () => {
-        const fromMolNo = parseInt(moleculeSelectRef.current.value);
+        const fromMolNo = selectedMolecule;
 
         let newTlc: string;
         if (searchModeSelectRef.current.value === "tlc") {
@@ -240,7 +241,7 @@ export const GetMonomer = () => {
             newTlc = monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code;
         }
 
-        if (!newTlc || !moleculeSelectRef.current.value) {
+        if (!newTlc || fromMolNo === -1) {
             dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
             console.warn("No TLC or molecule selected, doing nothing...");
             return;
@@ -254,6 +255,7 @@ export const GetMonomer = () => {
             result = await getMonomerFromLibcootAPI(newTlc, fromMolNo);
         }
 
+
         if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
             const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
             await createNewLigandMolecule(newTlc, result.data.result.result, fromMolecule?.getDict(newTlc));
@@ -266,7 +268,7 @@ export const GetMonomer = () => {
     const onCompleted = useCallback(async () => {
         if (sourceSelectRef.current.value === "libcoot-api") {
             const tlc = autoCompleteValue.toUpperCase();
-            const fromMolNo = parseInt(moleculeSelectRef.current.value);
+            const fromMolNo = selectedMolecule;
             const result = await getMonomerFromLibcootAPI(tlc, fromMolNo);
             if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                 const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
@@ -306,7 +308,7 @@ export const GetMonomer = () => {
                 <option value={"pdbe"}>PDBe</option>
             </MoorhenSelect>
             {["default", "libcoot-api"].includes(source) && (
-                <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
+                <MoorhenMoleculeSelect molecules={molecules} allowAny={true} selectedMolecule={selectedMolecule} setSelectedMolecule={setSelectedMolecule} />
             )}
             {source === "default" && (
                 <MoorhenSelect ref={searchModeSelectRef} value={searchMode} onChange={handleSearchModeChange} label="Search for">
