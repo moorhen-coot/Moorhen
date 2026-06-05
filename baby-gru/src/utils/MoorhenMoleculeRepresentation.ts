@@ -1762,7 +1762,7 @@ export class MoleculeRepresentation {
                     const residue = residues.get(residueIndex);
                     const residueSeqId = residue.seqid;
                     const resinfo = window.cootModule.find_tabulated_residue(residue.name)
-                    if(resinfo.is_dna()||resinfo.is_rna()){
+                    if(resinfo.is_dna()||resinfo.is_rna()){//FIXME - I think this fails for some rna types.
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()
                             const bplMatch = bpl.filter(bp =>
@@ -1778,6 +1778,9 @@ export class MoleculeRepresentation {
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/O4"
                                 } else if (residue.name==="C"){
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/N4"
+                                } else {
+                                    //Just make guess for now.
+                                    up_2 = "/1/"+chain.name+"/"+seqNum+"/N1"
                                 }
                                 if(up_2){
                                     const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/N1,C2,N3,C4,C5,C6"
@@ -1821,6 +1824,9 @@ export class MoleculeRepresentation {
                                     up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/O4"
                                 } else if (residue.name==="C"){
                                     up_2 = "/1/"+chain.name+"/"+fullSeqNum+"/N4"
+                                } else {
+                                    //Just make guess for now.
+                                    up_2 = "/1/"+chain.name+"/"+seqNum+"/N1"
                                 }
                                 if(up_2){
                                     const ring_atoms_cid = "/1/"+chain.name+"/"+fullSeqNum+"/N1,C2,N3,C4,C5,C6"
@@ -1848,6 +1854,8 @@ export class MoleculeRepresentation {
                                 }
                             }
                         }
+                    } else {
+                        console.log("not RNA/DNA?",residue.name)
                     }
                     residue.delete();
                     residueSeqId.delete();
