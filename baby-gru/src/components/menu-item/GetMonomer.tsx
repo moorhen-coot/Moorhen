@@ -348,32 +348,6 @@ export const GetMonomer = () => {
                     <option value={"name"}>Compound name</option>
                 </MoorhenSelect>
             )}
-            {/* {searchMode === "tlc" ? (
-                <MoorhenStack direction="line">
-                    <label>{"Three letter code"}</label>
-                    <MoorhenAutoComplete
-                        value={autoCompleteValue}
-                        setValue={setAutoCompleteValue}
-                        autocompleteOpen={autocompleteOpen}
-                        setAutocompleteOpen={setAutocompleteOpen}
-                        searchItems={monLibListRef.current}
-                        maxResults={5}
-                        keys={[
-                            { name: "three_letter_code", weight: 1 },
-                        ]}
-                        resultsRenderer={result => (
-                            <CompoundAutoCompleteOption
-                                compoundName={result.name}
-                                monLibListRef={monLibListRef}
-                                setValue={newVal => {
-                                    setAutoCompleteValue(result.three_letter_code);
-                                    setAutocompleteOpen(false);
-                                }}
-                            />
-                        )}
-                    />
-                </MoorhenStack>
-            ) : ( */}
                 <MoorhenStack direction="line">
                     <label>{searchMode === "tlc" ? "Three letter code" : "Compound name"}</label>
                     <MoorhenAutoComplete
@@ -398,8 +372,6 @@ export const GetMonomer = () => {
                         )}
                     />
                 </MoorhenStack>
-            {/* )} */}
-
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </MoorhenStack>
     );
