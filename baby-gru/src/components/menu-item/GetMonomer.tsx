@@ -38,7 +38,7 @@ function resizeSvgString(svg: string, size: number): string {
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
-    monLibListRef: React.RefObject<libcootApi.compoundInfo[]>;
+    tlc?: string;
     setValue: (newVal: string) => void;
 }) => {
     const [ligandSVG, setLigandSVG] = useState<string>("");
@@ -51,14 +51,13 @@ const CompoundAutoCompleteOption = (props: {
     }, [ligandSVG]);
 
     useEffect(() => {
-        const fetchLigandSVG = async () => {
-            const threeLetterCode = props.monLibListRef.current.find(item => item.name === props.compoundName)?.three_letter_code;
-            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_300.svg`);
+        const fetchLigandSVG = async () => {;
+            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${props.tlc}_300.svg`);
             const text = await response.text();
             setLigandSVG(text);
         };
         fetchLigandSVG();
-    }, [props.compoundName, props.monLibListRef]);
+    }, [props.compoundName, props.tlc]);
 
     const popoverLinkRef = useRef<HTMLButtonElement>(null);
 
@@ -159,7 +158,6 @@ export const GetMonomer = () => {
                 monLibListRef.current = table.data.result.result;
             } else {
                 dispatch(enqueueSnackbar({ message: "Unable to fetch ligand names", variant: "warning" }));
-                setSearchMode("tlc");
             }
             setBusy(false);
         };
@@ -383,14 +381,14 @@ export const GetMonomer = () => {
                         setAutocompleteOpen={setAutocompleteOpen}
                         searchItems={monLibListRef.current}
                         value={autoCompleteValue}
-                        setValue={setAutoCompleteValue}
+                        setValue={searchMode === "tlc" ? (val) =>setAutoCompleteValue(val.toUpperCase().slice(0, 3)) : setAutoCompleteValue}
                         maxResults={5}
                         //@ts-ignore
                         keys={searchKeys}
                         resultsRenderer={result => (
                             <CompoundAutoCompleteOption
                                 compoundName={result.name}
-                                monLibListRef={monLibListRef}
+                                tlc={result.three_letter_code}
                                 setValue={newVal => {
                                     setAutoCompleteValue(searchMode === "tlc" ? result.three_letter_code : result.name);
                                     setTlc(result.three_letter_code);
