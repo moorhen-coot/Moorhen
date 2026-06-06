@@ -75,13 +75,15 @@ import resizableVertical from "./resizableVertical.svg"
 import temperature from "./temperature.svg"
 import vanillin from "./vanillin.svg"
 import MatSymMyLocation from "./MatSymMyLocation.svg"
+import MatSymChevronDown from "./MatSymChevronDown.svg"
+import MatSymChevronUp from "./MatSymChevronUp.svg"
 import MatSymCrisisAlert from "./MatSymCrisisAlert.svg"
 import MatSymFlipCamera from "./MatSymFlipCamera.svg"
 import MatSymMerge from "./MatSymMerge.svg"
 import MatSymZoomIn from "./MatSymZoomIn.svg"
 import MatSymZoomOut from "./MatSymZoomOut.svg"
-import MatSymChevronDown from "./MatSymChevronDown.svg"
-import MatSymChevronUp from "./MatSymChevronUp.svg"
+import MatSymSave from "./MatSymSave.svg"
+import MatSymSaveClock from "./MatSymSaveClock.svg"
 
 export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymAlbum": MatSymAlbum,
@@ -160,13 +162,15 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "temperature": temperature,
  "vanillin": vanillin,
  "MatSymMyLocation": MatSymMyLocation,
+ "MatSymChevronDown": MatSymChevronDown,
+ "MatSymChevronUp": MatSymChevronUp,
  "MatSymCrisisAlert": MatSymCrisisAlert,
  "MatSymFlipCamera": MatSymFlipCamera,
  "MatSymMerge": MatSymMerge,
  "MatSymZoomIn": MatSymZoomIn,
  "MatSymZoomOut": MatSymZoomOut,
- "MatSymChevronDown": MatSymChevronDown,
- "MatSymChevronUp": MatSymChevronUp,
+ "MatSymSave": MatSymSave,
+ "MatSymSaveClock": MatSymSaveClock,
  }
 
 export type MoorhenSVG = "MatSymAdd" |
@@ -246,10 +250,12 @@ export type MoorhenSVG = "MatSymAdd" |
  "temperature" |
  "vanillin" |
  "MatSymMyLocation" |
+ "MatSymChevronDown" |
+ "MatSymChevronUp" |
  "MatSymCrisisAlert" |
  "MatSymFlipCamera" |
  "MatSymMerge" |
  "MatSymZoomIn" |
  "MatSymZoomOut" |
- "MatSymChevronDown" |
- "MatSymChevronUp"
+ "MatSymSave" |
+ "MatSymSaveClock"

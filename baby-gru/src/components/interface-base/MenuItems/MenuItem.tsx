@@ -4,7 +4,7 @@ import "./menu-item.css";
 interface MoorhenMenuItemProps {
     children: ReactNode;
     selected?: boolean;
-    onClick?: (e) => void | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
+    onClick?: (e) => void |((e) => Promise<void>) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     ref?: React.Ref<HTMLButtonElement>;
     id?: string;
     disabled?: boolean;

@@ -260,7 +260,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
-            dispatch(setTheme(_isDark ? "darkly" : "flatly"));
         }
     }, [backgroundColor]);
 

@@ -1,15 +1,18 @@
 import { Children, isValidElement } from "react";
 import "./grid.css"
+
 export const MoorhenGrid = (props: {
     children: React.ReactNode;
     gap?: string;
+    rowGap?: string;
+    columnGap?: string;
     columns: number;
     table?: boolean;
     style?: React.CSSProperties;
     titleRow?: boolean;
     titleColumn?: boolean;
 }) => {
-    const { children, gap = "0px", columns, style = null, table, titleRow, titleColumn } = props;
+    const { children, gap="0.5rem", rowGap, columnGap,  columns, style = null, table, titleRow, titleColumn } = props;
 
     const wrappedChildren = table
         ? Children.toArray(children).map((child, index) => {
@@ -33,7 +36,8 @@ export const MoorhenGrid = (props: {
             className={`moorhen__grid${table ? " moorhen__grid-table" : ""}`}
             style={{
                 gridTemplateColumns: `repeat(${columns}, auto)`,
-                gap: gap,
+                rowGap: rowGap ? rowGap : gap,
+                columnGap: columnGap ? columnGap : gap,
                 ...style,
             }}
         >

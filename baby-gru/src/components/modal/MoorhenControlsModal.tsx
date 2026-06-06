@@ -1,4 +1,3 @@
-import { Autocomplete, MenuItem, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -56,15 +55,6 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
         };
         fetchSVG();
     }, []);
-
-    const filterOptions = useMemo(
-        () =>
-            createFilterOptions({
-                ignoreCase: true,
-                limit: 5,
-            }),
-        []
-    );
 
     const handleMouseHover = (key: string) => {
         const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");

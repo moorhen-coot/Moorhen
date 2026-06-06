@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
 import { clampValue, toFixedNoZero } from "../../misc/helpers";
 import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
@@ -32,6 +32,10 @@ type MoorhenSliderPropsBase = {
     showTitleValue?: boolean;
     allowedValues?: number[];
     sliderTitleUnit?: string;
+    style?: React.CSSProperties;
+    colour?: string;
+    ariaLabel?: string;
+    getAriaValueText?: (value: number) => string;
 };
 
 type MoorhenSliderRange = {
@@ -157,7 +161,8 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         tickInside = false,
         step,
         allowedValues = null,
-        sliderTitleUnit
+        sliderTitleUnit,
+        getAriaValueText = () => undefined
     } = props;
     const logScale = scale === "log" || scale === "asinh";
 
@@ -435,6 +440,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 {" "}
                 <PlusMinusButton
                     step={+stepButtons}
+                    colour={props.colour}
                     allowedValues={allowedValues}
                     setButtonIsDown={setButtonIsDown}
                     value={side === "L" ? props.value : props.value2}
@@ -442,10 +448,12 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                     minVal={minVal}
                     maxVal={maxVal}
                     isDisabled={isDisabled}
+                    style={{ color: props.colour ? props.colour : null }}
                     logScale={logScale}
                 />{" "}
                 <PlusMinusButton
                     step={-stepButtons}
+                    colour={props.colour}
                     allowedValues={allowedValues}
                     setButtonIsDown={setButtonIsDown}
                     value={side === "L" ? props.value : props.value2}
@@ -460,6 +468,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             <PlusMinusButton
                 step={side === "L" ? -stepButtons : +stepButtons}
                 allowedValues={allowedValues}
+                colour={props.colour}
                 setButtonIsDown={setButtonIsDown}
                 value={props.value as number}
                 setValue={handleSetValue}
@@ -586,13 +595,18 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
     return (
         <>
-            <MoorhenStack>
+            <MoorhenStack style={{ color: props.colour ? props.colour : null, ...props.style }}>
                 {drawTitle()}
                 <MoorhenStack direction="row">
                     <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
                     <div className={`moorhen__slider-track-container ${buttonIsDown ? "moorhen__slider-track-container-active" : ""}`}>
                         <input
                             type="range"
+                            aria-label={props.ariaLabel}
+                            aria-valuemax={maxVal}
+                            aria-valuemin={minVal}
+                            aria-valuenow={logScale ? log10ofT(props.value, resolveScaling) : props.value}
+                            aria-valuetext={getAriaValueText(logScale ? log10ofT(props.value, resolveScaling) : props.value)}
                             className={"moorhen__slider-builtin"}
                             disabled={isDisabled}
                             value={logScale ? log10ofT(props.value, resolveScaling) : props.value}
@@ -628,7 +642,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                         <div
                             className={`moorhen__slider-thumb ${isDisabled ? "disabled" : ""}`}
                             ref={thumbRef}
-                            style={{ left: `${thumbPosition}%` }}
+                            style={{ left: `${thumbPosition}%` , background: props.colour ? props.colour : null}}
                             onMouseDown={evt => handleStartDragging(evt, 1)}
                         />
                         {props.type === "range" && (

@@ -14,6 +14,7 @@ type PlusMinusButtonProps = {
     allowedValues?: number[];
     type?: "arrow" | "round";
     style?: React.CSSProperties;
+    colour?: string;
 };
 
 export function PlusMinusButton(props: PlusMinusButtonProps) {
@@ -89,6 +90,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
             size="small"
             disabled={isDisabled}
             style={{ opacity: isDisabled ? 0.6 : 1, ...props.style }}
-        />
+            iconStyle={{ color: props.colour ? props.colour : null,}}
+                />
     );
 }

@@ -157,9 +157,9 @@
     width: var(--moorhen-slider-thumb-size);
     height: var(--moorhen-slider-thumb-size);
     border-radius: 50%;
-    background: var(--moorhen-accent);
+    background: var(--moorhen-focus);
     cursor: pointer;
-    border: 1px solid var(--moorhen-border);
+    border: 1px solid var(--moorhen-focus-shadow);
 }
 
 .moorhen__slider-thumb.disabled {

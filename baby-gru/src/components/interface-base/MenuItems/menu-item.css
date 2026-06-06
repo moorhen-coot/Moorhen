@@ -3,7 +3,6 @@
 .moorhen__menu-item,
 .moorhen__menu-item-disabled {
     all: unset;
-    /* font-family: "Roboto", "Helvetica", "Arial", sans-serif; */
     position: relative;
     overflow: hidden;
     min-height: 2.4rem;
