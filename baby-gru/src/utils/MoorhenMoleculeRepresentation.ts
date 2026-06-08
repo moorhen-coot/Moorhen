@@ -1664,20 +1664,29 @@ export class MoleculeRepresentation {
             ntot[2] /= ns.length
             return ntot
         }
+        const t1 = performance.now()
+
         const normal_atomPairs = []
         const other_atomPairs = []
         const cis_midPoints = []
         const trans_midPoints = []
         const bpl = this.parentMolecule.DNATCO_info["base_pair_list"]
         const bpa = this.parentMolecule.DNATCO_info["base_pair_annotation"]
+        const bpaMap: Map<number,libcootApi.DNATCOBasePair> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
+        const allC3pAtoms = await this.parentMolecule.gemmiAtomsForCid("/1/*/*/C3'")
+        const allC3pAtomMap = new Map(allC3pAtoms.map(t => ["/1/"+t.chain_id+"/"+t.res_no+"/C3'",t]))
+        console.log("Time to get all C3'",performance.now()-t1)
+        const allOtherAtoms = await this.parentMolecule.gemmiAtomsForCid("/*/*/*/N1,C2,N3,C4,C5,C6,O4,N4")
+        const allOtherAtomMap = new Map(allOtherAtoms.map(t => ["/1/"+t.chain_id+"/"+t.res_no+"/"+t.name,t]))
+        console.log("Time to get all ring atoms",performance.now()-t1)
         for(const bp of bpl){
-            const ba = bpa.filter(ba => ba.base_pair_id===bp.base_pair_id)[0]
+            const ba: libcootApi.DNATCOBasePair = bpaMap.get(bp.base_pair_id)
             const orientation = ba.orientation
             const bp_class = ba.class
             const cid_1 = "/"+bp.PDB_model_number+"/"+bp.auth_asym_id_1+"/"+bp.auth_seq_id_1+"/C3'"
             const cid_2 = "/"+bp.PDB_model_number+"/"+bp.auth_asym_id_2+"/"+bp.auth_seq_id_2+"/C3'"
-            const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(cid_1);
-            const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(cid_2);
+            const selectedGemmiAtoms_1 = [allC3pAtomMap.get(cid_1)]
+            const selectedGemmiAtoms_2 = [allC3pAtomMap.get(cid_2)]
             const orig_start = selectedGemmiAtoms_1[0]
             const orig_end = selectedGemmiAtoms_2[0]
 
@@ -1726,8 +1735,10 @@ export class MoleculeRepresentation {
             else
                 trans_midPoints.push(midAtomInfo)
         }
+        console.log("Time to end of base pairs loop",performance.now()-t1)
         const normal_objects = this.getGemmiAtomPairsBuffers(normal_atomPairs, [0.7, 0.7, 0.7, 1.0], false, 2.0, 15.0, 0.32, false)
         const other_objects = this.getGemmiAtomPairsBuffers(other_atomPairs, [0.8, 0.2, 0.2, 1.0], false, 2.0, 15.0, 0.32, false)
+        console.log("Time to end of create base pairs objects",performance.now()-t1)
 
         const sphere_size = 0.4;
         const cis_atomColours = {};
@@ -1740,6 +1751,7 @@ export class MoleculeRepresentation {
             trans_atomColours[`${atom.serial}`] = [0.0,0.0,0.0,1.0];
         });
         const trans_sphere_objects = [gemmiAtomsToCirclesSpheresInfo(trans_midPoints, sphere_size, "PERFECT_SPHERES", trans_atomColours,false)];
+        console.log("Time to end of create spheres objects",performance.now()-t1)
 
         const models = this.parentMolecule.gemmiStructure.models;
         //const modelsSize = models.size();
@@ -1757,12 +1769,26 @@ export class MoleculeRepresentation {
             mod.delete()
         }
         modres.delete()
+        console.log("Time to end of create modres dict",performance.now()-t1)
 
         const cuboid_points = []
         const cuboid_colours = []
         const cuboid_normals = []
         let cuboid_idxs = []
         let cuboid_idx_base = 0
+
+        const bplIndex = new Map();
+
+        for (const bp of bpl) {
+            const key1 = `${bp.auth_asym_id_1}|${bp.auth_seq_id_1}`;
+            const key2 = `${bp.auth_asym_id_2}|${bp.auth_seq_id_2}`;
+
+            if (!bplIndex.has(key1)) bplIndex.set(key1, []);
+            if (!bplIndex.has(key2)) bplIndex.set(key2, []);
+
+            bplIndex.get(key1).push(bp);
+            bplIndex.get(key2).push(bp);
+        }
 
         //for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
             const model = models.get(0);
@@ -1783,10 +1809,8 @@ export class MoleculeRepresentation {
                     if(resinfo.is_dna()||resinfo.is_rna()||["A","C","G","T","U"].indexOf(modres_js[residue.name])>-1){
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()
-                            const bplMatch = bpl.filter(bp =>
-                                (bp.auth_asym_id_1===chain.name&&bp.auth_seq_id_1===seqNum)||
-                                (bp.auth_asym_id_2===chain.name&&bp.auth_seq_id_2===seqNum)
-                            )
+                            const key = `${chain.name}|${seqNum}`;
+                            const bplMatch = bplIndex.get(key) || [];
                             if(bplMatch.length===0){
                                 const up_1 = "/1/"+chain.name+"/"+seqNum+"/C3'"
                                 let up_2 = ""
@@ -1801,9 +1825,8 @@ export class MoleculeRepresentation {
                                     up_2 = "/1/"+chain.name+"/"+seqNum+"/N1"
                                 }
                                 if(up_2){
-                                    const ring_atoms_cid = "/1/"+chain.name+"/"+seqNum+"/N1,C2,N3,C4,C5,C6"
-                                    const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
-                                    const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
+                                    const selectedGemmiAtoms_1 = [allC3pAtomMap.get(up_1)]
+                                    const selectedGemmiAtoms_2 = [allOtherAtomMap.get(up_2)]
 
                                     const orig_start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
                                     const orig_end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
@@ -1819,7 +1842,15 @@ export class MoleculeRepresentation {
                                     orig_start[1] + t2*(orig_end[1] - orig_start[1]),
                                     orig_start[2] + t2*(orig_end[2] - orig_start[2]),
                                     ]
-                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
+                                    const selectedGemmiAtoms_ring = [
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/N1"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/C2"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/N3"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/C4"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/C5"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+seqNum+"/C6"),
+                                    ]
+
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
                                     cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], 1.0, 0.4, cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
@@ -1848,8 +1879,8 @@ export class MoleculeRepresentation {
                                 }
                                 if(up_2){
                                     const ring_atoms_cid = "/1/"+chain.name+"/"+fullSeqNum+"/N1,C2,N3,C4,C5,C6"
-                                    const selectedGemmiAtoms_1 = await this.parentMolecule.gemmiAtomsForCid(up_1);
-                                    const selectedGemmiAtoms_2 = await this.parentMolecule.gemmiAtomsForCid(up_2);
+                                    const selectedGemmiAtoms_1 = [allC3pAtomMap.get(up_1)]
+                                    const selectedGemmiAtoms_2 = [allOtherAtomMap.get(up_2)]
 
                                     const orig_start = vec3Create([selectedGemmiAtoms_1[0].x,selectedGemmiAtoms_1[0].y,selectedGemmiAtoms_1[0].z])
                                     const orig_end = vec3Create([selectedGemmiAtoms_2[0].x,selectedGemmiAtoms_2[0].y,selectedGemmiAtoms_2[0].z])
@@ -1865,7 +1896,14 @@ export class MoleculeRepresentation {
                                     orig_start[1] + t2*(orig_end[1] - orig_start[1]),
                                     orig_start[2] + t2*(orig_end[2] - orig_start[2]),
                                     ]
-                                    const selectedGemmiAtoms_ring = await this.parentMolecule.gemmiAtomsForCid(ring_atoms_cid);
+                                    const selectedGemmiAtoms_ring = [
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/N1"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/C2"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/N3"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/C4"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/C5"),
+                                        allOtherAtomMap.get("/1/"+chain.name+"/"+fullSeqNum+"/C6"),
+                                    ]
                                     const up = ringNormal(selectedGemmiAtoms_ring)
 
                                     cuboid_idx_base = extendCuboidMesh(start, end, up, [0.9,0.1,0.9,1.0], 1.0, 0.4, cuboid_points, cuboid_colours, cuboid_normals, cuboid_idxs, cuboid_idx_base)
@@ -1893,6 +1931,7 @@ export class MoleculeRepresentation {
             norm_tri: [[cuboid_normals]],
             col_tri: [[cuboid_colours]]
         }]
+        console.log("Time to end of unpaired loop",performance.now()-t1)
 
         return [...unpaird_cuboid_objects,...normal_objects,...other_objects,...cis_sphere_objects,...trans_sphere_objects];
     }

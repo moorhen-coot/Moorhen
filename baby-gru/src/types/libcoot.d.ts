@@ -83,6 +83,17 @@ export namespace libcootApi {
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
         parseDNATCO(arg0: string): string;
     };
+    type DNATCOBasePair = {
+        base_1_edge: string;
+        base_2_edge: string;
+        base_pair_id: string;
+        class: string;
+        id: string;
+        "l-w_family": string;
+        "l-w_family_num": string;
+        orientation: string;
+        subclass: string;
+    }
     type headerInfoGemmi = {
         title: string;
         journal: emscriptem.map<emscriptem.vector<string>, string>;
