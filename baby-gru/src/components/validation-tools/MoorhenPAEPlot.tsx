@@ -686,7 +686,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
                     {paeModeButtonState === "molecule" && (
                         <MoorhenStack direction="row" align="center" justify="flex-start">
                             <MoorhenMoleculeSelect
-                                selected={selectedModel}
+                                selectedMolecule={selectedModel}
                                 onSelect={sel => setSelectedModel(sel)}
                                 ref={moleculeSelectRef}
                                 style={{ flex: "0 0 auto" }}

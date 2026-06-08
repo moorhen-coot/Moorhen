@@ -106,7 +106,7 @@ export const MoorhenValidationListWidgetBase = (props: {
             <MoorhenStack gap={"0.5rem"} flex={0}>
                 {enableMapSelect && (
                 <MoorhenStack inputGrid>
-                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selectedMolecule={selectedModel} />
 
                     <MoorhenMapSelect
                         filterFunction={filterMapFunction}
@@ -119,7 +119,7 @@ export const MoorhenValidationListWidgetBase = (props: {
                 </MoorhenStack>
                 )}
                 {!enableMapSelect && (
-                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selectedMolecule={selectedModel} />
                 )}
                 {extraControlForm}
             </MoorhenStack>

@@ -166,7 +166,7 @@ export const ValidationPanel = () => {
 
     const configPanel = (
         <MoorhenStack inputGrid>
-            <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />
+            <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selectedMolecule={selectedMolecule} />
             <MoorhenMapSelect onSelect={setSelectedMap} maps={maps} />
         </MoorhenStack>
     );
