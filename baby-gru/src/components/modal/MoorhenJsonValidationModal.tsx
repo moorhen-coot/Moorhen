@@ -41,7 +41,7 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
             resizeNodeRef={resizeNodeRef}
             footer={footerContent}
             onDock={setIsDocked}
-            body={<MoorhenJsonValidation />}
+            body={<MoorhenJsonValidation isDocked={!!isDocked} />}
         />
     );
 };

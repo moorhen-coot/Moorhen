@@ -27,7 +27,7 @@ type MoorhenButtonPropsTypeBase = {
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
     type: "icon-only";
     size?: "small" | "medium" | "large" | "accordion";
-    icon: MoorhenSVG;
+    icon?: MoorhenSVG;
     variant?: "default" | "danger";
 };
 
