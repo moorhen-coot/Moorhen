@@ -204,7 +204,6 @@
         "sass-loader": "^16.0.5",
         "style-loader": "^4.0.0",
         "svgo": "^4.0.0",
-        "Sest": "^29.4.5",
         "ts-loader": "^9.5.4",
         "ts-node": "^10.9.2",
         "tsc-alias": "^1.8.17",
