@@ -44,6 +44,82 @@ const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => 
     return result
 }
 
+const ensureCootModuleDirectory = (dirPath: string) => {
+    const parts = dirPath.split("/").filter(part => part.length > 0)
+    let currentPath = ""
+    parts.forEach(part => {
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+        try {
+            cootModule.FS.mkdir(currentPath)
+        } catch (_err) {
+            // Existing MEMFS directories throw; that is fine here.
+        }
+    })
+}
+
+const cacheXhpiMonomerDictionary = (compId: string, dictionary: string) => {
+    const upperCompId = compId.trim().toUpperCase()
+    if (!upperCompId || !dictionary) return
+
+    const targetDir = `data/ccp4_lib/data/monomers/${upperCompId[0].toLowerCase()}`
+    const targetFileName = `${upperCompId}.cif`
+    const targetPath = `${targetDir}/${targetFileName}`
+    ensureCootModuleDirectory(targetDir)
+
+    try {
+        cootModule.FS_unlink(targetPath)
+    } catch (_err) {
+        // The dictionary may not have been cached for XPID before.
+    }
+    cootModule.FS_createDataFile(targetDir, targetFileName, new TextEncoder().encode(dictionary), true, true)
+}
+
+const XHPI_MONOMER_LIBRARY_PATH = "data/ccp4_lib/data/monomers"
+const XHPI_MONOMER_LIBRARY_PROBE = `${XHPI_MONOMER_LIBRARY_PATH}/p/PHE.cif`
+
+const xhpiPathExists = (path: string) => {
+    try {
+        (cootModule.FS as any).stat(path)
+        return true
+    } catch (_err) {
+        return false
+    }
+}
+
+const detectXhpiInteractions = (imol: number, ligandDicts: Record<string, string> = {}, coordStringOverride?: string | null) => {
+    Object.entries(ligandDicts ?? {}).forEach(([compId, dictionary]) => {
+        cacheXhpiMonomerDictionary(compId, dictionary)
+    })
+
+    if (!xhpiPathExists(XHPI_MONOMER_LIBRARY_PROBE)) {
+        console.warn(`XPID could not find ${XHPI_MONOMER_LIBRARY_PROBE} in the CootWorker MEMFS.`)
+    }
+
+    const coordString = coordStringOverride || (molecules_container["molecule_to_mmCIF_string_with_gemmi"]
+        ? molecules_container["molecule_to_mmCIF_string_with_gemmi"](imol)
+        : molecules_container.molecule_to_mmCIF_string(imol))
+    const structure = cootModule.read_structure_from_string(coordString, `xpid-${imol}`)
+    let trimmedStructure: gemmi.Structure | null = null
+    try {
+        trimmedStructure = cootModule.cloneGemmiStructureWithTrimmedAtomNames(structure)
+        return cootModule.detect_xhpi_interactions_json_with_monomer_library(
+            trimmedStructure,
+            XHPI_MONOMER_LIBRARY_PATH
+        )
+    } finally {
+        try {
+            trimmedStructure?.delete()
+        } catch (_err) {
+            // pass
+        }
+        try {
+            structure.delete()
+        } catch (_err) {
+            // pass
+        }
+    }
+}
+
 const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.0): libcootApi.InstancedMeshJS => {
     //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
@@ -1286,6 +1362,9 @@ const doCootCommand = (messageData: {
                 break
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
+                break
+            case "shim_detect_xhpi_interactions":
+                cootResult = detectXhpiInteractions(...commandArgs as [number, Record<string, string>?, string?])
                 break
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])

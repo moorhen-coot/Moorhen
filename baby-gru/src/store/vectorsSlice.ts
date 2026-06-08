@@ -28,6 +28,11 @@ export interface MoorhenVector {
     radius?: number;
     visible?: boolean;
     ambiguous?: boolean
+    dashSpacing?: number;
+    arrowHeadLength?: number;
+    arrowHeadRadiusScale?: number;
+    labelFontSize?: number;
+    labelScreenOffsetDistance?: number;
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {

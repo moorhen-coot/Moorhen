@@ -62,11 +62,11 @@ export const AcceptRejectDragAtoms = () => {
     };
 
     const atomDraggedCallback = useCallback(
-        async (evt: moorhen.AtomDraggedEvent) => {
+        async (evt: Event) => {
             draggingDirty.current = true;
             if (!busy.current) {
                 moltenFragmentRef.current.clearBuffersOfStyle("hover");
-                await handleAtomDragged(evt);
+                await handleAtomDragged(evt as moorhen.AtomDraggedEvent);
             }
         },
         [moltenFragmentRef]

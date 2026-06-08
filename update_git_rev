@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 # This script can be used to update the git commit hash for certain dependencies in VERSIONS
 show_help() {
@@ -47,9 +47,10 @@ update_dep_fork() {
   else
     # sed: In-place replace line containing a `string`
     # sed -i 's/.*string.*/replacement line/' file.txt
-  	sed -i "s/.*${1}_fork.*/${1}_fork=\"${2}\"/" VERSIONS &&\
+  	sed -i.bak "s/.*${1}_fork.*/${1}_fork=\"${2}\"/" VERSIONS &&\
   	echo "Updated $1 fork to $2 (from previous fork = $old_fork)" ||\
   	echo Failed to update fork for $1
+        rm -f VERSIONS.bak
   fi
 }
 
@@ -63,9 +64,10 @@ update_dep_hash() {
   else
     # sed: In-place replace line containing a `string`
     # sed -i 's/.*string.*/replacement line/' file.txt
-  	sed -i "s/.*${1}_commit.*/${1}_commit=\"${2}\"/" VERSIONS &&\
+  	sed -i.bak "s/.*${1}_commit.*/${1}_commit=\"${2}\"/" VERSIONS &&\
   	echo "Updated $1 commit hash to $2 (from previous hash = $old_hash)" ||\
   	echo Failed to update commit hash for $1
+        rm -f VERSIONS.bak
   fi
 }
 

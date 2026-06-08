@@ -16,6 +16,7 @@ export class TextCanvasTexture {
     bigTextureTexOrigins: number[][];
     bigTextureTexOffsets: number[][];
     bigTextureScalings: number[][];
+    bigTextureScreenOffsets: number[][];
     canvasBig: OffscreenCanvas;
     contextBig: OffscreenCanvasRenderingContext2D;
     bigTextureCurrentBaseLine: number;
@@ -25,6 +26,7 @@ export class TextCanvasTexture {
     bigTextureTexOffsetsBuffer: WebGLBuffer;
     bigTextureTextInstanceOriginBuffer: WebGLBuffer;
     bigTextureTextInstanceSizeBuffer: WebGLBuffer;
+    bigTextureTextScreenOffsetBuffer: WebGLBuffer;
     bigTextureTextTexCoordBuffer: WebGLBuffer;
     bigTextureTextPositionBuffer: WebGLBuffer;
     bigTextureTextIndexesBuffer: WebGLBuffer;
@@ -43,6 +45,7 @@ export class TextCanvasTexture {
         this.bigTextureTexOrigins = []
         this.bigTextureTexOffsets = []
         this.bigTextureScalings   = []
+        this.bigTextureScreenOffsets = []
         this.canvasBig = new OffscreenCanvas(width,Math.min(height,this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE)))
         this.contextBig = this.canvasBig.getContext("2d");
         this.bigTextureCurrentBaseLine = 0;
@@ -58,6 +61,7 @@ export class TextCanvasTexture {
         this.bigTextureTexOffsetsBuffer = this.gl.createBuffer();
         this.bigTextureTextInstanceOriginBuffer = this.gl.createBuffer();
         this.bigTextureTextInstanceSizeBuffer = this.gl.createBuffer();
+        this.bigTextureTextScreenOffsetBuffer = this.gl.createBuffer();
         this.bigTextureTextTexCoordBuffer = this.gl.createBuffer();
         this.bigTextureTextPositionBuffer = this.gl.createBuffer();
         this.bigTextureTextIndexesBuffer = this.gl.createBuffer();
@@ -96,6 +100,10 @@ export class TextCanvasTexture {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTexOffsetsBuffer);
         this.gl.vertexAttribPointer(this.shader.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
 
+        this.gl.enableVertexAttribArray(this.shader.screenOffsetAttribute);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextScreenOffsetBuffer);
+        this.gl.vertexAttribPointer(this.shader.screenOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.bigTextureTextIndexesBuffer);
 
         this.gl.uniform1f(this.shader.pixelZoom,zoom*this.canvasBig.height/canvasHeight);
@@ -104,18 +112,22 @@ export class TextCanvasTexture {
             this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 1);
             this.gl.vertexAttribDivisor(this.shader.offsetAttribute, 1);
             this.gl.vertexAttribDivisor(this.shader.textureOffsetAttribute, 1);
+            this.gl.vertexAttribDivisor(this.shader.screenOffsetAttribute, 1);
             this.gl.drawElementsInstanced(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, this.nBigTextures);
             this.gl.vertexAttribDivisor(this.shader.sizeAttribute, 0);
             this.gl.vertexAttribDivisor(this.shader.offsetAttribute, 0);
             this.gl.vertexAttribDivisor(this.shader.textureOffsetAttribute, 0);
+            this.gl.vertexAttribDivisor(this.shader.screenOffsetAttribute, 0);
         } else {
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.sizeAttribute, 1);
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.offsetAttribute, 1);
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.textureOffsetAttribute, 1);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.screenOffsetAttribute, 1);
             this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, this.nBigTextures);
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.sizeAttribute, 0);
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.offsetAttribute, 0);
             this.instanced_ext.vertexAttribDivisorANGLE(this.shader.textureOffsetAttribute, 0);
+            this.instanced_ext.vertexAttribDivisorANGLE(this.shader.screenOffsetAttribute, 0);
         }
     }
 
@@ -132,6 +144,9 @@ export class TextCanvasTexture {
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceSizeBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bigTextureScalings.flat()), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextScreenOffsetBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bigTextureScreenOffsets.flat()), this.gl.STATIC_DRAW);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextTexCoordBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(bigTextureTexCoords), this.gl.STATIC_DRAW);
@@ -259,6 +274,7 @@ export class TextCanvasTexture {
         this.bigTextureTexOrigins = []
         this.bigTextureTexOffsets = []
         this.bigTextureScalings   = []
+        this.bigTextureScreenOffsets = []
     }
 
     removeBigTextureTextImages(textObjects,uuid=null) {
@@ -269,22 +285,42 @@ export class TextCanvasTexture {
     }
 
     removeBigTextureTextImage(textObject,uuid=null) {
-        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        const screenOffsetKey = this.getScreenOffsetKey(textObject);
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font+"_"+screenOffsetKey
         if(uuid) key += "-"+uuid;
         if(key in this.refI) {
             this.bigTextureTexOrigins[this.refI[key]] = [];
             this.bigTextureTexOffsets[this.refI[key]] = [];
             this.bigTextureScalings[this.refI[key]] = [];
+            this.bigTextureScreenOffsets[this.refI[key]] = [];
             delete this.refI[key];
             this.nBigTextures -= 1;
         }
+    }
+
+    getScreenOffsetKey(textObject) {
+        const screenOffsetVectorX = textObject.screenOffsetVectorX ?? 0.0;
+        const screenOffsetVectorY = textObject.screenOffsetVectorY ?? 0.0;
+        const screenOffsetVectorZ = textObject.screenOffsetVectorZ ?? 0.0;
+        const screenOffsetDistance = textObject.screenOffsetDistance ?? textObject.screenOffsetX ?? 0.0;
+        return [
+            screenOffsetVectorX,
+            screenOffsetVectorY,
+            screenOffsetVectorZ,
+            screenOffsetDistance,
+        ].join("_");
     }
 
     addBigTextureTextImage(textObject,uuid=null) {
 
         const background_colour = this.store.getState().sceneSettings.backgroundColor
 
-        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        const screenOffsetVectorX = textObject.screenOffsetVectorX ?? 0.0;
+        const screenOffsetVectorY = textObject.screenOffsetVectorY ?? 0.0;
+        const screenOffsetVectorZ = textObject.screenOffsetVectorZ ?? 0.0;
+        const screenOffsetDistance = textObject.screenOffsetDistance ?? textObject.screenOffsetX ?? 0.0;
+        const screenOffsetKey = this.getScreenOffsetKey(textObject);
+        let key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font+"_"+screenOffsetKey
         if(uuid) key += "-"+uuid;
 
         const fontSize = parseInt(textObject.font);
@@ -310,6 +346,7 @@ export class TextCanvasTexture {
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);
         this.bigTextureScalings.push(s)
+        this.bigTextureScreenOffsets.push([screenOffsetVectorX, screenOffsetVectorY, screenOffsetVectorZ, screenOffsetDistance])
         this.refI[key] = this.nBigTexturesInt;
         this.nBigTextures += 1;
         this.nBigTexturesInt += 1;
