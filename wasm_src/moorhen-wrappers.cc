@@ -2201,9 +2201,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("cell",&coot::symmetry_info_t::cell)
     .field("symm_trans",&coot::symmetry_info_t::symm_trans)
     ;
-=======
+
 EMSCRIPTEN_BINDINGS(moorhen_container) {
->>>>>>> origin
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("dedust_map",&molecules_container_t::dedust_map)
@@ -2520,7 +2519,6 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
-<<<<<<< HEAD
     value_object<texture_as_floats_t>("texture_as_floats_t")
     .field("width", &texture_as_floats_t::width)
     .field("height", &texture_as_floats_t::height)

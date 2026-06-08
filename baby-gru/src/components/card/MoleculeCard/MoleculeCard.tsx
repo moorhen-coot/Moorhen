@@ -31,7 +31,7 @@ import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
 import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
-import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
+// import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
 
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import "./molecule-card.css";
@@ -134,6 +134,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const displayContactDots = useSelector((state: RootState) => {
         return state.molecules.generalRepresentations.some(rep => {
             return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "CDs";
+        });
+    });
+    const displayNEFRestraints = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "NEFRestraints";
         });
     });
 
@@ -256,10 +261,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         dispatch(isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule));
         if (isVisible) {
             props.molecule.environmentRepresentation?.hide();
+            props.molecule.NEFRestraintRepresentation?.hide();
+
         } else {
             if (displayEnvironment) {
                 props.molecule.environmentRepresentation?.show();
                 props.molecule.environmentRepresentation?.redraw();
+            }
+            
+            if (displayNEFRestraints) {
+                props.molecule.NEFRestraintRepresentation?.show();
+                props.molecule.NEFRestraintRepresentation?.redraw();
             }
         }
     }, [isVisible]);
@@ -392,56 +404,70 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
-    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
-        v.uniqueId.includes("__TAG_NEF"))
-    let doShowAllNEF = false 
 
-    vectorsList.forEach(v => {
-        if (v.visible !== false){
-            doShowAllNEF = true
+    const handleNEFRestraintsToggle = value => {
+        if (!value) {
+            props.molecule.NEFRestraintRepresentation?.hide();
+            dispatch(removeGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+            return;
         }
-    })
-    const [showAllNEF, setShowAllNEF] = useState<boolean>(
-        doShowAllNEF
-    );
+
+        props.molecule.drawNEFRestraints().then(() => {
+            dispatch(addGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+        });
+    };
+
+
+    // const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
+    //     v.uniqueId.includes("__TAG_NEF"))
+    // let doShowAllNEF = false 
+
+    // vectorsList.forEach(v => {
+    //     if (v.visible !== false){
+    //         doShowAllNEF = true
+    //     }
+    // })
+    // const [showAllNEF, setShowAllNEF] = useState<boolean>(
+    //     doShowAllNEF
+    // );
     
-    const newVisibilityChangedVector = (theVector,vis) => {
-                const newVector: MoorhenVector = {
-                    coordsMode: theVector.coordsMode,
-                    labelMode: theVector.labelMode,
-                    labelText: theVector.labelText,
-                    drawMode: theVector.drawMode,
-                    arrowMode: theVector.arrowMode,
-                    xFrom: theVector.xFrom,
-                    yFrom: theVector.yFrom,
-                    zFrom: theVector.zFrom,
-                    xTo: theVector.xTo,
-                    yTo: theVector.yTo,
-                    zTo: theVector.zTo,
-                    cidFrom: theVector.cidFrom,
-                    cidTo: theVector.cidTo,
-                    molFromUniqueId: theVector.molNoFrom,
-                    molToUniqueId: theVector.molNoTo,
-                    uniqueId: theVector.uniqueId,
-                    vectorColour: theVector.vectorColour,
-                    textColour: theVector.textColour,
-                    radius: theVector.radius,
-                    visible: vis,
-                };
-                return newVector
-            }
-    const changeVectorVisibility = (type) => {
-        if (type === "All"){
-            vectorsList.forEach(v => {
-                    const newVector = newVisibilityChangedVector(v, !showAllNEF)
-                    dispatch(removeVector(v))
-                    dispatch(addVector(newVector))
-                console.log("Dispatched vectors (NEF)")
+    // const newVisibilityChangedVector = (theVector,vis) => {
+    //             const newVector: MoorhenVector = {
+    //                 coordsMode: theVector.coordsMode,
+    //                 labelMode: theVector.labelMode,
+    //                 labelText: theVector.labelText,
+    //                 drawMode: theVector.drawMode,
+    //                 arrowMode: theVector.arrowMode,
+    //                 xFrom: theVector.xFrom,
+    //                 yFrom: theVector.yFrom,
+    //                 zFrom: theVector.zFrom,
+    //                 xTo: theVector.xTo,
+    //                 yTo: theVector.yTo,
+    //                 zTo: theVector.zTo,
+    //                 cidFrom: theVector.cidFrom,
+    //                 cidTo: theVector.cidTo,
+    //                 molFromUniqueId: theVector.molNoFrom,
+    //                 molToUniqueId: theVector.molNoTo,
+    //                 uniqueId: theVector.uniqueId,
+    //                 vectorColour: theVector.vectorColour,
+    //                 textColour: theVector.textColour,
+    //                 radius: theVector.radius,
+    //                 visible: vis,
+    //             };
+    //             return newVector
+    //         }
+    // const changeVectorVisibility = (type) => {
+    //     if (type === "All"){
+    //         vectorsList.forEach(v => {
+    //                 const newVector = newVisibilityChangedVector(v, !showAllNEF)
+    //                 dispatch(removeVector(v))
+    //                 dispatch(addVector(newVector))
+    //             console.log("Dispatched vectors (NEF)")
                 
-            }
-        )
-        }
-        }
+    //         }
+    //     )
+    //     }
+    //     }
     const handleToggleXPIDList = value => {
         setShownXPIDList(value);
         props.molecule.moleculeCardState.showXpidList = value;
@@ -655,14 +681,15 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         />
                                             <MoorhenStack direction="row" align="center">
                         <MoorhenToggle
-                            onChange={() => {setShowAllNEF(prev => !prev)
-                                            changeVectorVisibility("All")
-                                        }}
-                            checked={showAllNEF}
+                            onChange={e => handleNEFRestraintsToggle(e.target.checked)}
+
+
+                            checked={displayNEFRestraints}
+
                             disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
-                                    NEF restraints&nbsp;
+                                    NEF restraints&nbsp;    
                                     <MoorhenInfoCard
                                         infoText={
                                             <>
@@ -676,9 +703,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 }
                             />
 
-                            <MoorhenPopoverButton tooltip={"Environment settings"} disabled={isVisible ? false : true}>
-                                <NEFRestraintsSettingsPanel molecule={props.molecule} />
-                            </MoorhenPopoverButton>
+
                         </MoorhenStack>
 
 
