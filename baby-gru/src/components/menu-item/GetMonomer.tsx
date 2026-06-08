@@ -94,7 +94,7 @@ export const GetMonomer = () => {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     // const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
-    const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
+    // const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([]);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
 
@@ -257,11 +257,11 @@ export const GetMonomer = () => {
         [fetchLigandDictFromUrl, addLigand, monomerLibraryPath]
     );
 
-    const defaultGetMonomer = useCallback(async () => {
+    const defaultGetMonomer = async () => {
         const fromMolNo = selectedMolecule
         
         let newTlc: string;
-        if (searchModeSelectRef.current.value === "tlc") {
+        if (searchMode === "tlc") {
             newTlc = autoCompleteValue.toUpperCase();
         } else {
             newTlc = monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code;
@@ -289,7 +289,7 @@ export const GetMonomer = () => {
             dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             console.log("Error getting monomer. Missing dictionary?");
         }
-    }, [autoCompleteValue, getMonomerFromLibcootAPI, createNewLigandMolecule, molecules]);
+    };
 
     const onCompleted = useCallback(async () => {
         if (sourceSelectRef.current.value === "libcoot-api") {
@@ -343,7 +343,7 @@ export const GetMonomer = () => {
                 <MoorhenMoleculeSelect molecules={molecules} allowAny={true} selectedMolecule={selectedMolecule} setSelectedMolecule={setSelectedMolecule} />
             )}
             {source === "default" && (
-                <MoorhenSelect ref={searchModeSelectRef} value={searchMode} label="Search for">
+                <MoorhenSelect setValue={setSearchMode} value={searchMode} label="Search for">
                     <option value={"tlc"}>Three letter code</option>
                     <option value={"name"}>Compound name</option>
                 </MoorhenSelect>
