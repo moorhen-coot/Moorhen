@@ -33,13 +33,11 @@ export const ActivityIndicator = () => {
                         )[0]?.chemshift?? "N/A"
                     
                 } Ambiguous? ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            // edit moorhenNOEVectors to enumerate ambiguous restraints + flag
             (cs.atom === hoveredAtom.atomInfo.name &&
              cs.chain === hoveredAtom.atomInfo.chain_id &&
              (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
              cs.resname === hoveredAtom.atomInfo.res_name)
                         )[0]?.ambiguityFlag?? "N/A"}`
-            // Ambiguity: ${hoveredAtom.molecule?.chemShifts.ambiguityFlag}`
         : "";    
     const busyIndicator = busy ? (
         <>

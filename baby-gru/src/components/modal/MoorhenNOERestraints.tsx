@@ -57,17 +57,17 @@ function convertNEFHydrogen(nefName, resName) {
     const base = nefName.slice(0, -1); // remove %
 
     // QQ special cases (VAL/LEU methyls)
-    if (resName === 'VAL' && base === 'HG') {
-      results.add('QQH');
-    }
-    if (resName === 'LEU' && base === 'HD') {
-      results.add('QQD');
-    }
+    // if (resName === 'VAL' && base === 'HG') {
+    //   results.add('QQH');
+    // }
+    // if (resName === 'LEU' && base === 'HD') {
+    //   results.add('QQD');
+    // }
 
-    // General Q rule reversal (H% -> Q)
-    if (base.includes('H')) {
-      results.add(base.replace(/H/g, 'Q'));
-    }
+    // // General Q rule reversal (H% -> Q)
+    // if (base.includes('H')) {
+    //   results.add(base.replace(/H/g, 'Q'));
+    // }
 
     // VL methyls (HGx% / HGy%)
     if (resiTypesVL.includes(resName)) {
@@ -90,8 +90,13 @@ function convertNEFHydrogen(nefName, resName) {
     }
 
     // ALA / THR special
+    // if (resName === 'ALA' && base === 'HB') {
+    //   results.add('HB');
+    // }
     if (resName === 'ALA' && base === 'HB') {
-      results.add('HB');
+        results.add('HB1');
+        results.add('HB2');
+        results.add('HB3');
     }
     if (resName === 'THR' && base === 'HG2') {
       results.add('HG2');
@@ -137,7 +142,7 @@ function convertNEFHydrogen(nefName, resName) {
 
     // ASN/GLN amides (H1/H2)
     if (resiTypesNQ.includes(resName) && base.includes('H')) {
-      if (suffix === 'x') results.add(base + '1');
+      if (suffix === 'x') results.add(base + '1');  
       if (suffix === 'y') results.add(base + '2');
     }
 
@@ -170,13 +175,13 @@ function loopReplaceProtons(rows, atomN = "atom1", nameN = "name1") {
             ConvertedName.forEach(convertedRow => {
                 let newRow = {...row}
                 newRow[atomN] = convertedRow
-                newRow.ambiguityFlag = true;
+                newRow.ambiguityFlag = row._sourceAmbiguity === true;
             newDF.push(newRow)
             })
             
         }
         else{                
-            row.ambiguityFlag = false;
+            row.ambiguityFlag = row._sourceAmbiguity === true;
             newDF.push(row)}
     }
 )
@@ -188,8 +193,19 @@ function convertDataframe(df, pdbAtoms = null) {
 //   const newDF = [];
 // atom1 and atom2 are not named correctly now the fn is done in c++
 // need to change header names etc
- const atom1Replaced = loopReplaceProtons(df, "atom1")
- const atom2Replaced = loopReplaceProtons(atom1Replaced, "atom2")
+    const headersFixed = convertDataHeaders(df);
+    const withSourceFlag = headersFixed.map(row => ({
+        ...row,
+        _sourceAmbiguity:
+            row.atom1?.includes("%") ||
+            row.atom2?.includes("%") ||
+            row.atom1?.includes("x") ||
+            row.atom1?.includes("y") ||
+            row.atom2?.includes("x") ||
+            row.atom2?.includes("y")
+    }));
+    const atom1Replaced = loopReplaceProtons(withSourceFlag, "atom1")
+    const atom2Replaced = loopReplaceProtons(atom1Replaced, "atom2")
 
   return atom2Replaced;
 }
@@ -369,35 +385,39 @@ export const MoorhenNOERestraints = () => {
                 if (true) {
 
                     const data = window.cootModule.get_noe_restraints(fileContents);
+                    const converted = convertDataframe(data).map(row => ({
                     
-                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
-                        ...row,
-                        restraintType: "noe"
+                    // const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                        ...row//,
+                        // restraintType: "noe"
                     }));
                     allConvertedData.push(...converted);
+                if (molecules.length > 0){
+                    molecules[0].NEFRestraints = allConvertedData
+                }
                 }
 
-                // if (selectedTypes.hbond) {
-                if (true) {
+                // // if (selectedTypes.hbond) {
+                // if (true) {
 
-                    const data = window.cootModule.get_hbond_restraints(fileContents);
-                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
-                        ...row,
-                        restraintType: "hbond"
-                    }));
-                    allConvertedData.push(...converted);
-                }
+                //     const data = window.cootModule.get_hbond_restraints(fileContents);
+                //     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                //         ...row,
+                //         restraintType: "hbond"
+                //     }));
+                //     allConvertedData.push(...converted);
+                // }
 
-                // if (selectedTypes.undefined) {
-                if (true) {
+                // // if (selectedTypes.undefined) {
+                // if (true) {
 
-                    const data = window.cootModule.get_undefined_restraints(fileContents);
-                    const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
-                        ...row,
-                        restraintType: "undefined"
-                    }));
-                    allConvertedData.push(...converted);
-                }
+                //     const data = window.cootModule.get_undefined_restraints(fileContents);
+                //     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
+                //         ...row,
+                //         restraintType: "undefined"
+                //     }));
+                //     allConvertedData.push(...converted);
+                // }
                 console.log(allConvertedData)
                 const newVectors = []
                 allConvertedData.forEach(row => {
@@ -427,10 +447,11 @@ export const MoorhenNOERestraints = () => {
                         newNOEVector.ambiguous = true 
                     }
                     newVectors.push(newNOEVector)
-                    console.log(newNOEVector)
+                    // console.log(newNOEVector)
                 })
-                setNOEVectors(newVectors)
-                dispatch(addVectors(newVectors))
+                // commented out for testing
+                // setNOEVectors(newVectors)
+                // dispatch(addVectors(newVectors))
                 console.log(newVectors)
                 
             }

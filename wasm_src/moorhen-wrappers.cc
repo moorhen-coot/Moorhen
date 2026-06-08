@@ -2202,6 +2202,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("cell",&coot::symmetry_info_t::cell)
     .field("symm_trans",&coot::symmetry_info_t::symm_trans)
     ;
+
+EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("dedust_map",&molecules_container_t::dedust_map)
