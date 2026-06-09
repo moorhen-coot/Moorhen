@@ -140,7 +140,7 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
-    moleculeCardState: { showXpidList: boolean };
+    moleculeCardState: { showXpidList: boolean, showDNATCOBasePairsList: boolean  };
     DNATCO_info: any; //FIXME = type this
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
@@ -232,7 +232,7 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
-        this.moleculeCardState = { showXpidList: false };
+        this.moleculeCardState = { showXpidList: false, showDNATCOBasePairsList: false };
     }
 
     /**

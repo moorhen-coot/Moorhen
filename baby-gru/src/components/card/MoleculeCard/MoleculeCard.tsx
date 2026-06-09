@@ -2,7 +2,7 @@ import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
-import { useCommandCentre, usePaths } from "../../../InstanceManager";
+import { useCommandCentre, usePaths, useMoorhenInstance } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import {
@@ -13,6 +13,7 @@ import {
     showMolecule,
 } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
+import { libcootApi } from "../../../types/libcoot";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../../inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
@@ -57,6 +58,7 @@ export type clickedResidueType = {
 };
 
 export const MoleculeCard = (props: MoleculeCardProps) => {
+    const moorhenGlobalInstance = useMoorhenInstance()
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -395,6 +397,16 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const centreOnCid = async (cid:string) => {
+        console.log(cid)
+        const c3pAtom = await props.molecule.gemmiAtomsForCid(cid)
+        if(c3pAtom.length<1) return
+        const x = -c3pAtom[0].x
+        const y = -c3pAtom[0].y
+        const z = -c3pAtom[0].z
+        moorhenGlobalInstance.centerOnCoordinate(x,y,z)
+    }
+
     const handleToggleXPIDList = value => {
         setShownXPIDList(value);
         props.molecule.moleculeCardState.showXpidList = value;
@@ -405,6 +417,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             dispatch(removeVectors(vectorList));
         }
     };
+
+    const bpl = props.molecule.DNATCO_info["base_pair_list"]
+    const bpa = props.molecule.DNATCO_info["base_pair_annotation"]
+    const bpaMap: Map<number,libcootApi.DNATCOBasePair> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
 
     return (
         <MoorhenAccordion
@@ -662,6 +678,40 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     )}
                     {showXPIDList && (
                         <MoorhenXPIDList setBusy={setBusyLoadingXPID} molecule={props.molecule} height={convertViewtoPx(40, height)} />
+                    )}
+                    {displayDNATCO && (
+                        <MoorhenAccordion title="Base pairs">
+                            {props.molecule.DNATCO_info.base_pair_list.map((bp,idx) => {
+                               const ba: libcootApi.DNATCOBasePair = bpaMap.get(bp.base_pair_id)
+                               const chain_1 = bp.auth_asym_id_1
+                               const chain_2 = bp.auth_asym_id_2
+                               const base_1 = bp.auth_seq_id_1
+                               const base_2 = bp.auth_seq_id_2
+                               const compid_1 = bp.comp_id_1
+                               const compid_2 = bp.comp_id_2
+                               const family = ba.class
+                               const key = "base_pair_" + bp.base_pair_id + "_" + chain_1 + "_" + base_1 + "_" + chain_2 + "_" + base_2
+                               return (<MoorhenStack
+                                   key={key}
+                                   direction="row"
+                               >
+                               <MoorhenStack>{`${chain_1}`}</MoorhenStack>
+                               <MoorhenStack>{`${compid_1} ${base_1}`}</MoorhenStack>
+                               <MoorhenStack>{family}</MoorhenStack>
+                               <MoorhenStack>{`${chain_2}`}</MoorhenStack>
+                               <MoorhenStack>{`${compid_2} ${base_2}`}</MoorhenStack>
+                               <MoorhenButton
+                                   size="accordion"
+                                   onClick={() => {
+                                       centreOnCid("/1/"+chain_1+"/"+base_1+"/C3'")
+                                   }}
+                                   type="icon-only"
+                                   icon="MatSymFilterFocus"
+                                   tooltip="Center on base pair"
+                               />
+                               </MoorhenStack>)
+                            })}
+                        </MoorhenAccordion>
                     )}
                 </div>
             </MoorhenStack>
