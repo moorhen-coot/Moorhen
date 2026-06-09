@@ -20,6 +20,7 @@ type MoorhenButtonPropsTypeBase = {
     value?: string | number;
     id?: string;
     tooltip?: string | JSX.Element | false;
+    disabledTooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
 };
@@ -54,12 +55,12 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         onMouseLeave,
         onMouseEnter,
         disabled = false,
+        disabledTooltip,
         icon,
         ref,
         className = "",
         style = {},
         children,
-        tooltip = null,
         iconStyle = null,
         tooltipPlacement,
     } = props;
@@ -90,7 +91,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
-    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className} ${disabled ? " disabled" : ""}`;
     const [animation, setAnimation] = useState<boolean>(false);
     
     const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -142,6 +143,11 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             </MoorhenStack>
         </button>
     );
+
+    let tooltip = props.tooltip;
+    if (disabled && disabledTooltip) {
+        tooltip = <>{tooltip}<br/>&nbsp;<MoorhenIcon moorhenSVG="MatSymWarning" style={{ color: "var(--moorhen-warning)", width: "18px", height: "18px", transform: "translateY(3px)" }}/>{" "}{disabledTooltip}</>;
+     }
 
     if (tooltip) {
         return <MoorhenTooltip tooltip={tooltip} placement={tooltipPlacement} link={button} linkRef={internalButtonRef} />;

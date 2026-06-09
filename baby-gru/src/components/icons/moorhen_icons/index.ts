@@ -1,261 +1,279 @@
-import MatSymAdd from "./MatSymAdd.svg"
-import MatSymAlbum from "./MatSymAlbum.svg"
-import MatSymArrowDownward from "./MatSymArrowDownward.svg"
-import MatSymArrowLeft from "./MatSymArrowLeft.svg"
-import MatSymArrowMenuClose from "./MatSymArrowMenuClose.svg"
-import MatSymArrowMenuOpen from "./MatSymArrowMenuOpen.svg"
-import MatSymArrowRight from "./MatSymArrowRight.svg"
-import MatSymArrowUpward from "./MatSymArrowUpward.svg"
-import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
-import MatSymBackgroudDots from "./MatSymBackgroudDots.svg"
-import MatSymBackgroudNoDots from "./MatSymBackgroudNoDots.svg"
-import MatSymCalculate from "./MatSymCalculate.svg"
-import MatSymCheck from "./MatSymCheck.svg"
-import MatSymCheckBox from "./MatSymCheckBox.svg"
-import MatSymCheckedBox from "./MatSymCheckedBox.svg"
-import MatSymChevronL from "./MatSymChevronL.svg"
-import MatSymChevronR from "./MatSymChevronR.svg"
-import MatSymClose from "./MatSymClose.svg"
-import MatSymCollapse from "./MatSymCollapse.svg"
-import MatSymColors from "./MatSymColors.svg"
-import MatSymConstruction from "./MatSymConstruction.svg"
-import MatSymDelete from "./MatSymDelete.svg"
-import MatSymDoubleArrowDown from "./MatSymDoubleArrowDown.svg"
-import MatSymDoubleArrowUp from "./MatSymDoubleArrowUp.svg"
-import MatSymDownload from "./MatSymDownload.svg"
-import MatSymEdit from "./MatSymEdit.svg"
-import MatSymExpand from "./MatSymExpand.svg"
-import MatSymExperiment from "./MatSymExperiment.svg"
-import MatSymFactCheck from "./MatSymFactCheck.svg"
-import MatSymFileDownload from "./MatSymFileDownload.svg"
-import MatSymFileOpen from "./MatSymFileOpen.svg"
-import MatSymFilterFocus from "./MatSymFilterFocus.svg"
-import MatSymFirstPage from "./MatSymFirstPage.svg"
-import MatSymGrain from "./MatSymGrain.svg"
-import MatSymHelp from "./MatSymHelp.svg"
-import MatSymHistory from "./MatSymHistory.svg"
-import MatSymInfo from "./MatSymInfo.svg"
-import MatSymKeyboardArrowDown from "./MatSymKeyboardArrowDown.svg"
-import MatSymLastPage from "./MatSymLastPage.svg"
-import MatSymLockClose from "./MatSymLockClose.svg"
-import MatSymLockOpen from "./MatSymLockOpen.svg"
-import MatSymLogout from "./MatSymLogout.svg"
-import MatSymMenu from "./MatSymMenu.svg"
-import MatSymPauseCircled from "./MatSymPauseCircled.svg"
-import MatSymPhotoCam from "./MatSymPhotoCam.svg"
-import MatSymPlayCircled from "./MatSymPlayCircled.svg"
-import MatSymProgressActivity from "./MatSymProgressActivity.svg"
-import MatSymRadioButtonChecked from "./MatSymRadioButtonChecked.svg"
-import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
-import MatSymRedo from "./MatSymRedo.svg"
-import MatSymRemove from "./MatSymRemove.svg"
-import MatSymSearch from "./MatSymSearch.svg"
-import MatSymSettings from "./MatSymSettings.svg"
-import MatSymShutter from "./MatSymShutter.svg"
-import MatSymStopCircled from "./MatSymStopCircled.svg"
-import MatSymTiltShiftFilter from "./MatSymTiltShiftFilter.svg"
-import MatSymToggle from "./MatSymToggle.svg"
-import MatSymTune from "./MatSymTune.svg"
-import MatSymUndo from "./MatSymUndo.svg"
-import MatSymVisibility from "./MatSymVisibility.svg"
-import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
-import MatSymWarning from "./MatSymWarning.svg"
-import MoorhenLogo from "./MoorhenLogo.svg"
-import SecondaryStructure from "./SecondaryStructure.svg"
-import ligand from "./ligand.svg"
 import menu2DObjects from "./menu2DObjects.svg"
-import menuLigands from "./menuLigands.svg"
-import menuMaps from "./menuMaps.svg"
-import menuModels from "./menuModels.svg"
-import menuVectors from "./menuVectors.svg"
-import minus from "./minus.svg"
-import plus from "./plus.svg"
-import resizable from "./resizable.svg"
-import resizableVertical from "./resizableVertical.svg"
-import temperature from "./temperature.svg"
-import vanillin from "./vanillin.svg"
+import MatSymHistory from "./MatSymHistory.svg"
+import MatSymTiltShiftFilter from "./MatSymTiltShiftFilter.svg"
+import MatSymFileDownload from "./MatSymFileDownload.svg"
+import MatSymConstruction from "./MatSymConstruction.svg"
+import MatSymLockOpen from "./MatSymLockOpen.svg"
+import MatSymExpand from "./MatSymExpand.svg"
+import MatSymArrowMenuClose from "./MatSymArrowMenuClose.svg"
 import MatSymMyLocation from "./MatSymMyLocation.svg"
-import MatSymChevronDown from "./MatSymChevronDown.svg"
-import MatSymChevronUp from "./MatSymChevronUp.svg"
-import MatSymCrisisAlert from "./MatSymCrisisAlert.svg"
-import MatSymFlipCamera from "./MatSymFlipCamera.svg"
-import MatSymMerge from "./MatSymMerge.svg"
+import vanillin from "./vanillin.svg"
+import MatSymFilterFocus from "./MatSymFilterFocus.svg"
+import MatSymClose from "./MatSymClose.svg"
 import MatSymZoomIn from "./MatSymZoomIn.svg"
-import MatSymZoomOut from "./MatSymZoomOut.svg"
+import MatSymExperiment from "./MatSymExperiment.svg"
+import MatSymSearch from "./MatSymSearch.svg"
 import MatSymSave from "./MatSymSave.svg"
+import MatSymLogout from "./MatSymLogout.svg"
+import menuMaps from "./menuMaps.svg"
+import MatSymArrowRight from "./MatSymArrowRight.svg"
+import MatSymBackgroudDots from "./MatSymBackgroudDots.svg"
+import MatSymMerge from "./MatSymMerge.svg"
+import MatSymSettings from "./MatSymSettings.svg"
+import MatSymCheckedBox from "./MatSymCheckedBox.svg"
+import MatSymToggle from "./MatSymToggle.svg"
+import MatSymLastPage from "./MatSymLastPage.svg"
+import temperature from "./temperature.svg"
+import MatSymSwapVert from "./MatSymSwapVert.svg"
+import MatSymChevronUp from "./MatSymChevronUp.svg"
+import MatSymColors from "./MatSymColors.svg"
+import MatSymGrain from "./MatSymGrain.svg"
+import MoorhenLogo from "./MoorhenLogo.svg"
+import MatSymArrowDownward from "./MatSymArrowDownward.svg"
+import MatSymRotate90Cw from "./MatSymRotate90Cw.svg"
+import SecondaryStructure from "./SecondaryStructure.svg"
+import MatSymKeyboardArrowDown from "./MatSymKeyboardArrowDown.svg"
+import MatSymBackgroudNoDots from "./MatSymBackgroudNoDots.svg"
+import MatSymAdsClick from "./MatSymAdsClick.svg"
+import MatSymVisibility from "./MatSymVisibility.svg"
+import MatSymFactCheck from "./MatSymFactCheck.svg"
+import MatSymCheckBox from "./MatSymCheckBox.svg"
+import minus from "./minus.svg"
+import MatSymSwipeRight from "./MatSymSwipeRight.svg"
+import MatSymFirstPage from "./MatSymFirstPage.svg"
+import MatSymStopCircled from "./MatSymStopCircled.svg"
+import MatSymRadioButtonChecked from "./MatSymRadioButtonChecked.svg"
+import MatSymChevronDown from "./MatSymChevronDown.svg"
+import MatSymCalculate from "./MatSymCalculate.svg"
+import MatSymCollapse from "./MatSymCollapse.svg"
+import MatSymUndo from "./MatSymUndo.svg"
+import MatSymHelp from "./MatSymHelp.svg"
+import MatSymPlayCircled from "./MatSymPlayCircled.svg"
+import MatSymCrisisAlert from "./MatSymCrisisAlert.svg"
+import MatSymAdd from "./MatSymAdd.svg"
+import MatSymRadioButtonUnchecked from "./MatSymRadioButtonUnchecked.svg"
+import MatSymMenu from "./MatSymMenu.svg"
+import MatSymProgressActivity from "./MatSymProgressActivity.svg"
+import MatSymAlbum from "./MatSymAlbum.svg"
+import MatSymLockClose from "./MatSymLockClose.svg"
+import MatSymShutter from "./MatSymShutter.svg"
+import MatSymPhotoCam from "./MatSymPhotoCam.svg"
+import MatSymPauseCircled from "./MatSymPauseCircled.svg"
+import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
+import MatSymTune from "./MatSymTune.svg"
+import MatSymDoubleArrowDown from "./MatSymDoubleArrowDown.svg"
+import MatSymEdit from "./MatSymEdit.svg"
+import MatSymChevronR from "./MatSymChevronR.svg"
+import ligand from "./ligand.svg"
+import MatSymArrowLeft from "./MatSymArrowLeft.svg"
+import MatSymCopyAll from "./MatSymCopyAll.svg"
+import MatSymDelete from "./MatSymDelete.svg"
+import MatSymWarning from "./MatSymWarning.svg"
+import plus from "./plus.svg"
+import MatSymAllOut from "./MatSymAllOut.svg"
+import MatSymDoubleArrowUp from "./MatSymDoubleArrowUp.svg"
+import menuModels from "./menuModels.svg"
+import resizableVertical from "./resizableVertical.svg"
 import MatSymSaveClock from "./MatSymSaveClock.svg"
+import MatSymFlipCamera from "./MatSymFlipCamera.svg"
+import resizable from "./resizable.svg"
+import MatSymArrowMenuOpen from "./MatSymArrowMenuOpen.svg"
+import MatSymZoomOut from "./MatSymZoomOut.svg"
+import MatSymAutoAwesome from "./MatSymAutoAwesome.svg"
+import menuVectors from "./menuVectors.svg"
+import MatSymInfo from "./MatSymInfo.svg"
+import MatSymArrowUpward from "./MatSymArrowUpward.svg"
+import MatSymFileOpen from "./MatSymFileOpen.svg"
+import MatSymRedo from "./MatSymRedo.svg"
+import MatSymCheck from "./MatSymCheck.svg"
+import MatSymRemove from "./MatSymRemove.svg"
+import MatSymChevronL from "./MatSymChevronL.svg"
+import MatSymDownload from "./MatSymDownload.svg"
+import menuLigands from "./menuLigands.svg"
 
-export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
- "MatSymAlbum": MatSymAlbum,
- "MatSymArrowDownward": MatSymArrowDownward,
- "MatSymArrowLeft": MatSymArrowLeft,
- "MatSymArrowMenuClose": MatSymArrowMenuClose,
- "MatSymArrowMenuOpen": MatSymArrowMenuOpen,
- "MatSymArrowRight": MatSymArrowRight,
- "MatSymArrowUpward": MatSymArrowUpward,
- "MatSymAutoAwesome": MatSymAutoAwesome,
- "MatSymBackgroudDots": MatSymBackgroudDots,
- "MatSymBackgroudNoDots": MatSymBackgroudNoDots,
- "MatSymCalculate": MatSymCalculate,
- "MatSymCheck": MatSymCheck,
- "MatSymCheckBox": MatSymCheckBox,
- "MatSymCheckedBox": MatSymCheckedBox,
- "MatSymChevronL": MatSymChevronL,
- "MatSymChevronR": MatSymChevronR,
- "MatSymClose": MatSymClose,
- "MatSymCollapse": MatSymCollapse,
- "MatSymColors": MatSymColors,
- "MatSymConstruction": MatSymConstruction,
- "MatSymDelete": MatSymDelete,
- "MatSymDoubleArrowDown": MatSymDoubleArrowDown,
- "MatSymDoubleArrowUp": MatSymDoubleArrowUp,
- "MatSymDownload": MatSymDownload,
- "MatSymEdit": MatSymEdit,
- "MatSymExpand": MatSymExpand,
- "MatSymExperiment": MatSymExperiment,
- "MatSymFactCheck": MatSymFactCheck,
- "MatSymFileDownload": MatSymFileDownload,
- "MatSymFileOpen": MatSymFileOpen,
- "MatSymFilterFocus": MatSymFilterFocus,
- "MatSymFirstPage": MatSymFirstPage,
- "MatSymGrain": MatSymGrain,
- "MatSymHelp": MatSymHelp,
+export const moorhenSVGs = {"menu2DObjects": menu2DObjects,
  "MatSymHistory": MatSymHistory,
- "MatSymInfo": MatSymInfo,
- "MatSymKeyboardArrowDown": MatSymKeyboardArrowDown,
- "MatSymLastPage": MatSymLastPage,
- "MatSymLockClose": MatSymLockClose,
- "MatSymLockOpen": MatSymLockOpen,
- "MatSymLogout": MatSymLogout,
- "MatSymMenu": MatSymMenu,
- "MatSymPauseCircled": MatSymPauseCircled,
- "MatSymPhotoCam": MatSymPhotoCam,
- "MatSymPlayCircled": MatSymPlayCircled,
- "MatSymProgressActivity": MatSymProgressActivity,
- "MatSymRadioButtonChecked": MatSymRadioButtonChecked,
- "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
- "MatSymRedo": MatSymRedo,
- "MatSymRemove": MatSymRemove,
- "MatSymSearch": MatSymSearch,
- "MatSymSettings": MatSymSettings,
- "MatSymShutter": MatSymShutter,
- "MatSymStopCircled": MatSymStopCircled,
  "MatSymTiltShiftFilter": MatSymTiltShiftFilter,
- "MatSymToggle": MatSymToggle,
- "MatSymTune": MatSymTune,
- "MatSymUndo": MatSymUndo,
- "MatSymVisibility": MatSymVisibility,
- "MatSymVisibilityOff": MatSymVisibilityOff,
- "MatSymWarning": MatSymWarning,
- "MoorhenLogo": MoorhenLogo,
- "SecondaryStructure": SecondaryStructure,
- "ligand": ligand,
- "menu2DObjects": menu2DObjects,
- "menuLigands": menuLigands,
- "menuMaps": menuMaps,
- "menuModels": menuModels,
- "menuVectors": menuVectors,
- "minus": minus,
- "plus": plus,
- "resizable": resizable,
- "resizableVertical": resizableVertical,
- "temperature": temperature,
- "vanillin": vanillin,
+ "MatSymFileDownload": MatSymFileDownload,
+ "MatSymConstruction": MatSymConstruction,
+ "MatSymLockOpen": MatSymLockOpen,
+ "MatSymExpand": MatSymExpand,
+ "MatSymArrowMenuClose": MatSymArrowMenuClose,
  "MatSymMyLocation": MatSymMyLocation,
- "MatSymChevronDown": MatSymChevronDown,
- "MatSymChevronUp": MatSymChevronUp,
- "MatSymCrisisAlert": MatSymCrisisAlert,
- "MatSymFlipCamera": MatSymFlipCamera,
- "MatSymMerge": MatSymMerge,
+ "vanillin": vanillin,
+ "MatSymFilterFocus": MatSymFilterFocus,
+ "MatSymClose": MatSymClose,
  "MatSymZoomIn": MatSymZoomIn,
- "MatSymZoomOut": MatSymZoomOut,
+ "MatSymExperiment": MatSymExperiment,
+ "MatSymSearch": MatSymSearch,
  "MatSymSave": MatSymSave,
+ "MatSymLogout": MatSymLogout,
+ "menuMaps": menuMaps,
+ "MatSymArrowRight": MatSymArrowRight,
+ "MatSymBackgroudDots": MatSymBackgroudDots,
+ "MatSymMerge": MatSymMerge,
+ "MatSymSettings": MatSymSettings,
+ "MatSymCheckedBox": MatSymCheckedBox,
+ "MatSymToggle": MatSymToggle,
+ "MatSymLastPage": MatSymLastPage,
+ "temperature": temperature,
+ "MatSymSwapVert": MatSymSwapVert,
+ "MatSymChevronUp": MatSymChevronUp,
+ "MatSymColors": MatSymColors,
+ "MatSymGrain": MatSymGrain,
+ "MoorhenLogo": MoorhenLogo,
+ "MatSymArrowDownward": MatSymArrowDownward,
+ "MatSymRotate90Cw": MatSymRotate90Cw,
+ "SecondaryStructure": SecondaryStructure,
+ "MatSymKeyboardArrowDown": MatSymKeyboardArrowDown,
+ "MatSymBackgroudNoDots": MatSymBackgroudNoDots,
+ "MatSymAdsClick": MatSymAdsClick,
+ "MatSymVisibility": MatSymVisibility,
+ "MatSymFactCheck": MatSymFactCheck,
+ "MatSymCheckBox": MatSymCheckBox,
+ "minus": minus,
+ "MatSymSwipeRight": MatSymSwipeRight,
+ "MatSymFirstPage": MatSymFirstPage,
+ "MatSymStopCircled": MatSymStopCircled,
+ "MatSymRadioButtonChecked": MatSymRadioButtonChecked,
+ "MatSymChevronDown": MatSymChevronDown,
+ "MatSymCalculate": MatSymCalculate,
+ "MatSymCollapse": MatSymCollapse,
+ "MatSymUndo": MatSymUndo,
+ "MatSymHelp": MatSymHelp,
+ "MatSymPlayCircled": MatSymPlayCircled,
+ "MatSymCrisisAlert": MatSymCrisisAlert,
+ "MatSymAdd": MatSymAdd,
+ "MatSymRadioButtonUnchecked": MatSymRadioButtonUnchecked,
+ "MatSymMenu": MatSymMenu,
+ "MatSymProgressActivity": MatSymProgressActivity,
+ "MatSymAlbum": MatSymAlbum,
+ "MatSymLockClose": MatSymLockClose,
+ "MatSymShutter": MatSymShutter,
+ "MatSymPhotoCam": MatSymPhotoCam,
+ "MatSymPauseCircled": MatSymPauseCircled,
+ "MatSymVisibilityOff": MatSymVisibilityOff,
+ "MatSymTune": MatSymTune,
+ "MatSymDoubleArrowDown": MatSymDoubleArrowDown,
+ "MatSymEdit": MatSymEdit,
+ "MatSymChevronR": MatSymChevronR,
+ "ligand": ligand,
+ "MatSymArrowLeft": MatSymArrowLeft,
+ "MatSymCopyAll": MatSymCopyAll,
+ "MatSymDelete": MatSymDelete,
+ "MatSymWarning": MatSymWarning,
+ "plus": plus,
+ "MatSymAllOut": MatSymAllOut,
+ "MatSymDoubleArrowUp": MatSymDoubleArrowUp,
+ "menuModels": menuModels,
+ "resizableVertical": resizableVertical,
  "MatSymSaveClock": MatSymSaveClock,
+ "MatSymFlipCamera": MatSymFlipCamera,
+ "resizable": resizable,
+ "MatSymArrowMenuOpen": MatSymArrowMenuOpen,
+ "MatSymZoomOut": MatSymZoomOut,
+ "MatSymAutoAwesome": MatSymAutoAwesome,
+ "menuVectors": menuVectors,
+ "MatSymInfo": MatSymInfo,
+ "MatSymArrowUpward": MatSymArrowUpward,
+ "MatSymFileOpen": MatSymFileOpen,
+ "MatSymRedo": MatSymRedo,
+ "MatSymCheck": MatSymCheck,
+ "MatSymRemove": MatSymRemove,
+ "MatSymChevronL": MatSymChevronL,
+ "MatSymDownload": MatSymDownload,
+ "menuLigands": menuLigands,
  }
 
-export type MoorhenSVG = "MatSymAdd" |
- "MatSymAlbum" |
- "MatSymArrowDownward" |
- "MatSymArrowLeft" |
- "MatSymArrowMenuClose" |
- "MatSymArrowMenuOpen" |
- "MatSymArrowRight" |
- "MatSymArrowUpward" |
- "MatSymAutoAwesome" |
- "MatSymBackgroudDots" |
- "MatSymBackgroudNoDots" |
- "MatSymCalculate" |
- "MatSymCheck" |
- "MatSymCheckBox" |
- "MatSymCheckedBox" |
- "MatSymChevronL" |
- "MatSymChevronR" |
- "MatSymClose" |
- "MatSymCollapse" |
- "MatSymColors" |
- "MatSymConstruction" |
- "MatSymDelete" |
- "MatSymDoubleArrowDown" |
- "MatSymDoubleArrowUp" |
- "MatSymDownload" |
- "MatSymEdit" |
- "MatSymExpand" |
- "MatSymExperiment" |
- "MatSymFactCheck" |
- "MatSymFileDownload" |
- "MatSymFileOpen" |
- "MatSymFilterFocus" |
- "MatSymFirstPage" |
- "MatSymGrain" |
- "MatSymHelp" |
+export type MoorhenSVG = "menu2DObjects" |
  "MatSymHistory" |
- "MatSymInfo" |
- "MatSymKeyboardArrowDown" |
- "MatSymLastPage" |
- "MatSymLockClose" |
- "MatSymLockOpen" |
- "MatSymLogout" |
- "MatSymMenu" |
- "MatSymPauseCircled" |
- "MatSymPhotoCam" |
- "MatSymPlayCircled" |
- "MatSymProgressActivity" |
- "MatSymRadioButtonChecked" |
- "MatSymRadioButtonUnchecked" |
- "MatSymRedo" |
- "MatSymRemove" |
- "MatSymSearch" |
- "MatSymSettings" |
- "MatSymShutter" |
- "MatSymStopCircled" |
  "MatSymTiltShiftFilter" |
- "MatSymToggle" |
- "MatSymTune" |
- "MatSymUndo" |
- "MatSymVisibility" |
- "MatSymVisibilityOff" |
- "MatSymWarning" |
- "MoorhenLogo" |
- "SecondaryStructure" |
- "ligand" |
- "menu2DObjects" |
- "menuLigands" |
- "menuMaps" |
- "menuModels" |
- "menuVectors" |
- "minus" |
- "plus" |
- "resizable" |
- "resizableVertical" |
- "temperature" |
- "vanillin" |
+ "MatSymFileDownload" |
+ "MatSymConstruction" |
+ "MatSymLockOpen" |
+ "MatSymExpand" |
+ "MatSymArrowMenuClose" |
  "MatSymMyLocation" |
- "MatSymChevronDown" |
- "MatSymChevronUp" |
- "MatSymCrisisAlert" |
- "MatSymFlipCamera" |
- "MatSymMerge" |
+ "vanillin" |
+ "MatSymFilterFocus" |
+ "MatSymClose" |
  "MatSymZoomIn" |
- "MatSymZoomOut" |
+ "MatSymExperiment" |
+ "MatSymSearch" |
  "MatSymSave" |
- "MatSymSaveClock"
+ "MatSymLogout" |
+ "menuMaps" |
+ "MatSymArrowRight" |
+ "MatSymBackgroudDots" |
+ "MatSymMerge" |
+ "MatSymSettings" |
+ "MatSymCheckedBox" |
+ "MatSymToggle" |
+ "MatSymLastPage" |
+ "temperature" |
+ "MatSymSwapVert" |
+ "MatSymChevronUp" |
+ "MatSymColors" |
+ "MatSymGrain" |
+ "MoorhenLogo" |
+ "MatSymArrowDownward" |
+ "MatSymRotate90Cw" |
+ "SecondaryStructure" |
+ "MatSymKeyboardArrowDown" |
+ "MatSymBackgroudNoDots" |
+ "MatSymAdsClick" |
+ "MatSymVisibility" |
+ "MatSymFactCheck" |
+ "MatSymCheckBox" |
+ "minus" |
+ "MatSymSwipeRight" |
+ "MatSymFirstPage" |
+ "MatSymStopCircled" |
+ "MatSymRadioButtonChecked" |
+ "MatSymChevronDown" |
+ "MatSymCalculate" |
+ "MatSymCollapse" |
+ "MatSymUndo" |
+ "MatSymHelp" |
+ "MatSymPlayCircled" |
+ "MatSymCrisisAlert" |
+ "MatSymAdd" |
+ "MatSymRadioButtonUnchecked" |
+ "MatSymMenu" |
+ "MatSymProgressActivity" |
+ "MatSymAlbum" |
+ "MatSymLockClose" |
+ "MatSymShutter" |
+ "MatSymPhotoCam" |
+ "MatSymPauseCircled" |
+ "MatSymVisibilityOff" |
+ "MatSymTune" |
+ "MatSymDoubleArrowDown" |
+ "MatSymEdit" |
+ "MatSymChevronR" |
+ "ligand" |
+ "MatSymArrowLeft" |
+ "MatSymCopyAll" |
+ "MatSymDelete" |
+ "MatSymWarning" |
+ "plus" |
+ "MatSymAllOut" |
+ "MatSymDoubleArrowUp" |
+ "menuModels" |
+ "resizableVertical" |
+ "MatSymSaveClock" |
+ "MatSymFlipCamera" |
+ "resizable" |
+ "MatSymArrowMenuOpen" |
+ "MatSymZoomOut" |
+ "MatSymAutoAwesome" |
+ "menuVectors" |
+ "MatSymInfo" |
+ "MatSymArrowUpward" |
+ "MatSymFileOpen" |
+ "MatSymRedo" |
+ "MatSymCheck" |
+ "MatSymRemove" |
+ "MatSymChevronL" |
+ "MatSymDownload" |
+ "menuLigands"

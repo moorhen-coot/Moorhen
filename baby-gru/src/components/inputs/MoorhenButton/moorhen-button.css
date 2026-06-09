@@ -14,6 +14,11 @@
     overflow: hidden;
 }
 
+.moorhen__button__icon-only.disabled {
+    color: var(--moorhen-disabled);
+    cursor: default;
+}
+
 .moorhen__button__default,
 .moorhen__button__toggle-checked,
 .moorhen__button__toggle-unchecked {
@@ -44,9 +49,7 @@
         filter 0.5s ease;
 }
 
-.moorhen__button__default.disabled {
-    background: var(--moorhen-disabled);
-}
+
 
 .moorhen__button__toggle-unchecked {
     background: var(--moorhen-background);
@@ -118,9 +121,14 @@
         opacity: 0;
     }
 }
+.moorhen__button__default.disabled {
+    background: var(--moorhen-disabled);
+    cursor: default;
+}
 
 .moorhen__button__default.disabled:hover {
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
     border-color: transparent;
+
     filter: none;
 }

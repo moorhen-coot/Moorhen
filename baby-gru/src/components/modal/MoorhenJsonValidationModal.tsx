@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { setValidationJson } from "../../store/jsonValidation";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenFileInput } from "../inputs";
-import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
