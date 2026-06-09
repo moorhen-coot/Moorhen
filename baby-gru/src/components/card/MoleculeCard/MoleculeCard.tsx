@@ -622,7 +622,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
-                        <MoorhenToggle
+                        {bpl.length > 0 && <MoorhenToggle
                             onChange={e => handleToolsToggle(e.target.checked, "dnatco")}
                             checked={displayDNATCO}
                             disabled={isVisible ? false : true}
@@ -641,6 +641,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
+                        }
                     </MoorhenStack>
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}
