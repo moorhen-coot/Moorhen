@@ -1672,7 +1672,7 @@ export class MoleculeRepresentation {
         const trans_midPoints = []
         const bpl = this.parentMolecule.DNATCO_info["base_pair_list"]
         const bpa = this.parentMolecule.DNATCO_info["base_pair_annotation"]
-        const bpaMap: Map<number,libcootApi.DNATCOBasePair> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
+        const bpaMap: Map<number,libcootApi.DNATCOBasePairAnnotation> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
         const allC3pAtoms = await this.parentMolecule.gemmiAtomsForCid("/1/*/*/C3'")
         const allC3pAtomMap = new Map(allC3pAtoms.map(t => ["/1/"+t.chain_id+"/"+t.res_no+"/C3'",t]))
         console.log("Time to get all C3'",performance.now()-t1)
@@ -1680,7 +1680,7 @@ export class MoleculeRepresentation {
         const allOtherAtomMap = new Map(allOtherAtoms.map(t => ["/1/"+t.chain_id+"/"+t.res_no+"/"+t.name,t]))
         console.log("Time to get all ring atoms",performance.now()-t1)
         for(const bp of bpl){
-            const ba: libcootApi.DNATCOBasePair = bpaMap.get(bp.base_pair_id)
+            const ba: libcootApi.DNATCOBasePairAnnotation = bpaMap.get(bp.base_pair_id)
             const orientation = ba.orientation
             const bp_class = ba.class
             const cid_1 = "/"+bp.PDB_model_number+"/"+bp.auth_asym_id_1+"/"+bp.auth_seq_id_1+"/C3'"

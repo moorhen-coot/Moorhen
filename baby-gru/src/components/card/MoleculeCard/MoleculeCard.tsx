@@ -398,7 +398,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     };
 
     const centreOnCid = async (cid:string) => {
-        console.log(cid)
         const c3pAtom = await props.molecule.gemmiAtomsForCid(cid)
         if(c3pAtom.length<1) return
         const x = -c3pAtom[0].x
@@ -420,7 +419,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const bpl = props.molecule.DNATCO_info["base_pair_list"]
     const bpa = props.molecule.DNATCO_info["base_pair_annotation"]
-    const bpaMap: Map<number,libcootApi.DNATCOBasePair> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
+    const ntc_step = props.molecule.DNATCO_info["ntc_step"]
+    const ntc_step_summary = props.molecule.DNATCO_info["ntc_step_summary"]
+    const bpaMap: Map<number,libcootApi.DNATCOBasePairAnnotation> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
+    const stepMap: Map<number,libcootApi.DNATCONtcStepSummary> = new Map(ntc_step_summary.map(step => [step.step_id, step]));
 
     return (
         <MoorhenAccordion
@@ -628,7 +630,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                             disabled={isVisible ? false : true}
                             label={
                                 <MoorhenStack direction="row" align="center">
-                                    DNATCO base pairs&nbsp;
+                                    DNATCO&nbsp;base&nbsp;pairs
                                     <MoorhenInfoCard
                                         infoText={
                                             <>
@@ -681,9 +683,9 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         <MoorhenXPIDList setBusy={setBusyLoadingXPID} molecule={props.molecule} height={convertViewtoPx(40, height)} />
                     )}
                     {displayDNATCO && (
-                        <MoorhenAccordion title="Base pairs">
-                            {props.molecule.DNATCO_info.base_pair_list.map((bp,idx) => {
-                               const ba: libcootApi.DNATCOBasePair = bpaMap.get(bp.base_pair_id)
+                        <MoorhenAccordion title="Base&nbsp;pairs">
+                            {bpl.map((bp,idx) => {
+                               const ba: libcootApi.DNATCOBasePairAnnotation = bpaMap.get(bp.base_pair_id)
                                const chain_1 = bp.auth_asym_id_1
                                const chain_2 = bp.auth_asym_id_2
                                const base_1 = bp.auth_seq_id_1
@@ -696,15 +698,48 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                    key={key}
                                    direction="row"
                                >
-                               <MoorhenStack>{`${chain_1}`}</MoorhenStack>
-                               <MoorhenStack>{`${compid_1} ${base_1}`}</MoorhenStack>
+                               <MoorhenStack>{chain_1}</MoorhenStack>
+                               <MoorhenStack>{compid_1}&nbsp;{base_1}</MoorhenStack>
                                <MoorhenStack>{family}</MoorhenStack>
-                               <MoorhenStack>{`${chain_2}`}</MoorhenStack>
-                               <MoorhenStack>{`${compid_2} ${base_2}`}</MoorhenStack>
+                               <MoorhenStack>{chain_2}</MoorhenStack>
+                               <MoorhenStack>{compid_2}&nbsp;{base_2}</MoorhenStack>
                                <MoorhenButton
                                    size="accordion"
                                    onClick={() => {
                                        centreOnCid("/1/"+chain_1+"/"+base_1+"/C3'")
+                                   }}
+                                   type="icon-only"
+                                   icon="MatSymFilterFocus"
+                                   tooltip="Center on base pair"
+                               />
+                               </MoorhenStack>)
+                            })}
+                        </MoorhenAccordion>
+                    )}
+                    {displayDNATCO && (
+                        <MoorhenAccordion title="NtC&nbsp;classes">
+                            {ntc_step.map((step,idx) => {
+                               const ntc: libcootApi.DNATCONtcStepSummary = stepMap.get(step.id)
+                               const assigned_CANA = ntc.assigned_CANA
+                               const assigned_NtC = ntc.assigned_NtC
+                               const chain = step.auth_asym_id_1
+                               const base_1 = step.auth_seq_id_1
+                               const base_2 = step.auth_seq_id_2
+                               const compid_1 = step.label_comp_id_1
+                               const compid_2 = step.label_comp_id_2
+                               const key = chain + "_"  +base_1 + "_"  + base_2 + "_" + assigned_CANA+ "_" + assigned_NtC
+                               return (<MoorhenStack
+                                   key={key}
+                                   direction="row"
+                               >
+                               <MoorhenStack>{chain}</MoorhenStack>
+                               <MoorhenStack>{assigned_NtC}</MoorhenStack>
+                               <MoorhenStack>{assigned_CANA}</MoorhenStack>
+                               <MoorhenStack>{compid_1}&nbsp;{base_1}&nbsp;{compid_2}&nbsp;{base_2}</MoorhenStack>
+                               <MoorhenButton
+                                   size="accordion"
+                                   onClick={() => {
+                                       centreOnCid("/1/"+chain+"/"+base_1+"/C3'")
                                    }}
                                    type="icon-only"
                                    icon="MatSymFilterFocus"

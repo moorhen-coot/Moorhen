@@ -83,7 +83,18 @@ export namespace libcootApi {
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
         parseDNATCO(arg0: string): string;
     };
-    type DNATCOBasePair = {
+    type DNATCONtcStepSummary = {
+        assigned_CANA: string;
+        assigned_NtC: string;
+        cartesian_rmsd_closest_NtC_representative: string;
+        closest_CANA: string;
+        closest_NtC: string;
+        closest_step_golden: string;
+        confal_score: string;
+        euclidean_distance_NtC_ideal: string;
+        step_id: string;
+    }
+    type DNATCOBasePairAnnotation = {
         base_1_edge: string;
         base_2_edge: string;
         base_pair_id: string;
