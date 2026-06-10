@@ -49,21 +49,14 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
 
     const sendToHostProgramCallback = useCallback(
         async (internalLhasaID: number, id: string, smiles: string, rdkitPickleBase64: string) => {
-            console.log(`LhasaWrapper::sendToHostProgramCallback() called with id: ${id}, smiles: ${smiles}`);
-            let name
-            if (id === undefined || id === null || id === "") {
-                name = "NewLig"     }
 
-            moorhenInstance.files.ligandFromSmiles(smiles, name);
+            moorhenInstance.files.ligandFromSmiles(smiles, "NewLig");
         },
         [commandCentre, store, monomerLibraryPath]
     );
 
     const bansuCallback = useCallback((internalLhasaID: number, id: string, cif_string: string) => {
-                    let name
-            if (id === undefined || id === null || id === "") {
-                name = "NewLig"     }
-        moorhenInstance.files.loadCifString(cif_string, name);
+        moorhenInstance.files.loadCifString(cif_string, "NewLig");
     }, []);
 
     return isCootAttached ? (
