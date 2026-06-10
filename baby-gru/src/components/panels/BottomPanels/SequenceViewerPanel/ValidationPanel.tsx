@@ -49,15 +49,6 @@ export const ValidationPanel = () => {
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
-    const toggleBottomPanel = () => {
-        if (sequencesExpand) {
-            setSequencesExpand(false);
-        }
-        dispatch(setShowBottomPanel(!bottomPanelIsShown));
-    };
-    const handleExpand = () => {
-        setSequencesExpand(!sequencesExpand);
-    };
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
@@ -208,6 +199,7 @@ export const ValidationPanel = () => {
                 &nbsp;&nbsp;&nbsp;
                 {bottomPanelIsShown && <MoorhenInfoCard infoText={infoPanel} />}
             </div>
+
             <div
                 className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
                 style={{ height: `${displaySize}px` }}
@@ -218,8 +210,8 @@ export const ValidationPanel = () => {
                         sequences={sequencesList}
                         selectedResidues={sequenceSelection}
                         hoveredResidue={hoveredResidue}
-                        maxDisplayHeight={4}
-                        displayHeight={sequencesExpand ? numberOfLines : 1}
+                        // maxDisplayHeight={1}
+                        displayHeight={1}
                         showTitleBar={false}
                         onResidueClick={handleClick}
                         onResiduesSelect={residueSelectionCallback}
