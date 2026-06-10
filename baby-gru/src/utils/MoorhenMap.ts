@@ -6,6 +6,7 @@ import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
+import { MRCHeaderJson, MTZHeaderJson } from "./mapHeaders";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -50,6 +51,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
 export class MoorhenMap {
     type: string;
     name: string;
+    fileHeader: MRCHeaderJson | MTZHeaderJson;
     headerInfo: moorhen.mapHeaderInfo;
     isEM: boolean;
     molNo: number;
