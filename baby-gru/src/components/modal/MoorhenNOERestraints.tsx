@@ -544,3 +544,30 @@ export const MoorhenNOERestraints = () => {
 };
 
 
+export const processNEFFileAutoLoader = async (
+    file: File,
+    molecules: any[],
+    dispatch: any
+) => {
+    let fileContents: string;
+
+    if (file.name.endsWith(".gz")) {
+        const bin = await file.arrayBuffer();
+        fileContents = pako.inflate(bin, { to: "string" });
+    } else {
+        fileContents = await file.text();
+    }
+
+    const data = window.cootModule.get_noe_restraints(fileContents);
+    const converted = convertDataframe(data);
+    const chemShifts = window.cootModule.get_chem_shift_info(fileContents);
+    const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
+    const chemShiftsEnum = loopReplaceProtons(chemShiftsConverted, "atom", "resname")
+    if (molecules.length > 0) {
+        molecules[0].NEFRestraints = converted;
+        molecules[0].chemShifts = chemShiftsEnum
+
+    }
+
+    return converted;
+};

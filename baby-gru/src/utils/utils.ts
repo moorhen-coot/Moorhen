@@ -809,8 +809,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     dashed: boolean = true,
     style: "cylinder" | "cone" = "cylinder",
     individualSizes?: number[],
-    NEF?: boolean,
-    dashedSteps: number = 15
+    dashedSteps: number = 15,
+    NEF?: boolean
 ) => {
     const atomPairs = atoms;
 

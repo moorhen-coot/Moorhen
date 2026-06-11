@@ -13,6 +13,8 @@ import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { processNEFFileAutoLoader } from "../components/modal/MoorhenNOERestraints"
+import { setNMRMode } from "@/store";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -576,7 +578,15 @@ export const autoOpenFiles = async (
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
-        } else if (
+        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+            const molecules = store.getState().molecules.moleculeList;
+
+            await processNEFFileAutoLoader(file, molecules, dispatch);
+            dispatch(setNMRMode(true))
+
+        }
+
+        else if (
             file.name.endsWith(".mrc") ||
             file.name.endsWith(".map") ||
             file.name.endsWith(".ccp4") ||
