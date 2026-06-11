@@ -33,7 +33,7 @@ export const LoadFiles = () => {
         <>
             <span className="moorhen__input__label-menu">Open Files</span>
             <MoorhenFileInput
-                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb, .mrc, .ccp4"
+                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb, .mrc, .ccp4 .nef"
                 multiple={true}
                 isLoading={isLoading}
                 className="moorhen_menu-custom-left-margin"
