@@ -12,6 +12,7 @@ import { MoorhenToggle, MoorhenSlider } from "../inputs";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
+    setDepthBlurRadius,
     setResetClippingFogging,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
@@ -20,7 +21,6 @@ import {
     setFogEnd,
     setClipStart,
     setClipEnd,
-    setBlurSize,
 } from "../../store/glRefSlice";
 import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
 import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
@@ -102,7 +102,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
     const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
-    const blurSize = useSelector((state: moorhen.State) => state.glRef.blurSize);
+    const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     const [useFog, setUseFog] = useState<boolean>(true);
     const [useClip, setUseClip] = useState<boolean>(true);
@@ -864,7 +864,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     sliderTitle="Blur size"
                     externalValue={blurSize}
                     setExternalValue={newValue => {
-                        dispatch(setBlurSize(newValue))
+                        dispatch(setDepthBlurRadius(newValue))
                     }}
                     stepButtons={1}
                     decimalPlaces={0}

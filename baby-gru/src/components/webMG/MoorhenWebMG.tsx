@@ -127,7 +127,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
     const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
     const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
-    const blurSize = useSelector((state: moorhen.State) => state.glRef.blurSize)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
@@ -585,13 +584,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [fogStart, fogEnd, glRef])
-
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setBlurSize(blurSize)
-            glRef.current.drawScene()
-        }
-    }, [blurSize, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
