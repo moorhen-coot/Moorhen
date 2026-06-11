@@ -246,6 +246,7 @@ export const AddCustomRepresentationCard = memo(
                     case "b-factor-norm":
                     case "electrostatics":
                     case "af2-plddt":
+                    case "dnatco":
                         colourRule = new ColourRule(
                             colourModeSelectRef.current.value,
                             "/*/*/*/*:*",
@@ -270,10 +271,14 @@ export const AddCustomRepresentationCard = memo(
                                               ? "PLDDT"
                                               : colourModeSelectRef.current.value === "electrostatics"
                                                 ? "Electrostatics"
-                                                : ""
+                                                : colourModeSelectRef.current.value === "dnatco"
+                                                  ? "DNATCO"
+                                                  : ""
                             }`
                         );
+                        console.log()
                         const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value);
+                        console.log(ruleArgs)
                         colourRule.setArgs([ruleArgs]);
                         colourRule.setParentMolecule(props.molecule);
                         break;
@@ -679,6 +684,9 @@ export const AddCustomRepresentationCard = memo(
                                 </option>
                                 <option value={"mol-symm"} key={"mol-symm"}>
                                     Mol. Symmetry
+                                </option>
+                                <option value={"dnatco"} key={"dnatco"}>
+                                    DNATCO
                                 </option>
                             </>
                             {representationStyle === "MolecularSurface" && (

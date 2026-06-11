@@ -541,6 +541,35 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number }[]): str
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join("|");
 };
 
+const getDNATCOColourRules = (DNATCO_info): string => {
+
+    let rule = "//^#cccccc"
+
+    const ntc_step = DNATCO_info["ntc_step"]
+    const ntc_step_summary = DNATCO_info["ntc_step_summary"]
+    const stepMap: Map<number,libcootApi.DNATCONtcStepSummary> = new Map(ntc_step_summary.map(step => [step.step_id, step]));
+    ntc_step.map((step) => {
+        const ntc: libcootApi.DNATCONtcStepSummary = stepMap.get(step.id)
+        const chain = step.auth_asym_id_1
+        const base_1 = step.auth_seq_id_1
+        const cid = "/1/"+chain+"/"+base_1+"/"
+        if(ntc.assigned_NtC==="BBS1"){
+            rule += "|"+cid+"^#ff8222"
+        } else if(ntc.assigned_NtC==="BB2S"){
+            rule += "|"+cid+"^#c8cfff"
+        } else if(ntc.assigned_NtC==="BA10"||ntc.assigned_NtC==="AA00"){
+            rule += "|"+cid+"^#ffeba1"
+        } else if(ntc.assigned_NtC==="IC01"){
+            rule += "|"+cid+"^#fb5cfb"
+        } else if(ntc.assigned_NtC.startsWith("OP")){
+            rule += "|"+cid+"^#e90000"
+        }
+    })
+    console.log(rule)
+
+    return rule
+}
+
 const getNcsColourRules = (ncsRelatedChains: string[][]): string => {
     const result: string[] = [];
     ncsRelatedChains.forEach(chains => {
@@ -611,6 +640,9 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
         case "mol-symm":
             const ncsRelatedChains = await molecule.getNcsRelatedChains();
             multiRulesArgs = getNcsColourRules(ncsRelatedChains);
+            break;
+        case "dnatco":
+            multiRulesArgs = getDNATCOColourRules(molecule.DNATCO_info);
             break;
         default:
             console.log("Unrecognised colour rule...");

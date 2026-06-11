@@ -698,11 +698,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                    key={key}
                                    direction="row"
                                >
-                               <MoorhenStack>{chain_1}</MoorhenStack>
-                               <MoorhenStack>{compid_1}&nbsp;{base_1}</MoorhenStack>
-                               <MoorhenStack>{family}</MoorhenStack>
-                               <MoorhenStack>{chain_2}</MoorhenStack>
-                               <MoorhenStack>{compid_2}&nbsp;{base_2}</MoorhenStack>
+                               <div style={{ width: "2rem" }}>{chain_1}</div>
+                               <div style={{ width: "4rem" }}>{compid_1}&nbsp;{base_1}</div>
+                               <div style={{ width: "5rem" }}>{family}</div>
+                               <div style={{ width: "2rem" }}>{chain_2}</div>
+                               <div style={{ width: "5rem" }}>{compid_2}&nbsp;{base_2}</div>
                                <MoorhenButton
                                    size="accordion"
                                    onClick={() => {
@@ -717,7 +717,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         </MoorhenAccordion>
                     )}
                     {displayDNATCO && (
-                        <MoorhenAccordion title="NtC&nbsp;classes">
+                        <MoorhenAccordion title="Dinucleotide&nbsp;NtC&nbsp;classes">
                             {ntc_step.map((step,idx) => {
                                const ntc: libcootApi.DNATCONtcStepSummary = stepMap.get(step.id)
                                const assigned_CANA = ntc.assigned_CANA
@@ -732,10 +732,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                    key={key}
                                    direction="row"
                                >
-                               <MoorhenStack>{chain}</MoorhenStack>
-                               <MoorhenStack>{assigned_NtC}</MoorhenStack>
-                               <MoorhenStack>{assigned_CANA}</MoorhenStack>
-                               <MoorhenStack>{compid_1}&nbsp;{base_1}&nbsp;{compid_2}&nbsp;{base_2}</MoorhenStack>
+                               <div style={{ width: "3rem" }}>{chain}</div>
+                               <div style={{ width: "5rem" }}>{assigned_NtC}</div>
+                               <div style={{ width: "5rem" }}>{assigned_CANA}</div>
+                               <div style={{ width: "7rem" }}>{compid_1}&nbsp;{base_1}&nbsp;{compid_2}&nbsp;{base_2}</div>
                                <MoorhenButton
                                    size="accordion"
                                    onClick={() => {
@@ -743,7 +743,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                    }}
                                    type="icon-only"
                                    icon="MatSymFilterFocus"
-                                   tooltip="Center on base pair"
+                                   tooltip="Center on bases"
+                                   style={{ width: "3rem" }}
                                />
                                </MoorhenStack>)
                             })}
