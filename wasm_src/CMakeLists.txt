@@ -473,7 +473,7 @@ set(ENV{EM_PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
 set(ENV{PKG_CONFIG_LIBDIR} ${CMAKE_INSTALL_PREFIX}/lib/)
 
 include(FindPkgConfig)
-pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp)
+pkg_check_modules(DEPS REQUIRED sigc++-3.0 graphene-1.0 jsoncpp igraph)
 
 find_package(RDKit REQUIRED)
 find_package(Boost COMPONENTS iostreams thread serialization system REQUIRED)
