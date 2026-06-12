@@ -69,6 +69,7 @@
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
 #include "coot-utils/coot-align.hh"
+#include "cremer-pople-sphere/scene.hh"
 
 #include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -708,6 +709,29 @@ class molecules_container_js : public molecules_container_t {
             auto results =  validate(file_content, "");
             return results;
         }
+        
+        std::vector<CremerPopleParameters> privateer_calculate_cremer_pople_parameters(int imol) {
+            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
+            auto results =  calculate_cremer_pople_parameters(file_content, "");
+            return results;
+        }
+
+        coot::simple_mesh_t DrawCremerPopleSphere(int imol) {
+
+            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
+            auto results =  calculate_cremer_pople_parameters(file_content, "");
+            
+            std::vector<CremerPopleData> data = {};
+            data.reserve(results.size());
+            for (int i = 0; i < results.size(); i++) {
+                data.emplace_back(results[i].q, results[i].phi, results[i].theta);
+            }
+
+            auto x = create_cremer_pople_sphere(data);
+
+            return x;
+        }
+
 
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
             //FIXME - pass in against_a_dark_background
