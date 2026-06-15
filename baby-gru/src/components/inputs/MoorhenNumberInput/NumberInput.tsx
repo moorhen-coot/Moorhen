@@ -205,6 +205,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                         setValue={props.setValue}
                         type="arrow"
                         style={buttonStyle}
+                        isDisabled={disabled}
                     />
                     <PlusMinusButton
                         step={-Math.pow(10, -decimalDigits)}
@@ -212,6 +213,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                         setValue={props.setValue}
                         type="arrow"
                         style={buttonStyle}
+                        isDisabled={disabled}
                     />
                 </MoorhenStack>
             )}
