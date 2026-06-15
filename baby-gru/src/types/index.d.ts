@@ -17,4 +17,5 @@ declare global {
         export default SVGComponent;
     }
     declare module "*.css";
+    declare module "*.scss";
 }

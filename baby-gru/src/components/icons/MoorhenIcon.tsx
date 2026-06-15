@@ -63,6 +63,7 @@ export const MoorhenIcon = ({
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
             >
+                {/* @ts-ignore */}
                 <SvgComponent className="moorhen__icon" />
             </span>
         );

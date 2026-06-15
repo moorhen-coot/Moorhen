@@ -1,7 +1,7 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
-import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
+import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { setOrigin } from "@/store";
@@ -16,6 +16,7 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+
 
 export type LoadFilesResult = {
     type: "molecule" | "map";
