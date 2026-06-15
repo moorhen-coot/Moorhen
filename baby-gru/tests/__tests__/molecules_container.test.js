@@ -200,10 +200,12 @@ describe('Testing molecules_container_js', () => {
 
         const useConformers = false
         const conformerCount = 10
+        const eigen_orientation_search_mode = 2
+
         const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const result = molecules_container.fit_ligand_right_here(
-            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount
+            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount, eigen_orientation_search_mode
         )
         expect(result.size()).toBeGreaterThan(0)
     })
@@ -222,10 +224,11 @@ describe('Testing molecules_container_js', () => {
 
         const useConformers = true
         const conformerCount = 50
+        const eigen_orientation_search_mode = 2
         const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const result = molecules_container.fit_ligand_right_here(
-            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount
+            coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount, eigen_orientation_search_mode
         )
         expect(result.size()).toBeGreaterThan(0)
     })
@@ -1185,7 +1188,7 @@ describe('Testing molecules_container_js', () => {
 
         // Find and merge the ligand
         const fit_ligand_result = molecules_container.fit_ligand(
-            coordMolNo, mapMolNo, ligandMolNo, 1., false, 10
+            coordMolNo, mapMolNo, ligandMolNo, 1., false, 10, 2
         )
         expect(fit_ligand_result.size()).toBeGreaterThan(0)
         const first_fitted_ligand_imol = fit_ligand_result.get(0).imol
