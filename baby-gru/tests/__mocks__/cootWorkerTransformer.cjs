@@ -34,7 +34,7 @@ module.exports = {
             .digest('hex');
     },
     process(sourceText, sourcePath) {
-        if (!sourcePath.endsWith('/public/MoorhenAssets/wasm/CootWorker.js')) {
+        if (!sourcePath.endsWith('/public/MoorhenAssets/wasm/CootWorker.js') && !sourcePath.endsWith('/public/MoorhenAssets/wasm/CootWorker')) {
             return { code: sourceText };
         }
 

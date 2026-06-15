@@ -6,8 +6,8 @@ module.exports = {
             displayName: "api-utils",
             testMatch: ["<rootDir>/tests/__tests__/*.test.js"],
             transform: {
-                "^.+/public/MoorhenAssets/wasm/moorhen\\.js$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
-                "^.+/public/MoorhenAssets/wasm/CootWorker\\.js$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/CootWorker(?:\\.js)?$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
                 "^.+\\.(ts|tsx)?$": "babel-jest",
                 "^.+\\.(js|jsx)$": "babel-jest",
             },
@@ -19,8 +19,8 @@ module.exports = {
             testEnvironment: "jsdom",
             preset: "ts-jest",
             transform: {
-                "^.+/public/MoorhenAssets/wasm/moorhen\\.js$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
-                "^.+/public/MoorhenAssets/wasm/CootWorker\\.js$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/CootWorker(?:\\.js)?$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
                 "^.+\\.(ts|tsx)?$": "ts-jest",
                 "^.+\\.(js|jsx)$": "babel-jest",
             },
