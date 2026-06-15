@@ -552,17 +552,19 @@ const getDNATCOColourRules = (DNATCO_info): string => {
         const ntc: libcootApi.DNATCONtcStepSummary = stepMap.get(step.id)
         const chain = step.auth_asym_id_1
         const base_1 = step.auth_seq_id_1
-        const cid = "/1/"+chain+"/"+base_1+"/"
+        const base_2 = step.auth_seq_id_2
+        const cid_1 = "/1/"+chain+"/"+base_1+"/"
+        const cid_2 = "/1/"+chain+"/"+base_2+"/"
         if(ntc.assigned_NtC==="BBS1"){
-            rule += "|"+cid+"^#ff8222"
+            rule += "|"+cid_1+"^#ff8222"
         } else if(ntc.assigned_NtC==="BB2S"){
-            rule += "|"+cid+"^#c8cfff"
+            rule += "|"+cid_1+"^#c8cfff"
         } else if(ntc.assigned_NtC==="BA10"||ntc.assigned_NtC==="AA00"){
-            rule += "|"+cid+"^#ffeba1"
-        } else if(ntc.assigned_NtC==="IC01"){
-            rule += "|"+cid+"^#fb5cfb"
+            rule += "|"+cid_1+"^#ffeba1"
+        } else if(ntc.assigned_NtC.startsWith("IC")){
+            rule += "|"+cid_1+"^#fb5cfb"
         } else if(ntc.assigned_NtC.startsWith("OP")){
-            rule += "|"+cid+"^#e90000"
+            rule += "|"+cid_1+"^#e90000"
         }
     })
     console.log(rule)
