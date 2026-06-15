@@ -716,18 +716,18 @@ class molecules_container_js : public molecules_container_t {
             return results;
         }
 
-        coot::simple_mesh_t DrawCremerPopleSphere(int imol) {
+        coot::simple_mesh_t DrawCremerPopleSphere(int imol, bool add_radial_conformations) {
 
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
             auto results =  calculate_cremer_pople_parameters(file_content, "");
-            
+
             std::vector<CremerPopleData> data = {};
             data.reserve(results.size());
             for (int i = 0; i < results.size(); i++) {
                 data.emplace_back(results[i].q, results[i].phi, results[i].theta);
             }
 
-            auto x = create_cremer_pople_sphere(data);
+            auto x = create_cremer_pople_sphere(data, add_radial_conformations);
 
             return x;
         }
