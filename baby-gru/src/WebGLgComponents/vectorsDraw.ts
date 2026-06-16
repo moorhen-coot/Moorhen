@@ -3,6 +3,47 @@ import { getMathJaxSVG }  from '../utils/mathJaxUtils'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
+const get1LetterElementPaddedCid = (cid): string  => {
+    let newCid
+    const cidSplit = cid.split("/")
+    const atNameAlt = cidSplit[cidSplit.length-1]
+    cidSplit.pop()
+    const atNameAltSplit = atNameAlt.split(":")
+    const atName = atNameAltSplit[0]
+    if(atName.length===1){
+        newCid = cidSplit.join("/")+"/ "+atName + "  "
+    } else if(atName.length===2){
+        newCid = cidSplit.join("/")+"/ "+atName + " "
+    } else if(atName.length===3){
+        newCid = cidSplit.join("/")+"/ "+atName
+    } else if(atName.length===4){
+        //Try unpadding ...
+        newCid = cidSplit.join("/")+"/"+atName.trim()
+    }
+    if(atNameAltSplit.length>1)
+        newCid += ":"+atNameAltSplit[1]
+    return newCid
+}
+
+const get2LetterElementPaddedCid = (cid): string  => {
+    let newCid
+    const cidSplit = cid.split("/")
+    const atNameAlt = cidSplit[cidSplit.length-1]
+    cidSplit.pop()
+    const atNameAltSplit = atNameAlt.split(":")
+    const atName = atNameAltSplit[0]
+    if(atName.length===2){
+        newCid = cidSplit.join("/")+"/"+atName + "  "
+    } else if(atName.length===3){
+        newCid = cidSplit.join("/")+"/"+atName + " "
+    } else if(atName.length===4){
+        //Try unpadding ...
+        newCid = cidSplit.join("/")+"/"+atName.trim()
+    }
+    if(atNameAltSplit.length>1)
+        newCid += ":"+atNameAltSplit[1]
+    return newCid
+}
 
 export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
@@ -39,14 +80,26 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 yToOrig = vec.yTo
                 zToOrig = vec.zTo
             }
-            if(vec.molNoFrom!==undefined&&vec.cidFrom.length>0){
-                const fromMol = molecules.find(mol => mol.molNo === vec.molNoFrom)
+            if(vec.molFromUniqueId!==undefined&&vec.cidFrom.length>0){
+                const fromMol = molecules.find(mol => mol.uniqueId === vec.molFromUniqueId)
                 if(fromMol){
                     let fromAtoms
                     let nFromAtoms = 0
                     try {
                         fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
                         nFromAtoms = fromAtoms.size()
+                        if(nFromAtoms===0 && vec.cidFrom.length!==4){
+                            //Try 4-char padding/unpadding
+                            fromAtoms.delete()
+                            const newCid = get1LetterElementPaddedCid(vec.cidFrom)
+                            fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
+                            nFromAtoms = fromAtoms.size()
+                            if(nFromAtoms===0){
+                                const newCid2 = get2LetterElementPaddedCid(vec.cidFrom)
+                                fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid2, "" )
+                                nFromAtoms = fromAtoms.size()
+                            }
+                        }
                     } catch(e) {
                         console.log(e)
                     }
@@ -72,14 +125,26 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             }
         }
         if(vec.coordsMode==="atoms"){
-            if(vec.molNoTo!==undefined&&vec.cidTo.length>0){
-                const toMol = molecules.find(mol => mol.molNo === vec.molNoTo)
+            if(vec.molFromUniqueId!==undefined&&vec.cidTo.length>0){
+                const toMol = molecules.find(mol => mol.uniqueId === vec.molFromUniqueId)
                 if(toMol){
                     let toAtoms
                     let nToAtoms = 0
                     try {
                         toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
                         nToAtoms = toAtoms.size()
+                        if(nToAtoms===0 && vec.cidTo.length!==4){
+                            //Try 4-char padding/unpadding
+                            toAtoms.delete()
+                            const newCid = get1LetterElementPaddedCid(vec.cidTo)
+                            toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
+                            nToAtoms = toAtoms.size()
+                            if(nToAtoms===0){
+                                const newCid2 = get2LetterElementPaddedCid(vec.cidTo)
+                                toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid2, "" )
+                                nToAtoms = toAtoms.size()
+                            }
+                        }
                     } catch(e) {
                         console.log(e)
                     }
@@ -112,11 +177,23 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             let yTo = yToOrig
             let zTo = zToOrig
             let labelScale = 2.0
-            let fnSize = 24
+            let fnSize = vec.labelFontSize ?? 24
             const lsq = (xToOrig - xFromOrig) * (xToOrig - xFromOrig)
                       + (yToOrig - yFromOrig) * (yToOrig - yFromOrig)
                       + (zToOrig - zFromOrig) * (zToOrig - zFromOrig)
             const l = Math.sqrt(lsq)
+            const dashSteps = vec.dashSpacing
+                ? Math.max(3, Math.min(80, Math.round(l / vec.dashSpacing)))
+                : 15
+            const arrowHeadLength = vec.arrowHeadLength ?? 1.0
+            const arrowHeadRadiusScale = vec.arrowHeadRadiusScale ?? 2.0
+            const labelScreenOffsetDistance = vec.labelScreenOffsetDistance ?? 0.0
+            const labelScreenOffset = {
+                screenOffsetVectorX: xToOrig - xFromOrig,
+                screenOffsetVectorY: yToOrig - yFromOrig,
+                screenOffsetVectorZ: zToOrig - zFromOrig,
+                screenOffsetDistance: labelScreenOffsetDistance,
+            }
             if(window.devicePixelRatio){
                 fnSize *= window.devicePixelRatio
                 labelScale *= window.devicePixelRatio
@@ -140,40 +217,40 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 const myImageData = ctx.getImageData(0, 0, img.width*labelScale,img.height*labelScale)
 
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
                 }
             } else {
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel},uuid:guid()})
+                    newLabelBuffers.push({label:{font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
                 }
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                xTo = xTo - 1.0 * (xToOrig - xFromOrig) / l
-                yTo = yTo - 1.0 * (yToOrig - yFromOrig) / l
-                zTo = zTo - 1.0 * (zToOrig - zFromOrig) / l
+                xTo = xTo - arrowHeadLength * (xToOrig - xFromOrig) / l
+                yTo = yTo - arrowHeadLength * (yToOrig - yFromOrig) / l
+                zTo = zTo - arrowHeadLength * (zToOrig - zFromOrig) / l
             }
             if(vec.arrowMode==="start"||vec.arrowMode==="both"){
-                xFrom = xFrom + 1.0 * (xToOrig - xFromOrig) / l
-                yFrom = yFrom + 1.0 * (yToOrig - yFromOrig) / l
-                zFrom = zFrom + 1.0 * (zToOrig - zFromOrig) / l
+                xFrom = xFrom + arrowHeadLength * (xToOrig - xFromOrig) / l
+                yFrom = yFrom + arrowHeadLength * (yToOrig - yFromOrig) / l
+                zFrom = zFrom + arrowHeadLength * (zToOrig - zFromOrig) / l
             }
             const firstAtomInfo = {
                 pos: [xFrom, yFrom, zFrom],
@@ -191,16 +268,16 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                 serial: nAtom++,
                 colour: theColour
             }
-            const pair = [firstAtomInfo, secondAtomInfo, vecSize]
+            const pair = [firstAtomInfo, secondAtomInfo, vecSize, dashSteps]
             if(vec.drawMode==="dashedcylinder"){
                 dashPairs.push(pair)
             } else {
                 solidPairs.push(pair)
             }
             if(vec.arrowMode==="end"||vec.arrowMode==="both"){
-                const xFrom = xToOrig - 1.0 * (xToOrig - xFromOrig) / l
-                const yFrom = yToOrig - 1.0 * (yToOrig - yFromOrig) / l
-                const zFrom = zToOrig - 1.0 * (zToOrig - zFromOrig) / l
+                const xFrom = xToOrig - arrowHeadLength * (xToOrig - xFromOrig) / l
+                const yFrom = yToOrig - arrowHeadLength * (yToOrig - yFromOrig) / l
+                const zFrom = zToOrig - arrowHeadLength * (zToOrig - zFromOrig) / l
                 const xTo = xToOrig
                 const yTo = yToOrig
                 const zTo = zToOrig
@@ -220,16 +297,16 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     serial: nAtom++,
                     colour: theColour
                 }
-                const pair = [firstAtomInfo, secondAtomInfo, vecSize]
+                const pair = [firstAtomInfo, secondAtomInfo, vecSize, arrowHeadRadiusScale]
                 arrowHeadPairs.push(pair)
             }
             if(vec.arrowMode==="start"||vec.arrowMode==="both"){
                 const xTo = xFromOrig
                 const yTo = yFromOrig
                 const zTo = zFromOrig
-                const xFrom = xFromOrig + 1.0 * (xToOrig - xFromOrig) / l
-                const yFrom = yFromOrig + 1.0 * (yToOrig - yFromOrig) / l
-                const zFrom = zFromOrig + 1.0 * (zToOrig - zFromOrig) / l
+                const xFrom = xFromOrig + arrowHeadLength * (xToOrig - xFromOrig) / l
+                const yFrom = yFromOrig + arrowHeadLength * (yToOrig - yFromOrig) / l
+                const zFrom = zFromOrig + arrowHeadLength * (zToOrig - zFromOrig) / l
                 const firstAtomInfo = {
                     pos: [xFrom, yFrom, zFrom],
                     x: xFrom,
@@ -246,27 +323,38 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     serial: nAtom++,
                     colour: theColour
                 }
-                const pair = [firstAtomInfo, secondAtomInfo, vecSize]
+                const pair = [firstAtomInfo, secondAtomInfo, vecSize, arrowHeadRadiusScale]
                 arrowHeadPairs.push(pair)
             }
         }
     }
 
-    const dashColours = {}
     const solidColours = {}
     const arrowColours = {}
 
-    const dashSizes = []
     const solidSizes = []
     const arrowSizes = []
 
-    dashPairs.forEach(atom => { dashSizes.push(atom[2]); dashColours[`${atom[0].serial}`] =  atom[0].colour; dashColours[`${atom[1].serial}`] =  atom[0].colour })
     solidPairs.forEach(atom => { solidSizes.push(atom[2]); solidColours[`${atom[0].serial}`] = atom[0].colour; solidColours[`${atom[1].serial}`] = atom[0].colour })
-    arrowHeadPairs.forEach(atom => { arrowSizes.push(2.0*atom[2]); arrowColours[`${atom[0].serial}`] = atom[0].colour; arrowColours[`${atom[1].serial}`] = atom[0].colour })
+    arrowHeadPairs.forEach(atom => { arrowSizes.push((atom[3] ?? 2.0)*atom[2]); arrowColours[`${atom[0].serial}`] = atom[0].colour; arrowColours[`${atom[1].serial}`] = atom[0].colour })
 
-    const objects = [
-        gemmiAtomPairsToCylindersInfo(dashPairs, 0.01, dashColours, false, 0.01, 1000.0, true, "cylinder", dashSizes)
-    ]
+    const objects = []
+    const dashPairsByStep = new Map<number, any[]>()
+    dashPairs.forEach(atom => {
+        const dashSteps = atom[3] ?? 15
+        if (!dashPairsByStep.has(dashSteps)) dashPairsByStep.set(dashSteps, [])
+        dashPairsByStep.get(dashSteps).push(atom)
+    })
+    dashPairsByStep.forEach((pairs, dashSteps) => {
+        const dashColours = {}
+        const dashSizes = []
+        pairs.forEach(atom => {
+            dashSizes.push(atom[2]);
+            dashColours[`${atom[0].serial}`] = atom[0].colour;
+            dashColours[`${atom[1].serial}`] = atom[0].colour;
+        })
+        objects.push(gemmiAtomPairsToCylindersInfo(pairs, 0.01, dashColours, false, 0.01, 1000.0, true, "cylinder", dashSizes, dashSteps))
+    })
     objects.push(...[
         gemmiAtomPairsToCylindersInfo(solidPairs, 0.01, solidColours, false, 0.01, 1000.0, false, "cylinder", solidSizes)
     ])

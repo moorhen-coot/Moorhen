@@ -77,6 +77,9 @@ export namespace libcootApi {
         CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
         // Gemmi vector constructors
         VectorString: { new (): emscriptem.vector<string> };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
     };
     type headerInfoGemmi = {
         title: string;
@@ -655,6 +658,9 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
     };
     interface DoublePairDoubleJS {
         first: number;
@@ -706,6 +712,8 @@ export namespace libcootApi {
         writeCCP4Map(molNo: number, tempFilename: string): void;
         writeCIFASCII(molNo: number, tempFilename: string): void;
         writePDBASCII(molNo: number, tempFilename: string): void;
+        molecule_to_mmCIF_string(imol: number): string;
+        molecule_to_mmCIF_string_with_gemmi(imol: number): string;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
         read_coords_string(pdb_string: string, molecule_name: string): PairType<number, string>;

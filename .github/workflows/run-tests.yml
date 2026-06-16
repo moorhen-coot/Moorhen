@@ -18,12 +18,12 @@ jobs:
     steps:
 
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
     
     - name: Install Node.js v24
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24
         cache: 'npm'
@@ -36,7 +36,7 @@ jobs:
 
     - name: Cache emsdk
       id: cache-emsdk
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with: 
         path: emsdk/
         key: emsdk-cache-${{ env.TARGET_EMSDK_VERSION }}
@@ -70,10 +70,10 @@ jobs:
     - name: Hash dependency versions and build scripts (excluding Coot and Lhasa)
       id: dep_versions
       run: |
-        { grep -v 'lhasa\|coot_commit=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
+        { grep -vE '^#|(lhasa|coot)_(fork|commit)=' VERSIONS; cat initial_build.sh get_sources get_sources_funs moorhen_build.sh; } | sha256sum | cut -d' ' -f1 | xargs -I{} echo "hash={}" >> "$GITHUB_OUTPUT"
     - name: Cache prebuilt C++ dependencies with sources
       id: cache-cpp-dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         # include/glm and rdkit are symlinks to the GLM headers and to the rdkit sources respectively.
         # They need to be included in the cache, I think.
@@ -88,7 +88,7 @@ jobs:
     # Restoring this cache now should overwrite whatever junk was put into checkout/coot-1.0 by the previous step
     - name: Cache Coot and Lhasa sources
       id: cache-coot-lhasa-src
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           checkout/coot-1.0
@@ -112,7 +112,7 @@ jobs:
         ./initial_build.sh
     - name: Cache Moorhen WASM build
       id: cache-moorhen-wasm
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           baby-gru/public/MoorhenAssets/

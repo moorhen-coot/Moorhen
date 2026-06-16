@@ -1,4 +1,3 @@
-import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -6,6 +5,7 @@ import { setShownSidePanel, showModal } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
+import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
@@ -114,7 +114,9 @@ export const MoorhenMainMenu = memo(() => {
                 </button>
                 <div className="moorhen__main-menu-container">
                     {menu}
-                    {subMenu ? <ClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</ClickAwayListener> : null}
+                    {subMenu ? (
+                        <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
+                    ) : null}
                 </div>
             </div>
         </div>

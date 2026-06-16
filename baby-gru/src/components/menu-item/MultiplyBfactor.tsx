@@ -10,6 +10,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
+import { MoorhenStack } from "../interface-base/Stack/Stack"
 
 export const MultiplyBfactor = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -132,6 +133,7 @@ export const MultiplyBfactor = () => {
 
     return (
         <>
+            <MoorhenStack inputGrid>
             <MoorhenSelect
                 label="Selection type"
                 ref={ruleSelectRef}
@@ -173,6 +175,7 @@ export const MultiplyBfactor = () => {
                     allowUseCurrentSelection={true}
                 />
             )}
+        </MoorhenStack>
             <div style={{ paddingLeft: "2rem", paddingRight: "2rem", paddingTop: "0.1rem", paddingBottom: "0.1rem" }}>
                 <Slider
                     aria-label="Factor"

@@ -12,6 +12,7 @@
 /build
 /dist
 /dev-dist
+/tsDist
 
 # misc
 .DS_Store

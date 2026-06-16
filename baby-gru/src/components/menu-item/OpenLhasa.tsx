@@ -118,7 +118,7 @@ export const OpenLhasa = () => {
     }, [molecules, fetchAndAddRdkitPickle]);
 
     return (
-        <MoorhenStack>
+        <MoorhenStack inputGrid>
             <MoorhenSelect
                 label="Load a ligand on start?"
                 ref={loadLigandSelectRef}

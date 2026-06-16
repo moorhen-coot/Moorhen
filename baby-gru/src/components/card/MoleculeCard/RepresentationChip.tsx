@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useState } from "react";
-import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
@@ -24,6 +24,9 @@ export const CustomRepresentationChip = (props: {
     }
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(representation.interfaceOption.visible);
     const [reload, setReload] = useState<boolean>(false);
+    const modelSelector = representation.cid.split("/")[1] !== "*" ? parseInt(representation.cid.split("/")[1]) : 0;
+
+    const models = molecule.numberOfModels;
 
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
@@ -90,6 +93,11 @@ export const CustomRepresentationChip = (props: {
         }
     }
 
+    const onChangeModelSelector = modelIndex => {
+        representation.setShownMultimodel(modelIndex);
+        setReload(!reload);
+    };
+
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
@@ -98,7 +106,21 @@ export const CustomRepresentationChip = (props: {
                     <br />
                     <span>{selectionName}</span>
                 </div>
-                <div style={{ flexShrink: "0" }}>
+                <MoorhenStack direction="row" align="center" gap="0.1rem" flex={0}>
+                    {models > 1 && (
+                        <MoorhenNumberInput
+                            value={modelSelector}
+                            setValue={onChangeModelSelector}
+                            integer
+                            type="number"
+                            allowNegativeValues={false}
+                            style={{ backgroundColor: "transparent" }}
+                            width={"6ch"}
+                            tooltip={"Model Selector"}
+                            minMax={[0, models]}
+                            className="moorhen__model-selector-input"
+                        />
+                    )}
                     <MoorhenButton
                         onClick={handleVisibility}
                         type="icon-only"
@@ -120,7 +142,7 @@ export const CustomRepresentationChip = (props: {
                             Delete Representation
                         </MoorhenButton>
                     </MoorhenPopoverButton>
-                </div>
+                </MoorhenStack>
             </MoorhenStack>
         </div>
     );

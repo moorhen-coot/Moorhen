@@ -100,6 +100,7 @@ export class MoorhenMolecule {
     name: string;
     molNo: number | null;
     gemmiStructure: gemmi.Structure;
+    private _numberOfModels: number;
     gemmiDocument: gemmi.cifDocument;
     sequences: Sequence[];
     representations: moorhen.MoleculeRepresentation[];
@@ -139,6 +140,7 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
+    moleculeCardState: { showXpidList: boolean };
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
         this.type = "molecule";
@@ -228,6 +230,7 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.moleculeCardState = { showXpidList: false };
     }
 
     /**
@@ -1432,7 +1435,7 @@ export class MoorhenMolecule {
         excludeNeighbours?: boolean,
         hbondedToCid?: string,
         hbondedTo?: boolean,
-        neighboursDistance?: number,
+        neighboursDistance?: number
     ): Promise<moorhen.MoleculeRepresentation>;
     /**
      * Add a representation to the molecule
@@ -1453,7 +1456,7 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0,
+        neighboursDistance: number = 6.0
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -2539,10 +2542,11 @@ export class MoorhenMolecule {
         let newMolecules: moorhen.Molecule[] = [];
         const command = fitRightHere ? "fit_ligand_right_here" : "fit_ligand";
         const returnType = fitRightHere ? "int_array" : "fit_ligand_info_array";
+        const eigen_orientation_search_mode = 2
 
         const commandArgs = fitRightHere
-            ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount]
-            : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount];
+            ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount, eigen_orientation_search_mode]
+            : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount, eigen_orientation_search_mode];
 
         const result = (await this.commandCentre.current.cootCommand(
             {
@@ -3052,5 +3056,13 @@ export class MoorhenMolecule {
             false
         )) as moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>;
         return result.data.result.result;
+    }
+
+    get numberOfModels() {
+        if (this._numberOfModels) return this._numberOfModels;
+        const models = this.gemmiStructure.models;
+        this._numberOfModels = models.size();
+        models.delete();
+        return this._numberOfModels;
     }
 }
