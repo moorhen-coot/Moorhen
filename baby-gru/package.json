@@ -50,7 +50,7 @@
         "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
         "transpile-ts-worker": "npx tsc --project tsconfig.worker.json && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
-        "transpile-ts-worker-jest": "npx tsc --ignoreConfig --module es2015 --lib webworker --skipLibCheck src/InstanceManager/CommandCentre/CootWorker.ts --outDir public/MoorhenAssets/wasm/ && sed -i.bak 's/export {}/export { doCootCommand, setModules }/g' public/MoorhenAssets/wasm//CootWorker.js && sed -i.bak '/importScripts.*;/d' public/MoorhenAssets/wasm/CootWorker.js && sed -i.bak 's/onmessage/function setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1 }; let postMessage = () => {}; let onmessage/g' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
+        "transpile-ts-worker-jest": "npm run transpile-ts-worker",
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "start": "vite --config vite.config.mts",
         "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
@@ -69,7 +69,8 @@
         "build-and-pack": "npm run build-release && cd dist && npm pack && cd ..",
         "build-and-pack-dev": "npm run build-release-dev && cd dist && npm pack && cd ..",
         "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
-        "test": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker-jest && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+        "test-api": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker && env MOORHEN_TEST_PTHREAD_POOL_SIZE=${MOORHEN_TEST_PTHREAD_POOL_SIZE:-1} node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --selectProjects api-utils --runInBand --detectOpenHandles --forceExit",
+        "test": "npm run test-api && npm run test-react",
         "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components",
         "debug-hmr": "DEBUG=vite:hmr,vite:react-refresh npm run start"
     },

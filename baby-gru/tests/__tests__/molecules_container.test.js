@@ -21,28 +21,40 @@ beforeAll(() => {
 })
 
 afterAll(() => {
+    if (molecules_container !== null) {
+        molecules_container.delete?.()
+        molecules_container = null
+    }
     setupFunctions.removeTestDataFromFauxFS()
+    cootModule = null
 })
 
 let molecules_container = null
 
 describe('Testing molecules_container_js', () => {
+    let testStartTime;
 
-    beforeEach(() => {
-        if (molecules_container !== null) {
-            molecules_container.delete?.()
-        }
+    beforeEach(function() {
+        testStartTime = performance.now()
         molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
     })
 
-    afterEach(() => {
+    afterEach(function() {
+        const testEndTime = performance.now()
+        const duration = (testEndTime - testStartTime).toFixed(2)
+        const testName = expect.getState().currentTestName || 'Unknown'
+        console.log(`⏱️  [${testName}] execution time: ${duration}ms`)
         cleanUpVariables.forEach(item => {
             if (typeof item.delete === 'function' && !item.isDeleted()) {
                 item.delete()
             }
         })
         cleanUpVariables = []
+        if (molecules_container !== null) {
+            molecules_container.delete?.()
+            molecules_container = null
+        }
     })
 
     test('get_map_cell', () => {
@@ -60,6 +72,7 @@ describe('Testing molecules_container_js', () => {
         molecules_container.associate_data_mtz_file_with_map(mapMolNo, "./5a3h_sigmaa.mtz", "FP", "SIGFP", "FREE")
         const resol = molecules_container.get_map_data_resolution(mapMolNo)
         expect(resol).toBeCloseTo(1.82,2)
+        cleanUpVariables.push(cell, sg)
     })
 
     test('fill_rotamer_probability_tables', () => {
@@ -93,6 +106,7 @@ describe('Testing molecules_container_js', () => {
         const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
         expect(mesh.vertices.size()).toBeGreaterThan(1000)
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
+        cleanUpVariables.push(mesh)
     })
 
     test("H-Bonds", () => {
@@ -113,6 +127,7 @@ describe('Testing molecules_container_js', () => {
         expect(coordMolNo_1).toBe(0)
         expect(coordMolNo_2).toBe(1)
         expect(hbonds_1.size()).toBe(hbonds_2.size())
+        cleanUpVariables.push(hbonds_1, hbonds_2)
     })
 
     test("read PDB", () => {
@@ -139,6 +154,7 @@ describe('Testing molecules_container_js', () => {
 
         const suggestedLevel = molecules_container.get_suggested_initial_contour_level(mapMolNo)
         expect(suggestedLevel).toBeCloseTo(0.56, 1)
+        cleanUpVariables.push(mapCentre)
     })
 
     test('glycoblocks', async () => {
@@ -208,6 +224,7 @@ describe('Testing molecules_container_js', () => {
             coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount, eigen_orientation_search_mode
         )
         expect(result.size()).toBeGreaterThan(0)
+        cleanUpVariables.push(result)
     })
 
     test('fit_ligand_right_here 2', () => {
@@ -231,6 +248,7 @@ describe('Testing molecules_container_js', () => {
             coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount, eigen_orientation_search_mode
         )
         expect(result.size()).toBeGreaterThan(0)
+        cleanUpVariables.push(result)
     })
 
     test("close_molecule", () => {
@@ -301,6 +319,7 @@ describe('Testing molecules_container_js', () => {
         expect(merge_info.second.size()).toBe(1)
         const mi0 = merge_info.second.get(0)
         expect(mi0.chain_id).toBe("C")
+        cleanUpVariables.push(merge_info.second)
     })
 
     test("water validation", () => {
@@ -490,6 +509,7 @@ describe('Testing molecules_container_js', () => {
             expect(inst.instancing_data_A.size()).toBe(0)
             expect(inst.instancing_data_B.size()).toBe(0)
         }
+        cleanUpVariables.push(instanceMesh, geom)
     })
 
     test.skip('backups', () => {
@@ -594,6 +614,7 @@ describe('Testing molecules_container_js', () => {
         expect(c_g).toBeCloseTo(0.2, 5)
         expect(c_b).toBeCloseTo(0.5, 5)
         expect(c_a).toBeCloseTo(1.0, 5)
+        cleanUpVariables.push(simpleMesh, vertices, triangles)
     })
 
     test('Surface mesh', () => {
@@ -603,6 +624,7 @@ describe('Testing molecules_container_js', () => {
         );
         expect(simpleMesh.vertices.size()).toBeCloseTo(147864, -4)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -4)
+        cleanUpVariables.push(simpleMesh)
     })
 
     test("ligand surface", () => {
@@ -621,6 +643,7 @@ describe('Testing molecules_container_js', () => {
 
         expect(simpleMesh.vertices.size()).toBeGreaterThan(100)
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
+        cleanUpVariables.push(simpleMesh)
     })
 
     test("import ligands with same name and animated refinement", () => {
@@ -712,6 +735,7 @@ describe('Testing molecules_container_js', () => {
         //Residue A/301 is a nitrobenzene, so should have 14 bonds
         const result_301 = molecules_container.get_acedrg_atom_types_for_ligand(coordMolNo, '/1/A/301/*')
         expect(result_301.bond_types.size()).toBe(14)
+        cleanUpVariables.push(result_298, result_301, result_298.bond_types, result_301.bond_types)
     })
 
     test("smiles_to_pdb", () => {
@@ -1338,6 +1362,7 @@ describe('Testing molecules_container_js', () => {
         expect(scores_2.rail_points_new).toBe(-299)
 
         expect(map_mesh_1.vertices.size()).not.toBe(map_mesh_2.vertices.size())
+        cleanUpVariables.push(map_mesh_1, map_mesh_2)
     })
 
     test.skip("get_diff_diff_map_peaks", () => {
