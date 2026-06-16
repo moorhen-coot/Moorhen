@@ -379,12 +379,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp,
         defaultValue: false,
     },
-    50: {
-        label: "useGemmi",
-        valueSetter: setUseGemmi,
-        selector: (state: moorhen.State) => state.generalStates.useGemmi,
-        defaultValue: true,
-    },
+    // 50: {
+    //     label: "useGemmi",
+    //     valueSetter: setUseGemmi,
+    //     selector: (state: moorhen.State) => state.generalStates.useGemmi,
+    //     defaultValue: true,
+    // },
     51: {
         label: "elementsIndicesRestrict",
         valueSetter: setElementsIndicesRestrict,
