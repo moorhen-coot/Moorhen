@@ -1614,7 +1614,17 @@ onmessage = function (e) {
             })
     }
 
-    else if (e.data.message === 'loadRotamerData') {
+    else if (e.data.message === 'loadRotamerTables') {
+        molecules_container.fill_rotamer_probability_tables()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Loaded rotamer probability tables`,
+            message: e.data.message,
+            result: { }
+        })
+    }
+    else if (e.data.message === 'loadExtraData') {
         const fileData = e.data.data.cootData
 
         let doUnzip = false
@@ -1630,11 +1640,10 @@ onmessage = function (e) {
         cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
         const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
         cootModule.FS_unlink("data_tmp/"+tarFileName)
-        molecules_container.fill_rotamer_probability_tables()
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Got rotamer probability tables`,
+            consoleMessage: `Extracted data file`,
             message: e.data.message,
             result: { }
         })
