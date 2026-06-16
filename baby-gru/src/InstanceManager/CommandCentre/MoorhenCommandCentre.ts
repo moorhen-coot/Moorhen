@@ -82,8 +82,10 @@ export class CommandCentre {
     onCommandExit: null | ((kwargs: any) => void);
     onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
     onMoleculeChanged: null | ((molNo: number) => void);
+    loadedRotamerTables: boolean;
 
     constructor(urlPrefix: string, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: { [x: string]: any }) {
+        this.loadedRotamerTables = false
         this.activeMessages = [];
         this.urlPrefix = urlPrefix;
         this.isClosed = false;
@@ -105,10 +107,6 @@ export class CommandCentre {
         const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
         await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
-        const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
-        const fileDataRota = await fileResponseRota.arrayBuffer();
-        console.log("Attempt to load rotamer data")
-        await this.postMessage({ message: "loadRotamerData", data: { cootData: new Uint8Array(fileDataRota) } });
         if (this.onCootInitialized) {
             this.onCootInitialized();
         }
@@ -144,6 +142,20 @@ export class CommandCentre {
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
+        if(kwargs.command && ["rotate_around_bond","change_to_next_rotamer","change_to_previous_rotamer",
+            "change_to_first_rotamer", "get_rotamer_dodecs",
+            "get_rotamer_dodecs_instanced","auto_fit_rotamer",
+            "rotamer_analysis"
+            ].indexOf(kwargs.command)>-1){
+            if(!this.loadedRotamerTables){
+                console.log("A rotamer command, let's load the rotamers")
+                const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
+                const fileDataRota = await fileResponseRota.arrayBuffer();
+                await this.postMessage({ message: "loadRotamerData", data: { cootData: new Uint8Array(fileDataRota) } });
+                this.loadedRotamerTables = true
+            }
+        }
+
         const message = "coot_command";
         console.log("In cootCommand", kwargs.command);
         if (this.onCommandStart) {
