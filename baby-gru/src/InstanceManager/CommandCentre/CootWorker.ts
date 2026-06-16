@@ -1620,18 +1620,24 @@ onmessage = function (e) {
         let doUnzip = false
         let unzipName = ""
 
-        let tarFileName = "data.tar"
+        let tarFileName = guid()+"data.tar"
         if(fileData[0]==0x1F && fileData[1]==0x8B){
             doUnzip = true
-            tarFileName = "data.tar.gz"
-            unzipName = "data_tmp/data.tar"
+            unzipName = "data_tmp/"+tarFileName
+            tarFileName += ".gz"
         }
 
-        //cootModule.FS.mkdir("data_tmp")
         cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
         const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
         cootModule.FS_unlink("data_tmp/"+tarFileName)
         molecules_container.fill_rotamer_probability_tables()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Got rotamer probability tables`,
+            message: e.data.message,
+            result: { }
+        })
     }
 
     else if (e.data.message === 'close') {

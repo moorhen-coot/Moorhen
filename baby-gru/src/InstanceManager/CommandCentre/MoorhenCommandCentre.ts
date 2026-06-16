@@ -105,9 +105,10 @@ export class CommandCentre {
         const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
         await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
-        //const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
-        //const fileDataRota = await fileResponseRota.arrayBuffer();
-        //await this.postMessage({ message: "loadRotamerData", data: { cootData: new Uint8Array(fileDataRota) } });
+        const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
+        const fileDataRota = await fileResponseRota.arrayBuffer();
+        console.log("Attempt to load rotamer data")
+        await this.postMessage({ message: "loadRotamerData", data: { cootData: new Uint8Array(fileDataRota) } });
         if (this.onCootInitialized) {
             this.onCootInitialized();
         }
