@@ -25,6 +25,9 @@ import { MoorhenFileInput, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
+import DoneIcon from '@mui/icons-material/Done';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+
 const newVector = () => {
     const aVector: MoorhenVector = {
         coordsMode: "atoms",
@@ -51,6 +54,7 @@ const newVector = () => {
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
+    const [busyCopyingProfileToClipboard, setBusyCopyingProfileToClipboard] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
@@ -93,7 +97,7 @@ export const MoorhenDevMenu = () => {
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
 
-    const printProfileData = async () => {
+    const copySplitModuleProfileDataToClipboard = async () => {
             const ret = await commandCentre.current.cootCommand(
                 {
                     returnType: "string",
@@ -104,6 +108,7 @@ export const MoorhenDevMenu = () => {
                 false
             );
             console.log(ret.data.result)
+            navigator.clipboard.writeText(ret.data.result as unknown as string)
     }
 
     const loadGzippedFiles = async (files: FileList) => {
@@ -417,9 +422,17 @@ export const MoorhenDevMenu = () => {
             <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
                 Show Info Snackbar
             </MoorhenButton>
-            <MoorhenButton onClick={() => printProfileData()}>
-                Print split module profile data
+            <MoorhenStack direction="row">
+            <MoorhenButton onClick={() => {
+                setBusyCopyingProfileToClipboard(true)
+                copySplitModuleProfileDataToClipboard()
+                setBusyCopyingProfileToClipboard(false)
+                }}>
+                Copy split module profile data to clipboard
             </MoorhenButton>
+            {!busyCopyingProfileToClipboard && <DoneIcon/>}
+            {busyCopyingProfileToClipboard && <HourglassBottomIcon/>}
+            </MoorhenStack>
         </MoorhenStack>
     );
 };
