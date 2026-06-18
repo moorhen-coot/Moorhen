@@ -5,28 +5,21 @@ EM_JS(void, write_profile, (), {
   if (!__write_profile) {
     return;
   }
-  console.log("write_profile 1");
 
   // Get the size of the profile and allocate a buffer for it.
   var len = __write_profile(BigInt(0), 0);
-  console.log("write_profile 2");
   var ptr = _malloc(len);
-  console.log("write_profile 3");
 
   // Write the profile data to the buffer.
   __write_profile(BigInt(ptr), len);
-  console.log("write_profile 4");
 
   // Write the profile file.
   var profile_data = HEAPU8.subarray(ptr, ptr + len);
-  console.log("write_profile 5");
 
   var binary = '';
-  console.log("write_profile 6");
   for (var i = 0; i < profile_data.length; i++) {
       binary += String.fromCharCode(profile_data[i]);
   }
-  console.log("write_profile 7");
   console.log("===BEGIN===");
   console.log(btoa(binary));
   console.log("===END===");
@@ -35,27 +28,9 @@ EM_JS(void, write_profile, (), {
   _free(ptr);
 });
 
-coot::instanced_mesh_t get_bonds_mesh_for_selection_instanced(molecules_container_t& mc, int imol, const std::string &atom_selection_cid,
-                                                                 const std::string &mode,
-                                                                 bool against_a_dark_background,
-                                                                 float bond_width, float atom_radius_to_bond_width_ratio,
-                                                                 bool show_atoms_as_aniso_flag,
-                                                                 bool show_aniso_atoms_as_ortep_flag,
-                                                                 bool show_aniso_atoms_as_empty_flag,
-                                                                 bool draw_hydrogen_atoms_flag,
-                                                                 int smoothness_factor){
-
-    coot::instanced_mesh_t mesh = mc.get_bonds_mesh_for_selection_instanced(imol, atom_selection_cid,
-                                                                 mode,
-                                                                 against_a_dark_background,
-                                                                 bond_width, atom_radius_to_bond_width_ratio,
-                                                                 show_atoms_as_aniso_flag,
-                                                                 show_aniso_atoms_as_ortep_flag,
-                                                                 show_aniso_atoms_as_empty_flag,
-                                                                 draw_hydrogen_atoms_flag,
-                                                                 smoothness_factor);
+int write_split_module_profile(molecules_container_t& mc){
     write_profile();
-    return mesh;
+    return 0;
 }
 
 EMSCRIPTEN_BINDINGS(moorhen_container) {
@@ -262,7 +237,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("get_goodsell_style_mesh_instanced", &molecules_container_t::get_goodsell_style_mesh_instanced)
     .function("clear", &molecules_container_t::clear)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
-    .function("get_bonds_mesh_for_selection_instanced",&get_bonds_mesh_for_selection_instanced)
+    .function("get_bonds_mesh_for_selection_instanced",&molecules_container_t::get_bonds_mesh_for_selection_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("get_monomer",&molecules_container_t::get_monomer)
     .function("get_monomer_and_position_at",&molecules_container_t::get_monomer_and_position_at)
@@ -374,5 +349,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_obj", &molecules_container_js::export_metaballs_as_obj)
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
+    //Prints a profile.
+    .function("write_split_module_profile",&write_split_module_profile)
     ;
 }

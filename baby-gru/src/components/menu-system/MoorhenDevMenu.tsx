@@ -93,6 +93,17 @@ export const MoorhenDevMenu = () => {
     // a canvas layed over the top of the GL widget. SVG Paths are also supported, these are in absolute rather
     // fractional coords.
 
+    const printProfileData = async () => {
+            await commandCentre.current.cootCommand(
+                {
+                    returnType: "status",
+                    command: "write_split_module_profile",
+                    commandArgs: [],
+                },
+                false
+            );
+    }
+
     const loadGzippedFiles = async (files: FileList) => {
         for (const file of files) {
             const fileContents = await readGzippedTextFile(file);
@@ -403,6 +414,9 @@ export const MoorhenDevMenu = () => {
             </MoorhenButton>
             <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
                 Show Info Snackbar
+            </MoorhenButton>
+            <MoorhenButton onClick={() => printProfileData()}>
+                Print split module profile data
             </MoorhenButton>
         </MoorhenStack>
     );
