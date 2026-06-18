@@ -1,9 +1,18 @@
 #include "moorhen-wrappers-helpers.h"
 
+EM_JS(bool, have_write_profile_emjs, (), {
+  var __write_profile = wasmExports.__write_profile;
+  if (!__write_profile) {
+    return false;
+  }
+  return true;
+});
+
+#ifdef _MOORHEN_MEMORY64_
 EM_JS(char*, write_profile, (), {
   var __write_profile = wasmExports.__write_profile;
   if (!__write_profile) {
-    return;
+    return BigInt(stringToNewUTF8("Not compiled with -sSPLIT_MODULE"));
   }
 
   // Get the size of the profile and allocate a buffer for it.
@@ -27,6 +36,39 @@ EM_JS(char*, write_profile, (), {
 
   return BigInt(stringToNewUTF8(jsString));
 });
+#else
+EM_JS(char*, write_profile, (), {
+  var __write_profile = wasmExports.__write_profile;
+  if (!__write_profile) {
+    return stringToNewUTF8("Not compiled with -sSPLIT_MODULE");
+  }
+
+  // Get the size of the profile and allocate a buffer for it.
+  var len = __write_profile(0, 0);
+  var ptr = _malloc(len);
+
+  // Write the profile data to the buffer.
+  __write_profile(ptr, len);
+
+  // Write the profile file.
+  var profile_data = HEAPU8.subarray(ptr, ptr + len);
+
+  var binary = '';
+  for (var i = 0; i < profile_data.length; i++) {
+      binary += String.fromCharCode(profile_data[i]);
+  }
+  var jsString = btoa(binary);
+
+  // Free the buffer.
+  _free(ptr);
+
+  return stringToNewUTF8(jsString);
+});
+#endif
+
+bool have_write_profile(){
+    return have_write_profile_emjs();
+}
 
 std::string write_split_module_profile(){
     char *str = write_profile();
@@ -930,8 +972,10 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("cidToNeighboursCid",&cidToNeighboursCid);
 
-    //Prints a profile.
+    //Returns a profile.
     function("write_split_module_profile",&write_split_module_profile);
+    //Tests if code is compiled with ability to get split module profile
+    function("have_write_profile",&have_write_profile);
 
     // Fix unbound types for --emit-tsd
     class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");

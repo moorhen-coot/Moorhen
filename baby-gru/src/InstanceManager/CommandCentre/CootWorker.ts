@@ -1369,6 +1369,9 @@ const doCootCommand = (messageData: {
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
+            case "have_write_profile":
+                cootResult = cootModule.have_write_profile()
+                break
             case "is64bit":
                 cootResult = cootModule.is64bit()
                 break

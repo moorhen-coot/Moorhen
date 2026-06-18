@@ -55,10 +55,12 @@ const newVector = () => {
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [busyCopyingProfileToClipboard, setBusyCopyingProfileToClipboard] = useState<boolean>(false);
+    const [doneACopyingProfileToClipboard, setDoneACopyingProfileToClipboard] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
+    const [haveWriteProfile, setHaveWriteProfile] = useState<boolean>(false);
 
     const commandCentre = useCommandCentre();
 
@@ -72,6 +74,20 @@ export const MoorhenDevMenu = () => {
     const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
 
     useEffect(() => {
+
+        const getHaveWriteProfile = async () => {
+            const have_write_profile = (await commandCentre.current.cootCommand(
+                {
+                    returnType: "boolean",
+                    command: "have_write_profile",
+                    commandArgs: [],
+                },
+                false
+            )) as moorhen.WorkerResponse<boolean>;
+            setHaveWriteProfile(have_write_profile.data.result.result);
+        };
+        getHaveWriteProfile();
+        
         dispatch(removeVectors(testVectors));
         const myVecs: MoorhenVector[] = [];
         for (let i = 0; i < 10; i++) {
@@ -422,17 +438,18 @@ export const MoorhenDevMenu = () => {
             <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
                 Show Info Snackbar
             </MoorhenButton>
-            <MoorhenStack direction="row">
+            {haveWriteProfile && <MoorhenStack direction="row">
             <MoorhenButton onClick={() => {
                 setBusyCopyingProfileToClipboard(true)
                 copySplitModuleProfileDataToClipboard()
                 setBusyCopyingProfileToClipboard(false)
+                setDoneACopyingProfileToClipboard(true)
                 }}>
                 Copy split module profile data to clipboard
             </MoorhenButton>
-            {!busyCopyingProfileToClipboard && <DoneIcon/>}
+            {(!busyCopyingProfileToClipboard && doneACopyingProfileToClipboard) && <DoneIcon/>}
             {busyCopyingProfileToClipboard && <HourglassBottomIcon/>}
-            </MoorhenStack>
+            </MoorhenStack>}
         </MoorhenStack>
     );
 };

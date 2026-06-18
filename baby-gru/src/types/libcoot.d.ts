@@ -627,6 +627,7 @@ export namespace libcootApi {
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
         write_split_module_profile(): string;
+        have_write_profile(): boolean;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
