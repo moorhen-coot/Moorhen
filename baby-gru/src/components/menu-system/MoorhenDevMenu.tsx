@@ -94,14 +94,16 @@ export const MoorhenDevMenu = () => {
     // fractional coords.
 
     const printProfileData = async () => {
-            await commandCentre.current.cootCommand(
+            const ret = await commandCentre.current.cootCommand(
                 {
-                    returnType: "status",
+                    returnType: "string",
+                    message: "write_split_module_profile",
                     command: "write_split_module_profile",
                     commandArgs: [],
                 },
                 false
             );
+            console.log(ret.data.result)
     }
 
     const loadGzippedFiles = async (files: FileList) => {

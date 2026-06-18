@@ -1669,6 +1669,14 @@ onmessage = function (e) {
         postMessage({
             messageId: e.data.messageId, resultList
         })
+    } else if (e.data.message === 'write_split_module_profile') {
+        const retValue = cootModule.write_split_module_profile()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: retValue,
+        })
     } else if (e.data.message === 'run_conkit_validate') {
 
         const fileDataPdb = e.data.commandArgs[0]

@@ -1,38 +1,5 @@
 #include "moorhen-wrappers-helpers.h"
 
-EM_JS(void, write_profile, (), {
-  var __write_profile = wasmExports.__write_profile;
-  if (!__write_profile) {
-    return;
-  }
-
-  // Get the size of the profile and allocate a buffer for it.
-  var len = __write_profile(BigInt(0), 0);
-  var ptr = _malloc(len);
-
-  // Write the profile data to the buffer.
-  __write_profile(BigInt(ptr), len);
-
-  // Write the profile file.
-  var profile_data = HEAPU8.subarray(ptr, ptr + len);
-
-  var binary = '';
-  for (var i = 0; i < profile_data.length; i++) {
-      binary += String.fromCharCode(profile_data[i]);
-  }
-  console.log("===BEGIN===");
-  console.log(btoa(binary));
-  console.log("===END===");
-
-  // Free the buffer.
-  _free(ptr);
-});
-
-int write_split_module_profile(molecules_container_t& mc){
-    write_profile();
-    return 0;
-}
-
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
@@ -349,7 +316,5 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_obj", &molecules_container_js::export_metaballs_as_obj)
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
-    //Prints a profile.
-    .function("write_split_module_profile",&write_split_module_profile)
     ;
 }

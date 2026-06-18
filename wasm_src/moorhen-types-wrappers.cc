@@ -1,5 +1,43 @@
 #include "moorhen-wrappers-helpers.h"
 
+EM_JS(char*, write_profile, (), {
+  var __write_profile = wasmExports.__write_profile;
+  if (!__write_profile) {
+    return;
+  }
+
+  // Get the size of the profile and allocate a buffer for it.
+  var len = __write_profile(BigInt(0), 0);
+  var ptr = _malloc(len);
+
+  // Write the profile data to the buffer.
+  __write_profile(BigInt(ptr), len);
+
+  // Write the profile file.
+  var profile_data = HEAPU8.subarray(ptr, ptr + len);
+
+  var binary = '';
+  for (var i = 0; i < profile_data.length; i++) {
+      binary += String.fromCharCode(profile_data[i]);
+  }
+  var jsString = btoa(binary);
+
+  // Free the buffer.
+  _free(ptr);
+
+  return BigInt(stringToNewUTF8(jsString));
+});
+
+std::string write_split_module_profile(){
+    char *str = write_profile();
+    if(str){
+        std::string cpp_str(str);
+        free(str);
+        return cpp_str;
+    }
+    return std::string("");
+}
+
 gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
 
     gemmi::Structure newStructure = st;
@@ -891,6 +929,9 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("run_conkit_validate",&run_conkit_validate_with_exception);
 
     function("cidToNeighboursCid",&cidToNeighboursCid);
+
+    //Prints a profile.
+    function("write_split_module_profile",&write_split_module_profile);
 
     // Fix unbound types for --emit-tsd
     class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");
