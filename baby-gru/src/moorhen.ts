@@ -37,6 +37,7 @@ export { MoorhenValidation } from "./components/validation-tools/MoorhenValidati
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
 export { autoOpenFiles } from "./utils/MoorhenFileLoading";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
+export { MoorhenMenuSystem } from "./components/menu-system/MenuSystem";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
 export type { RootState  } from "./store/MoorhenReduxStore";
 export { useCommandCentre, useCommandAndCapsule, useMoorhenInstance } from '@/InstanceManager';
