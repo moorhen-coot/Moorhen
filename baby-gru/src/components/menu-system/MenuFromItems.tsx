@@ -55,8 +55,6 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                 );
             } else if (menuItem.type === "customJSX") {
                 return <menuItem.jsx key={menuItem.label} />;
-            } else if (menuItem.type === "actualCustomJSX") {
-                return menuItem.jsx;
             } else if (menuItem.type === "preferenceSwitch") {
                 return (
                     <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} key={menuItem.label} />
