@@ -10,6 +10,7 @@
         "rootDir": "./",
         "types": ["node", "./src/types"],
 "lib": [
+    "es2017",
   "esnext",
   "dom",
   "dom.iterable",

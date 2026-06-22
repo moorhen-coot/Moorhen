@@ -1,0 +1,15 @@
+--- CMakeLists.txt	2026-06-17 17:28:30
++++ CMakeLists.txt-new	2026-06-17 17:28:14
+@@ -63,10 +63,12 @@
+ option(EIGEN_BUILD_BLAS "Toggles the building of the Eigen Blas library" ${PROJECT_IS_TOP_LEVEL})
+ option(EIGEN_BUILD_LAPACK "Toggles the building of the included Eigen LAPACK library" ${PROJECT_IS_TOP_LEVEL})
+ if (EIGEN_BUILD_BLAS OR EIGEN_BUILD_LAPACK)
++#[[
+   # Determine if we should build shared libraries for BLAS/LAPACK on this platform.
+   if (NOT EIGEN_BUILD_SHARED_LIBS)
+     get_cmake_property(EIGEN_BUILD_SHARED_LIBS TARGET_SUPPORTS_SHARED_LIBS)
+   endif()
++  ]]
+ endif()
+ 
+ option(EIGEN_BUILD_BTL "Build benchmark suite" OFF)

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Moorhen Dist Preview</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: sans-serif;
+            background: #f3f5f7;
+        }
+
+        main {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        .header {
+            flex: 0 0 auto;
+            background: #ffffff;
+            border: 1px solid #d9dee3;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .header p {
+            margin: 0.35rem 0 0;
+            font-size: 0.875rem;
+            color: #3a4958;
+        }
+
+        moorhen-web-component {
+            flex: 1 1 auto;
+            min-height: 0;
+            border: 1px solid #cfd6de;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="header">
+            <h1>Moorhen Webpack Dist Preview</h1>
+            <p>Loaded from ./dist/moorhen.js with assets from ./dist/public/MoorhenAssets</p>
+        </div>
+
+        <moorhen-web-component id="moorhen-dist-preview" url-prefix="dist/public/MoorhenAssets"></moorhen-web-component>
+    </main>
+
+    <script type="module">
+        import { registerMoorhenWebComponent } from "./dist/moorhen.js";
+        const tStart = performance.now();
+
+        registerMoorhenWebComponent();
+
+        const tAfterRegister = performance.now();
+        await customElements.whenDefined("moorhen-web-component");
+        const tDefined = performance.now();
+
+        const moorhenElement = document.getElementById("moorhen-dist-preview");
+        const moorhenInstance = await moorhenElement.getMoorhenInstance();
+        const tInstanceReady = performance.now();
+
+        await moorhenInstance.files.loadFiles([
+            "dist/public/MoorhenAssets/tutorials/moorhen-tutorial-structure-number-1.ent",
+            "dist/public/MoorhenAssets/tutorials/moorhen-tutorial-map-number-1.mtz"
+        ]);
+        const tFilesLoaded = performance.now();
+
+        console.group("Moorhen dist preview performance");
+        console.log(`registerMoorhenWebComponent(): ${(tAfterRegister - tStart).toFixed(2)} ms`);
+        console.log(`customElements.whenDefined(): ${(tDefined - tAfterRegister).toFixed(2)} ms`);
+        console.log(`getMoorhenInstance(): ${(tInstanceReady - tDefined).toFixed(2)} ms`);
+        console.log(`instance ready (start -> ready): ${(tInstanceReady - tStart).toFixed(2)} ms`);
+        console.log(`tutorial files load: ${(tFilesLoaded - tInstanceReady).toFixed(2)} ms`);
+        console.log(`total (start -> files loaded): ${(tFilesLoaded - tStart).toFixed(2)} ms`);
+        console.groupEnd();
+
+    </script>
+</body>
+</html>

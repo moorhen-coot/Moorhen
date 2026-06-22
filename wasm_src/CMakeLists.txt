@@ -11,6 +11,11 @@ set(lhasa_react_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/LhasaReact)
 # XDATADIR should be "${install_top_dir}/share/data"
 add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
 
+set(coot_rotamer_data_arg_lys
+${coot_src}/rama-data/rota500-arg.data
+${coot_src}/rama-data/rota500-lys.data
+)
+
 set(coot_rotamer_data
 ${coot_src}/rama-data/rota500-pro.data
 ${coot_src}/rama-data/rota500-cys.data
@@ -495,6 +500,9 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
+FILE(MAKE_DIRECTORY "rotarama")
+FILE(MAKE_DIRECTORY "rota_arg_lys")
+FILE(MAKE_DIRECTORY "rota_other")
 FILE(MAKE_DIRECTORY "data/COOT_BACKUP/")
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
@@ -560,12 +568,23 @@ FILE(COPY ../checkout/monomers/a/ADP.cif DESTINATION data/ccp4_lib/data/monomers
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
 FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
-FILE(COPY ../checkout/rotarama DESTINATION data )
-FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
+FILE(COPY ${coot_rotamer_data} DESTINATION rota_other/data/coot/rama-data )
+FILE(COPY ${coot_rotamer_data_arg_lys} DESTINATION rota_arg_lys/data/coot/rama-data )
+FILE(COPY ../checkout/rotarama DESTINATION rotarama/data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
+
+if (EMSCRIPTEN)
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} --version
+        OUTPUT_VARIABLE EMCC_VERSION_OUTPUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" EMCC_VERSION "${EMCC_VERSION_OUTPUT}")
+    message(STATUS "Emscripten version: ${EMCC_VERSION}")
+endif()
 
 add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
@@ -576,7 +595,11 @@ target_link_directories(moorhen PUBLIC
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
+if(${EMCC_VERSION} VERSION_LESS 5.0.8)
+target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+else()
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+endif()
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
@@ -672,7 +695,28 @@ add_custom_target(create_tar ALL COMMAND
     ${CMAKE_COMMAND} -E tar "cfvz" "data.tar.gz" ${CMAKE_CURRENT_BINARY_DIR}/data)
 add_dependencies(create_tar moorhen)
 
+add_custom_target(create_tar_rotarama ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "${CMAKE_CURRENT_BINARY_DIR}/rotarama-data.tar.gz" data
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/rotarama/
+)
+add_dependencies(create_tar_rotarama moorhen)
+
+add_custom_target(create_tar_rota_arg_lys ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "${CMAKE_CURRENT_BINARY_DIR}/rota_arg_lys-data.tar.gz" data
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/rota_arg_lys/
+)
+add_dependencies(create_tar_rota_arg_lys moorhen)
+
+add_custom_target(create_tar_rota_other ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "${CMAKE_CURRENT_BINARY_DIR}/rota_other-data.tar.gz" data
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/rota_other/
+)
+add_dependencies(create_tar_rota_other moorhen)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rotarama-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_arg_lys-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_other-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
@@ -703,7 +747,11 @@ if(${MEMORY64} MATCHES "1")
 target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'])
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)
 else()
+if(${EMCC_VERSION} VERSION_LESS 5.0.8)
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'])
+else()
 target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'] --emit-tsd gemmi.d.ts)
+endif()
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi)
 endif()
 
