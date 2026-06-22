@@ -1,18 +1,8 @@
-import {
-    Popover,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-} from "@mui/material";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
-import { convertViewtoPx, guid } from "../../utils/utils";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../inputs";
 import {  MoorhenStack } from "../interface-base";
 import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
