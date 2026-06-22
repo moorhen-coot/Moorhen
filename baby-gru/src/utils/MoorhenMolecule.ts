@@ -1862,6 +1862,7 @@ export class MoorhenMolecule {
         );
         this.displayObjectsTransformation.origin = [0, 0, 0];
         this.displayObjectsTransformation.quat = null;
+        this.displayObjectsTransformation.centre = [0, 0, 0];
         this.setAtomsDirty(true);
         await this.redraw();
     }

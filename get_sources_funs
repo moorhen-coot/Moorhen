@@ -158,7 +158,8 @@ getgemmi() {
         git clone https://github.com/project-gemmi/gemmi.git gemmi &&\
         cd gemmi &&\
         git checkout $gemmi_release &&\
-        patch -p1 < ../../patches/gemmi-emscripten-64.patch || fail "Failed to clone and patch gemmi"
+        patch -p1 < ../../patches/gemmi-emscripten-64.patch &&\
+        patch -p1 < ../../patches/gemmi-atom-name-trim.patch || fail "Failed to clone and patch gemmi"
     fi
     echo
 }

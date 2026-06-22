@@ -1598,7 +1598,6 @@ onmessage = function (e) {
                     unzipName = "data_tmp/data.tar"
                 }
 
-                //FIXME - Need to consider the case of doUnzip is true.
                 cootModule.FS.mkdir("data_tmp")
                 cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
                 const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
@@ -1608,7 +1607,6 @@ onmessage = function (e) {
                 molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
                 molecules_container.set_refinement_is_verbose(false)
-                molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
                 molecules_container.set_max_number_of_threads(3)
@@ -1617,6 +1615,41 @@ onmessage = function (e) {
             .catch((e) => {
                 console.log(e)
             })
+    }
+
+    else if (e.data.message === 'loadRotamerTables') {
+        molecules_container.fill_rotamer_probability_tables()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Loaded rotamer probability tables`,
+            message: e.data.message,
+            result: { }
+        })
+    }
+    else if (e.data.message === 'loadExtraData') {
+        const fileData = e.data.data.cootData
+
+        let doUnzip = false
+        let unzipName = ""
+
+        let tarFileName = guid()+"data.tar"
+        if(fileData[0]==0x1F && fileData[1]==0x8B){
+            doUnzip = true
+            unzipName = "data_tmp/"+tarFileName
+            tarFileName += ".gz"
+        }
+
+        cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
+        const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
+        cootModule.FS_unlink("data_tmp/"+tarFileName)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Extracted data file`,
+            message: e.data.message,
+            result: { }
+        })
     }
 
     else if (e.data.message === 'close') {
