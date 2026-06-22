@@ -52,14 +52,16 @@ const paths = {
 
 module.exports = (env, argv) => {
     return {
+        experiments: {
+            outputModule: true,
+        },
         output: {
             clean: false,
             path: paths.dist,
             publicPath: "./",
-            library: "moorhen",
-            libraryTarget: "umd",
-            umdNamedDefine: true,
-            globalObject: "this",
+            library: {
+                type: "module",
+            },
         },
         plugins: [
             new webpack.DefinePlugin({

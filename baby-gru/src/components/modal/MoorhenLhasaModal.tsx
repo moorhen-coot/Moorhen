@@ -50,13 +50,14 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
 
     const sendToHostProgramCallback = useCallback(
         async (internalLhasaID: number, id: string, smiles: string, rdkitPickleBase64: string) => {
-            moorhenInstance.files.ligandFromSmiles(smiles, id);
+
+            moorhenInstance.files.ligandFromSmiles(smiles, "NewLig");
         },
         [commandCentre, store, monomerLibraryPath]
     );
 
     const bansuCallback = useCallback((internalLhasaID: number, id: string, cif_string: string) => {
-        moorhenInstance.files.loadCifString(cif_string, id);
+        moorhenInstance.files.loadCifString(cif_string, "NewLig");
     }, []);
 
     return isCootAttached ? (
