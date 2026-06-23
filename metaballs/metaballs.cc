@@ -201,7 +201,70 @@ void smooth_mesh(
     }
 }
 
-void fill_field(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, int ip0, int ip1, std::vector<MC::MC_FLOAT> &field, float cutoff, int ncell_x, int ncell_y, int ncell_z, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z, float cell_x, float cell_y, float cell_z){
+void fill_field(
+    const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
+    int ip0, int ip1,
+    std::vector<MC::MC_FLOAT> &field,
+    float cutoff,
+    int ncell_x, int ncell_y, int ncell_z,
+    float min_x, float min_y, float min_z,
+    float cell_x, float cell_y, float cell_z)
+{
+    for (int ip = ip0; ip < ip1; ip++) {
+
+        float x0 = points[ip].first[0];
+        float y0 = points[ip].first[1];
+        float z0 = points[ip].first[2];
+        float r0 = points[ip].first[3];
+
+        float rr = r0 * r0;
+
+        // ✅ bounded grid region
+        int ix_min = std::max(0, (int)((x0 - cutoff - min_x) / cell_x));
+        int ix_max = std::min(ncell_x - 1, (int)((x0 + cutoff - min_x) / cell_x));
+
+        int iy_min = std::max(0, (int)((y0 - cutoff - min_y) / cell_y));
+        int iy_max = std::min(ncell_y - 1, (int)((y0 + cutoff - min_y) / cell_y));
+
+        int iz_min = std::max(0, (int)((z0 - cutoff - min_z) / cell_z));
+        int iz_max = std::min(ncell_z - 1, (int)((z0 + cutoff - min_z) / cell_z));
+
+        for (int iz = iz_min; iz <= iz_max; iz++) {
+            float z = min_z + iz * cell_z;
+            float dz = z - z0;
+            float zz = dz * dz;
+
+            int idx_z = iz * ncell_x * ncell_y;
+
+            for (int iy = iy_min; iy <= iy_max; iy++) {
+                float y = min_y + iy * cell_y;
+                float dy = y - y0;
+                float yy = dy * dy;
+
+                int idx_y = iy * ncell_x;
+
+                for (int ix = ix_min; ix <= ix_max; ix++) {
+                    float x = min_x + ix * cell_x;
+                    float dx = x - x0;
+                    float xx = dx * dx;
+
+                    float d2 = xx + yy + zz;
+
+                    // optional: skip very small distances
+                    if (d2 < 1e-6f) continue;
+
+                    float s = smoothstep(0.0f, 12.0f, d2);
+                    float inv = 1.0f / (s * 30.0f);
+
+                    int idx = idx_z + idx_y + ix;
+                    field[idx] += rr * inv;
+                }
+            }
+        }
+    }
+}
+
+void fill_field_old(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, int ip0, int ip1, std::vector<MC::MC_FLOAT> &field, float cutoff, int ncell_x, int ncell_y, int ncell_z, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z, float cell_x, float cell_y, float cell_z){
     for(unsigned ip=ip0;ip<ip1;ip++){
         float x0 = points[ip].first[0];
         float y0 = points[ip].first[1];
@@ -302,13 +365,13 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         for(int i=0;i<n_threads;i++){
             int start =     i * np / n_threads;
             int end   = (i+1) * np / n_threads;
-            fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, max_x, max_y, max_z, cell_x, cell_y, cell_z));
+            fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z));
         }
         for(int i=0;i<n_threads;i++){
             fill_threads[i].join();
         }
     } else {
-        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, max_x, max_y, max_z, cell_x, cell_y, cell_z);
+        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
     }
 
     auto t_field = std::chrono::high_resolution_clock::now();
