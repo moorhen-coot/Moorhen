@@ -412,7 +412,6 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         for(int i=0;i<n_threads;i++){
             int start =     i * np_smooth / n_threads;
             int end   = (i+1) * np_smooth / n_threads;
-            //smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), start, end, cutoff, &mesh));
             smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), grid, cell_size, start, end, cutoff, &mesh));
         }
         for(int i=0;i<n_threads;i++){
