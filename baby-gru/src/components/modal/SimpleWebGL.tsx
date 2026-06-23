@@ -101,6 +101,7 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [oldXY, setOldXY] = useState<[number,number]>([-1,-1])
     const [moveDist, setMoveDist] = useState<number>(-1)
+    const mouseButtonRef = useRef<number>(-1)
 
     const [myBuffers, setMyBuffers] = useState<DisplayBuffer[]>([])
 
@@ -186,7 +187,8 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const fit = contentRadiusRef.current * 1.1 * zoom
         const depth = contentRadiusRef.current * 4.0
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -fit, fit, -fit * height/width, fit * height/width, -depth, depth);
+        const [tx, ty] = [origin[0], origin[1]]
+        mat4.ortho(pMatrix, -fit + tx, fit + tx, (-fit * height/width) + ty, (fit * height/width) + ty, -depth, depth);
 
         // Rotate about the origin (the mesh's natural radial centre).
         const mvMatrix = quatToMat4(quat);
@@ -262,6 +264,12 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         return [x,y]
     }
 
+    const handleReset = () => {
+        setZoom(1.0)
+        setOrigin([0, 0, 0])
+        setQuat(quat4.create())
+    }
+
     const handleMouseDown = (evt) => {
 
         if(!canvasRef||!canvasRef.current) return
@@ -270,6 +278,7 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
 
         setOldXY([x,y])
         setMoveDist(0)
+        mouseButtonRef.current = evt.button
 
         setMouseHeldDown(true)
 
@@ -282,7 +291,15 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const [x,y] = getXY(evt)
 
         if(mouseHeldDown){
-            if(!evt.altKey){
+            const dx = x - oldXY[0]
+            const dy = y - oldXY[1]
+            if(mouseButtonRef.current === 1 || (evt.altKey && evt.shiftKey)) {
+                // Middle-button drag or Option+Shift drag: pan in screen space
+                const fit = contentRadiusRef.current * 1.1 * zoom
+                const w = canvasRef.current.width
+                const worldPerPx = 2.0 * fit / w
+                setOrigin([origin[0] - dx * worldPerPx, origin[1] + dy * worldPerPx, 0])
+            } else if(!evt.altKey){
                 const rot_x_axis = vec3.create()
                 const rot_y_axis = vec3.create()
                 vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
@@ -326,8 +343,9 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const margin = 1.1
         const pickRadius = (props.pickRadius && props.pickRadius > 0) ? props.pickRadius : contentRadiusRef.current
         const k = contentRadiusRef.current / pickRadius
-        const ux = (2.0*(x/width) - 1.0) * margin * zoom * k
-        const uy = (2.0*(y/height) - 1.0) * margin * zoom * k
+
+        const ux = (2.0*(x/width) - 1.0) * margin * zoom * k + origin[0] / pickRadius
+        const uy = (2.0*(y/height) - 1.0) * margin * zoom * k - origin[1] / pickRadius
         const r2 = ux*ux + uy*uy
         if(r2 > 1.0) return null
         const uz = Math.sqrt(1.0 - r2)
@@ -382,7 +400,6 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         canvasRef.current.addEventListener("mouseup", handleMouseUp , false)
         // Non-passive so preventDefault() can stop the container/page scroll.
         canvasRef.current.addEventListener("wheel", handleWheel , { passive: false })
-
         return () => {
             if (canvasRef.current !== null) {
                 canvasRef.current.removeEventListener("mousemove", handleMouseMove)
@@ -423,7 +440,7 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
 
     useEffect(() => {
         plotTheData()
-    }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom,myBuffers])
+    }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom,myBuffers,origin])
 
     return (
         <>
@@ -434,6 +451,19 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
+                <div style={{position: "absolute", bottom: 8, right: 8, display: "flex", flexDirection: "column", gap: 2, zIndex: 1}}>
+                    {[
+                        { label: "+", title: "Zoom in", onClick: () => setZoom(z => Math.max(0.1, z * 0.8)) },
+                        { label: "−", title: "Zoom out", onClick: () => setZoom(z => Math.min(5.0, z * 1.25)) },
+                        { label: "⌂", title: "Reset view", onClick: handleReset },
+                    ].map(({ label, title, onClick }) => (
+                        <button key={label} title={title} onClick={onClick} style={{
+                            width: 28, height: 28, padding: 0, lineHeight: 1,
+                            fontSize: "1rem", cursor: "pointer", border: "1px solid #888",
+                            borderRadius: 4, background: "rgba(40,40,40,0.85)", color: "#eee",
+                        }}>{label}</button>
+                    ))}
+                </div>
                 </figure>
                 </div>
             </MoorhenStack>
@@ -441,4 +471,3 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         </>
     );
 }
-
