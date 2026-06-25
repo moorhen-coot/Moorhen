@@ -128,7 +128,7 @@ export const windowGemmiLoader = (src: string) => {
             .then(src => {
                 console.debug(src + " loaded 64-bit successfully.");
                 /* eslint-disable no-undef */
-                createCoot64Module({
+                createGemmi64Module({
                     print(t) {
                         console.debug(["output", t]);
                     },
@@ -145,7 +145,7 @@ export const windowGemmiLoader = (src: string) => {
                 loadScript(`${src}/gemmi.js`).then(src => {
                     console.debug(src + " loaded 32-bit successfully (fallback).");
                     /* eslint-disable no-undef */
-                    createCootModule({
+                    createGemmiModule({
                         /* eslint-enable no-undef */
                         print(t) {
                             console.debug(["output", t]);
@@ -162,7 +162,7 @@ export const windowGemmiLoader = (src: string) => {
         loadScript(`${src}/gemmi.js`).then(src => {
             console.debug(src + " loaded 32-bit successfully.");
             /* eslint-disable no-undef */
-            createCootModule({
+            createGemmiModule({
                 print(t) {
                     console.debug(["output", t]);
                 },

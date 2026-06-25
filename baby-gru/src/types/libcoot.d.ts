@@ -8,6 +8,8 @@ declare global {
     function print(arg0: string): void;
     function createCoot64Module(arg0: any): Promise<libcootApi.CootModule>;
     function createCootModule(arg0: any): Promise<libcootApi.CootModule>;
+    function createGemmi64Module(arg0: any): Promise<any>; //FIXME
+    function createGemmiModule(arg0: any): Promise<any>; //FIXME
 }
 
 export namespace libcootApi {
