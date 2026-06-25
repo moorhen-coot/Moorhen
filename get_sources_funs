@@ -171,7 +171,7 @@ getmonomers() {
     else
         echo "Checking out monomers subset"
         #git clone https://github.com/MonomerLibrary/monomers monomers
-        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list &&\
+        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/k monomers/n monomers/z monomers/list &&\
         cd monomers &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ALA.cif -o a/ALA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASP.cif -o a/ASP.cif &&\
@@ -212,6 +212,11 @@ getmonomers() {
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NA.cif -o n/NA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ATP.cif -o a/ATP.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ADP.cif -o a/ADP.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/k/K.cif -o k/K.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CA.cif -o c/CA.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MG.cif -o m/MG.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NI.cif -o n/NI.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/z/ZN.cif -o z/ZN.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/ener_lib.cif -o ener_lib.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/list/mon_lib_list.cif -o list/mon_lib_list.cif || fail "Failed to download monomers"
     fi

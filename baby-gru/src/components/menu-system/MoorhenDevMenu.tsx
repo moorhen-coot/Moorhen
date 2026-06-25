@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { enqueueSnackbar, setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -19,7 +20,7 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { readGzippedTextFile } from "../../utils/utils";
-import { MoorhenFileInput, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 import { MoorhenLinearProgress } from "../icons";
@@ -314,6 +315,27 @@ export const MoorhenDevMenu = () => {
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
             Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
+            <MoorhenStack card>
+                set Origin
+                <MoorhenNumberInput
+                    value={origin[0]}
+                    setValue={val => {
+                        dispatch(setOrigin([val, origin[1], origin[2]]));
+                    }}
+                />
+                <MoorhenNumberInput
+                    value={origin[1]}
+                    setValue={val => {
+                        dispatch(setOrigin([origin[0], val, origin[2]]));
+                    }}
+                />
+                <MoorhenNumberInput
+                    value={origin[2]}
+                    setValue={val => {
+                        dispatch(setOrigin([origin[0], origin[1], val]));
+                    }}
+                />
+            </MoorhenStack>
             <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal({ key: modalKeys.VECTORS }));

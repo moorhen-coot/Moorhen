@@ -57,10 +57,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return isVisible;
     });
 
-    const reContourMapOnlyOnMouseUp = useSelector((state: RootState) => {
-        const reContourOnMouseUp = state.mapContourSettings.reContourMapOnlyOnMouseUp;
-        return reContourOnMouseUp || false;
-    });
     const isOriginLocked = useSelector((state: RootState) => {
         const mapItem = state.maps.find(item => item.molNo === mapMolNo);
         return mapItem?.isOriginLocked || false;
@@ -87,8 +83,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
                 ? "lit-lines"
                 : store.getState().mapContourSettings.defaultMapSurface
-                  ? "solid"
-                  : "lines";
+                    ? "solid"
+                    : "lines";
             return defaultStyle;
         }
         return style.style;
@@ -152,16 +148,18 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             let contourLevel = 1;
             if (map.isEM) {
                 contourLevel = map?.isDifference ? 5 * map.mapRmsd : map?.suggestedContourLevel;
+
             } else {
                 contourLevel = map?.isDifference ? 3 * map.mapRmsd : 1 * map.mapRmsd;
             }
+
 
             if (map.showOnLoad) {
                 dispatch(showMap(map));
                 dispatch(setMapRadius({ molNo: mapMolNo, radius: mapRadius }));
                 dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
                 dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: storeContourLevel ?? contourLevel }));
-                dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
+                dispatch(setMapStyle({ molNo: mapMolNo, style: map.isEM ? "solid" : mapStyle }));
             }
         };
         intialiseMap();
@@ -197,8 +195,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     return (
         <>
             {mapIsVisible &&
-                !isOriginLocked &&
-                (!reContourMapOnlyOnMouseUp ? <MapOriginListener drawMap={drawMap} /> : <MapOriginListenerMouseUp drawMap={drawMap} />)}
+                <MapOriginListener drawMap={drawMap} mapUID={map.uniqueId} />}
 
             {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
 
