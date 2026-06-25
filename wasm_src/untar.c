@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/errno.h>
+#include <errno.h>
 
 /* This is for mkdir(); this may need to be changed for some platforms. */
 #include <sys/stat.h>  /* For mkdir() */
