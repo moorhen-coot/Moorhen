@@ -6,6 +6,9 @@
         "*": {
             "vite-plugin": [
                 "scripts/VitePlugin.d.ts"
+            ],
+            "types/*": [
+                "types/*"
             ]
         }
     },
@@ -25,6 +28,10 @@
         "./web-component/utils": {
             "types": "./types/src/WebComponent/utils/entry.d.ts",
             "default": "./MoorhenWebComponentUtils.js"
+        },
+        "./types/*": {
+            "types": "./types/*",
+            "default": "./types/*"
         }
     },
     "homepage": "./",
@@ -195,7 +202,7 @@
         "react-dom": "^19.2.0",
         "react-redux": "^9.2.0",
         "rollup": "^4.52.5",
-        "esbuild":"0.28.0",
+        "esbuild": "0.28.0",
         "sass": "^1.93.2",
         "sass-loader": "^16.0.5",
         "style-loader": "^4.0.0",

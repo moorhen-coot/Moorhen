@@ -637,6 +637,8 @@ export const autoOpenFiles = async (
             } finally {
                 document.body.click();
             }
+        } else {
+            console.log("File unknown file type, skipping... " + file.name);
         }
     }
     if (moleculesCreated.length > 0) {

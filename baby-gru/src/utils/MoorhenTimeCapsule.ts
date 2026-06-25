@@ -206,7 +206,6 @@ export type Overlay2DSessionData = {
 export class MoorhenTimeCapsule {
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map | null>;
     busy: boolean;
     modificationCount: number;
@@ -217,47 +216,6 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: Store;
     onIsBusyChange: (arg0: boolean) => void;
-    getBackupLabel: (key: backupKey) => string;
-    loadSessionData: (
-        sessionData: backupSession,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromArrayBuffer: (
-        sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromProtoMessage: (
-        sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromJsonString: (
-        sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
@@ -839,6 +797,7 @@ export class MoorhenTimeCapsule {
                 return -1;
             }
         }
+        timeCapsuleRef.current.setBusy(true);
 
         // Delete current scene
         molecules.forEach(molecule => {
@@ -962,7 +921,7 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance,
+                        item.neighboursDistance
                     );
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
@@ -1171,6 +1130,7 @@ export class MoorhenTimeCapsule {
             });
         }
 
+        timeCapsuleRef.current.setBusy(false);
         return 0;
     }
 
@@ -1194,7 +1154,6 @@ export class MoorhenTimeCapsule {
         maps: moorhen.Map[],
         commandCentre: React.RefObject<moorhen.CommandCentre>,
         timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
         store: Store,
         dispatch: Dispatch<AnyAction>
     ): Promise<number> {
