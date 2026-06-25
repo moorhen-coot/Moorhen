@@ -7,9 +7,11 @@ declare global {
     namespace JSX {}
     interface Window {
         _cootModuleLoading: boolean;
+        _gemmiModuleLoading: boolean;
         _mathJaxLoading: boolean;
         CCP4Module: libcootApi.CCP4ModuleType;
         cootModule: libcootApi.CCP4ModuleType;
+        gemmiModule: any; //FIXME !!!
         MathJax: any;
     }
     declare module "*.svg" {
