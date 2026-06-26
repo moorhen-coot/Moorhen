@@ -48,11 +48,17 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * map.delete();
 */
 
+type mapHeaderInfo = {
+    spacegroup: string;
+    cell: libcootApi.mapCellJS;
+    resolution: number;
+};
+
 export class MoorhenMap {
-    type: string;
+    type: "map";
     name: string;
     fileHeader: MRCHeaderJson | MTZHeaderJson;
-    headerInfo: moorhen.mapHeaderInfo;
+    headerInfo: mapHeaderInfo;
     isEM: boolean;
     molNo: number;
     store: Store;
@@ -86,7 +92,6 @@ export class MoorhenMap {
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store) {
         this.type = "map";
-        this.name = "unnamed";
         this.headerInfo = null;
         this.store = reduxStore;
         this.isEM = false;
@@ -267,7 +272,7 @@ export class MoorhenMap {
             if (Object.keys(selectedColumns).includes("isDifference")) {
                 this.isDifference = selectedColumns.isDifference;
             }
-            await this.getSuggestedSettings();
+            // await this.getSuggestedSettings();
             this.dataOrigin = "mtz";
             return this;
         } catch (err) {
@@ -354,7 +359,7 @@ export class MoorhenMap {
             }
             this.molNo = reply.data.result.result;
             this.isDifference = isDiffMap;
-            await this.getSuggestedSettings();
+            // await this.getSuggestedSettings();
             return this;
         } catch (err) {
             console.warn(err);
@@ -452,7 +457,7 @@ export class MoorhenMap {
                     };
                     await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData);
                     newMap.dataOrigin = "mtz";
-                    await newMap.getSuggestedSettings();
+                    // await newMap.init();
                     return newMap;
                 })
         );
@@ -1148,10 +1153,34 @@ export class MoorhenMap {
         this.suggestedMapWeight = (50 * 0.3) / this.mapRmsd;
     }
 
+    getSimpleHeaderInfo(): mapHeaderInfo {
+        let headerInfo: mapHeaderInfo
+        if (this.dataOrigin === "mtz"){
+            const fileHeader = this.fileHeader as MTZHeaderJson
+            const cell = fileHeader.records.dcell[0].cell ?? fileHeader.records.cell ?? [1, 1, 1, 90, 90, 90]
+            headerInfo = {
+                cell: { a: cell[0], b: cell[1], c: cell[2], alpha: cell[3], beta: cell[4], gamma: cell[5] },
+                spacegroup: fileHeader.records.syminf?.spaceGroupName ?? "P 1",
+                resolution: fileHeader.records.reso?.high ?? -1
+            }
+        } else if (this.dataOrigin === "mapFile" ) {
+            const fileHeader = this.fileHeader as MRCHeaderJson
+            headerInfo = {
+                cell: { a: fileHeader.unitCell.cella[0], b: fileHeader.unitCell.cella[1], c: fileHeader.unitCell.cella[2], alpha: fileHeader.unitCell.cellb[0], beta: fileHeader.unitCell.cellb[1], gamma: fileHeader.unitCell.cellb[2] },
+                spacegroup: "P 1",
+                resolution: fileHeader.sampling[0]
+            }
+        }
+
+        return headerInfo
+    }
+
+
+
     /**
      * Get suggested contour level, radius and map centre for this map instance
      */
-    async getSuggestedSettings(): Promise<void> {
+    async initialise(): Promise<void> {
         // const response = (await this.commandCentre.current.cootCommand(
         //     {
         //         command: "is_EM_map",
@@ -1163,7 +1192,11 @@ export class MoorhenMap {
 
         // this.isEM = response.data.result.result;
 
-        const headerInfo = await this.fetchHeaderInfo();
+        const headerInfo = this.getSimpleHeaderInfo();
+        console.log("header info", headerInfo);
+        if (headerInfo === undefined) {
+            throw new Error("Header info is not defined");
+        }
         this.headerInfo = headerInfo;
 
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
@@ -1401,80 +1434,80 @@ export class MoorhenMap {
         return result.data.result.result;
     }
 
-    async fetchHeaderInfo(): Promise<moorhen.mapHeaderInfo> {
-        const headerInfo: moorhen.mapHeaderInfo = {
-            spacegroup: "",
-            cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
-            resolution: -1,
-        };
+    // async fetchHeaderInfo(): Promise<moorhen.mapHeaderInfo> {
+    //     const headerInfo: moorhen.mapHeaderInfo = {
+    //         spacegroup: "",
+    //         cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
+    //         resolution: -1,
+    //     };
 
-        const cell = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_cell",
-                commandArgs: [this.molNo],
-                returnType: "map_cell_info_t",
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
+    //     const cell = (await this.commandCentre.current.cootCommand(
+    //         {
+    //             command: "get_map_cell",
+    //             commandArgs: [this.molNo],
+    //             returnType: "map_cell_info_t",
+    //         },
+    //         false
+    //     )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
 
-        headerInfo.cell.a = cell.data.result.result.a;
-        headerInfo.cell.b = cell.data.result.result.b;
-        headerInfo.cell.c = cell.data.result.result.c;
-        headerInfo.cell.alpha = cell.data.result.result.alpha;
-        headerInfo.cell.beta = cell.data.result.result.beta;
-        headerInfo.cell.gamma = cell.data.result.result.gamma;
+    //     headerInfo.cell.a = cell.data.result.result.a;
+    //     headerInfo.cell.b = cell.data.result.result.b;
+    //     headerInfo.cell.c = cell.data.result.result.c;
+    //     headerInfo.cell.alpha = cell.data.result.result.alpha;
+    //     headerInfo.cell.beta = cell.data.result.result.beta;
+    //     headerInfo.cell.gamma = cell.data.result.result.gamma;
 
-        const sg = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_spacegroup",
-                commandArgs: [this.molNo],
-                returnType: "clipper_spacegroup",
-            },
-            false
-        )) as moorhen.WorkerResponse<string>;
-        headerInfo.spacegroup = sg.data.result.result;
+    //     const sg = (await this.commandCentre.current.cootCommand(
+    //         {
+    //             command: "get_map_spacegroup",
+    //             commandArgs: [this.molNo],
+    //             returnType: "clipper_spacegroup",
+    //         },
+    //         false
+    //     )) as moorhen.WorkerResponse<string>;
+    //     headerInfo.spacegroup = sg.data.result.result;
 
-        const resol = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_data_resolution",
-                commandArgs: [this.molNo],
-                returnType: "number",
-            },
-            false
-        )) as moorhen.WorkerResponse<number>;
-        headerInfo.resolution = resol.data.result.result;
+    //     const resol = (await this.commandCentre.current.cootCommand(
+    //         {
+    //             command: "get_map_data_resolution",
+    //             commandArgs: [this.molNo],
+    //             returnType: "number",
+    //         },
+    //         false
+    //     )) as moorhen.WorkerResponse<number>;
+    //     headerInfo.resolution = resol.data.result.result;
 
-        return headerInfo;
-    }
+    //     return headerInfo;
+    // }
 
-    // This is a duplicate of fetchHeaderInfo, but fetching map_resolution at the laoding time of the map seem to cause an error.
-    // This is needed to calculate max radius of the EM map
-    async fetchCellInfo(): Promise<moorhen.mapHeaderInfo> {
-        const headerInfo: moorhen.mapHeaderInfo = {
-            spacegroup: "",
-            cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
-            resolution: -1,
-        };
-        const cell = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_cell",
-                commandArgs: [this.molNo],
-                returnType: "map_cell_info_t",
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
+    // // This is a duplicate of fetchHeaderInfo, but fetching map_resolution at the laoding time of the map seem to cause an error.
+    // // This is needed to calculate max radius of the EM map
+    // async fetchCellInfo(): Promise<moorhen.mapHeaderInfo> {
+    //     const headerInfo: moorhen.mapHeaderInfo = {
+    //         spacegroup: "",
+    //         cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
+    //         resolution: -1,
+    //     };
+    //     const cell = (await this.commandCentre.current.cootCommand(
+    //         {
+    //             command: "get_map_cell",
+    //             commandArgs: [this.molNo],
+    //             returnType: "map_cell_info_t",
+    //         },
+    //         false
+    //     )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
 
-        headerInfo.cell.a = cell.data.result.result.a;
-        headerInfo.cell.b = cell.data.result.result.b;
-        headerInfo.cell.c = cell.data.result.result.c;
-        headerInfo.cell.alpha = cell.data.result.result.alpha;
-        headerInfo.cell.beta = cell.data.result.result.beta;
-        headerInfo.cell.gamma = cell.data.result.result.gamma;
+    //     headerInfo.cell.a = cell.data.result.result.a;
+    //     headerInfo.cell.b = cell.data.result.result.b;
+    //     headerInfo.cell.c = cell.data.result.result.c;
+    //     headerInfo.cell.alpha = cell.data.result.result.alpha;
+    //     headerInfo.cell.beta = cell.data.result.result.beta;
+    //     headerInfo.cell.gamma = cell.data.result.result.gamma;
 
-        this.headerInfo = headerInfo;
+    //     this.headerInfo = headerInfo;
 
-        return headerInfo;
-    }
+    //     return headerInfo;
+    // }
 
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;

@@ -14,6 +14,7 @@ import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
+import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeRepresentation";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -94,14 +95,14 @@ const readCoordsString = async (
     return newMolecule;
 };
 
-export const drawModels = async (newMolecules: moorhen.Molecule[]) => {
-    const drawPromises: Promise<void>[] = [];
+export const drawModels = async (newMolecules: MoorhenMolecule[], representation : RepresentationStyles) => {
+    const drawPromises: Promise<MoleculeRepresentation>[] = [];
     if (newMolecules.length === 0) {
         return;
     }
 
     for (const newMolecule of newMolecules) {
-        drawPromises.push(newMolecule.fetchIfDirtyAndDraw("CRs"));
+        drawPromises.push(newMolecule.addRepresentation(representation));
     }
     await Promise.all(drawPromises);
 };
@@ -300,7 +301,7 @@ const loadCoordinateFilesFromFileList = async (
 export const loadMrParseFiles = async (
     files: File[],
     commandCentre,
-    store,
+    store: MoorhenReduxStoreType,
     monomerLibraryPath,
     backgroundColor,
     defaultBondSmoothness,
@@ -318,7 +319,9 @@ export const loadMrParseFiles = async (
         defaultBondSmoothness
     );
 
-    await drawModels(newMolecules);
+    const state = store.getState()
+
+    await drawModels(newMolecules, state.generalStates.defaultMoleculeRepresentation);
     dispatch(addMoleculeList(newMolecules));
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
@@ -395,7 +398,7 @@ const loadCoordinateFilesFromURL = async (
 export const loadMrParseUrl = async (
     urlBase,
     commandCentre,
-    store,
+    store: MoorhenReduxStoreType,
     monomerLibraryPath,
     backgroundColor,
     defaultBondSmoothness,
@@ -413,7 +416,9 @@ export const loadMrParseUrl = async (
         defaultBondSmoothness
     );
 
-    await drawModels(newMolecules);
+    const state = store.getState()
+
+    await drawModels(newMolecules, state.generalStates.defaultMoleculeRepresentation);
     dispatch(addMoleculeList(newMolecules));
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
@@ -476,10 +481,13 @@ export const autoOpenFiles = async (
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number,
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
+
     dispatch: Dispatch
 ) => {
     const molecules = store.getState().molecules.moleculeList;
     const maps = store.getState().maps;
+
+    const state = store.getState();
 
     let isMrParse = false;
     let isRelionLocresFolder = false;
@@ -548,7 +556,7 @@ export const autoOpenFiles = async (
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
-                await drawModels([newMolecule]);
+                await drawModels([newMolecule], state.generalStates.defaultMoleculeRepresentation);
                 dispatch(addMoleculeList([newMolecule]));
                 moleculesCreated.push(newMolecule);
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
@@ -563,6 +571,10 @@ export const autoOpenFiles = async (
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
             for (const map in newMaps) {
                 newMaps[map].fileHeader = header;
+                newMaps[map].dataOrigin = "mtz"
+                await newMaps[map].initialise()
+                console.log("Read mtz data", header)
+                returnValues.push({ type: "map", uniqueID: newMaps[map].uniqueId, molNo: newMaps[map].molNo, fileName: file.name });
             }
             if (newMaps.length === 0) {
                 dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
@@ -599,6 +611,8 @@ export const autoOpenFiles = async (
                 if (file.name.endsWith(".mrc") || file.name.endsWith(".mrc.gz")) {
                     const header = await readMRCHeader(file);
                     newMap.fileHeader = header;
+                    newMap.dataOrigin = "mapFile"
+                    await newMap.initialise()
                     console.log(`Read MRC header for file ${file.name}`, header);
                 }
                 const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
