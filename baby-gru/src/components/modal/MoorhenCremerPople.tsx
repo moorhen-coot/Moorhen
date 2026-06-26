@@ -124,7 +124,6 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
            <div style={{ margin: "0.2rem", minHeight: "1.2rem" }}>
                {pickedResidue ? `Selected residue: ${pickedResidue}` : "Click a pinpoint to select its residue"}
            </div>
-           <button onClick={handleExportGltf}>Export as glTF (.glb)</button>
         </>
     )
 }
