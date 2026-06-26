@@ -7,19 +7,11 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
-import {
-    centreOnGemmiAtoms,
-    cidToSpec,
-    copyStructureSelection,
-    countResiduesInSelection,
-    gemmiAtomPairsToCylindersInfo,
-    gemmiAtomsToCirclesSpheresInfo,
-    getCubeLines,
-    guid,
-} from "./utils";
+
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState, useRef } from "react"; 
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../store/vectorsSlice"
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
 
 export type RepresentationStyles =
     | "VdwSpheres"
@@ -1348,6 +1340,10 @@ export class MoleculeRepresentation {
         let colorStyle: string = "";
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
+
+
+
+
 
         let ssUsageScheme;
         if (this.useDefaultM2tParams) {

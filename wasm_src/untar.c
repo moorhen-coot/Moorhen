@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 /* This is for mkdir(); this may need to be changed for some platforms. */
 #include <sys/stat.h>  /* For mkdir() */
@@ -50,7 +51,17 @@ system_mkdir(char *pathname, int mode)
 	(void)mode; /* UNUSED */
 	return _mkdir(pathname);
 #else
-	return mkdir(pathname, mode);
+	int ret;
+        ret = mkdir(pathname, mode);
+        if(ret!=0){
+            //We dont' care if the directory already exists.
+            if (errno == EEXIST) {
+                return 0;
+            } else {
+                return ret;
+            }
+        }
+        return 0;
 #endif
 }
 

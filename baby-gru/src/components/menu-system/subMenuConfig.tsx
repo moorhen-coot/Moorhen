@@ -65,10 +65,6 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
-export type MenuItemSlider = BaseMenuItem & {
-    type: "customJSX";
-    jsx: (aeg0: any) => React.JSX.Element;
-};
 
 export type MenuItemSubMenu = BaseMenuItem & {
     type: "subMenu";

@@ -142,7 +142,7 @@ describe("Testing MoorhenMap", () => {
         const f_2 = jest.spyOn(map, 'fetchMapRmsd')
         const f_3 = jest.spyOn(map, 'fetchMapCentre')
         const f_4 = jest.spyOn(map, 'setDefaultColour')
-        const f_5 = jest.spyOn(map, 'fetchSuggestedLevel')
+        const f_5 = jest.spyOn(map, 'fetchSuggestedLevelXtal')
         const f_6 = jest.spyOn(map, 'estimateMapWeight')
 
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })

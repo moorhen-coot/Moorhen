@@ -41,7 +41,7 @@ const initialState: {
     disableFileUpload: boolean;
 } = {
     devMode: null,
-    useGemmi: null,
+    useGemmi: true,
     userPreferencesMounted: false,
     appTitle: "Moorhen",
     cootInitialized: false,

@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <unordered_map>
+#include <cmath>
 
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
@@ -23,85 +25,246 @@ float smoothstep(float edge0, float edge1, float x)
     return x*x*(3 - 2 * x);
 }
 
-void smooth_mesh(const std::vector<std::pair<std::array<float,4>,std::array<float,4> > > &points, int ip0, int ip1, float cutoff, moorhenMesh *mesh){
-    //Smooth the mesh by computing normals based on field gradient
+struct CellKey {
+    int x, y, z;
 
-    int np = points.size();
+    bool operator==(const CellKey& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+};
 
-    for(unsigned ii=ip0;ii<ip1;ii++){
-        float x = mesh->vertices[ii].x;
-        float y = mesh->vertices[ii].y;
-        float z = mesh->vertices[ii].z;
+struct CellKeyHash {
+    std::size_t operator()(const CellKey& k) const {
+        return ((std::hash<int>()(k.x) * 73856093) ^
+                (std::hash<int>()(k.y) * 19349663) ^
+                (std::hash<int>()(k.z) * 83492791));
+    }
+};
 
-        float dx = mesh->vertices[ii].x+.02;
-        float dy = mesh->vertices[ii].y+.02;
-        float dz = mesh->vertices[ii].z+.02;
+using Grid = std::unordered_map<CellKey, std::vector<unsigned>, CellKeyHash>;
 
-        float f = 0.0;
-        float f_dx = 0.0;
-        float f_dy = 0.0;
-        float f_dz = 0.0;
+Grid build_grid(
+    const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
+    float cell_size)
+{
+    Grid grid;
+    grid.reserve(points.size());
 
-        std::vector<std::pair<unsigned,float> > idx_frac_pair_vec;
+    for (unsigned i = 0; i < points.size(); i++) {
+        const auto &p = points[i].first;
 
-        for(unsigned ip=0;ip<np;ip++){
-            float x0 = points[ip].first[0];
-            float y0 = points[ip].first[1];
-            float z0 = points[ip].first[2];
-            float r0 = points[ip].first[3];
+        int ix = static_cast<int>(std::floor(p[0] / cell_size));
+        int iy = static_cast<int>(std::floor(p[1] / cell_size));
+        int iz = static_cast<int>(std::floor(p[2] / cell_size));
 
-            if(fabs(z-z0)>cutoff) continue;
-            if(fabs(x-x0)>cutoff) continue;
-            if(fabs(y-y0)>cutoff) continue;
+        grid[{ix, iy, iz}].push_back(i);
+    }
 
-            float rr = r0 * r0;
+    return grid;
+}
 
-            float xx = (x - x0)*(x - x0);
-            float yy = (y - y0)*(y - y0);
-            float zz = (z - z0)*(z - z0);
+inline CellKey get_cell(float x, float y, float z, float cell_size) {
+    return {
+        static_cast<int>(std::floor(x / cell_size)),
+        static_cast<int>(std::floor(y / cell_size)),
+        static_cast<int>(std::floor(z / cell_size))
+    };
+}
 
-            float sumsq = xx+yy+zz;
-            if(sumsq<22.){
-                float frac = 1.0-smoothstep(0.3,2.8,sumsq);
-                std::pair<unsigned,float> idx_frac_pair;
-                idx_frac_pair.first = ip;
-                idx_frac_pair.second = frac;
-                idx_frac_pair_vec.push_back(idx_frac_pair);
+
+void smooth_mesh(
+    const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
+    const Grid &grid,
+    float cell_size,
+    int ip0, int ip1,
+    float cutoff,
+    moorhenMesh *mesh)
+{
+    const float cutoff_neg = -cutoff;
+
+    // Reusable buffer (NO reallocations per vertex)
+    std::vector<std::pair<unsigned,float>> idx_frac_pair_vec;
+    idx_frac_pair_vec.reserve(64);
+
+    for (int ii = ip0; ii < ip1; ii++) {
+
+        const auto &v = mesh->vertices[ii];
+
+        float x = v.x;
+        float y = v.y;
+        float z = v.z;
+
+        float dx = x + 0.02f;
+        float dy = y + 0.02f;
+        float dz = z + 0.02f;
+
+        float f = 0.0f;
+        float f_dx = 0.0f;
+        float f_dy = 0.0f;
+        float f_dz = 0.0f;
+
+        idx_frac_pair_vec.clear();
+
+        CellKey base = get_cell(x, y, z, cell_size);
+
+        // Only check nearby cells (27 max)
+        for (int cx = -1; cx <= 1; cx++) {
+            for (int cy = -1; cy <= 1; cy++) {
+                for (int cz = -1; cz <= 1; cz++) {
+
+                    CellKey key{base.x + cx, base.y + cy, base.z + cz};
+
+                    auto it = grid.find(key);
+                    if (it == grid.end()) continue;
+
+                    const auto &cell_pts = it->second;
+
+                    for (unsigned ip : cell_pts) {
+
+                        const auto &pt = points[ip].first;
+
+                        float x0 = pt[0];
+                        float y0 = pt[1];
+                        float z0 = pt[2];
+                        float r0 = pt[3];
+
+                        float dx0 = x - x0;
+                        if (dx0 > cutoff || dx0 < cutoff_neg) continue;
+
+                        float dy0 = y - y0;
+                        if (dy0 > cutoff || dy0 < cutoff_neg) continue;
+
+                        float dz0 = z - z0;
+                        if (dz0 > cutoff || dz0 < cutoff_neg) continue;
+
+                        float xx = dx0 * dx0;
+                        float yy = dy0 * dy0;
+                        float zz = dz0 * dz0;
+
+                        float sumsq = xx + yy + zz;
+                        if (sumsq >= 22.f) continue;
+
+                        float rr = r0 * r0;
+
+                        float inv = 1.0f / sumsq;
+                        float val = rr * inv;
+
+                        f += val;
+
+                        // gradient (reuse partial sums)
+                        float yz = yy + zz;
+                        float xz = xx + zz;
+                        float xy = xx + yy;
+
+                        float dxx = (dx - x0)*(dx - x0);
+                        float dyy = (dy - y0)*(dy - y0);
+                        float dzz = (dz - z0)*(dz - z0);
+
+                        f_dx += rr / (dxx + yz);
+                        f_dy += rr / (xx + dyy + zz);
+                        f_dz += rr / (xx + yy + dzz);
+
+                        // weight for color
+                        float frac = 1.0f - smoothstep(0.3f, 2.8f, sumsq);
+                        idx_frac_pair_vec.emplace_back(ip, frac);
+                    }
+                }
             }
-
-            float dxx = (dx - x0)*(dx - x0);
-            float dyy = (dy - y0)*(dy - y0);
-            float dzz = (dz - z0)*(dz - z0);
-
-            f_dx += rr / (dxx + yy + zz);
-            f_dy += rr / (xx + dyy + zz);
-            f_dz += rr / (xx + yy + dzz);
-
-            f += rr / (xx + yy + zz);
         }
 
-        float totFrac = 0.0;
-        for(unsigned ip=0;ip<idx_frac_pair_vec.size();ip++){
-            totFrac += idx_frac_pair_vec[ip].second;
-        }
-        std::array<float,4> theColor{0.0,0.0,0.0,0.0};
-        if(idx_frac_pair_vec.size()>0 && fabs(totFrac)>1e-4){
-            for(unsigned ip=0;ip<idx_frac_pair_vec.size();ip++){
-                theColor[0] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[0] / totFrac;
-                theColor[1] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[1] / totFrac;
-                theColor[2] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[2] / totFrac;
-                theColor[3] += idx_frac_pair_vec[ip].second * points[idx_frac_pair_vec[ip].first].second[3] / totFrac;
-            }
+        // ✅ single-pass color accumulation
+        float totFrac = 0.0f;
+        std::array<float,4> theColor{0,0,0,0};
+
+        for (const auto &p : idx_frac_pair_vec) {
+            float w = p.second;
+            totFrac += w;
+
+            const auto &c = points[p.first].second;
+            theColor[0] += w * c[0];
+            theColor[1] += w * c[1];
+            theColor[2] += w * c[2];
+            theColor[3] += w * c[3];
         }
 
-        MC::mcVec3f new_norm({f_dx-f,f_dy-f,f_dz-f});
+        if (totFrac > 1e-4f) {
+            float inv = 1.0f / totFrac;
+            for (int k = 0; k < 4; k++)
+                theColor[k] *= inv;
+        }
+
+        MC::mcVec3f new_norm({f_dx - f, f_dy - f, f_dz - f});
         new_norm = MC::mc_internalNormalize(new_norm);
+
         mesh->normals[ii] = new_norm;
         mesh->colors[ii] = theColor;
     }
 }
 
-void fill_field(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, int ip0, int ip1, std::vector<MC::MC_FLOAT> &field, float cutoff, int ncell_x, int ncell_y, int ncell_z, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z, float cell_x, float cell_y, float cell_z){
+void fill_field(
+    const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
+    int ip0, int ip1,
+    std::vector<MC::MC_FLOAT> &field,
+    float cutoff,
+    int ncell_x, int ncell_y, int ncell_z,
+    float min_x, float min_y, float min_z,
+    float cell_x, float cell_y, float cell_z)
+{
+    for (int ip = ip0; ip < ip1; ip++) {
+
+        float x0 = points[ip].first[0];
+        float y0 = points[ip].first[1];
+        float z0 = points[ip].first[2];
+        float r0 = points[ip].first[3];
+
+        float rr = r0 * r0;
+
+        // ✅ bounded grid region
+        int ix_min = std::max(0, (int)((x0 - cutoff - min_x) / cell_x));
+        int ix_max = std::min(ncell_x - 1, (int)((x0 + cutoff - min_x) / cell_x));
+
+        int iy_min = std::max(0, (int)((y0 - cutoff - min_y) / cell_y));
+        int iy_max = std::min(ncell_y - 1, (int)((y0 + cutoff - min_y) / cell_y));
+
+        int iz_min = std::max(0, (int)((z0 - cutoff - min_z) / cell_z));
+        int iz_max = std::min(ncell_z - 1, (int)((z0 + cutoff - min_z) / cell_z));
+
+        for (int iz = iz_min; iz <= iz_max; iz++) {
+            float z = min_z + iz * cell_z;
+            float dz = z - z0;
+            float zz = dz * dz;
+
+            int idx_z = iz * ncell_x * ncell_y;
+
+            for (int iy = iy_min; iy <= iy_max; iy++) {
+                float y = min_y + iy * cell_y;
+                float dy = y - y0;
+                float yy = dy * dy;
+
+                int idx_y = iy * ncell_x;
+
+                for (int ix = ix_min; ix <= ix_max; ix++) {
+                    float x = min_x + ix * cell_x;
+                    float dx = x - x0;
+                    float xx = dx * dx;
+
+                    float d2 = xx + yy + zz;
+
+                    // optional: skip very small distances
+                    if (d2 < 1e-6f) continue;
+
+                    float s = smoothstep(0.0f, 12.0f, d2);
+                    float inv = 1.0f / (s * 30.0f);
+
+                    int idx = idx_z + idx_y + ix;
+                    field[idx] += rr * inv;
+                }
+            }
+        }
+    }
+}
+
+void fill_field_old(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, int ip0, int ip1, std::vector<MC::MC_FLOAT> &field, float cutoff, int ncell_x, int ncell_y, int ncell_z, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z, float cell_x, float cell_y, float cell_z){
     for(unsigned ip=ip0;ip<ip1;ip++){
         float x0 = points[ip].first[0];
         float y0 = points[ip].first[1];
@@ -202,13 +365,13 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         for(int i=0;i<n_threads;i++){
             int start =     i * np / n_threads;
             int end   = (i+1) * np / n_threads;
-            fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, max_x, max_y, max_z, cell_x, cell_y, cell_z));
+            fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z));
         }
         for(int i=0;i<n_threads;i++){
             fill_threads[i].join();
         }
     } else {
-        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, max_x, max_y, max_z, cell_x, cell_y, cell_z);
+        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
     }
 
     auto t_field = std::chrono::high_resolution_clock::now();
@@ -237,6 +400,10 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     auto t_mesh = std::chrono::high_resolution_clock::now();
 
     //Smooth the mesh by computing normals based on field gradient
+
+    float cell_size = cutoff;
+    Grid grid = build_grid(points, cell_size);
+
     int np_smooth = mesh.vertices.size();
     std::array<float,4> theColor{0.5,0.5,0.5,1.0};
     mesh.colors.resize(np_smooth,theColor);
@@ -245,13 +412,13 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         for(int i=0;i<n_threads;i++){
             int start =     i * np_smooth / n_threads;
             int end   = (i+1) * np_smooth / n_threads;
-            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), start, end, cutoff, &mesh));
+            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), grid, cell_size, start, end, cutoff, &mesh));
         }
         for(int i=0;i<n_threads;i++){
             smooth_threads[i].join();
         }
     } else {
-        smooth_mesh(points, 0, np_smooth, cutoff, &mesh);
+        smooth_mesh(points, grid, cell_size, 0, np_smooth, cutoff, &mesh);
     }
 
     auto t_smooth = std::chrono::high_resolution_clock::now();
