@@ -13,6 +13,7 @@ import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -466,6 +467,7 @@ const readCifDictionary = async (
     }
     return newMonomers;
 };
+
 export const autoOpenFiles = async (
     files: File[],
     commandCentre: React.RefObject<moorhen.CommandCentre>,
@@ -552,7 +554,16 @@ export const autoOpenFiles = async (
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
+            let header: MTZHeaderJson;
+            try {
+                header = await readMTZHeader(file);
+            } catch (err) {
+                console.warn("Failed to parse MTZ header", err);
+            }
             const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
+            for (const map in newMaps) {
+                newMaps[map].fileHeader = header;
+            }
             if (newMaps.length === 0) {
                 dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
             } else {
@@ -585,6 +596,11 @@ export const autoOpenFiles = async (
         ) {
             try {
                 const newMap = new MoorhenMap(commandCentre, store);
+                if (file.name.endsWith(".mrc") || file.name.endsWith(".mrc.gz")) {
+                    const header = await readMRCHeader(file);
+                    newMap.fileHeader = header;
+                    console.log(`Read MRC header for file ${file.name}`, header);
+                }
                 const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
@@ -621,6 +637,8 @@ export const autoOpenFiles = async (
             } finally {
                 document.body.click();
             }
+        } else {
+            console.log("File unknown file type, skipping... " + file.name);
         }
     }
     if (moleculesCreated.length > 0) {

@@ -6,6 +6,7 @@ import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
+import { MRCHeaderJson, MTZHeaderJson } from "./mapHeaders";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -28,7 +29,8 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
- *
+ *import { MoorhenInstance } from '.';
+
  * // Create a new map
  * const map = new MoorhenMap(commandCentre, glRef);
  *
@@ -49,6 +51,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
 export class MoorhenMap {
     type: string;
     name: string;
+    fileHeader: MRCHeaderJson | MTZHeaderJson;
     headerInfo: moorhen.mapHeaderInfo;
     isEM: boolean;
     molNo: number;
@@ -78,6 +81,8 @@ export class MoorhenMap {
     defaultPositiveMapColour: { r: number; g: number; b: number };
     defaultNegativeMapColour: { r: number; g: number; b: number };
     autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre | null>, store: Store) => Promise<moorhen.Map[]>;
+    dataOrigin: "mtz" | "mapFile";
+    originShift: [number, number, number];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store) {
         this.type = "map";
@@ -228,6 +233,7 @@ export class MoorhenMap {
             if (selectedColumns.calcStructFact) {
                 await this.associateToReflectionData(selectedColumns, asUIntArray);
             }
+            this.dataOrigin = "mtz";
             return this;
         } catch (err) {
             console.log(err);
@@ -262,6 +268,7 @@ export class MoorhenMap {
                 this.isDifference = selectedColumns.isDifference;
             }
             await this.getSuggestedSettings();
+            this.dataOrigin = "mtz";
             return this;
         } catch (err) {
             return Promise.reject(err);
@@ -274,8 +281,7 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzFile = async function (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        //const $this = this likely not needed here
+    loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
         const reflectionData = await source.arrayBuffer();
         const asUIntArray = new Uint8Array(reflectionData);
         await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns);
@@ -445,11 +451,11 @@ export class MoorhenMap {
                         calcStructFact: true,
                     };
                     await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData);
+                    newMap.dataOrigin = "mtz";
                     await newMap.getSuggestedSettings();
                     return newMap;
                 })
         );
-
         return newMaps;
     }
 
@@ -753,9 +759,13 @@ export class MoorhenMap {
         style: "solid" | "lines" | "lit-lines"
     ): Promise<void> {
         if (this.isOriginLocked) {
-            x = Math.abs(this.cellCentre[0]);
-            y = Math.abs(this.cellCentre[1]);
-            z = Math.abs(this.cellCentre[2]);
+            if (this.drawOrigin === null) {
+                this.drawOrigin = [-x, -y, -z];
+            } else {
+                x = -this.drawOrigin[0];
+                y = -this.drawOrigin[1];
+                z = -this.drawOrigin[2];
+            }
         }
 
         let returnType: string;
@@ -1040,7 +1050,7 @@ export class MoorhenMap {
      * Get the suggested level for this map instance (only for MX maps)
      * @returns {number} The suggested map contour level
      */
-    async fetchSuggestedLevel(): Promise<number> {
+    async fetchSuggestedLevelXtal(): Promise<number> {
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "get_suggested_initial_contour_level",
@@ -1060,13 +1070,49 @@ export class MoorhenMap {
         return result.data.result.result;
     }
 
-    async guessMapRange(): Promise<[number, number]> {
+    async guessMapRangeAndLevel(): Promise<[number, number, number]> {
         const n_bins = 400;
         const histogram = await this.getHistogram(n_bins, 1);
         const maxRange = histogram.bin_width * n_bins - histogram.base;
         const precison = Math.pow(10, -Math.abs(Math.floor(Math.log10(maxRange / 200))));
         this.levelRange = [precison, maxRange];
-        return [precison, maxRange];
+
+        //** this is quite an empirical approach but it looks like it works reasonably well */
+        // Filter out bins with negative density values
+        const filteredData = histogram.counts.reduce<{ counts: number[]; labels: string[] }>(
+            (acc, count, index) => {
+                const binValue = histogram.base + histogram.bin_width * (index + 1);
+                if (binValue >= 0) {
+                    acc.counts.push(count);
+                    acc.labels.push(binValue.toFixed(this.isEM ? 4 : 2));
+                }
+                return acc;
+            },
+            { counts: [], labels: [] }
+        );
+
+        // Convert counts to log10 scale
+        const logData = filteredData.counts.map(count => (count > 0 ? Math.log10(count) : 0));
+
+        // Find the density level where a third of the total log counts are below and two-thirds above
+        const totalLogCount = logData.reduce((sum, value) => sum + value, 0);
+        const halfTotal = totalLogCount / 3;
+        let cumulative = 0;
+        let halfLevelIndex = 0;
+        for (let i = 0; i < logData.length; i++) {
+            cumulative += logData[i];
+            if (cumulative >= halfTotal) {
+                halfLevelIndex = i;
+                break;
+            }
+        }
+        const halfLevel = histogram.bin_width * (halfLevelIndex + 1);
+
+        if (this.isEM) {
+            this.suggestedContourLevel = halfLevel;
+        }
+
+        return [precison, maxRange, halfLevel];
     }
 
     /**
@@ -1085,14 +1131,9 @@ export class MoorhenMap {
 
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number];
-            if (this.isEM) {
-                this.suggestedContourLevel = response.data.result.result.suggested_contour_level;
-                this.suggestedRadius = response.data.result.result.suggested_radius;
-                this.isOriginLocked = true;
-            }
         } else {
-            console.log("Problem finding map centre");
-            this.mapCentre = null;
+            console.log("Problem finding map centre from coot, using cell centre instead");
+            this.mapCentre = this.cellCentre;
         }
 
         return this.mapCentre;
@@ -1112,27 +1153,92 @@ export class MoorhenMap {
      * Get suggested contour level, radius and map centre for this map instance
      */
     async getSuggestedSettings(): Promise<void> {
-        const response = (await this.commandCentre.current.cootCommand(
-            {
-                command: "is_EM_map",
-                commandArgs: [this.molNo],
-                returnType: "boolean",
-            },
-            false
-        )) as moorhen.WorkerResponse<boolean>;
+        // const response = (await this.commandCentre.current.cootCommand(
+        //     {
+        //         command: "is_EM_map",
+        //         commandArgs: [this.molNo],
+        //         returnType: "boolean",
+        //     },
+        //     false
+        // )) as moorhen.WorkerResponse<boolean>;
 
-        this.isEM = response.data.result.result;
+        // this.isEM = response.data.result.result;
 
+        const headerInfo = await this.fetchHeaderInfo();
+        this.headerInfo = headerInfo;
+
+        this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
+        console.log("headerInfo", headerInfo);
+        if (
+            headerInfo.spacegroup === "P 1" &&
+            headerInfo.cell.alpha < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.alpha > Math.PI / 2 - 0.0001 &&
+            headerInfo.cell.beta < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.beta > Math.PI / 2 - 0.0001 &&
+            headerInfo.cell.gamma < Math.PI / 2 + 0.0001 &&
+            headerInfo.cell.gamma > Math.PI / 2 - 0.0001
+        ) {
+            this.isEM = true;
+        }
+        if (this.isEM) {
+            this.isOriginLocked = true;
+        }
         await Promise.all([
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
-            this.fetchMapCentre(),
             this.setDefaultColour(),
+            this.fetchMapCentre(),
             this.fetchMapMean(),
-            !this.isEM && this.fetchSuggestedLevel(),
-            this.guessMapRange(),
+            !this.isEM && this.fetchSuggestedLevelXtal(),
+            this.guessMapRangeAndLevel(),
         ]);
-        const headerInfo = await this.fetchCellInfo();
-        this.cellCentre = [headerInfo.cell.a / 2, headerInfo.cell.b / 2, headerInfo.cell.c / 2];
+
+        if (this.isEM) {
+
+            
+            if (this.dataOrigin === "mtz")
+                {   console.log("Trying to find density centre of mass for EM map with MTZ origin");
+                    const densityCenter = await this.get_map_density_center_of_mass();
+                    
+                    this.originShift = densityCenter.map(coord => -coord) as [number, number, number];
+                    this.drawOrigin = densityCenter.map(coord => -coord) as [number, number, number];
+                    this.mapCentre = densityCenter.map(coord => -coord) as [number, number, number];
+
+                    //This is not great but get map bounding sphere doesn't work on repetitive cells
+                    this.suggestedRadius = Math.min(headerInfo.cell.a, headerInfo.cell.b, headerInfo.cell.c) / 2 - 1;
+                } else {
+                    console.log("Trying to find bounding sphere for EM map with non-MTZ origin");
+                    const result = await this.getMapBoundingSphere(this.suggestedContourLevel);
+                    this.mapCentre = result.center.map(coord => -coord) as [number, number, number];
+                    this.drawOrigin = result.center.map(coord => -coord) as [number, number, number];
+                this.suggestedRadius = result.radius;}
+        }
+    }
+
+    async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
+        const result = this.commandCentre.current.cootCommand(
+            {
+                command: "get_map_bounding_sphere",
+                commandArgs: [this.molNo, thresold],
+            },
+            false
+        );
+
+        const response = await result;
+        const results = response.data.result.result;
+        return { center: [results.position[0], results.position[1], results.position[2]], radius: results.value };
+    }
+
+    async get_map_density_center_of_mass(positive_only: boolean = true): Promise<[number, number, number]> {
+            const response = (await this.commandCentre.current.cootCommand(
+                {
+                    command: "find_density_center_of_mass",
+                    commandArgs: [this.molNo, positive_only],
+                },
+                false
+            )) as moorhen.WorkerResponse<number[]>;
+
+            const results = response.data.result.result;
+            return [results[0], results[1], results[2]];
     }
 
     async fetchMapMean() {
@@ -1157,6 +1263,12 @@ export class MoorhenMap {
      * Set the view in the centre of this map instance
      */
     async centreOnMap(): Promise<void> {
+        console.log("Centring on map with molNo", this.molNo);
+        console.log("Map centre is", this.mapCentre, "and cell centre is", this.cellCentre, "and draw origin is", this.drawOrigin);
+        if (this.isOriginLocked) {
+            this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
+            return;
+        }
         if (this.mapCentre === null) {
             await this.fetchMapCentre();
             if (this.mapCentre === null) {

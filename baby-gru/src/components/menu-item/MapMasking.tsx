@@ -1,5 +1,6 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
+import { usePersistentState } from "@/hooks";
 import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
@@ -20,24 +21,20 @@ export const MapMasking = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
-    const [invertFlag, setInvertFlag] = useState<boolean>(false);
-    const [useDefaultMaskRadius, setUseDefaultMaskRadius] = useState<boolean>(true);
+    const [invertFlag, setInvertFlag] = usePersistentState<boolean>("map-masking", "invertFlag", false);
+    const [useDefaultMaskRadius, setUseDefaultMaskRadius] = usePersistentState<boolean>("map-masking", "useDefaultMaskRadius", true);
+    const [maskRadius, setMaskRadius] = usePersistentState<number>("map-masking", "radius", 2.5);
     const [, setMaskType] = useState<string>("molecule");
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const maskTypeSelectRef = useRef<null | HTMLSelectElement>(null);
-    const invertFlagRef = useRef<null | HTMLInputElement>(null);
-    const maskRadiusFormRef = useRef<null | HTMLInputElement>(null);
-    const useDefaultMaskRadiusRef = useRef<null | HTMLInputElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidInputRef = useRef<null | HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
 
-    const menuItemText = "Map masking...";
-
-    const onCompleted = useCallback(async () => {
+    const onCompleted = async () => {
         if (!mapSelectRef.current.value || !moleculeSelectRef.current.value) {
             return;
         }
@@ -70,16 +67,11 @@ export const MapMasking = () => {
                 break;
         }
 
-        const maskRadius = useDefaultMaskRadiusRef.current.checked ? -1 : parseFloat(maskRadiusFormRef.current?.value || "0");
-        if (!maskRadius) {
-            console.log("Mask radius is invalid...");
-            return;
-        }
         const result = (await commandCentre.current.cootCommand(
             {
                 returnType: "status",
                 command: "mask_map_by_atom_selection",
-                commandArgs: [molNo, mapNo, cidLabel, maskRadius, invertFlagRef.current.checked],
+                commandArgs: [molNo, mapNo, cidLabel, useDefaultMaskRadius ? 2.5 : maskRadius, invertFlag],
             },
             false
         )) as moorhen.WorkerResponse<number>;
@@ -91,79 +83,76 @@ export const MapMasking = () => {
             await newMap.getSuggestedSettings();
             newMap.isDifference = selectedMap.isDifference;
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
-            batch(() => {
-                dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
-                dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
-                dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
-                dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
-                dispatch(hideMap(selectedMap));
-                dispatch(addMap(newMap));
-            });
+            dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
+            dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
+            dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
+            dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
+            dispatch(hideMap(selectedMap));
+            dispatch(addMap(newMap));
         }
-    }, [commandCentre, maps]);
+    };
 
     return (
         <>
             <MoorhenStack inputGrid>
-            <MoorhenSelect
-                label="Create mask by..."
-                ref={maskTypeSelectRef}
-                defaultValue={"molecule"}
-                onChange={evt => {
-                    setMaskType(evt.target.value);
-                    maskTypeSelectRef.current.value = evt.target.value;
-                }}
-            >
-                <option value={"molecule"} key={"molecule"}>
-                    By molecule
-                </option>
-                <option value={"chain"} key={"chain"}>
-                    By chain
-                </option>
-                <option value={"ligand"} key={"ligand"}>
-                    By ligand
-                </option>
-                <option value={"cid"} key={"cid"}>
-                    By atom selection
-                </option>
-            </MoorhenSelect>
-            <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
-            <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
-            {maskTypeSelectRef.current?.value === "cid" && (
-                <MoorhenCidInputForm width="20rem" margin="0.5rem" ref={cidInputRef} allowUseCurrentSelection={true} />
-            )}
-            {maskTypeSelectRef.current?.value === "chain" && (
-                <MoorhenChainSelect
-                    molecules={molecules}
-                    selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
-                    ref={chainSelectRef}
-                />
-            )}
-            {maskTypeSelectRef.current?.value === "ligand" && (
-                <MoorhenLigandSelect
-                    molecules={molecules}
-                    selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
-                    ref={ligandSelectRef}
-                />
-            )}
-            {!useDefaultMaskRadius && (
-                <MoorhenNumberInput ref={maskRadiusFormRef} value={2.5} label="Mask radius" allowNegativeValues={false} type="number" />
-            )}
+                <MoorhenSelect
+                    label="Create mask by..."
+                    ref={maskTypeSelectRef}
+                    defaultValue={"molecule"}
+                    onChange={evt => {
+                        setMaskType(evt.target.value);
+                        maskTypeSelectRef.current.value = evt.target.value;
+                    }}
+                >
+                    <option value={"molecule"} key={"molecule"}>
+                        By molecule
+                    </option>
+                    <option value={"chain"} key={"chain"}>
+                        By chain
+                    </option>
+                    <option value={"ligand"} key={"ligand"}>
+                        By ligand
+                    </option>
+                    <option value={"cid"} key={"cid"}>
+                        By atom selection
+                    </option>
+                </MoorhenSelect>
+                <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
+                <MoorhenMoleculeSelect molecules={molecules} allowAny={false} ref={moleculeSelectRef} />
+                {maskTypeSelectRef.current?.value === "cid" && (
+                    <MoorhenCidInputForm width="20rem" margin="0.5rem" ref={cidInputRef} allowUseCurrentSelection={true} />
+                )}
+                {maskTypeSelectRef.current?.value === "chain" && (
+                    <MoorhenChainSelect
+                        molecules={molecules}
+                        selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
+                        ref={chainSelectRef}
+                    />
+                )}
+                {maskTypeSelectRef.current?.value === "ligand" && (
+                    <MoorhenLigandSelect
+                        molecules={molecules}
+                        selectedCoordMolNo={parseInt(moleculeSelectRef.current?.value)}
+                        ref={ligandSelectRef}
+                    />
+                )}
+                {!useDefaultMaskRadius && (
+                    <MoorhenNumberInput
+                        value={maskRadius}
+                        setValue={setMaskRadius}
+                        label="Mask radius"
+                        allowNegativeValues={false}
+                        type="number"
+                    />
+                )}
             </MoorhenStack>
             <MoorhenToggle
-                ref={useDefaultMaskRadiusRef}
                 type="switch"
                 checked={useDefaultMaskRadius}
                 onChange={() => setUseDefaultMaskRadius(!useDefaultMaskRadius)}
                 label="Use default mask radius"
             />
-            <MoorhenToggle
-                ref={invertFlagRef}
-                type="switch"
-                checked={invertFlag}
-                onChange={() => setInvertFlag(!invertFlag)}
-                label="Invert mask"
-            />
+            <MoorhenToggle type="switch" checked={invertFlag} onChange={() => setInvertFlag(!invertFlag)} label="Invert mask" />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );

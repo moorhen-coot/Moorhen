@@ -1468,11 +1468,13 @@ export class MoorhenMolecule {
         // Check if the first argument is a MoleculeRepresentation instance
         if (styleOrRepresentation instanceof MoleculeRepresentation) {
             representation = styleOrRepresentation;
+            representation.setParentMolecule(this);
         } else {
             // Create a new representation from individual parameters
             const style = styleOrRepresentation as moorhen.RepresentationStyles;
             representation = new MoleculeRepresentation(style, cid, this.commandCentre);
             representation.isCustom = isCustom;
+            representation.setParentMolecule(this);
             representation.setColourRules(colourRules);
             representation.setBondOptions(bondOptions);
             representation.setM2tParams(m2tParams);
@@ -1486,7 +1488,6 @@ export class MoorhenMolecule {
             representation.neighboursDistance = neighboursDistance;
         }
 
-        representation.setParentMolecule(this);
         await representation.draw();
         this.representations.push(representation);
         await this.drawSymmetry(false);
@@ -1863,6 +1864,7 @@ export class MoorhenMolecule {
         );
         this.displayObjectsTransformation.origin = [0, 0, 0];
         this.displayObjectsTransformation.quat = null;
+        this.displayObjectsTransformation.centre = [0, 0, 0];
         this.setAtomsDirty(true);
         await this.redraw();
     }
@@ -2543,10 +2545,11 @@ export class MoorhenMolecule {
         let newMolecules: moorhen.Molecule[] = [];
         const command = fitRightHere ? "fit_ligand_right_here" : "fit_ligand";
         const returnType = fitRightHere ? "int_array" : "fit_ligand_info_array";
+        const eigen_orientation_search_mode = 2
 
         const commandArgs = fitRightHere
-            ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount]
-            : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount];
+            ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount, eigen_orientation_search_mode]
+            : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount, eigen_orientation_search_mode];
 
         const result = (await this.commandCentre.current.cootCommand(
             {

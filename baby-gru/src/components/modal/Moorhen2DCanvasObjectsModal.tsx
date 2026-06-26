@@ -210,11 +210,23 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                 })
             );
         } else if (objectType === "latex") {
+            let [new_x, new_y] = [0, 1];
+            try {
+                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
+                if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
+                    new_x = _new_x;
+                    new_y = _new_y;
+                } else {
+                    console.log("Not a valid number pair in latex text position.", positionText.split(","));
+                }
+            } catch (e) {
+                console.log("Not a valid number pair in latex text position.");
+            }
             dispatch(
                 addLatexOverlay({
                     text: theOverlayObject.text,
-                    x: theOverlayObject.x,
-                    y: theOverlayObject.y,
+                    x: new_x,
+                    y: new_y,
                     height: theOverlayObject.height,
                     uniqueId: theOverlayObject.uniqueId,
                     zIndex: theOverlayObject.zIndex,

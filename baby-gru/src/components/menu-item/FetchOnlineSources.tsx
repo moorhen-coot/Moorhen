@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { RootState, enqueueSnackbar, showModal } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { MoorhenInstance, useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { setBusy } from "../../store/globalUISlice";
 import { addMap } from "../../store/mapsSlice";
@@ -28,6 +28,7 @@ export const FetchOnlineSources = () => {
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
+    const moorhenInstance = useMoorhenInstance();
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const [fetchExtra, setFetchExtra] = usePersistentState("file", "fetch-extra", false, true);
 
@@ -81,13 +82,9 @@ export const FetchOnlineSources = () => {
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`;
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`;
         if (pdbCode && fetchExtra) {
-            Promise.all([
-                fetchMoleculeFromURL(coordUrl, pdbCode),
-                fetchMapFromURL(mapUrl, `${pdbCode}-map`),
-                fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true),
-            ]);
+            moorhenInstance.files.loadFiles([coordUrl, mapUrl, diffMapUrl], "PDBe");
         } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, pdbCode);
+            moorhenInstance.files.loadFiles(coordUrl, "PDBe");
         }
     };
 

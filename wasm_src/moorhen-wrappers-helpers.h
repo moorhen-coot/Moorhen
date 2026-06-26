@@ -1073,6 +1073,94 @@ class molecules_container_js : public molecules_container_t {
             return sg;
         }
 
+static double circular_center_of_mass(const std::vector<double>& proj)
+{
+    const double twopi = 2.0 * M_PI;
+
+    double sx = 0.0;
+    double sy = 0.0;
+
+    const int n = int(proj.size());
+
+    for (int i = 0; i < n; i++)
+    {
+        const double rho = proj[i];
+
+        if (rho <= 0.0)
+            continue;
+
+        const double theta = twopi * double(i) / double(n);
+
+        sx += rho * std::cos(theta);
+        sy += rho * std::sin(theta);
+    }
+
+    if (sx == 0.0 && sy == 0.0)
+        return 0.0;
+
+    double theta = std::atan2(sy, sx);
+
+    if (theta < 0.0)
+        theta += twopi;
+
+    return theta / twopi;
+}
+
+
+std::array<float,3> find_density_center_of_mass(
+        int imol,
+        bool positive_only = true)
+{
+    using namespace clipper;
+    auto xMap = (*this)[imol].xmap;
+
+    const Grid_sampling grid = xMap.grid_sampling();
+
+    const int nu = grid.nu();
+    const int nv = grid.nv();
+    const int nw = grid.nw();
+
+    std::vector<double> proj_u(nu, 0.0);
+    std::vector<double> proj_v(nv, 0.0);
+    std::vector<double> proj_w(nw, 0.0);
+
+    // accumulate 1D projections
+    for (Xmap<float>::Map_reference_index ix = xMap.first();
+         !ix.last();
+         ix.next())
+    {
+        const Coord_grid g = ix.coord();
+
+        const int u = g.u();
+        const int v = g.v();
+        const int w = g.w();
+
+        double rho = xMap[ix];
+
+        if (positive_only && rho < 0.0)
+            continue;
+
+        proj_u[u] += rho;
+        proj_v[v] += rho;
+        proj_w[w] += rho;
+    }
+
+    // periodic center of mass in fractional coordinates
+    const double fu = circular_center_of_mass(proj_u);
+    const double fv = circular_center_of_mass(proj_v);
+    const double fw = circular_center_of_mass(proj_w);
+
+    // convert to orthogonal coordinates
+    const Coord_frac cf(fu, fv, fw);
+    const Coord_orth co = cf.coord_orth(xMap.cell());
+
+    return {
+        float(co.x()),
+        float(co.y()),
+        float(co.z())
+    };
+}
+
 
     std::pair<std::array<float,3>,float> get_map_bounding_sphere(int imol, double threshold)
     {

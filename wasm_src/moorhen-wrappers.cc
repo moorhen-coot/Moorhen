@@ -287,6 +287,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("get_map_cell",&molecules_container_js::get_map_cell)
     .function("get_map_spacegroup",&molecules_container_js::get_map_spacegroup)
     .function("get_map_bounding_sphere",&molecules_container_js::get_map_bounding_sphere)
+    .function("find_density_center_of_mass",&molecules_container_js::find_density_center_of_mass)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
