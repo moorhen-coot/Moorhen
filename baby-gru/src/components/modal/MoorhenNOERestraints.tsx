@@ -1,4 +1,4 @@
-import { Form, Row, Stack } from "react-bootstrap";
+// import { Form, Row, Stack } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setValidationJson } from "../../store/jsonValidation";
 import { moorhen } from "../../types/moorhen";
@@ -507,14 +507,14 @@ export const MoorhenNOERestraints = () => {
             {/* </MoorhenStack> */}
 
             {/* RIGHT: File input */}
-            <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="uploadMrParse">
+            {/* <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="uploadMrParse">
                 <Form.Control
                     type="file"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         loadNEF(e.target.files);
                     }}
                 />
-            </Form.Group>
+            </Form.Group> */}
         </MoorhenStack>
     );
     return (
