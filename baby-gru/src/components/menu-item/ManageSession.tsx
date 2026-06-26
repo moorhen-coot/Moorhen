@@ -117,7 +117,7 @@ export const ManageSession = () => {
                 />
             </label>
             <hr className="moorhen_menu-hr"></hr>
-            <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
+            <MoorhenMenuItem id="save-session-menu-item" onClick={() => {createBackup()}} disabled={!enableTimeCapsule}>
                 Save in-browser backup
             </MoorhenMenuItem>
             <MoorhenMenuItemPopover menuItemText="Load in-browser Backup">

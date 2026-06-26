@@ -75,6 +75,7 @@ export class MoorhenMap {
     mapRmsd: number;
     mapMean: number;
     suggestedMapWeight: number;
+    mapWeight: number;
     otherMapForColouring: { molNo: number; min: number; max: number };
     diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
@@ -105,6 +106,7 @@ export class MoorhenMap {
         this.mapRmsd = null;
         this.mapMean = null;
         this.suggestedMapWeight = null;
+        this.mapWeight = 0;
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
@@ -121,19 +123,32 @@ export class MoorhenMap {
     /**
      * Helper function to set this map instance as the "active" map for refinement
      */
-    async setActive(): Promise<void> {
-        await this.commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "set_imol_refinement_map",
-                commandArgs: [this.molNo],
-            },
-            false
-        );
-        if (this.suggestedMapWeight === null) {
-            await this.estimateMapWeight();
+    private _isActive: boolean;
+    async setActive(activate: boolean) {
+        if (activate) {
+            await this.commandCentre.current.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_imol_refinement_map",
+                    commandArgs: [this.molNo],
+                },
+                false
+            );
+            if (this.suggestedMapWeight === null) {
+                await this.estimateMapWeight();
+            }
+            if (!this.mapWeight) {
+                this.mapWeight = this.suggestedMapWeight;
+            }
+            await this.setMapWeight();
+            this._isActive = true;
+        } else {
+            this._isActive = false;
         }
-        await this.setMapWeight();
+    }
+
+    get active() {
+        return this._isActive;
     }
 
     /**
@@ -475,21 +490,25 @@ export class MoorhenMap {
      * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
-    setMapWeight(weight?: number): Promise<moorhen.WorkerResponse> {
+    setMapWeight(weight?: number) {
         let newWeight: number;
         if (typeof weight !== "undefined") {
             newWeight = weight;
         } else {
-            newWeight = this.suggestedMapWeight;
+            newWeight = this.mapWeight;
         }
-        return this.commandCentre.current.cootCommand(
-            {
-                returnType: "status",
-                command: "set_map_weight",
-                commandArgs: [newWeight],
-            },
-            false
-        );
+
+        console.log(`Setting map weight to ${newWeight}`);
+        if (this.active) {
+            this.commandCentre.current.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_map_weight",
+                    commandArgs: [newWeight],
+                },
+                false
+            );
+        }
     }
 
     /**
@@ -1141,11 +1160,13 @@ export class MoorhenMap {
     /**
      * Estimate the map weight based on the map rmsd
      */
-    async estimateMapWeight(): Promise<void> {
-        if (this.mapRmsd === null) {
-            await this.fetchMapRmsd();
-        }
-        this.suggestedMapWeight = (50 * 0.3) / this.mapRmsd;
+    estimateMapWeight() {
+        // if (this.mapRmsd === null) {
+        //     await this.fetchMapRmsd();
+        // }
+        const weight = (50 * 0.3) / this.mapRmsd;
+        this.suggestedMapWeight = weight;
+        return weight;
     }
 
     /**

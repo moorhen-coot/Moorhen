@@ -256,10 +256,10 @@ export const MoorhenDifferenceMapPeaks = (props: { chartId: string }) => {
                 <MoorhenSlider
                     minVal={2.5}
                     maxVal={7.0}
-                    logScale={false}
+                    scale="linear"
                     sliderTitle="RMSD"
-                    externalValue={selectedRmsd}
-                    setExternalValue={value => setSelectedRmsd(value)}
+                    value={selectedRmsd}
+                    setValue={value => setSelectedRmsd(value)}
                 />
             }
             extraControlFormValue={selectedRmsd}

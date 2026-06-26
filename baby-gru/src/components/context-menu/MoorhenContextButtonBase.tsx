@@ -1,4 +1,3 @@
-import { ClickAwayListener, IconButton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -9,6 +8,7 @@ import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
 import "./context-menu.css";
+import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 
 const MoorhenPopoverOptions = (props: {
     showContextMenu: false | moorhen.AtomRightClickEventInfo;
@@ -59,7 +59,7 @@ const MoorhenPopoverOptions = (props: {
     }, [handleRightClick]);
 
     return (
-        <ClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
+        <MoorhenClickAwayListener onClickAway={() => props.setShowOverlay(false)}>
             <MoorhenStack direction="vertical">
                 <MoorhenSelect label={props.label} key={props.label} ref={selectRef} defaultValue={defaultValue}>
                     {props.options.map(optionName => {
@@ -74,7 +74,7 @@ const MoorhenPopoverOptions = (props: {
                 {props.extraInput?.(extraInputRef)}
                 <MoorhenButton onClick={handleClick}>OK</MoorhenButton>
             </MoorhenStack>
-        </ClickAwayListener>
+        </MoorhenClickAwayListener>
     );
 };
 

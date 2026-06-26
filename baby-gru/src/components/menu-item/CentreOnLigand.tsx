@@ -1,15 +1,22 @@
-import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
+import { MoorhenAccordion, MoorhenMenuItem } from "../interface-base";
+import { TreeBranch } from "../interface-base/Accordion/Tree";
 
 export const CentreOnLigand = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
+    const handleCentreOnLigand = (molNo: number, cid: string) => {
+        const molecule = molecules.find(mol => mol.molNo === molNo);
+        if (molecule) {
+            molecule.centreOn(cid, true, true);
+        }
+    };
+
     return molecules.some(molecule => molecule.ligands.length > 0) ? (
         <div style={{ overflowY: "auto", maxHeight: convertViewtoPx(30, height) }}>
-            <SimpleTreeView aria-label="file system navigator">
                 {molecules
                     .filter(molecule => molecule.ligands.length > 0)
                     .map(molecule => {
@@ -20,33 +27,32 @@ export const CentreOnLigand = () => {
                             return uniqueChains;
                         }, []);
                         return (
-                            <TreeItem key={molecule.molNo} itemId={molecule.molNo.toString()} label={molecule.name}>
+                            <TreeBranch key={molecule.molNo} label={molecule.name}>
                                 {uniqueChainNames.map(chainName => {
                                     return (
-                                        <TreeItem
+                                        <TreeBranch
                                             key={`${molecule.molNo}-${chainName}`}
-                                            itemId={`${molecule.molNo}-${chainName}`}
+                                            // itemId={`${molecule.molNo}-${chainName}`}
                                             label={`Chain ${chainName}`}
                                         >
                                             {molecule.ligands
                                                 .filter(lig => lig.chainName === chainName)
                                                 .map(ligand => {
                                                     return (
-                                                        <TreeItem
+                                                        <MoorhenMenuItem
                                                             key={`${molecule.molNo}-${ligand.cid}`}
-                                                            itemId={`${molecule.molNo}-${ligand.cid}`}
-                                                            label={ligand.cid}
-                                                            onClick={() => molecule.centreOn(ligand.cid, true, true)}
-                                                        />
+                                                            // itemId={`${molecule.molNo}-${ligand.cid}`}
+                                                            // label={ligand.cid}
+                                                            onClick={() => handleCentreOnLigand(molecule.molNo,ligand.cid)}
+                                                        >{ligand.cid}</MoorhenMenuItem>
                                                     );
                                                 })}
-                                        </TreeItem>
+                                        </TreeBranch>
                                     );
                                 })}
-                            </TreeItem>
+                            </TreeBranch>
                         );
                     })}
-            </SimpleTreeView>
         </div>
     ) : (
         <span>No ligands...</span>

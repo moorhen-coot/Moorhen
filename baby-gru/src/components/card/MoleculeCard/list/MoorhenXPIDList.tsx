@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+import { MoorhenLinearProgress } from "@/components/icons"
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
@@ -220,7 +220,7 @@ export const MoorhenXPIDList = (props: {
     return (
         <MoorhenAccordion title={xpidTitle} extraControls={extraControl} defaultOpen>
             {xpidList === null ? (
-                <LinearProgress variant="indeterminate" />
+                <MoorhenLinearProgress />
             ) : xpidList.length > 0 ? (
                 <>
                 <MoorhenStack direction="row" align="center" gap="0.5rem" style={{ flexWrap: "wrap", margin: "0.25rem 0.5rem 0.5rem 0.5rem" }}>

@@ -1,5 +1,3 @@
-import { WarningOutlined } from "@mui/icons-material";
-import { Backdrop, Slider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
@@ -20,11 +18,12 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex } from "../../utils/utils";
-import { MoorhenSpinner } from "../icons";
-import { MoorhenButton, MoorhenFileInput, MoorhenPopoverButton, MoorhenSelect, MoorhenToggle } from "../inputs";
+import { MoorhenIcon, MoorhenSpinner } from "../icons";
+import { MoorhenButton, MoorhenFileInput, MoorhenPopoverButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 
 const deleteHiddenResidues = async (molecule: moorhen.Molecule) => {
     if (molecule.excludedSelections.length > 0) {
@@ -87,15 +86,16 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
     };
 
     return (
-        <MoorhenStack card direction="line" align="center">
+        <MoorhenStack card direction="line" align="center" justify="center">
             <span>{props.label}</span>
-            <Slider
+            <MoorhenSlider
                 aria-label="Min. fragment size"
-                getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
-                valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
-                valueLabelDisplay="auto"
+                // getAriaValueText={(newVal: number) => `Min. size ${newVal} res.`}
+                // valueLabelFormat={(newVal: number) => `Min. size ${newVal} res.`}
+                // valueLabelDisplay="auto"
+                sliderTitle="Min. fragment size"
                 value={minFragmentSize}
-                onChange={(evt: any, newVal: number) => {
+                setValue={(newVal: number) => {
                     setMinFragmentSize(newVal);
                     sizeThresholdRef.current = newVal;
                     isDirty.current = true;
@@ -103,10 +103,11 @@ const MoorhenSliceNDiceCard = (props: { fragmentMolecule: moorhen.Molecule; labe
                         hideSmallFragments();
                     }
                 }}
-                defaultValue={1}
-                min={1}
-                max={20}
-                style={{ color: themeColor }}
+                // defaultValue={1}
+                minVal={1}
+                maxVal={20}
+                colour={themeColor}
+                style={{ marginInline: "0.5rem" }}
             />
             <MoorhenButton
                 onClick={() => props.fragmentMolecule.centreOn("/*/*/*/*", true, true)}
@@ -568,22 +569,12 @@ export const MoorhenSliceNDiceModal = () => {
                                 label="B-Factor"
                             />
                         </MoorhenStack>
-                        <Slider
-                            aria-label="B-Factor threshold"
+                        <MoorhenSlider
+                            ariaLabel="B-Factor threshold"
                             getAriaValueText={(newVal: number) => `${newVal} ${thresholdType === "b-factor-norm" ? "Å^2" : "PLDDT"}`}
-                            valueLabelFormat={(newVal: number) =>
-                                thresholdType === "b-factor-norm" ? (
-                                    <span>
-                                        {"≤ "}
-                                        {newVal}
-                                    </span>
-                                ) : (
-                                    <span>≥ {newVal}</span>
-                                )
-                            }
-                            valueLabelDisplay="on"
+                            sliderTitle={thresholdType === "b-factor-norm" ? "PLDDT≤" : "B<"}
                             value={bFactorThreshold}
-                            onChange={(evt: any, newVal: number) => {
+                            setValue={(newVal: number) => {
                                 dispatch(setBFactorThreshold(newVal));
                                 bFactorThresholdRef.current = newVal;
                                 isDirty.current = true;
@@ -591,51 +582,27 @@ export const MoorhenSliceNDiceModal = () => {
                                     trimBfactorThreshold();
                                 }
                             }}
-                            defaultValue={moleculeMinBfactor ? moleculeMinBfactor : 1}
-                            min={moleculeMinBfactor ? moleculeMinBfactor : 1}
-                            max={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
-                            sx={{
-                                marginTop: "1.7rem",
-                                marginBottom: "0.8rem",
-                                "& .MuiSlider-valueLabel": {
-                                    top: -1,
-                                    fontSize: 14,
-                                    fontWeight: "bold",
-                                    color: "grey",
-                                    backgroundColor: "unset",
-                                },
-                            }}
+                            minVal={moleculeMinBfactor ? moleculeMinBfactor : 1}
+                            maxVal={moleculeMaxBfactor ? moleculeMaxBfactor : 1}
+                            style={{marginTop: "0.5rem"}}
                         />
                     </div>
                     {["kmeans", "agglomerative", "birch", "pae"].includes(clusteringType) && (
                         <div style={{ margin: "0.5rem", padding: "0.1rem", width: "100%" }}>
-                            <span>Number of slices</span>
-                            <Slider
-                                aria-label="No. of clusters"
-                                getAriaValueText={(newVal: number) => `${newVal}`}
-                                valueLabelFormat={(newVal: number) => `${newVal}`}
-                                valueLabelDisplay="on"
+                            {/* <span>Number of slices</span> */}
+                            <MoorhenSlider
                                 value={nClusters}
-                                onChange={(evt: any, newVal: number) => {
+                                setValue={(newVal: number) => {
                                     nClustersRef.current = newVal;
                                     dispatch(setNClusters(newVal));
                                 }}
-                                marks={true}
-                                defaultValue={5}
+                                sliderTitle="Number of Slices"
+                                // marks={true}
+                                // defaultValue={5}
                                 step={1}
-                                min={1}
-                                max={10}
-                                sx={{
-                                    marginTop: "1.7rem",
-                                    marginBottom: "0.8rem",
-                                    "& .MuiSlider-valueLabel": {
-                                        top: -1,
-                                        fontSize: 14,
-                                        fontWeight: "bold",
-                                        color: "grey",
-                                        backgroundColor: "unset",
-                                    },
-                                }}
+                                minVal={1}
+                                maxVal={10}
+                                style={{marginTop: "2rem"}}
                             />
                         </div>
                     )}
@@ -717,27 +684,24 @@ export const MoorhenSliceNDiceModal = () => {
     );
 
     const spinnerContent = (
-        <Backdrop
-            sx={{
-                display: "flex",
-                flexDirection: busy ? "row" : "column",
-                color: "#fff",
-                zIndex: theme => theme.zIndex.drawer + 1,
-            }}
-            open={busy || showError}
-        >
-            {busy ? (
-                <>
-                    <MoorhenSpinner colour="white" size={"3rem"} />
-                    <span>Slicing...</span>
-                </>
-            ) : showError ? (
-                <>
-                    <WarningOutlined style={{ width: "35px", height: "35px" }} />
-                    <span>Something went wrong...</span>
-                </>
-            ) : null}
-        </Backdrop>
+        <OverlayModal
+            isShown={busy || showError}
+            overlay={
+                busy ? (
+                    <>
+                        <MoorhenSpinner colour="white" size={"3rem"} />
+                        <span>Slicing...</span>
+                    </>
+                ) : showError ? (
+                    <>
+                        <MoorhenIcon moorhenSVG="MatSymWarning" size="medium" />
+                        <span>Something went wrong...</span>
+                        <br />
+                        <MoorhenButton onClick={() => dispatch(hideModal("slice-n-dice"))}> Close </MoorhenButton>
+                    </>
+                ) : null
+            }
+        />
     );
 
     const header = (
@@ -762,10 +726,6 @@ export const MoorhenSliceNDiceModal = () => {
             modalId={modalKeys.SLICE_N_DICE}
             left={width / 6}
             top={height / 6}
-            minHeight={convertViewtoPx(15, height)}
-            minWidth={convertViewtoPx(33, width)}
-            maxHeight={convertViewtoPx(50, height)}
-            maxWidth={convertViewtoPx(50, width)}
             additionalChildren={spinnerContent}
             headerTitle={header}
             footer={footerContent}
