@@ -92,6 +92,7 @@ ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/utils/static-logging.cc
 ${coot_src}/utils/logging.cc
 ${coot_src}/pli/pi-stacking.cc
+${coot_src}/coot-utils/coot-coord-utils-mmdb-free.cc
 ${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc

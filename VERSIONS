@@ -23,4 +23,4 @@ jsoncpp_release="1.9.6"
 lhasa_commit="896185ae1a"
 coot_commit="229ebac72502ab795357b628ee5702f36540411a"
 # This is the GitHub repo username of the person who owns the repository of Coot that we use.
-coot_fork="Dialpuri"
+coot_fork="dialpuri"
