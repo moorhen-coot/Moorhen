@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef } from "react";
 import { enqueueSnackbar, setShownControl } from "@/store";
 import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
@@ -17,7 +17,8 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
 
     const zoomLevel = useSelector((state: RootState) => state.glRef.zoom);
     const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);
-    const origin = useSelector((state: RootState) => state.glRef.origin);
+    const store = useStore<RootState>();
+    const origin = store.getState().glRef.origin;
 
     // Use the fast contour mode hook
     const { fastMapContourLevel } = useFastContourMode({
@@ -29,20 +30,19 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
     });
 
     const dispatch = useDispatch();
-
     // Debouncing refs for performance
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastWheelTimeRef = useRef<number>(0);
     const debounceDelayMs = 25; // Adjust this value as needed
     const debounceRepeatTime = 50;
 
+    const mapOrigin = props.map.drawOrigin || props.map.mapCentre || [0, 0, 0];
     const distanceFromOrigin = Math.sqrt(
-        Math.pow(props.map.mapCentre[0] - origin[0], 2) +
-            Math.pow(props.map.mapCentre[1] - origin[1], 2) +
-            Math.pow(props.map.mapCentre[2] - origin[2], 2)
+        Math.pow(mapOrigin[0] - origin[0], 2) +
+            Math.pow(mapOrigin[1] - origin[1], 2) +
+            Math.pow(mapOrigin[2] - origin[2], 2)
     );
     const outOfMap = distanceFromOrigin > mapRadius - 8 * zoomLevel && props.map.isOriginLocked;
-
     const handleWheelContourLevel = useCallback(
         (evt: moorhen.WheelContourLevelEvent) => {
             evt.preventDefault();

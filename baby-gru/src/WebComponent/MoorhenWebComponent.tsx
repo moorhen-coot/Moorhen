@@ -187,6 +187,28 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 }
 
+/**
+ * Registers the Moorhen web component for use in the DOM.
+ * 
+ * This function must be called before using the web component, typically in the main entry point of your app (e.g. index.tsx).
+ * 
+ * @example
+ * // Call to register the web component
+ * registerMoorhenWebComponent();
+ * 
+ * // Then use the web component in your HTML
+ * <moorhen-web-component width="800" height="600" />
+ * 
+ * @example
+ * // For TypeScript React apps, add this type declaration:
+ * declare module "react" {
+ *     namespace JSX {
+ *         interface IntrinsicElements {
+ *             "moorhen-web-component": MoorhenWebComponentAttributes;
+ *         }
+ *     }
+ * }
+ */
 export const registerMoorhenWebComponent = () => {
     if (!customElements.get("moorhen-web-component")) {
         customElements.define("moorhen-web-component", MoorhenWebComponent);
@@ -201,10 +223,4 @@ export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTML
     "view-only"?: boolean;
 }
 
-declare module "react" {
-    namespace JSX {
-        interface IntrinsicElements {
-            "moorhen-web-component": MoorhenWebComponentAttributes;
-        }
-    }
-}
+

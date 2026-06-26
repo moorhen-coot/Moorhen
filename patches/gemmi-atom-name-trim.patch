@@ -1,0 +1,11 @@
+diff --git a/include/gemmi/mmdb.hpp b/include/gemmi/mmdb.hpp
+--- a/include/gemmi/mmdb.hpp
++++ b/include/gemmi/mmdb.hpp
+@@ -237,7 +237,7 @@ inline Atom copy_atom_from_mmdb(mmdb::Atom& m_atom) {
+ inline Atom copy_atom_from_mmdb(mmdb::Atom& m_atom) {
+   Atom atom;
+-  atom.name = m_atom.label_atom_id;
++  atom.name = trim_str(m_atom.label_atom_id);
+   atom.altloc = m_atom.altLoc[0];
+   atom.charge = (signed char) m_atom.charge;
+   atom.element = Element(m_atom.element);

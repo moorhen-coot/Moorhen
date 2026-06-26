@@ -6,7 +6,7 @@ import { RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { useEffect, useRef, useState } from "react"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
-import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
+import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import { buildBuffers, createOtherDataOtherContext } from '../../WebGLgComponents/buildBuffers'
 import { createQuatFromAngle } from '../../WebGLgComponents/quatUtils'
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
@@ -69,7 +69,7 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
     return { top: Math.round(top), left: Math.round(left) }
 }
 
-export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", width?: number, handleClick?: (x:number,y:number,quat:quat4,zoom:number,origin:[number,number,number])=> void, getMesh:() => any }) => {
+export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", width?: number, handleClick?: (clickedDirection: [number,number,number] | null)=> void, getMesh:() => any, refreshKey?: any, pickRadius?: number }) => {
 
     const store = useStore<RootState>()
     const dispatch = useDispatch();
@@ -85,6 +85,13 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
     const sphereProgramRef = useRef<null | SideOnProgramSphere>(null);
 
+    // Bounding sphere of the current mesh, used to fit the view to the contents
+    // so the same mesh frames correctly regardless of its absolute scale.
+    const contentRadiusRef = useRef<number>(1.0);
+    // Tracks which molecule the fit radius belongs to, so the framing only
+    // re-fits on a molecule change — not when sub-meshes are toggled on/off.
+    const fitMoleculeRef = useRef<any>(null);
+
     const displayBuffers = store.getState().glRef.displayBuffers
     const storeMolecules = store.getState().molecules.moleculeList
 
@@ -94,8 +101,40 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [oldXY, setOldXY] = useState<[number,number]>([-1,-1])
     const [moveDist, setMoveDist] = useState<number>(-1)
+    const mouseButtonRef = useRef<number>(-1)
 
     const [myBuffers, setMyBuffers] = useState<DisplayBuffer[]>([])
+
+    // Measure the bounding-sphere radius about the origin. The mesh is built
+    // radially from the origin (cage, pins, rings all emanate from 0,0,0), so the
+    // origin is the natural, stable pivot/centre — using the bounding-box centre
+    // instead would drift when the asymmetric pins/rings are toggled.
+    const measureContentBounds = (mesh) => {
+        let maxR2 = 0
+        let any = false
+        const groups = mesh?.vert_tri ?? []
+        for (const group of groups) {
+            for (const verts of group) {
+                for (let i = 0; i < verts.length; i += 3) {
+                    const x = verts[i], y = verts[i + 1], z = verts[i + 2]
+                    const r2 = x * x + y * y + z * z
+                    if (r2 > maxR2) maxR2 = r2
+                    any = true
+                }
+            }
+        }
+        if (!any) return
+        const radius = Math.sqrt(maxR2)
+        const safeRadius = radius > 0 ? radius : 1.0
+        // Re-fit only when the molecule changes; otherwise keep the largest radius
+        // seen so toggling sub-meshes (e.g. radial conformations) doesn't rezoom.
+        if (fitMoleculeRef.current !== storeMolecules) {
+            fitMoleculeRef.current = storeMolecules
+            contentRadiusRef.current = safeRadius
+        } else {
+            contentRadiusRef.current = Math.max(contentRadiusRef.current, safeRadius)
+        }
+    }
 
     useEffect(() => {
 
@@ -105,15 +144,20 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         if(!canvasRefWebGL.current)
             return
 
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
+        const setupBuffers = async () => {
+            const canvasWebGL = canvasRefWebGL.current
+            const gl = canvasWebGL.getContext("webgl2")
 
-        const theBuffers = createOtherDataOtherContext(props.getMesh(),gl)
+            const propMesh = await props.getMesh()
+            measureContentBounds(propMesh)
+            const theBuffers = createOtherDataOtherContext(propMesh,gl)
 
-        buildBuffers(theBuffers,store,gl)
-        setMyBuffers(theBuffers)
+            buildBuffers(theBuffers,store,gl)
+            setMyBuffers(theBuffers)
+        }
+        setupBuffers()
 
-    }, [storeMolecules])
+    }, [storeMolecules, props.refreshKey])
 
     const drawGL = async (width,height) => {
 
@@ -130,23 +174,24 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const gl = canvasWebGL.getContext("webgl2")
 
         gl.enable(gl.DEPTH_TEST);
-        gl.clearColor(0.5,0.5,0.5,1.0);
+        // Blend so vertex alpha (e.g. the semi-transparent cage) is honoured.
+        // Opaque geometry has alpha 1.0 and is unaffected.
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.clearColor(0.0,0.0,0.0,0.0);
         gl.viewport(0, 0, width, height);
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
+        // Fit the orthographic frustum to the mesh bounding sphere (with a small
+        // margin) so zoom=1 frames the whole object regardless of its scale.
+        const fit = contentRadiusRef.current * 1.1 * zoom
+        const depth = contentRadiusRef.current * 4.0
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -window.devicePixelRatio*zoom, window.devicePixelRatio*zoom, -window.devicePixelRatio*zoom * height/width, window.devicePixelRatio*zoom * height/width, -100.0, 100.0);
+        const [tx, ty] = [origin[0], origin[1]]
+        mat4.ortho(pMatrix, -fit + tx, fit + tx, (-fit * height/width) + ty, (fit * height/width) + ty, -depth, depth);
 
-        const theMatrix = quatToMat4(quat);
-
-        const mvMatrix = mat4.create();
-        mat4.set(mvMatrix,
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        )
-        mat4.multiply(mvMatrix, mvMatrix, theMatrix);
+        // Rotate about the origin (the mesh's natural radial centre).
+        const mvMatrix = quatToMat4(quat);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -219,6 +264,12 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         return [x,y]
     }
 
+    const handleReset = () => {
+        setZoom(1.0)
+        setOrigin([0, 0, 0])
+        setQuat(quat4.create())
+    }
+
     const handleMouseDown = (evt) => {
 
         if(!canvasRef||!canvasRef.current) return
@@ -227,6 +278,7 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
 
         setOldXY([x,y])
         setMoveDist(0)
+        mouseButtonRef.current = evt.button
 
         setMouseHeldDown(true)
 
@@ -239,7 +291,15 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const [x,y] = getXY(evt)
 
         if(mouseHeldDown){
-            if(!evt.altKey){
+            const dx = x - oldXY[0]
+            const dy = y - oldXY[1]
+            if(mouseButtonRef.current === 1 || (evt.altKey && evt.shiftKey)) {
+                // Middle-button drag or Option+Shift drag: pan in screen space
+                const fit = contentRadiusRef.current * 1.1 * zoom
+                const w = canvasRef.current.width
+                const worldPerPx = 2.0 * fit / w
+                setOrigin([origin[0] - dx * worldPerPx, origin[1] + dy * worldPerPx, 0])
+            } else if(!evt.altKey){
                 const rot_x_axis = vec3.create()
                 const rot_y_axis = vec3.create()
                 vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
@@ -267,6 +327,39 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         setOldXY([x,y])
     }
 
+    // Reconstruct the clicked direction in the mesh's local frame by intersecting
+    // the orthographic pick ray with the sphere the targets sit on. Returns a unit
+    // vector (front hemisphere) or null if the click missed the sphere.
+    //
+    // The view is fitted to the bounding sphere (radius contentRadius), but the
+    // pickable targets (pins) lie on a smaller sphere of radius pickRadius. Using
+    // the bounding radius would compress the recovered direction toward the pole
+    // and confuse nearby pins, so we rescale by contentRadius/pickRadius to invert
+    // the projection onto the *pin* sphere exactly.
+    const computeClickDirection = (x: number, y: number): [number,number,number] | null => {
+        if(!canvasRef.current) return null
+        const width = canvasRef.current.width
+        const height = canvasRef.current.height
+        const margin = 1.1
+        const pickRadius = (props.pickRadius && props.pickRadius > 0) ? props.pickRadius : contentRadiusRef.current
+        const k = contentRadiusRef.current / pickRadius
+
+        const ux = (2.0*(x/width) - 1.0) * margin * zoom * k + origin[0] / pickRadius
+        const uy = (2.0*(y/height) - 1.0) * margin * zoom * k - origin[1] / pickRadius
+        const r2 = ux*ux + uy*uy
+        if(r2 > 1.0) return null
+        const uz = Math.sqrt(1.0 - r2)
+        // View-space point on the sphere (screen y is down, world y is up).
+        const pView = vec3.fromValues(ux, -uy, uz)
+        const invQuat = quat4.create()
+        quat4Inverse(quat, invQuat)
+        const invMat = quatToMat4(invQuat)
+        const dir = vec3.create()
+        vec3.transformMat4(dir, pView, invMat)
+        vec3.normalize(dir, dir)
+        return [dir[0], dir[1], dir[2]]
+    }
+
     const handleMouseUp = (evt) => {
 
         setMouseHeldDown(false)
@@ -274,9 +367,29 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
-        if(moveDist<4){
-            props.handleClick(x,y,quat,zoom,origin)
+        if(moveDist<4 && props.handleClick){
+            props.handleClick(computeClickDirection(x,y))
         }
+
+    }
+
+    const handleWheel = (evt) => {
+
+        if(!canvasRef||!canvasRef.current) return
+
+        // Prevent the surrounding scrollable container (and the page) from
+        // scrolling while the cursor is zooming the canvas.
+        evt.preventDefault()
+
+        const factor = 1.0 + evt.deltaY / 500.0
+        let newZoom = zoom * factor
+        if (newZoom < 0.1) {
+            newZoom = 0.1
+        }
+        if (newZoom > 5.0) {
+            newZoom = 5.0
+        }
+        setZoom(newZoom)
 
     }
 
@@ -285,16 +398,18 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         canvasRef.current.addEventListener("mousemove", handleMouseMove , false)
         canvasRef.current.addEventListener("mousedown", handleMouseDown , false)
         canvasRef.current.addEventListener("mouseup", handleMouseUp , false)
-
+        // Non-passive so preventDefault() can stop the container/page scroll.
+        canvasRef.current.addEventListener("wheel", handleWheel , { passive: false })
         return () => {
             if (canvasRef.current !== null) {
                 canvasRef.current.removeEventListener("mousemove", handleMouseMove)
                 canvasRef.current.removeEventListener("mousedown", handleMouseDown)
                 canvasRef.current.removeEventListener("mouseup", handleMouseUp)
+                canvasRef.current.removeEventListener("wheel", handleWheel)
             }
         }
 
-    }, [canvasRef,handleMouseMove,handleMouseUp,handleMouseDown])
+    }, [canvasRef,handleMouseMove,handleMouseUp,handleMouseDown,handleWheel])
 
     useEffect(() => {
 
@@ -312,15 +427,20 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         const sphereFragmentShader = getShader(gl, perfect_sphere_side_on_view_fragment_shader_source, "fragment");
         sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
-        const theBuffers = createOtherDataOtherContext(props.getMesh(),gl)
-        buildBuffers(theBuffers,store,gl)
-        setMyBuffers(theBuffers)
+        const setupInitialBuffers = async () => {
+            const propMesh = await props.getMesh()
+            measureContentBounds(propMesh)
+            const theBuffers = createOtherDataOtherContext(propMesh,gl)
+            buildBuffers(theBuffers,store,gl)
+            setMyBuffers(theBuffers)
+        }
+        setupInitialBuffers()
 
     }, [])
 
     useEffect(() => {
         plotTheData()
-    }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom])
+    }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom,myBuffers,origin])
 
     return (
         <>
@@ -331,6 +451,19 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
+                <div style={{position: "absolute", bottom: 8, right: 8, display: "flex", flexDirection: "column", gap: 2, zIndex: 1}}>
+                    {[
+                        { label: "+", title: "Zoom in", onClick: () => setZoom(z => Math.max(0.1, z * 0.8)) },
+                        { label: "−", title: "Zoom out", onClick: () => setZoom(z => Math.min(5.0, z * 1.25)) },
+                        { label: "⌂", title: "Reset view", onClick: handleReset },
+                    ].map(({ label, title, onClick }) => (
+                        <button key={label} title={title} onClick={onClick} style={{
+                            width: 28, height: 28, padding: 0, lineHeight: 1,
+                            fontSize: "1rem", cursor: "pointer", border: "1px solid #888",
+                            borderRadius: 4, background: "rgba(40,40,40,0.85)", color: "#eee",
+                        }}>{label}</button>
+                    ))}
+                </div>
                 </figure>
                 </div>
             </MoorhenStack>
@@ -338,4 +471,3 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         </>
     );
 }
-
