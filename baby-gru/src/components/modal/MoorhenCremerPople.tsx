@@ -2,7 +2,7 @@ import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
 import { SimpleWebGL } from "./SimpleWebGL";
 import { useCommandCentre } from "../../InstanceManager";
-import { meshDataToGlb } from "../../utils/meshDataToGlb";
+//import { meshDataToGlb } from "../../utils/meshDataToGlb";
 import { doDownload } from "../../utils/utils";
 import { useCallback, useEffect, useState } from 'react';
 
@@ -75,11 +75,13 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         return getCremerPopleSphere()
     }
 
+    /*
     const handleExportGltf = useCallback(async () => {
         const mesh = await getCremerPopleSphere()
         const glb = meshDataToGlb(mesh)
         doDownload([glb], `cremer-pople-${props.molecule.name ?? props.molecule.molNo}.glb`)
     }, [getCremerPopleSphere, props.molecule.name, props.molecule.molNo])
+    */
 
     // Direction on the unit sphere for a pinpoint, matching the C++ placement:
     // dir = (sinθ cosφ, sinθ sinφ, cosθ).
