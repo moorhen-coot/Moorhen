@@ -810,7 +810,6 @@ export class MoorhenMap {
         }
 
         const objects = [response.data.result.result];
-        console.log(objects)
         this.setupContourBuffers(objects, this.otherMapForColouring !== null);
     }
 
