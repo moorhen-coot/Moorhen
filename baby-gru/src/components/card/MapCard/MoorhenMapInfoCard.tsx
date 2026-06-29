@@ -11,13 +11,12 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
     const [resolution, setResolution] = useState<string | null>(null);
     const [busy, setBusy] = useState<boolean>(true);
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     useEffect(() => {
         const fetchHeaderInfo = async () => {
-            const headerInfo: moorhen.mapHeaderInfo = await props.map.fetchHeaderInfo();
+            const headerInfo = props.map.getSimpleHeaderInfo()
             setCell(
                 headerInfo.cell.a.toFixed(2) +
                     " " +

@@ -7,6 +7,7 @@ import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
 import { MRCHeaderJson, MTZHeaderJson } from "./mapHeaders";
+import { spaceGroupList } from "@/utils/spaceGroupList"
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -48,6 +49,8 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * map.delete();
 */
 
+export type BasicMapHeaderInfo = {}
+
 type mapHeaderInfo = {
     spacegroup: string;
     cell: libcootApi.mapCellJS;
@@ -57,8 +60,8 @@ type mapHeaderInfo = {
 export class MoorhenMap {
     type: "map";
     name: string;
-    fileHeader: MRCHeaderJson | MTZHeaderJson;
-    headerInfo: mapHeaderInfo;
+    fileHeader: MRCHeaderJson | MTZHeaderJson | BasicMapHeaderInfo;
+    // headerInfo: mapHeaderInfo;
     isEM: boolean;
     molNo: number;
     store: Store;
@@ -92,7 +95,7 @@ export class MoorhenMap {
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store) {
         this.type = "map";
-        this.headerInfo = null;
+        // this.headerInfo = null;
         this.store = reduxStore;
         this.isEM = false;
         this.molNo = null;
@@ -498,7 +501,7 @@ export class MoorhenMap {
     }
 
     /**
-     * Set the map weight
+     * Set the map weight 
      * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
@@ -1158,16 +1161,18 @@ export class MoorhenMap {
         if (this.dataOrigin === "mtz"){
             const fileHeader = this.fileHeader as MTZHeaderJson
             const cell = fileHeader.records.dcell[0].cell ?? fileHeader.records.cell ?? [1, 1, 1, 90, 90, 90]
+            const spNum = fileHeader.records.syminf?.spaceGroupNumber ?? 1
             headerInfo = {
-                cell: { a: cell[0], b: cell[1], c: cell[2], alpha: cell[3], beta: cell[4], gamma: cell[5] },
-                spacegroup: fileHeader.records.syminf?.spaceGroupName ?? "P 1",
+                cell: { a: cell[0], b: cell[1], c: cell[2], alpha: cell[3], beta: cell[4], gamma: cell[5] },   
+                spacegroup: spaceGroupList[`${spNum}`],
                 resolution: fileHeader.records.reso?.high ?? -1
             }
         } else if (this.dataOrigin === "mapFile" ) {
             const fileHeader = this.fileHeader as MRCHeaderJson
+            const spNum = fileHeader.spaceGroup ?? 1
             headerInfo = {
                 cell: { a: fileHeader.unitCell.cella[0], b: fileHeader.unitCell.cella[1], c: fileHeader.unitCell.cella[2], alpha: fileHeader.unitCell.cellb[0], beta: fileHeader.unitCell.cellb[1], gamma: fileHeader.unitCell.cellb[2] },
-                spacegroup: "P 1",
+                spacegroup: spaceGroupList[`${spNum}`],
                 resolution: fileHeader.sampling[0]
             }
         }
@@ -1181,23 +1186,12 @@ export class MoorhenMap {
      * Get suggested contour level, radius and map centre for this map instance
      */
     async initialise(): Promise<void> {
-        // const response = (await this.commandCentre.current.cootCommand(
-        //     {
-        //         command: "is_EM_map",
-        //         commandArgs: [this.molNo],
-        //         returnType: "boolean",
-        //     },
-        //     false
-        // )) as moorhen.WorkerResponse<boolean>;
-
-        // this.isEM = response.data.result.result;
 
         const headerInfo = this.getSimpleHeaderInfo();
         console.log("header info", headerInfo);
         if (headerInfo === undefined) {
             throw new Error("Header info is not defined");
         }
-        this.headerInfo = headerInfo;
 
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);

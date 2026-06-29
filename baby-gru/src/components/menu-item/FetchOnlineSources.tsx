@@ -21,7 +21,7 @@ export const FetchOnlineSources = () => {
         downloadMaps: true,
     };
 
-    const notes = "ligand test 5hes, glyco test 5fjj";
+   "ligand test 5hes, glyco test 5fjj";
 
     const { sources, downloadMaps } = { ...defaultProps };
 
@@ -36,6 +36,7 @@ export const FetchOnlineSources = () => {
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true);
 
     const dispatch = useDispatch();
+
 
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
