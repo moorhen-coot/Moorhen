@@ -180,8 +180,6 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.clearColor(0.0,0.0,0.0,0.0);
         gl.viewport(0, 0, width, height);
-        const screenZ = vec3.create();
-        vec3.set(screenZ,0,0,1)
         // Fit the orthographic frustum to the mesh bounding sphere (with a small
         // margin) so zoom=1 frames the whole object regardless of its scale.
         const fit = contentRadiusRef.current * 1.1 * zoom
@@ -198,6 +196,16 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
 // useProgram is not a React hook.
 // eslint-disable-next-line
         gl.useProgram(programRef.current);
+
+
+        const screenZ = vec3.create();
+        screenZ[0] = 0.0;
+        screenZ[1] = 0.0;
+        screenZ[2] = 1.0;
+
+        const tempMVInvMatrix = mat4.create();
+        mat4.invert(tempMVInvMatrix, mvMatrix);
+        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
 
         gl.uniform3fv(programRef.current.screenZ, screenZ);
         gl.uniformMatrix4fv(programRef.current.pMatrixUniform, false, pMatrix);
