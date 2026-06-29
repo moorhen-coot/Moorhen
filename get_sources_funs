@@ -64,7 +64,11 @@ geteigen() {
     else
         echo "Checking out LibEigen"
         curl -fL https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz &&\
-        tar xf eigen-$libeigen_release.tar.gz || fail "Failed to download and unpack LibEigen"
+        tar xf eigen-$libeigen_release.tar.gz &&\
+        cd eigen-$libeigen_release &&\
+        echo &&\
+        echo "Patching LibEigen for Emscripten 6.0.0" &&\
+        patch -p0 < ../../patches/eigen-emsdk-600.patch || fail "Failed to download and unpack LibEigen"
     fi
     echo
 }
@@ -155,7 +159,8 @@ getgemmi() {
         git clone https://github.com/project-gemmi/gemmi.git gemmi &&\
         cd gemmi &&\
         git checkout $gemmi_release &&\
-        patch -p1 < ../../patches/gemmi-emscripten-64.patch || fail "Failed to clone and patch gemmi"
+        patch -p1 < ../../patches/gemmi-emscripten-64.patch &&\
+        patch -p1 < ../../patches/gemmi-atom-name-trim.patch || fail "Failed to clone and patch gemmi"
     fi
     echo
 }
@@ -167,7 +172,7 @@ getmonomers() {
     else
         echo "Checking out monomers subset"
         #git clone https://github.com/MonomerLibrary/monomers monomers
-        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list &&\
+        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/k monomers/n monomers/z monomers/list &&\
         cd monomers &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ALA.cif -o a/ALA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASP.cif -o a/ASP.cif &&\
@@ -208,6 +213,11 @@ getmonomers() {
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NA.cif -o n/NA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ATP.cif -o a/ATP.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ADP.cif -o a/ADP.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/k/K.cif -o k/K.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CA.cif -o c/CA.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MG.cif -o m/MG.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NI.cif -o n/NI.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/z/ZN.cif -o z/ZN.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/ener_lib.cif -o ener_lib.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/list/mon_lib_list.cif -o list/mon_lib_list.cif || fail "Failed to download monomers"
     fi
@@ -432,6 +442,11 @@ getrdkit() {
         cd ${MOORHEN_SOURCE_DIR} &&\
         rm -f rdkit &&\
         ln -s checkout/rdkit-$rdkit_release rdkit &&\
+        cd ${MOORHEN_SOURCE_DIR}/checkout/rdkit-$rdkit_release &&\
+        echo &&\
+        echo "Patching RDKit for Emscripten 6.0.0" &&\
+        patch -p0 < ../../patches/rdkit-emsdk-600.patch &&\
+        echo &&\
         echo "Getting git version of rapidjson for RDKit" &&\
         cd ${MOORHEN_SOURCE_DIR}/checkout/rdkit-$rdkit_release/External &&\
         git clone https://github.com/Tencent/rapidjson.git rapidjson-1.1.0 || fail "Failed to download, unpack and set up RDKit"

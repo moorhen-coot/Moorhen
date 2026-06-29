@@ -8,17 +8,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
-import {
-    centreOnGemmiAtoms,
-    cidToSpec,
-    copyStructureSelection,
-    countResiduesInSelection,
-    gemmiAtomPairsToCylindersInfo,
-    gemmiAtomsToCirclesSpheresInfo,
-    getCubeLines,
-    extendCuboidMesh,
-    guid,
-} from "./utils";
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, extendCuboidMesh, guid } from "./utils";
 
 export type RepresentationStyles =
     | "VdwSpheres"
@@ -508,6 +498,9 @@ export class MoleculeRepresentation {
                 }
             });
         }
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
@@ -529,6 +522,9 @@ export class MoleculeRepresentation {
                 buf.origin = selectionCentre;
             }
         });
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
@@ -1271,6 +1267,10 @@ export class MoleculeRepresentation {
         let colorStyle: string = "";
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
+
+
+
+
 
         let ssUsageScheme;
         if (this.useDefaultM2tParams) {

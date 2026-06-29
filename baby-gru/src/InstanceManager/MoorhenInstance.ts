@@ -1,7 +1,7 @@
 import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
-import { MoorhenWebComponent } from "@/Wrappers/MoorhenWebComponent";
+import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { setOrigin } from "@/store";
@@ -10,7 +10,7 @@ import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
-import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { MoorhenTimeCapsule, backupSession } from "@/utils/MoorhenTimeCapsule";
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
@@ -25,6 +25,7 @@ export type LoadFilesResult = {
 }[];
 
 export class MoorhenInstance extends StoreExtension {
+    private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
@@ -163,16 +164,29 @@ export class MoorhenInstance extends StoreExtension {
         const paths = this.paths;
         const timeCapsuleRef = this.timeCapsuleRef;
         const execWhenReady = this.execWhenReady.bind(this);
+        const filesLoadedCallbacks = this._filesLoadedCallbacks;
 
         return {
-            async loadFiles(files: File[] | File | FileList | string | string[] | URL | URL[]): Promise<LoadFilesResult> {
+            async loadFiles(
+                files:
+                    | File[]
+                    | File
+                    | FileList
+                    | string
+                    | string[]
+                    | URL
+                    | URL[]
+                    | { url: string | URL; filename: string }[]
+                    | { url: string | URL; filename: string },
+                origin?: string
+            ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
-                const getFileFromURL = async (url: string | URL): Promise<File> => {
+                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
                     const urlString = url instanceof URL ? url.toString() : url;
                     const response = await fetch(urlString);
                     const blob = await response.blob();
-                    const filename = urlString.split("/").pop() || "downloaded_file";
-                    return new File([blob], filename, { type: blob.type });
+                    const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                    return new File([blob], finalFilename, { type: blob.type });
                 };
                 const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
                 const backgroundColor = store.getState().sceneSettings.backgroundColor;
@@ -183,15 +197,30 @@ export class MoorhenInstance extends StoreExtension {
                     filesArray = Array.from(files);
                 } else if (typeof files === "string") {
                     filesArray = [await getFileFromURL(files)];
+                } else if (typeof files === "object" && "url" in files) {
+                    filesArray = [
+                        await getFileFromURL(
+                            (files as { url: string | URL; filename: string }).url,
+                            (files as { url: string | URL; filename: string }).filename
+                        ),
+                    ];
                 } else if (Array.isArray(files)) {
                     if (typeof files[0] === "string" || files[0] instanceof URL) {
                         filesArray = await Promise.all((files as (string | URL)[]).map(file => getFileFromURL(file)));
                     } else if (files[0] instanceof File) {
                         filesArray = files as File[];
+                    } else if (typeof files[0] === "object" && "url" in files[0]) {
+                        filesArray = await Promise.all(
+                            (files as { url: string | URL; filename: string }[]).map(file => getFileFromURL(file.url, file.filename))
+                        );
                     } else {
-                        throw new Error("Invalid file input type");
+                        console.warn(
+                            "Unrecognized file input format, expected array of strings, URLs, Files, or objects with url and filename properties."
+                        );
                     }
                 }
+
+                console.log("Files to load: ", filesArray);
 
                 const createdObjects = await execWhenReady(() =>
                     autoOpenFiles(
@@ -206,7 +235,10 @@ export class MoorhenInstance extends StoreExtension {
                     )
                 );
 
-                return createdObjects;
+                for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                    callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
+                }
+                return createdObjects as LoadFilesResult;
             },
 
             async ligandFromSmiles(smiles: string, ligname: string): Promise<LoadFilesResult> {
@@ -225,6 +257,41 @@ export class MoorhenInstance extends StoreExtension {
                 const file = new File([blob], name + ".cif", { type: "text/plain" });
                 return this.loadFiles(file);
             },
+
+            newFilesLoadedCallback(callback: (filesLoaded: LoadFilesResult, origin: string) => void): () => void {
+                const callbackUID = guid();
+                filesLoadedCallbacks[callbackUID] = { callback: callback };
+                return () => {
+                    delete filesLoadedCallbacks[callbackUID];
+                };
+            },
+        };
+    }
+
+    public get session() {
+        const commandCentreRef = this.commandCentreRef;
+        const monomerLibraryPath = this.paths.monomerLibraryPath;
+        const moleculesList = this.getMoleculeList();
+        const mapsList = this.getMapList();
+        const timecapsuleRef = this.timeCapsuleRef;
+        const store = this.store;
+        const dispatch = this.dispatch;
+
+        return {
+            loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
+                const result = MoorhenTimeCapsule.loadSessionData(
+                    sessionData,
+                    monomerLibraryPath,
+                    moleculesList,
+                    mapsList,
+                    commandCentreRef,
+                    timecapsuleRef,
+                    store,
+                    dispatch,
+                    fetchExternalUrl
+                );
+                return result;
+            },
         };
     }
 
@@ -235,6 +302,16 @@ export class MoorhenInstance extends StoreExtension {
     public getMolecule(uid: string): MoorhenMolecule {
         const state = this.store.getState();
         return state.molecules.moleculeList.filter(molecule => molecule.uniqueId === uid)[0];
+    }
+
+    public getMoleculeList(): MoorhenMolecule[] {
+        const state = this.store.getState();
+        return state.molecules.moleculeList;
+    }
+
+    public getMapList(): MoorhenMap[] {
+        const state = this.store.getState();
+        return state.maps;
     }
 
     /** Return the MoorhenMap Object corresponding to the given unique ID */

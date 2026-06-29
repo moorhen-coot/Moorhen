@@ -3,25 +3,31 @@
     "compilerOptions": {
         "strictNullChecks": false,
         "noImplicitAny": false,
-        "outDir": "tsDist",
-        "module": "es6",
-        "target": "es6",
+        "strict": false,
+        "outDir": "./dist/types/",
+        "module": "esnext",
+        "target": "es2022",
         "rootDir": "./",
         "types": ["node", "./src/types"],
-        "lib": ["ESNext.Array", "esnext", "es6", "dom", "dom.Iterable", "es2017", "WebWorker"],
+"lib": [
+    "es2017",
+  "esnext",
+  "dom",
+  "dom.iterable",
+  "webworker"
+],
         "skipLibCheck": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",
         "sourceMap": true,
         "declarationMap": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "declaration": true,
-        "baseUrl": "./",
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": ["./src/*"]
         }
     },
-    "include": ["src/*"],
+    "include": ["src"],
     "exclude": [
         "node_modules/*",
         "tsDist/*",
@@ -29,7 +35,8 @@
         "nginx/*",
         "test/*",
         "src/__tests__/*",
-        "webpack.config.js",
-        "src/protobuf/MoorhenSession.js"
+        "webpack.base.config.js",
+        "src/protobuf/MoorhenSession.js",
+        "src/LhasaReact/*"
     ]
 }

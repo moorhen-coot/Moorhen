@@ -156,7 +156,7 @@ function initGL(canvas) {
 export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //Props
-        props: webGL.MGWebGLPropsInterface;
+        declare props: webGL.MGWebGLPropsInterface;
 
         //Other stuff
         store: Store<RootState>;
@@ -235,7 +235,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         showCrosshairs: boolean;
         showScaleBar: boolean;
         showFPS: boolean;
-        state:  {width: number, height: number };
+        declare state:  {width: number, height: number };
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
@@ -7110,22 +7110,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
                 theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
                 theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
-                //Just consider one origin.
-                const diff = [0, 0, 0];
+                // Pivot the interactive render about the fragment centre of mass
+                // (in world space: COM + view origin). This MUST be the same pivot used
+                // by the accept coordinate math (displayObjectsTransformation.centre in
+                // transformedCachedAtomsAsMovedAtoms), so the position shown during
+                // manipulation equals the accepted coordinates. Previously a shadowed
+                // `diff` left transformOriginInteractive at [0,0,0] (the view origin),
+                // so the fragment visibly pivoted about the screen and landed elsewhere
+                // on accept.
+                let centre: [number, number, number] = this.activeMolecule.displayObjectsTransformation.centre;
 
                 const dispObjs: moorhen.DisplayObject[][]  = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
                 for (const value of dispObjs) {
                     if (value.length > 0) {
                         const com = centreOfMass(value[0].atoms);
-                        const diff : [number,number,number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
-                        this.activeMolecule.displayObjectsTransformation.centre = diff;
+                        centre = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
+                        this.activeMolecule.displayObjectsTransformation.centre = centre;
                         break;
                     }
                 }
                 for (const value of dispObjs) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         value[ibuf].transformMatrixInteractive = theMatrix;
-                        value[ibuf].transformOriginInteractive = diff;
+                        value[ibuf].transformOriginInteractive = centre;
                     }
                 }
                 // ###############

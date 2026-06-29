@@ -800,5 +800,6 @@ export namespace libcootApi {
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
         get_map_spacegroup(arg0: number): string;
         get_map_data_resolution(arg0: number): number;
+        find_density_center(arg0: number, arg1: boolean): emscriptem.vector<number>;
     }
 }
