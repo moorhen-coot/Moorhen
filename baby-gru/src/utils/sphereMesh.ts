@@ -538,7 +538,5 @@ export const getSphereMesh = (radius) => {
         col_tri: [[icosa_1_col]]
     }
 
-    console.log(sphere_json)
-
     return sphere_json
 }
