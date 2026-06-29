@@ -229,11 +229,11 @@ describe('Testing molecules_container_js', () => {
 
     test('fit_ligand_right_here 2', () => {
 
-        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        const result_import_dict = molecules_container.import_cif_dictionary('./G2F.cif', -999999)
         expect(result_import_dict).toBe(1)
 
-        const coords = [0, 0, 0]
-        const tlc = 'LZA'
+        const coords = [61.7, 45.6, 35.5]
+        const tlc = 'G2F'
         const ligandMolNo = molecules_container.get_monomer_and_position_at(
             tlc, -999999, ...coords
         )
@@ -244,11 +244,21 @@ describe('Testing molecules_container_js', () => {
         const eigen_orientation_search_mode = 2
         const coordMolNo = molecules_container.read_pdb('./5a3h_no_ligand.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
-        const result = molecules_container.fit_ligand_right_here(
+        const newMols = molecules_container.fit_ligand_right_here(
             coordMolNo, mapMolNo, ligandMolNo, ...coords, 1., useConformers, conformerCount, eigen_orientation_search_mode
         )
-        expect(result.size()).toBeGreaterThan(0)
-        cleanUpVariables.push(result)
+        const newMol = newMols.get(0)
+        const cc_info = molecules_container.density_correlation_analysis(newMol, mapMolNo)
+        const cc_name = cc_info.name;
+        const cviv = cc_info.cviv;
+        const cviv0 = cviv.get(0)
+        const rviv = cviv0.rviv;
+        const rviv0 = rviv.get(0)
+        const fv = rviv0.function_value;
+        console.log(cc_name, "function value: ", fv)
+        expect(newMols.size()).toBeGreaterThan(0)
+
+        cleanUpVariables.push(newMols,newMol,cc_info,cviv,cviv0,rviv,rviv0)
     })
 
     test("close_molecule", () => {
