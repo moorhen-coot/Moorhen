@@ -184,7 +184,7 @@ inline std::vector<CremerPopleParameters> calculate_cremer_pople_parameters(cons
     for (auto& sugar: sugars) {
       std::vector<clipper::ftype> cremer_pople_params = sugar.cremer_pople_params();
       CremerPopleParameters parameters = {
-       cremer_pople_params[0] , cremer_pople_params[1] * M_PI / 180, cremer_pople_params[2] * M_PI / 180, glycan.get_chain(), std::to_string(sugar.get_seqnum())
+       cremer_pople_params[0] , cremer_pople_params[1] * M_PI / 180, cremer_pople_params[2] * M_PI / 180, glycan.get_root_sugar_chainID(), std::to_string(sugar.get_seqnum())
       };
 
       cremer_pople_dataset.emplace_back(parameters);
