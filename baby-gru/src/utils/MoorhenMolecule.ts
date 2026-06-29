@@ -133,6 +133,7 @@ export class MoorhenMolecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
+    cachedPrivateerCremerPopleParameters: privateer.CremerPopleParameters[];
     cachedGemmiAtoms: moorhen.AtomInfo[];
     cachedLigandSVGs: { [key: string]: string };
     moleculeDiameter: number;
@@ -2769,6 +2770,33 @@ export class MoorhenMolecule {
 
         return result.data.result.result;
     }
+
+    /**
+     * Get results of privateer validation for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<privateer.CremerPopleParameters[]>} A list of results from privateer validation
+     */
+    async getPrivateerCremerPopleParameters(useCache: boolean = false): Promise<privateer.CremerPopleParameters[]> {
+        if (useCache && this.cachedPrivateerCremerPopleParameters && !this.atomsDirty) {
+            return this.cachedPrivateerCremerPopleParameters;
+        }
+
+        const result = (await this.commandCentre.current.cootCommand(
+            {
+                command: "privateer_calculate_cremer_pople_parameters",
+                commandArgs: [this.molNo],
+                returnType: "privateer_cremer_pople_parameters",
+            },
+            false
+        )) as moorhen.WorkerResponse<privateer.CremerPopleParameters[]>;
+
+        if (useCache) {
+            this.cachedPrivateerCremerPopleParameters = result.data.result.result;
+        }
+
+        return result.data.result.result;
+    }
+
 
     /**
      * Get SVG descriptions for the ligand environment
