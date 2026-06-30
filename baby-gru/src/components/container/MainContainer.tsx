@@ -244,7 +244,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     useEffect(() => {
         const startupEffect = async () => {
-            if (!window.cootModule) windowCootCCP4Loader(`${urlPrefix}/wasm/`);
             if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
             if (!window.MathJax) loadMathjax(`${urlPrefix}`);
             setWindowDimensions();
