@@ -543,7 +543,7 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number }[]): str
 
 const getDNATCOColourRules = (DNATCO_info): string => {
 
-    let rule = "//^#cccccc"
+    let rule = "//^#f2f2f2" //UNK, NAN
 
     const ntc_step = DNATCO_info["ntc_step"]
     const ntc_step_summary = DNATCO_info["ntc_step_summary"]
@@ -555,19 +555,74 @@ const getDNATCOColourRules = (DNATCO_info): string => {
         const base_2 = step.auth_seq_id_2
         const cid_1 = "/1/"+chain+"/"+base_1+"/"
         const cid_2 = "/1/"+chain+"/"+base_2+"/"
-        if(ntc.assigned_NtC==="BBS1"){
-            rule += "|"+cid_1+"^#ff8222"
-        } else if(ntc.assigned_NtC==="BB2S"){
-            rule += "|"+cid_1+"^#c8cfff"
-        } else if(ntc.assigned_NtC==="BA10"||ntc.assigned_NtC==="AA00"){
-            rule += "|"+cid_1+"^#ffeba1"
-        } else if(ntc.assigned_NtC.startsWith("IC")){
-            rule += "|"+cid_1+"^#fb5cfb"
-        } else if(ntc.assigned_NtC.startsWith("OP")){
-            rule += "|"+cid_1+"^#e90000"
+
+        //There is some redundancy here. Most pairs should
+        //be picked up by CANA (even if also in NtC types below),
+        //rest hopefully mopped up by the NTC types.
+
+        const A_types   =  ["AA00","AA01","AA02","AA03","AA04",
+                            "AA05","AA06","AA07","AA08","AA09",
+                            "AA10","AA11","AA12","AA13",
+                            "BA00", "BA01","AB02","BA03"]
+        const BI_types  =  ["BB00","BB01","BB02","BB03","BB04",
+                            "BB05","BB06"]
+        const BII_types =  ["BB07","BB08","BB09"]
+        const miB_types =  ["BB10","BB11","BB12","BB13","BB14","BB15"]
+        const Z_types   =  ["BB08","BB09"]
+
+        const A_col = "^#ffeba1"
+        const BI_col = "^#c8cfff"
+        const BII_col = "^#0057da"
+        const miB_col = "^#3be8fb"
+        const Z_col = "^#01f60d"
+        const IC_col = "^#fb5cfb"
+        const OPN_col = "^#e90000"
+        const SYN_col = "^#ff8222"
+
+        if(ntc.assigned_CANA==="ICL"){
+            rule += "|"+cid_1+IC_col //IC
+        } else if(ntc.assigned_CANA==="OPN"){
+            rule += "|"+cid_1+OPN_col //OPN
+        } else if(ntc.assigned_CANA==="SYN"){
+            rule += "|"+cid_1+SYN_col //SYN
+        } else if(ntc.assigned_CANA==="ZZZ"){
+            rule += "|"+cid_1+Z_col //Z
+        } else if(ntc.assigned_CANA==="BBB"){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(ntc.assigned_CANA==="BBw"){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(ntc.assigned_CANA==="2B1"){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(ntc.assigned_CANA==="3B1"){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(ntc.assigned_CANA==="B12"){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(ntc.assigned_CANA==="BB2"){
+            rule += "|"+cid_1+BII_col //BII
+        } else if(ntc.assigned_CANA==="miB"){
+            rule += "|"+cid_1+miB_col //miB
+        } else if(ntc.assigned_CANA==="AAA"){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_CANA==="AAw"){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_CANA==="AAu"){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_CANA==="B1A"){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_CANA==="B2A"){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_NtC.startsWith("BA")){
+            rule += "|"+cid_1+A_col //A
+        } else if(ntc.assigned_NtC.startsWith("AB")){
+            rule += "|"+cid_1+BI_col //B1
+        } else if(A_types.indexOf(ntc.assigned_NtC)){
+            rule += "|"+cid_1+A_col //A
+        } else if(BI_types.indexOf(ntc.assigned_NtC)){
+            rule += "|"+cid_1+BI_col //BI
+        } else if(BII_types.indexOf(ntc.assigned_NtC)){
+            rule += "|"+cid_1+BII_col //BII
         }
     })
-    console.log(rule)
 
     return rule
 }
