@@ -45,9 +45,10 @@ export const FlipMapHand = () => {
         )) as moorhen.WorkerResponse<number>;
 
         if (result.data.result.result !== -1) {
+            selectedMap.copyMapParametersTo(newMap);
             newMap.molNo = result.data.result.result;
             newMap.name = `Flipped map ${mapNo}`;
-            selectedMap.copyMapParametersTo(newMap);
+            
             await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             batch(() => {

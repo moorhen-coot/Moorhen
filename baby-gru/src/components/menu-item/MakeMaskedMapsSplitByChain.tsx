@@ -51,8 +51,9 @@ export const MakeMaskedMapsSplitByChain = () => {
                 result.data.result.result.map(async (iNewMap, listIndex) => {
                     const newMap = new MoorhenMap(moorhenInstance);
                     newMap.molNo = iNewMap;
-                    newMap.name = `Chain ${listIndex} of ${selectedMap.name}`;
                     selectedMap.copyMapParametersTo(newMap);
+                    newMap.name = `Chain ${listIndex} of ${selectedMap.name}`;
+                    
                     await newMap.initialise();
                     const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
                     if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }

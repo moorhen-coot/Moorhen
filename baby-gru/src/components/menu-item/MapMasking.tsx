@@ -80,8 +80,9 @@ export const MapMasking = () => {
         if (result.data.result.result !== -1) {
             const newMap = new MoorhenMap(moorhenInstance);
             newMap.molNo = result.data.result.result;
-            newMap.name = `Map ${mapNo} masked`;
             selectedMap.copyMapParametersTo(newMap);
+            newMap.name = `Map ${mapNo} masked`;
+            
             await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }

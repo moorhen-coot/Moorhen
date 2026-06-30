@@ -35,8 +35,9 @@ export const DedustMap = () => {
 
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
-            newMap.name = `Dusted ${mapNo}`;
             selectedMap.copyMapParametersTo(newMap);
+            newMap.name = `Dusted ${mapNo}`;
+            
             await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));

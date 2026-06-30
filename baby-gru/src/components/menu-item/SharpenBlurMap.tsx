@@ -65,8 +65,8 @@ export const SharpenBlurMap = () => {
 
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
-            newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;
             selectedMap.copyMapParametersTo(newMap);
+            newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;        
             await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
