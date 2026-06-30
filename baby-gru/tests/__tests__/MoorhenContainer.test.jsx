@@ -89,10 +89,18 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
         return createCootModule({
             print(t) { () => console.log(["output", t]) },
             printErr(t) { () => console.log(["output", t]); }
-        }).then(moduleCreated => {
-            cootModule = moduleCreated
-            global.window.CCP4Module = cootModule
-            return Promise.resolve()
+        }).then(CCP4Module => {
+            cootModule = CCP4Module
+            createGemmiModule({
+                print(t) { () => console.log(["output", t]) },
+                printErr(t) { () => console.log(["output", t]); }
+            }).then(gemmiModule => {
+                global.window = {
+                    CCP4Module: cootModule,
+                    gemmiModule: gemmiModule,
+                }
+                return Promise.resolve()
+            })
         })
     })
 

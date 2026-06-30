@@ -13,6 +13,7 @@ const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
 const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
 
 let cootModule;
 
@@ -60,12 +61,18 @@ beforeAll(() => {
     return createCootModule({
         print(t) { () => console.log(["output", t]) },
         printErr(t) { () => console.log(["output", t]); }
-    }).then(moduleCreated => {
-        cootModule = moduleCreated
-        global.window = {
-            CCP4Module: cootModule,
-        }
-        return setupFunctions.copyTestDataToFauxFS()
+    }).then(CCP4Module => {
+        cootModule = CCP4Module
+        createGemmiModule({
+            print(t) { () => console.log(["output", t]) },
+            printErr(t) { () => console.log(["output", t]); }
+        }).then(gemmiModule => {
+            global.window = {
+                CCP4Module: cootModule,
+                gemmiModule: gemmiModule,
+            }
+            return setupFunctions.copyTestDataToFauxFS()
+        })
     })
 })
 
