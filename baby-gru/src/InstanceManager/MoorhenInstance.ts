@@ -267,25 +267,14 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public get session() {
-        const commandCentreRef = this.commandCentreRef;
-        const monomerLibraryPath = this.paths.monomerLibraryPath;
-        const moleculesList = this.getMoleculeList();
-        const mapsList = this.getMapList();
-        const timecapsuleRef = this.timeCapsuleRef;
-        const store = this.store;
-        const dispatch = this.dispatch;
+        const moorhenInstance = this;
+
 
         return {
             loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
                 const result = MoorhenTimeCapsule.loadSessionData(
                     sessionData,
-                    monomerLibraryPath,
-                    moleculesList,
-                    mapsList,
-                    commandCentreRef,
-                    timecapsuleRef,
-                    store,
-                    dispatch,
+                    moorhenInstance,
                     fetchExternalUrl
                 );
                 return result;

@@ -16,8 +16,7 @@ export const DedustMap = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const selectRef = useRef<HTMLSelectElement>(null);
     const moorhenInstance = useMoorhenInstance();
-    const commandCentre = useCommandCentre();
-    const store = useStore<RootState>();
+
 
     const onCompleted = async () => {
         if (!selectRef.current?.value) {
@@ -25,7 +24,7 @@ export const DedustMap = () => {
         }
 
         const mapNo = parseInt(selectRef.current.value);
-        const newMap = new MoorhenMap(commandCentre, store);
+        const newMap = new MoorhenMap(moorhenInstance);
         const selectedMap = maps.find(map => map.molNo === mapNo);
 
         if (!selectedMap) {
@@ -37,8 +36,8 @@ export const DedustMap = () => {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
             newMap.name = `Dusted ${mapNo}`;
+            selectedMap.copyMapParametersTo(newMap);
             await newMap.initialise();
-            newMap.isDifference = selectedMap.isDifference;
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
             dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));

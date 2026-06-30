@@ -132,37 +132,20 @@ export const loadCoordFiles = async (
 
 const loadSession = async (
     session: string | object,
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: Store,
-    monomerLibraryPath: string,
-    molecules: moorhen.Molecule[],
-    maps: moorhen.Map[],
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-    dispatch: Dispatch
+    moorhenInstance: MoorhenInstance
+
 ) => {
-    commandCentre.current.history.reset();
+    moorhenInstance.commandCentre.history.reset();
     let status = -1;
     if (typeof session === "string") {
         status = await MoorhenTimeCapsule.loadSessionFromJsonString(
             session as string,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
         );
     } else {
         status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
             session,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance,
         );
     }
     if (status === -1) {
@@ -172,18 +155,12 @@ const loadSession = async (
 
 export const handleSessionUpload = async (
     file: File,
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: Store,
-    monomerLibraryPath: string,
-    molecules: moorhen.Molecule[],
-    maps: moorhen.Map[],
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-    dispatch: Dispatch
+    moorhenInstance: MoorhenInstance
 ) => {
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
-    await loadSession(sessionMessage, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
+    await loadSession(sessionMessage, moorhenInstance);
 };
 
 const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
@@ -626,7 +603,7 @@ export const autoOpenFiles = async (
         } else if (file.name.endsWith(".pb")) {
             //Session file
             try {
-                await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, moorhenInstance.getTimeCapsuleRef(), dispatch);
+                await handleSessionUpload(file, moorhenInstance);
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }

@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -20,6 +20,7 @@ export const SharpenBlurMap = () => {
     const selectRef = useRef<HTMLSelectElement>(null);
     const useResampleSwitchRef = useRef<HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const [useResample, setUseResample] = useState<boolean>(false);
 
@@ -33,7 +34,7 @@ export const SharpenBlurMap = () => {
 
         const mapNo = parseInt(selectRef.current.value);
         const bFactor = parseFloat(factorRef.current.value);
-        const newMap = new MoorhenMap(commandCentre, store);
+        const newMap = new MoorhenMap(moorhenInstance);
         const selectedMap = maps.find(map => map.molNo === mapNo);
 
         if (!selectedMap) {
@@ -65,8 +66,8 @@ export const SharpenBlurMap = () => {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
             newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;
-            await newMap.getSuggestedSettings();
-            newMap.isDifference = selectedMap.isDifference;
+            selectedMap.copyMapParametersTo(newMap);
+            await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
             dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));

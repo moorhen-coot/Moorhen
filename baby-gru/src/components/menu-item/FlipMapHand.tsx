@@ -1,7 +1,7 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -17,7 +17,8 @@ export const FlipMapHand = () => {
 
     const selectRef = useRef<HTMLSelectElement>(null);
     const commandCentre = useCommandCentre();
-    const store = useStore<RootState>();
+    const moorhenInstance = useMoorhenInstance();
+
 
     const menuItemText = "Flip map...";
 
@@ -27,7 +28,7 @@ export const FlipMapHand = () => {
         }
 
         const mapNo = parseInt(selectRef.current.value);
-        const newMap = new MoorhenMap(commandCentre, store);
+        const newMap = new MoorhenMap(moorhenInstance);
         const selectedMap = maps.find(map => map.molNo === mapNo);
 
         if (!selectedMap) {
@@ -46,11 +47,11 @@ export const FlipMapHand = () => {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
             newMap.name = `Flipped map ${mapNo}`;
-            await newMap.getSuggestedSettings();
-            newMap.isDifference = selectedMap.isDifference;
+            selectedMap.copyMapParametersTo(newMap);
+            await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             batch(() => {
-                dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
+                if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }
                 dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
                 dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
                 dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
@@ -64,7 +65,7 @@ export const FlipMapHand = () => {
     return (
         <>
             <MoorhenStack inputGrid>
-            <MoorhenMapSelect maps={maps} ref={selectRef} />
+                <MoorhenMapSelect maps={maps} ref={selectRef} />
             </MoorhenStack>
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>

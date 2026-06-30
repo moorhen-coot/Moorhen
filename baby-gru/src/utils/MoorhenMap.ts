@@ -259,10 +259,11 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Pormise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        this.name = name;
+    static async loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns, moorhenInstance: MoorhenInstance): Promise<moorhen.Map> {
+        const map = new MoorhenMap(moorhenInstance);
+        map.name = name;
         try {
-            const reply = await this.commandCentre.cootCommand(
+            const reply = await moorhenInstance.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "shim_read_mtz",
@@ -273,14 +274,14 @@ export class MoorhenMap {
             if (reply.data.result.status === "Exception") {
                 return Promise.reject(reply.data.result.consoleMessage);
             }
-            this.molNo = reply.data.result.result;
-            this.selectedColumns = selectedColumns;
+            map.molNo = reply.data.result.result;
+            map.selectedColumns = selectedColumns;
             if (Object.keys(selectedColumns).includes("isDifference")) {
-                this.isDifference = selectedColumns.isDifference;
+                map.isDifference = selectedColumns.isDifference;
             }
             // await this.getSuggestedSettings();
-            this.dataOrigin = "mtz";
-            return this;
+            map.dataOrigin = "mtz";
+            return map;
         } catch (err) {
             return Promise.reject(err);
         }
@@ -292,52 +293,53 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
+    static loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns, moorhenInstance: MoorhenInstance): Promise<moorhen.Map> => {
         const reflectionData = await source.arrayBuffer();
         const asUIntArray = new Uint8Array(reflectionData);
-        await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns);
+        const map = await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns, moorhenInstance);
         if (selectedColumns.calcStructFact) {
-            await this.associateToReflectionData(selectedColumns, asUIntArray);
+            await map.associateToReflectionData(selectedColumns, asUIntArray);
         }
-        return this;
+        return map;
     };
 
-    // /** 
-    //  * @deprecated 
-    //  * Load map to moorhen from a map file url - prefer using MoorhenInstance.file.loadFiles() instead
-    //  * @param {string} url - The url to the MTZ file
-    //  * @param {string} name - The name that will be assigned to the map
-    //  * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
-    //  * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
-    //  * @param {object} [options] - Options passed to fetch API
-    //  * @returns {Promise<moorhen.Map>} This moorhenMap instance
-    //  */
-    // async loadToCootFromMapURL(
-    //     url: RequestInfo | URL,
-    //     name: string,
-    //     isDiffMap: boolean = false,
-    //     decompress: boolean = false,
-    //     options?: RequestInit
-    // ): Promise<moorhen.Map> {
-    //     try {
-    //         const response = await fetch(url, options);
-    //         if (response.ok) {
-    //             const blobData = await response.blob();
-    //             const arrayBuffer = await blobData.arrayBuffer();
-    //             let mapData: ArrayBuffer | Uint8Array;
-    //             if (decompress) {
-    //                 mapData = pako.inflate(arrayBuffer);
-    //             } else {
-    //                 mapData = new Uint8Array(arrayBuffer);
-    //             }
-    //             return await this.loadToCootFromMapData(mapData, name, isDiffMap);
-    //         } else {
-    //             return Promise.reject(`Requested ${url} and response was not OK...`);
-    //         }
-    //     } catch (err) {
-    //         return Promise.reject(err);
-    //     }
-    // }
+    /** 
+     * Load map to moorhen from a map file url - prefer using MoorhenInstance.file.loadFiles() instead
+     * @param {string} url - The url to the MTZ file
+     * @param {string} name - The name that will be assigned to the map
+     * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
+     * @param {object} [options] - Options passed to fetch API
+     * @returns {Promise<moorhen.Map>} This moorhenMap instance
+     */
+    static async loadToCootFromMapURL(
+        url: RequestInfo | URL,
+        name: string,
+        moorhenInstance: MoorhenInstance,
+        isDiffMap: boolean = false,
+        decompress: boolean = false,
+        options?: RequestInit,
+        uniqueId?: string
+    ): Promise<moorhen.Map> {
+        try {
+            const response = await fetch(url, options);
+            if (response.ok) {
+                const blobData = await response.blob();
+                const arrayBuffer = await blobData.arrayBuffer();
+                let mapData: ArrayBuffer | Uint8Array;
+                if (decompress) {
+                    mapData = pako.inflate(arrayBuffer);
+                } else {
+                    mapData = new Uint8Array(arrayBuffer);
+                }
+                return this.loadToCootFromMapData(mapData, name, isDiffMap, moorhenInstance, uniqueId);
+            } else {
+                return Promise.reject(`Requested ${url} and response was not OK...`);
+            }
+        } catch (err) {
+            return Promise.reject(err);
+        }
+    }
 
     /**
      * Load map to moorhen from map data
@@ -346,7 +348,7 @@ export class MoorhenMap {
      * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    static async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean, moorhenInstance: MoorhenInstance): Promise<MoorhenMap> {
+    static async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean, moorhenInstance: MoorhenInstance, uniqueId?: string): Promise<MoorhenMap> {
         const newMap = new MoorhenMap(moorhenInstance)
         try {
             const reply = await moorhenInstance.commandCentre.cootCommand(
@@ -368,6 +370,9 @@ export class MoorhenMap {
             newMap.isDifference = isDiffMap;
             newMap.fileHeader = await readMRCHeader(data);
             newMap.dataOrigin = "mapFile"
+            if (uniqueId) {
+                newMap.uniqueId = uniqueId;
+            }
             await newMap.initialise()
             return newMap
         } catch (err) {
@@ -1032,11 +1037,41 @@ export class MoorhenMap {
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap();
         const newMap =  await MoorhenMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference, this.moorhenInstance);
-        // const { mapRadius, contourLevel } = this.getMapContourParams();
-        // newMap.suggestedContourLevel = contourLevel;
-        // newMap.suggestedRadius = mapRadius;
+        this.copyMapParametersTo(newMap);
         
         return newMap;
+    }
+
+    private static readonly COPYABLE_KEYS = [
+        "fileHeader",
+        "isDifference",
+        "type",
+        "dataOrigin",
+        "showOnLoad",
+        "mapCentre",
+        "suggestedContourLevel",
+        "suggestedRadius",
+        "suggestedMapWeight",
+        "mapRmsd",
+        "selectedColumns",
+        "hasReflectionData",
+        "associatedReflectionFileName",
+    ] as const satisfies readonly (keyof MoorhenMap)[];
+
+    copyMapParametersTo(newMap: MoorhenMap): void {
+        type CopyableKey = (typeof MoorhenMap.COPYABLE_KEYS)[number];
+
+        const copyKey = <K extends CopyableKey>(key: K): void => {
+            const value = this[key];
+            const copiedValue =
+                value && typeof value === "object"
+                    ? structuredClone(value)
+                    : value;
+
+            newMap[key] = copiedValue as MoorhenMap[K];
+        };
+
+        MoorhenMap.COPYABLE_KEYS.forEach(key => copyKey(key));
     }
 
     /**

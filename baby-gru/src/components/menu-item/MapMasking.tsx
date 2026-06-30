@@ -1,6 +1,6 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { usePersistentState } from "@/hooks";
+import { useMoorhenInstance, usePersistentState } from "@/hooks";
 import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
@@ -33,6 +33,7 @@ export const MapMasking = () => {
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null);
     const cidInputRef = useRef<null | HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const onCompleted = async () => {
         if (!mapSelectRef.current.value || !moleculeSelectRef.current.value) {
@@ -77,13 +78,13 @@ export const MapMasking = () => {
         )) as moorhen.WorkerResponse<number>;
 
         if (result.data.result.result !== -1) {
-            const newMap = new MoorhenMap(commandCentre, store);
+            const newMap = new MoorhenMap(moorhenInstance);
             newMap.molNo = result.data.result.result;
             newMap.name = `Map ${mapNo} masked`;
-            await newMap.getSuggestedSettings();
-            newMap.isDifference = selectedMap.isDifference;
+            selectedMap.copyMapParametersTo(newMap);
+            await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
-            dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
+            if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }
             dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
             dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
             dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
