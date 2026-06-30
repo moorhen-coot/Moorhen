@@ -496,6 +496,9 @@ export class MoleculeRepresentation {
                 }
             });
         }
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
@@ -517,6 +520,9 @@ export class MoleculeRepresentation {
                 buf.origin = selectionCentre;
             }
         });
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
