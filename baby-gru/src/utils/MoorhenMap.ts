@@ -370,6 +370,7 @@ export class MoorhenMap {
             newMap.isDifference = isDiffMap;
             newMap.fileHeader = await readMRCHeader(data);
             newMap.dataOrigin = "mapFile"
+            newMap.name = name;
             if (uniqueId) {
                 newMap.uniqueId = uniqueId;
             }
@@ -400,9 +401,8 @@ export class MoorhenMap {
             mapData = new Uint8Array(arrayBuffer);
             mapName = file.name;
         }
-        mapName.replace(".gz", "").replace(".map", "").replace(".mrc", "").replace(".ccp4", "")
-
-        const newMap = await this.loadToCootFromMapData(mapData, mapName, isDiffMap, moorhenInstance);
+        const newName = mapName.replace(".gz", "").replace(".map", "").replace(".mrc", "").replace(".ccp4", "")
+        const newMap = await this.loadToCootFromMapData(mapData, newName, isDiffMap, moorhenInstance);
         
         return newMap
     }
