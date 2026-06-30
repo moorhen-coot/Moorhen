@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     defaultBackgroundColor: [number, number, number, number];
@@ -95,168 +95,168 @@ const sceneSettingsSlice = createSlice({
             return initialState;
         },
         // API
-        setDefaultBackgroundColor: (state, action: { payload: [number, number, number, number]; type: string }) => {
-            return { ...state, defaultBackgroundColor: action.payload };
+        setDefaultBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.defaultBackgroundColor = action.payload;
         },
         // API
-        setDrawScaleBar: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawScaleBar: action.payload };
+        setDrawScaleBar: (state, action: PayloadAction<boolean>) => {
+            state.drawScaleBar = action.payload;
         },
         // API
-        setDrawEnvBOcc: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawEnvBOcc: action.payload };
+        setDrawEnvBOcc: (state, action: PayloadAction<boolean>) => {
+            state.drawEnvBOcc = action.payload;
         },
         // API
-        setDrawCrosshairs: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawCrosshairs: action.payload };
+        setDrawCrosshairs: (state, action: PayloadAction<boolean>) => {
+            state.drawCrosshairs = action.payload;
         },
         // API
-        setDrawFPS: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawFPS: action.payload };
+        setDrawFPS: (state, action: PayloadAction<boolean>) => {
+            state.drawFPS = action.payload;
         },
         // API
-        setDrawMissingLoops: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawMissingLoops: action.payload };
+        setDrawMissingLoops: (state, action: PayloadAction<boolean>) => {
+            state.drawMissingLoops = action.payload;
         },
         // API
-        setDefaultBondSmoothness: (state, action: { payload: number; type: string }) => {
-            return { ...state, defaultBondSmoothness: action.payload };
+        setDefaultBondSmoothness: (state, action: PayloadAction<number>) => {
+            state.defaultBondSmoothness = action.payload;
         },
         // API
-        setDrawAxes: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawAxes: action.payload };
+        setDrawAxes: (state, action: PayloadAction<boolean>) => {
+            state.drawAxes = action.payload;
         },
         // API
-        setDoSSAO: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSSAO: action.payload };
+        setDoSSAO: (state, action: PayloadAction<boolean>) => {
+            state.doSSAO = action.payload;
         },
         // API
-        setDoEdgeDetect: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doEdgeDetect: action.payload };
+        setDoEdgeDetect: (state, action: PayloadAction<boolean>) => {
+            state.doEdgeDetect = action.payload;
         },
         // API
-        setEdgeDetectDepthThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectDepthThreshold: action.payload };
+        setEdgeDetectDepthThreshold: (state, action: PayloadAction<number>) => {
+            state.edgeDetectDepthThreshold = action.payload;
         },
         // API
-        setEdgeDetectNormalThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectNormalThreshold: action.payload };
+        setEdgeDetectNormalThreshold: (state, action: PayloadAction<number>) => {
+            state.edgeDetectNormalThreshold = action.payload;
         },
         // API
-        setEdgeDetectDepthScale: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectDepthScale: action.payload };
+        setEdgeDetectDepthScale: (state, action: PayloadAction<number>) => {
+            state.edgeDetectDepthScale = action.payload;
         },
         // API
-        setEdgeDetectNormalScale: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectNormalScale: action.payload };
+        setEdgeDetectNormalScale: (state, action: PayloadAction<number>) => {
+            state.edgeDetectNormalScale = action.payload;
         },
         // API
-        setSsaoRadius: (state, action: { payload: number; type: string }) => {
-            return { ...state, ssaoRadius: action.payload };
+        setSsaoRadius: (state, action: PayloadAction<number>) => {
+            state.ssaoRadius = action.payload;
         },
         // API
-        setSsaoBias: (state, action: { payload: number; type: string }) => {
-            return { ...state, ssaoBias: action.payload };
+        setSsaoBias: (state, action: PayloadAction<number>) => {
+            state.ssaoBias = action.payload;
         },
         // API
-        setResetClippingFogging: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, resetClippingFogging: action.payload };
+        setResetClippingFogging: (state, action: PayloadAction<boolean>) => {
+            state.resetClippingFogging = action.payload;
         },
         // API
-        setClipCap: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, clipCap: action.payload };
+        setClipCap: (state, action: PayloadAction<boolean>) => {
+            state.clipCap = action.payload;
         },
         // API
-        setDoPerspectiveProjection: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doPerspectiveProjection: action.payload };
+        setDoPerspectiveProjection: (state, action: PayloadAction<boolean>) => {
+            state.doPerspectiveProjection = action.payload;
         },
         // API
-        setUseOffScreenBuffers: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, useOffScreenBuffers: action.payload };
+        setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
+            state.useOffScreenBuffers = action.payload;
         },
         // API
-        setDoShadowDepthDebug: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doShadowDepthDebug: action.payload };
+        setDoShadowDepthDebug: (state, action: PayloadAction<boolean>) => {
+            state.doShadowDepthDebug = action.payload;
         },
         // API
-        setDoShadow: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doShadow: action.payload };
+        setDoShadow: (state, action: PayloadAction<boolean>) => {
+            state.doShadow = action.payload;
         },
         // API
-        setDoSpin: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSpin: action.payload };
+        setDoSpin: (state, action: PayloadAction<boolean>) => {
+            state.doSpin = action.payload;
         },
         // API
-        setDoAnaglyphStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doAnaglyphStereo: action.payload };
+        setDoAnaglyphStereo: (state, action: PayloadAction<boolean>) => {
+            state.doAnaglyphStereo = action.payload;
         },
         // API
-        setDoCrossEyedStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doCrossEyedStereo: action.payload };
+        setDoCrossEyedStereo: (state, action: PayloadAction<boolean>) => {
+            state.doCrossEyedStereo = action.payload;
         },
         // API
-        setDoSideBySideStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSideBySideStereo: action.payload };
+        setDoSideBySideStereo: (state, action: PayloadAction<boolean>) => {
+            state.doSideBySideStereo = action.payload;
         },
         // API
-        setDoMultiView: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doMultiView: action.payload };
+        setDoMultiView: (state, action: PayloadAction<boolean>) => {
+            state.doMultiView = action.payload;
         },
         // API
-        setDoThreeWayView: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doThreeWayView: action.payload };
+        setDoThreeWayView: (state, action: PayloadAction<boolean>) => {
+            state.doThreeWayView = action.payload;
         },
         // API
-        setSpecifyMultiViewRowsColumns: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, specifyMultiViewRowsColumns: action.payload };
+        setSpecifyMultiViewRowsColumns: (state, action: PayloadAction<boolean>) => {
+            state.specifyMultiViewRowsColumns = action.payload;
         },
         // API
-        setMultiViewRows: (state, action: { payload: number; type: string }) => {
-            return { ...state, multiViewRows: action.payload };
+        setMultiViewRows: (state, action: PayloadAction<number>) => {
+            state.multiViewRows = action.payload;
         },
         // API
-        setMultiViewColumns: (state, action: { payload: number; type: string }) => {
-            return { ...state, multiViewColumns: action.payload };
+        setMultiViewColumns: (state, action: PayloadAction<number>) => {
+            state.multiViewColumns = action.payload;
         },
         // API
-        setThreeWayViewOrder: (state, action: { payload: string; type: string }) => {
-            return { ...state, threeWayViewOrder: action.payload };
+        setThreeWayViewOrder: (state, action: PayloadAction<string>) => {
+            state.threeWayViewOrder = action.payload;
         },
         // API
-        setDoOutline: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doOutline: action.payload };
+        setDoOutline: (state, action: PayloadAction<boolean>) => {
+            state.doOutline = action.payload;
         },
         // API
-        setDepthBlurRadius: (state, action: { payload: number; type: string }) => {
-            return { ...state, depthBlurRadius: action.payload };
+        setDepthBlurRadius: (state, action: PayloadAction<number>) => {
+            state.depthBlurRadius = action.payload;
         },
         // API
-        setDepthBlurDepth: (state, action: { payload: number; type: string }) => {
-            return { ...state, depthBlurDepth: action.payload };
+        setDepthBlurDepth: (state, action: PayloadAction<number>) => {
+            state.depthBlurDepth = action.payload;
         },
         // API
-        setBackgroundColor: (state, action: { payload: [number, number, number, number]; type: string }) => {
-            return { ...state, backgroundColor: action.payload };
+        setBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.backgroundColor = action.payload;
         },
         // API
-        setHeight: (state, action: { payload: number; type: string }) => {
-            return { ...state, height: action.payload };
+        setHeight: (state, action: PayloadAction<number>) => {
+            state.height = action.payload;
         },
         // API
-        setWidth: (state, action: { payload: number; type: string }) => {
-            return { ...state, width: action.payload };
+        setWidth: (state, action: PayloadAction<number>) => {
+            state.width = action.payload;
         },
         // API
-        setGlViewportHeight: (state, action: { payload: number; type: string }) => {
-            return { ...state, GlViewportHeight: action.payload };
+        setGlViewportHeight: (state, action: PayloadAction<number>) => {
+            state.GlViewportHeight = action.payload;
         },
         // API
-        setGlViewportWidth: (state, action: { payload: number; type: string }) => {
-            return { ...state, GlViewportWidth: action.payload };
+        setGlViewportWidth: (state, action: PayloadAction<number>) => {
+            state.GlViewportWidth = action.payload;
         },
         // API
-        setIsDark: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isDark: action.payload };
+        setIsDark: (state, action: PayloadAction<boolean>) => {
+            state.isDark = action.payload;
         },
     },
 });
