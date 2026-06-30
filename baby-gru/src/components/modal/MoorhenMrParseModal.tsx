@@ -680,7 +680,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, commandCentre, monomerLibraryPath, backgroundColor, defaultBondSmoothness, store, dispatch);
+        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
     };
 
     const footerContent = (

@@ -4,7 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { setOrigin } from "@/store";
+import { MoorhenReduxStoreType, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -26,7 +26,7 @@ export type LoadFilesResult = {
 
 export class MoorhenInstance extends StoreExtension {
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
-    private commandCentre: CommandCentre;
+    private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
@@ -77,8 +77,9 @@ export class MoorhenInstance extends StoreExtension {
         }
     }
 
+
     public setCommandCentre(commandCentre: CommandCentre): void {
-        this.commandCentre = commandCentre;
+        this._commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
         this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
@@ -86,8 +87,8 @@ export class MoorhenInstance extends StoreExtension {
         return this._cootCommand;
     }
 
-    public getCommandCentre(): CommandCentre {
-        return this.commandCentre;
+    public get commandCentre(): CommandCentre {
+        return this._commandCentre;
     }
 
     public getCommandCentreRef(): React.RefObject<CommandCentre> {
@@ -157,6 +158,7 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public get files() {
+        const moorhenInstance = this;
         const store = this.store;
         const cootCommand = this.cootCommand;
         const dispatch = this.dispatch;
@@ -225,13 +227,9 @@ export class MoorhenInstance extends StoreExtension {
                 const createdObjects = await execWhenReady(() =>
                     autoOpenFiles(
                         filesArray,
-                        commandCentreRef,
-                        store,
-                        paths.monomerLibraryPath,
+                        moorhenInstance,
                         backgroundColor,
                         defaultBondSmoothness,
-                        timeCapsuleRef,
-                        dispatch
                     )
                 );
 
@@ -516,9 +514,9 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public cleanup(): void {
-        if (this.commandCentre) {
+        if (this._commandCentre) {
             this.commandCentre.close();
-            this.commandCentre = undefined;
+            this._commandCentre = undefined;
             this.timeCapsule = undefined;
             this.videoRecorder = undefined;
         }

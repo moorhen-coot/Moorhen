@@ -343,55 +343,55 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
     return parsed;
 };
 
-export const readMRCHeader = async (file: File): Promise<MRCHeaderJson> => {
+export const readMRCHeader = async (file: ArrayBuffer | Uint8Array): Promise<MRCHeaderJson> => {
     const MAIN_HEADER_SIZE = 1024;
 
-    let headerBuffer: ArrayBuffer;
-    if (file.name.endsWith(".gz")) {
-        if (typeof DecompressionStream === "undefined") {
-            throw new Error("DecompressionStream is not available in this environment");
-        }
+    // let headerBuffer: ArrayBuffer;
+    // if (file.name.endsWith(".gz")) {
+    //     if (typeof DecompressionStream === "undefined") {
+    //         throw new Error("DecompressionStream is not available in this environment");
+    //     }
 
-        const decompressedStream = file.stream().pipeThrough(new DecompressionStream("gzip"));
-        const reader = decompressedStream.getReader();
-        const headerBytes = new Uint8Array(MAIN_HEADER_SIZE);
-        let bytesRead = 0;
+    //     const decompressedStream = file.stream().pipeThrough(new DecompressionStream("gzip"));
+    //     const reader = decompressedStream.getReader();
+    //     const headerBytes = new Uint8Array(MAIN_HEADER_SIZE);
+    //     let bytesRead = 0;
 
-        try {
-            while (bytesRead < MAIN_HEADER_SIZE) {
-                const { value, done } = await reader.read();
-                if (done) {
-                    break;
-                }
+    //     try {
+    //         while (bytesRead < MAIN_HEADER_SIZE) {
+    //             const { value, done } = await reader.read();
+    //             if (done) {
+    //                 break;
+    //             }
 
-                const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
-                const bytesToCopy = Math.min(chunk.length, MAIN_HEADER_SIZE - bytesRead);
-                headerBytes.set(chunk.subarray(0, bytesToCopy), bytesRead);
-                bytesRead += bytesToCopy;
+    //             const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+    //             const bytesToCopy = Math.min(chunk.length, MAIN_HEADER_SIZE - bytesRead);
+    //             headerBytes.set(chunk.subarray(0, bytesToCopy), bytesRead);
+    //             bytesRead += bytesToCopy;
 
-                if (bytesRead >= MAIN_HEADER_SIZE) {
-                    await reader.cancel();
-                    break;
-                }
-            }
-        } finally {
-            reader.releaseLock();
-        }
+    //             if (bytesRead >= MAIN_HEADER_SIZE) {
+    //                 await reader.cancel();
+    //                 break;
+    //             }
+    //         }
+    //     } finally {
+    //         reader.releaseLock();
+    //     }
 
-        if (bytesRead < MAIN_HEADER_SIZE) {
-            throw new Error(`Uncompressed MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${bytesRead}`);
-        }
+    //     if (bytesRead < MAIN_HEADER_SIZE) {
+    //         throw new Error(`Uncompressed MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${bytesRead}`);
+    //     }
 
-        headerBuffer = headerBytes.buffer;
-    } else {
-        if (file.size < MAIN_HEADER_SIZE) {
-            throw new Error(`MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${file.size}`);
-        }
-        headerBuffer = await file.slice(0, MAIN_HEADER_SIZE).arrayBuffer();
+    //     headerBuffer = headerBytes.buffer;
+    // } else {
+    const fileBytes = file instanceof Uint8Array ? file : new Uint8Array(file);
+    if (fileBytes.byteLength < MAIN_HEADER_SIZE) {
+        throw new Error(`MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${fileBytes.byteLength}`);
     }
 
-    const bytes = new Uint8Array(headerBuffer);
-    const view = new DataView(headerBuffer);
+    const bytes = fileBytes.subarray(0, MAIN_HEADER_SIZE);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    // }
 
     const machineStamp = Array.from(bytes.slice(212, 216));
     const littleEndian =

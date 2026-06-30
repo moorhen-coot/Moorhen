@@ -15,6 +15,9 @@ import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
 import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeRepresentation";
+import pako from "pako";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { MoorhenInstance } from "@/InstanceManager"
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -473,17 +476,65 @@ const readCifDictionary = async (
     return newMonomers;
 };
 
+
+    /**
+     * Load a map to moorhen from a map file data blob
+     * @param {File} source - The map file
+     * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
+     * @returns {Promise<moorhen.Map>} This moorhenMap instance
+     */
+    const loadMapFile = async (source: File, isDiffMap: boolean = false, decompress: boolean = false, commandCentre: CommandCentre, store: MoorhenReduxStoreType): Promise<moorhen.Map> => {
+        const arrayBuffer = await source.arrayBuffer();
+        let mapData: ArrayBuffer | Uint8Array;
+        let mapName: string;
+        if (decompress) {
+            mapData = pako.inflate(arrayBuffer);
+            mapName = source.name.replace(".gz", "");
+        } else {
+            mapData = new Uint8Array(arrayBuffer);
+            mapName = source.name;
+        }
+
+        try {
+            const reply = await commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "shim_read_ccp4_map",
+                    commandArgs: [mapData, name, isDiffMap],
+                },
+                true
+            );
+            if (reply.data.result?.status === "Exception") {
+                console.warn("Exception raised when reading map");
+                return Promise.reject(reply.data.result.consoleMessage);
+            } else if (reply.data.result?.result === -1) {
+                console.warn("Returned map has molNo -1");
+                return Promise.reject(reply.data.result.consoleMessage);
+            }
+            const molNo = reply.data.result.result;
+            const isDifference = isDiffMap;
+        } catch (err) {
+            console.warn(err);
+            return Promise.reject(err);
+        }
+        // const newMap = new MoorhenMap(
+
+        // );
+        return 
+    }
+
 export const autoOpenFiles = async (
     files: File[],
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: MoorhenReduxStoreType,
-    monomerLibraryPath: string,
+    moorhenInstance: MoorhenInstance,
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number,
-    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-
-    dispatch: Dispatch
 ) => {
+    const store = moorhenInstance.store
+    const dispatch = moorhenInstance.dispatch
+    const commandCentre = moorhenInstance.getCommandCentreRef()
+    const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath
+
     const molecules = store.getState().molecules.moleculeList;
     const maps = store.getState().maps;
 
@@ -562,18 +613,8 @@ export const autoOpenFiles = async (
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
-            let header: MTZHeaderJson;
-            try {
-                header = await readMTZHeader(file);
-            } catch (err) {
-                console.warn("Failed to parse MTZ header", err);
-            }
-            const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
+            const newMaps = await MoorhenMap.autoReadMtz(file, moorhenInstance);
             for (const map in newMaps) {
-                newMaps[map].fileHeader = header;
-                newMaps[map].dataOrigin = "mtz"
-                await newMaps[map].initialise()
-                console.log("Read mtz data", header)
                 returnValues.push({ type: "map", uniqueID: newMaps[map].uniqueId, molNo: newMaps[map].molNo, fileName: file.name });
             }
             if (newMaps.length === 0) {
@@ -585,7 +626,7 @@ export const autoOpenFiles = async (
         } else if (file.name.endsWith(".pb")) {
             //Session file
             try {
-                await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, timeCapsuleRef, dispatch);
+                await handleSessionUpload(file, commandCentre, store, monomerLibraryPath, molecules, maps, moorhenInstance.getTimeCapsuleRef(), dispatch);
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }
@@ -607,21 +648,15 @@ export const autoOpenFiles = async (
             file.name.endsWith(".map.gz")
         ) {
             try {
-                const newMap = new MoorhenMap(commandCentre, store);
-                if (file.name.endsWith(".mrc") || file.name.endsWith(".mrc.gz")) {
-                    const header = await readMRCHeader(file);
-                    newMap.fileHeader = header;
-                    newMap.dataOrigin = "mapFile"
-                    await newMap.initialise()
-                    console.log(`Read MRC header for file ${file.name}`, header);
-                }
+                let newMap: MoorhenMap = null; 
                 const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
+
                     if (file.name.endsWith(".gz")) {
-                        await newMap.loadToCootFromMapFile(file, isDiff, true);
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true,);
                     } else {
-                        await newMap.loadToCootFromMapFile(file, isDiff);
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, false);
                     }
                 } catch (err) {
                     // Try again if this is a compressed file...
@@ -637,7 +672,7 @@ export const autoOpenFiles = async (
                 }
                 if (isLocres) {
                     newMap.showOnLoad = false;
-                }
+                }                
                 dispatch(addMap(newMap));
                 if (!isLocres) {
                     dispatch(setActiveMap(newMap));
