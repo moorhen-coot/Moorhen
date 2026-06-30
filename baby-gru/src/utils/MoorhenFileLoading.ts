@@ -13,7 +13,6 @@ import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
 import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeRepresentation";
 import pako from "pako";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";

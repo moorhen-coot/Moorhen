@@ -103,7 +103,7 @@ export type MTZHeaderJson = {
     };
 };
 
-export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
+export const readMTZHeader = async (file: File): Promise<MTZHeaderJson | number>=> {
     if (file.size < 20) {
         throw new Error(`MTZ preamble requires at least 20 bytes, got ${file.size}`);
     }
@@ -114,7 +114,8 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
 
     const magic = String.fromCharCode(...preambleBytes.slice(0, 4));
     if (!magic.startsWith("MTZ")) {
-        throw new Error(`Not an MTZ file: expected magic 'MTZ ', got '${magic}'`);
+        console.error(`Not an MTZ file: expected magic 'MTZ ', got '${magic}'`);
+        return -1
     }
 
     // Machine stamp starts at byte 9 (1-based indexing in CCP4 docs).
@@ -346,44 +347,6 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
 export const readMRCHeader = async (file: ArrayBuffer | Uint8Array): Promise<MRCHeaderJson> => {
     const MAIN_HEADER_SIZE = 1024;
 
-    // let headerBuffer: ArrayBuffer;
-    // if (file.name.endsWith(".gz")) {
-    //     if (typeof DecompressionStream === "undefined") {
-    //         throw new Error("DecompressionStream is not available in this environment");
-    //     }
-
-    //     const decompressedStream = file.stream().pipeThrough(new DecompressionStream("gzip"));
-    //     const reader = decompressedStream.getReader();
-    //     const headerBytes = new Uint8Array(MAIN_HEADER_SIZE);
-    //     let bytesRead = 0;
-
-    //     try {
-    //         while (bytesRead < MAIN_HEADER_SIZE) {
-    //             const { value, done } = await reader.read();
-    //             if (done) {
-    //                 break;
-    //             }
-
-    //             const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
-    //             const bytesToCopy = Math.min(chunk.length, MAIN_HEADER_SIZE - bytesRead);
-    //             headerBytes.set(chunk.subarray(0, bytesToCopy), bytesRead);
-    //             bytesRead += bytesToCopy;
-
-    //             if (bytesRead >= MAIN_HEADER_SIZE) {
-    //                 await reader.cancel();
-    //                 break;
-    //             }
-    //         }
-    //     } finally {
-    //         reader.releaseLock();
-    //     }
-
-    //     if (bytesRead < MAIN_HEADER_SIZE) {
-    //         throw new Error(`Uncompressed MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${bytesRead}`);
-    //     }
-
-    //     headerBuffer = headerBytes.buffer;
-    // } else {
     const fileBytes = file instanceof Uint8Array ? file : new Uint8Array(file);
     if (fileBytes.byteLength < MAIN_HEADER_SIZE) {
         throw new Error(`MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${fileBytes.byteLength}`);

@@ -422,6 +422,9 @@ export class MoorhenMap {
         await mtzWrapper.loadHeaderFromFile(source);
 
         const header = await readMTZHeader(source);
+        if (header === -1) {
+            moorhenInstance.snackbar.enqueueSnackbar({message: "Error reading mtz file, this doesn't look like a mtz...", variant: "error"})
+        }
 
         const response = (await moorhenInstance.commandCentre.cootCommand(
             {
