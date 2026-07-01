@@ -103,14 +103,25 @@ export type MTZHeaderJson = {
     };
 };
 
-export const readMTZHeader = async (file: File): Promise<MTZHeaderJson | number>=> {
-    if (file.size < 20) {
-        throw new Error(`MTZ preamble requires at least 20 bytes, got ${file.size}`);
+export const readMTZHeader = async (file: File | ArrayBuffer | Uint8Array): Promise<MTZHeaderJson | number>=> {
+    // Normalize input to Uint8Array
+    let fileBytes: Uint8Array;
+    if (file instanceof File) {
+        const arrayBuffer = await file.arrayBuffer();
+        fileBytes = new Uint8Array(arrayBuffer);
+    } else if (file instanceof ArrayBuffer) {
+        fileBytes = new Uint8Array(file);
+    } else {
+        fileBytes = file;
     }
 
-    const preambleBuffer = await file.slice(0, 20).arrayBuffer();
-    const preambleBytes = new Uint8Array(preambleBuffer);
-    const preambleView = new DataView(preambleBuffer);
+    const fileSize = fileBytes.byteLength;
+    if (fileSize < 20) {
+        throw new Error(`MTZ preamble requires at least 20 bytes, got ${fileSize}`);
+    }
+
+    const preambleBytes = fileBytes.subarray(0, 20);
+    const preambleView = new DataView(preambleBytes.buffer, preambleBytes.byteOffset, 20);
 
     const magic = String.fromCharCode(...preambleBytes.slice(0, 4));
     if (!magic.startsWith("MTZ")) {
@@ -131,18 +142,17 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson | number>
     let headerStartWord = headerStartWordLittle;
     let headerStartByte = headerStartByteLittle;
 
-    if (headerStartByteLittle < 0 || headerStartByteLittle >= file.size) {
+    if (headerStartByteLittle < 0 || headerStartByteLittle >= fileSize) {
         littleEndian = false;
         headerStartWord = headerStartWordBig;
         headerStartByte = headerStartByteBig;
     }
 
-    if (headerStartByte < 0 || headerStartByte >= file.size) {
-        throw new Error(`Invalid MTZ header start byte ${headerStartByte} (file size ${file.size})`);
+    if (headerStartByte < 0 || headerStartByte >= fileSize) {
+        throw new Error(`Invalid MTZ header start byte ${headerStartByte} (file size ${fileSize})`);
     }
 
-    const headerChunk = await file.slice(headerStartByte).arrayBuffer();
-    const headerBytes = new Uint8Array(headerChunk);
+    const headerBytes = fileBytes.subarray(headerStartByte);
     const decoder = new TextDecoder("ascii");
 
     const records: string[] = [];

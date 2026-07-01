@@ -9,8 +9,15 @@ export class MoorhenMtzWrapper {
         this.columns = {};
     }
 
-    async loadHeaderFromFile(file: File): Promise<{ [colType: string]: string }> {
-        const arrayBuffer = await file.arrayBuffer()
+    async loadHeaderFromFile(file: File | ArrayBuffer | Uint8Array): Promise<{ [colType: string]: string }> {
+        let arrayBuffer: ArrayBuffer;
+        if (file instanceof File) {
+            arrayBuffer = await file.arrayBuffer();
+        } else if (file instanceof Uint8Array) {
+            arrayBuffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
+        } else {
+            arrayBuffer = file;
+        }
         const fileName = `File_${uuidv4()}`;
         const byteArray = new Uint8Array(arrayBuffer);
         window.CCP4Module.FS_createDataFile(".", fileName, byteArray, true, true);

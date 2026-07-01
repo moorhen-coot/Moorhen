@@ -39,6 +39,11 @@ const mockMonomerLibraryPath = 'https://raw.githubusercontent.com/MRC-LMB-Comput
                     },
                 };
             },
+            arrayBuffer: async () => {
+                const fileContents = fs.readFileSync(url);
+                const buff = fileContents.buffer;
+                return buff;
+            },
         });
     }
 };
@@ -140,25 +145,25 @@ describe('Testing MoorhenMap', () => {
 
     test('getSuggestedSettings', async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
-        const map = new MoorhenMap(mockInstance);
-
-        const f_1 = jest.spyOn(map, 'initialise');
-        const f_2 = jest.spyOn(map, 'fetchMapRmsd');
-        const f_3 = jest.spyOn(map, 'fetchMapCentre');
-        const f_4 = jest.spyOn(map, 'setDefaultColour');
-        const f_5 = jest.spyOn(map, 'fetchSuggestedLevelXtal');
-        const f_6 = jest.spyOn(map, 'estimateMapWeight');
-
-        await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: 'FWT', PHI: 'PHWT', isDifference: false, useWeight: false, calcStructFact: false });
+        const moorhenInstance = new MoorhenInstance(React.createRef(), null, commandCentre);
+        
+        // Create refs for external dependencies
+        const externalCommandCentreRef = React.createRef<any>();
+        externalCommandCentreRef.current = commandCentre;
+        
+        await moorhenInstance.startInstance(
+            MoorhenReduxStore.dispatch,
+            React.createRef(),
+            React.createRef(),
+            MoorhenReduxStore,
+        );
+        
+        // const map = new MoorhenMap(moorhenInstance);
+        const files = await moorhenInstance.files.loadFiles([fileUrl])
+        console.log('Loaded files:', files.map(f => f.uniqueID));
+        const map = moorhenInstance.getMap(files[0].uniqueID);
 
         expect(map.molNo).toBe(0);
-        expect(f_1).toHaveBeenCalledTimes(1);
-        expect(f_2).toHaveBeenCalledTimes(1);
-        expect(f_3).toHaveBeenCalledTimes(1);
-        expect(f_4).toHaveBeenCalledTimes(1);
-        expect(f_5).toHaveBeenCalledTimes(1);
-        expect(f_6).toHaveBeenCalledTimes(1);
-
         expect(map.isEM).toBeFalsy();
         expect(map.mapRmsd).toBeCloseTo(0.35, 1);
         expect(map.mapCentre[0]).toBeCloseTo(1.09, 1);

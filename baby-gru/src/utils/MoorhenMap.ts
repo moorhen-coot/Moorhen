@@ -442,8 +442,8 @@ export class MoorhenMap {
     ): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper();
         await mtzWrapper.loadHeaderFromFile(source);
-
         const header = await readMTZHeader(source);
+        
         if (header === -1) {
             moorhenInstance.snackbar.enqueueSnackbar({message: "Error reading mtz file, this doesn't look like a mtz...", variant: "error"})
         }
