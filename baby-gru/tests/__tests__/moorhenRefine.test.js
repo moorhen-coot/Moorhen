@@ -97,7 +97,6 @@ describe("Testing MoorhenMolecule", () => {
     })
 
     test("refineResiduesUsingAtomCidAnimated", async () => {
-        //console.log(window.gemmiModule)
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h-nitrobenzene.pdb')
         const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
