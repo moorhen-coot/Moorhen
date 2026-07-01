@@ -86,17 +86,17 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     let fromAtoms
                     let nFromAtoms = 0
                     try {
-                        fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
+                        fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
                         nFromAtoms = fromAtoms.size()
                         if(nFromAtoms===0 && vec.cidFrom.length!==4){
                             //Try 4-char padding/unpadding
                             fromAtoms.delete()
                             const newCid = get1LetterElementPaddedCid(vec.cidFrom)
-                            fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
+                            fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
                             nFromAtoms = fromAtoms.size()
                             if(nFromAtoms===0){
                                 const newCid2 = get2LetterElementPaddedCid(vec.cidFrom)
-                                fromAtoms = window.CCP4Module.get_atom_info_for_selection(fromMol.gemmiStructure, newCid2, "" )
+                                fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, newCid2, "" )
                                 nFromAtoms = fromAtoms.size()
                             }
                         }
@@ -131,17 +131,17 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
                     let toAtoms
                     let nToAtoms = 0
                     try {
-                        toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
+                        toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
                         nToAtoms = toAtoms.size()
                         if(nToAtoms===0 && vec.cidTo.length!==4){
                             //Try 4-char padding/unpadding
                             toAtoms.delete()
                             const newCid = get1LetterElementPaddedCid(vec.cidTo)
-                            toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
+                            toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
                             nToAtoms = toAtoms.size()
                             if(nToAtoms===0){
                                 const newCid2 = get2LetterElementPaddedCid(vec.cidTo)
-                                toAtoms = window.CCP4Module.get_atom_info_for_selection(toMol.gemmiStructure, newCid2, "" )
+                                toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, newCid2, "" )
                                 nToAtoms = toAtoms.size()
                             }
                         }

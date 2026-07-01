@@ -122,6 +122,92 @@ struct CompoundInfo {
     std::string three_letter_code;
 };
 
+inline std::vector<std::string> split_string(const std::string &string_in,
+                         const std::string &splitter) {
+
+   std::vector<std::string> v;
+   std::string s=string_in;
+
+   while (1) {
+      std::string::size_type isplit=s.find_first_of(splitter);
+      if (isplit != std::string::npos) {
+         std::string f = s.substr(0, isplit);
+         v.push_back(f);
+         if (s.length() > (isplit+splitter.length())) {
+            s = s.substr(isplit+splitter.length());
+         } else {
+            break;
+         }
+      } else {
+         if (! s.empty()) {
+            v.push_back(s);
+            break;
+         }
+      }
+   }
+   return v;
+}
+
+
+inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
+
+    auto splitNeighboursCid = split_string(cidNeighbours, "||");
+    auto splitCid = split_string(cid, "||");
+
+    auto d2 = d*d;
+
+    auto distsq = [](const gemmi::Atom &a1, const gemmi::Atom &a2){
+        return (a1.pos.x-a2.pos.x)*(a1.pos.x-a2.pos.x) + (a1.pos.y-a2.pos.y)*(a1.pos.y-a2.pos.y) + (a1.pos.z-a2.pos.z)*(a1.pos.z-a2.pos.z);
+    };
+
+    std::string sel_str = "";
+
+    std::vector<gemmi::Atom> atoms;
+
+    for(const auto &_neighboursCid : splitNeighboursCid){
+        gemmi::Selection sel2(_neighboursCid);
+        for(auto m: sel2.models(st)){
+            for(auto c: sel2.chains(m)){
+                for(auto r: sel2.residues(c)){
+                    for(auto a: sel2.atoms(r)){
+                        atoms.push_back(a);
+                    }
+                }
+            }
+        }
+    }
+
+    for(const auto &_cid : splitCid){
+        gemmi::Selection sel(_cid);
+        for(auto m: sel.models(st)){
+            for(auto c: sel.chains(m)){
+                for(auto r: sel.residues(c)){
+                    auto num = r.seqid.num;
+                    bool found_residue = false;
+                    if(num.has_value()){
+                        for(auto a: sel.atoms(r)){
+                            for(auto a2:atoms){
+                                if(distsq(a,a2)<d2){
+                                    found_residue = true;
+                                    break;
+                                }
+                            }
+                            if(found_residue) break;
+                        }
+                        if(found_residue!=excl) sel_str += c.name + "/" + std::to_string(num.value) + "||";
+                    }
+                }
+            }
+        }
+    }
+
+    if(sel_str.length()>2)
+        return sel_str.substr(0,sel_str.length()-2);
+
+    return "";
+
+}
+
 inline std::vector<CompoundInfo> parse_mon_lib_list_cif(const std::string &data) {
     gemmi::cif::Document doc = gemmi::cif::read_string(data);
     gemmi::cif::Block block = doc.blocks[1];

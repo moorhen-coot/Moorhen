@@ -89,8 +89,8 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             return [];
         }
 
-        const doc = new window.CCP4Module.cifDocument();
-        window.CCP4Module.cif_parse_string(doc, fileContent);
+        const doc = new window.gemmiModule.cifDocument();
+        window.gemmiModule.cif_parse_string(doc, fileContent);
 
         const blocks = doc.blocks;
         const blocksSize = blocks.size();

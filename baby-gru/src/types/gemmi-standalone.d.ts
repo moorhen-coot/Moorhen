@@ -5,6 +5,39 @@
 import type { gemmi } from '../types/gemmi';
 import type { emscriptem } from '../types/emscriptem';
 
+type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
+
+type SequenceResInfo = {
+    resNum: number;
+    resCode: string;
+    cid: string;
+};
+
+type SequenceEntry = {
+    type: number;
+    name: string;
+    chain: string;
+    sequence: emscriptem.vector<SequenceResInfo>;
+};
+
+export type AtomInfo = {
+        x: number;
+        y: number;
+        z: number;
+        charge: number;
+        element: string;
+        tempFactor: number;
+        serial: number;
+        occupancy: number;
+        name: string;
+        has_altloc: boolean;
+        alt_loc?: string;
+        mol_name: string;
+        chain_id: string;
+        res_no: string;
+        res_name: string;
+};
+
 export interface GemmiModule {
     // File I/O
     FS_createDataFile(parent: string, name: string, data: Uint8Array | string, canRead: boolean, canWrite: boolean): void;
@@ -59,6 +92,21 @@ export interface GemmiModule {
     Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
     cifDocument: { new(): gemmi.cifDocument };
     VectorString: { new(): emscriptem.vector<string> };
+
+    //Some things that are currently (25/6/2026) used by CootModule on window.
+    get_atom_info_for_selection(_0: Structure, _1: string, _2: string):  emscriptem.vector<AtomInfo>;
+    get_ligand_info_for_structure(_0: Structure):  emscriptem.vector<LigandInfo>;
+    get_sequence_info(_0: Structure, _1: string):  emscriptem.vector<SequenceEntry>;
+
+    gemmi_add_entity_types(_0: Structure, _1: boolean): void;
+    getElementNameAsString(_0: Element): string;
+    get_non_selected_cids(_0: Structure, _1: string):  emscriptem.vector<string>;
+    get_structure_bfactors(_0: Structure): emscriptem.vector<{ cid: string; bFactor: number; normalised_bFactor }>;
+    has_hydrogen(_0: Model): boolean;
+    is_small_structure(_0: string): boolean;
+    parse_ligand_dict_info(_0: string): emscriptem.vector<{ comp_id: string; dict_contents: string }>;
+    parse_multi_cids(_0: Structure, _1: string): emscriptem.vector<string>;
+    cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
 
     // Enums
     CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };

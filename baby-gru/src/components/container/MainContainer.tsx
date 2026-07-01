@@ -34,7 +34,7 @@ import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
 import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
-import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { windowCootCCP4Loader, windowGemmiLoader } from "../../utils/windowCootCCP4Loader";
 import { MoorhenSpinner } from "../icons";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenModalsContainer } from "../interface-base/ModalBase/ModalsContainer";
@@ -244,7 +244,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     useEffect(() => {
         const startupEffect = async () => {
-            if (!window.cootModule) windowCootCCP4Loader(`${urlPrefix}/wasm/`);
+            if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
             if (!window.MathJax) loadMathjax(`${urlPrefix}`);
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
