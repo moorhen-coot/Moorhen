@@ -91,7 +91,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             printErr(t) { () => console.log(["output", t]); }
         }).then(CCP4Module => {
             cootModule = CCP4Module
-            createGemmiModule({
+            return createGemmiModule({
                 print(t) { () => console.log(["output", t]) },
                 printErr(t) { () => console.log(["output", t]); }
             }).then(gemmiModule => {
