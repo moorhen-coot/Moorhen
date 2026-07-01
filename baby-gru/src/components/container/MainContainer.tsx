@@ -244,7 +244,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         const startupEffect = async () => {
             if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
-            if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 1500);
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
             dispatch(setDisableFileUpload(disableFileUploads));
@@ -290,6 +289,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 const json = JSON.parse(shortCuts);
                 console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
+            if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
         };
         startupEffect().then(() => {
             if (props.onInitialisationCompleted) {
