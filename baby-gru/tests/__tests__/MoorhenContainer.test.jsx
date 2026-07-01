@@ -54,54 +54,62 @@ let mockMonomerLibraryPath = null
 
 describe('Testing MoorhenContainer', () => {
 
-    beforeAll(async() => {
+    beforeAll(async () => {
         const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
         const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
 
-        mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+        const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
-        global.fetch = (url) => {
-            if (url.includes(mockMonomerLibraryPath)) {
-                return fetch(url)
-            } else if (url.includes('https:/files.rcsb.org/download/')) {
-                return fetch(url)
-            } else {
-                return Promise.resolve({
-                    ok: true,
-                    text: async () => {
-                        const fileContents = fs.readFileSync(`./public/baby-gru/${url}`, { encoding: 'utf8', flag: 'r' })
-                        return fileContents
-                    },
-                    blob: async () => {
-                        return {
-                            arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(`./public/baby-gru/${url}`)
-                                const buff = fileContents.buffer
-                                return buff
-                            }
-                        }
+        // Keep reference to real fetch
+        const realFetch = global.fetch
+
+        // Clean async fetch mock
+        global.fetch = async (input) => {
+            const url = typeof input === "string" ? input : input.url
+
+            if (
+                url.includes(mockMonomerLibraryPath) ||
+                url.includes('https:/files.rcsb.org/download/')
+            ) {
+                return realFetch(url)
+            }
+
+            return {
+                ok: true,
+
+                text: async () => {
+                    return fs.readFileSync(
+                        `./public/baby-gru/${url}`,
+                        { encoding: 'utf8', flag: 'r' }
+                    )
+                },
+
+                blob: async () => ({
+                    arrayBuffer: async () => {
+                        const fileContents = fs.readFileSync(
+                            `./public/baby-gru/${url}`
+                        )
+                        return fileContents.buffer
                     }
                 })
             }
         }
 
-        cootModule = await createCootModule({
+        // Shared module config
+        const moduleConfig = {
             print: (t) => console.log(["output", t]),
             printErr: (t) => console.log(["output", t]),
-        })
+        }
 
-        const gemmiModule = await createGemmiModule({
-            print: (t) => console.log(["output", t]),
-            printErr: (t) => console.log(["output", t]),
-        })
+        // Initialise WASM modules
+        cootModule = await createCootModule(moduleConfig)
+        const gemmiModule = await createGemmiModule(moduleConfig)
 
+        // Proper global setup
         global.window = {
             CCP4Module: cootModule,
             gemmiModule: gemmiModule,
         }
-
-        await Promise.resolve()
-
     })
 
     beforeEach(() => {
