@@ -218,39 +218,62 @@ export class MoorhenMap {
         return Promise.reject(cootResponse.data.result.status);
     }
 
-    // /**
-    //  * Load map to moorhen using a MTZ url
-    //  * @param {string} url - The url to the MTZ file
-    //  * @param {string} name - The name that will be assigned to the map
-    //  * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
-    //  * @param {object} [options] - Options passed to fetch API
-    //  * @returns {Pormise<moorhen.Map>} This moorhenMap instance
-    //  */
-    // async loadToCootFromMtzURL(
-    //     url: RequestInfo | URL,
-    //     name: string,
-    //     selectedColumns: moorhen.selectedMtzColumns,
-    //     options?: RequestInit
-    // ): Promise<moorhen.Map> {
-    //     try {
-    //         const response = await fetch(url, options);
-    //         if (!response.ok) {
-    //             return Promise.reject(`Error fetching data from url ${url}`);
-    //         }
-    //         const reflectionData: Blob = await response.blob();
-    //         const arrayBuffer: ArrayBuffer = await reflectionData.arrayBuffer();
-    //         const asUIntArray: Uint8Array = new Uint8Array(arrayBuffer);
-    //         await this.loadToCootFromMtzData(asUIntArray, name, selectedColumns);
-    //         if (selectedColumns.calcStructFact) {
-    //             await this.associateToReflectionData(selectedColumns, asUIntArray);
-    //         }
-    //         this.dataOrigin = "mtz";
-    //         return this;
-    //     } catch (err) {
-    //         console.log(err);
-    //         return Promise.reject(err);
-    //     }
-    // }
+    /** 
+     * @deprecated This is used to direct load to coot worker for test only
+     * Load map to moorhen using a MTZ url
+     * @param {string} url - The url to the MTZ file
+     * @param {string} name - The name that will be assigned to the map
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @param {object} [options] - Options passed to fetch API
+     * @returns {Pormise<moorhen.Map>} This moorhenMap instance
+     */
+    async loadToCootFromMtzURL(
+        url: RequestInfo | URL,
+        name: string,
+        selectedColumns: moorhen.selectedMtzColumns,
+        options?: RequestInit
+    ): Promise<moorhen.Map> {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                return Promise.reject(`Error fetching data from url ${url}`);
+            }
+            const reflectionData: Blob = await response.blob();
+            const arrayBuffer: ArrayBuffer = await reflectionData.arrayBuffer();
+            const asUIntArray: Uint8Array = new Uint8Array(arrayBuffer);
+
+            const reply = await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "shim_read_mtz",
+                    commandArgs: [asUIntArray, name, selectedColumns],
+                },
+                true
+            );
+            if (reply.data.result.status === "Exception") {
+                return Promise.reject(reply.data.result.consoleMessage);
+            }
+            this.molNo = reply.data.result.result;
+            this.selectedColumns = selectedColumns;
+            if (Object.keys(selectedColumns).includes("isDifference")) {
+                this.isDifference = selectedColumns.isDifference;
+            }
+            
+            if (selectedColumns.calcStructFact) {
+                await this.associateToReflectionData(selectedColumns, asUIntArray);
+            }
+            this.dataOrigin = "mtz";
+            const file = new File([arrayBuffer], "map.mtz");// this is idiotic, but just for testing anyways
+
+            const header = await readMTZHeader(file); 
+            this.fileHeader = header;
+            await this.initialise()
+            return this;
+        } catch (err) {
+            console.log(err);
+            return Promise.reject(err);
+        }
+    }
 
     /**
      * Load map to moorhen using MTZ data
@@ -279,7 +302,6 @@ export class MoorhenMap {
             if (Object.keys(selectedColumns).includes("isDifference")) {
                 map.isDifference = selectedColumns.isDifference;
             }
-            // await this.getSuggestedSettings();
             map.dataOrigin = "mtz";
             return map;
         } catch (err) {
@@ -1273,17 +1295,17 @@ export class MoorhenMap {
             this.isOriginLocked = true;
         }
         await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
+            this.fetchMapRmsd(),
             this.setDefaultColour(),
             this.fetchMapCentre(),
             this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevelXtal(),
             this.guessMapRangeAndLevel(),
         ]);
+        await this.estimateMapWeight();
+        
 
-        if (this.isEM) {
-
-            
+        if (this.isEM) {          
             if (this.dataOrigin === "mtz")
                 {   console.log("Trying to find density centre of mass for EM map with MTZ origin");
                     const densityCenter = await this.get_map_density_center_of_mass();
