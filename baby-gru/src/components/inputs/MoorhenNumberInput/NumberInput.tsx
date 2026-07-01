@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
@@ -84,6 +84,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const decimalDigits = integer ? 0 : (props.decimalDigits ?? 2);
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
+    const inputId = useId();
     const isValidRef = useRef<boolean>(true);
     const dispatch = useDispatch();
 
@@ -151,7 +152,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
 
     const input = (
         <input
-            id="input"
+            id={inputId}
             ref={ref}
             type={formType}
             step={Math.pow(10, -decimalDigits)}
@@ -172,7 +173,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     return (
         <MoorhenStack direction={labelPosition === "left" ? "line" : "column"} align="center" style={{ flex: 0, ...style }}>
             {label ? (
-                <label className="moorhen__input__label" htmlFor="input">
+                <label className="moorhen__input__label" htmlFor={inputId}>
                     {label}&nbsp;
                 </label>
             ) : null}

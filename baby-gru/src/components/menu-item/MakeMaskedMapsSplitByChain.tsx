@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -19,7 +19,7 @@ export const MakeMaskedMapsSplitByChain = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
-    const store = useStore<RootState>();
+    const moorhenInstance = useMoorhenInstance();
 
     const menuItemText = "Split map by chain...";
 
@@ -49,13 +49,14 @@ export const MakeMaskedMapsSplitByChain = () => {
         if (result.data.result.result.length > 0) {
             await Promise.all(
                 result.data.result.result.map(async (iNewMap, listIndex) => {
-                    const newMap = new MoorhenMap(commandCentre, store);
+                    const newMap = new MoorhenMap(moorhenInstance);
                     newMap.molNo = iNewMap;
+                    selectedMap.copyMapParametersTo(newMap);
                     newMap.name = `Chain ${listIndex} of ${selectedMap.name}`;
-                    newMap.isDifference = selectedMap.isDifference;
-                    await newMap.getSuggestedSettings();
+                    
+                    await newMap.initialise();
                     const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
-                    dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
+                    if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }
                     dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
                     dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
                     dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
@@ -71,11 +72,11 @@ export const MakeMaskedMapsSplitByChain = () => {
 
     return (
         <>
-        <MoorhenStack inputGrid>
-            <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
-            <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
-        </MoorhenStack>
-        <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
+            <MoorhenStack inputGrid>
+                <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
+                <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} />
+            </MoorhenStack>
+            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </>
     );
 };

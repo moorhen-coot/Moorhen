@@ -11,13 +11,12 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
     const [resolution, setResolution] = useState<string | null>(null);
     const [busy, setBusy] = useState<boolean>(true);
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     useEffect(() => {
         const fetchHeaderInfo = async () => {
-            const headerInfo: moorhen.mapHeaderInfo = await props.map.fetchHeaderInfo();
+            const headerInfo = props.map.getSimpleHeaderInfo()
             setCell(
                 headerInfo.cell.a.toFixed(2) +
                     " " +
@@ -25,11 +24,11 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
                     " " +
                     headerInfo.cell.c.toFixed(2) +
                     " " +
-                    ((headerInfo.cell.alpha * 180) / Math.PI).toFixed(2) +
+                    headerInfo.cell.alpha.toFixed(2) +
                     " " +
-                    ((headerInfo.cell.beta * 180) / Math.PI).toFixed(2) +
+                    headerInfo.cell.beta.toFixed(2) +
                     " " +
-                    ((headerInfo.cell.gamma * 180) / Math.PI).toFixed(2)
+                    headerInfo.cell.gamma.toFixed(2)
             );
             setSpacegroup(headerInfo.spacegroup);
             setResolution(headerInfo.resolution.toFixed(2));

@@ -6,7 +6,10 @@ import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
-import { MRCHeaderJson, MTZHeaderJson } from "./mapHeaders";
+import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
+import { spaceGroupList } from "@/utils/spaceGroupList"
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { MoorhenInstance } from "@/InstanceManager";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -48,15 +51,23 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * map.delete();
 */
 
+export type BasicMapHeaderInfo = {}
+
+type mapHeaderInfo = {
+    spacegroup: string;
+    cell: libcootApi.mapCellJS;
+    resolution: number;
+};
+
 export class MoorhenMap {
-    type: string;
+    type: "map";
     name: string;
-    fileHeader: MRCHeaderJson | MTZHeaderJson;
-    headerInfo: moorhen.mapHeaderInfo;
+    fileHeader: MRCHeaderJson | MTZHeaderJson | BasicMapHeaderInfo;
+    headerInfo: mapHeaderInfo;
     isEM: boolean;
     molNo: number;
     store: Store;
-    commandCentre: React.RefObject<moorhen.CommandCentre | null>;
+    commandCentre: CommandCentre | null;
     isOriginLocked: boolean;
     drawOrigin: [number, number, number];
     mapCentre: [number, number, number];
@@ -83,16 +94,16 @@ export class MoorhenMap {
     autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre | null>, store: Store) => Promise<moorhen.Map[]>;
     dataOrigin: "mtz" | "mapFile";
     originShift: [number, number, number];
+    moorhenInstance: MoorhenInstance
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store) {
+    constructor(moorhenInstance: MoorhenInstance) {
         this.type = "map";
-        this.name = "unnamed";
         this.headerInfo = null;
-        this.store = reduxStore;
+        this.moorhenInstance = moorhenInstance;
+        this.store = moorhenInstance.store;
         this.isEM = false;
         this.molNo = null;
-        this.commandCentre = commandCentre;
-        this.store = reduxStore;
+        this.commandCentre = moorhenInstance.commandCentre;
         this.levelRange = null;
         this.webMGContour = false;
         this.showOnLoad = true;
@@ -122,7 +133,7 @@ export class MoorhenMap {
      * Helper function to set this map instance as the "active" map for refinement
      */
     async setActive(): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "set_imol_refinement_map",
@@ -148,7 +159,7 @@ export class MoorhenMap {
             }
         });
         const promises = [
-            this.commandCentre.current.cootCommand(
+            this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "close_molecule",
@@ -157,7 +168,7 @@ export class MoorhenMap {
                 true
             ),
             this.hasReflectionData
-                ? this.commandCentre.current.postMessage({
+                ? this.commandCentre.postMessage({
                       message: "delete_file_name",
                       fileName: this.associatedReflectionFileName,
                   })
@@ -191,7 +202,7 @@ export class MoorhenMap {
             return Promise.reject(`Error fetching data from url ${fileUrl}`);
         }
 
-        const cootResponse = (await this.commandCentre.current.cootCommand(
+        const cootResponse = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "shim_replace_map_by_mtz_from_file",
@@ -207,7 +218,8 @@ export class MoorhenMap {
         return Promise.reject(cootResponse.data.result.status);
     }
 
-    /**
+    /** 
+     * @deprecated This is used to direct load to coot worker for test only
      * Load map to moorhen using a MTZ url
      * @param {string} url - The url to the MTZ file
      * @param {string} name - The name that will be assigned to the map
@@ -229,11 +241,33 @@ export class MoorhenMap {
             const reflectionData: Blob = await response.blob();
             const arrayBuffer: ArrayBuffer = await reflectionData.arrayBuffer();
             const asUIntArray: Uint8Array = new Uint8Array(arrayBuffer);
-            await this.loadToCootFromMtzData(asUIntArray, name, selectedColumns);
+
+            const reply = await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "shim_read_mtz",
+                    commandArgs: [asUIntArray, name, selectedColumns],
+                },
+                true
+            );
+            if (reply.data.result.status === "Exception") {
+                return Promise.reject(reply.data.result.consoleMessage);
+            }
+            this.molNo = reply.data.result.result;
+            this.selectedColumns = selectedColumns;
+            if (Object.keys(selectedColumns).includes("isDifference")) {
+                this.isDifference = selectedColumns.isDifference;
+            }
+            
             if (selectedColumns.calcStructFact) {
                 await this.associateToReflectionData(selectedColumns, asUIntArray);
             }
             this.dataOrigin = "mtz";
+            const file = new File([arrayBuffer], "map.mtz");// this is idiotic, but just for testing anyways
+
+            const header = await readMTZHeader(file); 
+            this.fileHeader = header;
+            await this.initialise()
             return this;
         } catch (err) {
             console.log(err);
@@ -248,10 +282,11 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Pormise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
-        this.name = name;
+    static async loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns, moorhenInstance: MoorhenInstance): Promise<moorhen.Map> {
+        const map = new MoorhenMap(moorhenInstance);
+        map.name = name;
         try {
-            const reply = await this.commandCentre.current.cootCommand(
+            const reply = await moorhenInstance.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "shim_read_mtz",
@@ -262,14 +297,13 @@ export class MoorhenMap {
             if (reply.data.result.status === "Exception") {
                 return Promise.reject(reply.data.result.consoleMessage);
             }
-            this.molNo = reply.data.result.result;
-            this.selectedColumns = selectedColumns;
+            map.molNo = reply.data.result.result;
+            map.selectedColumns = selectedColumns;
             if (Object.keys(selectedColumns).includes("isDifference")) {
-                this.isDifference = selectedColumns.isDifference;
+                map.isDifference = selectedColumns.isDifference;
             }
-            await this.getSuggestedSettings();
-            this.dataOrigin = "mtz";
-            return this;
+            map.dataOrigin = "mtz";
+            return map;
         } catch (err) {
             return Promise.reject(err);
         }
@@ -281,18 +315,18 @@ export class MoorhenMap {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
+    static loadToCootFromMtzFile = async (source: File, selectedColumns: moorhen.selectedMtzColumns, moorhenInstance: MoorhenInstance): Promise<moorhen.Map> => {
         const reflectionData = await source.arrayBuffer();
         const asUIntArray = new Uint8Array(reflectionData);
-        await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns);
+        const map = await this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns, moorhenInstance);
         if (selectedColumns.calcStructFact) {
-            await this.associateToReflectionData(selectedColumns, asUIntArray);
+            await map.associateToReflectionData(selectedColumns, asUIntArray);
         }
-        return this;
+        return map;
     };
 
-    /**
-     * Load map to moorhen from a map file url
+    /** 
+     * Load map to moorhen from a map file url - prefer using MoorhenInstance.file.loadFiles() instead
      * @param {string} url - The url to the MTZ file
      * @param {string} name - The name that will be assigned to the map
      * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
@@ -300,12 +334,14 @@ export class MoorhenMap {
      * @param {object} [options] - Options passed to fetch API
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapURL(
+    static async loadToCootFromMapURL(
         url: RequestInfo | URL,
         name: string,
+        moorhenInstance: MoorhenInstance,
         isDiffMap: boolean = false,
         decompress: boolean = false,
-        options?: RequestInit
+        options?: RequestInit,
+        uniqueId?: string
     ): Promise<moorhen.Map> {
         try {
             const response = await fetch(url, options);
@@ -318,7 +354,7 @@ export class MoorhenMap {
                 } else {
                     mapData = new Uint8Array(arrayBuffer);
                 }
-                return await this.loadToCootFromMapData(mapData, name, isDiffMap);
+                return this.loadToCootFromMapData(mapData, name, isDiffMap, moorhenInstance, uniqueId);
             } else {
                 return Promise.reject(`Requested ${url} and response was not OK...`);
             }
@@ -334,10 +370,10 @@ export class MoorhenMap {
      * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<moorhen.Map> {
-        this.name = name.replace(".gz", "").replace(".map", "").replace(".mrc", "").replace(".ccp4", ""); //clean up name a bit
+    static async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean, moorhenInstance: MoorhenInstance, uniqueId?: string): Promise<MoorhenMap> {
+        const newMap = new MoorhenMap(moorhenInstance)
         try {
-            const reply = await this.commandCentre.current.cootCommand(
+            const reply = await moorhenInstance.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "shim_read_ccp4_map",
@@ -352,10 +388,16 @@ export class MoorhenMap {
                 console.warn("Returned map has molNo -1");
                 return Promise.reject(reply.data.result.consoleMessage);
             }
-            this.molNo = reply.data.result.result;
-            this.isDifference = isDiffMap;
-            await this.getSuggestedSettings();
-            return this;
+            newMap.molNo = reply.data.result.result;
+            newMap.isDifference = isDiffMap;
+            newMap.fileHeader = await readMRCHeader(data);
+            newMap.dataOrigin = "mapFile"
+            newMap.name = name;
+            if (uniqueId) {
+                newMap.uniqueId = uniqueId;
+            }
+            await newMap.initialise()
+            return newMap
         } catch (err) {
             console.warn(err);
             return Promise.reject(err);
@@ -369,36 +411,44 @@ export class MoorhenMap {
      * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    async loadToCootFromMapFile(source: File, isDiffMap: boolean = false, decompress: boolean = false): Promise<moorhen.Map> {
-        const arrayBuffer = await source.arrayBuffer();
+    static async loadToCootFromMapFile(file: File, moorhenInstance: MoorhenInstance,  isDiffMap: boolean = false, decompress: boolean = false): Promise<MoorhenMap> {
+        const arrayBuffer = await file.arrayBuffer();
+        
         let mapData: ArrayBuffer | Uint8Array;
         let mapName: string;
         if (decompress) {
             mapData = pako.inflate(arrayBuffer);
-            mapName = source.name.replace(".gz", "");
+            mapName = file.name.replace(".gz", "");
         } else {
             mapData = new Uint8Array(arrayBuffer);
-            mapName = source.name;
+            mapName = file.name;
         }
-        return this.loadToCootFromMapData(mapData, mapName, isDiffMap);
+        const newName = mapName.replace(".gz", "").replace(".map", "").replace(".mrc", "").replace(".ccp4", "")
+        const newMap = await this.loadToCootFromMapData(mapData, newName, isDiffMap, moorhenInstance);
+        
+        return newMap
     }
 
     /**
      * Static method used to automatically read multiple maps from a single mtz file
      * @param {File} source - The mtz file
-     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+     * @param {moorhenInstance} - The instance
      * @param {Store} store - The redux store
      * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
      */
     static async autoReadMtz(
         source: File,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        store: Store
+        moorhenInstance: MoorhenInstance
     ): Promise<moorhen.Map[]> {
         const mtzWrapper = new MoorhenMtzWrapper();
         await mtzWrapper.loadHeaderFromFile(source);
+        const header = await readMTZHeader(source);
+        
+        if (header === -1) {
+            moorhenInstance.snackbar.enqueueSnackbar({message: "Error reading mtz file, this doesn't look like a mtz...", variant: "error"})
+        }
 
-        const response = (await commandCentre.current.cootCommand(
+        const response = (await moorhenInstance.commandCentre.cootCommand(
             {
                 returnType: "auto_read_mtz_info_array",
                 command: "shim_auto_read_mtz",
@@ -415,7 +465,7 @@ export class MoorhenMap {
 
         const isDiffMapResponses = await Promise.all(
             response.data.result.result.map(autoReadInfo => {
-                return commandCentre.current.cootCommand(
+                return moorhenInstance.commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "is_a_difference_map",
@@ -436,7 +486,7 @@ export class MoorhenMap {
             response.data.result.result
                 .filter(item => item.idx !== -1)
                 .map(async (autoReadInfo, index) => {
-                    const newMap = new MoorhenMap(commandCentre, store);
+                    const newMap = new MoorhenMap(moorhenInstance);
                     newMap.molNo = autoReadInfo.idx;
                     newMap.name = `${source.name.replace("mtz", "")}-map-${index}`;
                     newMap.isDifference = isDiffMapResponses[index].data.result.result;
@@ -452,10 +502,17 @@ export class MoorhenMap {
                     };
                     await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData);
                     newMap.dataOrigin = "mtz";
-                    await newMap.getSuggestedSettings();
+                    // await newMap.init();
                     return newMap;
                 })
         );
+
+        for (const map in newMaps) {
+            newMaps[map].fileHeader = header;
+            newMaps[map].dataOrigin = "mtz"
+            await newMaps[map].initialise()
+        }
+
         return newMaps;
     }
 
@@ -464,7 +521,7 @@ export class MoorhenMap {
      * @returns {Promise<moorhen.WorkerResponse>} A worker response with the map arrayBuffer
      */
     getMap(): Promise<moorhen.WorkerResponse> {
-        return this.commandCentre.current.postMessage({
+        return this.commandCentre.postMessage({
             message: "get_map",
             molNo: this.molNo,
         });
@@ -482,7 +539,7 @@ export class MoorhenMap {
         } else {
             newWeight = this.suggestedMapWeight;
         }
-        return this.commandCentre.current.cootCommand(
+        return this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "set_map_weight",
@@ -493,12 +550,12 @@ export class MoorhenMap {
     }
 
     /**
-     * Set the map weight
+     * Set the map weight 
      * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
     scaleMap(scale: number): Promise<moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand(
+        return this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "scale_map",
@@ -513,7 +570,7 @@ export class MoorhenMap {
      * @returns {Promise<number>} The current map weight
      */
     async getMapWeight(): Promise<number> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "get_map_weight",
@@ -779,7 +836,7 @@ export class MoorhenMap {
 
         let response: moorhen.WorkerResponse<any>;
         if (this.otherMapForColouring !== null) {
-            response = await this.commandCentre.current.cootCommand(
+            response = await this.commandCentre.cootCommand(
                 {
                     returnType: returnType,
                     command: "get_map_contours_mesh_using_other_map_for_colours",
@@ -799,7 +856,7 @@ export class MoorhenMap {
                 false
             );
         } else {
-            response = await this.commandCentre.current.cootCommand(
+            response = await this.commandCentre.cootCommand(
                 {
                     returnType: returnType,
                     command: "get_map_contours_mesh",
@@ -961,7 +1018,7 @@ export class MoorhenMap {
             selectedColumns.FreeR,
         ];
 
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 command: "shim_associate_data_mtz_file_with_map",
                 commandArgs: commandArgs,
@@ -988,7 +1045,7 @@ export class MoorhenMap {
      */
     async fetchReflectionData(): Promise<moorhen.WorkerResponse<Uint8Array>> {
         if (this.hasReflectionData) {
-            return await this.commandCentre.current.postMessage({
+            return await this.commandCentre.postMessage({
                 molNo: this.molNo,
                 message: "get_mtz_data",
                 fileName: this.associatedReflectionFileName,
@@ -1004,12 +1061,42 @@ export class MoorhenMap {
      */
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap();
-        const newMap = new MoorhenMap(this.commandCentre, this.store);
-        await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference);
-        const { mapRadius, contourLevel } = this.getMapContourParams();
-        newMap.suggestedContourLevel = contourLevel;
-        newMap.suggestedRadius = mapRadius;
+        const newMap =  await MoorhenMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference, this.moorhenInstance);
+        this.copyMapParametersTo(newMap);
+        
         return newMap;
+    }
+
+    private static readonly COPYABLE_KEYS = [
+        "fileHeader",
+        "isDifference",
+        "type",
+        "dataOrigin",
+        "showOnLoad",
+        "mapCentre",
+        "suggestedContourLevel",
+        "suggestedRadius",
+        "suggestedMapWeight",
+        "mapRmsd",
+        "selectedColumns",
+        "hasReflectionData",
+        "associatedReflectionFileName",
+    ] as const satisfies readonly (keyof MoorhenMap)[];
+
+    copyMapParametersTo(newMap: MoorhenMap): void {
+        type CopyableKey = (typeof MoorhenMap.COPYABLE_KEYS)[number];
+
+        const copyKey = <K extends CopyableKey>(key: K): void => {
+            const value = this[key];
+            const copiedValue =
+                value && typeof value === "object"
+                    ? structuredClone(value)
+                    : value;
+
+            newMap[key] = copiedValue as MoorhenMap[K];
+        };
+
+        MoorhenMap.COPYABLE_KEYS.forEach(key => copyKey(key));
     }
 
     /**
@@ -1018,7 +1105,7 @@ export class MoorhenMap {
      * @returns {Promise<moorhen.WorkerResponse<number>>} Status (-1 if failure)
      */
     blur(bFactor: number): Promise<moorhen.WorkerResponse> {
-        return this.commandCentre.current.cootCommand(
+        return this.commandCentre.cootCommand(
             {
                 command: "sharpen_blur_map",
                 commandArgs: [this.molNo, bFactor, true],
@@ -1033,7 +1120,7 @@ export class MoorhenMap {
      * @returns {number} The map RMSD
      */
     async fetchMapRmsd(): Promise<number> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_rmsd_approx",
                 commandArgs: [this.molNo],
@@ -1050,7 +1137,7 @@ export class MoorhenMap {
      * @returns {number} The suggested map contour level
      */
     async fetchSuggestedLevelXtal(): Promise<number> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 command: "get_suggested_initial_contour_level",
                 commandArgs: [this.molNo],
@@ -1119,7 +1206,7 @@ export class MoorhenMap {
      * @returns {number[]} The map centre
      */
     async fetchMapCentre(): Promise<[number, number, number]> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_molecule_centre",
                 commandArgs: [this.molNo],
@@ -1148,34 +1235,59 @@ export class MoorhenMap {
         this.suggestedMapWeight = (50 * 0.3) / this.mapRmsd;
     }
 
+    getSimpleHeaderInfo(): mapHeaderInfo {
+        let headerInfo: mapHeaderInfo
+        if (this.dataOrigin === "mtz"){
+            const fileHeader = this.fileHeader as MTZHeaderJson
+            const cell = fileHeader.records.dcell[0].cell ?? fileHeader.records.cell ?? [1, 1, 1, 90, 90, 90]
+            const spNum = fileHeader.records.syminf?.spaceGroupNumber ?? 1
+            headerInfo = {
+                cell: { a: cell[0], b: cell[1], c: cell[2], alpha: cell[3], beta: cell[4], gamma: cell[5] },   
+                spacegroup: spaceGroupList[`${spNum}`],
+                resolution: fileHeader.records.reso?.high ?? -1
+            }
+        } else if (this.dataOrigin === "mapFile" ) {
+            const fileHeader = this.fileHeader as MRCHeaderJson
+            const spNum = fileHeader.spaceGroup.ispg ?? 1
+            headerInfo = {
+                cell: {
+                    a: fileHeader.unitCell.cella.x,
+                    b: fileHeader.unitCell.cella.y,
+                    c: fileHeader.unitCell.cella.z,
+                    alpha: fileHeader.unitCell.cellb.alpha,
+                    beta: fileHeader.unitCell.cellb.beta,
+                    gamma: fileHeader.unitCell.cellb.gamma,
+                },
+                spacegroup: spaceGroupList[`${spNum}`],
+                resolution: fileHeader.sampling.mx
+            }
+        }
+
+        return headerInfo
+    }
+
+
+
     /**
      * Get suggested contour level, radius and map centre for this map instance
      */
-    async getSuggestedSettings(): Promise<void> {
-        // const response = (await this.commandCentre.current.cootCommand(
-        //     {
-        //         command: "is_EM_map",
-        //         commandArgs: [this.molNo],
-        //         returnType: "boolean",
-        //     },
-        //     false
-        // )) as moorhen.WorkerResponse<boolean>;
-
-        // this.isEM = response.data.result.result;
-
-        const headerInfo = await this.fetchHeaderInfo();
-        this.headerInfo = headerInfo;
+    async initialise(): Promise<void> {
+        const headerInfo = this.getSimpleHeaderInfo();
+        console.log("header info", headerInfo);
+        if (headerInfo === undefined) {
+            throw new Error("Header info is not defined");
+        }
 
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);
         if (
             headerInfo.spacegroup === "P 1" &&
-            headerInfo.cell.alpha < Math.PI / 2 + 0.0001 &&
-            headerInfo.cell.alpha > Math.PI / 2 - 0.0001 &&
-            headerInfo.cell.beta < Math.PI / 2 + 0.0001 &&
-            headerInfo.cell.beta > Math.PI / 2 - 0.0001 &&
-            headerInfo.cell.gamma < Math.PI / 2 + 0.0001 &&
-            headerInfo.cell.gamma > Math.PI / 2 - 0.0001
+            headerInfo.cell.alpha < 90 + 0.0001 &&
+            headerInfo.cell.alpha > 90 - 0.0001 &&
+            headerInfo.cell.beta < 90 + 0.0001 &&
+            headerInfo.cell.beta > 90 - 0.0001 &&
+            headerInfo.cell.gamma < 90 + 0.0001 &&
+            headerInfo.cell.gamma > 90 - 0.0001
         ) {
             this.isEM = true;
         }
@@ -1183,17 +1295,17 @@ export class MoorhenMap {
             this.isOriginLocked = true;
         }
         await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
+            this.fetchMapRmsd(),
             this.setDefaultColour(),
             this.fetchMapCentre(),
             this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevelXtal(),
             this.guessMapRangeAndLevel(),
         ]);
+        await this.estimateMapWeight();
+        
 
-        if (this.isEM) {
-
-            
+        if (this.isEM) {          
             if (this.dataOrigin === "mtz")
                 {   console.log("Trying to find density centre of mass for EM map with MTZ origin");
                     const densityCenter = await this.get_map_density_center_of_mass();
@@ -1214,7 +1326,7 @@ export class MoorhenMap {
     }
 
     async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
-        const result = this.commandCentre.current.cootCommand(
+        const result = this.commandCentre.cootCommand(
             {
                 command: "get_map_bounding_sphere",
                 commandArgs: [this.molNo, thresold],
@@ -1228,7 +1340,7 @@ export class MoorhenMap {
     }
 
     async get_map_density_center_of_mass(positive_only: boolean = true): Promise<[number, number, number]> {
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     command: "find_density_center_of_mass",
                     commandArgs: [this.molNo, positive_only],
@@ -1241,7 +1353,7 @@ export class MoorhenMap {
     }
 
     async fetchMapMean() {
-        const result = await this.commandCentre.current.cootCommand(
+        const result = await this.commandCentre.cootCommand(
             {
                 command: "get_map_mean",
                 commandArgs: [this.molNo],
@@ -1283,7 +1395,7 @@ export class MoorhenMap {
      * @returns {object} - An object with the histogram data
      */
     async getHistogram(nBins: number = 200, zoomFactor: number = 1): Promise<libcootApi.HistogramInfoJS> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_histogram",
                 commandArgs: [this.molNo, nBins, zoomFactor],
@@ -1306,7 +1418,7 @@ export class MoorhenMap {
         }
 
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_vertices_histogram",
                 commandArgs: [this.molNo, map2, posX, posY, posZ, mapRadius, contourLevel, nBins],
@@ -1322,7 +1434,7 @@ export class MoorhenMap {
      * @returns {boolean} - True if this map instance is a difference map
      */
     async fetchIsDifferenceMap(): Promise<boolean> {
-        const isDifferenceMap = (await this.commandCentre.current.cootCommand(
+        const isDifferenceMap = (await this.commandCentre.cootCommand(
             {
                 command: "is_a_difference_map",
                 commandArgs: [this.molNo],
@@ -1347,7 +1459,7 @@ export class MoorhenMap {
                 if (molNo === this.molNo) {
                     return false;
                 }
-                const isValidMap = (await this.commandCentre.current.cootCommand(
+                const isValidMap = (await this.commandCentre.cootCommand(
                     {
                         command: "is_valid_map_molecule",
                         commandArgs: [molNo],
@@ -1358,7 +1470,7 @@ export class MoorhenMap {
                 if (!isValidMap.data.result.result) {
                     return false;
                 } else {
-                    const isDifferenceMap = (await this.commandCentre.current.cootCommand(
+                    const isDifferenceMap = (await this.commandCentre.cootCommand(
                         {
                             command: "is_a_difference_map",
                             commandArgs: [molNo],
@@ -1389,7 +1501,7 @@ export class MoorhenMap {
     async exportAsMeshFile(fileType: string): Promise<ArrayBuffer> {
         const originState = this.store.getState().glRef.origin;
         const { mapRadius, contourLevel } = this.getMapContourParams();
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "arrayBuffer",
                 command: "shim_export_map_as_mesh_file",
@@ -1401,82 +1513,9 @@ export class MoorhenMap {
         return result.data.result.result;
     }
 
-    async fetchHeaderInfo(): Promise<moorhen.mapHeaderInfo> {
-        const headerInfo: moorhen.mapHeaderInfo = {
-            spacegroup: "",
-            cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
-            resolution: -1,
-        };
-
-        const cell = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_cell",
-                commandArgs: [this.molNo],
-                returnType: "map_cell_info_t",
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
-
-        headerInfo.cell.a = cell.data.result.result.a;
-        headerInfo.cell.b = cell.data.result.result.b;
-        headerInfo.cell.c = cell.data.result.result.c;
-        headerInfo.cell.alpha = cell.data.result.result.alpha;
-        headerInfo.cell.beta = cell.data.result.result.beta;
-        headerInfo.cell.gamma = cell.data.result.result.gamma;
-
-        const sg = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_spacegroup",
-                commandArgs: [this.molNo],
-                returnType: "clipper_spacegroup",
-            },
-            false
-        )) as moorhen.WorkerResponse<string>;
-        headerInfo.spacegroup = sg.data.result.result;
-
-        const resol = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_data_resolution",
-                commandArgs: [this.molNo],
-                returnType: "number",
-            },
-            false
-        )) as moorhen.WorkerResponse<number>;
-        headerInfo.resolution = resol.data.result.result;
-
-        return headerInfo;
-    }
-
-    // This is a duplicate of fetchHeaderInfo, but fetching map_resolution at the laoding time of the map seem to cause an error.
-    // This is needed to calculate max radius of the EM map
-    async fetchCellInfo(): Promise<moorhen.mapHeaderInfo> {
-        const headerInfo: moorhen.mapHeaderInfo = {
-            spacegroup: "",
-            cell: { a: -1, b: -1, c: -1, alpha: -1, beta: -1, gamma: -1 },
-            resolution: -1,
-        };
-        const cell = (await this.commandCentre.current.cootCommand(
-            {
-                command: "get_map_cell",
-                commandArgs: [this.molNo],
-                returnType: "map_cell_info_t",
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.mapCellJS>;
-
-        headerInfo.cell.a = cell.data.result.result.a;
-        headerInfo.cell.b = cell.data.result.result.b;
-        headerInfo.cell.c = cell.data.result.result.c;
-        headerInfo.cell.alpha = cell.data.result.result.alpha;
-        headerInfo.cell.beta = cell.data.result.result.beta;
-        headerInfo.cell.gamma = cell.data.result.result.gamma;
-
-        this.headerInfo = headerInfo;
-
-        return headerInfo;
-    }
 
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;
     }
+
 }

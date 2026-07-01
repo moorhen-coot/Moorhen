@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { toFixedNoZero } from "../../misc/helpers";
 import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
 import "./MoorhenSlider.css";
@@ -110,6 +110,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     } = props;
 
     const precision = sliderPrecision ?? Math.pow(10, -decimalPlaces);
+    const sliderId = useId();
 
     const stepButtons = useMemo(
         function getStepButtons() {
@@ -149,7 +150,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const drawTitle = () => {
         const drawPreciseInput = () => {
             return (
-                <label className={"moorhen__slider__label"} htmlFor="slider">
+                <label className={"moorhen__slider__label"} htmlFor={sliderId}>
                     <MoorhenNumberInput
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
@@ -169,7 +170,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
         if (!usePreciseInput) {
             return (
-                <label className={"moorhen__slider__label"} htmlFor="slider">
+                <label className={"moorhen__slider__label"} htmlFor={sliderId}>
                     {sliderTitle}: {props.externalValue.toFixed(decimalPlaces)}
                 </label>
             );
@@ -203,6 +204,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                 <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
                 <div className={"moorhen__slider__sliderCont"}>
                     <input
+                        id={sliderId}
                         type="range"
                         className={`${"moorhen__slider slider"} ${isDisabled ? "moorhen__slider disabled" : ""} ${
                             buttonIsDown ? "moorhen__slider buttonIsDown" : ""

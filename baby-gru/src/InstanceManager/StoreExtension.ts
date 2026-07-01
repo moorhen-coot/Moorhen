@@ -6,6 +6,7 @@ import type { ModalCall } from '@/store/modalsSlice';
 import type { MoorhenMap } from "@/utils"
 import type { MoorhenVector } from "@/store/vectorsSlice";
 import { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
+import {  SnackbarPayload } from "@/store/snackbarSlice";
 
 
 
@@ -485,8 +486,8 @@ export class StoreExtension {
             @variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
             @autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
             @uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
-            enqueueSnackbar(){
-            dispatch(enqueueSnackbar());
+            enqueueSnackbar(value:SnackbarPayload){
+            dispatch(enqueueSnackbar(value));
             },
     };
 }

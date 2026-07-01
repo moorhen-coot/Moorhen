@@ -107,7 +107,7 @@ export type gaussianSurfSettings = {
 
 export class MoleculeRepresentation {
     uniqueId: string;
-    style: moorhen.RepresentationStyles;
+    style: RepresentationStyles;
     cid: string;
     neighboursCid: string;
     restrictToNeighbours: boolean;
