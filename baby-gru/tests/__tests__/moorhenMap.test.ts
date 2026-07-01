@@ -66,10 +66,11 @@ let molecules_container: any = null;
 let commandCentre: any = null;
 let mockInstance: any = null;
 let glRef: any = null;
+let moorhenInstance: MoorhenInstance;
 
 describe('Testing MoorhenMap', () => {
 
-    beforeEach(() => {
+    beforeEach(async () => {
         if (molecules_container !== null) {
             molecules_container.delete?.();
         }
@@ -78,6 +79,13 @@ describe('Testing MoorhenMap', () => {
         molecules_container.set_use_gemmi(moorhen_test_use_gemmi);
         commandCentre = new MockMoorhenCommandCentre(molecules_container, cootModule);
         mockInstance = new MockMoorhenInstance(commandCentre);
+        moorhenInstance = new MoorhenInstance(React.createRef(), null, commandCentre);        
+        await moorhenInstance.startInstance(
+            MoorhenReduxStore.dispatch,
+            React.createRef(),
+            React.createRef(),
+            MoorhenReduxStore,
+        );
     });
 
     test('loadToCootFromMtzURL', async () => {
@@ -99,21 +107,16 @@ describe('Testing MoorhenMap', () => {
         expect(isValid).toBeTruthy();
     });
 
-    // test('loadToCootFromMapData', async () => {
-    //     const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
-    //     const map_1 = new MoorhenMap(mockInstance);
-    //     await map_1.loadToCootFromMtzURL(fileUrl, 'map-test', { F: 'FWT', PHI: 'PHWT', isDifference: false, useWeight: false, calcStructFact: false });
-    //     expect(map_1.molNo).toBe(0);
-    //     molecules_container.writeCCP4Map(map_1.molNo, 'test-file-name.map');
-    //     const mapData = cootModule.FS.readFile('test-file-name.map', { encoding: 'binary' });
-
-    //     // const map_2 = new MoorhenMap(mockInstance);
-    //     await map_2.loadToCootFromMapData(mapData, 'map-test');
-    //     expect(map_2.molNo).toBe(1);
-    //     const isValid = molecules_container.is_valid_map_molecule(map_2.molNo);
-    //     expect(isValid).toBeTruthy();
-    //     expect(map_2.isEM).toBeFalsy();
-    // });
+    test('auto load mtz', async () => {
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
+        const files = await moorhenInstance.files.loadFiles(fileUrl)
+        const map_1 = moorhenInstance.getMap(files[0].uniqueID)
+        const map_2 = moorhenInstance.getMap(files[1].uniqueID)
+        expect(map_1.molNo).toBe(0);
+        expect(map_1.isDifference).toBeFalsy;
+        expect(map_2.molNo).toBe(1);
+        expect(map_2.isDifference).toBeTruthy();
+    })
 
     test('delete', async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
@@ -145,18 +148,6 @@ describe('Testing MoorhenMap', () => {
 
     test('getSuggestedSettings', async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
-        const moorhenInstance = new MoorhenInstance(React.createRef(), null, commandCentre);
-        
-        // Create refs for external dependencies
-        const externalCommandCentreRef = React.createRef<any>();
-        externalCommandCentreRef.current = commandCentre;
-        
-        await moorhenInstance.startInstance(
-            MoorhenReduxStore.dispatch,
-            React.createRef(),
-            React.createRef(),
-            MoorhenReduxStore,
-        );
         
         // const map = new MoorhenMap(moorhenInstance);
         const files = await moorhenInstance.files.loadFiles([fileUrl])
