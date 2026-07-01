@@ -104,7 +104,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         if (selectedMolecule && onSelectUniqueId) {
             onSelectUniqueId(selectedMolecule.uniqueId);
         }
-        // if (onChange) onChange(evt);
+        if (props.onChange) props.onChange(evt);
         //if (onSelect) onSelect(selectedMolNo);
         setSelectedMolNo(selectedMolNo);
     };

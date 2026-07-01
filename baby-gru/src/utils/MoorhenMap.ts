@@ -106,7 +106,7 @@ export class MoorhenMap {
         this.mapRmsd = null;
         this.mapMean = null;
         this.suggestedMapWeight = null;
-        this.mapWeight = 0;
+        this.mapWeight = null;
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
@@ -126,6 +126,7 @@ export class MoorhenMap {
     private _isActive: boolean;
     async setActive(activate: boolean) {
         if (activate) {
+            this._isActive = true;
             await this.commandCentre.current.cootCommand(
                 {
                     returnType: "status",
@@ -141,7 +142,7 @@ export class MoorhenMap {
                 this.mapWeight = this.suggestedMapWeight;
             }
             await this.setMapWeight();
-            this._isActive = true;
+            
         } else {
             this._isActive = false;
         }
@@ -492,7 +493,7 @@ export class MoorhenMap {
      */
     setMapWeight(weight?: number) {
         let newWeight: number;
-        if (typeof weight !== "undefined") {
+        if (typeof weight !== 'undefined') {
             newWeight = weight;
         } else {
             newWeight = this.mapWeight;
@@ -508,6 +509,8 @@ export class MoorhenMap {
                 },
                 false
             );
+        } else {
+            console.warn("Map is not active, cannot set map weight");
         }
     }
 
@@ -1166,6 +1169,7 @@ export class MoorhenMap {
         // }
         const weight = (50 * 0.3) / this.mapRmsd;
         this.suggestedMapWeight = weight;
+        if (!this.mapWeight) this.mapWeight = weight
         return weight;
     }
 
@@ -1204,13 +1208,15 @@ export class MoorhenMap {
             this.isOriginLocked = true;
         }
         await Promise.all([
-            this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
+            this.fetchMapRmsd(),
             this.setDefaultColour(),
             this.fetchMapCentre(),
             this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevelXtal(),
             this.guessMapRangeAndLevel(),
         ]);
+
+        await this.estimateMapWeight()
 
         if (this.isEM) {
 

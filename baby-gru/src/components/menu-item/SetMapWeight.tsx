@@ -15,7 +15,7 @@ export const SetMapWeight = (props: { map: MoorhenMap }) => {
     };
 
     const onCompleted = async () => {
-
+        props.map.mapWeight = mapWeight
         props.map.setMapWeight(mapWeight);
         document.body.click();
     };
