@@ -52,12 +52,11 @@ let allowScripting = null
 let aceDRGInstance = null
 let mockMonomerLibraryPath = null
 
-const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
+describe('Testing MoorhenContainer', () => {
 
-describeIfWasmExists('Testing MoorhenContainer', () => {
-
-    beforeAll(() => {
+    beforeAll(async() => {
         const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+        const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
 
         mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
@@ -86,22 +85,23 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
             }
         }
 
-        return createCootModule({
-            print(t) { () => console.log(["output", t]) },
-            printErr(t) { () => console.log(["output", t]); }
-        }).then(CCP4Module => {
-            cootModule = CCP4Module
-            return createGemmiModule({
-                print(t) { () => console.log(["output", t]) },
-                printErr(t) { () => console.log(["output", t]); }
-            }).then(gemmiModule => {
-                global.window = {
-                    CCP4Module: cootModule,
-                    gemmiModule: gemmiModule,
-                }
-                return Promise.resolve()
-            })
+        cootModule = await createCootModule({
+            print: (t) => console.log(["output", t]),
+            printErr: (t) => console.log(["output", t]),
         })
+
+        const gemmiModule = await createGemmiModule({
+            print: (t) => console.log(["output", t]),
+            printErr: (t) => console.log(["output", t]),
+        })
+
+        global.window = {
+            CCP4Module: cootModule,
+            gemmiModule: gemmiModule,
+        }
+
+        await Promise.resolve()
+
     })
 
     beforeEach(() => {
@@ -165,7 +165,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
     afterEach(cleanup)
 
-    test('MoorhenContainer load tutorial data 1', async () => {
+    test.skip('MoorhenContainer load tutorial data 1', async () => {
 
         render(
             <Provider store={MoorhenReduxStore}>

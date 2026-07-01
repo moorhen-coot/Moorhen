@@ -57,23 +57,23 @@ global.DOMParser = class DOMParser {
     }
 }
 
-beforeAll(() => {
-    return createCootModule({
-        print(t) { () => console.log(["output", t]) },
-        printErr(t) { () => console.log(["output", t]); }
-    }).then(CCP4Module => {
-        cootModule = CCP4Module
-        return createGemmiModule({
-            print(t) { () => console.log(["output", t]) },
-            printErr(t) { () => console.log(["output", t]); }
-        }).then(gemmiModule => {
-            global.window = {
-                CCP4Module: cootModule,
-                gemmiModule: gemmiModule,
-            }
-            return setupFunctions.copyTestDataToFauxFS()
-        })
+beforeAll(async () => {
+    cootModule = await createCootModule({
+        print: (t) => console.log(["output", t]),
+        printErr: (t) => console.log(["output", t]),
     })
+
+    const gemmiModule = await createGemmiModule({
+        print: (t) => console.log(["output", t]),
+        printErr: (t) => console.log(["output", t]),
+    })
+
+    global.window = {
+        CCP4Module: cootModule,
+        gemmiModule: gemmiModule,
+    }
+
+    await setupFunctions.copyTestDataToFauxFS()
 })
 
 let molecules_container = null
