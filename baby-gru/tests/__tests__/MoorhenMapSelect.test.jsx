@@ -13,7 +13,7 @@ describe('Testing MoorhenMapSelect', () => {
     test('MoorhenMapSelect label', () => {
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect label="Test Label"/>
+                <MoorhenMapSelect maps={[]} label="Test Label"/>
             </Provider>
         )
 
@@ -22,6 +22,7 @@ describe('Testing MoorhenMapSelect', () => {
 
         const selectNode = screen.getByRole('combobox')
         expect(selectNode).toBeVisible()
+        
     })
 
     test('MoorhenMapSelect select maps', async () => {

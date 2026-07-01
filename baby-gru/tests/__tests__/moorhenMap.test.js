@@ -224,6 +224,7 @@ describe("Testing MoorhenMap", () => {
         const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const mapWeight_1 = map.suggestedMapWeight
+        await map.setActive(true)
         await map.setMapWeight()
         const mapWeight_2 = await map.getMapWeight()
         expect(mapWeight_2).toBeCloseTo(mapWeight_1, 1)
@@ -234,7 +235,7 @@ describe("Testing MoorhenMap", () => {
         const map = new MoorhenMap(commandCentre, MoorhenReduxStore)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const f_1 = jest.spyOn(map, 'setMapWeight')
-        await map.setActive()
+        await map.setActive(true)
         expect(f_1).toHaveBeenCalledTimes(1)
     })
 

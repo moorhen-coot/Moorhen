@@ -1,5 +1,3 @@
-import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
-import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -14,6 +12,7 @@ import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -78,37 +77,35 @@ const LigandHitCard = (props: {
     }, []);
 
     return (
-        <MoorhenStack card direction="row" align="center">
+        <MoorhenStack card direction="row" align="center" gap={"0.5rem"}>
             <span>{props.ligandMolecule.name}</span>
-            <Tooltip title="View">
-                <IconButton
-                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                    onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
-                >
-                    <CenterFocusWeakOutlined />
-                </IconButton>
-            </Tooltip>
-            <Tooltip title="Refine">
-                <IconButton
-                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                    onClick={() => handleRefinement(props.ligandMolecule)}
-                >
-                    <CrisisAlertOutlined />
-                </IconButton>
-            </Tooltip>
+
+            <MoorhenButton
+                onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
+                type="icon-only"
+                tooltip="View"
+                icon="MatSymFilterFocus"
+            >
+            </MoorhenButton>
+
+            <MoorhenButton
+
+                onClick={() => handleRefinement(props.ligandMolecule)}
+                tooltip="Refine"
+                type="icon-only"
+                icon="MatSymCrisisAlert"
+            >
+            </MoorhenButton>
             {allowAddNewFittedLigand && (
-                <Tooltip title="Add to new molecule">
-                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleAdd}>
-                        <DoneOutlined />
-                    </IconButton>
-                </Tooltip>
+
+                <MoorhenButton icon="MatSymCheck" onClick={handleAdd} tooltip="Add to new molecule" type="icon-only">
+                </MoorhenButton>
             )}
             {allowMergeFittedLigand && (
-                <Tooltip title="Merge to molecule">
-                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleMerge}>
-                        <MergeTypeOutlined />
-                    </IconButton>
-                </Tooltip>
+
+                    <MoorhenButton tooltip="Merge to molecule" onClick={handleMerge} icon="MatSymMerge" type="icon-only">
+                    </MoorhenButton>
+
             )}
         </MoorhenStack>
     );
@@ -176,6 +173,9 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     }, [ligandResults]);
 
     const bodyContent = (
+                <OverlayModal isShown={busy} overlay={<span><MoorhenSpinner size={40} colour="white"/> Finding ligand...</span>} style={{ zIndex: 12000 }}>
+            
+        
         <MoorhenStack>
             <MoorhenStack inputGrid>
                 <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
@@ -250,6 +250,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 )}
             </MoorhenStack>
         </MoorhenStack>
+        </OverlayModal>
     );
 
     const footerContent = (
@@ -269,12 +270,6 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         </>
     );
 
-    const spinnerContent = (
-        <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-            <MoorhenSpinner />
-            <span>Finding ligand...</span>
-        </Backdrop>
-    );
 
     return (
         <MoorhenDraggableModalBase
@@ -283,7 +278,6 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
             top={height / 6}
             initialWidth={400}
             initialHeight={600}
-            additionalChildren={spinnerContent}
             headerTitle="Find ligand"
             onClose={handleClose}
             footer={footerContent}

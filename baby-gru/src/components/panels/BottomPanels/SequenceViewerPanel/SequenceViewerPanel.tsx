@@ -78,7 +78,7 @@ export const SequenceViewerPanel = () => {
 
     const configPanel = (
         <div>
-            <MoorhenMoleculeSelect onSelect={setSelectedMolecule} selected={selectedMolecule} />
+            <MoorhenMoleculeSelect onSelect={setSelectedMolecule} selectedMolecule={selectedMolecule} />
             <p></p>
             <MoorhenNumberInput
                 label="Max lines"

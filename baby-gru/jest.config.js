@@ -13,6 +13,9 @@ module.exports = {
                 "^.+\\.(js|jsx)$": "babel-jest",
             },
             transformIgnorePatterns: ["node_modules/(?!(uuid|node-fetch)/)"],
+            moduleNameMapper: {
+                "@/(.*)": "<rootDir>/src/$1"
+            }
         },
         {
             displayName: "react-components",

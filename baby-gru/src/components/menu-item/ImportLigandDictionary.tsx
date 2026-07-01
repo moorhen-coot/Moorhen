@@ -1,4 +1,3 @@
-import { TextField } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store/";
@@ -9,7 +8,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton, MoorhenFileInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
@@ -206,7 +205,6 @@ export const SMILESToLigand = () => {
     const moleculeSelectValueRef = useRef<null | string>(null);
     const addToRef = useRef<null | HTMLSelectElement>(null);
     const addToMoleculeValueRef = useRef<null | number>(null);
-    const conformerCountRef = useRef<number>(10);
     const iterationCountRef = useRef<number>(100);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
 
@@ -248,15 +246,8 @@ export const SMILESToLigand = () => {
             return;
         }
 
-        let n_conformer: number;
-        let n_iteration: number;
-        try {
-            n_conformer = conformerCountRef.current;
-            n_iteration = iterationCountRef.current;
-        } catch (err) {
-            console.log(err);
-            return;
-        }
+        let n_conformer: number = conformerCount;
+        let n_iteration: number = iterationCount;
 
         if (
             isNaN(n_conformer) ||
@@ -322,20 +313,21 @@ export const SMILESToLigand = () => {
                     setTlc(e.target.value);
                 }}
             />
-            <TextField
-                style={{ margin: "0.5rem", width: "9rem" }}
-                id="conformer-count"
+            <MoorhenNumberInput
+                // id="conformer-count"
                 label="No. of conformers"
                 type="number"
-                variant="standard"
-                error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
+                decimalDigits={0}
+                // variant="standard"
+                // error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
                 value={conformerCount}
-                onChange={evt => {
-                    conformerCountRef.current = parseInt(evt.target.value);
-                    setConformerCount(parseInt(evt.target.value));
-                }}
+                setValue={setConformerCount}
+                // onChange={evt => {
+                //     conformerCountRef.current = parseInt(evt.target.value);
+                //     setConformerCount(parseInt(evt.target.value));
+                // }}
             />
-            <TextField
+            {/* <MoorhenTextInput
                 style={{ margin: "0.5rem", width: "9rem" }}
                 id="iteration-count"
                 label="No. of iterations"
@@ -346,8 +338,8 @@ export const SMILESToLigand = () => {
                 onChange={evt => {
                     iterationCountRef.current = parseInt(evt.target.value);
                     setIterationCount(parseInt(evt.target.value));
-                }}
-            />
+                }} */}
+            {/* /> */}
         </MoorhenStack>
     );
 

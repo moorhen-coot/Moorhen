@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+import { MoorhenLinearProgress } from "../icons";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager/hooks";
@@ -83,7 +83,7 @@ export const LongJobSnackNotification = () => {
             <div className="moorhen__long-job-notification" style={{ left: glWidth / 2, top: glHeight }}>
                 <MoorhenStack direction="vertical">
                     <span>Please wait...</span>
-                    <LinearProgress />
+                    <MoorhenLinearProgress />
                 </MoorhenStack>
             </div>
         )

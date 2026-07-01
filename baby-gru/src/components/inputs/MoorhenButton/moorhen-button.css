@@ -10,6 +10,13 @@
     box-shadow: none;
     box-sizing: border-box;
     color: var(--moorhen-primary);
+        position: relative;
+    overflow: hidden;
+}
+
+.moorhen__button__icon-only.disabled {
+    color: var(--moorhen-disabled);
+    cursor: default;
 }
 
 .moorhen__button__default,
@@ -20,6 +27,8 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
     width: fit-content;
     height: 2.2rem;
     padding: 0.4rem;
@@ -40,9 +49,7 @@
         filter 0.5s ease;
 }
 
-.moorhen__button__default.disabled {
-    background: var(--moorhen-disabled);
-}
+
 
 .moorhen__button__toggle-unchecked {
     background: var(--moorhen-background);
@@ -96,8 +103,32 @@
     filter: brightness(1.1);
 }
 
+.moorhen__button__animation {
+    position: absolute;
+    z-index: 2;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.45);
+    transform: scale(0);
+    animation: moorhen-ripple 0.3s linear;
+    pointer-events: none;
+}
+
+@keyframes moorhen-ripple {
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+.moorhen__button__default.disabled {
+    background: var(--moorhen-disabled);
+    cursor: default;
+}
+
 .moorhen__button__default.disabled:hover {
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
     border-color: transparent;
+
     filter: none;
 }

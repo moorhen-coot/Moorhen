@@ -29,7 +29,6 @@ export const MoorhenStack = (props: MoorhenStackType) => {
         card = null,
         className,
         inputGrid = false,
-        grid = false,
         gridWidth = 1,
         addMargin = false,
         ref = null,
@@ -56,7 +55,6 @@ export const MoorhenStack = (props: MoorhenStackType) => {
             className={mainClass}
             style={{
                 ...(inputGrid && { gridTemplateColumns: `repeat(${gridWidth}, auto 1fr)` }),
-                ...(grid && { gridTemplateColumns: `repeat(${gridWidth}, auto 1fr)` }),
                 gap: gap,
                 flex: flex,
                 justifyContent: justify,
