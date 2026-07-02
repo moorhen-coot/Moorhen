@@ -165,8 +165,8 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
         const inputMol = molecules.find(mol => mol.molNo === parseInt(inputMoleculeSelectRef.current.value));
         const predMol = molecules.find(mol => mol.molNo === parseInt(predMoleculeSelectRef.current.value));
 
-        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure);
-        const ref_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(predMol.gemmiStructure);
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(inputMol.gemmiStructure);
+        const ref_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(predMol.gemmiStructure);
 
         if (input_cif_string.length == 0 || ref_cif_string.length == 0) {
             return;

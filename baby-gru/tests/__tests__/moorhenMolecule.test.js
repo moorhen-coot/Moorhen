@@ -12,6 +12,7 @@ const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
 const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
 
 let cootModule;
 
@@ -46,17 +47,23 @@ global.DOMParser = class DOMParser {
     }
 }
 
-beforeAll(() => {
-    return createCootModule({
-        print(t) { () => console.log(["output", t]) },
-        printErr(t) { () => console.log(["output", t]); }
-    }).then(moduleCreated => {
-        cootModule = moduleCreated
-        global.window = {
-            CCP4Module: cootModule,
-        }
-        return setupFunctions.copyTestDataToFauxFS()
+beforeAll(async () => {
+    cootModule = await createCootModule({
+        print: (t) => console.log(["output", t]),
+        printErr: (t) => console.log(["output", t]),
     })
+
+    const gemmiModule = await createGemmiModule({
+        print: (t) => console.log(["output", t]),
+        printErr: (t) => console.log(["output", t]),
+    })
+
+    global.window = {
+        CCP4Module: cootModule,
+        gemmiModule: gemmiModule,
+    }
+
+    await setupFunctions.copyTestDataToFauxFS()
 })
 
 let molecules_container = null
