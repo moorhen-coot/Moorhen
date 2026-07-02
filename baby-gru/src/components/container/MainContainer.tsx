@@ -1,5 +1,4 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
-import type { Store } from "redux";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { SnackBars } from "@/components/snack-bars";
 import { enqueueSnackbar } from "@/store";
@@ -34,7 +33,7 @@ import { moorhen } from "../../types/moorhen";
 import { allFontsSet } from "../../utils/enums";
 import { loadMathjax } from "../../utils/mathJaxLoader";
 import { getTooltipShortcutLabel, parseAtomInfoLabel } from "../../utils/utils";
-import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
+import { windowGemmiLoader } from "../../utils/windowCootCCP4Loader";
 import { MoorhenSpinner } from "../icons";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenModalsContainer } from "../interface-base/ModalBase/ModalsContainer";
@@ -244,8 +243,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     useEffect(() => {
         const startupEffect = async () => {
-            if (!window.cootModule) windowCootCCP4Loader(`${urlPrefix}/wasm/`);
-            if (!window.MathJax) loadMathjax(`${urlPrefix}`);
+            if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
             setWindowDimensions();
             dispatch(setViewOnly(viewOnly));
             dispatch(setDisableFileUpload(disableFileUploads));
@@ -291,6 +289,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 const json = JSON.parse(shortCuts);
                 console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
+            if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
         };
         startupEffect().then(() => {
             if (props.onInitialisationCompleted) {

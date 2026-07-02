@@ -1,8 +1,6 @@
 // Auto-generated file. Do not edit directly.
 //Use scripts/CreateStoreExport.py to regenerate.
 
-export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export {
     setBusy,
     setTimeCapsuleBusy,
@@ -20,6 +18,7 @@ export {
     setShownBottomPanel,
     setClickAwayListenerActive,
 }  from "./globalUISlice";
+export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
 export {
     setOrigin,
@@ -211,6 +210,7 @@ export {
     setClusteringType,
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
     setActiveMap,

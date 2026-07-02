@@ -69,7 +69,7 @@ interface MrParseAFModelJson {
 export const parseCifDict = async (file: File) => {
     const result: { comp_id: string; dict_contents: string }[] = [];
     const fileContent = await file.text();
-    const compIdsVector = window.CCP4Module.parse_ligand_dict_info(fileContent);
+    const compIdsVector = window.gemmiModule.parse_ligand_dict_info(fileContent);
     const compIdsVectorSize = compIdsVector.size();
     for (let i = 0; i < compIdsVectorSize; i++) {
         const ligandInfo = compIdsVector.get(i);
@@ -429,7 +429,7 @@ const readCifDictionary = async (
             false
         );
         // dictionaryFilesContent.push(content);
-        // const compIdsVector = window.CCP4Module.parse_ligand_dict_info(content);
+        // const compIdsVector = window.gemmiModule.parse_ligand_dict_info(content);
 
         const result: moorhen.WorkerResponse<number> = await commandCentre.current.cootCommand(
             {
