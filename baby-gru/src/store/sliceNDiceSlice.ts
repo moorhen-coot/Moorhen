@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { MoorhenMolecule } from "@/utils";
 
 const initialState: {
@@ -32,35 +32,35 @@ const sliceNDiceSlice = createSlice({
         resetSliceNDiceSlice: () => {
             return initialState;
         },
-        setPaeFileIsUploaded: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, paeFileIsUploaded: action.payload };
+        setPaeFileIsUploaded: (state, action: PayloadAction<boolean>) => {
+            state.paeFileIsUploaded = action.payload;
         },
-        setThresholdType: (state, action: { payload: "b-factor-norm" | "af2-plddt"; type: string }) => {
-            return { ...state, thresholdType: action.payload };
+        setThresholdType: (state, action: PayloadAction<"b-factor-norm" | "af2-plddt">) => {
+            state.thresholdType = action.payload;
         },
-        setMoleculeBfactors: (state, action: { payload: { cid: string; bFactor: number; normalised_bFactor: number }[]; type: string }) => {
-            return { ...state, moleculeBfactors: action.payload };
+        setMoleculeBfactors: (state, action: PayloadAction<{ cid: string; bFactor: number; normalised_bFactor: number }[]>) => {
+            state.moleculeBfactors = action.payload;
         },
-        setMoleculeMinBfactor: (state, action: { payload: number; type: string }) => {
-            return { ...state, moleculeMinBfactor: action.payload };
+        setMoleculeMinBfactor: (state, action: PayloadAction<number>) => {
+            state.moleculeMinBfactor = action.payload;
         },
-        setMoleculeMaxBfactor: (state, action: { payload: number; type: string }) => {
-            return { ...state, moleculeMaxBfactor: action.payload };
+        setMoleculeMaxBfactor: (state, action: PayloadAction<number>) => {
+            state.moleculeMaxBfactor = action.payload;
         },
-        setBFactorThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, bFactorThreshold: action.payload };
+        setBFactorThreshold: (state, action: PayloadAction<number>) => {
+            state.bFactorThreshold = action.payload;
         },
-        setNClusters: (state, action: { payload: number; type: string }) => {
-            return { ...state, nClusters: action.payload };
+        setNClusters: (state, action: PayloadAction<number>) => {
+            state.nClusters = action.payload;
         },
-        setSlicingResults: (state, action: { payload: MoorhenMolecule[]; type: string }) => {
-            return { ...state, slicingResults: action.payload };
+        setSlicingResults: (state, action: PayloadAction<MoorhenMolecule[]>) => {
+            state.slicingResults = action.payload as  unknown as typeof state.slicingResults; // FIXME this is a hack to get typscript to stop complaining about the type of the payload.
         },
-        setClusteringType: (state, action: { payload: string; type: string }) => {
-            return { ...state, clusteringType: action.payload };
+        setClusteringType: (state, action: PayloadAction<string>) => {
+            state.clusteringType = action.payload;
         },
-        setPAEFileContents: (state, action: { payload: { fileContents: string; fileName: string }[]; type: string }) => {
-            return { ...state, paeFileContents: action.payload };
+        setPAEFileContents: (state, action: PayloadAction<{ fileContents: string; fileName: string }[]>) => {
+            state.paeFileContents = action.payload;
         },
     },
 });

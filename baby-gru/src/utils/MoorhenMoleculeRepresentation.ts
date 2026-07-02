@@ -652,8 +652,8 @@ export class MoleculeRepresentation {
 
             hBonds.forEach(hb => {
                 [hb.acceptor, hb.donor].forEach(hbEnd => {
-                    const seqId_acc: gemmi.SeqId = new window.cootModule.SeqId("" + hbEnd.res_no);
-                    const addr_acc: gemmi.AtomAddress = new window.cootModule.AtomAddress(
+                    const seqId_acc: gemmi.SeqId = new window.gemmiModule.SeqId("" + hbEnd.res_no);
+                    const addr_acc: gemmi.AtomAddress = new window.gemmiModule.AtomAddress(
                         hbEnd.chain,
                         seqId_acc,
                         hbEnd.residue_name,
@@ -700,7 +700,7 @@ export class MoleculeRepresentation {
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
             if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha"].includes(_style)) {
-                restrictedCid = window.cootModule.cidToNeighboursCid(
+                restrictedCid = window.gemmiModule.cidToNeighboursCid(
                     this.parentMolecule.gemmiStructure,
                     _cid,
                     this.neighboursCid,

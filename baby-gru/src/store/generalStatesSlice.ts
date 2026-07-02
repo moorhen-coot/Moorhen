@@ -1,5 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { moorhen } from "../types/moorhen";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 
@@ -56,7 +55,7 @@ const initialState: {
         cid: null,
         isMultiCid: false,
         label: null,
-    } as moorhen.ResidueSelection,
+    } as ResidueSelection,
     showResidueSelection: false,
     defaultExpandDisplayCards: null,
     transparentModalsOnMouseOut: null,
@@ -83,116 +82,109 @@ const generalStatesSlice = createSlice({
         resetGeneralStates: () => {
             return initialState;
         },
-        setIsShowingTomograms: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isShowingTomograms: action.payload };
+        setIsShowingTomograms: (state, action: PayloadAction<boolean>) => {
+            state.isShowingTomograms = action.payload;
         },
-        setIsAnimatingTrajectory: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isAnimatingTrajectory: action.payload };
+        setIsAnimatingTrajectory: (state, action: PayloadAction<boolean>) => {
+            state.isAnimatingTrajectory = action.payload;
         },
         // API generalOptions
-        setShowResidueSelection: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, showResidueSelection: action.payload };
+        setShowResidueSelection: (state, action: PayloadAction<boolean>) => {
+            state.showResidueSelection = action.payload;
         },
         toggleCootCommandStart: state => {
-            return { ...state, newCootCommandStart: !state.newCootCommandStart };
+            state.newCootCommandStart = !state.newCootCommandStart;
         },
         toggleCootCommandExit: state => {
-            return { ...state, newCootCommandExit: !state.newCootCommandExit };
+            state.newCootCommandExit = !state.newCootCommandExit;
         },
-        setIsChangingRotamers: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isChangingRotamers: action.payload };
+        setIsChangingRotamers: (state, action: PayloadAction<boolean>) => {
+            state.isChangingRotamers = action.payload;
         },
-        setIsDraggingAtoms: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isDraggingAtoms: action.payload };
+        setIsDraggingAtoms: (state, action: PayloadAction<boolean>) => {
+            state.isDraggingAtoms = action.payload;
         },
-        setIsRotatingAtoms: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isRotatingAtoms: action.payload };
+        setIsRotatingAtoms: (state, action: PayloadAction<boolean>) => {
+            state.isRotatingAtoms = action.payload;
         },
-        setTheme: (state, action: { payload: string; type: string }) => {
-            return { ...state, theme: action.payload };
+        setTheme: (state, action: PayloadAction<string>) => {
+            state.theme = action.payload;
         },
         // API generalOptions
         /* Set the view-only mode of the application. In view-only mode, users can interact with the visualisation but cannot make any modifications to the loaded structures or maps.*/
-        setViewOnly: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, viewOnly: action.payload };
+        setViewOnly: (state, action: PayloadAction<boolean>) => {
+            state.viewOnly = action.payload;
         },
         // API globalUI
-        setShowHoverInfo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, showHoverInfo: action.payload };
+        setShowHoverInfo: (state, action: PayloadAction<boolean>) => {
+            state.showHoverInfo = action.payload;
         },
         // API maps
-        setActiveMap: (state, action: { payload: MoorhenMap; type: string }) => {
-            return { ...state, activeMap: action.payload };
+        setActiveMap: (state, action: PayloadAction<MoorhenMap>) => {
+            state.activeMap = action.payload as unknown as typeof state.activeMap;
         },
-        setCootInitialized: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, cootInitialized: action.payload };
+        setCootInitialized: (state, action: PayloadAction<boolean>) => {
+            state.cootInitialized = action.payload;
         },
-        setAppTittle: (state, action: { payload: string; type: string }) => {
-            return { ...state, appTitle: action.payload };
+        setAppTittle: (state, action: PayloadAction<string>) => {
+            state.appTitle = action.payload;
         },
-        setUserPreferencesMounted: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, userPreferencesMounted: action.payload };
+        setUserPreferencesMounted: (state, action: PayloadAction<boolean>) => {
+            state.userPreferencesMounted = action.payload;
         },
         // API globalUI
         /* Show dev menu and extra tools */
-        setDevMode: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, devMode: action.payload };
+        setDevMode: (state, action: PayloadAction<boolean>) => {
+            state.devMode = action.payload;
         },
         // API  generalOptions
-        setUseGemmi: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, useGemmi: action.payload };
+        setUseGemmi: (state, action: PayloadAction<boolean>) => {
+            state.useGemmi = action.payload;
         },
         clearResidueSelection: state => {
-            return {
-                ...state,
-                residueSelection: {
-                    molecule: null,
-                    first: null,
-                    second: null,
-                    cid: null,
-                    isMultiCid: false,
-                    label: null,
-                },
+            state.residueSelection = {
+                molecule: null,
+                first: null,
+                second: null,
+                cid: null,
+                isMultiCid: false,
+                label: null,
             };
         },
-        setResidueSelection: (state, action: { payload: moorhen.ResidueSelection; type: string }) => {
-            return { ...state, residueSelection: action.payload };
+        setResidueSelection: (state, action: PayloadAction<ResidueSelection>) => {
+            state.residueSelection = action.payload as unknown as typeof state.residueSelection; 
         },
-        setMoleculeResidueSelection: (state, action: { payload: MoorhenMolecule; type: string }) => {
-            const newResidueSelection = { ...state.residueSelection, molecule: action.payload };
-            return { ...state, residueSelection: newResidueSelection };
+        setMoleculeResidueSelection: (state, action: PayloadAction<MoorhenMolecule>) => {
+            state.residueSelection.molecule = action.payload as unknown as typeof state.residueSelection.molecule;
         },
-        setStopResidueSelection: (state, action: { payload: string; type: string }) => {
-            const newResidueSelection = { ...state.residueSelection, stop: action.payload };
-            return { ...state, residueSelection: newResidueSelection };
+        setStopResidueSelection: (state, action: PayloadAction<string>) => {
+            state.residueSelection.second = action.payload;
         },
-        setStartResidueSelection: (state, action: { payload: string; type: string }) => {
-            const newResidueSelection = { ...state.residueSelection, start: action.payload };
-            return { ...state, residueSelection: newResidueSelection };
+        setStartResidueSelection: (state, action: PayloadAction<string>) => {
+            state.residueSelection.first = action.payload;
         },
-        setCidResidueSelection: (state, action: { payload: string; type: string }) => {
-            const newResidueSelection = { ...state.residueSelection, cid: action.payload };
-            return { ...state, residueSelection: newResidueSelection };
+        setCidResidueSelection: (state, action: PayloadAction<string>) => {
+            state.residueSelection.cid = action.payload;
         },
-        setDefaultExpandDisplayCards: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, defaultExpandDisplayCards: action.payload };
+        setDefaultExpandDisplayCards: (state, action: PayloadAction<boolean>) => {
+            state.defaultExpandDisplayCards = action.payload;
         },
-        setTransparentModalsOnMouseOut: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, transparentModalsOnMouseOut: action.payload };
+        setTransparentModalsOnMouseOut: (state, action: PayloadAction<boolean>) => {
+            state.transparentModalsOnMouseOut = action.payload;
         },
-        setAllowScripting: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, allowScripting: action.payload };
+        setAllowScripting: (state, action: PayloadAction<boolean>) => {
+            state.allowScripting = action.payload;
         },
-        setAllowAddNewFittedLigand: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, allowAddNewFittedLigand: action.payload };
+        setAllowAddNewFittedLigand: (state, action: PayloadAction<boolean>) => {
+            state.allowAddNewFittedLigand = action.payload;
         },
-        setAllowMergeFittedLigand: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, allowMergeFittedLigand: action.payload };
+        setAllowMergeFittedLigand: (state, action: PayloadAction<boolean>) => {
+            state.allowMergeFittedLigand = action.payload;
         },
         // API  generalOptions
         /* disable file upload through the interface, API call still works normally */
-        setDisableFileUpload: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, disableFileUpload: action.payload };
+        setDisableFileUpload: (state, action: PayloadAction<boolean>) => {
+            state.disableFileUpload = action.payload;
         },
     },
 });
