@@ -13,8 +13,11 @@ const fs = require('fs');
 const path = require('path');
 const { ungzip } = require('node-gzip');
 const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen');
+const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
+
 
 let cootModule: any;
+let gemmiModule: any;
 
 const mockMonomerLibraryPath = 'https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/';
 
@@ -48,18 +51,22 @@ const mockMonomerLibraryPath = 'https://raw.githubusercontent.com/MRC-LMB-Comput
     }
 };
 
-beforeAll(() => {
-    return createCootModule({
-        print(t: any) { () => console.log(['output', t]); },
-        printErr(t: any) { () => console.log(['output', t]); },
-    }).then((moduleCreated: any) => {
-        cootModule = moduleCreated;
-        (global as any).window = {
-            CCP4Module: cootModule,
-        };
-        return setupFunctions.copyTestDataToFauxFS();
-
+beforeAll(async () => {
+    cootModule = await createCootModule({
+        print: (t: string) => console.log(["output", t]),
+        printErr: (t: string) => console.log(["output", t]),
     });
+
+    gemmiModule = await createGemmiModule({
+        print: (t: string) => console.log(["output", t]),
+        printErr: (t: string) => console.log(["output", t]),
+    });
+
+    (globalThis as any).window = {};
+    (globalThis as any).window.CCP4Module = cootModule;
+    (globalThis as any).window.gemmiModule = gemmiModule;
+
+    await setupFunctions.copyTestDataToFauxFS();
 });
 
 let molecules_container: any = null;

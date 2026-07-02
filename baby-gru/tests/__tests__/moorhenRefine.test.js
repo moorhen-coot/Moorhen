@@ -79,6 +79,7 @@ beforeAll(async () => {
 
 let molecules_container = null
 let commandCentre = null
+let mockInstance = null
 let glRef = null
 
 describe("Testing MoorhenMolecule", () => {
