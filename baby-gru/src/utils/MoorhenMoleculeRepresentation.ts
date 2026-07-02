@@ -1797,7 +1797,7 @@ export class MoleculeRepresentation {
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex);
                 const poly = chain.get_polymer()
-                const polyType = window.CCP4Module.check_polymer_type_non_const(poly,true)
+                const polyType = window.gemmiModule.check_polymer_type_non_const(poly,true)
                 const isNucleotide = (polyType.value === 4||polyType.value === 3)? true : false
                 poly.delete()
                 const residues = chain.residues;
@@ -1805,7 +1805,7 @@ export class MoleculeRepresentation {
                 for (let residueIndex = 0; residueIndex < residuesSize && isNucleotide; residueIndex++) {
                     const residue = residues.get(residueIndex);
                     const residueSeqId = residue.seqid;
-                    const resinfo = window.cootModule.find_tabulated_residue(residue.name)
+                    const resinfo = window.gemmiModule.find_tabulated_residue(residue.name)
                     if(resinfo.is_dna()||resinfo.is_rna()||["A","C","G","T","U"].indexOf(modres_js[residue.name])>-1){
                         if(!residueSeqId.has_icode()){
                             const seqNum = residueSeqId.str()

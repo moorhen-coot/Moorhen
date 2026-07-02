@@ -759,7 +759,7 @@ target_include_directories(gemmi-wasm PRIVATE
 )
 
 
-target_link_libraries(gemmi-wasm gemmi_cpp z)
+target_link_libraries(gemmi-wasm gemmi_cpp jsoncpp z)
 if(${MEMORY64} MATCHES "1")
 target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'])
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)

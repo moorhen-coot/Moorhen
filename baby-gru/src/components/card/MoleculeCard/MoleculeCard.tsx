@@ -417,10 +417,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
-    const bpl = props.molecule.DNATCO_info["base_pair_list"]
-    const bpa = props.molecule.DNATCO_info["base_pair_annotation"]
-    const ntc_step = props.molecule.DNATCO_info["ntc_step"]
-    const ntc_step_summary = props.molecule.DNATCO_info["ntc_step_summary"]
+    const bpl = props.molecule.DNATCO_info?.base_pair_list ?? []
+    const bpa = props.molecule.DNATCO_info?.base_pair_annotation ?? []
+    const ntc_step = props.molecule.DNATCO_info?.ntc_step ?? []
+    const ntc_step_summary = props.molecule.DNATCO_info?.ntc_step_summary ?? []
     const bpaMap: Map<number,libcootApi.DNATCOBasePairAnnotation> = new Map(bpa.map(ba => [ba.base_pair_id, ba]));
     const stepMap: Map<number,libcootApi.DNATCONtcStepSummary> = new Map(ntc_step_summary.map(step => [step.step_id, step]));
 

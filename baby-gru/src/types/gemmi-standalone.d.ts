@@ -107,6 +107,8 @@ export interface GemmiModule {
     parse_ligand_dict_info(_0: string): emscriptem.vector<{ comp_id: string; dict_contents: string }>;
     parse_multi_cids(_0: Structure, _1: string): emscriptem.vector<string>;
     cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
+    parseDNATCO(arg0: string): string;
+    check_polymer_type_non_const(resspan: gemmi.ResidueSpan, ignore_entity_type: boolean):  gemmi.PolymerType ;
 
     // Enums
     CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };

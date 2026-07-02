@@ -1,3 +1,4 @@
+#include <json/json.h>
 #include "gemmi-wrappers-helpers.h"
 
 gemmi::PolymerType check_polymer_type_non_const(const gemmi::ResidueSpan& span, bool ignore_entity_type) {
@@ -621,6 +622,7 @@ GlobWalk
     function("get_non_selected_cids", &get_non_selected_cids);
     function("parse_mon_lib_list_cif", &parse_mon_lib_list_cif);
     function("cidToNeighboursCid",&cidToNeighboursCid);
+    function("parseDNATCO",&parseDNATCO);
 
     value_array<std::array<double, 9>>("array_native_double_9")
         .element(emscripten::index<0>())

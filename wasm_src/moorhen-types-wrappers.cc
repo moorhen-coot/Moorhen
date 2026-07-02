@@ -1,115 +1,5 @@
 #include "moorhen-wrappers-helpers.h"
 
-std::string parseDNATCO(const std::string &data){
-
-    auto doc = gemmi::cif::read_string(data);
-    auto block = doc.sole_block();
-
-    Json::Value root;
-    Json::Value base_pair_annotation(Json::arrayValue);
-    Json::Value base_pair_list(Json::arrayValue);
-    Json::Value sugar_step_parameters(Json::arrayValue);
-    Json::Value ntc_step_parameters(Json::arrayValue);
-    Json::Value ntc_step_summary(Json::arrayValue);
-    Json::Value ntc_step(Json::arrayValue);
-    Json::Value na_base_pair_step(Json::arrayValue);
-    Json::Value na_base_pair(Json::arrayValue);
-
-    std::vector<std::string> base_pair_list_keys = {"base_pair_id", "PDB_model_number", "asym_id_1", "entity_id_1",    "seq_id_1", "comp_id_1", "PDB_ins_code_1", "alt_id_1",    "struct_oper_id_1", "asym_id_2", "entity_id_2", "seq_id_2",    "comp_id_2", "PDB_ins_code_2", "alt_id_2", "struct_oper_id_2",    "auth_asym_id_1", "auth_seq_id_1", "auth_asym_id_2", "auth_seq_id_2"};
-
-    std::vector<std::string> base_pair_annotation_keys = {"id", "base_pair_id", "orientation", "base_1_edge", "base_2_edge", "l-w_family_num", "l-w_family", "class", "subclass"};
-
-    std::vector<std::string> sugar_step_parameters_keys = {"step_id", "P_1", "tau_1", "Pn_1", "P_2", "tau_2", "Pn_2", "nu_1_1", "nu_1_2", "nu_1_3", "nu_1_4", "nu_1_5", "nu_2_1", "nu_2_2", "nu_2_3", "nu_2_4", "nu_2_5", "diff_nu_1_1", "diff_nu_1_2", "diff_nu_1_3", "diff_nu_1_4", "diff_nu_1_5", "diff_nu_2_1", "diff_nu_2_2", "diff_nu_2_3", "diff_nu_2_4", "diff_nu_2_5"};
-
-    std::vector<std::string> ntc_step_parameters_keys = {"step_id", "tor_delta_1", "tor_epsilon_1", "tor_zeta_1", "tor_alpha_2", "tor_beta_2", "tor_gamma_2", "tor_delta_2", "tor_chi_1", "tor_chi_2", "dist_NN", "dist_CC", "tor_NCCN", "diff_tor_delta_1", "diff_tor_epsilon_1", "diff_tor_zeta_1", "diff_tor_alpha_2", "diff_tor_beta_2", "diff_tor_gamma_2", "diff_tor_delta_2", "diff_tor_chi_1", "diff_tor_chi_2", "diff_dist_NN", "diff_dist_CC", "diff_tor_NCCN", "confal_tor_delta_1", "confal_tor_epsilon_1", "confal_tor_zeta_1", "confal_tor_alpha_2", "confal_tor_beta_2", "confal_tor_gamma_2", "confal_tor_delta_2", "confal_tor_chi_1", "confal_tor_chi_2", "confal_dist_NN", "confal_dist_CC", "confal_tor_NCCN", "details"};
-
-    std::vector<std::string> ntc_step_summary_keys = {"step_id", "assigned_CANA", "assigned_NtC", "confal_score", "euclidean_distance_NtC_ideal", "cartesian_rmsd_closest_NtC_representative", "closest_CANA", "closest_NtC", "closest_step_golden"};
-
-    std::vector<std::string> ntc_step_keys = {"id", "name", "PDB_model_number", "label_entity_id_1", "label_asym_id_1", "label_seq_id_1", "label_comp_id_1", "label_alt_id_1", "label_entity_id_2", "label_asym_id_2", "label_seq_id_2", "label_comp_id_2", "label_alt_id_2", "auth_asym_id_1", "auth_seq_id_1", "auth_asym_id_2", "auth_seq_id_2", "PDB_ins_code_1", "PDB_ins_code_2"};
-
-    std::vector<std::string> na_base_pair_step_keys = {"model_number", "i_label_asym_id_1", "i_label_comp_id_1", "i_label_seq_id_1", "i_symmetry_1", "j_label_asym_id_1", "j_label_comp_id_1", "j_label_seq_id_1", "j_symmetry_1", "i_label_asym_id_2", "i_label_comp_id_2", "i_label_seq_id_2", "i_symmetry_2", "j_label_asym_id_2", "j_label_comp_id_2", "j_label_seq_id_2", "j_symmetry_2", "shift", "slide", "rise", "tilt", "roll", "twist", "x_displacement", "y_displacement", "helical_rise", "inclination", "tip", "helical_twist", "step_number", "step_name", "i_auth_asym_id_1", "i_auth_seq_id_1", "i_PDB_ins_code_1", "j_auth_asym_id_1", "j_auth_seq_id_1", "j_PDB_ins_code_1", "i_auth_asym_id_2", "i_auth_seq_id_2", "i_PDB_ins_code_2", "j_auth_asym_id_2", "j_auth_seq_id_2", "j_PDB_ins_code_2"};
-
-    std::vector<std::string> na_base_pair_keys = {"model_number", "i_label_asym_id", "i_label_comp_id", "i_label_seq_id", "i_symmetry", "j_label_asym_id", "j_label_comp_id", "j_label_seq_id", "j_symmetry", "shear", "stretch", "stagger", "buckle", "propeller", "opening", "pair_number", "pair_name", "i_auth_asym_id", "i_auth_seq_id", "i_PDB_ins_code", "j_auth_asym_id", "j_auth_seq_id", "j_PDB_ins_code", "hbond_type_28", "hbond_type_12"};
-
-    for (auto row : block.find("_ndb_struct_na_base_pair_step.", na_base_pair_step_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < na_base_pair_step_keys.size(); ++i) {
-            json_row[na_base_pair_step_keys[i]] = row[i];
-        }
-        na_base_pair_step.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_struct_na_base_pair.", na_base_pair_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < na_base_pair_keys.size(); ++i) {
-            json_row[na_base_pair_keys[i]] = row[i];
-        }
-        na_base_pair.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_struct_ntc_step.", ntc_step_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < ntc_step_keys.size(); ++i) {
-            json_row[ntc_step_keys[i]] = row[i];
-        }
-        ntc_step.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_struct_ntc_step_summary.", ntc_step_summary_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < ntc_step_summary_keys.size(); ++i) {
-            json_row[ntc_step_summary_keys[i]] = row[i];
-        }
-        ntc_step_summary.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_struct_ntc_step_parameters.", ntc_step_parameters_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < ntc_step_parameters_keys.size(); ++i) {
-            json_row[ntc_step_parameters_keys[i]] = row[i];
-        }
-        ntc_step_parameters.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_struct_sugar_step_parameters.", sugar_step_parameters_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < sugar_step_parameters_keys.size(); ++i) {
-            json_row[sugar_step_parameters_keys[i]] = row[i];
-        }
-        sugar_step_parameters.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_base_pair_list.", base_pair_list_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < base_pair_list_keys.size(); ++i) {
-            json_row[base_pair_list_keys[i]] = row[i];
-        }
-        base_pair_list.append(json_row);
-    }
-
-    for (auto row : block.find("_ndb_base_pair_annotation.", base_pair_annotation_keys)){
-        Json::Value json_row;
-        for (size_t i = 0; i < base_pair_annotation_keys.size(); ++i) {
-            json_row[base_pair_annotation_keys[i]] = row[i];
-        }
-        base_pair_annotation.append(json_row);
-    }
-
-    root["base_pair_annotation"] = base_pair_annotation;
-    root["base_pair_list"] = base_pair_list;
-    root["sugar_step_parameters"] = sugar_step_parameters;
-    root["ntc_step_parameters"] = ntc_step_parameters;
-    root["ntc_step_summary"] = ntc_step_summary;
-    root["ntc_step"] = ntc_step;
-    root["na_base_pair_step"] = na_base_pair_step;
-    root["na_base_pair"] = na_base_pair;
-
-    Json::StreamWriterBuilder builder;
-    const std::string json_string = Json::writeString(builder, root);
-
-    return json_string;
-}
-
 gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
 
     gemmi::Structure newStructure = st;
@@ -168,7 +58,6 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("detect_xhpi_interactions_json_with_monomer_library", &xhpi::detect_xhpi_interactions_json_with_monomer_library);
 
     function("cloneGemmiStructureWithTrimmedAtomNames", &cloneGemmiStructureWithTrimmedAtomNames);
-    function("parseDNATCO", &parseDNATCO);
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
