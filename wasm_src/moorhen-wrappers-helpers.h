@@ -712,14 +712,14 @@ class molecules_container_js : public molecules_container_t {
         
         std::vector<CremerPopleParameters> privateer_calculate_cremer_pople_parameters(int imol) {
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            auto results =  calculate_cremer_pople_parameters(file_content, "");
+            auto results =  calculate_cremer_pople_parameters(file_content, std::string("thing.cif"));
             return results;
         }
 
         coot::simple_mesh_t DrawCremerPopleSphere(int imol, bool add_radial_conformations) {
 
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            auto results =  calculate_cremer_pople_parameters(file_content, "");
+            auto results =  calculate_cremer_pople_parameters(file_content, std::string("thing.cif"));
 
             std::vector<CremerPopleData> data = {};
             data.reserve(results.size());
