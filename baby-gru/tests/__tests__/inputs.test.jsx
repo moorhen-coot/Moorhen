@@ -12,6 +12,7 @@ jest.mock('chart.js', () => ({
 import '@testing-library/jest-dom'
 import { render, cleanup, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { Provider } from 'react-redux'
 import { _MoorhenReduxStore as MoorhenReduxStore } from "../../src/store/MoorhenReduxStore"
 import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
@@ -281,6 +282,33 @@ describe('MoorhenToggle', () => {
         const checkbox = screen.getByRole('checkbox')
         expect(checkbox).toHaveAttribute('id', 'myToggleId')
     })
+
+    test('works bidirectionally with lifted useState pattern', async () => {
+        const user = userEvent.setup()
+        function ToggleWrapper() {
+            const [checked, setChecked] = useState(false)
+            return (
+                <>
+                    <button data-testid="reset-toggle" onClick={() => setChecked(false)}>Reset</button>
+                    <MoorhenToggle
+                        label="Lifted"
+                        checked={checked}
+                        onChange={() => setChecked(!checked)}
+                    />
+                </>
+            )
+        }
+        render(<ToggleWrapper />)
+        const checkbox = screen.getByRole('checkbox')
+        // Initial state
+        expect(checkbox).not.toBeChecked()
+        // User interaction → state lifted → UI updates
+        await user.click(checkbox)
+        expect(checkbox).toBeChecked()
+        // External state change → component re-renders
+        await user.click(screen.getByTestId('reset-toggle'))
+        expect(checkbox).not.toBeChecked()
+    })
 })
 
 // ==============================
@@ -414,6 +442,32 @@ describe('MoorhenSelect', () => {
             </Provider>
         )
         expect(ref.current).toBeInstanceOf(HTMLSelectElement)
+    })
+
+    test('works bidirectionally with lifted useState pattern', async () => {
+        const user = userEvent.setup()
+        function SelectWrapper() {
+            const [value, setValue] = useState('opt1')
+            return (
+                <Provider store={MoorhenReduxStore}>
+                    <button data-testid="reset-select" onClick={() => setValue('opt1')}>Reset</button>
+                    <MoorhenSelect value={value} setValue={setValue}>
+                        <option value="opt1">Option 1</option>
+                        <option value="opt2">Option 2</option>
+                    </MoorhenSelect>
+                </Provider>
+            )
+        }
+        render(<SelectWrapper />)
+        const select = screen.getByRole('combobox')
+        // Initial state
+        expect(select).toHaveValue('opt1')
+        // User interaction → state lifted → UI updates
+        await user.selectOptions(select, 'opt2')
+        expect(select).toHaveValue('opt2')
+        // External state change → component re-renders
+        await user.click(screen.getByTestId('reset-select'))
+        expect(select).toHaveValue('opt1')
     })
 })
 
@@ -580,6 +634,29 @@ describe('MoorhenTextInput', () => {
         )
         expect(ref.current).toBeInstanceOf(HTMLInputElement)
     })
+
+    test('works bidirectionally with lifted useState pattern', async () => {
+        const user = userEvent.setup()
+        function TextInputWrapper() {
+            const [text, setText] = useState('')
+            return (
+                <Provider store={MoorhenReduxStore}>
+                    <button data-testid="reset-text" onClick={() => setText('')}>Reset</button>
+                    <MoorhenTextInput text={text} setText={setText} />
+                </Provider>
+            )
+        }
+        render(<TextInputWrapper />)
+        const input = screen.getByRole('textbox')
+        // Initial state
+        expect(input).toHaveValue('')
+        // User interaction → state lifted → UI updates
+        await user.type(input, 'hello')
+        expect(input).toHaveValue('hello')
+        // External state change → component re-renders
+        await user.click(screen.getByTestId('reset-text'))
+        expect(input).toHaveValue('')
+    })
 })
 
 // ==============================
@@ -665,6 +742,30 @@ describe('MoorhenNumberInput', () => {
             </Provider>
         )
         expect(ref.current).toBeInstanceOf(HTMLInputElement)
+    })
+
+    test('works bidirectionally with lifted useState pattern', async () => {
+        const user = userEvent.setup()
+        function NumberInputWrapper() {
+            const [value, setValue] = useState(10)
+            return (
+                <Provider store={MoorhenReduxStore}>
+                    <button data-testid="reset-num" onClick={() => setValue(10)}>Reset</button>
+                    <MoorhenNumberInput value={value} setValue={setValue} />
+                </Provider>
+            )
+        }
+        render(<NumberInputWrapper />)
+        const input = screen.getByRole('textbox')
+        // Initial state
+        expect(input).toHaveValue('10.00')
+        // User interaction → state lifted → UI updates
+        await user.clear(input)
+        await user.type(input, '42.50')
+        expect(input).toHaveValue('42.50')
+        // External state change → component re-renders
+        await user.click(screen.getByTestId('reset-num'))
+        expect(input).toHaveValue('10.00')
     })
 })
 
@@ -762,6 +863,36 @@ describe('MoorhenSlider', () => {
         )
         const slider = screen.getByRole('slider')
         expect(slider).toBeInTheDocument()
+    })
+
+    test('works bidirectionally with lifted useState pattern', async () => {
+        const user = userEvent.setup()
+        function SliderWrapper() {
+            const [value, setValue] = useState(50)
+            return (
+                <Provider store={MoorhenReduxStore}>
+                    <button data-testid="reset-slider" onClick={() => setValue(50)}>Reset</button>
+                    <MoorhenSlider
+                        externalValue={value}
+                        setExternalValue={setValue}
+                        minVal={0}
+                        maxVal={100}
+                        sliderTitle="Test"
+                    />
+                </Provider>
+            )
+        }
+        render(<SliderWrapper />)
+        expect(screen.getByText(/test/i)).toBeInTheDocument()
+        const slider = screen.getByRole('slider')
+        // Initial state
+        expect(slider).toHaveValue('50')
+        // User interaction → state lifted → UI updates
+        fireEvent.change(slider, { target: { value: '75' } })
+        expect(slider).toHaveValue('75')
+        // External state change → component re-renders
+        await user.click(screen.getByTestId('reset-slider'))
+        expect(slider).toHaveValue('50')
     })
 })
 

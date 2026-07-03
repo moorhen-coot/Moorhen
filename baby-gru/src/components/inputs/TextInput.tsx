@@ -52,7 +52,7 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     id={props.id ? props.id : id}
                     type="text"
                     onChange={handleChange}
-                    defaultValue={props.text}
+                    value={props.text}
                     className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${isInvalid ? " invalid" : null}`}
                     onBlur={handleBlur}
                     onFocus={() => dispatch(setShortCutsBlocked(true))}
