@@ -1,9 +1,4 @@
 jest.setTimeout(15000)
-
-jest.mock('protvista-sequence')
-jest.mock('protvista-navigation')
-jest.mock('protvista-manager')
-jest.mock('protvista-track')
 jest.mock('chart.js', () => ({
     ...jest.requireActual('chart.js'),
     registerables: []
