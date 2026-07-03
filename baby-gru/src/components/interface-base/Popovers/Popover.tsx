@@ -155,21 +155,27 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             {popoverContent || props.children}
         </div>
     );
-    const popover = closeButton ? (
-        createPortal(container, containerRef.current)
-    ) : (
-        <>
-            {createPortal(
-                <MoorhenClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</MoorhenClickAwayListener>,
-                containerRef.current
-            )}
-        </>
-    );
+    // const popover = closeButton ? (
+    //     createPortal(container, containerRef.current)
+    // ) : (
+    //     <>
+    //         {createPortal(
+    //             <MoorhenClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</MoorhenClickAwayListener>,
+    //             containerRef.current
+    //         )}
+    //     </>
+    // );
 
     return (
-        <>
-            {isShown && popover}
-            {props.link}
-        </>
+    <>
+        {isShown && (closeButton
+            ? createPortal(container, containerRef.current)
+            : createPortal(
+                <MoorhenClickAwayListener onClickAway={() => props.setIsShown(false)}>{container}</MoorhenClickAwayListener>,
+                containerRef.current
+              )
+        )}
+        {props.link}
+    </>
     );
 };

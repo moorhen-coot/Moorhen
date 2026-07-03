@@ -10,7 +10,7 @@ type TabContextType = {
 const TabContext = createContext<TabContextType | undefined>(undefined);
 
 type TabContainerProps = {
-    children: React.ReactElement<TabProps>[];
+    children:React.ReactElement<TabProps> | React.ReactElement<TabProps>[];
     defaultActiveId?: string;
     onChange?: (activeId: string) => void;
     className?: string;
@@ -19,7 +19,8 @@ type TabContainerProps = {
 export const MoorhenTabContainer = (props: TabContainerProps) => {
     const { children, defaultActiveId, onChange, className } = props;
 
-    const firstTabId = children[0]?.props.id || "0";
+    const firstChild = React.Children.toArray(children)[0] as React.ReactElement<TabProps>;
+    const firstTabId = firstChild?.props.id || "0";
     const [activeId, setActiveId] = useState<string>(defaultActiveId || firstTabId);
 
     const handleSetActiveId = (id: string) => {
@@ -28,7 +29,7 @@ export const MoorhenTabContainer = (props: TabContainerProps) => {
     };
 
     return (
-        <div className={`moorhen__tabs-container ${className}`}>
+        <div className={`moorhen__tabs-container ${className ? ` ${className}` : ""}`}>
             <div className="moorhen__tabs-header">
                 {React.Children.map(children, child => (
                     <button
@@ -43,7 +44,7 @@ export const MoorhenTabContainer = (props: TabContainerProps) => {
                 ))}
             </div>
 
-            {children.map(child => (
+            {React.Children.map(children, child => (
                 <Activity mode={activeId === child.props.id ? "visible" : "hidden"} key={`${child.props.id}-tab-panel`}>
                     <div className="moorhen__tab-panel">{child}</div>
                 </Activity>
