@@ -646,7 +646,7 @@ export const subMenuMap: SubMenuMap = {
             },
             {
                 id: "smiles-to-ligand",
-                label: "New Ligand from SMILE...",
+                label: "New Ligand from SMILES...",
                 type: "popover",
                 keywords: ["SMILES", "ligand"],
                 description: "Convert SMILES to ligand",
