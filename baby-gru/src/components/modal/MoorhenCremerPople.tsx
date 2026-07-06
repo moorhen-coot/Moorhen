@@ -25,11 +25,12 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
     useEffect(() => {
         let cancelled = false
         const measure = async () => {
+            const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(props.molecule.gemmiStructure)
             const response = await commandCentre.current.cootCommand(
                 {
                     returnType: "mesh",
                     command: "DrawCremerPopleSphere",
-                    commandArgs: [props.molecule.molNo, false],
+                    commandArgs: [input_cif_string, false],
                 },
                 false
             )
@@ -60,11 +61,12 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
     }, [props.molecule])
 
     const getCremerPopleSphere = useCallback(async () => {
+        const input_cif_string = window.cootModule.get_mmcif_string_from_gemmi_struct(props.molecule.gemmiStructure)
         const response = await commandCentre.current.cootCommand(
             {
                 returnType: "mesh",
                 command: "DrawCremerPopleSphere",
-                commandArgs: [props.molecule.molNo, showRadialConformations],
+                commandArgs: [input_cif_string, showRadialConformations],
             },
             false
         )
