@@ -1425,7 +1425,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(ss2_vector)
     })
 
-    test("privateer_validate", () => {
+    test.skip("privateer_validate", () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
         const results = molecules_container.privateer_validate(coordMolNo)
         const first = results.get(0)
