@@ -183,7 +183,7 @@ export const AddCustomRepresentationCard = memo(
                         (representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") &&
                         restrictToNeighbours
                     ) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(
                             theMolecule.gemmiStructure,
                             unRestrictedCidSelection,
                             neighboursCid,
@@ -201,7 +201,7 @@ export const AddCustomRepresentationCard = memo(
                             .map(r => r + extraRestrict)
                             .join("||");
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(
                             theMolecule.gemmiStructure,
                             unRestrictedCidSelection,
                             neighboursCid,
@@ -224,7 +224,7 @@ export const AddCustomRepresentationCard = memo(
                             restrictToNeighbours
                         ) {
                             const waterSelection = "/*/*/(HOH)";
-                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(
+                            const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(
                                 theMolecule.gemmiStructure,
                                 waterSelection,
                                 neighboursCid,

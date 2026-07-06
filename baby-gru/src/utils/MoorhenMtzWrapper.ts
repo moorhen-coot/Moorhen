@@ -9,19 +9,35 @@ export class MoorhenMtzWrapper {
         this.columns = {};
     }
 
-    async loadHeaderFromFile(file: File): Promise<{ [colType: string]: string }> {
+    loadHeaderFromFile = async ( file: File): Promise<{ [colType: string]: string }> => {
+
+        const gemmi = (window as any).gemmiModule
         const arrayBuffer = await file.arrayBuffer()
+
         const fileName = `File_${uuidv4()}`;
         const byteArray = new Uint8Array(arrayBuffer);
-        window.CCP4Module.FS_createDataFile(".", fileName, byteArray, true, true);
-        const header_info = window.CCP4Module.get_mtz_columns(fileName);
-        window.CCP4Module.FS_unlink(`./${fileName}`);
-        const newColumns: { [colType: string]: string } = {};
-        for (let ih = 0; ih < header_info.size(); ih += 2) {
-            newColumns[header_info.get(ih + 1)] = header_info.get(ih);
+        gemmi.FS_createDataFile(".", fileName, byteArray, true, true);
+
+        const mtz = gemmi.read_mtz_file(fileName)
+
+        const result: { [colType: string]: string } = {}
+
+        for (let i = 0; i < mtz.columns.size(); i++) {
+            const col = mtz.columns.get(i)
+
+            const label = col.label
+            const type = String.fromCharCode(col.type)
+            result[label] = type
+
         }
-        this.columns = newColumns;
+
+        if (mtz.delete) mtz.delete()
+        gemmi.FS_unlink(`./${fileName}`);
+
+        this.columns = result;
         this.reflectionData = byteArray;
-        return newColumns;
+
+        return result
     }
+
 }

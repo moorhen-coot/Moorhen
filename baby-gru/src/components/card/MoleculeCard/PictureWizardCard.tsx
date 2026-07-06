@@ -191,7 +191,7 @@ export const PictureWizardCard = memo(
                     }
 
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
@@ -200,7 +200,7 @@ export const PictureWizardCard = memo(
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         cidSelection = restrictedCid
                     } else {
                         cidSelection += ":*";
@@ -208,7 +208,7 @@ export const PictureWizardCard = memo(
                     if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
                         if (representationStyle === "CBs" && restrictToNeighbours) {
                             const waterSelection = "/*/*/(HOH)";
-                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                            const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                             if(restrictedWaterCid.length>2)
                                 cidSelection += "||"+restrictedWaterCid
                         } else {
@@ -231,7 +231,7 @@ export const PictureWizardCard = memo(
                         cidSelection += "[!H]";
                     }
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"

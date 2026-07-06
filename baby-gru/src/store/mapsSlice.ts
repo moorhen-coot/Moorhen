@@ -6,7 +6,7 @@ const mapsSlice = createSlice({
     initialState: [] as MoorhenMap[],
     reducers: {
         addMap: (state, action: PayloadAction<MoorhenMap>) => {
-            state.push(action.payload);
+            state.push(action.payload as unknown as typeof state[number]); // FIXME this is a hack to get typscript to stop complaining about the type of the payload.
             return state;
         },
         removeMap: (state, action: PayloadAction<MoorhenMap>) => {
@@ -16,7 +16,7 @@ const mapsSlice = createSlice({
             return [] as MoorhenMap[];
         },
         addMapList: (state, action: PayloadAction<MoorhenMap[]>) => {
-            state.push(...action.payload);
+            state.push(...(action.payload as unknown as typeof state)); // FIXME this is a hack to get typscript to stop complaining about the type of the payload.
             return state;
         },
     },

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Overlay2DFracPath {
     type: "FracPath";
@@ -81,84 +81,58 @@ const overlaysSlice = createSlice({
     name: "overlays",
     initialState: initialState,
     reducers: {
-        addImageOverlay: (state, action: { payload: Omit<Overlay2DImageSrcFrac, "type">; type: string }) => {
+        addImageOverlay: (state, action: PayloadAction<Omit<Overlay2DImageSrcFrac, "type">>) => {
             const imageOverlay: Overlay2DImageSrcFrac = {
                 ...action.payload,
                 type: "Image",
             };
-            state = { ...state, imageOverlayList: [...state.imageOverlayList, imageOverlay] };
-            return state;
+            state.imageOverlayList.push(imageOverlay);
         },
-        removeImageOverlay: (state, action: { payload: Overlay2DImageSrcFrac; type: string }) => {
-            state = {
-                ...state,
-                imageOverlayList: state.imageOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeImageOverlay: (state, action: PayloadAction<Overlay2DImageSrcFrac>) => {
+            state.imageOverlayList = state.imageOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
-        addLatexOverlay: (state, action: { payload: Omit<Overlay2DLatexSrcFrac, "type">; type: string }) => {
+        addLatexOverlay: (state, action: PayloadAction<Omit<Overlay2DLatexSrcFrac, "type">>) => {
             const latexOverlay: Overlay2DLatexSrcFrac = {
                 ...action.payload,
                 type: "Latex",
             };
-            state = { ...state, latexOverlayList: [...state.latexOverlayList, latexOverlay] };
-            return state;
+            state.latexOverlayList.push(latexOverlay);
         },
-        removeLatexOverlay: (state, action: { payload: Overlay2DLatexSrcFrac; type: string }) => {
-            state = {
-                ...state,
-                latexOverlayList: state.latexOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeLatexOverlay: (state, action: PayloadAction<Overlay2DLatexSrcFrac>) => {
+            state.latexOverlayList = state.latexOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
-        addTextOverlay: (state, action: { payload: Omit<Overlay2DTextFrac, "type">; type: string }) => {
+        addTextOverlay: (state, action: PayloadAction<Omit<Overlay2DTextFrac, "type">>) => {
             const textOverlay: Overlay2DTextFrac = {
                 ...action.payload,
                 type: "Text",
             };
-            state = { ...state, textOverlayList: [...state.textOverlayList, textOverlay] };
-            return state;
+            state.textOverlayList.push(textOverlay);
         },
-        removeTextOverlay: (state, action: { payload: Overlay2DTextFrac; type: string }) => {
-            state = {
-                ...state,
-                textOverlayList: state.textOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeTextOverlay: (state, action: PayloadAction<Overlay2DTextFrac>) => {
+            state.textOverlayList = state.textOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
-        addSvgPathOverlay: (state, action: { payload: Omit<Overlay2DSvgPath, "type">; type: string }) => {
+        addSvgPathOverlay: (state, action: PayloadAction<Omit<Overlay2DSvgPath, "type">>) => {
             const svgPathOverlay: Overlay2DSvgPath = {
                 ...action.payload,
                 type: "SvgPath",
             };
-            state = { ...state, svgPathOverlayList: [...state.svgPathOverlayList, svgPathOverlay] };
-            return state;
+            state.svgPathOverlayList.push(svgPathOverlay);
         },
-        removeSvgPathOverlay: (state, action: { payload: Overlay2DSvgPath; type: string }) => {
-            state = {
-                ...state,
-                svgPathOverlayList: state.svgPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeSvgPathOverlay: (state, action: PayloadAction<Overlay2DSvgPath>) => {
+            state.svgPathOverlayList = state.svgPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
-        addFracPathOverlay: (state, action: { payload: Omit<Overlay2DFracPath, "type">; type: string }) => {
+        addFracPathOverlay: (state, action: PayloadAction<Omit<Overlay2DFracPath, "type">>) => {
             const fracPathOverlay: Overlay2DFracPath = {
                 ...action.payload,
                 type: "FracPath",
             };
-            state = { ...state, fracPathOverlayList: [...state.fracPathOverlayList, fracPathOverlay] };
-            return state;
+            state.fracPathOverlayList.push(fracPathOverlay);
         },
-        removeFracPathOverlay: (state, action: { payload: Overlay2DFracPath; type: string }) => {
-            state = {
-                ...state,
-                fracPathOverlayList: state.fracPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeFracPathOverlay: (state, action: PayloadAction<Overlay2DFracPath>) => {
+            state.fracPathOverlayList = state.fracPathOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
-        addCallback: (state, action: { payload: Function; type: string }) => {
-            state = { ...state, callBacks: [...state.callBacks, action.payload] };
-            return state;
+        addCallback: (state, action: PayloadAction<Function>) => {
+            state.callBacks.push(action.payload);
         },
         emptyOverlays: () => {
             return initialState;

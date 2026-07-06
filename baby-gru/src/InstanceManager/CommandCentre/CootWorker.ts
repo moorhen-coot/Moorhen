@@ -1564,8 +1564,7 @@ onmessage = function (e) {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
-        if (memory64&&!isChromeLinux) {
+        if (memory64) {
             try {
                 // @ts-ignore
                 importScripts('./moorhen64.js')
