@@ -1786,6 +1786,17 @@ onmessage = function (e) {
             messageTag: "result",
             result: jsonContents,
         })
+
+    } else if (e.data.message === 'privateer_validate') {
+        const fileDataString = e.data.commandArgs[0]
+        const retCode = cootModule.validate(fileDataString,"thing.cif")
+        const returnResult = privateerValidationToJSArray(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
     }
 
     if (e.data.message === 'coot_command') {

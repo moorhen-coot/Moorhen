@@ -2759,6 +2759,7 @@ export class MoorhenMolecule {
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "privateer_validate",
+                message: "privateer_validate",
                 commandArgs: [input_cif_string],
                 returnType: "privateer_results",
             },
