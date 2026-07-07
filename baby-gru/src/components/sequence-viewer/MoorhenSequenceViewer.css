@@ -131,6 +131,7 @@
 
 .moorhen__seqviewer__tick-mark {
     align-items: top;
+    box-sizing: border-box;
     display: flex;
     justify-content: left;
     padding-left: 2px;
