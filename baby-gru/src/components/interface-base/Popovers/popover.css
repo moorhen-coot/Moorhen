@@ -68,7 +68,10 @@
 
 .moorhen__tooltip {
     box-sizing: border-box;
-    position: fixed;
+    display: block;
+    text-align: center;
+    align-items: center;
+    justify-content: center; 
     background: color-mix(in srgb, var(--moorhen-primary) 80%, transparent);
     color: var(--moorhen-secondary);
     padding: 0.5rem 0.75rem;

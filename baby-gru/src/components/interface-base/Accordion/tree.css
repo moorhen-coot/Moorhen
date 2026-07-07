@@ -1,0 +1,54 @@
+@import "../../../colors.css";
+
+.moorhen__tree-branch-container {
+    padding-left: 1rem;
+}
+
+.moorhen__tree-branch-button {
+    all: unset;
+    position: relative;
+    overflow: hidden;
+    min-height: 2.4rem;
+    height: fit-content;
+    text-align: left;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    border-radius: 1rem;
+    background: var(--moorhen-background-shaded);
+    border: 1px solid var(--moorhen-background);
+    align-items: center;
+    display: flex;
+}
+
+.moorhen__tree-branch-button:hover {
+    background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
+    /* border-radius: 0.25rem; */
+}
+
+.moorhen__tree-branch-icon {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.moorhen__tree-branch-icon.open {
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.moorhen__tree-branch-content {
+    display:flex;
+    flex-direction: column;
+    max-height: 0;
+    overflow: hidden;
+    transform-origin: top;
+    transform: translateY(-0.25rem) scaleY(0.98);
+    opacity: 0;
+    transition: max-height 0.5s ease, transform 0.5s ease, opacity 0.5s ease;
+}
+
+.moorhen__tree-branch-content.open {
+    max-height: 1000px;
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+}

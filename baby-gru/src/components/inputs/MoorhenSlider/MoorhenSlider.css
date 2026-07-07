@@ -1,65 +1,125 @@
 @import "../../../colors.css";
 
-.moorhen__slider__container {
-    display: grid;
-    grid-template-columns: 24px auto 24px;
-    grid-template-rows: 0.2fr 1fr;
-    margin: 0.5rem;
-}
-
-.moorhen__slider__label {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: center;
-    align-self: center;
-}
-
-.moorhen__slider__leftPanel {
-    grid-column: 1;
-    grid-row: 2;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 4px;
-}
-
-.moorhen__slider__rightPanel {
-    grid-column: 3;
-    grid-row: 2;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 4px;
-}
-
-.moorhen__slider__sliderCont {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: center;
-    align-self: center;
-    width: 90%;
-}
-
-.moorhen__slider__minMaxVal {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    top: 0.3rem;
-    font-size: 0.8rem;
-    width: 100%;
-    height: 0.2rem;
-}
-
 :root {
     --moorhen-slider-thumb-size: 20px;
     --moorhen-slider-track-height: 8px;
 }
 
-.moorhen__slider.slider {
-    -webkit-appearance: none;
-    appearance: none;
+.moorhen__slider__label {
+    justify-self: center;
+    align-self: center;
+    display: flex;
+    flex-direction: line;
+    margin-bottom: 0.3rem;
+    /* outline: 1px solid green; */
+}
+
+.moorhen__slider__leftPanel, .moorhen__slider__rightPanel {
+    position: relative;
+    display: flex;
+    transform: translateY(-40%);
+    padding: 0;
+    margin: 0;
+    /* outline: 1px solid green; */
+}
+
+
+.moorhen__slider__labels-container {
+    display: flex;
+    position: relative;
+    top: 0rem;
+    font-size: 0.9rem;
     width: 100%;
+    height: 1.6rem;
+    /* outline: 1px solid greenyellow; */
+}
+
+
+.moorhen__slider__label-bottom {
+    all: unset;
+    position: absolute;
+    cursor: pointer; 
+    font-size: inherit;
+    color: var(--moorhen-primary);
+    transform: translateX(-50%);
+    top: 0.2rem;
+}
+
+.moorhen__slider__label-bottom.tick::after {
+    content: "";
+    position: absolute;
+    width: 3px;
+    height: 7px;
+    background: var(--moorhen-primary);
+    top: -3px;
+    transform: translateX(50%);
+    right: 50%;
+    z-index: 4;
+}
+
+.moorhen__slider__tick,
+.moorhen__slider__major-tick {
+    position: absolute;
+    width: 2px;
+    height: 6px;
+    background: var(--moorhen-border);
+    top: 0rem;
+    transform: translateX(-50%);
+}
+
+.moorhen__slider__major-tick {
+    width: 3px;
+    height: 7px;
+    background: var(--moorhen-primary);
+}
+
+.moorhen__slider__major-tick.inside,
+.moorhen__slider__tick.inside {
+    top: -8px;
+    height: 8px;
+}
+
+.moorhen__slider-builtin {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+}
+
+.moorhen__slider-track-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    justify-self: center;
+    align-self: center;
+    margin-left: 15px;
+    margin-right: 15px;
+    width: 100%;
+    /* outline: 1px solid red; */
+}
+
+.moorhen__slider-track-container-active .moorhen__slider-track:not(.disabled),
+.moorhen__slider-track-container-active .moorhen__slider-thumb:not(.disabled) {
+    opacity: 1;
+    border-color: var(--moorhen-focus);
+    outline: 0;
+    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+}
+.moorhen__slider-track-container:hover .moorhen__slider-track:not(.disabled),
+.moorhen__slider-track-container:hover .moorhen__slider-thumb:not(.disabled) {
+    opacity: 1;
+    border-color: var(--moorhen-focus);
+    outline: 0;
+    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+}
+
+.moorhen__slider-track {
+    appearance: none;
+    width: calc(100% + var(--moorhen-slider-thumb-size));
+    transform: translateX(-10px);
     height: var(--moorhen-slider-track-height);
     border-radius: var(--moorhen-slider-track-height);
     background: var(--moorhen-background);
@@ -70,62 +130,41 @@
     cursor: pointer;
 }
 
-.moorhen__slider.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: var(--moorhen-slider-thumb-size);
-    height: var(--moorhen-slider-thumb-size);
-    border-radius: 50%;
-    background: var(--moorhen-accent);
-    cursor: pointer;
-    border: 1px solid var(--moorhen-border);
-}
-
-.moorhen__slider.slider::-moz-range-thumb {
-    width: var(--moorhen-slider-thumb-size);
-    height: var(--moorhen-slider-thumb-size);
-    border-radius: 50%;
-    background: var(--moorhen-accent);
-    cursor: pointer;
-    border: 1px solid var(--moorhen-border);
-}
-
-.moorhen__slider.slider.disabled::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: var(--moorhen-slider-thumb-size);
-    height: var(--moorhen-slider-thumb-size);
-    border-radius: 50%;
-    background: var(--moorhen-disabled);
+.moorhen__slider-track.disabled {
     cursor: default;
 }
 
-.moorhen__slider.slider.disabled::-moz-range-thumb {
-    width: var(--moorhen-slider-thumb-size);
-    height: var(--moorhen-slider-thumb-size);
-    border-radius: 50%;
-    background: var(--moorhen-disabled);
-    cursor: default;
-}
-
-.moorhen__slider.slider:hover {
-    opacity: 1;
-    border-color: var(--moorhen-focus);
-    outline: 0;
-    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
-}
-
-.moorhen__slider.slider.buttonIsDown {
-    opacity: 1;
-    border-color: var(--moorhen-focus);
-    outline: 0;
-    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
-}
-
-.moorhen__slider.slider:hover.disabled {
+.moorhen__slider-track-fill {
+    position: absolute;
+    height: var(--moorhen-slider-track-height);
+    background: var(--moorhen-focus-shadow);
     opacity: 0.7;
-    border-color: var(--moorhen-disabled);
-    box-shadow: none;
+    pointer-events: none;
+}
+
+.moorhen__slider-track-fill.disabled {
+    background: var(--moorhen-disabled);
+    opacity: 0.4;
+    cursor: default;
+}
+
+.moorhen__slider-thumb {
+    position: absolute;
+    margin: 0;
+    z-index: 2;
+    top: 0;
+    transform: translate(-50%, -25%);
+    width: var(--moorhen-slider-thumb-size);
+    height: var(--moorhen-slider-thumb-size);
+    border-radius: 50%;
+    background: var(--moorhen-focus);
+    cursor: pointer;
+    border: 1px solid var(--moorhen-focus-shadow);
+}
+
+.moorhen__slider-thumb.disabled {
+    background: var(--moorhen-disabled);
+    box-shadow: 2px 2px 4px 3px var(--moorhen-inactive-shadow);
     cursor: default;
 }
 

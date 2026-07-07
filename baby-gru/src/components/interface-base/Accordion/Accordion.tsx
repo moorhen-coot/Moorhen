@@ -8,7 +8,9 @@ export type MoorhenAccordionType = {
     disabled?: boolean;
     defaultOpen?: boolean;
     extraControls?: React.JSX.Element[];
+    hideExtraControlsWhenClosed?: boolean;
     type?: "default" | "card";
+    twoLinesHeader?: boolean;
     onChange?: (isExpanded: boolean) => void;
     onOpen?: () => void;
     onClose?: () => void;
@@ -16,7 +18,7 @@ export type MoorhenAccordionType = {
 };
 
 export const MoorhenAccordion = (props: MoorhenAccordionType) => {
-    const { title, children, disabled = false, defaultOpen = false, extraControls = null, type = "default" } = props;
+    const { title, children, disabled = false, defaultOpen = false, extraControls = null, hideExtraControlsWhenClosed = false, type = "default", twoLinesHeader = false } = props;
     const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
 
     useEffect(() => {
@@ -39,11 +41,11 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
     return (
         <div className={`moorhen__accordion-container ${type === "default" ? "" : "moorhen__accordion-container-card"} `}>
             <div
-                className={`moorhen__accordion-header ${type === "default" ? "" : "moorhen__accordion-header-card"} ${disabled ? "disabled" : ""} ${isOpen ? " moorhen__accordion-open" : " moorhen__accordion-closed"}`}
+                className={`moorhen__accordion-header ${type === "default" ? "" : "moorhen__accordion-header-card"} ${twoLinesHeader && (isOpen || !hideExtraControlsWhenClosed) ? "two-lines" : ""} ${disabled ? "disabled" : ""} ${isOpen ? " moorhen__accordion-open" : " moorhen__accordion-closed"}`}
             >
                 <div className="moorhen__accordion-title">{title}</div>
                 <div className="moorhen__accordion-control-panel">
-                    {extraControls}
+                    {!hideExtraControlsWhenClosed || isOpen ? extraControls : null}
                     <MoorhenButton
                         type="icon-only"
                         icon="MatSymKeyboardArrowDown"
