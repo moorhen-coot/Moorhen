@@ -1425,15 +1425,6 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(ss2_vector)
     })
 
-    test.skip("privateer_validate", () => {
-        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const results = molecules_container.privateer_validate(coordMolNo)
-        const first = results.get(0)
-        expect(first.wurcs).toBe("WURCS=2.0/2,3,2/[a2122h-1b_1-5_2*NCC/3=O][a1122h-1b_1-5]/1-1-2/a4-b1_b4-c1")
-        expect(results.size()).toBe(38)
-        cleanUpVariables.push(results)
-    });
-
     test("get molecule diameter", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const diameter = molecules_container.get_molecule_diameter(coordMolNo)
