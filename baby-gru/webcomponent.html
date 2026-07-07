@@ -31,13 +31,14 @@
         <script type="module">
             import { registerMoorhenWebComponent } from "./src/WebComponent/entry";
             registerMoorhenWebComponent();
+
         </script>
 
         <div class="intro">
             <h1>Moorhen Web Component Test</h1>
             <p>This page is for testing the Moorhen Web Component in isolation.</p>
         </div>
-        <moorhen-web-component id="moorhen-test"></moorhen-web-component>
+        <moorhen-web-component id="moorhen-test"><div slot="test-slot" style="border: 1px solid red">Test</div></moorhen-web-component>
     </main>
 </body>
 

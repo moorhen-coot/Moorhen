@@ -11,7 +11,6 @@ export class MoorhenWebComponent extends HTMLElement {
     private _rootElement: HTMLDivElement;
     private _reactRoot: ReturnType<typeof createRoot> | null = null;
     private _parentElementRef: React.RefObject<HTMLElement | null>;
-    
 
     public onInit: (() => void) | null = null;
 
@@ -32,7 +31,6 @@ export class MoorhenWebComponent extends HTMLElement {
         shadow.appendChild(this._rootElement);
         this._parentElementRef = React.createRef<HTMLElement | null>();
         this._parentElementRef.current = this;
-
     }
 
     public getMoorhenInstance(): Promise<MoorhenInstance> {
@@ -146,8 +144,6 @@ export class MoorhenWebComponent extends HTMLElement {
         }
     }
 
-    
-
     private _renderReactTree() {
         if (!this._reactRoot) return;
         this._reactRoot.render(
@@ -165,45 +161,44 @@ export class MoorhenWebComponent extends HTMLElement {
         );
     }
 
-    private async loadStylesheets()  {
-            const shadow = this.shadowRoot!;
-            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-            const moorhenCss = await moorhenRes.text();
+    private async loadStylesheets() {
+        const shadow = this.shadowRoot;
+        const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
+        const moorhenCss = await moorhenRes.text();
 
-            if ("adoptedStyleSheets" in shadow) {
-                const moorhenSheet = new CSSStyleSheet();
-                moorhenSheet.replaceSync(moorhenCss);
-                shadow.adoptedStyleSheets = [moorhenSheet];
-            } else {
-                const moorhenStyle = document.createElement("style");
-                moorhenStyle.textContent = moorhenCss;
-                (shadow as ShadowRoot).appendChild(moorhenStyle);
-            }
-        };
+        if ("adoptedStyleSheets" in shadow) {
+            const moorhenSheet = new CSSStyleSheet();
+            moorhenSheet.replaceSync(moorhenCss);
+            shadow.adoptedStyleSheets = [moorhenSheet];
+        } else {
+            const moorhenStyle = document.createElement("style");
+            moorhenStyle.textContent = moorhenCss;
+            (shadow as ShadowRoot).appendChild(moorhenStyle);
+        }
+    }
 
     public async connectedCallback() {
-
         await this.loadStylesheets();
 
-        if (!this._reactRoot) {
-        this._reactRoot = createRoot(this._rootElement);
-        this._renderReactTree();
-        const checkRefsReady = () => {
-            if (this._moorhenInstanceRef?.current?.isReady()) {
-                clearInterval(refCheckInterval);
-                this._moorhenInstance = this._moorhenInstanceRef.current;
-                this.onInit?.();
-                this._moorhenInstance.webComponent = this;
-                this._ready = true;
-                const event = new CustomEvent("moorhenReady", { detail: { id: this.id } });
-                window.dispatchEvent(event);
-            }
-        };
-        const refCheckInterval = setInterval(checkRefsReady, 50);
+        if (this._reactRoot === null) {
+            this._reactRoot = createRoot(this._rootElement);
+            this._renderReactTree();
+            const checkRefsReady = () => {
+                if (this._moorhenInstanceRef?.current?.isReady()) {
+                    clearInterval(refCheckInterval);
+                    this._moorhenInstance = this._moorhenInstanceRef.current;
+                    this.onInit?.();
+                    this._moorhenInstance.webComponent = this;
+                    this._ready = true;
+                    const event = new CustomEvent("moorhenReady", { detail: { id: this.id } });
+                    window.dispatchEvent(event);
+                }
+            };
+            const refCheckInterval = setInterval(checkRefsReady, 50);
+        } else {
+            this._renderReactTree();
+        }
     }
-    else {
-        this._renderReactTree();
-    }}
 }
 
 /**

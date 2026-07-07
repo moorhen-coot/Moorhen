@@ -8,6 +8,7 @@ import { showModal } from "../../store/modalsSlice";
 import { MoorhenToggle } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
 import type { MenuItemType } from "./subMenuConfig";
+import { guid } from "@/utils/utils";
 
 export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: string }): React.JSX.Element => {
     const dispatch = useDispatch();
@@ -15,7 +16,6 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
 
-    let key = 0;
     if (props.menuItemList === undefined) {
         return <div>Empty menu list</div>;
     }
@@ -56,14 +56,13 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
             } else if (menuItem.type === "customJSX") {
                 return <menuItem.jsx key={menuItem.label} />;
             } else if (menuItem.type === "HTMLslot") {
-                return <slot name={menuItem.slotName}></slot>;
+                return <slot key={menuItem.id} name={menuItem.slotName}></slot>;
             } else if (menuItem.type === "preferenceSwitch") {
                 return (
                     <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} key={menuItem.label} />
                 );
             } else if (menuItem.type === "separator") {
-                key += 1;
-                return <hr key={key} className="moorhen_menu-hr"></hr>;
+                return <hr key={guid()} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
                 return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={menuItem.id} />;
             } else if (menuItem.type === "showPanel") {
