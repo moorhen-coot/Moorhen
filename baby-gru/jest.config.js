@@ -17,9 +17,6 @@ module.exports = {
                 "^localforage$": "<rootDir>/tests/__mocks__/mockLocalforage.js",
                 "@/(.*)": "<rootDir>/src/$1"
             },
-            moduleNameMapper: {
-                "@/(.*)": "<rootDir>/src/$1"
-            }
         },
         {
             displayName: "react-components",

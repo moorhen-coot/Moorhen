@@ -553,7 +553,7 @@ export class MoorhenMap {
         if (typeof weight !== 'undefined') {
             newWeight = weight;
         } else {
-            newWeight = this.mapWeight;
+            newWeight = this.mapWeight ?? this.suggestedMapWeight;
         }
         if (this.active) {
             this.commandCentre.cootCommand(
