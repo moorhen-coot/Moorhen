@@ -1,7 +1,7 @@
 import { Store } from "@reduxjs/toolkit";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setOrigin, setRequestDrawScene } from "../store/glRefSlice";
+import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store/glRefSlice";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
@@ -10,6 +10,7 @@ import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./ma
 import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
+import { MoorhenReduxStoreType, RootState } from "@/store";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -66,7 +67,7 @@ export class MoorhenMap {
     headerInfo: mapHeaderInfo;
     isEM: boolean;
     molNo: number;
-    store: Store;
+    store: MoorhenReduxStoreType;
     commandCentre: CommandCentre | null;
     isOriginLocked: boolean;
     drawOrigin: [number, number, number];
@@ -1399,10 +1400,10 @@ export class MoorhenMap {
      * Set the view in the centre of this map instance
      */
     async centreOnMap(): Promise<void> {
-        console.log("Centring on map with molNo", this.molNo);
-        console.log("Map centre is", this.mapCentre, "and cell centre is", this.cellCentre, "and draw origin is", this.drawOrigin);
         if (this.isOriginLocked) {
             this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
+            const currentRadius = this.store.getState().mapContourSettings.mapRadii.find(map => map.molNo === this.molNo)?.radius ?? this.suggestedRadius ?? 20 /22
+            this.store.dispatch(setZoom(currentRadius /22))
             return;
         }
         if (this.mapCentre === null) {
@@ -1429,7 +1430,7 @@ export class MoorhenMap {
             false
         )) as moorhen.WorkerResponse<any>;
         return response.data.result.result;
-    }
+    }0
 
     async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;

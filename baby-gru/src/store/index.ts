@@ -210,7 +210,6 @@ export {
     setClusteringType,
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
     setActiveMap,
@@ -245,6 +244,7 @@ export {
     setDisableFileUpload,
     setDefaultMoleculeRepresentation,
 }  from "./generalStatesSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
