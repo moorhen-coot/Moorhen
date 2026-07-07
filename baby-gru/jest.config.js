@@ -18,6 +18,9 @@ module.exports = {
 
                 "@/(.*)": "<rootDir>/src/$1"
             },
+            moduleNameMapper: {
+                "@/(.*)": "<rootDir>/src/$1"
+            }
         },
         {
             displayName: "react-components",

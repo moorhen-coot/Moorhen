@@ -1,8 +1,3 @@
-import { CenterFocusWeakOutlined } from "@mui/icons-material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { Box, Button, Checkbox, Collapse, FormControlLabel, Grid, IconButton } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
@@ -10,9 +5,10 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { hsvToRgb, rgbToHsv } from "../../utils/utils";
 import { MoorhenIcon } from "../icons";
-import { MoorhenMoleculeSelect } from "../inputs";
+import { MoorhenButton, MoorhenMoleculeSelect, MoorhenToggle } from "../inputs";
+import { MoorhenAccordion } from "../interface-base";
 
-export const MoorhenJsonValidation = () => {
+export const MoorhenJsonValidation = (props: {isDocked?: boolean}) => {
     const dispatch = useDispatch();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
@@ -229,27 +225,15 @@ export const MoorhenJsonValidation = () => {
         col = "#" + colR + colG + colB;
 
         return (
-            <ThemeProvider
-                theme={{
-                    palette: {
-                        primary: {
-                            main: col,
-                            dark: col,
-                        },
-                    },
-                }}
-            >
-                <Box
-                    sx={{
+                <div
+                    style={{
                         width: width,
                         height: height,
-                        borderRadius: 1,
-                        bgcolor: "primary.main",
+                        borderRadius: "0.5rem",
+                        backgroundColor: col,
                         display: "inline-block",
                     }}
-                    component="span"
                 />
-            </ThemeProvider>
         );
     };
 
@@ -356,8 +340,9 @@ export const MoorhenJsonValidation = () => {
                                                 }}
                                             >
                                                 {selectedMolecule && (
-                                                    <IconButton
-                                                        title="Centre on"
+                                                    <MoorhenButton
+                                                        tooltip="Centre on"
+                                                        type="icon-only"
                                                         aria-label="Centre on"
                                                         style={{ marginRight: "0.5rem" }}
                                                         onClick={() =>
@@ -366,65 +351,65 @@ export const MoorhenJsonValidation = () => {
                                                                 false
                                                             )
                                                         }
-                                                    >
-                                                        <CenterFocusWeakOutlined style={{ color: isDark ? "white" : "black" }} />
-                                                    </IconButton>
+                                                        icon="MatSymFilterFocus"
+                                                    />
                                                 )}
                                                 {selectedMolecule && issue["action"].indexOf("sphere-refinement-action") > -1 && (
-                                                    <Button
-                                                        title="Sphere Refine"
+                                                    <MoorhenButton
+                                                        tooltip="Sphere Refine"
                                                         aria-label="Sphere Refine"
-                                                        sx={{ marginRight: "0.5rem", p: 0, minWidth: 0 }}
-                                                        startIcon={refineSvgIcon}
+                                                        type="icon-only"
+                                                        // variant="white"
+                                                        style={{padding: "0.5rem", }}
                                                         onClick={() => {
                                                             handleRefine(selectedMolecule, chainId, resNum, insCode, "SPHERE", false);
                                                         }}
-                                                    />
+                                                    >{refineSvgIcon}</MoorhenButton>
                                                 )}
                                                 {selectedMolecule &&
                                                     issue["action"].indexOf("triple-refinement-with-rama-restraints-action") > -1 && (
-                                                        <Button
-                                                            title="Triple Refine with Rama restraints"
+                                                        <MoorhenButton
+                                                            tooltip="Triple Refine with Rama restraints"
                                                             aria-label="Triple Refine with Rama restraints"
-                                                            startIcon={refineRamaSvgIcon}
-                                                            sx={{ marginRight: "0.5rem", p: 0, minWidth: 0 }}
+                                                            type="icon-only"
+                                                            style={{padding: "0.5rem", }}
                                                             onClick={() => {
                                                                 handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", true);
                                                             }}
-                                                        />
+                                                        >{refineRamaSvgIcon}</MoorhenButton>
                                                     )}
                                                 {selectedMolecule && issue["action"].indexOf("triple-refinement-action") > -1 && (
-                                                    <Button
-                                                        title="Triple Refine"
+                                                    <MoorhenButton
+                                                        tooltip="Triple Refine"
                                                         aria-label="Triple Refine"
-                                                        sx={{ marginRight: "0.5rem", p: 0, minWidth: 0 }}
-                                                        startIcon={refineSvgIcon}
+                                                        type="icon-only"
+                                                        style={{padding: "0.5rem", }}
                                                         onClick={() => {
                                                             handleRefine(selectedMolecule, chainId, resNum, insCode, "TRIPLE", false);
                                                         }}
-                                                    />
+                                                    >{refineSvgIcon}</MoorhenButton>
                                                 )}
                                                 {selectedMolecule && issue["action"].indexOf("side-chain-flip-action") > -1 && (
-                                                    <Button
-                                                        title="Flip side chain"
+                                                    <MoorhenButton
+                                                        tooltip="Flip side chain"
                                                         aria-label="Flip side chain"
-                                                        sx={{ marginRight: "0.5rem", p: 0, minWidth: 0 }}
-                                                        startIcon={flipSideSvgIcon}
+                                                        type="icon-only"
+                                                        style={{padding: "0.5rem", }}
                                                         onClick={() => {
                                                             handleFlipSide(selectedMolecule, chainId, resNum, insCode);
                                                         }}
-                                                    />
+                                                    >{flipSideSvgIcon}</MoorhenButton>
                                                 )}
                                                 {selectedMolecule && issue["action"].indexOf("auto-fit-rotamer-action") > -1 && (
-                                                    <Button
-                                                        title="Auto fit rotamer"
+                                                    <MoorhenButton
+                                                        tooltip="Auto fit rotamer"
                                                         aria-label="Auto fit rotamer"
-                                                        sx={{ marginRight: "0.5rem", p: 0, minWidth: 0 }}
-                                                        startIcon={autoFitRotamerSvgIcon}
+                                                        type="icon-only"
+                                                        style={{padding: "0.5rem", }}
                                                         onClick={() => {
                                                             handleAutoFitRotamer(selectedMolecule, chainId, resNum, insCode);
                                                         }}
-                                                    />
+                                                    >{autoFitRotamerSvgIcon}</MoorhenButton>
                                                 )}
                                             </td>
                                         </tr>
@@ -433,47 +418,12 @@ export const MoorhenJsonValidation = () => {
                             );
                         })
                     );
+                    const extraControl = [<><MoorhenToggle label="Sort by badness" checked={isSorted} onChange={e => toggleSectionOrder(e, section_index)} /></>];
                     return (
-                        <div>
-                            <Grid
-                                onClick={e => toggleSection(e, section_index)}
-                                container
-                                spacing={2}
-                                style={{
-                                    borderRadius: "4px",
-                                    color: "black",
-                                    backgroundColor: isDark ? "#adb5bd" : "#ecf0f1",
-                                    width: "100%",
-                                    verticalAlign: "middle",
-                                    padding: "0px",
-                                }}
-                            >
-                                <Grid style={{ padding: "5px", verticalAlign: "middle", textAlign: "left" }} size={6}>
-                                    <span style={{ margin: "0", padding: "0", verticalAlign: "middle" }}>{section.title}</span>
-                                </Grid>
-                                <Grid maxHeight={30} size={6} style={{ padding: "0px", textAlign: "right", verticalAlign: "middle" }}>
-                                    {isOpen && sectionSortable.keys[section_index] && (
-                                        <FormControlLabel
-                                            onClick={e => e.stopPropagation()}
-                                            control={
-                                                <Checkbox
-                                                    onChange={e => toggleSectionOrder(e, section_index)}
-                                                    checked={isSorted}
-                                                    inputProps={{ "aria-label": "controlled" }}
-                                                />
-                                            }
-                                            label="Sort&nbsp;by&nbsp;'badness'"
-                                        />
-                                    )}
-                                    <IconButton aria-label="expand row" size="small" onClick={e => toggleSection(e, section_index)}>
-                                        {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                    </IconButton>
-                                </Grid>
-                            </Grid>
-                            <Collapse in={isOpen}>
-                                <Box sx={{ margin: 1 }}>{innerCards}</Box>
-                            </Collapse>
-                        </div>
+
+                                <MoorhenAccordion title={section.title} extraControls={extraControl} type="card" defaultOpen={true}  twoLinesHeader={props.isDocked} hideExtraControlsWhenClosed={true}>
+                                    {innerCards}
+                                </MoorhenAccordion>
                     );
                 })
             );

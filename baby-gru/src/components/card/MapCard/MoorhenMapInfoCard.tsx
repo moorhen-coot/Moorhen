@@ -1,18 +1,12 @@
-import { Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
-import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { MoorhenGrid } from "@/components/interface-base/Stack/Grid";
 import { moorhen } from "../../../types/moorhen";
-import { convertViewtoPx } from "../../../utils/utils";
 import { MoorhenMenuItemPopover } from "../../interface-base/Popovers/MenuItemPopover";
 
 export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean }) => {
     const [cell, setCell] = useState<string | null>(null);
     const [spacegroup, setSpacegroup] = useState<string | null>(null);
     const [resolution, setResolution] = useState<string | null>(null);
-    const [busy, setBusy] = useState<boolean>(true);
-
-    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     useEffect(() => {
         const fetchHeaderInfo = async () => {
@@ -32,49 +26,20 @@ export const MoorhenMapInfoCard = (props: { map: moorhen.Map; disabled: boolean 
             );
             setSpacegroup(headerInfo.spacegroup);
             setResolution(headerInfo.resolution.toFixed(2));
-            setBusy(false);
         };
-        setBusy(true);
+
         fetchHeaderInfo();
     }, []);
 
     const panelContent = (
-        <TableContainer style={{ maxWidth: convertViewtoPx(40, width), maxHeight: convertViewtoPx(40, height), overflow: "auto" }}>
-            <Table stickyHeader={true}>
-                <TableBody>
-                    <TableRow
-                        style={{ backgroundColor: "rgba(233, 233, 233, 0.3)" }}
-                        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                        <TableCell component="th" scope="row">
-                            Cell
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                            {cell}
-                        </TableCell>
-                    </TableRow>
-                    <TableRow style={{ backgroundColor: "white" }} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                        <TableCell component="th" scope="row">
-                            SpaceGroup
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                            {spacegroup}
-                        </TableCell>
-                    </TableRow>
-                    <TableRow
-                        style={{ backgroundColor: "rgba(233, 233, 233, 0.3)" }}
-                        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                        <TableCell component="th" scope="row">
-                            Resolution
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                            {resolution}
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </TableContainer>
+        <MoorhenGrid table columns={2} titleColumn>
+            <div>Cell</div>
+            <div>{cell}</div>
+            <div>Space Group</div>
+            <div>{spacegroup}</div>
+            <div>Resolution</div>
+            <div>{resolution}</div>
+        </MoorhenGrid>
     );
 
     return <MoorhenMenuItemPopover popoverPlacement="left" popoverContent={panelContent} menuItemText="Map Information..." />;

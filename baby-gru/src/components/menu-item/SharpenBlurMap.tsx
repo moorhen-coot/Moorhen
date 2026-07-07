@@ -1,5 +1,5 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { RootState } from "@/store";
 import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
@@ -15,49 +15,44 @@ export const SharpenBlurMap = () => {
     const store = useStore<RootState>();
     const maps = useSelector((state: moorhen.State) => state.maps);
 
-    const factorRef = useRef<HTMLInputElement>(null);
-    const resampleFactorRef = useRef<HTMLInputElement>(null);
-    const selectRef = useRef<HTMLSelectElement>(null);
-    const useResampleSwitchRef = useRef<HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
     const moorhenInstance = useMoorhenInstance();
 
     const [useResample, setUseResample] = useState<boolean>(false);
-
-    const menuItemText = "Sharpen/Blur map...";
+    const [selectedMapNo, setSelectedMapNo] = useState<number | null>(null);
+    const [resampleFactor, setResampleFactor] = useState<number>(1.4);
+    const [bFactor, setBFactor] = useState<number>(50);
 
     const onCompleted = async () => {
-        if (!selectRef.current.value || !factorRef.current || (useResampleSwitchRef.current.checked && !resampleFactorRef.current)) {
+        if (selectedMapNo === null || bFactor === null || (useResample && resampleFactor === null)) {
             console.warn("Unable to sharpen/blur map, invalid input...");
+            console.warn(`selectedMapNo: ${selectedMapNo}, bFactor: ${bFactor}, resampleFactor: ${resampleFactor}`);
             return;
         }
-
-        const mapNo = parseInt(selectRef.current.value);
-        const bFactor = parseFloat(factorRef.current.value);
         const newMap = new MoorhenMap(moorhenInstance);
-        const selectedMap = maps.find(map => map.molNo === mapNo);
+        const selectedMap = maps.find(map => map.molNo === selectedMapNo);
 
         if (!selectedMap) {
+            console.warn(`Unable to sharpen/blur map, could not find map with molNo ${selectedMapNo}...`);
             return;
         }
 
         let result: moorhen.WorkerResponse<number>;
-        if (!useResampleSwitchRef.current.checked) {
+        if (!useResample) {
             result = (await commandCentre.current.cootCommand(
                 {
                     returnType: "int",
                     command: "sharpen_blur_map",
-                    commandArgs: [mapNo, bFactor, false],
+                    commandArgs: [selectedMapNo, bFactor, false],
                 },
                 false
             )) as moorhen.WorkerResponse<number>;
         } else {
-            const resampleFactor = parseFloat(resampleFactorRef.current.value);
             result = (await commandCentre.current.cootCommand(
                 {
                     returnType: "int",
                     command: "sharpen_blur_map_with_resample",
-                    commandArgs: [mapNo, bFactor, resampleFactor, false],
+                    commandArgs: [selectedMapNo, bFactor, resampleFactor, false],
                 },
                 false
             )) as moorhen.WorkerResponse<number>;
@@ -66,7 +61,7 @@ export const SharpenBlurMap = () => {
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
             selectedMap.copyMapParametersTo(newMap);
-            newMap.name = `Map ${mapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;        
+            newMap.name = `Map ${selectedMapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;
             await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
@@ -76,27 +71,31 @@ export const SharpenBlurMap = () => {
             dispatch(hideMap(selectedMap));
             dispatch(addMap(newMap));
         }
+        console.log(`Sharpen/blur map result: ${result.data.result.result}`);
 
         return result;
     };
 
     return (
         <>
-        <MoorhenStack inputGrid>
-            <MoorhenMapSelect maps={maps} ref={selectRef} />
-            <MoorhenNumberInput ref={factorRef} label="B-factor to apply" value={50} allowNegativeValues={true} />
-            <MoorhenToggle
-                ref={useResampleSwitchRef}
-                type="switch"
-                checked={useResample}
-                onChange={() => {
-                    setUseResample(prev => !prev);
-                }}
-                label="Use resample"
-            />
-            {useResample && <MoorhenNumberInput ref={resampleFactorRef} label="Resampling factor" value={1.4} />}
-        </MoorhenStack>
-        <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
+            <MoorhenStack inputGrid>
+                <MoorhenMapSelect maps={maps} selected={selectedMapNo} setSelectedMap={setSelectedMapNo} />
+                <MoorhenNumberInput label="B-factor to apply" value={bFactor} setValue={setBFactor} allowNegativeValues={true} />
+                <MoorhenToggle
+                    type="switch"
+                    checked={useResample}
+                    onChange={() => {
+                        setUseResample(prev => !prev);
+                    }}
+                    label="Use resample"
+                />
+                {useResample && (
+                    <>
+                        <MoorhenNumberInput label="Resampling factor" value={resampleFactor} setValue={setResampleFactor} /> <div />
+                    </>
+                )}
+            </MoorhenStack>
+            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
 };

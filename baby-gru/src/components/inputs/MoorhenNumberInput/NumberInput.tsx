@@ -1,15 +1,15 @@
 import { useDispatch } from "react-redux";
-import { useId, useRef, useState } from "react";
+import { useId, Dispatch, SetStateAction, useState } from "react";
 import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { clampValue } from "../../misc/helpers";
+import { PlusMinusButton } from "../MoorhenSlider/PlusMinusButton";
 import "./NumberInput.css";
-
 
 type MoorhenNumberInputProps = {
     value: number | null;
-    setValue?: (newVal: number) => void;
+    setValue?: (newVal: number) => void | Dispatch<SetStateAction<number>>;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
@@ -18,7 +18,7 @@ type MoorhenNumberInputProps = {
     disabled?: boolean;
     width?: string | number;
     minMax?: [number, number];
-    type?: string;
+    type?: "default" | "number" | "numberForm" | "withButtons";
     labelPosition?: "top" | "left";
     style?: React.CSSProperties;
     ref?: React.Ref<HTMLInputElement>;
@@ -85,7 +85,6 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const [isUserInteracting, setIsUserInteracting] = useState<boolean>(false);
     const [internalValue, setInternalValue] = useState<string>(props.value?.toFixed(decimalDigits));
     const inputId = useId();
-    const isValidRef = useRef<boolean>(true);
     const dispatch = useDispatch();
 
     let displayValue: string = "";
@@ -114,15 +113,28 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         return true;
     };
 
-    isValidRef.current = checkIsValidInput(displayValue);
+    const commitInputValue = () => {
+        let valueToCommit = internalValue;
+        const numericValue = Number(internalValue);
+        if (minMax != null && !isNaN(numericValue) && isFinite(numericValue)) {
+            valueToCommit = clampValue(numericValue, ...minMax).toString();
+            if (valueToCommit !== internalValue) {
+                setInternalValue(valueToCommit);
+            }
+        }
+
+        if (checkIsValidInput(valueToCommit)) {
+            props.setValue?.(Number(valueToCommit));
+        }
+
+        setIsUserInteracting(false);
+        dispatch(setShortCutsBlocked(false));
+    };
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setIsUserInteracting(true);
         dispatch(setShortCutsBlocked(true));
-        let newValue = evt.target.value;
-        if (minMax) {
-            newValue = clampValue(Number(evt.target.value), ...minMax).toString();
-        }
+        const newValue = evt.target.value;
         setInternalValue(newValue);
         const _isValid = checkIsValidInput(newValue);
         if (_isValid && !waitReturn) {
@@ -134,40 +146,79 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     const handleReturn = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
-            if (checkIsValidInput(internalValue)) {
-                props.setValue?.(Number(internalValue));
-            }
-            setIsUserInteracting(false);
-            dispatch(setShortCutsBlocked(false));
+            commitInputValue();
         }
     };
 
-    const handleBlur = () => {
-        setIsUserInteracting(false);
-        dispatch(setShortCutsBlocked(false));
+    const handleFocus = () => {
+        setIsUserInteracting(true);
+        dispatch(setShortCutsBlocked(true));
+        setInternalValue(props.value?.toFixed(decimalDigits) ?? "");
     };
 
-    const inputWidth = width ? width : `${2 + 0.6 * decimalDigits + (type === "text" ? 0 : 1.1)}rem`;
-    const formType = type === "number" ? "number" : type === "numberForm" ? "number" : "text";
+    const inputWidth = width ? width : `${3 + 0.6 * decimalDigits}rem`;
+    const showButtons = type === "number" || type === "numberForm";
+    if (showButtons) {
+        if (!props.setValue) {
+            console.warn("MoorhenNumberInput: 'setValue' prop is required when using displaying buttons");
+        }
+    }
+    const buttonStyle: React.CSSProperties = {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "1rem",
+        border: "1px solid var(--moorhen-border)",
+        borderRadius: "0.2rem",
+    };
 
     const input = (
-        <input
-            id={inputId}
-            ref={ref}
-            type={formType}
-            step={Math.pow(10, -decimalDigits)}
-            disabled={disabled}
-            value={displayValue}
-            style={{ width: inputWidth }}
-            className={`moorhen__input ${"moorhen__input__precise"} 
+        <MoorhenStack
+            direction="row"
+            flex={0}
+            align="center"
+            style={{
+                width: "fit-content",
+            }}
+        >
+            <input
+                id={inputId}
+                ref={ref}
+                step={Math.pow(10, -decimalDigits)}
+                disabled={disabled}
+                value={displayValue}
+                style={{ width: inputWidth, marginRight: showButtons ? "0.1rem" : 0, ...style }}
+                className={`moorhen__input ${"moorhen__input__precise"} 
                 ${type === "numberForm" ? "moorhen__input__number" : "moorhen__input__compact"} 
-                ${isValidRef.current ? "moorhen__input__valid" : "moorhen__input__invalid"} 
+                ${checkIsValidInput(displayValue) ? "moorhen__input__valid" : "moorhen__input__invalid"} 
                 ${disabled ? "disabled" : ""} ${className}`}
-            onChange={handleChange}
-            onKeyDown={handleReturn}
-            onBlur={handleBlur}
-            onFocus={() => dispatch(setShortCutsBlocked(true))}
-        />
+                onChange={handleChange}
+                onKeyDown={handleReturn}
+                onBlur={commitInputValue}
+                onFocus={handleFocus}
+            />
+
+            {showButtons && (
+                <MoorhenStack direction="column" align="center" style={{ marginLeft: "0.1rem" }}>
+                    <PlusMinusButton
+                        step={Math.pow(10, -decimalDigits)}
+                        value={props.value}
+                        setValue={props.setValue}
+                        type="arrow"
+                        style={buttonStyle}
+                        isDisabled={disabled}
+                    />
+                    <PlusMinusButton
+                        step={-Math.pow(10, -decimalDigits)}
+                        value={props.value}
+                        setValue={props.setValue}
+                        type="arrow"
+                        style={buttonStyle}
+                        isDisabled={disabled}
+                    />
+                </MoorhenStack>
+            )}
+        </MoorhenStack>
     );
 
     return (

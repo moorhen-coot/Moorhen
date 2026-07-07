@@ -1,8 +1,6 @@
-import { SaveOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
-import { useState } from "react";
 import { RootState } from "@/store";
-import { MoorhenSpinner } from "../../icons";
+import { MoorhenIcon, MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
@@ -59,7 +57,7 @@ export const ActivityIndicator = () => {
                             </span>
                         </MoorhenStack>
                     )}
-                    {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: "black" }} />}
+                    {timeCapsuleBusy && <MoorhenIcon moorhenSVG="MatSymSaveClock" />}
                 </div>
             )}
             {updatingMapsIsEnabled && (

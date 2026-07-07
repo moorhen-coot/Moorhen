@@ -20,6 +20,9 @@ type MoorhenTextInputBase = {
     uppercase?: boolean;
     readOnly?: boolean;
     onSubmit?: () => void;
+    onFocus?: () => void;
+    onBlur?: () => void;
+    className?: string;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -36,14 +39,23 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
     const { inline = true, ref, isInvalid, disabled = false, placeholder, readOnly = false } = props;
     const id = useId();
     const dispatch = useDispatch();
+    
     const handleBlur = () => {
         dispatch(setShortCutsBlocked(false));
+        props.onBlur ? props.onBlur() : null;
     };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.onChange ? props.onChange(event) : null;
         props.setText ? props.setText(event.target.value) : null;
     };
+
+    const handleFocus = () => {
+        dispatch(setShortCutsBlocked(true));
+        props.onFocus ? props.onFocus() : null;
+    }
+
+
     return (
         <MoorhenStack direction={inline ? "line" : "column"} align="center" style={{ ...props.style }}>
             <label htmlFor={props.id ? props.id : id}>{props.label}</label>
@@ -52,10 +64,11 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     id={props.id ? props.id : id}
                     type="text"
                     onChange={handleChange}
-                    defaultValue={props.text}
-                    className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${isInvalid ? " invalid" : null}`}
+                    value={props.text !== undefined ? props.text : undefined}
+                    defaultValue={props.text === undefined ? props.text : undefined}
+                    className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${props.className ?? ""} ${isInvalid ? " invalid" : null}`}
                     onBlur={handleBlur}
-                    onFocus={() => dispatch(setShortCutsBlocked(true))}
+                    onFocus={handleFocus}
                     ref={ref}
                     disabled={disabled}
                     placeholder={placeholder}

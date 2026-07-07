@@ -40,10 +40,10 @@ export const MapSettings = (props: {
                 minVal={0.0}
                 maxVal={1.0}
                 decimalPlaces={2}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Opacity"
-                externalValue={props.mapOpacity}
-                setExternalValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
+                value={props.mapOpacity}
+                setValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
             />
         </>
     );

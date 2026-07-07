@@ -1,4 +1,4 @@
-import { hexToRgb } from "@mui/material";
+
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
@@ -617,6 +617,14 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
     }
 
     return multiRulesArgs;
+};
+
+export const hexToRgb = (hex: string): string => {
+    const hexWithoutHash = hex.replace("#", "");
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    return `rgb(${r}, ${g}, ${b})`;
 };
 
 export const hexToHsl = (hex: string): [number, number, number] => {

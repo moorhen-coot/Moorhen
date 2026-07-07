@@ -1,13 +1,9 @@
-import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
-import { Tooltip } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { CSSProperties } from "react";
-import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
-import { MoorhenStack } from "../interface-base";
+import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenCarbohydrateValidation } from "../validation-tools/MoorhenCarbohydrateValidation";
@@ -16,23 +12,16 @@ export const MoorhenCarbohydrateValidationModal = (props: ModalComponentProps) =
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
-    const dispatch = useDispatch();
 
-    const header = (title: string) => (
-        <MoorhenStack direction="horizontal" gap={1}>
-            <span>{title}</span>
-            <Tooltip
-                title="This plugin uses Privateer, a software for the conformational validation of carbohydrate structures. Please cite Dialpuri, J. et al. Acta Cryst. Section F 80.2 (2024)."
-                key={1}
+    const header = (
+        <MoorhenStack direction="horizontal">
+            <span>Carbohydrate validation with Privateer</span>
+            <MoorhenInfoCard infoText={<span>This plugin uses Privateer, \
+            a software for the conformational validation of carbohydrate structures. \
+            Please cite Dialpuri, J. et al. Acta Cryst. Section F 80.2 (2024).<br />
+            visit <a href="https://privateer.york.ac.uk/" target="_blank" rel="noopener noreferrer">Privateer website</a></span>}         
             >
-                <MoorhenButton
-                    variant="white"
-                    style={{ margin: "0.1rem", padding: "0.1rem" }}
-                    onClick={() => window.open("https://privateer.york.ac.uk/")}
-                >
-                    <InfoOutlined />
-                </MoorhenButton>
-            </Tooltip>
+            </MoorhenInfoCard>
         </MoorhenStack>
     );
 
@@ -54,7 +43,7 @@ export const MoorhenCarbohydrateValidationModal = (props: ModalComponentProps) =
             enforceMaxBodyDimensions={true}
             overflowY="auto"
             overflowX="auto"
-            headerTitle={header("Carbohydrate validation with Privateer")}
+            headerTitle={header}
             footer={null}
             body={body({ height: "100%" })}
             allowDocking
