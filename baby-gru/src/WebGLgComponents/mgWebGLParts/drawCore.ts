@@ -13,7 +13,23 @@ import type { MGWebGL } from '../mgWebGL';
  * MGWebGL (following the viewTransforms/framebuffers/bufferDraw pattern). All
  * GL state, buffers, shaders and the many draw/setup helpers they call stay on
  * the instance, reached through the explicit `self` parameter.
+ *
+ * This file is large but is one cohesive module: the two sections below are a
+ * single mutually-recursive pipeline, so they deliberately stay together rather
+ * than split into two files (which would only create a circular import):
+ *
+ *   1. GEOMETRY & FRAME     - drawPeel, drawTriangles, drawScene, applySymmetryMatrix
+ *   2. PASSES & POST-PROCESS - bindFramebufferDrawBuffers, getMultiViewInfo,
+ *                              textureBlur, depthBlur, GLrender
+ *
+ * The coupling that keeps them one module: drawScene calls into the passes
+ * (GLrender / depthBlur / textureBlur / getMultiViewInfo), and GLrender calls
+ * back into drawTriangles - a genuine cycle, not an accident of layout.
  */
+
+// ============================================================================
+// SECTION 1 - GEOMETRY & FRAME
+// ============================================================================
 
 export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         let invMat
@@ -1576,6 +1592,14 @@ export function applySymmetryMatrix(self: MGWebGL, theShader,symmetryMatrix,temp
         vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
         self.gl.uniform3fv(theShader.screenZ, screenZ);
     }
+
+// ============================================================================
+// SECTION 2 - PASSES & POST-PROCESS
+// GLrender is the top-level render entry (multi-view / stereo); depthBlur and
+// textureBlur are post-processing passes; getMultiViewInfo / bindFramebuffer-
+// DrawBuffers are framebuffer plumbing. GLrender calls back into drawTriangles
+// (section 1), which is why the two sections stay in one module.
+// ============================================================================
 
 export function bindFramebufferDrawBuffers(self: MGWebGL) {
         if(!self.framebufferDrawBuffersReady) {
