@@ -3,7 +3,7 @@ import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
-import { vec3Create } from '../mgMaths.js';
+import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 
 /**
@@ -61,7 +61,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                             self.gl.useProgram(shader);
                             self.gl.uniform1i(shader.peelNumber,ipeel);
                             })
-                    invMat = self.GLrender(false,doClear,ratioMult);
+                    invMat = GLrender(self, false,doClear,ratioMult);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
 
@@ -79,7 +79,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.disableVertexAttribArray(i);
                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
                 self.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
-                self.bindFramebufferDrawBuffers();
+                bindFramebufferDrawBuffers(self);
 
                 const paintPMatrix = mat4.create();
                 if(self.renderToTexture) {
@@ -553,7 +553,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             }
                             for (let isym = 0; isym < displayBuffers[idx].symmetryMatrices.length; isym++) {
 
-                                self.applySymmetryMatrix(program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
+                                applySymmetryMatrix(self, program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (self.WEBGL2) {
                                         if(self.doAnaglyphStereo) {
                                             self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -975,7 +975,7 @@ export function drawScene(self: MGWebGL) : void {
 
         const origQuat = quat4.clone(self.myQuat);
         const origOrigin = self.origin
-        const multiViewInfo = self.getMultiViewInfo()
+        const multiViewInfo = getMultiViewInfo(self)
         const multiViewOrigins = multiViewInfo.multiViewOrigins
         const multiViewGroupsKeys = multiViewInfo.multiViewGroupsKeys
         const quats = multiViewInfo.quats
@@ -1036,16 +1036,16 @@ export function drawScene(self: MGWebGL) : void {
                     }
 
                     const doClear = i===0 ? true : false
-                    self.GLrender(false,doClear,ratioMult);
+                    GLrender(self, false,doClear,ratioMult);
                 }
                 self.myQuat = origQuat
                 if(self.doMultiView&&multiViewGroupsKeys.length===0){
-                    self.GLrender(false);
+                    GLrender(self, false);
                 }
                 self.origin = origOrigin
             } else {
                 self.currentViewport = [0, 0, self.gl.viewportWidth, self.gl.viewportHeight]
-                self.GLrender(false);
+                GLrender(self, false);
             }
 
             self.drawingGBuffers = false;
@@ -1143,7 +1143,7 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniformMatrix4fv(self.shaderProgramEdgeDetect.mvMatrixUniform, false, paintMvMatrix);
 
             self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
-            self.bindFramebufferDrawBuffers();
+            bindFramebufferDrawBuffers(self);
 
             if (self.ext) {
                 self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
@@ -1225,7 +1225,7 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniformMatrix4fv(self.shaderProgramSSAO.mvMatrixUniform, false, paintMvMatrix);
 
             self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
-            self.bindFramebufferDrawBuffers();
+            bindFramebufferDrawBuffers(self);
 
             self.bindSSAOBuffers()
 
@@ -1237,7 +1237,7 @@ export function drawScene(self: MGWebGL) : void {
 
             // Now blur ....
 
-            self.textureBlur(self.offScreenFramebufferSimpleBlurX.width,self.offScreenFramebufferSimpleBlurX.height,self.ssaoTexture);
+            textureBlur(self, self.offScreenFramebufferSimpleBlurX.width,self.offScreenFramebufferSimpleBlurX.height,self.ssaoTexture);
 
         }
 
@@ -1254,7 +1254,7 @@ export function drawScene(self: MGWebGL) : void {
 
         if (self.doShadow) {
             self.calculatingShadowMap = true;
-            self.GLrender(true);
+            GLrender(self, true);
             self.calculatingShadowMap = false;
 
             //FIXME - This is all following mgfbo.cc
@@ -1277,14 +1277,14 @@ export function drawScene(self: MGWebGL) : void {
             //Framebuffer way
             self.renderSilhouettesToTexture = true;
             self.stenciling = false;
-            invMat = self.GLrender(false);
+            invMat = GLrender(self, false);
             self.gl.clear(self.gl.COLOR_BUFFER_BIT);
             self.stenciling = true;
-            invMat = self.GLrender(false);
+            invMat = GLrender(self, false);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
             self.renderSilhouettesToTexture = false;
             self.stenciling = false;
-            invMat = self.GLrender(false);
+            invMat = GLrender(self, false);
 
             self.gl.useProgram(self.shaderProgramOverlay);
             for(let i = 0; i<16; i++)
@@ -1305,7 +1305,7 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniformMatrix4fv(self.shaderProgramOverlay.pMatrixUniform, false, paintPMatrix);
             self.gl.uniformMatrix4fv(self.shaderProgramOverlay.mvMatrixUniform, false, paintMvMatrix);
 
-            self.bindFramebufferDrawBuffers();
+            bindFramebufferDrawBuffers(self);
 
             self.gl.depthFunc(self.gl.ALWAYS);
             if (self.ext) {
@@ -1349,7 +1349,7 @@ export function drawScene(self: MGWebGL) : void {
                         if(self.doPeel){//Do depth peel
                             invMat = drawPeel(self, theShaders,doClear,ratioMult)
                         } else {
-                            invMat = self.GLrender(false,doClear,ratioMult);
+                            invMat = GLrender(self, false,doClear,ratioMult);
                         }
                         if (self.doPeel) {
                             self.gl.activeTexture(self.gl.TEXTURE0);
@@ -1365,7 +1365,7 @@ export function drawScene(self: MGWebGL) : void {
                         if(self.doPeel){//Do depth peel
                             invMat = drawPeel(self, theShaders)
                         } else {
-                            invMat = self.GLrender(false);
+                            invMat = GLrender(self, false);
                         }
                     }
                     self.origin = origOrigin
@@ -1374,7 +1374,7 @@ export function drawScene(self: MGWebGL) : void {
                     if(self.doPeel){//Do depth peel
                         invMat = drawPeel(self, theShaders)
                     } else {
-                        invMat = self.GLrender(false);
+                        invMat = GLrender(self, false);
                     }
                 }
 
@@ -1388,7 +1388,7 @@ export function drawScene(self: MGWebGL) : void {
                     self.myQuat = newXQuat
                     self.currentAnaglyphColor = i===0 ? [1.0,0.0,0.0,1.0] : [0.0,1.0,0.0,1.0]
                     const doClear = i===0 ? true : false
-                    invMat = self.GLrender(false,doClear);
+                    invMat = GLrender(self, false,doClear);
                 }
                 self.myQuat = origQuat
             }
@@ -1454,7 +1454,7 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniformMatrix4fv(self.shaderProgramRenderFrameBuffer.pMatrixUniform, false, paintPMatrix);
             self.gl.uniformMatrix4fv(self.shaderProgramRenderFrameBuffer.mvMatrixUniform, false, paintMvMatrix);
 
-            self.bindFramebufferDrawBuffers();
+            bindFramebufferDrawBuffers(self);
 
             if (self.ext) {
                 self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
@@ -1510,7 +1510,7 @@ export function drawScene(self: MGWebGL) : void {
         }
 
         if(self.useOffScreenBuffers&&self.offScreenReady){
-            self.depthBlur(invMat);
+            depthBlur(self, invMat);
         }
 
         if(self.showFPS){
@@ -1539,4 +1539,895 @@ export function drawScene(self: MGWebGL) : void {
                 self.ssaoFramebuffer = null;
             }
         }
+    }
+
+export function applySymmetryMatrix(self: MGWebGL, theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix,doTransform=true){
+        const symt = mat4.create();
+        const invsymt = mat4.create();
+        mat4.set(symt,
+                symmetryMatrix[0], symmetryMatrix[1], symmetryMatrix[2], symmetryMatrix[3],
+                symmetryMatrix[4], symmetryMatrix[5], symmetryMatrix[6], symmetryMatrix[7],
+                symmetryMatrix[8], symmetryMatrix[9], symmetryMatrix[10], symmetryMatrix[11],
+                symmetryMatrix[12], symmetryMatrix[13], symmetryMatrix[14], symmetryMatrix[15]);
+        mat4.multiply(tempMVMatrix, self.mvMatrix, symt);
+        mat4.invert(invsymt, symt);
+        invsymt[12] = 0.0;
+        invsymt[13] = 0.0;
+        invsymt[14] = 0.0;
+        self.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, tempMVMatrix);
+        self.gl.uniformMatrix4fv(theShader.invSymMatrixUniform, false, invsymt);
+        tempMVMatrix[12] = 0.0;
+        tempMVMatrix[13] = 0.0;
+        tempMVMatrix[14] = 0.0;
+        mat4.invert(tempMVInvMatrix, tempMVMatrix);// All else
+        self.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
+
+        if(doTransform){
+            const light_position = vec3.create();
+            vec3.transformMat4(light_position, self.light_positions, tempMVInvMatrix);
+            NormalizeVec3(light_position);
+            self.gl.uniform4fv(theShader.light_positions, new Float32Array([light_position[0],light_position[1],light_position[2],1.0]));
+        }
+
+        const screenZ = vec3.create();
+        screenZ[0] = 0.0;
+        screenZ[1] = 0.0;
+        screenZ[2] = 1.0;
+        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
+        self.gl.uniform3fv(theShader.screenZ, screenZ);
+    }
+
+export function bindFramebufferDrawBuffers(self: MGWebGL) {
+        if(!self.framebufferDrawBuffersReady) {
+            const textTexCoords = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+                  0.0, 0.0, 1.0, 1.0, 0.0, 1.0];
+            const textVertices = [
+                -1.0, - 1.0, -200,
+                1.0, - 1.0, -200,
+                1.0,  1.0, -200,
+                -1.0,  - 1.0, -200,
+                1.0, 1.0, -200,
+                -1.0,  1.0, -200];
+            const textIndexs = [0, 2, 1, 3, 4, 5];
+
+            self.framebufferDrawPositionBuffer = self.gl.createBuffer();
+            self.framebufferDrawTexCoordBuffer = self.gl.createBuffer();
+            self.framebufferDrawIndexesBuffer = self.gl.createBuffer();
+
+            self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.framebufferDrawIndexesBuffer);
+            if (self.ext) {
+                self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(textIndexs), self.gl.STATIC_DRAW);
+            } else {
+                self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(textIndexs), self.gl.STATIC_DRAW);
+            }
+
+            self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.framebufferDrawTexCoordBuffer);
+            self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);
+            self.gl.bufferData(self.gl.ARRAY_BUFFER, new Float32Array(textTexCoords), self.gl.STATIC_DRAW);
+
+            self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.framebufferDrawPositionBuffer);
+            self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, self.gl.FLOAT, false, 0, 0);
+            self.gl.bufferData(self.gl.ARRAY_BUFFER, new Float32Array(textVertices), self.gl.DYNAMIC_DRAW);
+            self.framebufferDrawBuffersReady = true;
+        }
+
+        self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.framebufferDrawTexCoordBuffer);
+        self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);
+        self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.framebufferDrawPositionBuffer);
+        self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, self.gl.FLOAT, false, 0, 0);
+        self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.framebufferDrawIndexesBuffer);
+    }
+
+export function getMultiViewInfo(self: MGWebGL) : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
+
+        const displayBuffers = self.store.getState().glRef.displayBuffers
+
+        const multiViewOrigins = []
+        let multiViewGroupsKeys = []
+
+        let quats
+        let viewports
+        let ratioMult = 1.0
+        let multi_rows_cols = {rows:0,cols:0}
+
+        if(self.doThreeWayView){
+            quats = self.threeWayQuats
+            viewports = self.threeWayViewports
+        } else if(self.doMultiView) {
+
+            const multiViewGroups = {}
+            for (let idx = 0; idx < displayBuffers.length; idx++) {
+                if(displayBuffers[idx].multiViewGroup!==undefined&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
+                    //console.log(idx,displayBuffers[idx].multiViewGroup)
+                    if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
+                        if(!(displayBuffers[idx].multiViewGroup in multiViewGroups)){
+                            multiViewGroups[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].multiViewGroup
+                            multiViewOrigins[displayBuffers[idx].multiViewGroup] = displayBuffers[idx].origin
+                        }
+                    }
+                }
+            }
+            //console.log(multiViewGroups)
+            self.multiViewOrigins = multiViewOrigins
+            multiViewGroupsKeys = Object.keys(multiViewGroups)
+            if(self.multiWayViewports.length!==multiViewGroupsKeys.length&&multiViewGroupsKeys.length>0){
+                multi_rows_cols = self.setupMultiWayTransformations(multiViewGroupsKeys.length)
+            }
+
+            quats = self.multiWayQuats
+            viewports = self.multiWayViewports
+            ratioMult = self.multiWayRatio
+        } else if(self.doSideBySideStereo) {
+            quats = self.stereoQuats
+            viewports = self.stereoViewports
+            ratioMult = 0.5
+        } else {
+            quats = self.stereoQuats.toReversed()
+            viewports = self.stereoViewports
+            ratioMult = 0.5
+        }
+
+        return {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols}
+
+    }
+
+export function textureBlur(self: MGWebGL, width,height,inputTexture) {
+
+        const paintMvMatrix = mat4.create();
+        const paintPMatrix = mat4.create();
+        mat4.identity(paintMvMatrix);
+        mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
+
+        const blurSize = 3
+
+        const blurSizeX = blurSize/width;
+        const blurSizeY = blurSize/height;
+
+        self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.blurUBOBuffer);
+        self.makeBlurBuffers(blurSize);
+        self.gl.useProgram(self.shaderProgramSimpleBlurX);
+
+        for(let i = 0; i<16; i++)
+            self.gl.disableVertexAttribArray(i);
+        self.gl.enableVertexAttribArray(self.shaderProgramSimpleBlurX.vertexTextureAttribute);
+        self.gl.enableVertexAttribArray(self.shaderProgramSimpleBlurX.vertexPositionAttribute);
+
+        self.gl.uniform1i(self.shaderProgramSimpleBlurX.inputTexture,0);
+
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferSimpleBlurX);
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, inputTexture);
+        self.gl.viewport(0, 0, width, height);
+
+        self.gl.uniformMatrix4fv(self.shaderProgramSimpleBlurX.pMatrixUniform, false, paintPMatrix);
+        self.gl.uniformMatrix4fv(self.shaderProgramSimpleBlurX.mvMatrixUniform, false, paintMvMatrix);
+
+        self.gl.uniform1f(self.shaderProgramSimpleBlurX.blurSize,blurSizeX);
+
+        self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
+        bindFramebufferDrawBuffers(self);
+
+        if (self.ext) {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
+        } else {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
+        }
+
+        self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.blurUBOBuffer);
+        self.makeBlurBuffers(blurSize);
+        self.gl.useProgram(self.shaderProgramSimpleBlurY);
+        for(let i = 0; i<16; i++)
+            self.gl.disableVertexAttribArray(i);
+        self.gl.enableVertexAttribArray(self.shaderProgramSimpleBlurY.vertexTextureAttribute);
+        self.gl.enableVertexAttribArray(self.shaderProgramSimpleBlurY.vertexPositionAttribute);
+
+        self.gl.uniform1i(self.shaderProgramSimpleBlurY.inputTexture,0);
+
+        self.gl.enableVertexAttribArray(self.shaderProgramSimpleBlurY.vertexTextureAttribute);
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferSimpleBlurY);
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, self.simpleBlurXTexture);
+        self.gl.viewport(0, 0, width, height);
+
+        self.gl.uniformMatrix4fv(self.shaderProgramSimpleBlurY.pMatrixUniform, false, paintPMatrix);
+        self.gl.uniformMatrix4fv(self.shaderProgramSimpleBlurY.mvMatrixUniform, false, paintMvMatrix);
+
+        self.gl.uniform1f(self.shaderProgramSimpleBlurY.blurSize,blurSizeY);
+
+        self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
+        bindFramebufferDrawBuffers(self);
+
+        if (self.ext) {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
+        } else {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
+        }
+
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+        // And now our FB texture is blurred
+    }
+
+export function depthBlur(self: MGWebGL, invMat) {
+
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+
+        self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
+        //Hmm - Why these 3 lines?
+        //self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
+        //self.gl.clearColor(1.0,1.0,0.0,1.0);
+        //self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+
+        const paintMvMatrix = mat4.create();
+        const paintPMatrix = mat4.create();
+        mat4.identity(paintMvMatrix);
+        mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
+
+        let srcWidth;
+        let srcHeight;
+        let dstWidth;
+        let dstHeight;
+        if(self.renderToTexture&&!self.doPeel) {
+            self.recreateOffScreeenBuffers(self.rttFramebuffer.width,self.rttFramebuffer.height);
+            // FIXME - This cannnot work with current framebuffers, textures, etc.
+            console.log("Need to combine depthBlur and screenshot ...");
+            self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebuffer);
+            self.gl.bindFramebuffer(self.gl.DRAW_FRAMEBUFFER, self.rttFramebufferColor);
+            srcWidth = self.rttFramebuffer.width;
+            srcHeight = self.rttFramebuffer.height;
+            dstWidth = srcWidth;
+            dstHeight = srcHeight;
+        } else {
+            self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.offScreenFramebuffer);
+            self.gl.bindFramebuffer(self.gl.DRAW_FRAMEBUFFER, self.offScreenFramebufferColor);
+            srcWidth = self.offScreenFramebuffer.width;
+            srcHeight = self.offScreenFramebuffer.height;
+            dstWidth = self.offScreenFramebufferColor.width;
+            dstHeight = self.offScreenFramebufferColor.height;
+        }
+
+        self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+        self.gl.clearBufferfi(self.gl.DEPTH_STENCIL, 0, 0.0, 0);
+
+        self.gl.blitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, self.gl.COLOR_BUFFER_BIT, self.gl.LINEAR);
+        self.gl.blitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, self.gl.DEPTH_BUFFER_BIT, self.gl.NEAREST);
+
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+
+
+        /*
+         * In focus     - self.offScreenFramebufferBlurX
+         * Out of focus - self.blurYTexture
+         * Depth        - self.offScreenDepthTexture
+         */
+
+        //This is an example of chaining framebuffer shader effects.
+        //FIXME - Scale to deal with different sized Framebuffers ...
+        const blurSizeX = self.blurSize/self.gl.viewportWidth;
+        let blurSizeY = self.blurSize/self.gl.viewportHeight;
+        if(self.renderToTexture)
+            blurSizeY *= self.gl.viewportHeight/dstHeight;
+
+        self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.blurUBOBuffer);
+        self.makeBlurBuffers(self.blurSize);
+        self.gl.useProgram(self.shaderProgramBlurX);
+
+        for(let i = 0; i<16; i++)
+            self.gl.disableVertexAttribArray(i);
+        self.gl.enableVertexAttribArray(self.shaderProgramBlurX.vertexTextureAttribute);
+        self.gl.enableVertexAttribArray(self.shaderProgramBlurX.vertexPositionAttribute);
+
+        self.gl.uniform1i(self.shaderProgramBlurX.inputTexture,0);
+        self.gl.uniform1i(self.shaderProgramBlurX.depthTexture,1);
+
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurX);
+
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        if(self.renderToTexture&&!self.doPeel) {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTexture);
+        } else {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenTexture);
+        }
+        self.gl.activeTexture(self.gl.TEXTURE1);
+        if(self.doPeel){
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[0]);
+        } else if(self.renderToTexture) {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttDepthTexture);
+        } else {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenDepthTexture);
+        }
+        if(self.renderToTexture) {
+            self.gl.viewport(0, 0, srcWidth, srcHeight);
+        } else {
+            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
+        }
+
+        self.gl.uniformMatrix4fv(self.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
+        self.gl.uniformMatrix4fv(self.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
+
+        let f = -(self.gl_clipPlane0[3]);
+        let b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
+        if(self.doPerspectiveProjection){
+            f = 100
+            b = 270
+        }
+
+        const displayBuffers = self.store.getState().glRef.displayBuffers
+        let min_x =  1e5;
+        let max_x = -1e5;
+        let min_y =  1e5;
+        let max_y = -1e5;
+        let min_z =  1e5;
+        let max_z = -1e5;
+
+        displayBuffers.forEach(buffer => {
+            if (buffer.visible) {
+                buffer.atoms.forEach(atom => {
+                    if(atom.x>max_x) max_x = atom.x;
+                    if(atom.x<min_x) min_x = atom.x;
+                    if(atom.y>max_y) max_y = atom.y;
+                    if(atom.y<min_y) min_y = atom.y;
+                    if(atom.z>max_z) max_z = atom.z;
+                    if(atom.z<min_z) min_z = atom.z;
+                })
+            }
+        })
+        //console.log(min_x,min_y,min_z,max_x,max_y,max_z)
+        let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+        atom_span = Math.min(1000.0,atom_span);
+        self.atom_span = atom_span;
+
+        //console.log("In blur",f.toFixed(2),b.toFixed(2),self.blurDepth.toFixed(2))
+        const fPrime = f-self.fogClipOffset
+        const bPrime = b-self.fogClipOffset
+        //NB The 1.5 scaling is because it is 2 * 0.75 where 0.75 is scaling in the new widget.
+        const fPrimeFrac = fPrime/(1.5*atom_span)+0.5
+        const bPrimeFrac = bPrime/(1.5*atom_span)+0.5
+        const fracDepth = (self.blurDepth-fPrimeFrac)/(bPrimeFrac-fPrimeFrac)
+
+        self.gl.uniform1f(self.shaderProgramBlurX.blurDepth,fracDepth);
+        self.gl.uniform1f(self.shaderProgramBlurX.blurSize,blurSizeX);
+
+        if(self.renderToTexture&&self.transparentScreenshotBackground){
+            self.gl.clearBufferfv(self.gl.COLOR, 0, [self.background_colour[0], self.background_colour[1], self.background_colour[2], 0.0]);
+        } else {
+            self.gl.clearBufferfv(self.gl.COLOR, 0, [self.background_colour[0], self.background_colour[1], self.background_colour[2], 1.0]);
+        }
+        bindFramebufferDrawBuffers(self);
+
+        if (self.ext) {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
+        } else {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
+        }
+
+        self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.blurUBOBuffer);
+        self.makeBlurBuffers(self.blurSize);
+        self.gl.useProgram(self.shaderProgramBlurY);
+        for(let i = 0; i<16; i++)
+            self.gl.disableVertexAttribArray(i);
+        self.gl.enableVertexAttribArray(self.shaderProgramBlurY.vertexTextureAttribute);
+        self.gl.enableVertexAttribArray(self.shaderProgramBlurY.vertexPositionAttribute);
+
+        self.gl.uniform1i(self.shaderProgramBlurY.inputTexture,0);
+        self.gl.uniform1i(self.shaderProgramBlurY.depthTexture,1);
+
+        self.gl.enableVertexAttribArray(self.shaderProgramBlurY.vertexTextureAttribute);
+        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurY);
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, self.blurXTexture);
+        self.gl.activeTexture(self.gl.TEXTURE1);
+        if(self.doPeel){
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[0]);
+        } else if(self.renderToTexture) {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttDepthTexture);
+        } else {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenDepthTexture);
+        }
+        if(self.renderToTexture) {
+            self.gl.viewport(0, 0, srcWidth, srcHeight);
+        } else {
+            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
+        }
+
+        self.gl.uniformMatrix4fv(self.shaderProgramBlurY.pMatrixUniform, false, paintPMatrix);
+        self.gl.uniformMatrix4fv(self.shaderProgramBlurY.mvMatrixUniform, false, paintMvMatrix);
+
+        self.gl.uniform1f(self.shaderProgramBlurY.blurDepth,fracDepth);
+        self.gl.uniform1f(self.shaderProgramBlurY.blurSize,blurSizeY);
+
+        if(self.renderToTexture&&self.transparentScreenshotBackground){
+            self.gl.clearBufferfv(self.gl.COLOR, 0, [self.background_colour[0], self.background_colour[1], self.background_colour[2], 0.0]);
+        } else {
+            self.gl.clearBufferfv(self.gl.COLOR, 0, [self.background_colour[0], self.background_colour[1], self.background_colour[2], 1.0]);
+        }
+        bindFramebufferDrawBuffers(self);
+
+        if (self.ext) {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
+        } else {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
+        }
+
+        if(self.renderToTexture) {
+            //Do something different from below ....
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebuffer);
+        } else {
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+        }
+
+        self.gl.bindTexture(self.gl.TEXTURE_2D, self.blurYTexture);
+        self.gl.useProgram(self.shaderProgramRenderFrameBuffer);
+        self.gl.uniform1f(self.shaderProgramRenderFrameBuffer.blurDepth,fracDepth);
+
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.focussedTexture,0);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.blurredTexture,1);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture,2);
+
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        if(self.renderToTexture&&!self.doPeel) {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTexture);
+        } else {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenTexture);
+        }
+
+
+        self.gl.activeTexture(self.gl.TEXTURE1);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, self.blurYTexture);
+
+        self.gl.activeTexture(self.gl.TEXTURE2);
+        if(self.doPeel){
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[0]);
+        } else if(self.renderToTexture) {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttDepthTexture);
+        } else {
+            self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenDepthTexture);
+        }
+
+        for(let i = 0; i<16; i++)
+            self.gl.disableVertexAttribArray(i);
+        self.gl.enableVertexAttribArray(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
+        self.gl.enableVertexAttribArray(self.shaderProgramRenderFrameBuffer.vertexPositionAttribute);
+
+        if(self.renderToTexture) {
+            self.gl.viewport(0, 0, srcWidth, srcHeight);
+        } else {
+            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
+        }
+
+        self.gl.uniformMatrix4fv(self.shaderProgramRenderFrameBuffer.pMatrixUniform, false, paintPMatrix);
+        self.gl.uniformMatrix4fv(self.shaderProgramRenderFrameBuffer.mvMatrixUniform, false, paintMvMatrix);
+
+        bindFramebufferDrawBuffers(self);
+
+        if (self.ext) {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
+        } else {
+            self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
+        }
+
+        if(!self.atomLabelDepthMode) self.drawDistancesAndLabels();
+        self.drawLineMeasures(invMat);
+        self.drawTextOverlays(invMat);
+
+        if(self.renderToTexture) {
+            console.log("SCREENSHOT MkII !");
+
+            const width_ratio = self.gl.viewportWidth / self.rttFramebuffer.width;
+            const height_ratio = self.gl.viewportHeight / self.rttFramebuffer.height;
+            if (self.WEBGL2) {
+                self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebuffer);
+                self.gl.bindFramebuffer(self.gl.DRAW_FRAMEBUFFER, self.rttFramebufferColor);
+                self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                self.gl.blitFramebuffer(0, 0, self.rttFramebuffer.width, self.rttFramebuffer.height,
+                        0, 0, self.rttFramebuffer.width, self.rttFramebuffer.height,
+                        self.gl.COLOR_BUFFER_BIT, self.gl.LINEAR);
+
+                self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
+                for(let i=0;i<self.depthPeelFramebuffers.length;i++){
+                    self.gl.deleteFramebuffer(self.depthPeelFramebuffers[i]);
+                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferDepth[i]);
+                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferColor[i]);
+                    self.gl.deleteTexture(self.depthPeelColorTextures[i]);
+                    self.gl.deleteTexture(self.depthPeelDepthTextures[i]);
+                }
+                self.depthPeelFramebuffers = [];
+                self.offScreenReady = false
+            }
+            self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
+            const pixels = new Uint8Array(self.gl.viewportWidth / width_ratio * self.gl.viewportHeight / height_ratio * 4);
+            self.gl.readPixels(0, 0, self.gl.viewportWidth / width_ratio, self.gl.viewportHeight / height_ratio, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
+            self.pixel_data = pixels;
+            self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+        }
+
+        self.gl.disableVertexAttribArray(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
+
+        self.gl.activeTexture(self.gl.TEXTURE2);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, null);
+        self.gl.activeTexture(self.gl.TEXTURE1);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, null);
+        self.gl.activeTexture(self.gl.TEXTURE0);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, null);
+
+    }
+
+export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioMult=1.0) {
+        const displayBuffers = self.store.getState().glRef.displayBuffers
+        const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight * ratioMult;
+
+        let fb_scale = 1.0
+
+        if(self.WEBGL2){
+            self.gl.useProgram(self.shaderProgram);
+            self.gl.uniform1f(self.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0);
+            self.gl.uniform1f(self.shaderProgram.zoom,self.zoom);
+            self.gl.useProgram(self.shaderProgramInstanced);
+            self.gl.uniform1f(self.shaderProgramInstanced.ssaoMultiviewWidthHeightRatio,1.0);
+            self.gl.uniform1f(self.shaderProgramInstanced.zoom,self.zoom);
+            self.gl.useProgram(self.shaderProgramPerfectSpheres);
+            self.gl.uniform1f(self.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0);
+            self.gl.uniform1f(self.shaderProgramPerfectSpheres.zoom,self.zoom);
+        }
+
+        if (calculatingShadowMap) {
+            if(!self.offScreenReady)
+                self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+            if(!self.screenshotBuffersReady)
+                self.initTextureFramebuffer();
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
+            self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
+        } else if(self.drawingGBuffers) {
+            const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
+            const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.gFramebuffer);
+            self.gl.viewport(self.currentViewport[0]/ width_ratio, self.currentViewport[1]/ height_ratio, self.currentViewport[2]/ width_ratio, self.currentViewport[3]/ height_ratio);
+        } else if(self.renderSilhouettesToTexture) {
+            if(!self.silhouetteBufferReady)
+                self.recreateSilhouetteBuffers();
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.silhouetteFramebuffer);
+            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
+        } else if(self.doDepthPeelPass&&self.renderToTexture&&(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo)) {
+            if(!self.screenshotBuffersReady)
+                self.initTextureFramebuffer();
+            let viewport_start_x = Math.trunc(self.currentViewport[0] * self.rttFramebuffer.width  / self.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(self.currentViewport[1] * self.rttFramebuffer.height / self.gl.viewportHeight)
+            let viewport_width =   Math.trunc(self.currentViewport[2] * self.rttFramebuffer.width  / self.gl.viewportWidth)
+            let viewport_height =  Math.trunc(self.currentViewport[3] * self.rttFramebuffer.height / self.gl.viewportHeight)
+            self.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            if(self.gl.viewportWidth>self.gl.viewportHeight){
+                const hp = self.gl.viewportHeight/self.gl.viewportWidth * self.rttFramebuffer.width
+                const b = 0.5*(self.rttFramebuffer.height - hp)
+                const vh = self.currentViewport[3] * self.rttFramebuffer.width  / self.gl.viewportWidth
+                const bp = self.currentViewport[1] * self.rttFramebuffer.width  / self.gl.viewportWidth
+                viewport_height = vh
+                viewport_start_y = bp + b
+            } else {
+                const wp = self.gl.viewportWidth/self.gl.viewportHeight * self.rttFramebuffer.height
+                const b = 0.5*(self.rttFramebuffer.width - wp)
+                const vw = self.currentViewport[2] * self.rttFramebuffer.width  / self.gl.viewportHeight
+                const bp = self.currentViewport[0] * self.rttFramebuffer.width  / self.gl.viewportHeight
+                viewport_width = vw
+                viewport_start_x =  bp + b
+            }
+            self.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+        } else if(self.doDepthPeelPass) {
+            const viewport_start_x = Math.trunc(self.currentViewport[0] * self.depthPeelFramebuffers[0].width  / self.gl.viewportWidth)
+            const viewport_start_y = Math.trunc(self.currentViewport[1] * self.depthPeelFramebuffers[0].height / self.gl.viewportHeight)
+            const viewport_width =   Math.trunc(self.currentViewport[2] * self.depthPeelFramebuffers[0].width  / self.gl.viewportWidth)
+            const viewport_height =  Math.trunc(self.currentViewport[3] * self.depthPeelFramebuffers[0].height / self.gl.viewportHeight)
+            self.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+        } else if(self.renderToTexture) {
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebuffer);
+            self.gl.enable(self.gl.DEPTH_TEST);
+            self.gl.depthFunc(self.gl.LESS);
+            let viewport_start_x = Math.trunc(self.currentViewport[0] * self.rttFramebuffer.width  / self.gl.viewportWidth)
+            let viewport_start_y = Math.trunc(self.currentViewport[1] * self.rttFramebuffer.height / self.gl.viewportHeight)
+            let viewport_width =   Math.trunc(self.currentViewport[2] * self.rttFramebuffer.width  / self.gl.viewportWidth)
+            let viewport_height =  Math.trunc(self.currentViewport[3] * self.rttFramebuffer.height / self.gl.viewportHeight)
+            self.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
+                self.gl.useProgram(self.shaderProgram);
+                if(self.WEBGL2) self.gl.uniform1f(self.shaderProgram.ssaoMultiviewWidthHeightRatio,1.0*self.canvas.width/self.canvas.height);
+                self.gl.useProgram(self.shaderProgramInstanced);
+                if(self.WEBGL2) self.gl.uniform1f(self.shaderProgramInstanced.ssaoMultiviewWidthHeightRatio,1.0*self.canvas.width/self.canvas.height);
+                self.gl.useProgram(self.shaderProgramPerfectSpheres);
+                if(self.WEBGL2) self.gl.uniform1f(self.shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio,1.0*self.canvas.width/self.canvas.height);
+                if(self.gl.viewportWidth>self.gl.viewportHeight){
+                    const hp = self.gl.viewportHeight/self.gl.viewportWidth * self.rttFramebuffer.width
+                    const b = 0.5*(self.rttFramebuffer.height - hp)
+                    const vh = self.currentViewport[3] * self.rttFramebuffer.width  / self.gl.viewportWidth
+                    const bp = self.currentViewport[1] * self.rttFramebuffer.width  / self.gl.viewportWidth
+                    viewport_height = vh
+                    viewport_start_y = bp + b
+                } else {
+                    const wp = self.gl.viewportWidth/self.gl.viewportHeight * self.rttFramebuffer.height
+                    const b = 0.5*(self.rttFramebuffer.width - wp)
+                    const vw = self.currentViewport[2] * self.rttFramebuffer.width  / self.gl.viewportHeight
+                    const bp = self.currentViewport[0] * self.rttFramebuffer.width  / self.gl.viewportHeight
+                    viewport_width = vw
+                    viewport_start_x =  bp + b
+                }
+                self.gl.viewport(viewport_start_x,viewport_start_y,viewport_width,viewport_height);
+            } else {
+                self.gl.viewport(0, 0, self.rttFramebuffer.width, self.rttFramebuffer.height);
+            }
+        } else {
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+            if(self.useOffScreenBuffers&&self.WEBGL2){
+                if(!self.offScreenReady)
+                    self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+                self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
+            }
+            self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
+        }
+
+        if(self.renderSilhouettesToTexture||self.drawingGBuffers||(self.renderToTexture&&self.transparentScreenshotBackground)) {
+            self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], 0.0);
+        } else {
+            self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
+        }
+        if(self.doStenciling){
+            if(!self.stenciling){
+                self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+            }
+        } else {
+            if(doClear) self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+        }
+
+        mat4.identity(self.mvMatrix);
+
+        const oldQuat = quat4.clone(self.myQuat);
+        const newQuat = quat4.clone(self.myQuat);
+
+        if (calculatingShadowMap) {
+
+            let min_x =  1e5;
+            let max_x = -1e5;
+            let min_y =  1e5;
+            let max_y = -1e5;
+            let min_z =  1e5;
+            let max_z = -1e5;
+
+            displayBuffers.forEach(buffer => {
+                if (buffer.visible) {
+                    buffer.atoms.forEach(atom => {
+                        if(atom.x>max_x) max_x = atom.x;
+                        if(atom.x<min_x) min_x = atom.x;
+                        if(atom.y>max_y) max_y = atom.y;
+                        if(atom.y<min_y) min_y = atom.y;
+                        if(atom.z>max_z) max_z = atom.z;
+                        if(atom.z<min_z) min_z = atom.z;
+                    })
+                }
+            })
+            let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+            atom_span = Math.min(1000.0,atom_span);
+            self.atom_span = atom_span;
+            const shadowExtent = Math.max(170.0,atom_span); // 170. ??
+
+            //The extent (atom_span) should probably be scaled to viewable area - lets see if we can calculate that.
+            //But, the angle of the light is important ...
+
+            let d = Math.min(48*self.zoom,atom_span)
+
+            let rotX = quat4.create();
+            quat4.set(rotX, 0, 0, 0, -1);
+            const zprime = vec3Create([self.light_positions[0], self.light_positions[1], self.light_positions[2]]);
+            NormalizeVec3(zprime);
+            const zorig = vec3Create([0.0, 0.0, 1.0]);
+            const dp = vec3.dot(zprime, zorig);
+            let tanA = 0.0;
+            if ((1.0 - dp) > 1e-6) {
+                const axis = vec3.create();
+                vec3Cross(zprime, zorig, axis);
+                NormalizeVec3(axis);
+                const angle = -Math.acos(dp);
+                const dval3 = Math.cos(angle / 2.0);
+                const dval0 = axis[0] * Math.sin(angle / 2.0);
+                const dval1 = axis[1] * Math.sin(angle / 2.0);
+                const dval2 = axis[2] * Math.sin(angle / 2.0);
+                rotX = quat4.create();
+                quat4.set(rotX, dval0, dval1, dval2, dval3);
+                quat4.multiply(newQuat, newQuat, rotX);
+                tanA = Math.tan(angle)
+            }
+
+            let excess = Math.abs(shadowExtent*tanA);
+            if(self.doPerspectiveProjection){
+                excess += 150; // ?? It works.
+            }
+            d += excess;
+
+            d /= 2.0
+            d = Math.max(d,60.0)
+
+            mat4.ortho(self.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.0);
+            mat4.translate(self.mvMatrix, self.mvMatrix, [0, 0, -atom_span]);
+
+            self.gl.disable(self.gl.CULL_FACE);
+            self.gl.cullFace(self.gl.FRONT);
+        } else {
+            self.gl.disable(self.gl.CULL_FACE);
+            self.gl.cullFace(self.gl.BACK);
+            if(self.renderToTexture){
+                //FIXME - drawingGBuffers stanza?
+                if(self.doPerspectiveProjection){
+                    //FIXME - with  multiviews
+                    mat4.perspective(self.pMatrix, 1.0, 1.0, 100, 1270.0);
+                } else {
+                    const f = self.gl_clipPlane0[3];
+                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
+                    if(self.currentViewport[2] > self.currentViewport[3]){
+                        if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
+                            mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                        } else {
+                            mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
+                        }
+                    } else {
+                        if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo)
+                            fb_scale = self.currentViewport[2]/self.currentViewport[3]
+                        mat4.ortho(self.pMatrix, -24*fb_scale, 24*fb_scale, -24, 24, -f, b);
+                    }
+                }
+            } else {
+                if(self.doPerspectiveProjection){
+                    mat4.perspective(self.pMatrix, 1.0, self.gl.viewportWidth / self.gl.viewportHeight, 100, 1270.0);
+                } else {
+                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
+                    const f = self.gl_clipPlane0[3];
+                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                }
+            }
+
+            mat4.translate(self.mvMatrix, self.mvMatrix, [0, 0, -self.fogClipOffset]);
+
+        }
+
+        self.myQuat = quat4.clone(newQuat);
+        const theMatrix = quatToMat4(self.myQuat);
+
+        mat4.multiply(self.mvMatrix, self.mvMatrix, theMatrix);
+
+        mat4.identity(self.mvInvMatrix);
+
+        const invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+
+        const invMat = quatToMat4(invQuat);
+        self.mvInvMatrix = invMat;
+
+        const right = vec3.create();
+        vec3.set(right, 1.0, 0.0, 0.0);
+        const up = vec3.create();
+        vec3.set(up, 0.0, 1.0, 0.0);
+        vec3.transformMat4(up, up, invMat);
+        vec3.transformMat4(right, right, invMat);
+
+        self.screenZ[0] = 0.0;
+        self.screenZ[1] = 0.0;
+        self.screenZ[2] = 1.0;
+
+        vec3.transformMat4(self.screenZ, self.screenZ, invMat);
+
+        self.gl.useProgram(self.shaderProgram);
+        if (self.backColour === "default") {
+            self.gl.uniform1i(self.shaderProgram.defaultColour, true);
+        } else {
+            self.gl.uniform1i(self.shaderProgram.defaultColour, false);
+            self.gl.uniform4fv(self.shaderProgram.backColour, new Float32Array(self.backColour as number[]));
+        }
+        self.gl.uniform1i(self.shaderProgram.shinyBack, self.shinyBack);
+
+        self.gl.useProgram(self.shaderProgramInstanced);
+        if (self.backColour === "default") {
+            self.gl.uniform1i(self.shaderProgramInstanced.defaultColour, true);
+        } else {
+            self.gl.uniform1i(self.shaderProgramInstanced.defaultColour, false);
+            self.gl.uniform4fv(self.shaderProgramInstanced.backColour, new Float32Array(self.backColour as number[]));
+        }
+        self.gl.uniform1i(self.shaderProgramInstanced.shinyBack, self.shinyBack);
+
+        if(self.doPerspectiveProjection){
+            //FIXME - What is the justificatio of 5.7? (Approximately tan(acos(48./270.)), but not quite close enough)....
+            let perspMult = 1.0;
+            if(self.renderToTexture){
+                if(self.gl.viewportWidth > self.gl.viewportHeight){
+                    perspMult = 1.0 / ratio;
+                }
+            }
+            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * 5.7 / self.zoom, perspMult * 5.7 / self.zoom, 1.0]);
+        } else {
+            mat4.scale(self.pMatrix, self.pMatrix, [1. / self.zoom, 1. / self.zoom, 1.0]);
+        }
+        mat4.translate(self.mvMatrix, self.mvMatrix, self.origin);
+
+        self.pmvMatrix = mat4.create();
+        mat4.multiply(self.pmvMatrix, self.pMatrix, self.mvMatrix);
+
+        self.gl.useProgram(self.shaderProgramGBuffers);
+        self.setMatrixUniforms(self.shaderProgramGBuffers);
+
+        self.gl.useProgram(self.shaderProgramGBuffersInstanced);
+        self.setMatrixUniforms(self.shaderProgramGBuffersInstanced);
+
+        self.gl.useProgram(self.shaderProgramGBuffersPerfectSpheres);
+        self.setMatrixUniforms(self.shaderProgramGBuffersPerfectSpheres);
+
+        self.gl.useProgram(self.shaderProgram);
+        self.setMatrixUniforms(self.shaderProgram);
+        self.setLightUniforms(self.shaderProgram);
+
+        self.gl.useProgram(self.shaderProgramOutline);
+        self.setMatrixUniforms(self.shaderProgramOutline);
+        self.setLightUniforms(self.shaderProgramOutline);
+
+        self.gl.useProgram(self.shaderProgramInstanced);
+        self.setMatrixUniforms(self.shaderProgramInstanced);
+        self.setLightUniforms(self.shaderProgramInstanced);
+
+        self.gl.useProgram(self.shaderProgramInstancedOutline);
+        self.setMatrixUniforms(self.shaderProgramInstancedOutline);
+        self.setLightUniforms(self.shaderProgramInstancedOutline);
+
+        self.gl.useProgram(self.shaderProgramInstancedShadow);
+        self.setMatrixUniforms(self.shaderProgramInstancedShadow);
+        self.setLightUniforms(self.shaderProgramInstancedShadow);
+
+        self.gl.useProgram(self.shaderProgramShadow);
+        self.setMatrixUniforms(self.shaderProgramShadow);
+        self.setLightUniforms(self.shaderProgramShadow);
+
+        self.gl.useProgram(self.shaderProgramLines);
+        self.setMatrixUniforms(self.shaderProgramLines);
+
+        self.gl.useProgram(self.shaderProgramPointSpheres);
+        self.setMatrixUniforms(self.shaderProgramPointSpheres);
+        self.setLightUniforms(self.shaderProgramPointSpheres);
+
+        self.gl.useProgram(self.shaderProgram);
+        self.gl.enableVertexAttribArray(self.shaderProgram.vertexNormalAttribute);
+
+        self.gl.useProgram(self.shaderProgramGBuffers);
+        self.gl.enableVertexAttribArray(self.shaderProgramGBuffers.vertexNormalAttribute);
+
+        self.gl.useProgram(self.shaderProgramGBuffersInstanced);
+        self.gl.enableVertexAttribArray(self.shaderProgramGBuffersInstanced.vertexNormalAttribute);
+
+        self.gl.useProgram(self.shaderProgramOutline);
+        self.gl.enableVertexAttribArray(self.shaderProgramOutline.vertexNormalAttribute);
+
+        //self.gl.useProgram(self.shaderProgramInstancedOutline);
+        //self.gl.enableVertexAttribArray(self.shaderProgramInstancedOutline.vertexNormalAttribute);
+
+        self.gl.useProgram(self.shaderProgramInstanced);
+        self.gl.enableVertexAttribArray(self.shaderProgramInstanced.vertexNormalAttribute);
+
+        if(self.doDepthPeelPass||(self.drawingGBuffers&&self.doPerspectiveProjection)){
+            self.gl.disable(self.gl.BLEND);
+        } else {
+            self.gl.enable(self.gl.BLEND);
+        }
+
+        if(self.drawingGBuffers){
+            drawTriangles(self, calculatingShadowMap, invMat);
+            return;
+        }
+
+        drawTriangles(self, calculatingShadowMap, invMat);
+
+        if(!calculatingShadowMap){
+            self.drawImagesAndText(invMat);
+            if(self.atomLabelDepthMode) self.drawDistancesAndLabels();
+            self.drawTextLabels(up, right);
+            if(self.WEBGL2){
+                self.drawTexturedShapes(theMatrix);
+            }
+            //self.drawCircles(up, right);
+        }
+
+        self.myQuat = quat4.clone(oldQuat);
+
+        return invMat;
+
     }
