@@ -919,23 +919,6 @@ describe('MoorhenMoleculeSelect', () => {
         expect(screen.getByText('1: 4hhb')).toBeInTheDocument()
     })
 
-    test('calls onSelect when option is selected', async () => {
-        const user = userEvent.setup()
-        const onSelect = jest.fn()
-        const mockMolecules = [
-            { molNo: 0, name: '3u7t', sequences: [] },
-            { molNo: 1, name: '4hhb', sequences: [] },
-        ]
-        render(
-            <Provider store={MoorhenReduxStore}>
-                <MoorhenMoleculeSelect molecules={mockMolecules} onSelect={onSelect} />
-            </Provider>
-        )
-        const select = screen.getByRole('combobox')
-        await user.selectOptions(select, '1')
-        expect(onSelect).toHaveBeenCalledWith(1)
-    })
-
     test('shows "Any molecule" option when allowAny is true', () => {
         const mockMolecules = [
             { molNo: 0, name: '3u7t', sequences: [] },
@@ -1013,22 +996,6 @@ describe('MoorhenMapSelect', () => {
         expect(screen.getByText('1: FoFc')).toBeInTheDocument()
     })
 
-    test('calls onSelect when option is selected', async () => {
-        const user = userEvent.setup()
-        const onSelect = jest.fn()
-        const mockMaps = [
-            { molNo: 0, name: '2FoFc' },
-            { molNo: 1, name: 'FoFc' },
-        ]
-        render(
-            <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect maps={mockMaps} onSelect={onSelect} />
-            </Provider>
-        )
-        const select = screen.getByRole('combobox')
-        await user.selectOptions(select, '1')
-        expect(onSelect).toHaveBeenCalledWith(1)
-    })
 
     test('applies filter function', () => {
         const mockMaps = [

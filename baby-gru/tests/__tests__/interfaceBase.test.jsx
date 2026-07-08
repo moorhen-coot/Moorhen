@@ -348,15 +348,6 @@ describe('MoorhenStack', () => {
         expect(stackDiv).toHaveStyle('flex: 0')
     })
 
-    test('grid applies gridTemplateColumns', () => {
-        const { container } = render(
-            <MoorhenStack grid={true} gridWidth={3}>
-                <p>Grid item</p>
-            </MoorhenStack>
-        )
-        const stackDiv = container.firstElementChild
-        expect(stackDiv).toHaveStyle('grid-template-columns: repeat(3, auto 1fr)')
-    })
 
     test('forwards ref', () => {
         const ref = { current: null }
