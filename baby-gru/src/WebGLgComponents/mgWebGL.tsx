@@ -106,6 +106,7 @@ import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWeb
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
 import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
+import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -1870,13 +1871,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:webGL.MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
-
-        this.setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
-
-        this.drawBuffer(buffer,shader,bufferIdx,vertexType,specialDrawBuffer);
-
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);
-        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+        drawTransformMatrixInteractive(this, transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
     }
 
     applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix,doTransform=true){
@@ -1916,409 +1911,27 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawBuffer(theBuffer:any,theShaderIn:webGL.MGWebGLShader|webGL.ShaderTrianglesInstanced,j:number,vertexType:number,specialDrawBuffer?:any) : void {
-
-        const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-
-        let drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = theBuffer.triangleVertexIndexBuffer[j];
-        }
-
-        if (this.ext) {
-            const theShader = theShaderIn as webGL.ShaderTrianglesInstanced;
-            if(theBuffer.triangleInstanceOriginBuffer[j]){
-                this.gl.enableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceOriginBuffer[j]);
-                this.gl.vertexAttribPointer(theShader.vertexInstanceOriginAttribute, theBuffer.triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                if (this.WEBGL2) {
-                    this.gl.vertexAttribDivisor(theShader.vertexInstanceOriginAttribute, 1);
-                } else {
-                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOriginAttribute, 1);
-                }
-                if(theBuffer.triangleInstanceSizeBuffer[j]){
-                    this.gl.enableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceSizeBuffer[j]);
-                    this.gl.vertexAttribPointer(theShader.vertexInstanceSizeAttribute, theBuffer.triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                    if (this.WEBGL2) {
-                        this.gl.vertexAttribDivisor(theShader.vertexInstanceSizeAttribute, 1);
-                    } else {
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
-                    }
-                }
-                if(theBuffer.triangleInstanceOrientationBuffer[j]){
-                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
-                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
-                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
-                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceOrientationBuffer[j]);
-                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute, 4, this.gl.FLOAT, false, 64, 0);
-                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+1, 4, this.gl.FLOAT, false, 64, 16);
-                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+2, 4, this.gl.FLOAT, false, 64, 32);
-                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+3, 4, this.gl.FLOAT, false, 64, 48);
-                    if (this.WEBGL2) {
-                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute, 1);
-                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+1, 1);
-                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+2, 1);
-                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+3, 1);
-                    } else {
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute, 1);
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+1, 1);
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+2, 1);
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+3, 1);
-                    }
-                }
-                if(theBuffer.supplementary["instance_use_colors"]){
-                    if(theShader.vertexColourAttribute>-1){
-                        this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleColourBuffer[j]);
-                        this.gl.vertexAttribPointer(theShader.vertexColourAttribute, theBuffer.triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                        if(theBuffer.supplementary["instance_use_colors"][j]){
-                            if (this.WEBGL2) {
-                                this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 1);
-                            } else {
-                                this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
-                            }
-                        }
-                    }
-                    if(this.stencilPass){
-                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                        if(bright_y<0.5)
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                        else
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                    }
-                }
-                if (this.WEBGL2) {
-                    if(this.doAnaglyphStereo) {
-                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
-                    }
-                    this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
-                } else {
-                    this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
-                }
-                if(theBuffer.symmetryMatrices.length>0){
-                    if(theShader.vertexColourAttribute>-1&&theBuffer.changeColourWithSymmetry){
-                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                        if(bright_y>0.5)
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
-                        else
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
-                    }
-
-                    const tempMVMatrix = mat4.create();
-                    const tempMVInvMatrix = mat4.create();
-                    for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
-
-                        this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
-                        if (this.WEBGL2) {
-                            this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
-                        } else {
-                            this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
-                        }
-
-                    }
-                    this.setLightUniforms(theShader);
-                    this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
-                    this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    if(theShader.vertexColourAttribute>-1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                }
-                if(theShader.light_colours_diffuse) this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
-                if(theShader.light_colours_specular) this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
-                if(theShader.specularPower) this.gl.uniform1f(theShader.specularPower, this.specularPower);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
-                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
-                if(theShader.vertexColourAttribute>-1){
-                    if (this.WEBGL2) {
-                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);
-                    } else {
-                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
-                    }
-                }
-            } else {
-                const theShader = theShaderIn as webGL.MGWebGLShader;
-                if (this.WEBGL2) {
-                    if(this.doAnaglyphStereo) {
-                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                        this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
-                    }
-                    this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
-                } else {
-                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-                }
-                if(theBuffer.symmetryMatrices.length>0){
-                    if(theShader.vertexColourAttribute>-1&&theBuffer.changeColourWithSymmetry){
-                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                        if(bright_y>0.5)
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.3, 0.3, 0.3, 1.0);
-                        else
-                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.5, 0.5, 0.5, 1.0);
-                    }
-                    const tempMVMatrix = mat4.create();
-                    const tempMVInvMatrix = mat4.create();
-                    for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
-
-                        this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
-                        if (this.WEBGL2) {
-                            if(this.doAnaglyphStereo) {
-                                this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                                this.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                                this.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...this.currentAnaglyphColor)
-                            }
-                            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
-                        } else {
-                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-                        }
-
-                    }
-                    this.setLightUniforms(theShader);
-                    this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
-                    this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-                    if(theShader.vertexColourAttribute>-1) this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                }
-            }
-        } else {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-        }
+        drawBuffer(this, theBuffer, theShaderIn, j, vertexType, specialDrawBuffer);
     }
 
     drawMaxElementsUInt(vertexType, numItems) {
-
-        if(numItems<this.max_elements_indices){
-            this.gl.drawElements(vertexType, numItems, this.gl.UNSIGNED_INT, 0);
-        } else {
-            let inum=0;
-            for( ; inum <  numItems / this.max_elements_indices-1; inum++){
-                this.gl.drawElements(vertexType, this.max_elements_indices, this.gl.UNSIGNED_INT, inum*this.max_elements_indices*4);
-            }
-            if((numItems % this.max_elements_indices)>0){
-                this.gl.drawElements(vertexType, numItems % this.max_elements_indices, this.gl.UNSIGNED_INT, inum*this.max_elements_indices*4);
-            }
-        }
-
+        drawMaxElementsUInt(this, vertexType, numItems);
     }
 
     setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
-
-        const screenZ = vec3.create();
-        const tempMVMatrix = mat4.create();
-        const tempMVInvMatrix = mat4.create();
-        const symt = mat4.create();
-        mat4.set(symt,
-            transformMatrix[0],
-            transformMatrix[1],
-            transformMatrix[2],
-            transformMatrix[3],
-            transformMatrix[4],
-            transformMatrix[5],
-            transformMatrix[6],
-            transformMatrix[7],
-            transformMatrix[8],
-            transformMatrix[9],
-            transformMatrix[10],
-            transformMatrix[11],
-            transformMatrix[12],
-            transformMatrix[13],
-            transformMatrix[14],
-            transformMatrix[15],
-        );
-        //mat4.transpose(symt,symt_t);
-
-        mat4.translate(this.mvMatrix, this.mvMatrix, [transformOrigin[0] - this.origin[0], transformOrigin[1] - this.origin[1], transformOrigin[2] - this.origin[2]]);
-        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-        mat4.translate(this.mvMatrix, this.mvMatrix, [-transformOrigin[0] + this.origin[0], -transformOrigin[1] + this.origin[1], -transformOrigin[2] + this.origin[2]]);
-        mat4.translate(tempMVMatrix, tempMVMatrix, [-transformOrigin[0] + this.origin[0], -transformOrigin[1] + this.origin[1], -transformOrigin[2] + this.origin[2]]);
-
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-        tempMVMatrix[12] = 0.0;
-        tempMVMatrix[13] = 0.0;
-        tempMVMatrix[14] = 0.0;
-        mat4.invert(tempMVInvMatrix, tempMVMatrix);
-        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
-        screenZ[0] = 0.0;
-        screenZ[1] = 0.0;
-        screenZ[2] = 1.0;
-        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-        this.gl.uniform3fv(shader.screenZ, screenZ);
-
+        setupModelViewTransformMatrixInteractive(this, transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
     }
 
     drawTransformMatrix(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number, specialDrawBuffer?:any) : void {
-        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
-
-        let drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-        }
-
-        const screenZ = vec3.create();
-        const tempMVMatrix = mat4.create();
-        const tempMVInvMatrix = mat4.create();
-        const symt_t = mat4.create();
-        const symt = mat4.create();
-        mat4.set(symt_t,
-            transformMatrix[0],
-            transformMatrix[1],
-            transformMatrix[2],
-            transformMatrix[3],
-            transformMatrix[4],
-            transformMatrix[5],
-            transformMatrix[6],
-            transformMatrix[7],
-            transformMatrix[8],
-            transformMatrix[9],
-            transformMatrix[10],
-            transformMatrix[11],
-            transformMatrix[12],
-            transformMatrix[13],
-            transformMatrix[14],
-            transformMatrix[15],
-        );
-        mat4.transpose(symt, symt_t);
-        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-        tempMVMatrix[12] = 0.0;
-        tempMVMatrix[13] = 0.0;
-        tempMVMatrix[14] = 0.0;
-        mat4.invert(tempMVInvMatrix, tempMVMatrix);
-        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
-        screenZ[0] = 0.0;
-        screenZ[1] = 0.0;
-        screenZ[2] = 1.0;
-        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-        this.gl.uniform3fv(shader.screenZ, screenZ);
-        if (this.ext) {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-        }
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);
-        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-
+        drawTransformMatrix(this, transformMatrix, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
     }
 
     drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
-        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
-
-        const drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-
-        const pmvMatrix = mat4.create();
-        const screenZ = vec3.create();
-        const tempMVMatrix = mat4.create();
-        const tempMVInvMatrix = mat4.create();
-        const symt = mat4.create();
-        mat4.set(symt,
-            transformMatrix[0],
-            transformMatrix[1],
-            transformMatrix[2],
-            transformMatrix[3],
-            transformMatrix[4],
-            transformMatrix[5],
-            transformMatrix[6],
-            transformMatrix[7],
-            transformMatrix[8],
-            transformMatrix[9],
-            transformMatrix[10],
-            transformMatrix[11],
-            transformMatrix[12],
-            transformMatrix[13],
-            transformMatrix[14],
-            transformMatrix[15],
-        );
-        //mat4.transpose(symt,symt_t);
-
-        mat4.translate(this.mvMatrix, this.mvMatrix, [transformOrigin[0] - this.origin[0], transformOrigin[1] - this.origin[1], transformOrigin[2] - this.origin[2]]);
-        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-        mat4.translate(this.mvMatrix, this.mvMatrix, [-transformOrigin[0] + this.origin[0], -transformOrigin[1] + this.origin[1], -transformOrigin[2] + this.origin[2]]);
-        mat4.translate(tempMVMatrix, tempMVMatrix, [-transformOrigin[0] + this.origin[0], -transformOrigin[1] + this.origin[1], -transformOrigin[2] + this.origin[2]]);
-        mat4.multiply(pmvMatrix, this.pMatrix, tempMVMatrix); // Lines
-
-        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, pmvMatrix); // Lines
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-
-        tempMVMatrix[12] = 0.0;
-        tempMVMatrix[13] = 0.0;
-        tempMVMatrix[14] = 0.0;
-        mat4.invert(tempMVInvMatrix, tempMVMatrix);
-        screenZ[0] = 0.0;
-        screenZ[1] = 0.0;
-        screenZ[2] = 1.0;
-        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-        this.gl.uniform3fv(shader.screenZ, screenZ);
-        if (this.ext) {
-            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
-        } else {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-        }
-        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, this.pmvMatrix); // Lines
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix); // Lines
-        this.gl.uniform3fv(shader.screenZ, this.screenZ); // Lines
-
+        drawTransformMatrixInteractivePMV(this, transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx);
     }
 
     drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
-        const triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
-
-        const drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-
-        const pmvMatrix = mat4.create();
-        const screenZ = vec3.create();
-        const tempMVMatrix = mat4.create();
-        const tempMVInvMatrix = mat4.create();
-        const symt_t = mat4.create();
-        const symt = mat4.create();
-        mat4.set(symt_t,
-            transformMatrix[0],
-            transformMatrix[1],
-            transformMatrix[2],
-            transformMatrix[3],
-            transformMatrix[4],
-            transformMatrix[5],
-            transformMatrix[6],
-            transformMatrix[7],
-            transformMatrix[8],
-            transformMatrix[9],
-            transformMatrix[10],
-            transformMatrix[11],
-            transformMatrix[12],
-            transformMatrix[13],
-            transformMatrix[14],
-            transformMatrix[15],
-        );
-        mat4.transpose(symt, symt_t);
-        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-        mat4.multiply(pmvMatrix, this.pMatrix, tempMVMatrix); // Lines
-        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, pmvMatrix); // Lines
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-        tempMVMatrix[12] = 0.0;
-        tempMVMatrix[13] = 0.0;
-        tempMVMatrix[14] = 0.0;
-        mat4.invert(tempMVInvMatrix, tempMVMatrix);
-        screenZ[0] = 0.0;
-        screenZ[1] = 0.0;
-        screenZ[2] = 1.0;
-        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-        this.gl.uniform3fv(shader.screenZ, screenZ);
-        if (this.ext) {
-            this.drawMaxElementsUInt(vertexType, drawBuffer.numItems);
-        } else {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-        }
-        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, this.pmvMatrix); // Lines
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix); // Lines
-        this.gl.uniform3fv(shader.screenZ, this.screenZ); // Lines
-
+        drawTransformMatrixPMV(this, transformMatrix, buffer, shader, vertexType, bufferIdx);
     }
 
     GLrender(calculatingShadowMap,doClear=true,ratioMult=1.0) {
