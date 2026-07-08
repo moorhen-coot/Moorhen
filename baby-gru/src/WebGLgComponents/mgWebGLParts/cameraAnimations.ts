@@ -126,6 +126,16 @@ export function setOriginOrientationAndZoomAnimated(self: MGWebGL, o: number[], 
     requestAnimationFrame(() => setOriginOrientationAndZoomFrame(self, [old_x, old_y, old_z], [dx, dy, dz], oldQuat, q, oldZoom, zoomDelta, 1))
 }
 
+export function setOriginAndZoomAnimated(self: MGWebGL, newOrigin: [number, number, number], newZoom: number) {
+    self.nAnimationFrames = 15
+    const deltaOrigin = self.calculateOriginDelta(newOrigin, self.origin, self.nAnimationFrames)
+    const deltaZoom = (newZoom - self.zoom) / self.nAnimationFrames
+    // Snapshot origin/zoom now (bind-time), matching the original .bind(this, this.origin, this.zoom, …).
+    const startOrigin = self.origin
+    const startZoom = self.zoom
+    requestAnimationFrame(() => drawOriginAndZoomFrame(self, startOrigin, startZoom, deltaOrigin, deltaZoom, 1))
+}
+
 export function drawOriginAndZoomFrame(self: MGWebGL, oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
     const [ DX, DY, DZ ] = deltaOrigin
     const [ X, Y, Z ] = oldOrigin
@@ -149,7 +159,9 @@ export function setOriginAnimated(self: MGWebGL, oldOrigin: number[]): void {
     const dx = DX/self.nAnimationFrames
     const dy = DY/self.nAnimationFrames
     const dz = DZ/self.nAnimationFrames
-    requestAnimationFrame(() => drawOriginFrame(self, [...self.origin], [dx, dy, dz], 1))
+    // Snapshot origin now (bind-time), matching the original .bind(this, [...this.origin], …).
+    const startOrigin = [...self.origin]
+    requestAnimationFrame(() => drawOriginFrame(self, startOrigin, [dx, dy, dz], 1))
 }
 
 export function drawOriginFrame(self: MGWebGL, oo, d, iframe){

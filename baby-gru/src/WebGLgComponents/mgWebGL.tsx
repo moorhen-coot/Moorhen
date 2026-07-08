@@ -104,7 +104,7 @@ import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBu
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
-import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
+import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -1559,10 +1559,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setOriginAndZoomAnimated(newOrigin: [number, number, number], newZoom: number) {
-        this.nAnimationFrames = 15
-        const deltaOrigin = this.calculateOriginDelta(newOrigin, this.origin, this.nAnimationFrames)
-        const deltaZoom = (newZoom - this.zoom) / this.nAnimationFrames
-        requestAnimationFrame(this.drawOriginAndZoomFrame.bind(this, this.origin, this.zoom, deltaOrigin, deltaZoom, 1))
+        setOriginAndZoomAnimated(this, newOrigin, newZoom)
     }
 
     drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
