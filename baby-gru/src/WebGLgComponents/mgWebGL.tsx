@@ -100,6 +100,7 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
+import { Camera } from './camera'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -161,6 +162,21 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //Other stuff
         store: Store<RootState>;
         dispatch: Dispatch<any>;
+
+        // Core view state now lives in a Camera collaborator. The accessors below
+        // present the same `myQuat` / `zoom` / `origin` / `fogClipOffset` interface
+        // that internal code and external consumers (glRef.current.*) already use.
+        // Getters return the LIVE objects so in-place mutation (e.g.
+        // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
+        private _camera: Camera = new Camera();
+        get myQuat(): quat4 { return this._camera.quat; }
+        set myQuat(q: quat4) { this._camera.quat = q; }
+        get zoom(): number { return this._camera.zoom; }
+        set zoom(z: number) { this._camera.zoom = z; }
+        get origin(): [number, number, number] { return this._camera.origin; }
+        set origin(o: [number, number, number]) { this._camera.origin = o; }
+        get fogClipOffset(): number { return this._camera.fogClipOffset; }
+        set fogClipOffset(v: number) { this._camera.fogClipOffset = v; }
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
         specularPower: number;
@@ -169,20 +185,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         useOffScreenBuffers: boolean;
         blurSize: number;
         blurDepth:number;
-        myQuat: quat4;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;
         gl_clipPlane0: null | Float32Array;
         gl_clipPlane1: null | Float32Array;
-        fogClipOffset: number;
-        zoom: number;
         gl_fog_end: number;
         light_colours_specular: Float32Array;
         light_colours_diffuse: Float32Array;
         light_positions: Float32Array;
         light_colours_ambient: Float32Array;
         background_colour: [number, number, number, number];
-        origin: [number, number, number];
         drawEnvBOcc: boolean;
         environmentAtoms: {atom:webGL.clickAtom,label:string}[][];
         labelledAtoms: webGL.clickAtom[][];
