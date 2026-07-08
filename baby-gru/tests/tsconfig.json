@@ -4,5 +4,5 @@
         "noEmit": true,
         "types": ["node", "jest"]
     },
-    "include": ["./**/*.ts", "./**/*.tsx", "./**/*.js", "./**/*.jsx"]
+    "include": ["./**/*.ts", "./**/*.tsx", "./**/*.js", "./**/*.jsx", "__tests__/MoorhenContainer.test.jsx.old"]
 }

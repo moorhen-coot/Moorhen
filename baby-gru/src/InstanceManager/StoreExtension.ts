@@ -463,6 +463,8 @@ export class StoreExtension {
             setWidth(value:number){
             dispatch(setWidth(value));
             },
+            /** @zoom level 1 = 22A
+            or A/22 */
             setZoom(value:number){
             dispatch(setZoom(value));
             },

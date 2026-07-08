@@ -1,4 +1,3 @@
-import { DownloadOutlined } from "@mui/icons-material";
 import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
@@ -47,8 +46,8 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
                             link.download = carbohydrate.id.replace(/\//g, "_") + ".svg";
                             link.click();
                         }}
+                        icon="MatSymFileDownload"
                     >
-                        <DownloadOutlined />
                         Download image (svg)
                     </MoorhenButton>
                 </MoorhenStack>

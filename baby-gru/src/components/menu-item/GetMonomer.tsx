@@ -1,4 +1,3 @@
-import { Autocomplete, CircularProgress, MenuItem, Skeleton, TextField, createFilterOptions } from "@mui/material";
 import parse from "html-react-parser";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,66 +9,79 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenInfoCard, MoorhenPopover, MoorhenStack } from "../interface-base";
+import { MoorhenAutoComplete } from "../inputs/autocomplete/AutoComplete";
+import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack } from "../interface-base";
+
+function resizeSvgString(svg: string, size: number): string {
+  const s = String(size);
+  const sizePx = `${s}px`;
+
+  const viewBoxMatch = svg.match(/viewBox=['"]([^'"]+)['"]/i);
+  const withoutWH = svg.replace(/\s(?:width|height)=['"][^'"]*['"]/gi, "");
+
+  if (viewBoxMatch) {
+    const vb = viewBoxMatch[1];
+    return withoutWH.replace(/<svg[^>]*>/i, `<svg width="${sizePx}" height="${sizePx}" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">`);
+  }
+
+  const widthMatch = svg.match(/width=['"]?(\d+(\.\d+)?)px?['"]?/i);
+  const heightMatch = svg.match(/height=['"]?(\d+(\.\d+)?)px?['"]?/i);
+  if (widthMatch && heightMatch) {
+    const w = widthMatch[1];
+    const h = heightMatch[1];
+    return withoutWH.replace(/<svg[^>]*>/i, `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">`);
+  }
+
+  // Fallback: add width/height and allow overflow (less ideal, but avoids clipping)
+  return withoutWH.replace(/<svg[^>]*>/i, `<svg width="${sizePx}" height="${sizePx}" preserveAspectRatio="xMidYMid meet" style="overflow:visible">`);
+}
 
 const CompoundAutoCompleteOption = (props: {
     compoundName: string;
-    monLibListRef: React.RefObject<libcootApi.compoundInfo[]>;
+    tlc?: string;
     setValue: (newVal: string) => void;
 }) => {
     const [ligandSVG, setLigandSVG] = useState<string>("");
     const [isShown, setIsShown] = useState<boolean>(false);
 
-    const tooltip = useMemo(() => {
+    const svgPopover = useMemo(() => {
         return (
-            <div
-                style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "column",
-                }}
-            >
-                <div style={{ maxWidth: "300px", maxHeight: "300px", overflow: "hidden" }}>
-                    {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
-                </div>
-                <br></br>
-                <strong>{props.compoundName}</strong>
-            </div>
+            parse(resizeSvgString(ligandSVG, 350)) as React.ReactNode
         );
     }, [ligandSVG]);
 
     useEffect(() => {
-        const fetchLigandSVG = async () => {
-            const threeLetterCode = props.monLibListRef.current.find(item => item.name === props.compoundName)?.three_letter_code;
-            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${threeLetterCode}_300.svg`);
+        const fetchLigandSVG = async () => {;
+            const response = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${props.tlc}_300.svg`);
             const text = await response.text();
             setLigandSVG(text);
         };
         fetchLigandSVG();
-    }, []);
+    }, [props.compoundName, props.tlc]);
 
     const popoverLinkRef = useRef<HTMLButtonElement>(null);
 
-    const popoverLink = (
+    const svg = ligandSVG ? parse(resizeSvgString(ligandSVG, 100)) : null;
+
+        const popoverLink = (
         <button
-            ref={popoverLinkRef}
+            key={`compound-${props.compoundName}`}
+            onClick={() => props.setValue(props.compoundName)}
+            className="moorhen__autocomplete-option"
             onMouseEnter={() => setIsShown(true)}
             onMouseLeave={() => setIsShown(false)}
-            onClick={() => props.setValue(props.compoundName)}
-            style={{ all: "unset", width: "18rem", height: "6rem", display: "flex", alignItems: "center", justifyContent: "center" }}
+            ref={popoverLinkRef}
         >
-            <div style={{ width: "100px", height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {ligandSVG ? parse(ligandSVG) : <Skeleton variant="rectangular" width={100} height={100} />}
-            </div>
-            <span style={{ width: "12rem", textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{props.compoundName}</span>
+            <MoorhenStack direction="line" align="center">
+                <div style={{flex:0}}>
+            {svg}</div>
+            {props.compoundName}{" "}</MoorhenStack>
         </button>
     );
 
     return (
-        <MoorhenPopover link={popoverLink} linkRef={popoverLinkRef} isShown={isShown} setIsShown={setIsShown} popoverPlacement="right">
-            {tooltip}
+        <MoorhenPopover key={`popover-${props.compoundName}`} popoverPlacement="top" link={popoverLink} linkRef={popoverLinkRef} isShown={isShown} setIsShown={setIsShown}>
+            {svgPopover}
         </MoorhenPopover>
     );
 };
@@ -81,13 +93,9 @@ export const GetMonomer = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-
-    const tlcRef = useRef<HTMLInputElement>(null);
-    const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
-    const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
+    // const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
+    // const searchModeSelectRef = useRef<HTMLSelectElement | null>(null);
     const monLibListRef = useRef<libcootApi.compoundInfo[]>([]);
-    const autoCompleteRef = useRef<string | null>(null);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
 
     const [source, setSource] = useState<string>("default");
@@ -95,20 +103,12 @@ export const GetMonomer = () => {
     const [busy, setBusy] = useState<boolean>(false);
     const [autoCompleteValue, setAutoCompleteValue] = useState<string>("");
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
+    const [selectedMolecule, setSelectedMolecule] = useState<number | undefined>(undefined);
+    const [tlc, setTlc] = useState<string>("");
 
     const dispatch = useDispatch();
 
     const originState = useSelector((state: moorhen.State) => state.glRef.origin);
-
-    const filterOptions = useMemo(
-        () =>
-            createFilterOptions({
-                ignoreCase: true,
-                matchFrom: "start",
-                limit: 5,
-            }),
-        []
-    );
 
     const handleSourceChange = evt => {
         setSource(evt.target.value);
@@ -117,10 +117,33 @@ export const GetMonomer = () => {
         }
     };
 
-    const handleSearchModeChange = async evt => {
-        setSearchMode(evt.target.value);
-        if (evt.target.value === "name" && monLibListRef.current.length === 0) {
-            setBusy(true);
+    // const handleSearchModeChange = async evt => {
+    //     setSearchMode(evt.target.value);
+    //     if (evt.target.value === "name" && monLibListRef.current.length === 0) {
+    //         setBusy(true);
+    //         const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif");
+    //         if (response.ok) {
+    //             const fileContents = await response.text();
+    //             const table = (await commandCentre.current.cootCommand(
+    //                 {
+    //                     command: "parse_mon_lib_list_cif",
+    //                     commandArgs: [fileContents],
+    //                     returnType: "status",
+    //                 },
+    //                 false
+    //             )) as moorhen.WorkerResponse<libcootApi.compoundInfo[]>;
+    //             monLibListRef.current = table.data.result.result;
+    //         } else {
+    //             dispatch(enqueueSnackbar({ message: "Unable to fetch ligand names", variant: "warning" }));
+    //             setSearchMode("tlc");
+    //         }
+    //         setBusy(false);
+    //     }
+    // };
+
+    useEffect(() => {
+        const fetchMonLibList = async () => {
+                        setBusy(true);
             const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif");
             if (response.ok) {
                 const fileContents = await response.text();
@@ -135,11 +158,11 @@ export const GetMonomer = () => {
                 monLibListRef.current = table.data.result.result;
             } else {
                 dispatch(enqueueSnackbar({ message: "Unable to fetch ligand names", variant: "warning" }));
-                setSearchMode("tlc");
             }
             setBusy(false);
-        }
-    };
+        };
+        fetchMonLibList();
+    }, [commandCentre, dispatch]);
 
     const getMonomerFromLibcootAPI = useCallback((tlc: string, fromMolNo: number) => {
         return commandCentre.current.cootCommand(
@@ -234,18 +257,19 @@ export const GetMonomer = () => {
         [fetchLigandDictFromUrl, addLigand, monomerLibraryPath]
     );
 
-    const defaultGetMonomer = useCallback(async () => {
-        const fromMolNo = parseInt(moleculeSelectRef.current.value);
-
+    const defaultGetMonomer = async () => {
+        const fromMolNo = selectedMolecule
+        
         let newTlc: string;
-        if (searchModeSelectRef.current.value === "tlc") {
-            newTlc = tlcRef.current.value.toUpperCase();
+        if (searchMode === "tlc") {
+            newTlc = autoCompleteValue.toUpperCase();
         } else {
-            newTlc = monLibListRef.current.find(item => item.name === autoCompleteRef.current)?.three_letter_code;
+            newTlc = monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code;
         }
-
-        if (!newTlc || !moleculeSelectRef.current.value) {
+        
+        if (!newTlc || fromMolNo === -1) {
             dispatch(enqueueSnackbar({ message: "Something went wrong", variant: "warning" }));
+            console.warn("No TLC or molecule selected, doing nothing...");
             return;
         }
 
@@ -257,6 +281,7 @@ export const GetMonomer = () => {
             result = await getMonomerFromLibcootAPI(newTlc, fromMolNo);
         }
 
+
         if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
             const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
             await createNewLigandMolecule(newTlc, result.data.result.result, fromMolecule?.getDict(newTlc));
@@ -264,12 +289,12 @@ export const GetMonomer = () => {
             dispatch(enqueueSnackbar({ message: "Error getting monomer. Missing dictionary?", variant: "warning" }));
             console.log("Error getting monomer. Missing dictionary?");
         }
-    }, [getMonomerFromLibcootAPI, createNewLigandMolecule, molecules]);
+    };
 
     const onCompleted = useCallback(async () => {
         if (sourceSelectRef.current.value === "libcoot-api") {
-            const tlc = tlcRef.current.value.toUpperCase();
-            const fromMolNo = parseInt(moleculeSelectRef.current.value);
+            const tlc = autoCompleteValue.toUpperCase();
+            const fromMolNo = selectedMolecule;
             const result = await getMonomerFromLibcootAPI(tlc, fromMolNo);
             if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                 const fromMolecule = molecules.find(molecule => molecule.molNo === fromMolNo);
@@ -278,16 +303,20 @@ export const GetMonomer = () => {
                 dispatch(enqueueSnackbar({ message: "Unable to get monomer. Missing dictionary?", variant: "warning" }));
             }
         } else if (["remote-monomer-library", "local-monomer-library", "pdbe"].includes(sourceSelectRef.current.value)) {
-            const tlc = tlcRef.current.value.toUpperCase();
+            const tlc = autoCompleteValue.toUpperCase();
             await fetchLigandDict(sourceSelectRef.current.value, tlc);
         } else {
             await defaultGetMonomer();
         }
         document.body.click();
-    }, [molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule]);
+    }, [autoCompleteValue, molecules, defaultGetMonomer, fetchLigandDict, getMonomerFromLibcootAPI, createNewLigandMolecule]);
 
-    const menuItemText = "Get monomer...";
-
+    const searchKeys = searchMode === "tlc" ? [
+                            { name: "three_letter_code", weight: 1 },
+                        ] : [
+                            { name: "name", weight: 0.9 },
+                            { name: "three_letter_code", weight: 0.1 },
+                        ];
     return (
         <MoorhenStack inputGrid>
             <MoorhenSelect
@@ -311,92 +340,38 @@ export const GetMonomer = () => {
                 <option value={"pdbe"}>PDBe</option>
             </MoorhenSelect>
             {["default", "libcoot-api"].includes(source) && (
-                <MoorhenMoleculeSelect molecules={molecules} allowAny={true} ref={moleculeSelectRef} />
+                <MoorhenMoleculeSelect molecules={molecules} allowAny={true} selectedMolecule={selectedMolecule} setSelectedMolecule={setSelectedMolecule} />
             )}
             {source === "default" && (
-                <MoorhenSelect ref={searchModeSelectRef} value={searchMode} onChange={handleSearchModeChange} label="Search for">
+                <MoorhenSelect setValue={setSearchMode} value={searchMode} label="Search for">
                     <option value={"tlc"}>Three letter code</option>
                     <option value={"name"}>Compound name</option>
                 </MoorhenSelect>
             )}
-            {searchMode === "tlc" ? (
-                <>
-                    <MoorhenTextInput ref={tlcRef} uppercase label="Monomer identifier" />
-                </>
-            ) : (
                 <MoorhenStack direction="line">
-                    <label>Compound Name</label>
-                    <Autocomplete
-                        disablePortal
-                        selectOnFocus
-                        clearOnBlur
-                        handleHomeEndKeys
-                        freeSolo
-                        includeInputInList
-                        filterSelectedOptions
-                        size="small"
-                        loading={busy}
+                    <label>{searchMode === "tlc" ? "Three letter code" : "Compound name"}</label>
+                    <MoorhenAutoComplete
+                        autocompleteOpen={autocompleteOpen}
+                        setAutocompleteOpen={setAutocompleteOpen}
+                        searchItems={monLibListRef.current}
                         value={autoCompleteValue}
-                        open={autocompleteOpen}
-                        style={{ width: "18rem" }}
-                        onClose={() => setAutocompleteOpen(false)}
-                        onOpen={() => setAutocompleteOpen(true)}
-                        renderInput={params => (
-                            <TextField
-                                {...params}
-                                label="Search"
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <>
-                                            {busy ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </>
-                                    ),
+                        setValue={searchMode === "tlc" ? (val) =>setAutoCompleteValue(val.toUpperCase().slice(0, 3)) : setAutoCompleteValue}
+                        maxResults={5}
+                        //@ts-ignore
+                        keys={searchKeys}
+                        resultsRenderer={result => (
+                            <CompoundAutoCompleteOption
+                                compoundName={result.name}
+                                tlc={result.three_letter_code}
+                                setValue={newVal => {
+                                    setAutoCompleteValue(searchMode === "tlc" ? result.three_letter_code : result.name);
+                                    setTlc(result.three_letter_code);
+                                    setAutocompleteOpen(false);
                                 }}
                             />
                         )}
-                        renderOption={(props, option: string) => {
-                            return (
-                                <CompoundAutoCompleteOption
-                                    key={option}
-                                    compoundName={option}
-                                    monLibListRef={monLibListRef}
-                                    setValue={newVal => {
-                                        autoCompleteRef.current = newVal;
-                                        setAutoCompleteValue(newVal);
-                                        setAutocompleteOpen(false);
-                                    }}
-                                />
-                            );
-                        }}
-                        options={monLibListRef.current.map(item => item.name)}
-                        filterOptions={filterOptions}
-                        onChange={(evt, newSelection: string) => {
-                            autoCompleteRef.current = newSelection;
-                            if (newSelection === null) {
-                                setAutoCompleteValue(newSelection);
-                            }
-                            setAutocompleteOpen(false);
-                        }}
-                        sx={{
-                            "& .MuiInputBase-root": {
-                                backgroundColor: isDark ? "#222" : "white",
-                                color: isDark ? "white" : "#222",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: isDark ? "white" : "grey",
-                            },
-                            "& .MuiButtonBase-root": {
-                                color: isDark ? "white" : "grey",
-                            },
-                            "& .MuiFormLabel-root": {
-                                color: isDark ? "white" : "#222",
-                            },
-                        }}
                     />
                 </MoorhenStack>
-            )}
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
         </MoorhenStack>
     );

@@ -15,7 +15,6 @@ module.exports = {
             transformIgnorePatterns: ["node_modules/(?!(uuid|node-fetch)/)"],
             moduleNameMapper: {
                 "^localforage$": "<rootDir>/tests/__mocks__/mockLocalforage.js",
-
                 "@/(.*)": "<rootDir>/src/$1"
             },
         },

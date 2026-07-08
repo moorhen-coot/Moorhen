@@ -125,7 +125,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     return (
         <Fragment>
             <MoorhenStack direction="row">
-                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selected={selectedModel} />
+                <MoorhenMoleculeSelect onSelect={handleModelChange} ref={moleculeSelectRef} selectedMolecule={selectedModel} />
 
                 {enableChainSelect && (
                     <MoorhenChainSelect

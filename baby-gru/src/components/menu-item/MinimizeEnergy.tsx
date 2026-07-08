@@ -4,7 +4,7 @@ import { usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenStack } from "../interface-base";
@@ -162,9 +162,9 @@ export const MinimizeEnergy = () => {
                     minVal={0.1}
                     maxVal={100}
                     decimalPlaces={2}
-                    logScale={true}
-                    externalValue={ramaWeight}
-                    setExternalValue={value => setRamaWeight(value)}
+                    scale="log"
+                    value={ramaWeight}
+                    setValue={value => setRamaWeight(value)}
                 />
             </div>
             <div style={{ display: useTorsionRestraints ? "" : "none" }}>
@@ -174,28 +174,28 @@ export const MinimizeEnergy = () => {
                     minVal={0.1}
                     maxVal={10}
                     decimalPlaces={2}
-                    logScale={true}
-                    externalValue={torsionWeight}
-                    setExternalValue={setTorsionWeight}
+                    scale="log"
+                    value={torsionWeight}
+                    setValue={setTorsionWeight}
                 />
             </div>
             <MoorhenSlider
                 sliderTitle="Number of iterations"
                 minVal={1}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
-                externalValue={nIterations}
-                setExternalValue={value => setNIterations(value)}
+                value={nIterations}
+                setValue={value => setNIterations(value)}
             />
             <MoorhenSlider
                 sliderTitle="Number of cycles"
                 minVal={1}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
-                externalValue={ncyc}
-                setExternalValue={value => setNcyc(value)}
+                value={ncyc}
+                setValue={value => setNcyc(value)}
             />
             <p />
             <MoorhenButton variant="primary" onClick={minimizeEnergy}>

@@ -1,7 +1,7 @@
 import { Store } from "@reduxjs/toolkit";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setOrigin, setRequestDrawScene } from "../store/glRefSlice";
+import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store/glRefSlice";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
@@ -86,6 +86,7 @@ export class MoorhenMap {
     mapRmsd: number;
     mapMean: number;
     suggestedMapWeight: number;
+    mapWeight: number;
     otherMapForColouring: { molNo: number; min: number; max: number };
     diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
@@ -116,6 +117,7 @@ export class MoorhenMap {
         this.mapRmsd = null;
         this.mapMean = null;
         this.suggestedMapWeight = null;
+        this.mapWeight = null;
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
@@ -132,19 +134,33 @@ export class MoorhenMap {
     /**
      * Helper function to set this map instance as the "active" map for refinement
      */
-    async setActive(): Promise<void> {
-        await this.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "set_imol_refinement_map",
-                commandArgs: [this.molNo],
-            },
-            false
-        );
-        if (this.suggestedMapWeight === null) {
-            await this.estimateMapWeight();
+    private _isActive: boolean;
+    async setActive(activate: boolean) {
+        if (activate) {
+            this._isActive = true;
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_imol_refinement_map",
+                    commandArgs: [this.molNo],
+                },
+                false
+            );
+            if (this.suggestedMapWeight === null) {
+                await this.estimateMapWeight();
+            }
+            if (!this.mapWeight) {
+                this.mapWeight = this.suggestedMapWeight;
+            }
+            await this.setMapWeight();
+            
+        } else {
+            this._isActive = false;
         }
-        await this.setMapWeight();
+    }
+
+    get active() {
+        return this._isActive;
     }
 
     /**
@@ -532,21 +548,25 @@ export class MoorhenMap {
      * @param {number} [weight=moorhen.Map.suggestedMapWeight] - The new map weight
      * @returns {Promise<moorhen.WorkerResponse>} Void worker response
      */
-    setMapWeight(weight?: number): Promise<moorhen.WorkerResponse> {
+    setMapWeight(weight?: number) {
         let newWeight: number;
-        if (typeof weight !== "undefined") {
+        if (typeof weight !== 'undefined') {
             newWeight = weight;
         } else {
-            newWeight = this.suggestedMapWeight;
+            newWeight = this.mapWeight ?? this.suggestedMapWeight;
         }
-        return this.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "set_map_weight",
-                commandArgs: [newWeight],
-            },
-            false
-        );
+        if (this.active) {
+            this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "set_map_weight",
+                    commandArgs: [newWeight],
+                },
+                false
+            );
+        } else {
+            console.warn("Map is not active, cannot set map weight");
+        }
     }
 
     /**
@@ -1228,11 +1248,14 @@ export class MoorhenMap {
     /**
      * Estimate the map weight based on the map rmsd
      */
-    async estimateMapWeight(): Promise<void> {
-        if (this.mapRmsd === null) {
-            await this.fetchMapRmsd();
-        }
-        this.suggestedMapWeight = (50 * 0.3) / this.mapRmsd;
+    estimateMapWeight():number {
+        // if (this.mapRmsd === null) {
+        //     await this.fetchMapRmsd();
+        // }
+        const weight = (50 * 0.3) / this.mapRmsd;
+        this.suggestedMapWeight = weight;
+        if (!this.mapWeight) this.mapWeight = weight
+        return weight;
     }
 
     getSimpleHeaderInfo(): mapHeaderInfo {
@@ -1302,8 +1325,10 @@ export class MoorhenMap {
             !this.isEM && this.fetchSuggestedLevelXtal(),
             this.guessMapRangeAndLevel(),
         ]);
-        await this.estimateMapWeight();
-        
+
+        await this.estimateMapWeight()
+
+        if (this.isEM) {
 
         if (this.isEM) {          
             if (this.dataOrigin === "mtz")
@@ -1323,7 +1348,7 @@ export class MoorhenMap {
                     this.drawOrigin = result.center.map(coord => -coord) as [number, number, number];
                 this.suggestedRadius = result.radius;}
         }
-    }
+    }}
 
     async getMapBoundingSphere(thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
         const result = this.commandCentre.cootCommand(
@@ -1374,10 +1399,10 @@ export class MoorhenMap {
      * Set the view in the centre of this map instance
      */
     async centreOnMap(): Promise<void> {
-        console.log("Centring on map with molNo", this.molNo);
-        console.log("Map centre is", this.mapCentre, "and cell centre is", this.cellCentre, "and draw origin is", this.drawOrigin);
         if (this.isOriginLocked) {
             this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
+            const currentRadius = this.store.getState().mapContourSettings.mapRadii.find(map => map.molNo === this.molNo)?.radius ?? this.suggestedRadius ?? 20 /22
+            this.store.dispatch(setZoom(currentRadius /22))
             return;
         }
         if (this.mapCentre === null) {
@@ -1404,7 +1429,7 @@ export class MoorhenMap {
             false
         )) as moorhen.WorkerResponse<any>;
         return response.data.result.result;
-    }
+    }0
 
     async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;
