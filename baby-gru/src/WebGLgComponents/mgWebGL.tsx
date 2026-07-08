@@ -95,7 +95,6 @@ import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-gbuffer-vertex-shader.js';
 import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
-import { gaussianBlurs } from './gaussianBlurs'
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
@@ -104,6 +103,7 @@ import { Camera } from './camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './canvasTextures'
+import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './postProcessUniformBuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -604,64 +604,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     makeBlurBuffers(blurSize) {
-        if(this.WEBGL2){
-            const blockSize = this.gl.getActiveUniformBlockParameter( this.shaderProgramBlurX, this.shaderProgramBlurX.blurCoeffs, this.gl.UNIFORM_BLOCK_DATA_SIZE);
-            //console.log("blur blockSize",blockSize);
-
-            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-            this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);//????
-            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
-            this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.blurUBOBuffer);
-            const uboVariableNames = ["row0","row1","row2","row3","row4","row5","row6","row7","row8","nsteps"];
-            const uboVariableIndices = this.gl.getUniformIndices( this.shaderProgramBlurX, uboVariableNames);
-            const uboVariableOffsets = this.gl.getActiveUniforms( this.shaderProgramBlurX, uboVariableIndices, this.gl.UNIFORM_OFFSET);
-
-            const uboVariableInfo = {};
-
-            uboVariableNames.forEach((name, index) => {
-                uboVariableInfo[name] = {
-                    index: uboVariableIndices[index],
-                    offset: uboVariableOffsets[index],
-                };
-            });
-
-            this.gl.useProgram(this.shaderProgramSimpleBlurY);
-            let index = this.gl.getUniformBlockIndex(this.shaderProgramSimpleBlurY, "coeffBuffer");
-            this.gl.uniformBlockBinding(this.shaderProgramSimpleBlurY, index, 0);
-
-            this.gl.useProgram(this.shaderProgramSimpleBlurX);
-            index = this.gl.getUniformBlockIndex(this.shaderProgramSimpleBlurX, "coeffBuffer");
-            this.gl.uniformBlockBinding(this.shaderProgramSimpleBlurX, index, 0);
-
-            this.gl.useProgram(this.shaderProgramBlurY);
-            index = this.gl.getUniformBlockIndex(this.shaderProgramBlurY, "coeffBuffer");
-            this.gl.uniformBlockBinding(this.shaderProgramBlurY, index, 0);
-
-            this.gl.useProgram(this.shaderProgramBlurX);
-            index = this.gl.getUniformBlockIndex(this.shaderProgramBlurX, "coeffBuffer");
-            this.gl.uniformBlockBinding(this.shaderProgramBlurX, index, 0);
-
-            // This might have to be done every frame if we ever have multiple UBOs.
-            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.blurUBOBuffer);
-            const bigBlurArray = new Array(36).fill(0);
-            for(let iblur=0;iblur<gaussianBlurs[blurSize];iblur++){
-                bigBlurArray[iblur] = gaussianBlurs[blurSize][iblur];
-            }
-
-            const bigFloatArray = new Float32Array(gaussianBlurs[blurSize]);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row0"].offset, bigFloatArray.subarray( 0, 4), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row1"].offset, bigFloatArray.subarray( 4, 8), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row2"].offset, bigFloatArray.subarray( 8,12), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row3"].offset, bigFloatArray.subarray(12,16), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row4"].offset, bigFloatArray.subarray(16,20), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row5"].offset, bigFloatArray.subarray(20,24), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row6"].offset, bigFloatArray.subarray(24,28), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row7"].offset, bigFloatArray.subarray(28,32), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row8"].offset, bigFloatArray.subarray(32,36), 0);
-            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["nsteps"].offset, new Int32Array([blurSize]), 0);
-            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null)
-        }
-
+        makeBlurBuffers(this, blurSize)
     }
 
     startSpinTest() {
@@ -821,79 +764,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     initializeSSAOBuffers() {
-        this.ssaoKernel = [];
-        for (let i = 0; i < 32; ++i) {
-
-            const sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
-
-            NormalizeVec3(sample);
-            vec3.scale(sample,sample,Math.random());
-            let scale = i / 32.0;
-
-            // scale samples s.t. they're more aligned to center of kernel
-            scale = this.lerp(0.1, 1.0, scale * scale);
-            vec3.scale(sample,sample,scale);
-            this.ssaoKernel.push(sample[0]);
-            this.ssaoKernel.push(sample[1]);
-            this.ssaoKernel.push(sample[2]);
-            this.ssaoKernel.push(1.0);
-        }
-        //console.log(this.ssaoKernel);
-        //console.log(this.ssaoKernel.length);
-
-        const ssaoNoise = [];
-        for (let i = 0; i < 16; i++) {
-            ssaoNoise.push(Math.random() * 2.0 - 1.0);
-            ssaoNoise.push(Math.random() * 2.0 - 1.0);
-            ssaoNoise.push(0.0);
-        }
-
-        this.ssaoNoiseTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoNoiseTexture);
-        console.log("Do texImage2D for noise");
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB32F, 4, 4, 0, this.gl.RGB, this.gl.FLOAT, new Float32Array(ssaoNoise));
-        console.log("Done texImage2D for noise");
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
-
-        this.gl.useProgram(this.shaderProgramSSAO);
-        this.ssaoKernelBuffer = this.gl.createBuffer();
-        this.bindSSAOBuffers()
+        initializeSSAOBuffers(this)
     }
 
     bindSSAOBuffers() {
-        const blockSize = this.gl.getActiveUniformBlockParameter( this.shaderProgramSSAO, this.shaderProgramSSAO.samples, this.gl.UNIFORM_BLOCK_DATA_SIZE);
-        this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
-        this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);
-        this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
-        this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.ssaoKernelBuffer);
-        const uboVariableNames = [
-        "samples"
-        ];
-        const uboVariableIndices = this.gl.getUniformIndices( this.shaderProgramSSAO, uboVariableNames);
-        const uboVariableOffsets = this.gl.getActiveUniforms( this.shaderProgramSSAO, uboVariableIndices, this.gl.UNIFORM_OFFSET);
-
-        const uboVariableInfo = {};
-
-        uboVariableNames.forEach((name, index) => {
-            uboVariableInfo[name] = {
-                index: uboVariableIndices[index],
-                offset: uboVariableOffsets[index],
-            };
-        });
-
-        this.gl.useProgram(this.shaderProgramSSAO);
-        const index = this.gl.getUniformBlockIndex(this.shaderProgramSSAO, "sampleBuffer");
-        this.gl.uniformBlockBinding(this.shaderProgramSSAO, index, 0);
-
-        const bigFloatArray = new Float32Array(this.ssaoKernel);
-        this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.ssaoKernelBuffer);
-        this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.ssaoKernelBuffer);
-        this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["samples"].offset,  bigFloatArray.subarray( 0, 128), 0);
-        this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
-
+        bindSSAOBuffers(this)
     }
 
     setFogClipOffset(fogClipOffset: number) {
