@@ -1,4 +1,4 @@
-import type { MGWebGL } from './mgWebGL';
+import type { MGWebGL } from '../mgWebGL';
 
 /**
  * 2D-canvas text/circle rasterisation helpers. These draw a string (or a

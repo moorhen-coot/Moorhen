@@ -1,5 +1,5 @@
-import { setRttFramebufferSize } from "../store/glRefSlice"
-import type { MGWebGL } from './mgWebGL';
+import { setRttFramebufferSize } from "../../store/glRefSlice"
+import type { MGWebGL } from '../mgWebGL';
 
 /**
  * Framebuffer / offscreen-buffer setup. These methods create and resize the

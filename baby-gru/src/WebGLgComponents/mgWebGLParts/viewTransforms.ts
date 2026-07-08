@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
-import { get_grid } from '../utils/utils';
-import type { MGWebGL } from './mgWebGL';
+import { get_grid } from '../../utils/utils';
+import type { MGWebGL } from '../mgWebGL';
 
 /**
  * View-transform setup — stereo, multi-way and three-way viewport/quaternion

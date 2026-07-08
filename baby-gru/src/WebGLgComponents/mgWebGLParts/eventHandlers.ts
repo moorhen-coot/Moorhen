@@ -1,13 +1,13 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { quatToMat4, quat4Inverse } from './quatToMat4.js';
-import { createQuatFromDXAngle, createQuatFromAngle, createZQuatFromDX } from './quatUtils';
-import { parseAtomInfoLabel } from '../utils/utils';
-import { getDeviceScale } from './webGLUtils';
-import { getOffsetRect, MGWebGL } from './mgWebGL';
-import type { moorhen } from '../types/moorhen';
-import { webGL } from '../types/mgWebGL';
+import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
+import { createQuatFromDXAngle, createQuatFromAngle, createZQuatFromDX } from '../quatUtils';
+import { parseAtomInfoLabel } from '../../utils/utils';
+import { getDeviceScale } from '../webGLUtils';
+import { getOffsetRect, MGWebGL } from '../mgWebGL';
+import type { moorhen } from '../../types/moorhen';
+import { webGL } from '../../types/mgWebGL';
 
 /**
  * Pointer / keyboard event handlers for the MGWebGL canvas. These were methods

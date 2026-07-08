@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
-import { NormalizeVec3, vec3Create } from './mgMaths.js';
-import { gaussianBlurs } from './gaussianBlurs';
-import type { MGWebGL } from './mgWebGL';
+import { NormalizeVec3, vec3Create } from '../mgMaths.js';
+import { gaussianBlurs } from '../gaussianBlurs';
+import type { MGWebGL } from '../mgWebGL';
 
 /**
  * Uniform-buffer-object (UBO) setup for the WebGL2 post-processing shaders:
