@@ -97,7 +97,6 @@ import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, v
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
-import { createXQuatFromDX, createYQuatFromDY, quatSlerp } from './quatUtils'
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
@@ -105,6 +104,7 @@ import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBu
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
+import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -609,22 +609,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     startSpinTest() {
-        this.doSpin = true;
-        requestAnimationFrame(this.doSpinTestFrame.bind(this));
+        startSpinTest(this)
     }
 
     stopSpinTest() {
-        this.doSpin = false;
+        stopSpinTest(this)
     }
 
     doSpinTestFrame() {
-        const xQ = createXQuatFromDX(0);
-        const yQ = createYQuatFromDY(1);
-        quat4.multiply(xQ, xQ, yQ);
-        quat4.multiply(this.myQuat, this.myQuat, xQ);
-        this.drawScene()
-        if(this.doSpin)
-            requestAnimationFrame(this.doSpinTestFrame.bind(this));
+        doSpinTestFrame(this)
     }
 
     setDrawEnvBOcc(drawEnvBOcc) {
@@ -1487,40 +1480,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setOrientationFrame(qOld, qNew, iframe) {
-        const frac = iframe / this.nAnimationFrames;
-        const newQuat = quatSlerp(qOld, qNew,frac)
-        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.drawScene()
-        if(iframe<this.nAnimationFrames){
-            requestAnimationFrame(this.setOrientationFrame.bind(this,qOld, qNew,iframe+1))
-        }
+        setOrientationFrame(this, qOld, qNew, iframe)
     }
 
     setOrientationAndZoomFrame(qOld, qNew, oldZoom, zoomDelta, iframe) {
-        const frac = iframe / this.nAnimationFrames;
-        const newQuat = quatSlerp(qOld, qNew,frac)
-        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.setZoom(oldZoom + iframe * zoomDelta)
-        this.drawScene()
-        if(iframe<this.nAnimationFrames){
-            requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,qOld, qNew,oldZoom,zoomDelta,iframe+1))
-        }
+        setOrientationAndZoomFrame(this, qOld, qNew, oldZoom, zoomDelta, iframe)
     }
 
     setOrientationAndZoomAnimated(q,z) {
-        this.nAnimationFrames = 15;
-        const oldQuat = quat4.create();
-        const oldZoom = this.zoom;
-        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
-        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
-        requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,oldQuat,q,oldZoom,zoomDelta,1))
+        setOrientationAndZoomAnimated(this, q, z)
     }
 
     setOrientationAnimated(q) {
-        this.nAnimationFrames = 15;
-        const oldQuat = quat4.create()
-        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
-        requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
+        setOrientationAnimated(this, q)
     }
 
     handleOriginUpdated(doDispatch: boolean) {
@@ -1566,54 +1538,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
-        const frac = iframe / this.nAnimationFrames;
-        const newQuat = quatSlerp(qOld, qNew,frac)
-        if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
-            console.log("Something's gone wrong!!!!!!!!!!!!!")
-            console.log(newQuat)
-            console.log(qOld)
-            console.log(qNew)
-            console.log(frac)
-        }
-        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.zoom = oldZoom + iframe * zoomDelta
-        this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
-        this.drawScene()
-        if(iframe<this.nAnimationFrames){
-            requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
-            return
-        }
-        this.animating = false
-        this.handleOriginUpdated(true)
-        const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: this.zoom } })
-        document.dispatchEvent(zoomChanged)
+        setOriginOrientationAndZoomFrame(this, oo, d, qOld, qNew, oldZoom, zoomDelta, iframe)
     }
 
     setViewAnimated(o,q,z) {
-        this.setOriginOrientationAndZoomAnimated(o,q,z)
+        setViewAnimated(this, o, q, z)
     }
 
     setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void {
-        if(this.animating) return
-        this.nAnimationFrames = 15;
-        const old_x = this.origin[0]
-        const old_y = this.origin[1]
-        const old_z = this.origin[2]
-        const new_x = o[0]
-        const new_y = o[1]
-        const new_z = o[2]
-        const DX = new_x - old_x
-        const DY = new_y - old_y
-        const DZ = new_z - old_z
-        const dx = DX/this.nAnimationFrames
-        const dy = DY/this.nAnimationFrames
-        const dz = DZ/this.nAnimationFrames
-        const oldQuat = quat4.create();
-        const oldZoom = this.zoom;
-        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
-        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
-        this.animating = true
-        requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
+        setOriginOrientationAndZoomAnimated(this, o, q, z)
     }
 
     calculateOriginDelta(newOrigin: [number, number, number], oldOrigin: [number, number, number], nFrames: number): [number, number, number] {
@@ -1633,40 +1566,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
-        const [ DX, DY, DZ ] = deltaOrigin
-        const [ X, Y, Z ] = oldOrigin
-        this.origin = [ X + iframe * DX , Y + iframe * DY, Z + iframe * DZ ]
-        this.zoom = oldZoom + deltaZoom * iframe
-        this.drawScene()
-        if (iframe < this.nAnimationFrames) {
-            requestAnimationFrame(this.drawOriginAndZoomFrame.bind(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe + 1))
-        } else {
-            const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: this.zoom } })
-            document.dispatchEvent(zoomChanged)
-            this.handleOriginUpdated(true)
-        }
+        drawOriginAndZoomFrame(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe)
     }
 
     setOriginAnimated(oldOrigin: number[]) : void {
-        const [ DX, DY, DZ ] = this.calculateOriginDelta(oldOrigin as [number, number, number], this.origin, 1)
-        const distance = Math.sqrt(DX**2 + DY**2 + DZ**2)
-        const nFrames = Math.floor(distance / 1.5)
-        this.nAnimationFrames = nFrames > 15 ? 15 : nFrames < 5 ? 5 : nFrames
-        const dx = DX/this.nAnimationFrames
-        const dy = DY/this.nAnimationFrames
-        const dz = DZ/this.nAnimationFrames
-        requestAnimationFrame(this.drawOriginFrame.bind(this, [...this.origin], [dx, dy, dz], 1))
+        setOriginAnimated(this, oldOrigin)
     }
 
     drawOriginFrame(oo,d,iframe){
-        this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
-        this.drawScene()
-        if(iframe<this.nAnimationFrames){
-            requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
-        } else {
-            this.handleOriginUpdated(true)
-            this.props.onOriginChanged(this.origin)
-        }
+        drawOriginFrame(this, oo, d, iframe)
     }
 
     setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void {
@@ -1736,31 +1644,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {
-        const deltaZoom = (newZoom - oldZoom) / this.nAnimationFrames
-        const currentZoom = oldZoom + deltaZoom * iframe
-        this.zoom = currentZoom
-        this.drawScene()
-        if (iframe < this.nAnimationFrames) {
-            const fieldDepthFront = 8
-            const fieldDepthBack = 21
-            this.set_fog_range(this.fogClipOffset - (this.zoom * fieldDepthFront), this.fogClipOffset + (this.zoom * fieldDepthBack))
-            this.set_clip_range(0 - (this.zoom * fieldDepthFront), 0 + (this.zoom * fieldDepthBack))
-            requestAnimationFrame(this.drawZoomFrame.bind(this, oldZoom, newZoom, iframe + 1))
-        } else {
-            const zoomChanged = new CustomEvent("zoomChanged", {
-                "detail": {
-                    oldZoom,
-                    newZoom
-                }
-            });
-            document.dispatchEvent(zoomChanged);
-        }
+        drawZoomFrame(this, oldZoom, newZoom, iframe)
     }
 
     setZoomAnimated(newZoom: number) {
-        const oldZoom = this.zoom
-        this.nAnimationFrames = 15
-        requestAnimationFrame(this.drawZoomFrame.bind(this, oldZoom, newZoom, 1))
+        setZoomAnimated(this, newZoom)
     }
 
     setZoom(z: number, drawScene?: boolean) {
