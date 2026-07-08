@@ -5,7 +5,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
-import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
+import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -102,6 +102,7 @@ import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQ
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { Camera } from './camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './viewTransforms'
+import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './framebuffers'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -1906,481 +1907,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     recreateSilhouetteBuffers(){
-        if(!this.silhouetteFramebuffer){
-            this.silhouetteFramebuffer = this.gl.createFramebuffer();
-
-            this.silhouetteTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.silhouetteDepthTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteDepthTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.silhouetteRenderbufferDepth = this.gl.createRenderbuffer();
-            this.silhouetteRenderbufferColor = this.gl.createRenderbuffer();
-
-        }
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
-        this.silhouetteFramebuffer.width = this.canvas.width;
-        this.silhouetteFramebuffer.height = this.canvas.height;
-
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.silhouetteRenderbufferColor);
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.silhouetteRenderbufferColor);
-        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.silhouetteTexture, 0);
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteDepthTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.silhouetteDepthTexture, 0);
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        this.silhouetteBufferReady = true;
-
+        recreateSilhouetteBuffers(this)
     }
 
     createEdgeDetectFramebufferBuffer(width : number,height : number){
-
-        if(!this.edgeDetectFramebuffer){
-            this.edgeDetectFramebuffer = this.gl.createFramebuffer();
-
-            this.edgeDetectTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            const edgeDetectRenderbuffer = this.gl.createRenderbuffer();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.edgeDetectFramebuffer);
-            this.edgeDetectFramebuffer.width = width;
-            this.edgeDetectFramebuffer.height = height;
-
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, edgeDetectRenderbuffer);
-
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.edgeDetectTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.edgeDetectTexture, 0);
-
-            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-            //console.log("EdgeDetect framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
-        }
-
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
+        createEdgeDetectFramebufferBuffer(this, width, height)
     }
 
     createGBuffers(width : number,height : number){
-        if(!this.gFramebuffer){
-            this.gFramebuffer = this.gl.createFramebuffer();
-            this.gBufferDepthTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferDepthTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.gBufferPositionTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.gBufferNormalTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            //FIXME - Sizes?
-            const gBufferRenderbuffer = this.gl.createRenderbuffer();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.gFramebuffer);
-            this.gFramebuffer.width = width;
-            this.gFramebuffer.height = height;
-
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            if (this.WEBGL2) {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
-            } else {
-                this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
-            }
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferDepthTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.gBufferDepthTexture, 0);
-
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferPositionTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.gBufferPositionTexture, 0);
-
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.RENDERBUFFER, gBufferRenderbuffer);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.gBufferNormalTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT1, this.gl.TEXTURE_2D, this.gBufferNormalTexture, 0);
-
-            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-            console.log("G-buffer framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
-
-        }
+        createGBuffers(this, width, height)
     }
 
     createSSAOFramebufferBuffer(){
-
-        if(!this.ssaoFramebuffer){
-            this.ssaoFramebuffer = this.gl.createFramebuffer();
-
-            this.ssaoTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            //FIXME - Sizes?
-            const ssaoRenderbuffer = this.gl.createRenderbuffer();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.ssaoFramebuffer);
-            this.ssaoFramebuffer.width = this.ssaoFramebufferSize;
-            this.ssaoFramebuffer.height = this.ssaoFramebufferSize;
-
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, ssaoRenderbuffer);
-
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.ssaoTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.ssaoFramebuffer.width, this.ssaoFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.ssaoTexture, 0);
-
-            const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-            console.log("SSAO",typeof(status))
-            console.log("SSAO",typeof(this.gl.FRAMEBUFFER_COMPLETE))
-            console.log("SSAO framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
-        }
-
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
+        createSSAOFramebufferBuffer(this)
     }
 
     createSimpleBlurOffScreeenBuffers(){
-
-        this.offScreenFramebufferSimpleBlurX = this.gl.createFramebuffer();
-        this.offScreenFramebufferSimpleBlurY = this.gl.createFramebuffer();
-
-        this.simpleBlurXTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurXTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-        this.simpleBlurYTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferSimpleBlurX);
-        this.offScreenFramebufferSimpleBlurX.width = 1024;
-        this.offScreenFramebufferSimpleBlurX.height = 1024;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurXTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.simpleBlurXTexture, 0);
-
-        let status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-        console.log("offScreenFramebufferSimpleBlurX framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferSimpleBlurY);
-        this.offScreenFramebufferSimpleBlurY.width = 1024;
-        this.offScreenFramebufferSimpleBlurY.height = 1024;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.simpleBlurYTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1024, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.simpleBlurYTexture, 0);
-
-        status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-        console.log("offScreenFramebufferSimpleBlurY framebuffer OK?",(status===this.gl.FRAMEBUFFER_COMPLETE));
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
+        createSimpleBlurOffScreeenBuffers(this)
     }
 
     recreateDepthPeelBuffers(width,height){
-        //Defines 4 off-screeen multisampled framebuffers and corresponding textures.
-        //Requires depth_texture
-        //FIXME - Should be called after resize event
-        if(this.depth_texture){
-            if(this.depthPeelFramebuffers.length===0&&width>0&&height>0){
-                console.log("Make depth peel buffers of size",width,height)
-                for(let i=0;i<4;i++){
-                    this.depthPeelFramebuffers[i] = this.gl.createFramebuffer();
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.depthPeelFramebuffers[i]);
-
-                    this.depthPeelColorTextures[i] = this.gl.createTexture();
-                    this.depthPeelDepthTextures[i] = this.gl.createTexture();
-                    this.depthPeelRenderbufferDepth[i] = this.gl.createRenderbuffer();
-                    this.depthPeelRenderbufferColor[i] = this.gl.createRenderbuffer();
-
-                    this.depthPeelFramebuffers[i].width = width;
-                    this.depthPeelFramebuffers[i].height = height;
-
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelColorTextures[i]);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
-                    this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.depthPeelRenderbufferColor[i]);
-                    if (this.WEBGL2) {
-                        //FIXME - multismapling isn't actually working - need to blit to another buffer ...
-                        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES), this.gl.RGBA32F, width, height);
-                        //this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA32F, width, height);
-                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, width, height, 0, this.gl.RGBA, this.gl.FLOAT, null);
-                    } else {
-                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, width, height);
-                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-                    }
-                    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.depthPeelColorTextures[i], 0);
-
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i]);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthPeelRenderbufferDepth[i]);
-                    this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.depthPeelRenderbufferDepth[i]);
-                    if (this.WEBGL2) {
-                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT32F, width, height);
-                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT32F, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.FLOAT, null);
-                    } else {
-                        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
-                        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
-                    }
-                    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthPeelDepthTextures[i], 0);
-
-                    const canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
-                    console.log("Depth-peel buffer",i,"completeness",canRead);
-                    if(!canRead){
-                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT){
-                            console.log("FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-                        }
-                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT){
-                            console.log("FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-                        }
-                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS){
-                            console.log("FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
-                        }
-                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_UNSUPPORTED){
-                            console.log("FRAMEBUFFER_UNSUPPORTED");
-                        }
-                        if(this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE){
-                            console.log("FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
-                        }
-                    }
-
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-                    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-                    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-
-                }
-            }
-        }
+        recreateDepthPeelBuffers(this, width, height)
     }
 
     recreateOffScreeenBuffers(width,height){
-        // This defines an off-screeen multisampled framebuffer and an off-screen framebuffer and texture to blit to.
-        if(!this.offScreenFramebuffer){
-            this.offScreenFramebuffer = this.gl.createFramebuffer();
-            this.offScreenFramebufferColor = this.gl.createFramebuffer();
-            this.offScreenFramebufferBlurX = this.gl.createFramebuffer();
-            this.offScreenFramebufferBlurY = this.gl.createFramebuffer();
-
-            this.blurXTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.blurYTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.offScreenTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.offScreenDepthTexture = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            this.offScreenRenderbufferDepth = this.gl.createRenderbuffer();
-            this.offScreenRenderbufferColor = this.gl.createRenderbuffer();
-        }
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
-        this.offScreenFramebuffer.width = width;
-        this.offScreenFramebuffer.height = height;
-
-        if (this.WEBGL2) {
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
-            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
-                    this.gl.DEPTH_COMPONENT24, width, height);
-
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
-                    this.gl.RGBA8, width, height);
-        } else {
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
-        }
-
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
-        this.offScreenFramebufferColor.width = width;
-        this.offScreenFramebufferColor.height = height;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.offScreenTexture, 0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, width, height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.offScreenDepthTexture, 0);
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
-        this.offScreenFramebufferBlurX.width = width;
-        this.offScreenFramebufferBlurX.height = height;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.blurXTexture, 0);
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurY);
-        this.offScreenFramebufferBlurY.width = width;
-        this.offScreenFramebufferBlurY.height = height;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.blurYTexture, 0);
-
-        this.offScreenReady = true;
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        recreateOffScreeenBuffers(this, width, height)
     }
 
     initTextureFramebuffer() : void {
-
-        this.rttFramebuffer = this.gl.createFramebuffer();
-        this.rttFramebufferColor = this.gl.createFramebuffer();
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
-
-        this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
-        this.rttFramebuffer.height = this.rttFramebuffer.width;
-        this.dispatch(setRttFramebufferSize([this.rttFramebuffer.width,this.rttFramebuffer.height]))
-
-        this.rttTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.rttFramebuffer.width, this.rttFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-
-        this.rttDepthTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttDepthTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-        if (this.WEBGL2) {
-            const renderbufferDepth = this.gl.createRenderbuffer();
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferDepth);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
-            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
-                                    this.gl.getParameter(this.gl.MAX_SAMPLES),
-                                    this.gl.DEPTH_COMPONENT24,
-                                    this.rttFramebuffer.width,
-                                    this.rttFramebuffer.height);
-            const renderbuffer = this.gl.createRenderbuffer();
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, renderbuffer);
-            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
-                                    this.gl.getParameter(this.gl.MAX_SAMPLES),
-                                    this.gl.RGBA8,
-                                    this.rttFramebuffer.width,
-                                    this.rttFramebuffer.height);
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferColor);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttDepthTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.rttFramebuffer.width, this.rttFramebuffer.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.rttDepthTexture, 0);
-        } else {
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
-            const renderbuffer = this.gl.createRenderbuffer();
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
-            //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.rttFramebuffer.width, this.rttFramebuffer.height);
-        }
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-
-        this.rttFramebufferDepth = null;
-        if (this.depth_texture) {
-            this.rttFramebufferDepth = this.gl.createFramebuffer();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
-            const hwLimit = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE), this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE));
-            const maxDim = Math.max(1, this.canvas.width, this.canvas.height);
-            const shadowSize = Math.max(1024, Math.min(4096, hwLimit, Math.pow(2, Math.ceil(Math.log2(maxDim)))));
-            this.rttFramebufferDepth.width = shadowSize;
-            this.rttFramebufferDepth.height = shadowSize;
-            this.rttTextureDepth = this.gl.createTexture();
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-            if (this.WEBGL2) {
-                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
-            } else {
-                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_SHORT, null);
-            }
-            const renderbufferCol = this.gl.createRenderbuffer();
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferCol);
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.rttTextureDepth, 0);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, renderbufferCol);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        }
-        this.screenshotBuffersReady = true;
-
+        initTextureFramebuffer(this)
     }
 
     centreOn(idx) {
