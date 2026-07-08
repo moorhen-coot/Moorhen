@@ -6,7 +6,7 @@ import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setIsWebGL2, setGLCtx, setDisplayBuffers, setCanvasSize, setRttFramebufferSize } from "../store/glRefSlice"
-import { parseAtomInfoLabel, guid, get_grid , gemmiAtomPairsToCylindersInfo } from '../utils/utils';
+import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
 //WebGL2 shaders
@@ -101,6 +101,7 @@ import { DisplayBuffer } from './displayBuffer'
 import { createQuatFromDXAngle, createQuatFromAngle, createXQuatFromDX, createYQuatFromDY, createZQuatFromDX, quatSlerp } from './quatUtils'
 import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { Camera } from './camera'
+import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './viewTransforms'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -445,35 +446,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         currentMultiViewGroup: number;
 
     setupStereoTransformations() : void {
-
-        this.stereoViewports = []
-        this.stereoQuats = []
-        this.stereoViewports.push([0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight])
-        this.stereoViewports.push([this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight])
-        const yaxis = vec3.create();
-        vec3.set(yaxis, 0.0, -1.0, 0.0)
-
-        const angle = 3/180*Math.PI;
-
-        const dval3_p = Math.cos(angle / 2.0);
-        const dval0_y_p = yaxis[0] * Math.sin(angle / 2.0);
-        const dval1_y_p = yaxis[1] * Math.sin(angle / 2.0);
-        const dval2_y_p = yaxis[2] * Math.sin(angle / 2.0);
-
-        const dval3_m = Math.cos(-angle / 2.0);
-        const dval0_y_m = yaxis[0] * Math.sin(-angle / 2.0);
-        const dval1_y_m = yaxis[1] * Math.sin(-angle / 2.0);
-        const dval2_y_m = yaxis[2] * Math.sin(-angle / 2.0);
-
-        const rotY_p = quat4.create();
-        const rotY_m = quat4.create();
-
-        quat4.set(rotY_p, dval0_y_p, dval1_y_p, dval2_y_p, dval3_p);
-        quat4.set(rotY_m, dval0_y_m, dval1_y_m, dval2_y_m, dval3_m);
-
-        this.stereoQuats.push(rotY_p)
-        this.stereoQuats.push(rotY_m)
-
+        setupStereoTransformations(this)
     }
 
     getCanvasRef() : React.RefObject<HTMLCanvasElement>{
@@ -503,142 +476,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     setupMultiWayTransformations(nmols:number) : {rows:number,cols:number} {
-
-        let wh : number[] = get_grid(nmols)
-        if(this.specifyMultiViewRowsColumns){
-           wh = this.multiViewRowsColumns
-        }
-
-        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
-        this.multiWayViewports = []
-        this.multiWayQuats = []
-
-        const rotZ = quat4.create();
-        quat4.set(rotZ, 0, 0, 0, -1);
-
-        for(let i=0;i<wh[1];i++){
-            for(let j=0;j<wh[0];j++){
-                const frac_i = i/wh[1]
-                const frac_j = j/wh[0]
-                this.multiWayViewports.push([frac_i*this.gl.viewportWidth,frac_j*this.gl.viewportHeight, this.gl.viewportWidth/wh[1], this.gl.viewportHeight/wh[0]])
-                this.multiWayQuats.push(rotZ)
-            }
-        }
-        this.multiWayRatio = wh[0]/wh[1]
-        this.currentMultiViewGroup = 0
-
-        return {rows:wh[1],cols:wh[0]}
-
+        return setupMultiWayTransformations(this, nmols)
     }
 
     setupThreeWayTransformations() : void {
-
-        this.currentViewport = [0, 0, this.gl.viewportWidth, this.gl.viewportHeight]
-        this.threeWayViewports = []
-        this.threeWayQuats = []
-
-        const BL = [0, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-        const BR = [this.gl.viewportWidth/2, 0, this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-        const TR = [this.gl.viewportWidth/2, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-        const TL = [0, this.gl.viewportHeight/2,this.gl.viewportWidth/2, this.gl.viewportHeight/2]
-
-        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
-            if(this.threeWayViewOrder.indexOf(" ")===0){
-                this.threeWayViewports.push(BL)
-                this.threeWayViewports.push(BR)
-                this.threeWayViewports.push(TR)
-            } else if(this.threeWayViewOrder.indexOf(" ")===1){
-                this.threeWayViewports.push(BL)
-                this.threeWayViewports.push(BR)
-                this.threeWayViewports.push(TL)
-            } else if(this.threeWayViewOrder.indexOf(" ")===2){
-                this.threeWayViewports.push(BR)
-                this.threeWayViewports.push(TL)
-                this.threeWayViewports.push(TR)
-            } else if(this.threeWayViewOrder.indexOf(" ")===3){
-                this.threeWayViewports.push(BL)
-                this.threeWayViewports.push(TL)
-                this.threeWayViewports.push(TR)
-            }
-        } else {
-            this.threeWayViewports.push(BL)
-            this.threeWayViewports.push(TL)
-            this.threeWayViewports.push(TR)
-        }
-
-        const xaxis = vec3.create();
-        vec3.set(xaxis, 1.0, 0.0, 0.0)
-        const yaxis = vec3.create();
-        vec3.set(yaxis, 0.0, -1.0, 0.0)
-
-        const zaxis = vec3.create();
-        vec3.set(zaxis, 0.0, 0.0, 1.0)
-
-        const angle = -Math.PI/2.;
-
-        const dval3 = Math.cos(angle / 2.0);
-
-        const dval0_x = xaxis[0] * Math.sin(angle / 2.0);
-        const dval1_x = xaxis[1] * Math.sin(angle / 2.0);
-        const dval2_x = xaxis[2] * Math.sin(angle / 2.0);
-
-        const dval0_y = yaxis[0] * Math.sin(angle / 2.0);
-        const dval1_y = yaxis[1] * Math.sin(angle / 2.0);
-        const dval2_y = yaxis[2] * Math.sin(angle / 2.0);
-
-        const dval0_z_p = zaxis[0] * Math.sin(angle / 2.0);
-        const dval1_z_p = zaxis[1] * Math.sin(angle / 2.0);
-        const dval2_z_p = zaxis[2] * Math.sin(angle / 2.0);
-        const dval3_z_p = Math.cos(angle / 2.0);
-
-        const dval0_z_m = zaxis[0] * Math.sin(-angle / 2.0);
-        const dval1_z_m = zaxis[1] * Math.sin(-angle / 2.0);
-        const dval2_z_m = zaxis[2] * Math.sin(-angle / 2.0);
-        const dval3_z_m = Math.cos(-angle / 2.0);
-
-        const yForward = quat4.create();
-        const xForward = quat4.create();
-        const zForward = quat4.create();
-        const zPlus = quat4.create();
-        const zMinus = quat4.create();
-
-        quat4.set(zForward, 0, 0, 0, -1);
-        quat4.set(yForward, dval0_x, dval1_x, dval2_x, dval3);
-        quat4.set(xForward, dval0_y, dval1_y, dval2_y, dval3);
-
-        quat4.set(zPlus, dval0_z_p, dval1_z_p, dval2_z_p, dval3_z_p);
-        quat4.set(zMinus, dval0_z_m, dval1_z_m, dval2_z_m, dval3_z_p);
-
-        quat4.multiply(xForward, xForward, zMinus);
-        quat4.multiply(yForward, yForward, zPlus);
-
-        if(this.threeWayViewOrder&&this.threeWayViewOrder.length===4){
-
-            const top = this.threeWayViewOrder.substring(0,2)
-            const bottom = this.threeWayViewOrder.substring(2,4)
-
-            for(const c of bottom.trim()) {
-                if(c==="X")
-                    this.threeWayQuats.push(xForward)
-                if(c==="Y")
-                    this.threeWayQuats.push(yForward)
-                if(c==="Z")
-                    this.threeWayQuats.push(zForward)
-            }
-            for(const c of top.trim()) {
-                if(c==="X")
-                    this.threeWayQuats.push(xForward)
-                if(c==="Y")
-                    this.threeWayQuats.push(yForward)
-                if(c==="Z")
-                    this.threeWayQuats.push(zForward)
-            }
-        } else {
-            this.threeWayQuats.push(yForward)
-            this.threeWayQuats.push(zForward)
-            this.threeWayQuats.push(xForward)
-        }
-
+        setupThreeWayTransformations(this)
     }
 
     resize(width: number, height: number) : void {
