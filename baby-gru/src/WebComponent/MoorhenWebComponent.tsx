@@ -139,7 +139,7 @@ export class MoorhenWebComponent extends HTMLElement {
     private _renderReactTree() {
         if (!this._reactRoot) return;
         this._reactRoot.render(
-            <MoorhenProvider key="aaaaabbb">
+            <MoorhenProvider>
                 <MoorhenContainer
                     moorhenInstanceRef={this._moorhenInstanceRef}
                     size={this.size ?? undefined}
@@ -148,7 +148,6 @@ export class MoorhenWebComponent extends HTMLElement {
                     disableFileUploads={this.disableFileUploads}
                     viewOnly={this.viewOnly}
                     parentElementRef={this._parentElementRef}
-                    key="aaaaa"
                 />
             </MoorhenProvider>
         );
