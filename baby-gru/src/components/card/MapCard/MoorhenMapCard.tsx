@@ -110,7 +110,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const handleDownload = async () => {
         const response = await props.map.getMap();
-        doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", ".map")}`);
+        doDownload([response.data.result.mapData], `${props.map.name.replace(".mtz", "")}.map`);
     };
 
     const handleVisibility = () => {

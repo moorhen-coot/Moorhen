@@ -122,7 +122,7 @@ export const subMenuMap: SubMenuMap = {
                 type: "customJSX",
                 keywords: ["upload", "load", "pdb"],
                 description: "Upload and open files",
-                jsx: MenuItems.AutoLoadFiles,
+                jsx: MenuItems.LoadFiles,
                 specialType: "upload",
             },
             { type: "separator" },

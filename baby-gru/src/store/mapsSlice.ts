@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { MoorhenMap } from "../utils/MoorhenMap";
+import type { MoorhenMap } from "../utils/MoorhenMap";
 
 const mapsSlice = createSlice({
     name: "maps",

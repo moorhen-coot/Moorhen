@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useState } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -15,8 +15,8 @@ export const SharpenBlurMap = () => {
     const store = useStore<RootState>();
     const maps = useSelector((state: moorhen.State) => state.maps);
 
-
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const [useResample, setUseResample] = useState<boolean>(false);
     const [selectedMapNo, setSelectedMapNo] = useState<number | null>(null);
@@ -24,20 +24,18 @@ export const SharpenBlurMap = () => {
     const [bFactor, setBFactor] = useState<number>(50);
 
     const onCompleted = async () => {
-
         if (selectedMapNo === null || bFactor === null || (useResample && resampleFactor === null)) {
             console.warn("Unable to sharpen/blur map, invalid input...");
             console.warn(`selectedMapNo: ${selectedMapNo}, bFactor: ${bFactor}, resampleFactor: ${resampleFactor}`);
             return;
         }
-
-        const newMap = new MoorhenMap(commandCentre, store);
+        const newMap = new MoorhenMap(moorhenInstance);
         const selectedMap = maps.find(map => map.molNo === selectedMapNo);
+
         if (!selectedMap) {
             console.warn(`Unable to sharpen/blur map, could not find map with molNo ${selectedMapNo}...`);
             return;
         }
-
 
         let result: moorhen.WorkerResponse<number>;
         if (!useResample) {
@@ -62,9 +60,9 @@ export const SharpenBlurMap = () => {
 
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;
+            selectedMap.copyMapParametersTo(newMap);
             newMap.name = `Map ${selectedMapNo} ${bFactor < 0 ? "sharpened" : "blurred"} by ${bFactor}`;
-            await newMap.getSuggestedSettings();
-            newMap.isDifference = selectedMap.isDifference;
+            await newMap.initialise();
             const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
             dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius }));
             dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
@@ -80,20 +78,24 @@ export const SharpenBlurMap = () => {
 
     return (
         <>
-        <MoorhenStack inputGrid>
-            <MoorhenMapSelect maps={maps} selected={selectedMapNo} setSelectedMap={setSelectedMapNo} />
-            <MoorhenNumberInput  label="B-factor to apply" value={bFactor} setValue={setBFactor} allowNegativeValues={true} />
-            <MoorhenToggle
-                type="switch"
-                checked={useResample}
-                onChange={() => {
-                    setUseResample(prev => !prev);
-                }}
-                label="Use resample"
-            />
-            {useResample &&( <><MoorhenNumberInput label="Resampling factor" value={resampleFactor} setValue={setResampleFactor} /> <div/></>)}
-        </MoorhenStack>
-        <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
+            <MoorhenStack inputGrid>
+                <MoorhenMapSelect maps={maps} selected={selectedMapNo} setSelectedMap={setSelectedMapNo} />
+                <MoorhenNumberInput label="B-factor to apply" value={bFactor} setValue={setBFactor} allowNegativeValues={true} />
+                <MoorhenToggle
+                    type="switch"
+                    checked={useResample}
+                    onChange={() => {
+                        setUseResample(prev => !prev);
+                    }}
+                    label="Use resample"
+                />
+                {useResample && (
+                    <>
+                        <MoorhenNumberInput label="Resampling factor" value={resampleFactor} setValue={setResampleFactor} /> <div />
+                    </>
+                )}
+            </MoorhenStack>
+            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>
     );
 };

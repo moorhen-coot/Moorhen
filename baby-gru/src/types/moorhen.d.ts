@@ -173,11 +173,6 @@ export namespace moorhen {
 
     type ScreenRecorder = import("../utils/MoorhenScreenRecorder").ScreenRecorder;
 
-    type mapHeaderInfo = {
-        spacegroup: string;
-        cell: libcootApi.mapCellJS;
-        resolution: number;
-    };
 
     type AtomRightClickEventInfo = {
         atom: AtomInfo;

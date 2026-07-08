@@ -4,7 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { setOrigin } from "@/store";
+import { MoorhenReduxStoreType, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -26,7 +26,7 @@ export type LoadFilesResult = {
 
 export class MoorhenInstance extends StoreExtension {
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
-    private commandCentre: CommandCentre;
+    private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
     private timeCapsule: MoorhenTimeCapsule;
     private timeCapsuleRef: React.RefObject<MoorhenTimeCapsule | null>;
@@ -43,15 +43,18 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
 
-    constructor(containerRef: React.RefObject<HTMLDivElement>, menuSystem: MoorhenMenuSystem) {
+    constructor(containerRef: React.RefObject<HTMLDivElement>, menuSystem?: MoorhenMenuSystem, externalCommandCentre?: CommandCentre, externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>) {
         super();
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
         this.videoRecorderRef = React.createRef<ScreenRecorder>();
         this.moleculesRef = React.createRef<MoorhenMolecule[]>();
         this.mapsRef = React.createRef<MoorhenMap[]>();
+        if (externalCommandCentre) {
+            this.setCommandCentre(externalCommandCentre);
+        }
         this.preferences = new Preferences();
-        this._menuSystem = menuSystem;
+        this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
     }
 
@@ -59,9 +62,9 @@ export class MoorhenInstance extends StoreExtension {
         urlPrefix: string;
         monomerLibraryPath: string;
     } = {
-        urlPrefix: "",
-        monomerLibraryPath: "",
-    };
+            urlPrefix: "",
+            monomerLibraryPath: "",
+        };
 
     /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
     public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
@@ -77,8 +80,9 @@ export class MoorhenInstance extends StoreExtension {
         }
     }
 
+
     public setCommandCentre(commandCentre: CommandCentre): void {
-        this.commandCentre = commandCentre;
+        this._commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
         this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
@@ -86,8 +90,8 @@ export class MoorhenInstance extends StoreExtension {
         return this._cootCommand;
     }
 
-    public getCommandCentre(): CommandCentre {
-        return this.commandCentre;
+    public get commandCentre(): CommandCentre {
+        return this._commandCentre;
     }
 
     public getCommandCentreRef(): React.RefObject<CommandCentre> {
@@ -141,7 +145,7 @@ export class MoorhenInstance extends StoreExtension {
         return this.containerRef;
     }
 
-    get menuSystem(): MoorhenMenuSystem {
+    public get menuSystem(): MoorhenMenuSystem | null {
         return this._menuSystem;
     }
 
@@ -157,6 +161,7 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public get files() {
+        const moorhenInstance = this;
         const store = this.store;
         const cootCommand = this.cootCommand;
         const dispatch = this.dispatch;
@@ -183,6 +188,22 @@ export class MoorhenInstance extends StoreExtension {
                 let filesArray: File[] = [];
                 const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
                     const urlString = url instanceof URL ? url.toString() : url;
+
+                    // Handle Node.js file system paths or it bugs in testing
+                    if (typeof urlString === 'string' && !urlString.startsWith('http') && !urlString.startsWith('blob:') && !urlString.startsWith('file://')) {
+                        try {
+                            // Try to import fs (will work in Node.js)
+                            const fs = await import('fs');
+                            const fsPromises = fs.promises;
+                            const fileBuffer = await fsPromises.readFile(urlString);
+                            const blob = new Blob([fileBuffer]);
+                            const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                            return new File([blob], finalFilename, { type: blob.type });
+                        } catch (err) {
+                            // fs not available or file not found, fall back to fetch
+                            console.log("Could not read file from filesystem, trying fetch...", err);
+                        }
+                    }
                     const response = await fetch(urlString);
                     const blob = await response.blob();
                     const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
@@ -193,7 +214,7 @@ export class MoorhenInstance extends StoreExtension {
 
                 if (files instanceof File) {
                     filesArray = [files];
-                } else if (files instanceof FileList) {
+                } else if (typeof FileList !== 'undefined' && files instanceof FileList) {
                     filesArray = Array.from(files);
                 } else if (typeof files === "string") {
                     filesArray = [await getFileFromURL(files)];
@@ -225,13 +246,9 @@ export class MoorhenInstance extends StoreExtension {
                 const createdObjects = await execWhenReady(() =>
                     autoOpenFiles(
                         filesArray,
-                        commandCentreRef,
-                        store,
-                        paths.monomerLibraryPath,
+                        moorhenInstance,
                         backgroundColor,
                         defaultBondSmoothness,
-                        timeCapsuleRef,
-                        dispatch
                     )
                 );
 
@@ -269,25 +286,14 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public get session() {
-        const commandCentreRef = this.commandCentreRef;
-        const monomerLibraryPath = this.paths.monomerLibraryPath;
-        const moleculesList = this.getMoleculeList();
-        const mapsList = this.getMapList();
-        const timecapsuleRef = this.timeCapsuleRef;
-        const store = this.store;
-        const dispatch = this.dispatch;
+        const moorhenInstance = this;
+
 
         return {
             loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
                 const result = MoorhenTimeCapsule.loadSessionData(
                     sessionData,
-                    monomerLibraryPath,
-                    moleculesList,
-                    mapsList,
-                    commandCentreRef,
-                    timecapsuleRef,
-                    store,
-                    dispatch,
+                    moorhenInstance,
                     fetchExternalUrl
                 );
                 return result;
@@ -486,28 +492,31 @@ export class MoorhenInstance extends StoreExtension {
             externalTimeCapsuleRef.current = this.timeCapsule;
         }
 
-        // == Init Command Centre ==
-        const newCommandCentre = new CommandCentre(this.paths.urlPrefix, this.timeCapsuleRef, {
-            onCootInitialized: () => {
-                this.dispatch(setCootInitialized(true));
-            },
-            onCommandExit: () => {
-                this.dispatch(toggleCootCommandExit());
-            },
-            onCommandStart: () => {
-                this.dispatch(toggleCootCommandStart());
-            },
-            onMoleculeChanged: (cootMolNo: number) => {
-                this.triggerMoleculeChanged(cootMolNo);
-            },
-        });
-        newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
-        this.setCommandCentre(newCommandCentre);
-        if (externalCommandCentreRef) {
-            externalCommandCentreRef.current = this.commandCentre;
-        }
+        if (!this.commandCentre) {
+            // == Init Command Centre ==
+            const newCommandCentre = new CommandCentre(this.paths.urlPrefix, this.timeCapsuleRef, {
+                onCootInitialized: () => {
+                    this.dispatch(setCootInitialized(true));
+                },
+                onCommandExit: () => {
+                    this.dispatch(toggleCootCommandExit());
+                },
+                onCommandStart: () => {
+                    this.dispatch(toggleCootCommandStart());
+                },
+                onMoleculeChanged: (cootMolNo: number) => {
+                    this.triggerMoleculeChanged(cootMolNo);
+                },
+            });
+            newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
+            this.setCommandCentre(newCommandCentre);
+            if (externalCommandCentreRef) {
+                externalCommandCentreRef.current = this.commandCentre;
+            }
 
-        await newCommandCentre.init();
+            await newCommandCentre.init();
+        }
+        
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
@@ -516,9 +525,9 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public cleanup(): void {
-        if (this.commandCentre) {
+        if (this._commandCentre) {
             this.commandCentre.close();
-            this.commandCentre = undefined;
+            this._commandCentre = undefined;
             this.timeCapsule = undefined;
             this.videoRecorder = undefined;
         }

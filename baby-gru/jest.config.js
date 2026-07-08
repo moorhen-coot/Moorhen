@@ -4,7 +4,7 @@ module.exports = {
     projects: [
         {
             displayName: "api-utils",
-            testMatch: ["<rootDir>/tests/__tests__/*.test.js"],
+            testMatch: ["<rootDir>/tests/__tests__/*.test.js", "<rootDir>/tests/__tests__/*.test.ts"],
             setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             transform: {
                 "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
@@ -14,8 +14,9 @@ module.exports = {
             },
             transformIgnorePatterns: ["node_modules/(?!(uuid|node-fetch)/)"],
             moduleNameMapper: {
+                "^localforage$": "<rootDir>/tests/__mocks__/mockLocalforage.js",
                 "@/(.*)": "<rootDir>/src/$1"
-            }
+            },
         },
         {
             displayName: "react-components",
@@ -33,6 +34,7 @@ module.exports = {
             moduleNameMapper: {
                 "\\.(css|less|scss)$": "<rootDir>/tests/__mocks__/mockStyle.js",
                 "\\.(svg)$": "<rootDir>/tests/__mocks__/mockSvg.js",
+                "^localforage$": "<rootDir>/tests/__mocks__/mockLocalforage.js",
                 mockService: "<rootDir>/tests/__mocks__",
                 "@/(.*)": "<rootDir>/src/$1"
             },

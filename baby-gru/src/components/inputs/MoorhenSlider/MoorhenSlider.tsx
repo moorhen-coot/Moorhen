@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
 import { clampValue, toFixedNoZero } from "../../misc/helpers";
 import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
@@ -193,6 +193,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const thumbRef = useRef<HTMLDivElement>(null);
 
     const precision = sliderPrecision ?? Math.pow(10, -decimalPlaces);
+    const sliderId = useId();
     const [thumbPosition, setThumbPosition] = useState(0);
     const [thumb2Position, setThumb2Position] = useState(0);
     const thumb2Ref = useRef<HTMLDivElement>(null);
@@ -385,7 +386,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             const maxDigits = maxVal.toFixed(decimalPlaces).length;
             const finalPiWidth = piWidth ? piWidth : 0.5 + 0.7 * maxDigits + "rem";
             return (
-                <label className={"moorhen__slider__label"} htmlFor="slider">
+                <label className={"moorhen__slider__label"} htmlFor={sliderId}>
                     <MoorhenNumberInput
                         allowNegativeValues={minVal < 0}
                         label={sliderTitle}
@@ -420,7 +421,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
 
         if (!usePreciseInput) {
             return (
-                <label className={"moorhen__slider__label"} htmlFor="slider">
+                <label className={"moorhen__slider__label"} htmlFor={sliderId}>
                     {sliderTitle}
                     {showTitleValue && `: ${props.value.toFixed(decimalPlaces)}`}{sliderTitleUnit ?? null}
                     {showTitleValue && props.type === "range" ? ` - ${props.value2.toFixed(decimalPlaces)}` : ""}
@@ -617,7 +618,8 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
                         />
                         {props.type === "range" && (
                             <input
-                                type="range"
+                                id={sliderId}
+                        type="range"
                                 className={"moorhen__slider-builtin"}
                                 disabled={isDisabled}
                                 value={logScale ? log10ofT(props.value2, resolveScaling) : props.value2}
