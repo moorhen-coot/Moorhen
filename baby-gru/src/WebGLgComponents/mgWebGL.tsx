@@ -103,6 +103,7 @@ import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
 import { Camera } from './camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './framebuffers'
+import { makeCircleCanvas, makeTextCanvas } from './canvasTextures'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -6608,77 +6609,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     makeCircleCanvas(text, width, height, circleColour) {
-        this.circleCanvasInitialized = false;
-        if (!this.circleCanvasInitialized) {
-            this.circleCtx.canvas.width = width;
-            this.circleCtx.canvas.height = height;
-            this.circleCtx.font = "80px helvetica";
-            this.circleCtx.textAlign = "left";
-            this.circleCtx.textBaseline = "middle";
-            this.circleCanvasInitialized = true;
-        }
-        this.circleCtx.fillStyle = "red";
-        this.circleCtx.clearRect(0, 0, this.circleCtx.canvas.width, this.circleCtx.canvas.height);
-        this.circleCtx.fillRect(0, 0, this.circleCtx.canvas.width, this.circleCtx.canvas.height);
-        this.circleCtx.fillStyle = circleColour;
-        this.circleCtx.strokeStyle = circleColour;
-        this.circleCtx.lineWidth = width / 10;
-        this.circleCtx.arc(width / 2, height / 2, width / 2 - width / 20 - 1, 0, 2 * Math.PI);
-        this.circleCtx.stroke();
-        const tm = this.circleCtx.measureText(text);
-        this.circleCtx.fillText(text, width / 2 - tm.width / 2, height / 2 + 30);
+        makeCircleCanvas(this, text, width, height, circleColour)
     }
 
     // Puts text in center of canvas.
     makeTextCanvas(text:string, width:number, height:number, textColour:string, font?:string)  : [number,CanvasRenderingContext2D] {
-        if(font){
-            let theCtx;
-            if(this.extraFontCtxs && (font in this.extraFontCtxs)){
-                theCtx = this.extraFontCtxs[font];
-            } else {
-                theCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
-            }
-            theCtx.canvas.width = width;
-            theCtx.canvas.height = height;
-            theCtx.textBaseline = "alphabetic";
-            theCtx.font = font;
-            let textMetric = theCtx.measureText("Mgq!^(){}|'\"~`√∫Å");
-            let actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
-            let loop = 0;
-            while(actualHeight>theCtx.canvas.height&&loop<3){
-                theCtx.canvas.height *= 2;
-                theCtx.font = font;
-                textMetric = theCtx.measureText("M");
-                actualHeight = textMetric.fontBoundingBoxAscent + textMetric.fontBoundingBoxDescent;
-                loop += 1;
-            }
-            theCtx.textAlign = "left";
-            theCtx.fillStyle = "#00000000";
-            theCtx.fillRect(0, 0, theCtx.canvas.width, theCtx.canvas.height);
-            theCtx.fillStyle = textColour;
-            theCtx.fillText(text, 0, theCtx.canvas.height + textMetric.ideographicBaseline,theCtx.canvas.width);
-            if(!this.extraFontCtxs)
-                this.extraFontCtxs = {};
-            this.extraFontCtxs[font] = theCtx;
-            textMetric = theCtx.measureText(text);
-            return [textMetric.actualBoundingBoxRight / width,theCtx];
-        }
-        this.textCanvasInitialized = false;
-        if (!this.textCanvasInitialized) {
-            this.textCtx.canvas.width = width;
-            this.textCtx.canvas.height = height;
-            this.textCtx.font = "20px helvetica";
-            this.textCtx.textAlign = "left";
-            this.textCtx.textBaseline = "middle";
-            this.textCanvasInitialized = true;
-        }
-        this.textCtx.fillStyle = "#00000000";
-        this.textCtx.fillRect(0, 0, this.textCtx.canvas.width, this.textCtx.canvas.height);
-        this.textCtx.fillStyle = textColour;
-        this.textCtx.fillText(text, 0, height / 2,this.textCtx.canvas.width);
-        const textMetric = this.textCtx.measureText(text);
-        //Return the maximum width in fractional box coordinates
-        return [textMetric.actualBoundingBoxRight / width,this.textCtx];
+        return makeTextCanvas(this, text, width, height, textColour, font)
     }
 
 }
