@@ -97,7 +97,7 @@ import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, v
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
-import { buildBuffers, appendOtherData,linesToThickLines } from './buildBuffers'
+import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
@@ -105,6 +105,7 @@ import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
 import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
+import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -4702,9 +4703,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTransparent(theMatrix) {
+        drawTransparent(this, theMatrix)
     }
 
     drawImagesAndText(invMat) {
+        drawImagesAndText(this, invMat)
     }
 
     clearTextPositionBuffers() {
@@ -4713,48 +4716,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTexturedShapes(invMat) {
-        const texturedShapes = this.store.getState().glRef.texturedShapes
-        const theShader = this.shaderProgramTextured;
-        this.gl.useProgram(theShader);
-        this.setMatrixUniforms(theShader);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
-
-        //this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.3, 0.4, 1.0);
-        //this.gl.vertexAttrib3f(theShader.vertexNormalAttribute, 0.0, 0.0, 1.0);
-
-        texturedShapes.forEach(shape => {
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.vertexBuffer);
-            this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, shape.texCoordBuffer);
-            this.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, shape.idxBuffer);
-            this.gl.uniform1i(theShader.valueMap, 0);
-            this.gl.uniform1i(theShader.colorMap, 1);
-            this.gl.activeTexture(this.gl.TEXTURE0);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, shape.image_texture);
-            this.gl.activeTexture(this.gl.TEXTURE1);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, shape.color_ramp_texture);
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-        })
-        this.gl.activeTexture(this.gl.TEXTURE0);
+        drawTexturedShapes(this, invMat)
     }
 
     drawTextLabels(up, right) {
-        // Labels, angles, etc. should be instanced by texture coords, positions using contextBig
-
-        // make sure we can render it even if it's not a power of 2
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-        return
-
+        drawTextLabels(this, up, right)
     }
 
     isWebGL2() {
@@ -4762,46 +4728,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawDistancesAndLabels() {
-
-        // Labels, angles, etc. instanced by texture coords, positions using contextBig
-
-        this.gl.useProgram(this.shaderProgramTextInstanced);
-        this.setMatrixUniforms(this.shaderProgramTextInstanced);
-
-        if (this.atomLabelDepthMode) {
-            //If we want to fog them
-            this.gl.depthFunc(this.gl.LESS);
-        } else {
-            //If we want them to be on top
-            this.gl.depthFunc(this.gl.ALWAYS);
-            this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
-            this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
-        }
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        [this.measureTextCanvasTexture,this.labelsTextCanvasTexture].forEach((canvasTexture) => {
-            canvasTexture.draw();
-        })
-
-        this.gl.depthFunc(this.gl.LESS);
-
+        drawDistancesAndLabels(this)
     }
 
     drawCircles(up, right) {
-        this.gl.useProgram(this.shaderProgramCircles);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.circleTex);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.uniform3fv(this.shaderProgramCircles.up, up);
-        this.gl.uniform3fv(this.shaderProgramCircles.right, right);
-
-        //TODO
-        // Use the right coords and colours and not do this for clicked atoms!
-        // Big texture
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
+        drawCircles(this, up, right)
     }
 
     getFrontAndBackPos(event: KeyboardEvent) : [number[], number[], number, number]  {
@@ -5156,612 +5087,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawLineMeasures(invMat) {
-        if(this.measurePointsArray.length<1) return;
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-        //Begin copy/paste from crosshairs
-        const axesOffset = vec3.create();
-        vec3.set(axesOffset, 0, 0, 0);
-        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
-
-        this.gl.useProgram(this.shaderProgramThickLines);
-        this.setMatrixUniforms(this.shaderProgramThickLines);
-        const pmvMatrix = mat4.create();
-        const pMatrix = mat4.create();
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-
-        if(this.renderToTexture){
-            if(this.gl.viewportWidth > this.gl.viewportHeight){
-                const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
-            } else {
-                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
-            }
-        } else {
-            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
-        }
-
-        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
-        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
-
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
-        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
-
-        if (typeof (this.axesPositionBuffer) === "undefined") {
-            this.axesPositionBuffer = this.gl.createBuffer();
-            this.axesColourBuffer = this.gl.createBuffer();
-            this.axesIndexBuffer = this.gl.createBuffer();
-            this.axesNormalBuffer = this.gl.createBuffer();
-            this.axesTextNormalBuffer = this.gl.createBuffer();
-            this.axesTextColourBuffer = this.gl.createBuffer();
-            this.axesTextPositionBuffer = this.gl.createBuffer();
-            this.axesTextTexCoordBuffer = this.gl.createBuffer();
-            this.axesTextIndexesBuffer = this.gl.createBuffer();
-        }
-        const renderArrays = {
-            axesVertices: [],
-            axesColours: [],
-            axesIdx: []
-        }
-        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
-            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
-        }
-
-        let hairColour = [0., 0., 0., 1.];
-        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (y < 0.5) {
-            hairColour = [1., 1., 1., 1.];
-        }
-
-        const lineStart = vec3.create();
-        const lineEnd = vec3.create();
-
-        let lastPoint = null;
-
-        const addLine = (x1,y1,x2,y2) => {
-            vec3.set(lineStart, x1 * this.zoom * ratio, y1 * this.zoom, 0.0);
-            vec3.transformMat4(lineStart, lineStart, invMat);
-            vec3.set(lineEnd,   x2 * this.zoom * ratio, y2 * this.zoom, 0.0);
-            vec3.transformMat4(lineEnd, lineEnd, invMat);
-            addSegment(renderArrays,
-                xyzOff.map((coord, iCoord) => coord + lineStart[iCoord]),
-                xyzOff.map((coord, iCoord) => coord + lineEnd[iCoord]),
-                hairColour, hairColour
-            )
-        }
-
-        this.measurePointsArray.forEach(point => {
-
-            const x2 =  point.x;
-            const y2 = -point.y;
-
-            addLine(x2-.3/ratio,  y2-.3, x2+.3/ratio, y2-.3);
-            addLine(x2-.3/ratio,  y2+.3, x2+.3/ratio, y2+.3);
-            addLine(x2-.25/ratio, y2-.3, x2-.25/ratio, y2+.3);
-            addLine(x2+.25/ratio, y2-.3, x2+.25/ratio, y2+.3);
-
-            if(lastPoint){
-                const x1 =  lastPoint.x;
-                const y1 = -lastPoint.y;
-                addLine(x1,y1,x2,y2);
-            }
-            lastPoint = point;
-        })
-
-        const size = 1.5;
-        const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        const axesNormals = thickLines["normals"];
-        const axesVertices_new = thickLines["vertices"];
-        const axesColours_new = thickLines["colours"];
-        const axesIndexs_new = thickLines["indices"];
-
-        //console.log("thickLines",thickLines);
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.depthFunc(this.gl.LESS)
-
+        drawLineMeasures(this, invMat)
     }
 
     drawCrosshairs(invMat,ratioMult=1.0) {
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        const axesOffset = vec3.create();
-        vec3.set(axesOffset, 0, 0, 0);
-        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
-        this.gl.useProgram(this.shaderProgramThickLines);
-        this.setMatrixUniforms(this.shaderProgramThickLines);
-        const pmvMatrix = mat4.create();
-        const pMatrix = mat4.create();
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
-        if(this.renderToTexture){
-            if(this.gl.viewportWidth > this.gl.viewportHeight){
-                const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
-            } else {
-                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
-            }
-        } else {
-            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
-        }
-        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
-        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
-
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
-        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
-
-        if (typeof (this.axesPositionBuffer) === "undefined") {
-            this.axesPositionBuffer = this.gl.createBuffer();
-            this.axesColourBuffer = this.gl.createBuffer();
-            this.axesIndexBuffer = this.gl.createBuffer();
-            this.axesNormalBuffer = this.gl.createBuffer();
-            this.axesTextNormalBuffer = this.gl.createBuffer();
-            this.axesTextColourBuffer = this.gl.createBuffer();
-            this.axesTextPositionBuffer = this.gl.createBuffer();
-            this.axesTextTexCoordBuffer = this.gl.createBuffer();
-            this.axesTextIndexesBuffer = this.gl.createBuffer();
-        }
-        const renderArrays = {
-            axesVertices: [],
-            axesColours: [],
-            axesIdx: []
-        }
-        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
-            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
-            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
-        }
-
-        let hairColour = [0., 0., 0., 0.5];
-        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (y < 0.5) {
-            hairColour = [1., 1., 1., 0.5];
-        }
-
-        // Actual axes
-        const cross_hair_scale_factor = 0.3;
-        const horizontalHairStart = vec3.create();
-        vec3.set(horizontalHairStart, -cross_hair_scale_factor * this.zoom, 0.0, 0.0);
-        vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        const horizontalHairEnd = vec3.create();
-        vec3.set(horizontalHairEnd, cross_hair_scale_factor * this.zoom, 0.0, 0.0);
-        vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
-
-        addSegment(renderArrays,
-            xyzOff.map((coord, iCoord) => coord + horizontalHairStart[iCoord]),
-            xyzOff.map((coord, iCoord) => coord + horizontalHairEnd[iCoord]),
-            hairColour, hairColour
-        )
-
-        const verticalHairStart = vec3.create();
-        vec3.set(verticalHairStart, 0.0, -cross_hair_scale_factor * this.zoom, 0.0);
-        vec3.transformMat4(verticalHairStart, verticalHairStart, invMat);
-        const verticalHairEnd = vec3.create();
-        vec3.set(verticalHairEnd, 0.0, cross_hair_scale_factor * this.zoom, 0.0);
-        vec3.transformMat4(verticalHairEnd, verticalHairEnd, invMat);
-
-        addSegment(renderArrays,
-            xyzOff.map((coord, iCoord) => coord + verticalHairStart[iCoord]),
-            xyzOff.map((coord, iCoord) => coord + verticalHairEnd[iCoord]),
-            hairColour, hairColour
-        )
-
-        const size = 1.0;
-        const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        const axesNormals = thickLines["normals"];
-        const axesVertices_new = thickLines["vertices"];
-        const axesColours_new = thickLines["colours"];
-        const axesIndexs_new = thickLines["indices"];
-
-        //console.log("thickLines",thickLines);
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.depthFunc(this.gl.LESS)
-
+        drawCrosshairs(this, invMat, ratioMult)
     }
 
     drawMouseTrack() {
-
-        const c = this.canvasRef.current;
-        const offset = getOffsetRect(c);
-
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-        const frac_x = (getDeviceScale()*(this.init_x-offset.left)/this.gl.viewportWidth-0.5)  * 48.;
-        const frac_y = -(getDeviceScale()*(this.init_y-offset.top)/this.gl.viewportHeight-0.5) * 48;
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        this.gl.useProgram(this.shaderProgram);
-        this.setMatrixUniforms(this.shaderProgram);
-        this.gl.uniform1f(this.shaderProgram.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgram.fog_end, 1000.0);
-        this.gl.uniform4fv(this.shaderProgram.clipPlane0, [0, 0, -1, 1000]);
-        this.gl.uniform4fv(this.shaderProgram.clipPlane1, [0, 0, 1, 1000]);
-        const pmvMatrix = mat4.create();
-        const tempMVMatrix = mat4.create();
-        mat4.set(tempMVMatrix,
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, -50.0, 1.0,
-        )
-        const tempInvMVMatrix = mat4.create();
-        mat4.set(tempInvMVMatrix,
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        )
-        const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
-        mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
-        this.gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, pmvMatrix);
-        this.gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, tempInvMVMatrix);
-        this.gl.uniformMatrix4fv(this.shaderProgram.mvInvMatrixUniform, false, tempInvMVMatrix);
-
-        this.mouseTrackPoints.push([frac_x,frac_y,performance.now()]);
-        if(this.mouseTrackPoints.length>120) this.mouseTrackPoints.shift();
-
-        let mouseTrackVertices = [];
-        let mouseTrackColours = [];
-        let mouseTrackNormals = [];
-        let mouseTrackIndexs = [];
-
-        let i = 0;
-        let currentIdx = 0;
-        this.mouseTrackPoints.forEach(point => {
-            const this_x = point[0];
-            const this_y = point[1];
-            const timeStamp = point[2];
-            const ifrac = i / this.mouseTrackPoints.length;
-            if((performance.now()-timeStamp)<200){
-            mouseTrackVertices = mouseTrackVertices.concat([
-                this_x-ifrac/ratio, this_y-ifrac, 0.0,
-                this_x+ifrac/ratio, this_y-ifrac, 0.0,
-                this_x+ifrac/ratio, this_y+ifrac, 0.0,
-                this_x-ifrac/ratio, this_y+ifrac, 0.0,
-            ]);
-            mouseTrackColours = mouseTrackColours.concat([
-                1, 0, 0, 1,
-                1, 0, 0, 1,
-                1, 0, 0, 1,
-                1, 0, 0, 1,
-            ]);
-            mouseTrackNormals = mouseTrackNormals.concat([
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1,
-            ]);
-            mouseTrackIndexs = mouseTrackIndexs.concat([
-               currentIdx, currentIdx+1, currentIdx+2,
-               currentIdx, currentIdx+2, currentIdx+3,
-            ])
-               currentIdx += 4;
-            }
-            i += 1;
-        })
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.enableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgram.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgram.vertexColourAttribute);
-
-        if (typeof (this.mouseTrackPositionBuffer) === "undefined") {
-            this.mouseTrackPositionBuffer = this.gl.createBuffer();
-            this.mouseTrackColourBuffer = this.gl.createBuffer();
-            this.mouseTrackIndexBuffer = this.gl.createBuffer();
-            this.mouseTrackNormalBuffer = this.gl.createBuffer();
-        }
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.mouseTrackNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mouseTrackNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.mouseTrackPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mouseTrackVertices), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.mouseTrackColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mouseTrackColours), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgram.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.mouseTrackIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(mouseTrackIndexs), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, mouseTrackIndexs.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mouseTrackIndexs), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, mouseTrackIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-        this.gl.depthFunc(this.gl.LESS)
+        drawMouseTrack(this)
     }
 
     drawFPSMeter() {
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        this.gl.useProgram(this.shaderProgramThickLines);
-        this.setMatrixUniforms(this.shaderProgramThickLines);
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
-        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane0, [0, 0, -1, 1000]);
-        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane1, [0, 0, 1, 1000]);
-        const pmvMatrix = mat4.create();
-        const tempMVMatrix = mat4.create();
-        mat4.set(tempMVMatrix,
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, -50.0, 1.0,
-        )
-        const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
-        mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04);
-
-        if (typeof (this.hitchometerPositionBuffer) === "undefined") {
-            this.hitchometerPositionBuffer = this.gl.createBuffer();
-            this.hitchometerColourBuffer = this.gl.createBuffer();
-            this.hitchometerIndexBuffer = this.gl.createBuffer();
-            this.hitchometerNormalBuffer = this.gl.createBuffer();
-        }
-
-        const size = 1.0;
-
-        const screenZ = vec3.create()
-        vec3.set(screenZ,0,0,1)
-
-        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, screenZ);
-
-        const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
-        const hitchometerVertices = [
-            -22.9, -11.4, 0.0,
-            -12.7, -11.4, 0.0,
-            -22.9, -21.6, 0.0,
-            -12.7, -21.6, 0.0,
-            -22.9, -11.4, 0.0,
-            -22.9, -21.6, 0.0,
-            -12.7, -11.4, 0.0,
-            -12.7, -21.6, 0.0,
-
-        ];
-
-        for(let i=0; i<this.mspfArray.length;i++){
-            let mspf = this.mspfArray[i];
-            if(mspf>200.0) mspf = 200.0;
-
-            const l = mspf / 200.0 * 10.0;
-            const x = -22.8 + i/20.;
-            const y1 = -21.5;
-            const y2 = -21.5 + l;
-            const z = 0.0;
-            hitchometerVertices.push(x,y1,z,x,y2,z);
-            if(mspf<17){
-                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-            } else if(mspf<24) {
-                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-            } else if(mspf<50) {
-                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-            } else {
-                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-            }
-        }
-
-        const thickLines = linesToThickLines(hitchometerVertices, hitchometerColours, size);
-        const hitchometerNormals = thickLines["normals"];
-        const hitchometerVertices_new = thickLines["vertices"];
-        const hitchometerColours_new = thickLines["colours"];
-        const hitchometerIndexs_new = thickLines["indices"];
-
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerVertices_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerColours_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.hitchometerIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.depthFunc(this.gl.LESS)
+        drawFPSMeter(this)
     }
 
     drawTextOverlays(invMat,ratioMult=1.0,font_scale=1.0) {
-
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight * ratioMult
-
-        let textColour = "black";
-        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (y < 0.5) {
-            textColour = "white";
-        }
-
-        this.measureText2DCanvasTexture.clearBigTexture()
-
-        const drawString = (s, xpos, ypos, zpos, font, threeD) => {
-            if(font) this.textCtx.font = font;
-            const axesOffset = vec3.create();
-            vec3.set(axesOffset, xpos,ypos, 0);
-            vec3.transformMat4(axesOffset, axesOffset, invMat);
-
-            const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord]);
-            const base_x = xyzOff[0];
-            const base_y = xyzOff[1];
-            const base_z = xyzOff[2];
-
-            this.measureText2DCanvasTexture.addBigTextureTextImage({font:font,text:s,x:base_x,y:base_y,z:base_z})
-
-        }
-
-        this.textLegends.forEach(label => {
-                const xpos = label.x * 48.0 -24.*ratio;
-                const ypos = label.y * 48.0 -24.;
-                drawString(label.text,xpos,ypos, 0.0, label.font, false);
-        });
-
-        let fontMult = 1.0
-        if(window.devicePixelRatio){
-            fontMult *= window.devicePixelRatio
-        }
-        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, (fontMult * 20 * font_scale).toFixed(0)+"px helvetica", false);
-
-        let lastPoint = null;
-        let lastLastPoint = null;
-
-        if(!this.doMultiView&&!this.doThreeWayView&&!this.doCrossEyedStereo&&!this.doSideBySideStereo){
-
-            this.measurePointsArray.forEach(point => {
-                if(lastPoint){
-                    let fnSize = 24
-                    if(window.devicePixelRatio){
-                        fnSize *= window.devicePixelRatio
-                    }
-                    const fnSizePx = fnSize + "px"
-                    const dist = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(point.x-lastPoint.x) + this.zoom*(point.y-lastPoint.y) * this.zoom*(point.y-lastPoint.y));
-                    const mid_point = {x:(point.x+lastPoint.x)/2,y:(point.y+lastPoint.y)/2}
-                    drawString(dist.toFixed(1)+"Å", mid_point.x*ratio, -mid_point.y, 0.0, fnSizePx+" helvetica", false);
-                    if(lastLastPoint){
-                        const l1 = {x:(point.x-lastPoint.x),y:(point.y-lastPoint.y)}
-                        l1.x /= dist / this.zoom;
-                        l1.y /= dist / this.zoom;
-                        const dist2 = Math.sqrt(this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) * this.zoom* this.gl.viewportWidth / this.gl.viewportHeight*(lastLastPoint.x-lastPoint.x) + this.zoom*(lastLastPoint.y-lastPoint.y) * this.zoom*(lastLastPoint.y-lastPoint.y));
-                        const l2 = {x:(lastLastPoint.x-lastPoint.x),y:(lastLastPoint.y-lastPoint.y)}
-                        l2.x /= dist2 / this.zoom;
-                        l2.y /= dist2 / this.zoom;
-                        const l1_dot_l2 = this.gl.viewportWidth / this.gl.viewportHeight*this.gl.viewportWidth / this.gl.viewportHeight*l1.x*l2.x + l1.y*l2.y;
-                        const angle = Math.acos(l1_dot_l2) / Math.PI * 180.0;
-                        const angle_t = angle.toFixed(1)+"º";
-                        drawString(angle_t, lastPoint.x*ratio, -lastPoint.y, 0.0, fnSizePx+" helvetica", false);
-                    }
-                    lastLastPoint = lastPoint;
-                }
-                lastPoint = point;
-            })
-        }
-
-        //Do we ever have any newTextLabels?
-        //Draw Hbond, etc. text.
-        this.newTextLabels.forEach(tlabel => {
-            tlabel.forEach(label => {
-                drawString(label.text, label.x,label.y,label.z, "30px helvetica", true);
-            })
-        })
-
-        this.measureText2DCanvasTexture.recreateBigTextureBuffers();
-
-        this.gl.useProgram(this.shaderProgramTextInstanced);
-        this.setMatrixUniforms(this.shaderProgramTextInstanced);
-
-        //If we want them to be on top
-        this.gl.depthFunc(this.gl.ALWAYS);
-        this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
-
-        for(let i = 0; i<16; i++)
-            this.gl.disableVertexAttribArray(i);
-
-
-        this.measureText2DCanvasTexture.draw();
-
-        this.gl.depthFunc(this.gl.LESS)
+        drawTextOverlays(this, invMat, ratioMult, font_scale)
     }
 
     canvasPointToGLPoint(point) {
