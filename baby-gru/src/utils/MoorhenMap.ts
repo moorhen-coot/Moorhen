@@ -10,7 +10,6 @@ import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./ma
 import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
-import { MoorhenReduxStoreType, RootState } from "@/store";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -67,7 +66,7 @@ export class MoorhenMap {
     headerInfo: mapHeaderInfo;
     isEM: boolean;
     molNo: number;
-    store: MoorhenReduxStoreType;
+    store: Store;
     commandCentre: CommandCentre | null;
     isOriginLocked: boolean;
     drawOrigin: [number, number, number];
