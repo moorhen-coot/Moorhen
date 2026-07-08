@@ -21,6 +21,6 @@ png_release="1.6.55"
 freetype_release="2.14.3"
 jsoncpp_release="1.9.6"
 lhasa_commit="4e11ebf3b6"
-coot_commit="5da7e89b4b"
+coot_commit="6d06347f50"
 # This is the GitHub repo username of the person who owns the repository of Coot that we use.
 coot_fork="pemsley"
