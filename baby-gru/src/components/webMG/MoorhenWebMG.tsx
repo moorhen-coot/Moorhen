@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, useMemo, forwardRef, useState, useReducer } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
@@ -18,6 +18,8 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { EdgeDetectSync } from './glRefSync/EdgeDetectSync';
+import { SceneRenderSettingsSync } from './glRefSync/SceneRenderSettingsSync';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -67,38 +69,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
-    const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
-    const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
-    const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
-    const edgeDetectNormalThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold)
-    const edgeDetectDepthScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale)
-    const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
-    const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
-    const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
-    const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
-    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
-    const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
-    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
-    const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
-    const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
-    const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
-    const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
-    const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
-    const multiViewRows = useSelector((state: moorhen.State) => state.sceneSettings.multiViewRows)
-    const multiViewColumns = useSelector((state: moorhen.State) => state.sceneSettings.multiViewColumns)
-    const threeWayViewOrder = useSelector((state: moorhen.State) => state.sceneSettings.threeWayViewOrder)
-    const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
-    const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
-    const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
-    const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
-    const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
-    const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    // Stabilise props passed to <MGWebGL>: parse the accelerators once per change of
+    // shortCuts (not every render), and keep a single no-op identity. Without this the
+    // class re-renders on every parent render because these props change by identity.
+    const keyboardAccelerators = useMemo(() => JSON.parse(shortCuts as string), [shortCuts])
+    const noopMessageChanged = useCallback(() => { }, [])
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
@@ -223,27 +203,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
        }
     }, [])
 
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.doPerspectiveProjection = doPerspectiveProjection
-            glRef.current.clearTextPositionBuffers()
-            glRef.current.drawScene()
-        }
-    }, [doPerspectiveProjection])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setShadowDepthDebug(doShadowDepthDebug)
-            glRef.current.drawScene()
-        }
-    }, [doShadowDepthDebug])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(doOutline)
-            glRef.current.drawScene()
-        }
-    }, [doOutline])
 
     /*
     useEffect(() => {
@@ -280,155 +239,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [elementsIndicesRestrict])
 
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setSSAOOn(doSSAO)
-            glRef.current.drawScene()
-        }
-    }, [doSSAO])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setEdgeDetectOn(doEdgeDetect)
-            glRef.current.drawScene()
-        }
-    }, [doEdgeDetect])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setEdgeDetectDepthThreshold(edgeDetectDepthThreshold)
-            glRef.current.drawScene()
-        }
-    }, [edgeDetectDepthThreshold])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setEdgeDetectNormalThreshold(edgeDetectNormalThreshold)
-            glRef.current.drawScene()
-        }
-    }, [edgeDetectNormalThreshold])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setEdgeDetectDepthScale(edgeDetectDepthScale)
-            glRef.current.drawScene()
-        }
-    }, [edgeDetectDepthScale])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setEdgeDetectNormalScale(edgeDetectNormalScale)
-            glRef.current.drawScene()
-        }
-    }, [edgeDetectNormalScale])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setShadowsOn(doShadow)
-            glRef.current.drawScene()
-        }
-    }, [doShadow])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDrawEnvBOcc(drawEnvBOcc)
-            glRef.current.handleOriginUpdated(false)
-            glRef.current.drawScene()
-        }
-    }, [drawEnvBOcc])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setThreeWayViewOrder(threeWayViewOrder)
-            glRef.current.setupThreeWayTransformations()
-            glRef.current.drawScene()
-        }
-    }, [threeWayViewOrder])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setMultiViewRowsColumns([multiViewRows,multiViewColumns])
-            glRef.current.setSpecifyMultiViewRowsColumns(specifyMultiViewRowsColumns)
-            glRef.current.drawScene()
-        }
-    }, [multiViewRows,multiViewColumns,specifyMultiViewRowsColumns])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDoThreeWayView(doThreeWayView)
-            glRef.current.drawScene()
-        }
-    }, [doThreeWayView])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDoSideBySideStereo(doSideBySideStereo)
-            glRef.current.drawScene()
-        }
-    }, [doSideBySideStereo])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDoMultiView(doMultiView)
-            glRef.current.drawScene()
-        }
-    }, [doMultiView])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDoCrossEyedStereo(doCrossEyedStereo)
-            glRef.current.drawScene()
-        }
-    }, [doCrossEyedStereo])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setDoAnaglyphStereo(doAnaglyphStereo)
-            glRef.current.drawScene()
-        }
-    }, [doAnaglyphStereo])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setSpinTestState(doSpin)
-            glRef.current.drawScene()
-        }
-    }, [doSpin])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function' && ssaoBias != null) {
-            glRef.current.setSSAOBias(ssaoBias)
-            glRef.current.drawScene()
-        }
-    }, [ssaoBias])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function' && ssaoRadius != null) {
-            glRef.current.setSSAORadius(ssaoRadius)
-            glRef.current.drawScene()
-        }
-    }, [ssaoRadius])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setBlurSize(depthBlurRadius)
-            glRef.current.drawScene()
-        }
-    }, [depthBlurRadius])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.blurDepth = depthBlurDepth
-            glRef.current.drawScene()
-        }
-    }, [depthBlurDepth])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.useOffScreenBuffers = useOffScreenBuffers
-            glRef.current.drawScene()
-        }
-    }, [useOffScreenBuffers])
+    // SSAO / shadow / env-B-occ / stereo / multi-view / spin / depth-blur scene
+    // settings are synced by <SceneRenderSettingsSync/> (mounted below), and
+    // edge-detect by <EdgeDetectSync/>, so changing any of them re-renders only
+    // that headless component rather than this 770-line one.
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
@@ -553,12 +367,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     }, [handleRightClick]);
 
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.clipCapPerfectSpheres = clipCap
-            glRef.current.drawScene()
-        }
-    }, [clipCap, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -722,6 +530,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [zoom,quat,originState])
 
     return  <>
+                <EdgeDetectSync glRef={glRef} />
+                <SceneRenderSettingsSync glRef={glRef} />
                 <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
                 <MGWebGL
                     ref={glRef}
@@ -731,10 +541,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     onOriginChanged={onOriginChanged}
                     onQuatChanged={onQuatChanged}
                     cursorPositionChanged={cursorPositionChanged}
-                    messageChanged={(d) => { }}
+                    messageChanged={noopMessageChanged}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}
-                    keyboardAccelerators={JSON.parse(shortCuts as string)}
+                    keyboardAccelerators={keyboardAccelerators}
                     showCrosshairs={drawCrosshairs}
                     showScaleBar={drawScaleBar}
                     showAxes={drawAxes}

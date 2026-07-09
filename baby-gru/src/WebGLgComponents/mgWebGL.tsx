@@ -107,7 +107,7 @@ import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setO
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
-import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
+import { initInstanceState, initGraphicsContext, attachCanvasListeners, detachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
@@ -243,6 +243,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doCrossEyedStereo: boolean;
         doAnaglyphStereo: boolean;
         doneEvents: boolean;
+        // Teardown bookkeeping (componentWillUnmount): the canvas listeners to
+        // remove, and the two interval ids to clear, so nothing leaks on unmount.
+        canvasEventListeners: [string, (e: any) => void][];
+        fpsIntervalId: ReturnType<typeof setInterval>;
+        drawDirtyIntervalId: ReturnType<typeof setInterval>;
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
@@ -545,7 +550,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.store = props.store;
         this.dispatch = props.dispatch
 
-        setInterval(() => {
+        this.fpsIntervalId = setInterval(() => {
             if(!this.gl) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
@@ -585,6 +590,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (this.props.mapLineWidth !== null) {
             this.mapLineWidth = this.props.mapLineWidth
         }
+    }
+
+    // render() only produces the <canvas> (size from constructor-time state,
+    // stable ref), so parent re-renders never change our output. BUT
+    // shouldComponentUpdate:false also skips componentDidUpdate - so we must
+    // return true for every prop componentDidUpdate reacts to (width/height and
+    // the display toggles), or those changes would be silently dropped. For all
+    // other prop churn from the (frequently re-rendering) MoorhenWebMG wrapper,
+    // skipping is free. Draws happen imperatively via glRef.current, not render().
+    shouldComponentUpdate(nextProps: webGL.MGWebGLPropsInterface) {
+        return nextProps.width !== this.props.width
+            || nextProps.height !== this.props.height
+            || nextProps.showScaleBar !== this.props.showScaleBar
+            || nextProps.showCrosshairs !== this.props.showCrosshairs
+            || nextProps.showAxes !== this.props.showAxes
+            || nextProps.showFPS !== this.props.showFPS
+            || nextProps.mapLineWidth !== this.props.mapLineWidth
+            || nextProps.reContourMapOnlyOnMouseUp !== this.props.reContourMapOnlyOnMouseUp;
     }
 
     render() {
@@ -780,6 +803,16 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
+    }
+
+    componentWillUnmount() {
+        // Teardown counterpart to componentDidMount. Without this the canvas
+        // listeners and the two intervals (FPS text every 1s, drawSceneIfDirty
+        // every 16ms) leaked on unmount / remount - the ~62/s redraw tick kept
+        // firing for the lifetime of the page.
+        detachCanvasListeners(this)
+        if (this.fpsIntervalId !== undefined) clearInterval(this.fpsIntervalId)
+        if (this.drawDirtyIntervalId !== undefined) clearInterval(this.drawDirtyIntervalId)
     }
 
     initializeShaders() : void {
