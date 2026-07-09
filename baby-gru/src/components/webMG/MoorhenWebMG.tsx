@@ -75,6 +75,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
+    const useHBAO = useSelector((state: moorhen.State) => state.sceneSettings.useHBAO)
+    const ssaoStrength = useSelector((state: moorhen.State) => state.sceneSettings.ssaoStrength)
+    const ssaoQuality = useSelector((state: moorhen.State) => state.sceneSettings.ssaoQuality)
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
@@ -408,6 +411,24 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [ssaoRadius])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && useHBAO != null) {
+            glRef.current.setUseHBAO(useHBAO)
+        }
+    }, [useHBAO])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoStrength != null) {
+            glRef.current.setSSAOStrength(ssaoStrength)
+        }
+    }, [ssaoStrength])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && ssaoQuality != null) {
+            glRef.current.setSSAOQuality(ssaoQuality)
+        }
+    }, [ssaoQuality])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

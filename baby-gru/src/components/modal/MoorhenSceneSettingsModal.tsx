@@ -28,6 +28,9 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
+    setUseHBAO,
+    setSsaoStrength,
+    setSsaoQuality,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -114,6 +117,9 @@ const OcclusionPanel = () => {
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO);
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius);
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias);
+    const useHBAO = useSelector((state: moorhen.State) => state.sceneSettings.useHBAO);
+    const ssaoStrength = useSelector((state: moorhen.State) => state.sceneSettings.ssaoStrength);
+    const ssaoQuality = useSelector((state: moorhen.State) => state.sceneSettings.ssaoQuality);
 
     return (
         <MoorhenStack direction="vertical" card={true}>
@@ -137,16 +143,41 @@ const OcclusionPanel = () => {
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
+
+            {/* HBAO prototype (WebGL2). Toggle flips the AO pass between the
+                classic sampled SSAO and the horizon-based shader for live A/B. */}
+            <MoorhenToggle
+                type="switch"
+                checked={useHBAO}
+                disabled={!doSSAO}
+                onChange={() => {
+                    dispatch(setUseHBAO(!useHBAO));
+                }}
+                label="Use HBAO (prototype)"
+            />
+
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
                 scale="linear"
                 isDisabled={!doSSAO}
-                sliderTitle="Occlusion effect"
-                value={ssaoBias}
-                setValue={val => dispatch(setSsaoBias(val))}
+                sliderTitle={useHBAO ? "Strength" : "Occlusion effect"}
+                value={useHBAO ? ssaoStrength : ssaoBias}
+                setValue={val => dispatch(useHBAO ? setSsaoStrength(val) : setSsaoBias(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
+            />
+
+            <MoorhenSlider
+                minVal={0}
+                maxVal={2}
+                scale="linear"
+                isDisabled={!doSSAO || !useHBAO}
+                sliderTitle="HBAO quality (0 Low · 1 Med · 2 High)"
+                value={ssaoQuality}
+                setValue={val => dispatch(setSsaoQuality(Math.round(val)))}
+                stepButtons={1}
+                decimalPlaces={0}
             />
         </MoorhenStack>
     );

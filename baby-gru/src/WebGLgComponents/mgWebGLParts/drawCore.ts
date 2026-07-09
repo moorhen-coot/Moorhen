@@ -1180,23 +1180,42 @@ export function drawScene(self: MGWebGL) : void {
             if(!self.ssaoFramebuffer) self.createSSAOFramebufferBuffer();
             if(!self.offScreenFramebufferSimpleBlurX) self.createSimpleBlurOffScreeenBuffers();
 
-            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.ssaoFramebuffer);
-            self.gl.useProgram(self.shaderProgramSSAO);
-            self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.ssaoKernelBuffer);
-            self.gl.uniform1i(self.shaderProgramSSAO.gPositionTexture,0);
-            self.gl.uniform1i(self.shaderProgramSSAO.gNormalTexture,1);
-            self.gl.uniform1i(self.shaderProgramSSAO.texNoiseTexture,2);
+            // HBAO prototype: flip the AO pass to the horizon-based shader when
+            // useHBAO is set and its program compiled. Both shaders share this
+            // pass's scaffolding (framebuffer, G-buffer/noise textures, tile
+            // uniforms, fullscreen-quad draw, blur) - only the program and a few
+            // uniforms differ, so we alias the active program as `ao` here.
+            const usingHBAO = self.useHBAO && self.shaderProgramHBAO;
+            const ao = usingHBAO ? self.shaderProgramHBAO : self.shaderProgramSSAO;
 
-            self.gl.uniform1f(self.shaderProgramSSAO.depthBufferSize,b+f);
+            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.ssaoFramebuffer);
+            self.gl.useProgram(ao);
+            self.gl.bindBuffer(self.gl.UNIFORM_BUFFER, self.ssaoKernelBuffer);
+            self.gl.uniform1i(ao.gPositionTexture,0);
+            self.gl.uniform1i(ao.gNormalTexture,1);
+            self.gl.uniform1i(ao.texNoiseTexture,2);
+
+            self.gl.uniform1f(ao.depthBufferSize,b+f);
             if(self.doPerspectiveProjection){
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0/80.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius*2.0);
+                self.gl.uniform1f(ao.depthFactor,1.0/80.0);
+                self.gl.uniform1f(ao.radius,self.ssaoRadius*2.0);
             } else {
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius/self.zoom);
+                self.gl.uniform1f(ao.depthFactor,1.0);
+                self.gl.uniform1f(ao.radius,self.ssaoRadius/self.zoom);
             }
 
-            self.gl.uniform1f(self.shaderProgramSSAO.bias,self.ssaoBias);
+            if(usingHBAO){
+                // Quality tier -> (directions, steps). Kept <= the shader's
+                // MAX_DIRECTIONS/MAX_STEPS (12).
+                const tiers = [ [4,4], [6,6], [8,8] ];
+                const tier = tiers[Math.max(0, Math.min(2, self.ssaoQuality|0))];
+                self.gl.uniform1i(ao.numDirections, tier[0]);
+                self.gl.uniform1i(ao.numSteps, tier[1]);
+                self.gl.uniform1f(ao.strength, self.ssaoStrength);
+                self.gl.uniform1f(ao.angleBias, 0.30); // ~17 deg, rejects self-occlusion
+            } else {
+                self.gl.uniform1f(ao.bias,self.ssaoBias);
+            }
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.gBufferPositionTexture);
             self.gl.activeTexture(self.gl.TEXTURE1);
@@ -1206,25 +1225,25 @@ export function drawScene(self: MGWebGL) : void {
 
             for(let i = 0; i<16; i++)
                 self.gl.disableVertexAttribArray(i);
-            self.gl.enableVertexAttribArray(self.shaderProgramSSAO.vertexTextureAttribute);
-            self.gl.enableVertexAttribArray(self.shaderProgramSSAO.vertexPositionAttribute);
+            self.gl.enableVertexAttribArray(ao.vertexTextureAttribute);
+            self.gl.enableVertexAttribArray(ao.vertexPositionAttribute);
 
             //These things probably need tweaking in the SSAO multiview case
-            self.gl.uniform1f(self.shaderProgramSSAO.tileScaleBase_x,0.0);
-            self.gl.uniform1f(self.shaderProgramSSAO.tileScaleBase_y,0.0);
+            self.gl.uniform1f(ao.tileScaleBase_x,0.0);
+            self.gl.uniform1f(ao.tileScaleBase_y,0.0);
 
             if(self.doThreeWayView) {
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_x,0.5);
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_y,0.5);
+                self.gl.uniform1f(ao.tileScale_x,0.5);
+                self.gl.uniform1f(ao.tileScale_y,0.5);
             } else if(self.doSideBySideStereo||self.doCrossEyedStereo) {
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_x,0.5);
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_y,1.0);
+                self.gl.uniform1f(ao.tileScale_x,0.5);
+                self.gl.uniform1f(ao.tileScale_y,1.0);
             } else if(self.doMultiView&&multi_rows_cols.rows>0&&multi_rows_cols.cols>0) {
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_x,1.0/multi_rows_cols.cols);
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_y,1.0/multi_rows_cols.rows);
+                self.gl.uniform1f(ao.tileScale_x,1.0/multi_rows_cols.cols);
+                self.gl.uniform1f(ao.tileScale_y,1.0/multi_rows_cols.rows);
             } else {
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_x,1.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.tileScale_y,1.0);
+                self.gl.uniform1f(ao.tileScale_x,1.0);
+                self.gl.uniform1f(ao.tileScale_y,1.0);
             }
 
             self.gl.viewport(0, 0, self.ssaoFramebuffer.width, self.ssaoFramebuffer.height);
@@ -1237,13 +1256,20 @@ export function drawScene(self: MGWebGL) : void {
             } else {
                 mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
             }
-            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.pMatrixUniform, false, paintPMatrix);
-            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.mvMatrixUniform, false, paintMvMatrix);
+            self.gl.uniformMatrix4fv(ao.pMatrixUniform, false, paintPMatrix);
+            self.gl.uniformMatrix4fv(ao.mvMatrixUniform, false, paintMvMatrix);
 
             self.gl.clearBufferfv(self.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
             bindFramebufferDrawBuffers(self);
 
-            self.bindSSAOBuffers()
+            if(usingHBAO){
+                // HBAO doesn't use the SSAO kernel UBO. Crucially, bindSSAOBuffers()
+                // does gl.useProgram(shaderProgramSSAO) internally, so calling it here
+                // would silently switch the draw back to SSAO - re-assert HBAO instead.
+                self.gl.useProgram(ao);
+            } else {
+                self.bindSSAOBuffers()
+            }
 
             if (self.ext) {
                 self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
