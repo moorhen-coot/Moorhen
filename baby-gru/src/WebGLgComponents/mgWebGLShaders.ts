@@ -262,6 +262,53 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
 
 }
 
+// HBAO prototype - mirrors initSSAOShader but for the horizon-based occlusion
+// shader (hbao-fragment-shader.js). Reuses the same vertex shader and the same
+// gPosition/gNormal/texNoise/pMatrix/radius/tile inputs; drops the samples UBO
+// and `bias`/`zoom`; adds the strength + quality-tier (numDirections/numSteps)
+// + angleBias uniforms.
+export function initHBAOShader(vertexShaderHBAO, fragmentShaderHBAO, gl, WEBGL2) {
+    const shaderProgramHBAO = gl.createProgram();
+    gl.attachShader(shaderProgramHBAO, vertexShaderHBAO);
+    gl.attachShader(shaderProgramHBAO, fragmentShaderHBAO);
+    gl.bindAttribLocation(shaderProgramHBAO, 0, "aVertexPosition");
+    gl.bindAttribLocation(shaderProgramHBAO, 3, "aVertexTexture");
+    gl.linkProgram(shaderProgramHBAO);
+    if (!gl.getProgramParameter(shaderProgramHBAO, gl.LINK_STATUS)) {
+        alert("Could not initialise shaders (initHBAOShader)");
+        console.log(gl.getProgramInfoLog(shaderProgramHBAO));
+    }
+
+    gl.useProgram(shaderProgramHBAO);
+
+    shaderProgramHBAO.vertexPositionAttribute = gl.getAttribLocation(shaderProgramHBAO, "aVertexPosition");
+    gl.enableVertexAttribArray(shaderProgramHBAO.vertexPositionAttribute);
+
+    shaderProgramHBAO.vertexTextureAttribute = gl.getAttribLocation(shaderProgramHBAO, "aVertexTexture");
+    gl.enableVertexAttribArray(shaderProgramHBAO.vertexTextureAttribute);
+
+    shaderProgramHBAO.pMatrixUniform = gl.getUniformLocation(shaderProgramHBAO, "uPMatrix");
+    shaderProgramHBAO.mvMatrixUniform = gl.getUniformLocation(shaderProgramHBAO, "uMVMatrix");
+
+    shaderProgramHBAO.gPositionTexture = gl.getUniformLocation(shaderProgramHBAO, "gPosition");
+    shaderProgramHBAO.gNormalTexture = gl.getUniformLocation(shaderProgramHBAO, "gNormal");
+    shaderProgramHBAO.texNoiseTexture = gl.getUniformLocation(shaderProgramHBAO, "texNoise");
+    shaderProgramHBAO.radius = gl.getUniformLocation(shaderProgramHBAO, "radius");
+    shaderProgramHBAO.strength = gl.getUniformLocation(shaderProgramHBAO, "strength");
+    shaderProgramHBAO.depthFactor = gl.getUniformLocation(shaderProgramHBAO, "depthFactor");
+    shaderProgramHBAO.depthBufferSize = gl.getUniformLocation(shaderProgramHBAO, "depthBufferSize");
+    shaderProgramHBAO.numDirections = gl.getUniformLocation(shaderProgramHBAO, "numDirections");
+    shaderProgramHBAO.numSteps = gl.getUniformLocation(shaderProgramHBAO, "numSteps");
+    shaderProgramHBAO.angleBias = gl.getUniformLocation(shaderProgramHBAO, "angleBias");
+    shaderProgramHBAO.tileScale_x = gl.getUniformLocation(shaderProgramHBAO, "tileScale_x");
+    shaderProgramHBAO.tileScale_y = gl.getUniformLocation(shaderProgramHBAO, "tileScale_y");
+    shaderProgramHBAO.tileScaleBase_x = gl.getUniformLocation(shaderProgramHBAO, "tileScaleBase_x");
+    shaderProgramHBAO.tileScaleBase_y = gl.getUniformLocation(shaderProgramHBAO, "tileScaleBase_y");
+
+    return shaderProgramHBAO
+
+}
+
 export function initBlurXShader(vertexShaderBlurX, fragmentShaderBlurX, gl, WEBGL2) {
     const shaderProgramBlurX = gl.createProgram();
 

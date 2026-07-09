@@ -453,6 +453,11 @@ export function initGraphics(self: MGWebGL): void {
 
     self.ssaoRadius = 0.4;
     self.ssaoBias = 1.0;
+    // HBAO prototype defaults (WebGL2). useHBAO flag flips the AO pass between the
+    // classic sampled SSAO and the horizon-based shader for live A/B comparison.
+    self.useHBAO = false;
+    self.ssaoStrength = 1.0;   // full darkening
+    self.ssaoQuality = 1;      // 0=Low, 1=Med, 2=High
     if(self.WEBGL2) self.initializeSSAOBuffers();
 
     self.buildBuffers();

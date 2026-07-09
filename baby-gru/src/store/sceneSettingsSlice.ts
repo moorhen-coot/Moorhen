@@ -14,6 +14,9 @@ const initialState: {
     depthBlurDepth: number;
     ssaoBias: number;
     ssaoRadius: number;
+    useHBAO: boolean;      // HBAO prototype: horizon-based AO instead of sampled SSAO
+    ssaoStrength: number;  // HBAO darkening 0..1
+    ssaoQuality: number;   // HBAO quality tier: 0=Low, 1=Med, 2=High
     doShadowDepthDebug: boolean;
     doShadow: boolean;
     doSSAO: boolean;
@@ -59,6 +62,9 @@ const initialState: {
     edgeDetectNormalScale: null,
     ssaoRadius: null,
     ssaoBias: null,
+    useHBAO: false,
+    ssaoStrength: 1.0,
+    ssaoQuality: 1,
     resetClippingFogging: null,
     clipCap: null,
     doPerspectiveProjection: null,
@@ -153,6 +159,18 @@ const sceneSettingsSlice = createSlice({
         // API
         setSsaoRadius: (state, action: PayloadAction<number>) => {
             state.ssaoRadius = action.payload;
+        },
+        // API
+        setUseHBAO: (state, action: PayloadAction<boolean>) => {
+            state.useHBAO = action.payload;
+        },
+        // API
+        setSsaoStrength: (state, action: PayloadAction<number>) => {
+            state.ssaoStrength = action.payload;
+        },
+        // API
+        setSsaoQuality: (state, action: PayloadAction<number>) => {
+            state.ssaoQuality = action.payload;
         },
         // API
         setSsaoBias: (state, action: PayloadAction<number>) => {
@@ -271,6 +289,9 @@ export const {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
+    setUseHBAO,
+    setSsaoStrength,
+    setSsaoQuality,
     setResetClippingFogging,
     setClipCap,
     resetSceneSettings,

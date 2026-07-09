@@ -16,6 +16,7 @@ import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_s
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
 import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader.js';
+import { hbao_fragment_shader_source as hbao_fragment_shader_source_webgl2 } from './webgl-2/hbao-fragment-shader.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl2 } from './webgl-2/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
@@ -109,7 +110,7 @@ import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteracti
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
-import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
+import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initHBAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
 import { RootState } from '@/store/MoorhenReduxStore';
@@ -248,6 +249,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         mspfArray: number[];
         ssaoRadius: number;
         ssaoBias: number;
+        useHBAO: boolean;        // HBAO prototype: use horizon-based AO instead of sampled SSAO
+        ssaoStrength: number;    // HBAO darkening amount 0..1 (honest version of ssaoBias)
+        ssaoQuality: number;     // HBAO quality tier: 0=Low, 1=Med, 2=High
         radius: number;
         reContourMapOnlyOnMouseUp: boolean;
         showAxes: boolean;
@@ -382,6 +386,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramGBuffersPerfectSpheres: webGL.ShaderGBuffersPerfectSpheres;
         shaderProgramGBuffersThickLinesNormal: webGL.ShaderGBuffersThickLinesNormal;
         shaderProgramSSAO: webGL.ShaderSSAO;
+        shaderProgramHBAO: any; // HBAO prototype shader program (WebGL2 only)
         shaderProgramEdgeDetect: webGL.ShaderEdgeDetect;
         shaderProgramBlurX: webGL.ShaderBlurX;
         shaderProgramBlurY: webGL.ShaderBlurY;
@@ -600,6 +605,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setSSAOBias(bias) {
         this.ssaoBias = bias;
+    }
+
+    // HBAO prototype controls
+    setUseHBAO(useHBAO: boolean) {
+        this.useHBAO = useHBAO;
+        this.drawScene();
+    }
+
+    setSSAOStrength(strength: number) {
+        this.ssaoStrength = strength;
+        this.drawScene();
+    }
+
+    setSSAOQuality(quality: number) {
+        this.ssaoQuality = quality;
+        this.drawScene();
     }
 
     setBlurSize(blurSize) {
@@ -825,6 +846,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doRedraw = false;
 
         let ssao_fragment_shader_source = ssao_fragment_shader_source_webgl1;
+        let hbao_fragment_shader_source = null; // HBAO prototype: WebGL2 only
         let edge_detect_fragment_shader_source = edge_detect_fragment_shader_source_webgl1;
         let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
         let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
@@ -868,6 +890,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if(this.WEBGL2){
             ssao_fragment_shader_source = ssao_fragment_shader_source_webgl2;
+            hbao_fragment_shader_source = hbao_fragment_shader_source_webgl2;
             edge_detect_fragment_shader_source = edge_detect_fragment_shader_source_webgl2;
             blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
@@ -958,6 +981,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramOverlay = initOverlayShader(blurVertexShader, overlayFragmentShader, this.gl);
         this.shaderProgramBlurX = initBlurXShader(blurVertexShader, blurXFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSSAO = initSSAOShader(blurVertexShader, ssaoFragmentShader, this.gl, this.WEBGL2);
+        if(this.WEBGL2 && hbao_fragment_shader_source){
+            const hbaoFragmentShader = getShader(this.gl, hbao_fragment_shader_source, "fragment");
+            this.shaderProgramHBAO = initHBAOShader(blurVertexShader, hbaoFragmentShader, this.gl, this.WEBGL2);
+        }
         this.shaderProgramEdgeDetect = initEdgeDetectShader(blurVertexShader, edgeDetectFragmentShader, this.gl);
         this.shaderProgramBlurY = initBlurYShader(blurVertexShader, blurYFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSimpleBlurX = initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader, this.gl, this.WEBGL2);
