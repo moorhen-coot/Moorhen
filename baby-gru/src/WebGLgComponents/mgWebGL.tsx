@@ -587,6 +587,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
     }
 
+    // render() only produces the <canvas> (size from constructor-time state,
+    // stable ref), so parent re-renders never change our output. BUT
+    // shouldComponentUpdate:false also skips componentDidUpdate - so we must
+    // return true for every prop componentDidUpdate reacts to (width/height and
+    // the display toggles), or those changes would be silently dropped. For all
+    // other prop churn from the (frequently re-rendering) MoorhenWebMG wrapper,
+    // skipping is free. Draws happen imperatively via glRef.current, not render().
+    shouldComponentUpdate(nextProps: webGL.MGWebGLPropsInterface) {
+        return nextProps.width !== this.props.width
+            || nextProps.height !== this.props.height
+            || nextProps.showScaleBar !== this.props.showScaleBar
+            || nextProps.showCrosshairs !== this.props.showCrosshairs
+            || nextProps.showAxes !== this.props.showAxes
+            || nextProps.showFPS !== this.props.showFPS
+            || nextProps.mapLineWidth !== this.props.mapLineWidth
+            || nextProps.reContourMapOnlyOnMouseUp !== this.props.reContourMapOnlyOnMouseUp;
+    }
+
     render() {
         return <canvas ref={this.canvasRef} height={this.state.width} width={this.state.height} />;
     }

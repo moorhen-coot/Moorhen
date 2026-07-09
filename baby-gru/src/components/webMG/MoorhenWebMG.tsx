@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, useMemo, forwardRef, useState, useReducer } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
@@ -99,6 +99,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
     const zoomWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
+    // Stabilise props passed to <MGWebGL>: parse the accelerators once per change of
+    // shortCuts (not every render), and keep a single no-op identity. Without this the
+    // class re-renders on every parent render because these props change by identity.
+    const keyboardAccelerators = useMemo(() => JSON.parse(shortCuts as string), [shortCuts])
+    const noopMessageChanged = useCallback(() => { }, [])
     const shortcutOnHoveredAtom = useSelector((state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom)
     const showShortcutToast = useSelector((state: moorhen.State) => state.shortcutSettings.showShortcutToast)
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth)
@@ -731,10 +736,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     onOriginChanged={onOriginChanged}
                     onQuatChanged={onQuatChanged}
                     cursorPositionChanged={cursorPositionChanged}
-                    messageChanged={(d) => { }}
+                    messageChanged={noopMessageChanged}
                     mouseSensitivityFactor={mouseSensitivity}
                     zoomWheelSensitivityFactor={zoomWheelSensitivityFactor}
-                    keyboardAccelerators={JSON.parse(shortCuts as string)}
+                    keyboardAccelerators={keyboardAccelerators}
                     showCrosshairs={drawCrosshairs}
                     showScaleBar={drawScaleBar}
                     showAxes={drawAxes}
