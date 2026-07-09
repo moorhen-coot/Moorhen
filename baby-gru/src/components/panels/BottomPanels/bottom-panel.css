@@ -1,7 +1,45 @@
+@import "../../../colors.css";
+
 .moorhen__bottom-panel-container {
     position: absolute;
+    display: flex;
+    flex-direction: column;
     bottom: 0;
     left: 0;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible;
+    /* outline: 1px solid red; */
+}
+
+.moorhen__bottom-panel-tabs-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    border-bottom: 1px solid var(--moorhen-border);
+    height: 2rem;
+    outline: 1px solid blue;
+}
+
+.moorhen__bottom-panel-tab {
+    min-width: 10rem;
+    padding: 0.5rem;
+    height: 2rem;
+    border: 1px solid var(--moorhen-border);
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    z-index: var(--z-side-panels);
+    background-color: var(--moorhen-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.moorhen__bottom-panel-button {
+    border: none;
+    border-radius: 1rem;
+    background: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: var(--moorhen-primary);
 }

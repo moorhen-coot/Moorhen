@@ -31,38 +31,6 @@
     user-select: none;
 }
 
-.moorhen__sequence-panel-tab {
-    position: absolute;
-    bottom: 76px;
-    min-width: 10rem;
-    padding: 0.5rem;
-    height: 2rem;
-    border: 1px solid var(--moorhen-border);
-    border-bottom: none;
-    border-radius: 0.5rem 0.5rem 0 0;
-    z-index: var(--z-side-panels);
-    background-color: var(--moorhen-background);
-    transition:
-        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-        bottom 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-        left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-
-    transform: translateY(0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.moorhen__sequence-panel-button {
-    border: none;
-    border-radius: 1rem;
-    background: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    color: var(--moorhen-primary);
-}
-
 .moorhen__sequence-panel-button:hover {
     box-shadow: 0px 0px 0px 4px var(--moorhen-focus-shadow);
 }

@@ -24,7 +24,7 @@ type MoorhenMoleculeSelectType = {
 
 export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     const {
-        // onSelect = null,
+        onSelect = null,
         onSelectUniqueId = null,
         // onChange = null,
         molecules = null,
@@ -56,7 +56,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         if (selectedMolNo === undefined || selectedMolNo === -1) {
             const newMolNo = getDefaultValue();
             setSelectedMolNo(newMolNo);
-            // onSelect?.(newMolNo);
+            onSelect?.(newMolNo);
             onSelectUniqueId?.(newMolNo.toString());
         }
     },[moleculesList])
@@ -65,6 +65,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
         if (selectedUniqueId !== undefined ) {
             const selectedMolecule = moleculesList.find(molecule => molecule.uniqueId === selectedUniqueId);
             setSelectedMolNo(selectedMolecule ? selectedMolecule.molNo : undefined);
+            onSelect?.(selectedMolecule ? selectedMolecule.molNo : undefined);
         }
     }, [selectedUniqueId])
 
@@ -105,7 +106,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             onSelectUniqueId(selectedMolecule.uniqueId);
         }
         if (props.onChange) props.onChange(evt);
-        //if (onSelect) onSelect(selectedMolNo);
+        if (onSelect) onSelect(selectedMolNo);
         setSelectedMolNo(selectedMolNo);
     };
 

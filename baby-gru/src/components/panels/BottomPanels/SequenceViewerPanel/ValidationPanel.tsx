@@ -178,27 +178,13 @@ export const ValidationPanel = () => {
 
     const expandLength = sequencesList.length <= numberOfLines ? sequencesList.length : numberOfLines;
     const displaySize = 2 * 26 + 76;
-
-    const infoPanel = (
-        <>
-            <h1>Validation Panel</h1>
-        </>
-    );
-
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
     }, [molecule?.molNo, selectedMolecule, moleculeList]);
 
     return (
         <>
-            <div
-                className={`moorhen__sequence-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2 + 200}px`, bottom: `${displaySize - 1}px` }}
-            >
-                {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-                &nbsp;&nbsp;&nbsp;
-                {bottomPanelIsShown && <MoorhenInfoCard infoText={infoPanel} />}
-            </div>
+
 
             <div
                 className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}

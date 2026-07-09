@@ -12,19 +12,18 @@ import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { convertRemToPx } from "@/utils/utils";
 import "./sequence-viewer-panel.css";
+import { SequenceViewerOption } from "./SequenceViewerTab";
 
-export const SequenceViewerPanel = () => {
+export const SequenceViewerPanel = (props: {option:SequenceViewerOption}) => {
+    const {option} = props
     const dispatch = useDispatch();
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
-    const [expand, setExpand] = useState<boolean>(true);
 
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
-    const [numberOfLines, setNumberOfLines] = useState<number>(4);
     const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
         return moleculeList.length > 0
-            ? (state.molecules.moleculeList.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList[0])
+            ? (state.molecules.moleculeList.find(molecule => molecule.molNo === option.selectedMolecule) ?? moleculeList[0])
             : null;
     });
 
@@ -34,15 +33,12 @@ export const SequenceViewerPanel = () => {
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
-    const toggleBottomPanel = () => {
-        if (expand) {
-            setExpand(false);
-        }
-        dispatch(setShowBottomPanel(!bottomPanelIsShown));
-    };
-    const handleExpand = () => {
-        setExpand(!expand);
-    };
+    // const toggleBottomPanel = () => {
+    //     if (expand) {
+    //         setExpand(false);
+    //     }
+    //     dispatch(setShowBottomPanel(!bottomPanelIsShown));
+    // };
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
@@ -51,7 +47,7 @@ export const SequenceViewerPanel = () => {
     const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
         const sequences = MoleculeToSeqViewerSequences(molecule);
         return sequences;
-    }, [selectedMolecule, molecule?.sequences]);
+    }, [option.selectedMolecule, molecule?.sequences]);
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
@@ -76,22 +72,6 @@ export const SequenceViewerPanel = () => {
         [dispatch, molecule]
     );
 
-    const configPanel = (
-        <div>
-            <MoorhenMoleculeSelect onSelect={setSelectedMolecule} selectedMolecule={selectedMolecule} />
-            <p></p>
-            <MoorhenNumberInput
-                label="Max lines"
-                labelPosition="left"
-                minMax={[1, 10]}
-                type="numberForm"
-                decimalDigits={0}
-                value={numberOfLines}
-                setValue={val => setNumberOfLines(val)}
-                width="4rem"
-            />
-        </div>
-    );
 
     useEffect(() => {
         const animation = () => {
@@ -107,17 +87,17 @@ export const SequenceViewerPanel = () => {
         animation();
     }, [sidePanelIsOpen]);
 
-    const expandLength = sequenceList.length <= numberOfLines ? sequenceList.length : numberOfLines;
+    const expandLength = sequenceList.length <= option.nOfLines ? sequenceList.length : option.nOfLines;
     const displaySize = (expandLength - 1) * 26 + 76;
     //const displaySize = 4 * 26 + 16;
 
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
-    }, [molecule?.molNo, selectedMolecule, moleculeList]);
+    }, [molecule?.molNo, option.selectedMolecule, moleculeList]);
 
     return (
         <>
-            <div
+            {/* <div
                 className={`moorhen__sequence-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
                 style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
             >
@@ -136,10 +116,10 @@ export const SequenceViewerPanel = () => {
                     ) : (
                         <span>&nbsp;&nbsp;</span>
                     ))}
-            </div>
+            </div> */}
             <div
-                className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={expand ? { height: expand ? `${displaySize}px` : "76px" } : {}}
+                className={`moorhen__sequence-panel-container- ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
+                style={option.expanded ? { height:option.expanded? `${displaySize}px` : "76px" } : {}}
             >
                 <MoorhenSequenceViewer
                     key={seqViewerKey}
@@ -147,7 +127,7 @@ export const SequenceViewerPanel = () => {
                     selectedResidues={sequenceSelection}
                     hoveredResidue={hoveredResidue}
                     maxDisplayHeight={4}
-                    displayHeight={expand ? numberOfLines : 1}
+                    displayHeight={option.expanded ? option.nOfLines : 1}
                     // displayHeight={1}
                     showTitleBar={false}
                     onResidueClick={handleClick}
