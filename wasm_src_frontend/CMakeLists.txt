@@ -6,7 +6,7 @@ set(CMAKE_EXECUTABLE_SUFFIX ".js")
 add_executable(web_example web_example.cc headers.cc ../wasm_src/gemmi-wrappers.cc ../checkout/ssm/sup_pairwise.cpp ../checkout/ssm/sup_multiple.cpp
 )
 
-target_link_options(web_example PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCCP4Module -sEXPORTED_RUNTIME_METHODS=['FS'])
+target_link_options(web_example PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCCP4Module -sEXPORTED_RUNTIME_METHODS=['FS'])
 
 if(${MEMORY64} MATCHES "1")
     target_link_directories(web_example PUBLIC ../install64/lib )
