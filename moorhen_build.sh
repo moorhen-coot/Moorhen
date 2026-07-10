@@ -1038,6 +1038,7 @@ if [ $BUILD_MOORHEN = true ]; then
     rm -rf ${MOORHEN_SOURCE_DIR}/baby-gru/src/LhasaReact
     cp -r ${MOORHEN_SOURCE_DIR}/checkout/LhasaReact ${MOORHEN_SOURCE_DIR}/baby-gru/src/
     npm run transpile-graphql-codegen
+    npm run transpile-ts-worker
     cd ${MOORHEN_SOURCE_DIR}/baby-gru/public/MoorhenAssets/
     ln -sf ${MOORHEN_SOURCE_DIR}/checkout/monomers
 fi
