@@ -1786,6 +1786,17 @@ onmessage = function (e) {
             messageTag: "result",
             result: jsonContents,
         })
+    } else if (e.data.message === 'DrawCremerPopleSphere') {
+        const fileDataString = e.data.commandArgs[0]
+        const showRadialConformations = e.data.commandArgs[1]
+        const retCode = cootModule.DrawCremerPopleSphere(fileDataString,showRadialConformations)
+        const returnResult = simpleMeshToMeshData(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
     } else if (e.data.message === 'privateer_calculate_cremer_pople_parameters') {
         const fileDataString = e.data.commandArgs[0]
         const retCode = cootModule.calculate_cremer_pople_parameters(fileDataString,"thing.cif")

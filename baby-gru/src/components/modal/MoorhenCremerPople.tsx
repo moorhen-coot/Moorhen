@@ -66,6 +66,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
             {
                 returnType: "mesh",
                 command: "DrawCremerPopleSphere",
+                message: "DrawCremerPopleSphere",
                 commandArgs: [input_cif_string, showRadialConformations],
             },
             false

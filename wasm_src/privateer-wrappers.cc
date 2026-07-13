@@ -1,4 +1,6 @@
 #include "privateer-wrappers.h"
+#include "coot-utils/simple-mesh.hh"
+#include "cremer-pople-sphere/scene.hh"
 
 std::vector<TableEntry> validate(const std::string &file, const std::string &name)
 {
@@ -157,4 +159,25 @@ std::vector<CremerPopleParameters> calculate_cremer_pople_parameters(const std::
   }
   return cremer_pople_dataset;
 
+}
+
+coot::simple_mesh_t DrawCremerPopleSphere(const std::string  &file_content, bool add_radial_conformations) {
+
+    std::vector<CremerPopleParameters> results;
+    try {
+        results =  calculate_cremer_pople_parameters(file_content, std::string("thing.cif"));
+    } catch (...) {
+        std::cerr << "Failed to calculate_cremer_pople_parameters for:" << std::endl;
+        std::cerr << file_content << std::endl;
+    }
+
+    std::vector<CremerPopleData> data = {};
+    data.reserve(results.size());
+    for (int i = 0; i < results.size(); i++) {
+        data.emplace_back(results[i].q, results[i].phi, results[i].theta);
+    }
+
+    auto x = create_cremer_pople_sphere(data, add_radial_conformations);
+
+    return x;
 }

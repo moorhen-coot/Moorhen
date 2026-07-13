@@ -753,6 +753,7 @@ add_executable(gemmi-wasm privateer-wrappers.cc gemmi-wrappers.cc gemmi-cif-wrap
 target_compile_options(gemmi-wasm PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations)
 set_target_properties(gemmi-wasm PROPERTIES COMPILE_FLAGS "-Wno-deprecated-builtins -Wno-deprecated-declarations")
 target_include_directories(gemmi-wasm PRIVATE
+    ${coot_src}
     ${CMAKE_INSTALL_PREFIX}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${DEPS_INCLUDE_DIRS}
