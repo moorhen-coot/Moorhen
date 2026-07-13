@@ -1786,7 +1786,16 @@ onmessage = function (e) {
             messageTag: "result",
             result: jsonContents,
         })
-
+    } else if (e.data.message === 'privateer_calculate_cremer_pople_parameters') {
+        const fileDataString = e.data.commandArgs[0]
+        const retCode = cootModule.calculate_cremer_pople_parameters(fileDataString,"thing.cif")
+        const returnResult = privateerCremerPopleParametersToJSArray(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
     } else if (e.data.message === 'privateer_validate') {
         const fileDataString = e.data.commandArgs[0]
         const retCode = cootModule.validate(fileDataString,"thing.cif")

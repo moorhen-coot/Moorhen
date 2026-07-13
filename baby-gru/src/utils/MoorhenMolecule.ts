@@ -2787,6 +2787,7 @@ export class MoorhenMolecule {
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "privateer_calculate_cremer_pople_parameters",
+                message: "privateer_calculate_cremer_pople_parameters",
                 commandArgs: [input_cif_string],
                 returnType: "privateer_cremer_pople_parameters",
             },
