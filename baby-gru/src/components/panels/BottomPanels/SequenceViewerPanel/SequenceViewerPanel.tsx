@@ -14,11 +14,9 @@ import { convertRemToPx } from "@/utils/utils";
 import "./sequence-viewer-panel.css";
 import { SequenceViewerOption } from "./SequenceViewerTab";
 
-export const SequenceViewerPanel = (props: {option:SequenceViewerOption}) => {
-    const {option} = props
+export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => {
+    const { option } = props
     const dispatch = useDispatch();
-
-    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
 
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
@@ -32,13 +30,6 @@ export const SequenceViewerPanel = (props: {option:SequenceViewerOption}) => {
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
-
-    // const toggleBottomPanel = () => {
-    //     if (expand) {
-    //         setExpand(false);
-    //     }
-    //     dispatch(setShowBottomPanel(!bottomPanelIsShown));
-    // };
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
@@ -88,57 +79,26 @@ export const SequenceViewerPanel = (props: {option:SequenceViewerOption}) => {
     }, [sidePanelIsOpen]);
 
     const expandLength = sequenceList.length <= option.nOfLines ? sequenceList.length : option.nOfLines;
-    const displaySize = (expandLength - 1) * 26 + 76;
-    //const displaySize = 4 * 26 + 16;
-
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
     }, [molecule?.molNo, option.selectedMolecule, moleculeList]);
 
     return (
-        <>
-            {/* <div
-                className={`moorhen__sequence-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
-            >
-                {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-                <button className="moorhen__sequence-panel-button" onClick={toggleBottomPanel}>
-                    &nbsp;&nbsp;Sequences&nbsp;&nbsp;
-                </button>
-                {bottomPanelIsShown &&
-                    (sequenceList.length > 1 ? (
-                        <MoorhenButton
-                            type="icon-only"
-                            icon={expand ? "MatSymDoubleArrowDown" : "MatSymDoubleArrowUp"}
-                            size="small"
-                            onClick={handleExpand}
-                        />
-                    ) : (
-                        <span>&nbsp;&nbsp;</span>
-                    ))}
-            </div> */}
-            <div
-                className={`moorhen__sequence-panel-container- ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={option.expanded ? { height:option.expanded? `${displaySize}px` : "76px" } : {}}
-            >
-                <MoorhenSequenceViewer
-                    key={seqViewerKey}
-                    sequences={sequenceList}
-                    selectedResidues={sequenceSelection}
-                    hoveredResidue={hoveredResidue}
-                    maxDisplayHeight={4}
-                    displayHeight={option.expanded ? option.nOfLines : 1}
-                    // displayHeight={1}
-                    showTitleBar={false}
-                    onResidueClick={handleClick}
-                    onResiduesSelect={residueSelectionCallback}
-                    onHoverResidue={handleHoverResidue}
-                    className={`moorhen__edge-panel-sequence-viewer`}
-                    style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
-                    forceRedrawScrollBarKey={panelKeyRef}
-                    showValidationData={false}
-                />
-            </div>
-        </>
+        <MoorhenSequenceViewer
+            key={seqViewerKey}
+            sequences={sequenceList}
+            selectedResidues={sequenceSelection}
+            hoveredResidue={hoveredResidue}
+            displayHeight={option.expanded ? expandLength : 1}
+            showTitleBar={false}
+            onResidueClick={handleClick}
+            onResiduesSelect={residueSelectionCallback}
+            onHoverResidue={handleHoverResidue}
+            className={`moorhen__edge-panel-sequence-viewer`}
+            style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
+            forceRedrawScrollBarKey={panelKeyRef}
+            showValidationData={false}
+        />
+
     );
 };

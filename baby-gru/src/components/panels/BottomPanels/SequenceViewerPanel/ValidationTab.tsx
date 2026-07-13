@@ -1,18 +1,19 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
+import {  MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenInfoCard } from "@/components/interface-base";
-import { RootState } from "@/store";
-import { convertRemToPx } from "@/utils/utils";
+import { RootState, setShownBottomPanel } from "@/store";
 
-export const ValidationTab = (props: { bottomPanelIsShown: boolean; toggleBottomPanel: () => void; showExpandButton: boolean }) => {
-    const { bottomPanelIsShown, toggleBottomPanel, showExpandButton } = props;
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
-    const expand = true;
+export const ValidationTab = () => {
+    const isActiveTab = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
+    const dispatch = useDispatch();
 
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
+
+        const handleTitleClick = () => {
+            dispatch(setShownBottomPanel(isActiveTab ? null : "validation"))
+        }
 
     const infoPanel = (
         <>
@@ -37,12 +38,12 @@ export const ValidationTab = (props: { bottomPanelIsShown: boolean; toggleBottom
     );
 
     return (
-        <div className={`moorhen__bottom-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}>
-            {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-            <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
+        <div className={`moorhen__bottom-panel-tab ${isActiveTab  ? "" : "background"}`}>
+            {isActiveTab && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
+            <button className="moorhen__bottom-panel-button" onClick={handleTitleClick}>
                 &nbsp;&nbsp;Validation&nbsp;&nbsp;
             </button>
-            {bottomPanelIsShown && <MoorhenInfoCard infoText={infoPanel} />}
+            {isActiveTab && <MoorhenInfoCard infoText={infoPanel} />}
         </div>
     );
 };

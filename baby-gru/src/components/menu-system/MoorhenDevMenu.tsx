@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect, useRef, useState } from "react";
-import { enqueueSnackbar, setOrigin } from "@/store";
+import { useEffect, useState } from "react";
+import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -57,7 +57,7 @@ export const MoorhenDevMenu = () => {
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
-    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
+    const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
     const [sliderValue, setSliderValue] = useState(1);
     const [sliderValue2, setSliderValue2] = useState(9);
     useEffect(() => {

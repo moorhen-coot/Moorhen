@@ -97,8 +97,8 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
     };
 
     return (
-        <div style={{ position: 'relative', width: '100%', ...style }} className={className}>
-            <div ref={scrollRef} style={{ overflow: 'hidden', width: '100%', height: '100%' }}>
+        <div style={{ position: 'relative', width: '100%', outline: "1px solid green", padding:0, ...style }} className={className}>
+            <div ref={scrollRef} style={{ overflow: 'hidden', width: '100%'}}>
                 {children}
             </div>
             <div className="moorhen__custom__scrollbar-track" onClick={onTrackClick}>

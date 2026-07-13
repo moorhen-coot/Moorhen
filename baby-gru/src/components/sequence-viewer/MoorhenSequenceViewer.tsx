@@ -506,7 +506,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         <>
             <div
                 className={`moorhen__seqviewer-container ${className}`}
-                style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
+                // style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
                     setMouseIsHovering(true);
@@ -530,7 +530,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     {leftButtonsBar}
                     <CustomHorizontalScrollbar
                         key={scrollbarKey}
-                        style={{ width: seqLength > displayHeight ? "calc(100% - 40px)" : "100%" }}
                         onDraggingChange={setIsScrolling}
                         forceRedrawScrollBarKey={props.forceRedrawScrollBarKey}
                     >

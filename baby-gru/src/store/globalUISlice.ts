@@ -16,7 +16,6 @@ const initialState: {
     shownControl: ShownControl | null;
     controlLocked: number | null;
     selectionToolsActive: boolean;
-    shownBottomPanel: BottomPanelIDs | null;
     isClickAwayListenerActive?: boolean;
 } = {
     busy: false,
@@ -31,7 +30,6 @@ const initialState: {
     shownControl: null,
     controlLocked: null,
     selectionToolsActive: false,
-    shownBottomPanel: "sequences-viewer",
     isClickAwayListenerActive: true,
 };
 
@@ -101,10 +99,6 @@ const globalUISlice = createSlice({
             state.selectionToolsActive = false;
             state.shownControl = null;
         },
-        // API
-        setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
-            state.shownBottomPanel = action.payload;
-        },
         setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
             state.isClickAwayListenerActive = action.payload;
         },
@@ -125,7 +119,6 @@ export const {
     lockControls,
     unlockControls,
     closeResidueSelectionTools,
-    setShownBottomPanel,
     setClickAwayListenerActive,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

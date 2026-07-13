@@ -14,10 +14,10 @@
 .moorhen__bottom-panel-tabs-container {
     display: flex;
     flex-direction: row;
+    gap: 0.2rem;
     justify-content: center;
     border-bottom: 1px solid var(--moorhen-border);
     height: 2rem;
-    outline: 1px solid blue;
 }
 
 .moorhen__bottom-panel-tab {
@@ -32,6 +32,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.moorhen__bottom-panel-tab.background {
+    /* border: 1px solid var(--moorhen-border); */
+    background-color: var(--moorhen-background-shaded);
+    transform: translateY(3px);
+    clip-path: inset(0 0 4px 0);
 }
 
 .moorhen__bottom-panel-button {

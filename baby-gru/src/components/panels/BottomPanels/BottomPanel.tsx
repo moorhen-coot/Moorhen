@@ -1,25 +1,19 @@
-import { useSelector } from "react-redux";
-import { createContext, useState } from "react";
+import { useSelector, } from "react-redux";
+import { useState } from "react";
 import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import { RootState } from "@/store";
 import { BottomPanelIDs, BottomPanelsList } from "./BottomPanelsList";
-import { SequenceViewerOption, SequenceViewerTab } from "./SequenceViewerPanel/SequenceViewerTab";
+import {  SequenceViewerTab } from "./SequenceViewerPanel/SequenceViewerTab";
 import { ValidationTab } from "./SequenceViewerPanel/ValidationTab";
 import "./bottom-panel.css";
 
 export const BottomPanelContainer = () => {
     const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel);
-    const [activePanels, setActivePanels] = useState<BottomPanelIDs[]>(["sequences-viewer", "validation"]);
+    const [activePanels] = useState<BottomPanelIDs[]>(["sequences-viewer", "validation"]);
     const width = window.innerWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
-    const shownPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel);
-
-    const [seqviewerOption, setSeqViewerOption] = useState<SequenceViewerOption>({
-        showExpandButton: true,
-        nOfLines: 4,
-        expanded: false,
-        selectedMolecule: -999,
-    });
+    const shownPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel);
+    const seqviewerOption = useSelector((state: RootState) => state.bottomPanels.seqviewerOption);
 
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
@@ -32,13 +26,8 @@ export const BottomPanelContainer = () => {
     return (
         <div className="moorhen__bottom-panel-container" style={{ width: width }}>
             <div className="moorhen__bottom-panel-tabs-container">
-                <SequenceViewerTab
-                    toggleBottomPanel={() => {}}
-                    setSeqViewerOption={setSeqViewerOption}
-                    seqviewerOption={seqviewerOption}
-                    bottomPanelIsShown={true}
-                />{" "}
-                <ValidationTab showExpandButton={true} toggleBottomPanel={() => {}} bottomPanelIsShown={true} />
+                <SequenceViewerTab/>
+                <ValidationTab/>
             </div>
             {panels}
         </div>

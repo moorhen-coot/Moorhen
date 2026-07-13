@@ -1,4 +1,8 @@
 ;import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
+import { setSeqViewerOption, setShownBottomPanel } from "@/store";
+import { RootState } from "@/store/MoorhenReduxStore";
+import { useDispatch, useSelector } from "react-redux";
+
 
 export type SequenceViewerOption = {
     showExpandButton: boolean;
@@ -7,20 +11,22 @@ export type SequenceViewerOption = {
     selectedMolecule: number
 };
 
-export const SequenceViewerTab = (props: {
-    bottomPanelIsShown: boolean;
-    toggleBottomPanel: () => void;
-    seqviewerOption: SequenceViewerOption;
-    setSeqViewerOption: React.Dispatch<SequenceViewerOption>;
-}) => {
-    const { bottomPanelIsShown, toggleBottomPanel, seqviewerOption,setSeqViewerOption } = props;
+export const SequenceViewerTab = () => {
+    const isActiveTab = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "sequences-viewer");
+    const seqviewerOption = useSelector((state: RootState) => state.bottomPanels.seqviewerOption);
+
+    const dispatch = useDispatch();
 
     const handleExpand = () => {
-        setSeqViewerOption({...seqviewerOption, expanded: !seqviewerOption.expanded})
+        dispatch(setSeqViewerOption({...seqviewerOption, expanded: !seqviewerOption.expanded}))
     }
 
     const setSelectedMolecule = (val) => {
-        setSeqViewerOption({...seqviewerOption, selectedMolecule: val})
+        dispatch(setSeqViewerOption({...seqviewerOption, selectedMolecule: val}))
+    }
+
+    const handleTitleClick = () => {
+        dispatch(setShownBottomPanel(isActiveTab ? null : "sequences-viewer"))
     }
 
     const configPanel = (
@@ -34,7 +40,9 @@ export const SequenceViewerTab = (props: {
                 type="numberForm"
                 decimalDigits={0}
                 value={seqviewerOption.nOfLines}
-                setValue={val => setSeqViewerOption({...seqviewerOption, nOfLines: val})}
+                setValue={(val: number) => {
+                    dispatch(setSeqViewerOption({ ...seqviewerOption, nOfLines: val }))
+                }}
                 width="4rem"
             />
         </div>
@@ -42,14 +50,14 @@ export const SequenceViewerTab = (props: {
 
     return (
         <div
-            className={`moorhen__bottom-panel-tab ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
+            className={`moorhen__bottom-panel-tab ${isActiveTab  ? "" : "background"}`}
             // style={{ left: `${(GlViewportWidth - convertRemToPx(10)) / 2}px`, bottom: expand ? `${displaySize - 1}px` : "76px" }}
         >
-            {bottomPanelIsShown && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-            <button className="moorhen__bottom-panel-button" onClick={toggleBottomPanel}>
+            {isActiveTab && (<MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>)}
+            <button className="moorhen__bottom-panel-button" onClick={handleTitleClick}>
                 &nbsp;&nbsp;Sequences&nbsp;&nbsp;
             </button>
-            {bottomPanelIsShown &&
+            { isActiveTab && (
                 (seqviewerOption.showExpandButton ? (
                     <MoorhenButton
                         type="icon-only"
@@ -59,7 +67,7 @@ export const SequenceViewerTab = (props: {
                     />
                 ) : (
                     <span>&nbsp;&nbsp;</span>
-                ))}
+                )))}
         </div>
     );
 };

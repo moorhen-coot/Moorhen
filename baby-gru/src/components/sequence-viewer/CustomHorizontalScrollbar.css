@@ -7,9 +7,9 @@
 }
 
 .moorhen__custom__scrollbar-track {
-    position: absolute;
+    position: relative;
     left: 0;
-    bottom: -14px;
+    bottom: 0px;
     width: 100%;
     height: 12px;
     background: var(--moorhen-middle);
@@ -17,6 +17,7 @@
     border-radius: 6px;
     border: 1px solid var(--moorhen-border);
     margin: 2px;
+    outline: 1px solid blue;
 }
 
 .moorhen__custom__scrollbar-thumb {

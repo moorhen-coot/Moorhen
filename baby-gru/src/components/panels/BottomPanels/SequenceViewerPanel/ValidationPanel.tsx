@@ -183,34 +183,23 @@ export const ValidationPanel = () => {
     }, [molecule?.molNo, selectedMolecule, moleculeList]);
 
     return (
-        <>
-
-
-            <div
-                className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
-                style={{ height: `${displaySize}px` }}
-            >
-                {bottomPanelIsShown && (
-                    <MoorhenSequenceViewer
-                        key={seqViewerKey}
-                        sequences={sequencesList}
-                        selectedResidues={sequenceSelection}
-                        hoveredResidue={hoveredResidue}
-                        // maxDisplayHeight={1}
-                        displayHeight={1}
-                        showTitleBar={false}
-                        onResidueClick={handleClick}
-                        onResiduesSelect={residueSelectionCallback}
-                        onHoverResidue={handleHoverResidue}
-                        className={`moorhen__edge-panel-sequence-viewer`}
-                        style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
-                        forceRedrawScrollBarKey={panelKeyRef}
-                        showValidationData={true}
-                        nameColumnWidth={4}
-                        validationTracks={["Overall RMSZ", "Density Correlation"]}
-                    />
-                )}
-            </div>
-        </>
+        <MoorhenSequenceViewer
+            key={seqViewerKey}
+            sequences={sequencesList}
+            selectedResidues={sequenceSelection}
+            hoveredResidue={hoveredResidue}
+            // maxDisplayHeight={1}
+            displayHeight={1}
+            showTitleBar={false}
+            onResidueClick={handleClick}
+            onResiduesSelect={residueSelectionCallback}
+            onHoverResidue={handleHoverResidue}
+            className={`moorhen__edge-panel-sequence-viewer`}
+            style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
+            forceRedrawScrollBarKey={panelKeyRef}
+            showValidationData={true}
+            nameColumnWidth={4}
+            validationTracks={["Overall RMSZ", "Density Correlation"]}
+        />
     );
 };
