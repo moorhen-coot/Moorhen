@@ -10,7 +10,7 @@ const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 let cootModule;
 let cleanUpVariables = []
 
-beforeAll(() => {   
+beforeAll(() => {
     return createCootModule({
         print(t) { () => console.log(["output", t]) },
         printErr(t) { () => console.log(["output", t]); }
