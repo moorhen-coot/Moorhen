@@ -704,22 +704,37 @@ class molecules_container_js : public molecules_container_t {
             return DrawSugarBlocks(mol,cid_str);
         }
 
-        std::vector<TableEntry> privateer_validate(int imol) {
-            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            auto results =  validate(file_content, "");
+        std::vector<TableEntry> privateer_validate(const std::string  &file_content) {
+            std::vector<TableEntry> results;
+            try {
+                results =  validate(file_content, "thing.cif");
+            } catch (...) {
+                std::cerr << "Failed to validate" << std::endl;
+                std::cerr << file_content << std::endl;
+            }
             return results;
         }
         
-        std::vector<CremerPopleParameters> privateer_calculate_cremer_pople_parameters(int imol) {
-            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            auto results =  calculate_cremer_pople_parameters(file_content, "");
+        std::vector<CremerPopleParameters> privateer_calculate_cremer_pople_parameters(const std::string  &file_content) {
+            std::vector<CremerPopleParameters> results;
+            try {
+                results =  calculate_cremer_pople_parameters(file_content, "thing.cif");
+            } catch (...) {
+                std::cerr << "Failed to calculate_cremer_pople_parameters for:" << std::endl;
+                std::cerr << file_content << std::endl;
+            }
             return results;
         }
 
-        coot::simple_mesh_t DrawCremerPopleSphere(int imol, bool add_radial_conformations) {
+        coot::simple_mesh_t DrawCremerPopleSphere(const std::string  &file_content, bool add_radial_conformations) {
 
-            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
-            auto results =  calculate_cremer_pople_parameters(file_content, "");
+            std::vector<CremerPopleParameters> results;
+            try {
+                results =  calculate_cremer_pople_parameters(file_content, std::string("thing.cif"));
+            } catch (...) {
+                std::cerr << "Failed to calculate_cremer_pople_parameters for:" << std::endl;
+                std::cerr << file_content << std::endl;
+            }
 
             std::vector<CremerPopleData> data = {};
             data.reserve(results.size());

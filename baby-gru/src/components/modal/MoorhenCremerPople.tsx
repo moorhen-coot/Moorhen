@@ -25,11 +25,12 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
     useEffect(() => {
         let cancelled = false
         const measure = async () => {
+            const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(props.molecule.gemmiStructure)
             const response = await commandCentre.current.cootCommand(
                 {
                     returnType: "mesh",
                     command: "DrawCremerPopleSphere",
-                    commandArgs: [props.molecule.molNo, false],
+                    commandArgs: [input_cif_string, false],
                 },
                 false
             )
@@ -47,7 +48,7 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
         }
         measure()
         return () => { cancelled = true }
-    }, [props.molecule.molNo])
+    }, [props.molecule.gemmiStructure])
 
     // The pinpoints are generated in the same order as these parameters, so the
     // i-th pin corresponds to cremerPopleParams[i] (chain_id + residue_id).
@@ -60,16 +61,17 @@ export const MoorhenCremerPople = (props: { stackDirection: "horizontal" | "vert
     }, [props.molecule])
 
     const getCremerPopleSphere = useCallback(async () => {
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(props.molecule.gemmiStructure)
         const response = await commandCentre.current.cootCommand(
             {
                 returnType: "mesh",
                 command: "DrawCremerPopleSphere",
-                commandArgs: [props.molecule.molNo, showRadialConformations],
+                commandArgs: [input_cif_string, showRadialConformations],
             },
             false
         )
         return response.data.result.result;
-    }, [props.molecule.molNo, showRadialConformations])
+    }, [props.molecule.gemmiStructure, showRadialConformations])
 
     const getMesh = async () => {
         return getCremerPopleSphere()

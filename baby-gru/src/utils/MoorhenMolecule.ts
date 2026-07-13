@@ -2755,10 +2755,12 @@ export class MoorhenMolecule {
             return this.cachedPrivateerValidation;
         }
 
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "privateer_validate",
-                commandArgs: [this.molNo],
+                message: "privateer_validate",
+                commandArgs: [input_cif_string],
                 returnType: "privateer_results",
             },
             false
@@ -2781,10 +2783,11 @@ export class MoorhenMolecule {
             return this.cachedPrivateerCremerPopleParameters;
         }
 
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
         const result = (await this.commandCentre.current.cootCommand(
             {
                 command: "privateer_calculate_cremer_pople_parameters",
-                commandArgs: [this.molNo],
+                commandArgs: [input_cif_string],
                 returnType: "privateer_cremer_pople_parameters",
             },
             false

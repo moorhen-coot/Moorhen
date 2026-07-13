@@ -602,7 +602,7 @@ if (EMSCRIPTEN)
     message(STATUS "Emscripten version: ${EMCC_VERSION}")
 endif()
 
-add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc privateer-wrappers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
@@ -749,7 +749,7 @@ install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRE
 install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
 
 # Standalone gemmi WASM module — no pthreads, no coot, no SharedArrayBuffer required
-add_executable(gemmi-wasm gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc gemmi-types-wrappers.cc)
+add_executable(gemmi-wasm privateer-wrappers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc gemmi-types-wrappers.cc)
 target_compile_options(gemmi-wasm PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations)
 set_target_properties(gemmi-wasm PROPERTIES COMPILE_FLAGS "-Wno-deprecated-builtins -Wno-deprecated-declarations")
 target_include_directories(gemmi-wasm PRIVATE
