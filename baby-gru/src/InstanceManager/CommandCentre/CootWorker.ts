@@ -1316,6 +1316,26 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
     }
 }
 
+const doPrivateerValidate = (messageData: {
+    myTimeStamp: number;
+    chainID?: string;
+    messageId?: string;
+    message: string;
+    returnType: string;
+    command: string;
+    commandArgs: any[];
+}) => {
+    const fileDataString = messageData.commandArgs[0]
+    const retCode = cootModule.validate(fileDataString,"thing.cif")
+    const returnResult = privateerValidationToJSArray(retCode)
+    return {
+            messageId: messageData.messageId,
+            myTimeStamp: messageData.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+    }
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -1808,15 +1828,8 @@ onmessage = function (e) {
             result: {result: returnResult},
         })
     } else if (e.data.message === 'privateer_validate') {
-        const fileDataString = e.data.commandArgs[0]
-        const retCode = cootModule.validate(fileDataString,"thing.cif")
-        const returnResult = privateerValidationToJSArray(retCode)
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            messageTag: "result",
-            result: {result: returnResult},
-        })
+        const returnResult = doPrivateerValidate(e.data)
+        postMessage(returnResult)
     }
 
     if (e.data.message === 'coot_command') {
