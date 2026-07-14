@@ -113,6 +113,8 @@ const glRefSlice = createSlice({
             state.specularPower = action.payload;
         },
         // API sceneSettings
+        /* @zoom level 1 = 22A
+         or A/22 */
         setZoom: (state, action: PayloadAction<number>) => {
             state.zoom = action.payload;
         },

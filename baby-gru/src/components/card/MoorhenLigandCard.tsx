@@ -1,33 +1,12 @@
-import {
-    CenterFocusStrongOutlined,
-    DownloadOutlined,
-    ExpandMoreOutlined,
-    HelpOutlined,
-    RadioButtonCheckedOutlined,
-    RadioButtonUncheckedOutlined,
-} from "@mui/icons-material";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    LinearProgress,
-    Popover,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-} from "@mui/material";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
-import { convertViewtoPx, guid } from "../../utils/utils";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../inputs";
-import { MoorhenAccordion, MoorhenStack } from "../interface-base";
+import {  MoorhenStack } from "../interface-base";
 import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
+import { MoorhenLinearProgress } from "../icons";
 
 export const MoorhenLigandCard = (props: {
     ligand: LigandInfo;
@@ -121,10 +100,14 @@ export const MoorhenLigandCard = (props: {
 
     let flev_placeholder = true;
     if (ligand && ligand.flev_svg) flev_placeholder = ligand.flev_svg.includes("You must add hydrogen atoms to the model");
-
+    console.log("Chem comp info", ligand.chem_comp_info);
     // For some reason a random key needs to be used here otherwise the scroll of the card list gets reset with every re-render
     return (
         <MoorhenStack card>
+            
+            {/* FIX ME : this is using MUI and need to be replaced but get_gphl_chem_comp_info seem to never return anything...
+            
+            
             {ligand.chem_comp_info?.length > 0 && (
                 <Popover
                     anchorOrigin={{ vertical: "center", horizontal: "center" }}
@@ -179,7 +162,7 @@ export const MoorhenLigandCard = (props: {
                         </Table>
                     </TableContainer>
                 </Popover>
-            )}
+            )} */}
             <MoorhenStack direction="vertical">
                 {ligand.svg ? parse(ligand.svg) : <span>{ligand.cid}</span>}
                 {calculateQScore && activeMap ? (
@@ -187,7 +170,7 @@ export const MoorhenLigandCard = (props: {
                         {qScore ? (
                             <span>Q-Score: {qScore.toFixed(2)}</span>
                         ) : (
-                            <LinearProgress variant="indeterminate" style={{ width: "50%" }} />
+                            <MoorhenLinearProgress />
                         )}
                     </div>
                 ) : null}
@@ -204,7 +187,7 @@ export const MoorhenLigandCard = (props: {
                     >
                         Show
                     </MoorhenButton>
-                    {!flev_placeholder && (
+                    {ligand.svg && (
                         <MoorhenButton
                             onClick={() => {
                                 let link: any = document.getElementById("download_ligand_svg_link");
@@ -220,8 +203,8 @@ export const MoorhenLigandCard = (props: {
                                 link.download = ligand.resName + "_ligand.svg";
                                 link.click();
                             }}
+                            icon="MatSymFileDownload"
                         >
-                            <DownloadOutlined />
                             Download image (svg)
                         </MoorhenButton>
                     )}
@@ -232,8 +215,8 @@ export const MoorhenLigandCard = (props: {
                     })}
                 </MoorhenStack>
                 {ligand.chem_comp_info?.length > 0 && (
-                    <MoorhenButton variant="secondary" onClick={() => setShowInfoTable(prev => !prev)}>
-                        <HelpOutlined style={{ marginRight: "0.5rem" }} />
+                    <MoorhenButton variant="secondary" onClick={() => setShowInfoTable(prev => !prev)} icon="MatSymHelp">
+                        
                         Show info
                     </MoorhenButton>
                 )}
@@ -285,8 +268,8 @@ export const MoorhenLigandCard = (props: {
                                 link.download = ligand.resName + "_flev.svg";
                                 link.click();
                             }}
+                            icon="MatSymFileDownload"
                         >
-                            <DownloadOutlined />
                             Download image (svg)
                         </MoorhenButton>
                     </MoorhenPopoverButton>

@@ -1,5 +1,3 @@
-import styled, { css } from "styled-components";
-import { ClickAwayListener, List, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { useSelector } from "react-redux";
 import { BackgroundColor} from "../menu-item";
@@ -24,6 +22,7 @@ import { MoorhenDragAtomsButton } from "./MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "./MoorhenRigidBodyFitButton";
 import { MoorhenMenuItem } from "../interface-base/MenuItems/MenuItem";
 import { MoorhenMenuItemPopover, MoorhenPopover } from "../interface-base";
+import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 
 export type ActionButtonSettings = {
     mutate:"ALA"| "CYS" | "ASP"| "GLU" | "PHE" | "GLY"| "HIS"| "ILE" | "LYS" | "LEU" | "MET" | "ASN" | "PRO" | "GLN" | "ARG" | "SER" | "THR" | "VAL" | "TRP" | "TYR";
@@ -40,17 +39,6 @@ interface ContextMenuProps {
     opacity: number;
 }
 
-const ContextMenu = styled.div<ContextMenuProps>`
-    position: absolute;
-    border-radius: 5px;
-    box-sizing: border-box;
-    ${({ top, left, opacity }) => css`
-        top: ${top}px;
-        left: ${left}px;
-        background-color: transparent;
-        opacity: ${opacity};
-    `}
-`;
 
 export const MoorhenContextMenu = (props: {
     urlPrefix: string;
@@ -141,16 +129,21 @@ export const MoorhenContextMenu = (props: {
     };
 
     const contextMenu = (
-                   <ContextMenu
-                ref={contextMenuRef}
-                top={overrideMenuContents ? 0 : menuPosition.top}
-                left={overrideMenuContents ? 0 : menuPosition.left}
-                opacity={opacity}
+                   <div
+                ref={contextMenuRef}style={{
+
+                top : overrideMenuContents ? 0 : menuPosition.top,
+                left : overrideMenuContents ? 0 : menuPosition.left,
+                opacity : opacity ,
+                position: "absolute",
+                borderRadius: "5px",
+                boxSizing: 'border-box',
+    }}
             >
                 {overrideMenuContents ? (
                     overrideMenuContents
                 ) : (
-                    <ClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
+                    <MoorhenClickAwayListener onClickAway={() => !showOverlay && props.setShowContextMenu(false)}>
 
                             {props.viewOnly ? (
                                 <MoorhenMenuItemPopover menuItemText="Background Color..."><BackgroundColor /></MoorhenMenuItemPopover>
@@ -179,9 +172,9 @@ export const MoorhenContextMenu = (props: {
                                     </div>
                                 )
                             )}
-                    </ClickAwayListener>
+                    </MoorhenClickAwayListener>
                 )}
-            </ContextMenu>
+            </div>
     );
 
     return (

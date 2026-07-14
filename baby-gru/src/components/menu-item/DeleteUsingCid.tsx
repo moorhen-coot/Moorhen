@@ -6,7 +6,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { removeMolecule } from "../../store/moleculesSlice";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../interface-base";
 
 export const DeleteUsingCid = () => {

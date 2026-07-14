@@ -66,6 +66,7 @@ interface ContainerRefs {
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
     moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
+    parentElementRef?: React.RefObject<null | HTMLElement>;
 }
 
 interface ContainerOptionalProps {
@@ -185,10 +186,22 @@ export const MoorhenContainer = (props: ContainerProps) => {
     );
 
     const setWindowDimensions = useCallback(() => {
-        let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
+        const parent = props.parentElementRef?.current
+        let [newWidth, newHeight]: [number, number] = [1,1];
+        
         if (props.size) {
             [newWidth, newHeight] = props.size;
-        }
+        } else if (parent) {
+            const parentSize = parent.getBoundingClientRect();
+            if (parentSize.width === 0 || parentSize.height === 0) {
+                console.warn("Parent element has zero width or height. Defaulting to window dimensions. You might want to place moorhen into a div container with appropriate size.");
+                [newWidth, newHeight] = [window.innerWidth, window.innerHeight];
+            } else {
+                [newWidth, newHeight] = [parentSize.width, parentSize.height];
+            }
+        } else {
+        [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
+
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
         dispatch(setWidth(newWidth));
@@ -200,6 +213,27 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useLayoutEffect(() => {
         setWindowDimensions();
     }, [setWindowDimensions]);
+
+    useLayoutEffect(() => {
+        if (props.size) {
+            return;
+        }
+
+        const parent = props.parentElementRef?.current;
+        if (!parent || typeof ResizeObserver === "undefined") {
+            return;
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            setWindowDimensions();
+        });
+
+        resizeObserver.observe(parent);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [props.size, props.parentElementRef, setWindowDimensions]);
 
     useWindowEventListener("resize", setWindowDimensions);
 
@@ -225,7 +259,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
-            dispatch(setTheme(_isDark ? "darkly" : "flatly"));
         }
     }, [backgroundColor]);
 
@@ -303,8 +336,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }, [width, height]);
 
     useEffect(() => {
+        for (const map of maps ) {
+            map.setActive(false)
+        }
         if (activeMap && commandCentre.current) {
-            activeMap.setActive();
+            activeMap.setActive(true);
             if (activeMap.isEM) {
                 dispatch(setRefinementSelection("SPHERE"));
             } else {

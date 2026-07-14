@@ -1,4 +1,3 @@
-import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined } from "@mui/icons-material";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
@@ -265,8 +264,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: reversedOrder ? "MoveDown" : "MoveUp", item: rule });
                         }}
                         tooltip="Move Up"
+                        icon="MatSymArrowUpward"
                     >
-                        <ArrowUpwardOutlined />
                     </MoorhenButton>
                     <MoorhenButton
                         size="sm"
@@ -275,8 +274,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: reversedOrder ? "MoveUp" : "MoveDown", item: rule });
                         }}
                         tooltip="Move Down"
+                        icon="MatSymArrowDownward"
                     >
-                        <ArrowDownwardOutlined />
                     </MoorhenButton>
                     <MoorhenButton
                         size="sm"
@@ -285,8 +284,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: "Remove", item: rule });
                         }}
                         tooltip="Delete rule"
+                        icon="MatSymDelete"
                     >
-                        <DeleteOutlined />
                     </MoorhenButton>
                 </div>
             </MoorhenStack>

@@ -13,7 +13,6 @@ import wasm from "vite-plugin-wasm";
 
 const enableTypeCheck = process.env.MOORHEN_TYPECHECK === "1";
 
-
 export default defineConfig({
     resolve: {
         alias: {
@@ -26,6 +25,7 @@ export default defineConfig({
         },
     },
     plugins: [
+
         svgr({
             include: "**/*.svg",
             svgrOptions: {

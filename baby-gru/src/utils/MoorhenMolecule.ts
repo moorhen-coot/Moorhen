@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -1423,10 +1423,10 @@ export class MoorhenMolecule {
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
     async addRepresentation(
-        style: moorhen.RepresentationStyles,
+        style: RepresentationStyles,
         cid?: string,
         isCustom?: boolean,
-        colourRules?: moorhen.ColourRule[],
+        colourRules?: ColourRule[],
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
@@ -1445,7 +1445,7 @@ export class MoorhenMolecule {
     async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
     async addRepresentation(
         styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
-        cid: string = "/*/*/*/*",
+        cid: string = "/*/*/*/*:*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
         bondOptions?: moorhen.cootBondOptions,

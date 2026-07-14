@@ -38,6 +38,7 @@ const initialState: {
     allowAddNewFittedLigand: boolean;
     allowMergeFittedLigand: boolean;
     disableFileUpload: boolean;
+    defaultMoleculeRepresentation:  "CAs" | "CBs" | "CRs"
 } = {
     devMode: null,
     useGemmi: true,
@@ -73,6 +74,7 @@ const initialState: {
     allowAddNewFittedLigand: false,
     allowMergeFittedLigand: false,
     disableFileUpload: false,
+    defaultMoleculeRepresentation: "CRs"
 };
 
 const generalStatesSlice = createSlice({
@@ -186,6 +188,9 @@ const generalStatesSlice = createSlice({
         setDisableFileUpload: (state, action: PayloadAction<boolean>) => {
             state.disableFileUpload = action.payload;
         },
+        setDefaultMoleculeRepresentation: (state, action: PayloadAction<typeof initialState.defaultMoleculeRepresentation>) => {
+            state.defaultMoleculeRepresentation = action.payload;
+        },
     },
 });
 
@@ -220,6 +225,7 @@ export const {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,
     setDisableFileUpload,
+    setDefaultMoleculeRepresentation,
 } = generalStatesSlice.actions;
 
 export default generalStatesSlice.reducer;

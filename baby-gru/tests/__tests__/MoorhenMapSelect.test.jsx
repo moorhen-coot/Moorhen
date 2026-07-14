@@ -5,6 +5,7 @@ import { userEvent } from '@testing-library/user-event'
 import { MoorhenMapSelect }  from '../../src/components/inputs/Selector/MoorhenMapSelect'
 import { MoorhenMap } from '../../src/utils/MoorhenMap'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance'
 
 describe('Testing MoorhenMapSelect', () => {
 
@@ -13,7 +14,7 @@ describe('Testing MoorhenMapSelect', () => {
     test('MoorhenMapSelect label', () => {
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect label="Test Label"/>
+                <MoorhenMapSelect maps={[]} label="Test Label"/>
             </Provider>
         )
 
@@ -22,16 +23,18 @@ describe('Testing MoorhenMapSelect', () => {
 
         const selectNode = screen.getByRole('combobox')
         expect(selectNode).toBeVisible()
+        
     })
 
     test('MoorhenMapSelect select maps', async () => {
-        const map_1 = new MoorhenMap(null, null)
+        const mockInstance = new MockMoorhenInstance()
+        const map_1 = new MoorhenMap(mockInstance)
         map_1.molNo = 0
         map_1.name = 'map-1'
-        const map_2 = new MoorhenMap(null, null)
+        const map_2 = new MoorhenMap(mockInstance)
         map_2.molNo = 1
         map_2.name = 'map-2'
-        const map_3 = new MoorhenMap(null, null)
+        const map_3 = new MoorhenMap(mockInstance)
         map_3.molNo = 2
         map_3.name = 'map-3'
 
@@ -61,13 +64,14 @@ describe('Testing MoorhenMapSelect', () => {
     })
 
     test('MoorhenMapSelect filter', () => {
-        const map_1 = new MoorhenMap(null, null)
+        const mockInstance = new MockMoorhenInstance()
+        const map_1 = new MoorhenMap(mockInstance)
         map_1.molNo = 0
         map_1.name = 'map-1'
-        const map_2 = new MoorhenMap(null, null)
+        const map_2 = new MoorhenMap(mockInstance)
         map_2.molNo = 1
         map_2.name = 'map-2'
-        const map_3 = new MoorhenMap(null, null)
+        const map_3 = new MoorhenMap(mockInstance)
         map_3.molNo = 2
         map_3.name = 'map-3'
 
@@ -97,13 +101,14 @@ describe('Testing MoorhenMapSelect', () => {
     })
 
     test('MoorhenMapSelect onChange', async () => {
-        const map_1 = new MoorhenMap(null, null)
+        const mockInstance = new MockMoorhenInstance()
+        const map_1 = new MoorhenMap(mockInstance)
         map_1.molNo = 0
         map_1.name = 'map-1'
-        const map_2 = new MoorhenMap(null, null)
+        const map_2 = new MoorhenMap(mockInstance)
         map_2.molNo = 1
         map_2.name = 'map-2'
-        const map_3 = new MoorhenMap(null, null)
+        const map_3 = new MoorhenMap(mockInstance)
         map_3.molNo = 2
         map_3.name = 'map-3'
 

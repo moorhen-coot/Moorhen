@@ -73,6 +73,7 @@ import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
+import { MoorhenInstance } from "@/InstanceManager";
 
 export interface backupKey {
     name?: string;
@@ -777,15 +778,19 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionData(
         sessionData: backupSession,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>,
-        fetchExternalUrl?: (uniqueId: string) => Promise<string>
+        moorhenInstance: MoorhenInstance,
+        fetchExternalUrl?: (uniqueId: string) => Promise<string>,
+        
     ): Promise<number> {
+
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
+        const molecules = moorhenInstance.getMoleculeList();
+        const maps = moorhenInstance.getMapList();
+        const commandCentre = moorhenInstance.getCommandCentreRef();
+        const store = moorhenInstance.store;
+        const dispatch = moorhenInstance.dispatch;
+        const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
+
         if (!sessionData) {
             return -1;
         } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
@@ -833,21 +838,19 @@ export class MoorhenTimeCapsule {
         // Load maps stored in session
         const newMapPromises =
             sessionData.mapData?.map(async storedMapData => {
-                const newMap = new MoorhenMap(commandCentre, store);
                 if (sessionData.includesAdditionalMapData) {
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
-                        return newMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference);
+                        return MoorhenMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference, moorhenInstance);
                     } else {
                         if (fetchExternalUrl) {
-                            newMap.uniqueId = storedMapData.uniqueId;
+                            
                             const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId);
-                            return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference);
+                            const newMap = MoorhenMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, moorhenInstance, storedMapData.isDifference, false, undefined, storedMapData.uniqueId);
+                            return newMap
                         }
                         console.warn("No function provided for fetchExternalUrl");
                     }
                 } else {
-                    newMap.uniqueId = storedMapData.uniqueId;
-
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                         return timeCapsuleRef.current
                             .retrieveBackup(
@@ -857,16 +860,18 @@ export class MoorhenTimeCapsule {
                                 })
                             )
                             .then(mapData => {
-                                return newMap.loadToCootFromMapData(
+                                return MoorhenMap.loadToCootFromMapData(
                                     mapData as ArrayBuffer | Uint8Array,
                                     storedMapData.name,
-                                    storedMapData.isDifference
+                                    storedMapData.isDifference,
+                                    moorhenInstance,
+                                    storedMapData.uniqueId        
                                 );
                             });
                     } else {
                         if (fetchExternalUrl) {
                             const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId);
-                            return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference);
+                            return MoorhenMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, moorhenInstance, storedMapData.isDifference, false, undefined, storedMapData.uniqueId);
                         }
                         console.warn("No function provided for fetchExternalUrl");
                     }
@@ -1149,26 +1154,15 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromArrayBuffer(
         sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const bytes = new Uint8Array(sessionArrayBuffer);
         const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
         const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
             sessionMessage,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
         );
         timeCapsuleRef.current.setBusy(false);
         return status;
@@ -1189,25 +1183,15 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromProtoMessage(
         sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
+
         );
         timeCapsuleRef.current.setBusy(false);
         return status;
@@ -1228,25 +1212,14 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromJsonString(
         sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const sessionData: backupSession = JSON.parse(sessionDataString);
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
         );
         timeCapsuleRef.current.setBusy(false);
         return status;

@@ -8,13 +8,19 @@ export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
     private _moorhenInstance: MoorhenInstance | null = null;
     private _ready: boolean = false;
-    private _root: ReturnType<typeof createRoot> | null = null;
+    private _rootElement: HTMLDivElement;
+    private _reactRoot: ReturnType<typeof createRoot> | null = null;
+    private _parentElementRef: React.RefObject<HTMLElement | null>;
+    
 
     public onInit: (() => void) | null = null;
 
     constructor() {
         super();
         this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
+        this._parentElementRef = React.createRef<HTMLElement | null>();
+        this._parentElementRef.current = this;
+
     }
 
     public getMoorhenInstance(): Promise<MoorhenInstance> {
@@ -123,55 +129,66 @@ export class MoorhenWebComponent extends HTMLElement {
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
-        if (this._root) {
+        if (this._reactRoot) {
             this._renderReactTree();
         }
     }
 
+    
+
     private _renderReactTree() {
-        if (!this._root) return;
-        this._root.render(
+        if (!this._reactRoot) return;
+        this._reactRoot.render(
             <MoorhenProvider>
                 <MoorhenContainer
                     moorhenInstanceRef={this._moorhenInstanceRef}
                     size={this.size ?? undefined}
                     urlPrefix={this.urlPrefix}
-                    webComponentMode={false}
+                    webComponentMode={true}
                     disableFileUploads={this.disableFileUploads}
                     viewOnly={this.viewOnly}
+                    parentElementRef={this._parentElementRef}
                 />
             </MoorhenProvider>
         );
     }
 
-    public connectedCallback() {
-        // shadow context
-        const rootElement = document.createElement("div");
-        this.appendChild(rootElement); // comment this out  and uncomment the following to use shadow DOM instead of light DOM
-        // also set webComponentMode to true in MoorhenContainer props
+    private async loadStylesheets()  {
+            const shadow = this.shadowRoot!;
+            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
+            const moorhenCss = await moorhenRes.text();
 
-        // const shadow = this.attachShadow({ mode: "open" });
-        // shadow.appendChild(rootElement);
+            if ("adoptedStyleSheets" in shadow) {
+                const moorhenSheet = new CSSStyleSheet();
+                moorhenSheet.replaceSync(moorhenCss);
+                shadow.adoptedStyleSheets = [moorhenSheet];
+            } else {
+                const moorhenStyle = document.createElement("style");
+                moorhenStyle.textContent = moorhenCss;
+                (shadow as ShadowRoot).appendChild(moorhenStyle);
+            }
+        };
 
-        // const loadStylesheets = async () => {
-        //     const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-        //     const moorhenCss = await moorhenRes.text();
+    public async connectedCallback() {
+        this._rootElement = document.createElement("div");
+        this._reactRoot = createRoot(this._rootElement);
 
-        //     if ("adoptedStyleSheets" in shadow) {
-        //         const moorhenSheet = new CSSStyleSheet();
-        //         moorhenSheet.replaceSync(moorhenCss);
-        //         shadow.adoptedStyleSheets = [moorhenSheet];
-        //     } else {
-        //         const moorhenStyle = document.createElement("style");
-        //         moorhenStyle.textContent = moorhenCss;
-        //         (shadow as ShadowRoot).appendChild(moorhenStyle);
-        //     }
-        // };
-        // loadStylesheets();
+        if (!this.style.display) this.style.display = "block";
+        if (!this.style.width) this.style.width = "100%";
+        if (!this.style.flex) this.style.flex = "1 1 auto";
+        if (!this.style.minHeight) this.style.minHeight = "0";
+        if (!this.style.minWidth) this.style.minWidth = "0";
+        this._rootElement.style.width = "100%";
+        this._rootElement.style.height = "100%";
+        this._rootElement.style.minHeight = "0";
+        this._rootElement.style.minWidth = "0";
 
-        this._root = createRoot(rootElement);
+        const shadow = this.attachShadow({ mode: "open" });
+        shadow.appendChild(this._rootElement);
+
+        await this.loadStylesheets();
+
         this._renderReactTree();
-
         const checkRefsReady = () => {
             if (this._moorhenInstanceRef?.current?.isReady()) {
                 clearInterval(refCheckInterval);
@@ -189,16 +206,16 @@ export class MoorhenWebComponent extends HTMLElement {
 
 /**
  * Registers the Moorhen web component for use in the DOM.
- * 
+ *
  * This function must be called before using the web component, typically in the main entry point of your app (e.g. index.tsx).
- * 
+ *
  * @example
  * // Call to register the web component
  * registerMoorhenWebComponent();
- * 
+ *
  * // Then use the web component in your HTML
  * <moorhen-web-component width="800" height="600" />
- * 
+ *
  * @example
  * // For TypeScript React apps, add this type declaration:
  * declare module "react" {
@@ -222,5 +239,3 @@ export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTML
     "disable-file-uploads"?: boolean;
     "view-only"?: boolean;
 }
-
-
