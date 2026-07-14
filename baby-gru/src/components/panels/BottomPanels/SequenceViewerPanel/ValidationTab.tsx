@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import { MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput } from "@/components/inputs";
-import { MoorhenInfoCard } from "@/components/interface-base";
+import { MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { RootState, setShownBottomPanel, setValidationOption } from "@/store";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
 
@@ -11,7 +11,7 @@ export const ValidationTab = () => {
     const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
     const dispatch = useDispatch();
 
-    const [numberOfLines, setNumberOfLines] = useState<number>(4);
+    const [numberOfLines, setNumberOfLines] = useState<number>(2);
 
     const handleTitleClick = () => {
         dispatch(setShownBottomPanel(isActiveTab ? null : "validation"))
@@ -31,14 +31,14 @@ export const ValidationTab = () => {
         </>
     );
 
-    const configPanel = (
-        <div>
-            <MoorhenMoleculeSelect useUniqueId onSelect={handleMoleculeSelect} selectedMolecule={validationOption.selectedMolecule} />
-            <MoorhenMapSelect useUniqueId onSelect={handleMapSelect} selected={validationOption.selectedMap} />
+    
 
-            <p></p>
+    const configPanel = (
+        <MoorhenStack inputGrid>
+            <MoorhenMoleculeSelect useUniqueId setSelectedMolecule={handleMoleculeSelect} selectedMolecule={validationOption.selectedMolecule} />
+            <MoorhenMapSelect useUniqueId setSelectedMap={handleMapSelect} selectedMap={validationOption.selectedMap} />
             <MoorhenNumberInput
-                label="Max lines"
+                label="Number of lines"
                 labelPosition="left"
                 minMax={[1, 10]}
                 type="numberForm"
@@ -47,7 +47,7 @@ export const ValidationTab = () => {
                 setValue={val => setNumberOfLines(val)}
                 width="4rem"
             />
-        </div>
+        </MoorhenStack>
     );
 
     return (

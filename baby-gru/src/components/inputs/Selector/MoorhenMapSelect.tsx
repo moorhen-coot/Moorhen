@@ -17,13 +17,13 @@ type MoorhenMapSelectBaseProps = {
 
 type MoorhenMapSelectPropsType = MoorhenMapSelectBaseProps & {
     defaultValue?: number | null;
-    selected?: number | null;
+    selectedMap?: number | null;
     setSelectedMap?: React.Dispatch<React.SetStateAction<number | null>>;
 };
 
 type MoorhenMapSelectPropsUIDType = MoorhenMapSelectBaseProps & {
     defaultValue?: string | null;
-    selected?: string | null;
+    selectedMap?: string | null;
     setSelectedMap?: React.Dispatch<React.SetStateAction<string | null>>;
 };
 /**
@@ -67,8 +67,8 @@ export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType | MoorhenMapSe
     const [internalSelectedMap, setInternalSelectedMap] = useState<number | string | null>(null);
     const selectedMap =
         useUniqueId
-            ? ((props.selected ?? internalSelectedMap) as string | null)
-            : ((props.selected ?? internalSelectedMap) as number | null);
+            ? ((props as MoorhenMapSelectPropsUIDType).selectedMap ?? internalSelectedMap) as string | null
+            : ((props as MoorhenMapSelectPropsType).selectedMap ?? internalSelectedMap) as number | null;
 
     const setSelectedMap = (value: number | string | null) => {
         setInternalSelectedMap(value);

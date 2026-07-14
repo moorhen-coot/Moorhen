@@ -9,7 +9,7 @@ import {
     cootMMRCCToSeqViewer,
     cootValidationDataToSeqViewer,
 } from "@/components/sequence-viewer/utils";
-import { RootState } from "@/store";
+import { RootState, setValidationOption } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
 
@@ -28,22 +28,21 @@ export const ValidationPanel = () => {
     const mapList = useSelector((state: RootState) => state.maps);
 
     const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+    const dispatch = useDispatch();
 
-    const [selectedMolecule] = useState<string>("");
-    const [selectedMap, setSelectedMap] = useState<string>("");
     const [sequencesList, setSequencesList] = useState<MoorhenSequenceViewerSequence[]>([]);
 
     const molecule = useMemo(() => {
         return moleculeList.length > 0
-            ? (moleculeList.find(molecule => molecule.uniqueId === selectedMolecule) ?? moleculeList[0])
+            ? (moleculeList.find(molecule => molecule.uniqueId === validationOption.selectedMolecule) ?? moleculeList[0])
             : null;
-    }, [moleculeList, selectedMolecule]);
+    }, [moleculeList, validationOption.selectedMolecule]);
 
     const map = useMemo(() => {
         return mapList.length > 0
-            ? (mapList.find(map => map.uniqueId === selectedMap) ?? null)
+            ? (mapList.find(map => map.uniqueId === validationOption.selectedMap) ?? null)
             : null;
-    }, [mapList, selectedMap]);
+    }, [mapList, validationOption.selectedMap]);
 
     useEffect(() => {
         if (!molecule || molecule.molNo === null) {
@@ -60,10 +59,10 @@ export const ValidationPanel = () => {
         const updateSequences = async () => {
             const sequences = MoleculeToSeqViewerSequences(molecule);
 
-            if (selectedMap === "") {
+            if (validationOption.selectedMap === "") {
                 // use active map if no map is selected
                 if (store.getState().generalStates.activeMap) {
-                    setSelectedMap(store.getState().generalStates.activeMap.uniqueId);
+                    dispatch(setValidationOption({ ...validationOption, selectedMap: store.getState().generalStates.activeMap.uniqueId }));
                     return [];
                 } else {
                     skipDensity = true;
@@ -121,11 +120,11 @@ export const ValidationPanel = () => {
             setSequencesList(sequences);
         };
         updateSequences();
-    }, [molecule?.sequences, selectedMap, map?.molNo]);
+    }, [molecule?.sequences, map?.molNo, validationOption.selectedMap, moorhenInstance, commandCentre, dispatch, validationOption.selectedMolecule]);
 
     return (
         <BaseSequenceViewerPanel
-            selectedMolecule={selectedMolecule}
+            selectedMolecule={validationOption.selectedMolecule}
             sequences={sequencesList}
             displayHeight={1}
             showValidationData={true}

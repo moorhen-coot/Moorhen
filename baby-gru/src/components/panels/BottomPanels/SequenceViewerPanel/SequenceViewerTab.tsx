@@ -25,7 +25,7 @@ export const SequenceViewerTab = () => {
 
     const configPanel = (
         <div>
-            <MoorhenMoleculeSelect useUniqueId onSelect={setSelectedMolecule} selectedMolecule={seqviewerOption.selectedMolecule} />
+            <MoorhenMoleculeSelect useUniqueId setSelectedMolecule={setSelectedMolecule} selectedMolecule={seqviewerOption.selectedMolecule} />
             <p></p>
             <MoorhenNumberInput
                 label="Max lines"
