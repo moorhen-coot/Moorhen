@@ -2,9 +2,8 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
-import { MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import { MoorhenMoleculeSelect} from "@/components/inputs";
 import { MoorhenMapSelect } from "@/components/inputs/";
-import { MoorhenInfoCard } from "@/components/interface-base";
 import { MoorhenStack } from "@/components/interface-base/Stack/Stack";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
@@ -16,23 +15,16 @@ import {
     handleResiduesSelection,
     useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
-import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
+import { RootState, setHoveredAtom } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
-import { convertRemToPx } from "@/utils/utils";
-import "./sequence-viewer-panel.css";
 
 export const ValidationPanel = () => {
     const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
     const moorhenInstance = useMoorhenInstance();
-
-    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
-    const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
-
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
-    const [numberOfLines, setNumberOfLines] = useState<number>(4);
     const [sequencesList, setSequencesList] = useState<MoorhenSequenceViewerSequence[]>([]);
     const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
         return moleculeList.length > 0
@@ -42,7 +34,6 @@ export const ValidationPanel = () => {
     const [selectedMap, setSelectedMap] = useState<number>(-999);
 
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
     const maps = useSelector((state: RootState) => state.maps);
     const store = useStore<RootState>();
@@ -53,6 +44,13 @@ export const ValidationPanel = () => {
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
     }, [residueSelection]);
+
+    useEffect(() => {
+        if (!molecule || molecule.molNo === null) {
+            setSequencesList([]);
+            return;
+        }
+    }, [molecule]);
 
     useEffect(() => {
         let skipDensity = false;
@@ -95,15 +93,6 @@ export const ValidationPanel = () => {
                     "Density"
                 );
 
-                // const newCootDensityFitData = await moorhenInstance.cootCommand.getDensityFitAnalysis(molecule.molNo, selectedMap, mapRMS);
-                // addValidationDataToSeqViewerSequences(
-                //     sequences,
-                //     cootValidationDataToSeqViewer(newCootDensityFitData, "Density Fit RMSZ"),
-                //     4,
-                //     undefined,
-                //     true,
-                //     "Density"
-                // );
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
                     selectedMap
@@ -134,6 +123,7 @@ export const ValidationPanel = () => {
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
+            if (!molecule) return;
             molecule.centreOn(`//${chain}/${seqNum}/*`);
         },
         [molecule]
@@ -143,6 +133,7 @@ export const ValidationPanel = () => {
 
     const residueSelectionCallback = useCallback(
         selection => {
+            if (!molecule) return;
             handleResiduesSelection(selection, molecule, dispatch);
         },
         [molecule, dispatch]
@@ -150,6 +141,7 @@ export const ValidationPanel = () => {
 
     const handleHoverResidue = useCallback(
         (molName, chain, resNum, resCode, resCID) => {
+            if (!molecule) return;
             dispatch(setHoveredAtom({ molecule: molecule, cid: resCID, atomInfo: null }));
         },
         [dispatch, molecule]
@@ -176,8 +168,6 @@ export const ValidationPanel = () => {
         animation();
     }, [sidePanelIsOpen]);
 
-    const expandLength = sequencesList.length <= numberOfLines ? sequencesList.length : numberOfLines;
-    const displaySize = 2 * 26 + 76;
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
     }, [molecule?.molNo, selectedMolecule, moleculeList]);
@@ -188,18 +178,15 @@ export const ValidationPanel = () => {
             sequences={sequencesList}
             selectedResidues={sequenceSelection}
             hoveredResidue={hoveredResidue}
-            // maxDisplayHeight={1}
             displayHeight={1}
             showTitleBar={false}
             onResidueClick={handleClick}
             onResiduesSelect={residueSelectionCallback}
             onHoverResidue={handleHoverResidue}
-            className={`moorhen__edge-panel-sequence-viewer`}
-            style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
             forceRedrawScrollBarKey={panelKeyRef}
             showValidationData={true}
             nameColumnWidth={4}
-            validationTracks={["Overall RMSZ", "Density Correlation"]}
+            validationTracks={["Overall RMSZ", "Density Correlation", "Rama. ZScore", "Rota. ZScore"]}
         />
     );
 };

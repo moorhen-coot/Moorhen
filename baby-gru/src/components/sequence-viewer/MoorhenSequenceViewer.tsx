@@ -495,7 +495,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     }, [sequencesToDisplay?.length, minVal, maxVal, displayHeight]);
 
     if (noSequence) {
-        return <div className="moorhen__seqviewer-no-sequence">No sequences available</div>;
+        return <div className="moorhen__seqviewer-container moorhen__seqviewer-no-sequence">No sequences available</div>;
     }
 
     if (invalidSequences) {

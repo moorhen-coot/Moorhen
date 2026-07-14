@@ -1,6 +1,5 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MoorhenButton, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
@@ -8,15 +7,14 @@ import {
     handleResiduesSelection,
     useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
-import { RootState, setHoveredAtom, setShowBottomPanel } from "@/store";
+import { RootState, setHoveredAtom, setSeqViewerOption } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
-import { convertRemToPx } from "@/utils/utils";
-import "./sequence-viewer-panel.css";
 import { SequenceViewerOption } from "./SequenceViewerTab";
 
 export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => {
     const { option } = props
     const dispatch = useDispatch();
+    const store = useStore<RootState>();
 
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
@@ -26,8 +24,9 @@ export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => 
     });
 
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const GlViewportWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
+
+
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
@@ -39,6 +38,11 @@ export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => 
         const sequences = MoleculeToSeqViewerSequences(molecule);
         return sequences;
     }, [option.selectedMolecule, molecule?.sequences]);
+
+    useEffect(() => {
+        const seqviewerOption = store.getState().bottomPanels.seqviewerOption;
+        dispatch(setSeqViewerOption({...seqviewerOption, showExpandButton: sequenceList.length > 1}));
+    }, [sequenceList]);
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
@@ -94,8 +98,6 @@ export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => 
             onResidueClick={handleClick}
             onResiduesSelect={residueSelectionCallback}
             onHoverResidue={handleHoverResidue}
-            className={`moorhen__edge-panel-sequence-viewer`}
-            style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}
             forceRedrawScrollBarKey={panelKeyRef}
             showValidationData={false}
         />

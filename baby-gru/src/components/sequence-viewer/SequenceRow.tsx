@@ -35,35 +35,16 @@ export const SequenceRow = memo(
 
         const validationTracksLabels = showValidationData
             ? validationTracks?.map((value, index) => {
-                  return (
-                      <div
-                          className="moorhen__seqviewer__sticky-left-column"
-                          style={{
-                              minWidth: `${nameColumnWidth}rem`,
-                              maxWidth: `${nameColumnWidth}rem`,
-                              height: "1.5rem",
-                              top: `${1 + 1.5 * (index + 1)}rem`,
-                          }}
-                      >
-                          <MoorhenTooltip tooltip={`${value}`}>
-                              <div
-                                  style={{
-                                      display: "flex",
-                                      width: "100%",
-                                      textAlign: "left",
-                                      fontSize: "0.75rem",
-                                      fontStyle: "italic",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      lineHeight: "1",
-                                  }}
-                              >
-                                  {value}
-                              </div>
-                          </MoorhenTooltip>
-                      </div>
-                  );
-              })
+                return (
+
+                    <MoorhenTooltip tooltip={`${value}`}>
+                        <div className={`moorhen__seqviewer__sticky-left-column-validation-track-label`}
+                        >
+                            {value}
+                        </div>
+                    </MoorhenTooltip>
+                );
+            })
             : null;
 
         const residueColumns =
@@ -106,9 +87,11 @@ export const SequenceRow = memo(
                     className="moorhen__seqviewer__sticky-left-column"
                     style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}
                 >
-                    {sequence.displayName ? sequence.displayName : `${sequence.chain}`}
+                    <div className="moorhen__seqviewer__sticky-left-column-seqName">
+                        {sequence.displayName ? sequence.displayName : `${sequence.chain}`}</div>
+                    {validationTracksLabels}
                 </div>
-                {validationTracksLabels}
+
                 <div
                     className="moorhen__seqviewer__left-column-spacer"
                     style={{ minWidth: `${nameColumnWidth}rem`, maxWidth: `${nameColumnWidth}rem` }}

@@ -1,17 +1,23 @@
 @import "../../colors.css";
 
+:host,
+:root {
+    --residue-box-height: 1.5rem;
+    --validation-box-height: 1.7rem;
+}
+
 .moorhen__seqviewer-container {
     padding: 0.5rem;
     background-color: var(--moorhen-background);
-    border: 1px solid var(--moorhen-border);
+    /* border: 1px solid var(--moorhen-border); */
     border-radius: 0.2rem;
 }
 .moorhen__seqviewer__residue-box {
     cursor: pointer;
     min-width: var(--column-width, 1rem);
     max-width: var(--column-width, 1rem);
-    min-height: 1.5rem;
-    max-height: 1.5rem;
+    min-height: var(--residue-box-height);
+    max-height: var(--residue-box-height);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,8 +31,8 @@
     cursor: pointer;
     min-width: var(--column-width, 1rem);
     max-width: var(--column-width, 1rem);
-    min-height: 1.5rem;
-    max-height: 1.5rem;
+    min-height: var(--validation-box-height);
+    max-height: var(--validation-box-height);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -174,18 +180,36 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
-    min-height: 1.5rem;
-    max-height: 1.5rem;
     z-index: 20;
+}
+
+.moorhen__seqviewer__sticky-left-column-seqName {
+    height: var(--residue-box-height);
+}
+
+.moorhen__seqviewer__sticky-left-column-validation-track-label {
+    height: var(--validation-box-height);
+    margin-top: 2px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--moorhen-border);
+    justify-content: center;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-style: italic; 
+    text-overflow: ellipsis;
+    line-height: 1;
 }
 
 .moorhen__seqviewer__left-column-spacer {
     left: 0;
     margin-bottom: 2px;
     margin-left: 0px;
-    min-height: 1.5rem;
-    max-height: 1.5rem;
+    min-height: var(--residue-box-height);
+    max-height: var(--residue-box-height);
 }
 
 .moorhen__seqviewer-updown-buttons-bar {
