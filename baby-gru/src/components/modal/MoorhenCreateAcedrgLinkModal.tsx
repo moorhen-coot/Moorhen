@@ -176,7 +176,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     return (
         <MoorhenStack card>
             <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
-                <MoorhenMoleculeSelect  onSelectUniqueId={(uid) => setChosenMolecule(moorhenInstance.getMolecule(uid))}/>
+                <MoorhenMoleculeSelect useUniqueId onSelect={(uid) => setChosenMolecule(moorhenInstance.getMolecule(uid))} />
                 {/* <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                     Set Atom {props.id}
                 </MoorhenButton>

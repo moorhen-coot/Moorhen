@@ -1,49 +1,49 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
-import { MoorhenMoleculeSelect} from "@/components/inputs";
-import { MoorhenMapSelect } from "@/components/inputs/";
-import { MoorhenStack } from "@/components/interface-base/Stack/Stack";
-import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
+import { MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
     MoleculeToSeqViewerSequences,
-    MoorhenSelectionToSeqViewer,
     addValidationDataToSeqViewerSequences,
     cootMMRCCToSeqViewer,
     cootValidationDataToSeqViewer,
-    handleResiduesSelection,
-    useHoveredResidue,
 } from "@/components/sequence-viewer/utils";
-import { RootState, setHoveredAtom } from "@/store";
+import { RootState } from "@/store";
 import { libcootApi } from "@/types/libcoot";
-import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
+
+export type ValidationOption = {
+    selectedMolecule: string
+    selectedMap: string
+    availableData: string[]
+    shownData: string[]
+};
 
 export const ValidationPanel = () => {
-    const dispatch = useDispatch();
+    const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
     const moorhenInstance = useMoorhenInstance();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
+    const mapList = useSelector((state: RootState) => state.maps);
+
+    const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+
+    const [selectedMolecule] = useState<string>("");
+    const [selectedMap, setSelectedMap] = useState<string>("");
     const [sequencesList, setSequencesList] = useState<MoorhenSequenceViewerSequence[]>([]);
-    const molecule: MoorhenMolecule | null = useSelector((state: RootState) => {
+
+    const molecule = useMemo(() => {
         return moleculeList.length > 0
-            ? (state.molecules.moleculeList.find(molecule => molecule.molNo === selectedMolecule) ?? moleculeList[0])
+            ? (moleculeList.find(molecule => molecule.uniqueId === selectedMolecule) ?? moleculeList[0])
             : null;
-    });
-    const [selectedMap, setSelectedMap] = useState<number>(-999);
+    }, [moleculeList, selectedMolecule]);
 
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
-    const maps = useSelector((state: RootState) => state.maps);
-    const store = useStore<RootState>();
-
-    const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
-
-
-    const sequenceSelection = useMemo(() => {
-        return MoorhenSelectionToSeqViewer(residueSelection);
-    }, [residueSelection]);
+    const map = useMemo(() => {
+        return mapList.length > 0
+            ? (mapList.find(map => map.uniqueId === selectedMap) ?? null)
+            : null;
+    }, [mapList, selectedMap]);
 
     useEffect(() => {
         if (!molecule || molecule.molNo === null) {
@@ -60,14 +60,16 @@ export const ValidationPanel = () => {
         const updateSequences = async () => {
             const sequences = MoleculeToSeqViewerSequences(molecule);
 
-            if (selectedMap === -999) {
+            if (selectedMap === "") {
                 // use active map if no map is selected
                 if (store.getState().generalStates.activeMap) {
-                    setSelectedMap(store.getState().generalStates.activeMap.molNo);
+                    setSelectedMap(store.getState().generalStates.activeMap.uniqueId);
                     return [];
                 } else {
                     skipDensity = true;
                 }
+            } else if (!map || map.molNo === null) {
+                skipDensity = true;
             }
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
@@ -79,7 +81,7 @@ export const ValidationPanel = () => {
                         message: "coot_command",
                         command: "mmrrcc",
                         returnType: "mmrrcc_stats",
-                        commandArgs: [molecule.molNo, "A", selectedMap],
+                        commandArgs: [molecule.molNo, "A", map.molNo],
                     },
                     false
                 )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
@@ -95,7 +97,7 @@ export const ValidationPanel = () => {
 
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
-                    selectedMap
+                    map.molNo
                 );
                 addValidationDataToSeqViewerSequences(
                     sequences,
@@ -106,7 +108,7 @@ export const ValidationPanel = () => {
                     "Density"
                 );
 
-                const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, selectedMap);
+                const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map.molNo);
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),
@@ -119,74 +121,16 @@ export const ValidationPanel = () => {
             setSequencesList(sequences);
         };
         updateSequences();
-    }, [selectedMolecule, molecule?.sequences, selectedMap]);
-
-    const handleClick = useCallback(
-        (modelIndex: number, molName: string, chain: string, seqNum: number) => {
-            if (!molecule) return;
-            molecule.centreOn(`//${chain}/${seqNum}/*`);
-        },
-        [molecule]
-    );
-
-    const hoveredResidue = useHoveredResidue();
-
-    const residueSelectionCallback = useCallback(
-        selection => {
-            if (!molecule) return;
-            handleResiduesSelection(selection, molecule, dispatch);
-        },
-        [molecule, dispatch]
-    );
-
-    const handleHoverResidue = useCallback(
-        (molName, chain, resNum, resCode, resCID) => {
-            if (!molecule) return;
-            dispatch(setHoveredAtom({ molecule: molecule, cid: resCID, atomInfo: null }));
-        },
-        [dispatch, molecule]
-    );
-
-    const configPanel = (
-        <MoorhenStack inputGrid>
-            <MoorhenMoleculeSelect setSelectedMolecule={setSelectedMolecule} selectedMolecule={selectedMolecule} />
-            <MoorhenMapSelect setSelectedMap={setSelectedMap} maps={maps} />
-        </MoorhenStack>
-    );
-
-    useEffect(() => {
-        const animation = () => {
-            for (let i = 0; i < 600 / 10; i++) {
-                setTimeout(
-                    () => {
-                        setPanelKeyRef(current => current + 1);
-                    },
-                    10 * (i + 1)
-                );
-            }
-        };
-        animation();
-    }, [sidePanelIsOpen]);
-
-    const seqViewerKey = useMemo(() => {
-        return molecule?.molNo !== undefined ? molecule.molNo : `no-molecule`;
-    }, [molecule?.molNo, selectedMolecule, moleculeList]);
+    }, [molecule?.sequences, selectedMap, map?.molNo]);
 
     return (
-        <MoorhenSequenceViewer
-            key={seqViewerKey}
+        <BaseSequenceViewerPanel
+            selectedMolecule={selectedMolecule}
             sequences={sequencesList}
-            selectedResidues={sequenceSelection}
-            hoveredResidue={hoveredResidue}
             displayHeight={1}
-            showTitleBar={false}
-            onResidueClick={handleClick}
-            onResiduesSelect={residueSelectionCallback}
-            onHoverResidue={handleHoverResidue}
-            forceRedrawScrollBarKey={panelKeyRef}
             showValidationData={true}
             nameColumnWidth={4}
-            validationTracks={["Overall RMSZ", "Density Correlation", "Rama. ZScore", "Rota. ZScore"]}
+            validationTracks={validationOption.shownData}
         />
     );
 };

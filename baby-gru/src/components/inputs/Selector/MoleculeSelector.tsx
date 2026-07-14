@@ -6,10 +6,7 @@ import { MoorhenSelect } from "./Select";
 import "./selectors.css";
 
 type MoorhenMoleculeSelectType = {
-    onSelect?: (arg0: number) => void | React.Dispatch<React.SetStateAction<number>>;
-    onSelectUniqueId?: (arg0: string) => void | React.Dispatch<React.SetStateAction<string>>;
     onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
-    selectedUniqueId?: string;
     molecules?: MoorhenMolecule[];
     disabled?: boolean;
     allowAny?: boolean;
@@ -17,65 +14,87 @@ type MoorhenMoleculeSelectType = {
     label?: string | null;
     style?: React.CSSProperties;
     filterFunction?: (arg0: MoorhenMolecule) => boolean;
-    selectedMolecule?: number;
-    setSelectedMolecule?: React.Dispatch<React.SetStateAction<number>>;
-
+    useUniqueId?: boolean;
 };
 
-export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
+type MoorhenMoleculeSelectMolNoType = MoorhenMoleculeSelectType & {
+    useUniqueId?: false;
+    selectedMolecule?: number;
+    setSelectedMolecule?: React.Dispatch<React.SetStateAction<number | undefined>>;
+    onSelect?: (arg0: number) => void;
+};
+
+type MoorhenMoleculeSelectUIDType = MoorhenMoleculeSelectType & {
+    useUniqueId: true;
+    selectedMolecule?: string;
+    setSelectedMolecule?: React.Dispatch<React.SetStateAction<string | undefined>>;
+    onSelect?: (arg0: string) => void;
+};
+
+export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectMolNoType | MoorhenMoleculeSelectUIDType) => {
     const {
-        onSelect = null,
-        onSelectUniqueId = null,
-        // onChange = null,
-        molecules = null,
+        molecules,
         allowAny,
         ref,
         label,
         style,
         filterFunction = () => true,
-        selectedUniqueId,
-        selectedMolecule,
-        setSelectedMolecule
+        onChange,
+        useUniqueId = false,
     } = props;
 
     const storeMolecules = useSelector((state: RootState) => state.molecules.moleculeList);
-    const moleculesList = molecules ? molecules : storeMolecules;
-    
-    const [internalSelected, setInternalSelected] = useState<number | undefined>(undefined);
-    const selectedMolNo = selectedMolecule !== undefined ? selectedMolecule : internalSelected;
-    const setSelectedMolNo = setSelectedMolecule ? setSelectedMolecule : setInternalSelected;
+    const moleculesList = molecules ?? storeMolecules;
+
+    const [internalSelected, setInternalSelected] = useState<number | string | undefined>(undefined);
+    const selectedMolecule = props.selectedMolecule ?? internalSelected;
+
+    const setSelectedMolecule = (newValue: number | string | undefined) => {
+        setInternalSelected(newValue);
+        if (useUniqueId) {
+            (props as MoorhenMoleculeSelectUIDType).setSelectedMolecule?.(newValue as string | undefined);
+            if (newValue !== undefined) {
+                (props as MoorhenMoleculeSelectUIDType).onSelect?.(newValue as string);
+            }
+        } else {
+            (props as MoorhenMoleculeSelectMolNoType).setSelectedMolecule?.(newValue as number | undefined);
+            if (newValue !== undefined) {
+                (props as MoorhenMoleculeSelectMolNoType).onSelect?.(newValue as number);
+            }
+        }
+    };
 
 
-    const getDefaultValue = () => {
-        if (allowAny) return -999999;
-        if (selectedMolNo) return selectedMolNo;    
-        return 0;
+    const getDefaultValue = (): number | string | undefined => {
+        if (selectedMolecule !== undefined) {
+            return selectedMolecule;
+        }
+        if (allowAny) {
+            return useUniqueId ? "" : -999999;
+        }
+        if (moleculesList.length === 0) {
+            return undefined;
+        }
+        return useUniqueId ? moleculesList[0].uniqueId : moleculesList[0].molNo;
     };
 
     useEffect(() => {
-        if (selectedMolNo === undefined || selectedMolNo === -1) {
-            const newMolNo = getDefaultValue();
-            setSelectedMolNo(newMolNo);
-            onSelect?.(newMolNo);
-            onSelectUniqueId?.(newMolNo.toString());
+        if (selectedMolecule === undefined || selectedMolecule === -1) {
+            const newSelection = getDefaultValue();
+            if (newSelection !== undefined) {
+                setSelectedMolecule(newSelection);
+            }
         }
-    },[moleculesList])
-
-    useEffect(() => {
-        if (selectedUniqueId !== undefined ) {
-            const selectedMolecule = moleculesList.find(molecule => molecule.uniqueId === selectedUniqueId);
-            setSelectedMolNo(selectedMolecule ? selectedMolecule.molNo : undefined);
-            onSelect?.(selectedMolecule ? selectedMolecule.molNo : undefined);
-        }
-    }, [selectedUniqueId])
+    }, [moleculesList, selectedMolecule, useUniqueId]);
 
 
     let disabled: boolean = props.disabled;
 
     const options = moleculesList.map(option => {
         if (filterFunction(option)) {
+            const optionValue = useUniqueId ? option.uniqueId : option.molNo;
             return (
-                <option key={option.molNo} value={option.molNo}>
+                <option key={option.uniqueId} value={optionValue}>
                     {`${option.molNo}: ${option.name}`}
                 </option>
             );
@@ -85,13 +104,13 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
     if (options.length === 0) {
         disabled = true;
         options.push(
-            <option disabled value={allowAny ? -999999 : 0} key={0}>
+            <option disabled value={allowAny ? (useUniqueId ? "" : -999999) : 0} key={0}>
                 No molecules loaded
             </option>
         );
     } else if (props.allowAny && options.length !== 0) {
         options.push(
-            <option value={-999999} key={-999999}>
+            <option value={useUniqueId ? "" : -999999} key={-999999}>
                 Any molecule
             </option>
         );
@@ -100,14 +119,16 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
 
 
     const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMolNo = parseInt(evt.target.value);
-        const selectedMolecule = moleculesList.find(molecule => molecule.molNo === selectedMolNo);
-        if (selectedMolecule && onSelectUniqueId) {
-            onSelectUniqueId(selectedMolecule.uniqueId);
+        if (useUniqueId) {
+            setSelectedMolecule(evt.target.value);
+        } else {
+            const selectedMolNo = parseInt(evt.target.value);
+            if (!Number.isNaN(selectedMolNo)) {
+                setSelectedMolecule(selectedMolNo);
+            }
         }
-        if (props.onChange) props.onChange(evt);
-        if (onSelect) onSelect(selectedMolNo);
-        setSelectedMolNo(selectedMolNo);
+
+        onChange?.(evt);
     };
 
 
@@ -116,7 +137,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             label={props.label === undefined ? "Select Molecule:" : props.label}
             disabled={disabled}
             // defaultValue={getDefaultValue()}
-            value={selectedMolNo}
+            value={selectedMolecule}
             onChange={e => handleChange(e)}
             ref={ref}
             style={style}

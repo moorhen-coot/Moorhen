@@ -1,31 +1,40 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
-import { MoorhenSelect } from "..";
-import { moorhen } from "../../../types/moorhen";
+import { useSelector } from "react-redux";
+import { MoorhenSelect } from "./Select";
+import type { MoorhenMap } from "@/utils/MoorhenMap";
+import type { RootState } from "@/store";
 
-type MoorhenMapSelectPropsType = {
-    height?: string;
-    width?: string;
+type MoorhenMapSelectBaseProps = {
     label?: string;
-    maps: moorhen.Map[];
-    filterFunction?: (arg0: moorhen.Map) => boolean;
-    onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
-
-    defaultValue?: number | null;
+    maps?: MoorhenMap[];
+    filterFunction?: (arg0: MoorhenMap) => boolean;
     ref?: React.Ref<HTMLSelectElement>;
     disabled?: boolean;
+    onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
+    onSelect?: (value: number | string) => void;
+    useUniqueId?: boolean;
+};
+
+type MoorhenMapSelectPropsType = MoorhenMapSelectBaseProps & {
+    defaultValue?: number | null;
     selected?: number | null;
     setSelectedMap?: React.Dispatch<React.SetStateAction<number | null>>;
 };
 
+type MoorhenMapSelectPropsUIDType = MoorhenMapSelectBaseProps & {
+    defaultValue?: string | null;
+    selected?: string | null;
+    setSelectedMap?: React.Dispatch<React.SetStateAction<string | null>>;
+};
 /**
  * A map selector react component
  * @property {string} [height="4rem"] The height of the selector
  * @property {string} [width="20rem"] The width of the selector
  * @property {string} [label="Map"] A text label shown on top of the selector
- * @property {moorhen.Map[]} maps List of maps displayed in the selector options
- * @property {function} filterFunction A function that takes a moorhen.Map as input and returns a boolean: true if the map is to be included in the options.
+ * @property {MoorhenMap[]} maps List of maps displayed in the selector options
+ * @property {function} filterFunction A function that takes a MoorhenMap as input and returns a boolean: true if the map is to be included in the options.
  * @property {function} onChange A function that is called when the user changes the selector option
- * @property {number} [defaultValue=-999999] The default value of the selector
+ * @property {number | string} [defaultValue=-999999] The default value of the selector
  * @example
  * import { MoorhenMapSelect } from "moorhen";
  * import { useRef } from "react";
@@ -42,38 +51,88 @@ type MoorhenMapSelectPropsType = {
      width='100%' label='Select a map' onChange={handleMapChange} />
  * )
  */
-export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
-    const { height = "4rem", width = "20rem", maps = null, label = "Map", filterFunction = () => true, defaultValue = 0, ref } = props;
+export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType | MoorhenMapSelectPropsUIDType) => {
+    const storeMaps = useSelector((state: RootState) => state.maps);
+    const {
+        label = "Map",
+        filterFunction = () => true,
+        ref,
+        onChange,
+        onSelect,
+    } = props;
 
-    const [_selectedMap, _setSelectedMap] = useState<number | null>(null);
-    const selectedMap = props.selected ?? _selectedMap;
-    const setSelectedMap = props.setSelectedMap ?? _setSelectedMap;
+    const maps = props.maps ?? storeMaps;
+    const useUniqueId = props.useUniqueId ?? false;
 
-    const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
-        const nextSelectedMap = Number.parseInt(evt.target.value, 10);
-        props.onChange?.(evt);
-        if (!Number.isNaN(nextSelectedMap)) {
-            // props.onSelect?.(nextSelectedMap);
-            setSelectedMap(nextSelectedMap);
+    const [internalSelectedMap, setInternalSelectedMap] = useState<number | string | null>(null);
+    const selectedMap =
+        useUniqueId
+            ? ((props.selected ?? internalSelectedMap) as string | null)
+            : ((props.selected ?? internalSelectedMap) as number | null);
+
+    const setSelectedMap = (value: number | string | null) => {
+        setInternalSelectedMap(value);
+        if (useUniqueId) {
+            (props as MoorhenMapSelectPropsUIDType).setSelectedMap?.(value as string | null);
+            if (value !== null) {
+                onSelect?.(value as string);
+            }
+        } else {
+            (props as MoorhenMapSelectPropsType).setSelectedMap?.(value as number | null);
+            if (value !== null) {
+                onSelect?.(value as number);
+            }
         }
     };
 
-    useEffect(() => {
-        if (selectedMap === null || selectedMap === undefined) {
-            const newSelectedMap = defaultValue !== 0 ? defaultValue : maps[0]?.molNo ?? null;
-            console.log(`MoorhenMapSelect: setting default selected map to ${newSelectedMap}`);
-            setSelectedMap(newSelectedMap);
-        }
-    }, [defaultValue, maps]);
+    const filteredMaps = maps.filter(filterFunction);
 
-    const filteredMaps = maps ? maps.filter(filterFunction) : [];
+    const resolveDefaultSelection = (): number | string | null => {
+        if (filteredMaps.length === 0) {
+            return null;
+        }
+
+        if (useUniqueId) {
+            const defaultUniqueId = (props as MoorhenMapSelectPropsUIDType).defaultValue;
+            return defaultUniqueId && defaultUniqueId !== "" ? defaultUniqueId : filteredMaps[0].uniqueId;
+        }
+
+        const defaultMolNo = (props as MoorhenMapSelectPropsType).defaultValue;
+        return typeof defaultMolNo === "number" && !Number.isNaN(defaultMolNo) ? defaultMolNo : filteredMaps[0].molNo;
+    };
+
+    const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
+        let selectedMapValue: number | string | null = null;
+        if (useUniqueId) {
+            selectedMapValue = evt.target.value;
+        } else {
+            selectedMapValue = Number.parseInt(evt.target.value, 10);
+        }
+
+        if (useUniqueId || !Number.isNaN(selectedMapValue)) {
+            setSelectedMap(selectedMapValue);
+        }
+
+        onChange?.(evt);
+    };
+
+    useEffect(() => {
+        if (selectedMap === null || selectedMap === undefined || selectedMap === "") {
+            const selectedMapValue = resolveDefaultSelection();
+            if (selectedMapValue !== null) {
+                setSelectedMap(selectedMapValue);
+            }
+        }
+    }, [props.defaultValue, maps, selectedMap, useUniqueId]);
+
     const isDisabled = props.disabled ?? filteredMaps.length === 0;
 
     const mapOptions: React.JSX.Element[] = [];
     if (filteredMaps.length > 0) {
         filteredMaps.forEach(map => {
+            const optionValue = useUniqueId ? map.uniqueId : map.molNo;
             mapOptions.push(
-                <option key={map.molNo} value={map.molNo}>
+                <option key={map.uniqueId} value={optionValue}>
                     {`${map.molNo}: ${map.name}`}
                 </option>
             );
@@ -85,6 +144,10 @@ export const MoorhenMapSelect = (props: MoorhenMapSelectPropsType) => {
             </option>
         );
     }
+
+    const defaultValue = useUniqueId
+        ? (props as MoorhenMapSelectPropsUIDType).defaultValue ?? undefined
+        : (props as MoorhenMapSelectPropsType).defaultValue ?? undefined;
 
     return (
         <MoorhenSelect ref={ref} defaultValue={defaultValue} value={selectedMap ?? undefined} onChange={handleChange} label={label} inline disabled={isDisabled}>

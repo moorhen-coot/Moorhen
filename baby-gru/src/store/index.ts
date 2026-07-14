@@ -244,7 +244,7 @@ export {
 }  from "./glRefSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export { setSeqViewerOption, setShownBottomPanel }  from "./bottomPanelsSlice";
+export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
