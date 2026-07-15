@@ -1465,10 +1465,8 @@ const doCootCommand = (messageData: {
                 const point_triangles = cootResult.point_triangles
                 const pick_points = cootResult.pick_points
                 const point_triangles_js = vectorVectorToJSArray(point_triangles)
-                console.log(point_triangles_js)
                 const pick_points_js = vectorArray3ToJSArray(pick_points)
-                console.log(pick_points_js)
-                returnResult = simpleMeshToMeshData(mesh, true)
+                returnResult = {mesh:simpleMeshToMeshData(mesh, true),pick_info:{pick_points:pick_points_js,point_triangles:point_triangles_js}}
                 break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
