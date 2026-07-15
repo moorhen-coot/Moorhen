@@ -422,7 +422,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                             setBusy={setBusyDrawingCustomRepresentation}
                             urlPrefix={urlPrefix}
                             molecule={props.molecule}
-                            onApply={() => document.body.click()}
                         />
                     </MoorhenPopoverButton>
                     <MoorhenPopoverButton
