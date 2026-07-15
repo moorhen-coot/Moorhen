@@ -15,9 +15,8 @@ type MeshType =
     | ReturnType<typeof gemmiAtomsToCirclesSpheresInfo>
     | ReturnType<typeof gemmiAtomPairsToCylindersInfo>;
 
-type PickableMesh = {
-    mesh: MeshType;
-    pick_info: {};
+type PickableMesh = MeshType & {
+    pick_info?: {};
 };
 
 export type RepresentationStyles =
@@ -469,7 +468,7 @@ export class MoleculeRepresentation {
                 .forEach(object => {
                     //TODO - Carry the pick_info further down the chain
                     console.log(object)
-                    const a = appendOtherData(object.mesh, this.parentMolecule.store, true);
+                    const a = appendOtherData(object, this.parentMolecule.store, true);
                     newBuffers = [...newBuffers, ...a];
                     buildBuffers(a, this.parentMolecule.store);
                     if (this.buffers) {
@@ -828,15 +827,16 @@ export class MoleculeRepresentation {
 
         for (let i = 0; i < bufferObj1.length; i++) {
             const iObjects = {};
-            for (const key in bufferObj1[i].mesh) {
-                if (!(key in bufferObj2[i].mesh)) {
+            for (const key in bufferObj1[i]) {
+                if (key === "pick_info") continue
+                if (!(key in bufferObj2[i])) {
                     console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`);
                 } else {
-                    iObjects[key] = bufferObj1[i].mesh[key].concat(bufferObj2[i].mesh[key]);
+                    iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key]);
                 }
             }
             resultBufferObjects.push({
-                mesh: iObjects as libcootApi.InstancedMeshJS,
+                ...(iObjects as MeshType),
                 pick_info: {},
             });
         }
@@ -991,7 +991,7 @@ export class MoleculeRepresentation {
                 },
               false
             )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
-            const objects = [{ mesh: response.data.result.result, pick_info: {} }];
+            const objects = [{ ...response.data.result.result, pick_info: {} }];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1259,7 +1259,7 @@ export class MoleculeRepresentation {
             ),
         ]);
 
-        const objects = [{mesh:result.data.result.result,pick_info:{}}];
+        const objects = [{ ...result.data.result.result, pick_info: {} }];
         return objects;
     }
 
@@ -1297,7 +1297,7 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
 
-        const ribbonBufferObjects = [{ mesh: response.data.result.result, pick_info: {} }];
+        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: {} }];
 
         let resultBufferObjects: PickableMesh[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {
@@ -1387,7 +1387,7 @@ export class MoleculeRepresentation {
         }
 
         const response = await meshCommand;
-        const objects = [{mesh:response.data.result.result,pick_info:{}}];
+        const objects = [{ ...response.data.result.result, pick_info: {} }];
         return objects
     }
 
@@ -1437,11 +1437,12 @@ export class MoleculeRepresentation {
             atomColours[`${atom.serial}`] = colour;
         });
         const sphere_size = 0.3;
-        const objects = [{mesh:gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours),pick_info:{}}];
+        //const objects = [{mesh:gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours),pick_info:{}}];
+        const objects = [{ ...gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours), pick_info: {} }]
         objects.forEach(object => {
-            object.mesh["clickTol"] = 1e-6;
-            object.mesh["doStencil"] = true;
-            object.mesh["isHoverBuffer"] = true;
+            object["clickTol"] = 1e-6;
+            object["doStencil"] = true;
+            object["isHoverBuffer"] = true;
         });
         return objects
     }
@@ -1461,7 +1462,7 @@ export class MoleculeRepresentation {
                 },
                 false
             )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{ ...response.data.result.result, pick_info: {} }];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1489,7 +1490,7 @@ export class MoleculeRepresentation {
             atomColours[`${atom[0].serial}`] = colour;
             atomColours[`${atom[1].serial}`] = colour;
         });
-        const objects = [{mesh:gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled),pick_info:{}}]
+        const objects = [{...gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled),pick_info:{}}]
         return objects;
     }
 
@@ -1508,7 +1509,7 @@ export class MoleculeRepresentation {
                 },
                 false
             )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{...response.data.result.result,pick_info:{}}];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1581,7 +1582,7 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{...response.data.result.result,pick_info:{}}];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1603,7 +1604,7 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{...response.data.result.result,pick_info:{}}];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1624,7 +1625,7 @@ export class MoleculeRepresentation {
             },
             false
         )) as moorhen.WorkerResponse<{mesh:libcootApi.SimpleMeshJS,pick_info:{pick_points:number[][]}}>;
-        const objects = [{mesh:response.data.result.result.mesh,pick_info:response.data.result.result.pick_info}];
+        const objects = [{ ...response.data.result.result.mesh, pick_info: response.data.result.result.pick_info }];
         return objects;
     }
 
@@ -1642,7 +1643,7 @@ export class MoleculeRepresentation {
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
-        const objects = [{mesh:response.data.result.result,pick_info:{}}];
+        const objects = [{...response.data.result.result,pick_info:{}}];
         return objects;
     }
 
@@ -1662,11 +1663,11 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{ ...response.data.result.result, pick_info: {} }];
             if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
-                    flippedNormalsObject.mesh.idx_tri = object.mesh.idx_tri.map(element => element.map(subElement => subElement.reverse()));
+                    flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
                     return flippedNormalsObject;
                 });
                 //Empty existing buffers of this type
@@ -1691,7 +1692,7 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{...response.data.result.result,pick_info:{}}];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1712,7 +1713,7 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
-            const objects = [{mesh:response.data.result.result,pick_info:{}}];
+            const objects = [{...response.data.result.result,pick_info:{}}];
             return objects;
         } catch (err) {
             console.log(err);
@@ -1728,7 +1729,7 @@ export class MoleculeRepresentation {
         const lines = getCubeLines(unitCell);
         unitCell.delete();
 
-        const objects = [{mesh:gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false),pick_info:{}}];
+        const objects = [{...gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false),pick_info:{}}];
 
         return objects;
     }
