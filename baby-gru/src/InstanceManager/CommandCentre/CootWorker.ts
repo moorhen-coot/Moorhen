@@ -347,6 +347,32 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 }
 
+const vectorArray3ToJSArray = (vectorArray): number[][] => {
+    const vectorVectorSize = vectorArray.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const theArray = vectorArray.get(ivv)
+        retVal.push(theArray)
+    }
+    return retVal
+}
+
+const vectorVectorToJSArray = (vectorVector): number[][] => {
+    const vectorVectorSize = vectorVector.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const vector = vectorVector.get(ivv)
+        const vectorSize = vector.size()
+        const thisArray: number[] = []
+        for(let iv=0; iv<vectorSize; iv++){
+            thisArray.push(vector.get(iv))
+        }
+        retVal.push(thisArray)
+        vector.delete()
+    }
+    return retVal
+}
+
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
     const print_timing = false
@@ -1436,6 +1462,12 @@ const doCootCommand = (messageData: {
                 break;
             case 'PickableMeshPerm':
                 const mesh = cootResult.mesh
+                const point_triangles = cootResult.point_triangles
+                const pick_points = cootResult.pick_points
+                const point_triangles_js = vectorVectorToJSArray(point_triangles)
+                console.log(point_triangles_js)
+                const pick_points_js = vectorArray3ToJSArray(pick_points)
+                console.log(pick_points_js)
                 returnResult = simpleMeshToMeshData(mesh, true)
                 break;
             case 'mesh_perm':
