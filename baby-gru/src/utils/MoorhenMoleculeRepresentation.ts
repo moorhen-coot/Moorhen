@@ -466,8 +466,6 @@ export class MoleculeRepresentation {
             objects
                 .filter(object => typeof object !== "undefined" && object !== null)
                 .forEach(object => {
-                    //TODO - Carry the pick_info further down the chain
-                    console.log(object)
                     const a = appendOtherData(object, this.parentMolecule.store, true);
                     newBuffers = [...newBuffers, ...a];
                     buildBuffers(a, this.parentMolecule.store);

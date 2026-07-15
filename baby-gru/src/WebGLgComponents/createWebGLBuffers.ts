@@ -472,6 +472,9 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
     }
+    if(jsondata.pick_info){
+        theBuffer.pick_info = jsondata.pick_info;
+    }
 
     return theBuffer
 }
