@@ -1434,6 +1434,10 @@ const doCootCommand = (messageData: {
             case 'mesh_perm3':
                 returnResult = simpleMeshToMeshData(cootResult, true, true)
                 break;
+            case 'PickableMeshPerm':
+                const mesh = cootResult.mesh
+                returnResult = simpleMeshToMeshData(mesh, true)
+                break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
                 break;

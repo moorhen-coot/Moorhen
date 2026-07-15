@@ -1601,7 +1601,7 @@ export class MoleculeRepresentation {
     async getMetaBallBuffers(cid: string) {
         const response = (await this.commandCentre.current.cootCommand(
             {
-                returnType: "mesh_perm",
+                returnType: "PickableMeshPerm",
                 command: "DrawMoorhenMetaBalls",
                 commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8, 4],
             },

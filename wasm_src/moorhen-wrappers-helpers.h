@@ -418,6 +418,12 @@ struct moorhen_hbond {
 
 };
 
+struct PickableMesh {
+    coot::simple_mesh_t mesh;
+    std::vector<std::vector<unsigned>> point_triangles;
+    std::vector<std::array<float,3>> pick_points;
+};
+
 std::pair<coot::simple_mesh_t,std::vector<std::vector<unsigned>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
@@ -708,7 +714,7 @@ class molecules_container_js : public molecules_container_t {
             return results;
         }
 
-        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
+        PickableMesh DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
             //FIXME - pass in against_a_dark_background
             bool against_a_dark_background = false;
             coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, false, true, 1);
@@ -716,7 +722,25 @@ class molecules_container_js : public molecules_container_t {
             //This is the coot mesh and list of associations with the input spheres.
             //Now how we map this onto the spheres when hovering is an as-yet unanswered question.
             auto mesh_assoc = GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
-            return mesh_assoc.first;
+
+            std::vector<std::array<float,3>> points;
+            const auto geom = spheres_mesh.geom;
+            for(const auto &inst : geom){
+                const auto &As = inst.instancing_data_A;
+                for(const auto &inst_data : As){
+                    const auto &instDataPosition = inst_data.position;
+                    const float atomMult = inst_data.size[0];
+                    std::array<float,3> point{instDataPosition[0],instDataPosition[1],instDataPosition[2]};
+                    points.push_back(point);
+                }
+            }
+
+            PickableMesh pick_mesh;
+            pick_mesh.mesh = mesh_assoc.first;
+            pick_mesh.point_triangles = mesh_assoc.second;
+            pick_mesh.pick_points = points;
+
+            return pick_mesh;
         }
 
         std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
@@ -1424,24 +1448,24 @@ std::array<float,3> find_density_center_of_mass(
      }
 
      void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .glb
          bool as_binary = true; // test the extension of file_name
          float gltf_pbr_roughness = 0.2;
          float gltf_pbr_metalicity = 0.0;
-         sm.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
+         sm.mesh.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
      }
 
      void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .obj
-         write_simple_mesh_to_obj_file(sm,file_name);
+         write_simple_mesh_to_obj_file(sm.mesh,file_name);
      }
 
      void export_metaballs_as_3mf_xml(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as 3mf xml
-         write_simple_mesh_to_3mf_xml_file(sm,file_name);
+         write_simple_mesh_to_3mf_xml_file(sm.mesh,file_name);
      }
 
 };

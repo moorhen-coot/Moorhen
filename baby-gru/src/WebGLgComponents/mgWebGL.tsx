@@ -5965,7 +5965,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let minz = 100000.0;
         let minidx = -1;
         let minj = -1;
-        //FIXME - This needs to depend on whether spheres, surface are drawn
+        //TODO - This needs to depend on whether spheres, surface, etc. are drawn.
+        //       We will start with metaballs, displayBuffers need something other than atoms?
 
         let minsym = -1;
 
