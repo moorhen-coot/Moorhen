@@ -72,7 +72,7 @@ export const ValidationPanel = () => {
             }
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
-            addValidationDataToSeqViewerSequences(sequences, geoValidationData, 4, undefined, undefined, "Geometry");
+            addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", 4, undefined, undefined);
 
             if (!skipDensity) {
                 const MMRRCC = (await commandCentre.current.cootCommand(
@@ -88,10 +88,10 @@ export const ValidationPanel = () => {
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootMMRCCToSeqViewer(MMRRCC.data.result.result),
+                    "Density",
                     undefined,
                     undefined,
-                    true,
-                    "Density"
+                    true,              
                 );
 
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
@@ -101,22 +101,25 @@ export const ValidationPanel = () => {
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootValidationDataToSeqViewer(newCootDensityCorrelationData, "Density Correlation"),
+                    "Density",
                     undefined,
                     "mpl Viridis",
                     true,
-                    "Density"
+                    
                 );
 
                 const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map.molNo);
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),
+                    "Density",
                     undefined,
                     "mpl Viridis",
                     true,
-                    "Density"
+                    
                 );
             }
+            // setValidationOption({ ...validationOption, availableData: sequences[0].validationTracks.map(track => track.name) });
             setSequencesList(sequences);
         };
         updateSequences();

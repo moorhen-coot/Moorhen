@@ -1,9 +1,8 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo } from "react";
-import { MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
-import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { RootState, setSeqViewerOption } from "@/store";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
+import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
 
 export type SequenceViewerOption = {
     showExpandButton: boolean;
@@ -23,10 +22,9 @@ export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => 
             : null;
     }, [moleculeList, option.selectedMolecule]);
 
-    const sequenceList = useMemo<MoorhenSequenceViewerSequence[]>(() => {
-        const sequences = MoleculeToSeqViewerSequences(molecule);
-        return sequences;
-    }, [molecule?.sequences]);
+    const moleculeChange = useMoleculeChanged();
+
+    const sequenceList = molecule?.seqViewerData ?? [];
 
     useEffect(() => {
         const seqviewerOption = store.getState().bottomPanels.seqviewerOption;

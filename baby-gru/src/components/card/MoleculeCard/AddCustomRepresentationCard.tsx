@@ -109,7 +109,7 @@ export const AddCustomRepresentationCard = memo(
 
         const commandCentre = useCommandCentre();
         const representationRef = useRef<MoleculeRepresentation>(
-            props.representation ?? new MoleculeRepresentation(representationStyle, "/*/*/*/*:*", commandCentre)
+            props.representation ?? new MoleculeRepresentation(representationStyle, "/*/*/*/*:*", commandCentre.current)
         );
         representationRef.current.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
 

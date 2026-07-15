@@ -74,27 +74,6 @@ export function MoleculeToSeqViewerSequences(molecule: MoorhenMolecule | null, g
     return newSequenceList;
 }
 
-// export function addValidationDataToSeqViewerSequences(
-//     sequences: SeqElement[],
-//     validationData: { chain: string; label: string; data: { resNum: number; score: number | [number, number] }[] }[]
-// ): SeqElement[] {
-//     for (const dataSet of validationData) {
-//         for (const sequence of sequences) {
-//             if (dataSet.chain === sequence.chain) {
-//                 for (const residue of sequence.residues) {
-//                     const resValidation = dataSet.data.find(v => v.resNum === residue.resNum);
-//                     if (resValidation) {
-//                         if (!residue.validationData) {
-//                             residue.validationData = {};
-//                         }
-//                         residue.validationData[dataSet.label] = resValidation.score;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//     return sequences;
-// }
 
 export const cootValidationDataToSeqViewer = (cootData, valueName: string): ValidationData => {
     const validationData: ValidationData = {};
@@ -124,14 +103,16 @@ export const cootMMRCCToSeqViewer = (cootData: libcootApi.MMRCCStatsJS): Validat
 export const addValidationDataToSeqViewerSequences = (
     sequences: SeqElement[],
     validationData: ValidationData,
+    category: string,
     rmszScale: number = 5,
     gradientPresets?: GradientPreset,
     reverseGradient?: boolean,
-    category?: string
 ): SeqElement[] => {
     const scaleRMSZ = val => {
         return Math.min(val / rmszScale, 1);
     };
+
+    const validationTracks = new Set<{categorie: string, name: string }>();
 
     const newSequences = [...sequences];
     for (const sequence of newSequences) {

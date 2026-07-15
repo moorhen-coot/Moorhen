@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useMemo } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
@@ -16,9 +16,8 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
 
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
-    const monomerLibraryPath = usePaths().monomerLibraryPath;
+    const moorhenInstance = useMoorhenInstance();
+
 
     const dispatch = useDispatch();
 
@@ -46,7 +45,7 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
 
     const fetchMoleculeFromURL = useCallback(
         async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-            const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+            const newMolecule = new MoorhenMolecule(moorhenInstance);
             newMolecule.setBackgroundColour(backgroundColor);
             newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
             try {
@@ -69,14 +68,14 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
             return;
         }
         if (entryInfo.compModelInfo?.url) {
-            const colourRule = new ColourRule("af2-plddt", "//*", "#ffffff", commandCentre, true);
+            const colourRule = new ColourRule("af2-plddt", "//*", "#ffffff", moorhenInstance.commandCentre, true);
             colourRule.setLabel("PLDDT");
             const ruleArgs = await getMultiColourRuleArgs(newMolecule, "af2-plddt");
             colourRule.setArgs([ruleArgs]);
             colourRule.setParentMolecule(newMolecule);
             newMolecule.defaultColourRules = [colourRule];
         }
-        await commandCentre.current.cootCommand(
+        await moorhenInstance.commandCentre.cootCommand(
             {
                 message: "coot_command",
                 command: "SSM_superpose",

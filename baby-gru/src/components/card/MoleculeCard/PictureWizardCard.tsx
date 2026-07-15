@@ -321,7 +321,7 @@ export const PictureWizardCard = memo(
                     ? nonCustomOpacity
                     : null;
 
-            let rep = new MoleculeRepresentation(representationStyle, cidSelection, commandCentre)
+            let rep = new MoleculeRepresentation(representationStyle, cidSelection, commandCentre.current)
             rep.cid = cidSelection;
             rep.restrictToNeighbours = restrictToNeighbours;
             rep.neighboursDistance = neighboursDistance;

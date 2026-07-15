@@ -175,7 +175,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                     break;
             }
             if (cidLabel) {
-                newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre, false);
+                newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre.current, false);
                 newRule.setParentMolecule(props.molecule);
                 newRule.setArgs([cidLabel, selectedColour]);
             } else {
@@ -183,7 +183,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
             }
         } else {
             const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourProperty);
-            newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre, true);
+            newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre.current, true);
             newRule.setParentMolecule(props.molecule);
             newRule.setArgs([ruleArgs]);
             newRule.propertyType = colourProperty;

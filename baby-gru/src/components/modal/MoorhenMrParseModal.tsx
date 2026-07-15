@@ -2,7 +2,7 @@ import Fasta from "biojs-io-fasta";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import {
@@ -150,6 +150,8 @@ export const MoorhenMrParseModal = () => {
         seq_ident: "number",
     };
 
+    const moorhenInstance = useMoorhenInstance();
+
     const mrParseModels = useSelector((state: moorhen.State) => state.mrParse.mrParseModels);
     const targetSequence = useSelector((state: moorhen.State) => state.mrParse.targetSequence);
     const afJson = useSelector((state: moorhen.State) => state.mrParse.afJson);
@@ -296,7 +298,7 @@ export const MoorhenMrParseModal = () => {
     };
 
     const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(moorhenInstance);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromString(fileString, fileName);
@@ -304,7 +306,7 @@ export const MoorhenMrParseModal = () => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(moorhenInstance);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -680,7 +682,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseUrl(urlBase, moorhenInstance, backgroundColor, defaultBondSmoothness, dispatch);
     };
 
     const footerContent = (
@@ -692,12 +694,9 @@ export const MoorhenMrParseModal = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     loadMrParseFiles(
                         Array.from(e.target.files),
-                        commandCentre,
-                        store,
-                        monomerLibraryPath,
+                        moorhenInstance,
                         backgroundColor,
                         defaultBondSmoothness,
-                        dispatch
                     );
                 }}
             />

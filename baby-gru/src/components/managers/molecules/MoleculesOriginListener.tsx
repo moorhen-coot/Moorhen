@@ -1,6 +1,6 @@
 import { useSelector, useStore } from "react-redux";
 import { useEffect, useRef } from "react";
-import { useCommandCentre } from "@/InstanceManager";
+import {  useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "@/store";
 import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { getCentreAtom } from "@/utils/utils";
@@ -10,7 +10,7 @@ export const MoleculesOriginListener = () => {
     const _origin = useSelector((state: RootState) => state.glRef.origin);
     const originRef = useRef(_origin);
     const lastOriginRef = useRef(_origin);
-    const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     originRef.current = _origin;
 
@@ -26,7 +26,7 @@ export const MoleculesOriginListener = () => {
             return;
         }
         lastOriginRef.current = originRef.current;
-        const [_molecule, cid] = await getCentreAtom(molecules, commandCentre, store);
+        const [_molecule, cid] = await getCentreAtom(molecules, moorhenInstance.commandCentre, store);
         molecules.forEach((molecule: MoorhenMolecule) => {
             if (molecule.environmentRepresentation.visible) {
                 molecule.drawEnvironment(cid);

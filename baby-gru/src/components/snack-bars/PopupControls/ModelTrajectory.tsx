@@ -101,7 +101,7 @@ export const ModelTrajectory = () => {
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true));
-            representationRef.current = new MoleculeRepresentation(style, "/*/*/*/*", commandCentre);
+            representationRef.current = new MoleculeRepresentation(style, "/*/*/*/*", commandCentre.current);
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current);
             setNFrames(framesRef.current.length);
             setBusyComputingFrames(false);

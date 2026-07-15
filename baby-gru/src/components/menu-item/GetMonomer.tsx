@@ -2,7 +2,7 @@ import parse from "html-react-parser";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
@@ -43,6 +43,7 @@ const CompoundAutoCompleteOption = (props: {
 }) => {
     const [ligandSVG, setLigandSVG] = useState<string>("");
     const [isShown, setIsShown] = useState<boolean>(false);
+    const moorhenInstance = useMoorhenInstance();
 
     const svgPopover = useMemo(() => {
         return (
@@ -88,7 +89,8 @@ const CompoundAutoCompleteOption = (props: {
 
 export const GetMonomer = () => {
     const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
+    const commandCentre = moorhenInstance.commandCentre;
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -147,7 +149,7 @@ export const GetMonomer = () => {
             const response = await fetch("https://raw.githubusercontent.com/MonomerLibrary/monomers/master/list/mon_lib_list.cif");
             if (response.ok) {
                 const fileContents = await response.text();
-                const table = (await commandCentre.current.cootCommand(
+                const table = (await moorhenInstance.commandCentre.cootCommand(
                     {
                         command: "parse_mon_lib_list_cif",
                         commandArgs: [fileContents],
@@ -165,7 +167,7 @@ export const GetMonomer = () => {
     }, [commandCentre, dispatch]);
 
     const getMonomerFromLibcootAPI = useCallback((tlc: string, fromMolNo: number) => {
-        return commandCentre.current.cootCommand(
+        return moorhenInstance.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "get_monomer_and_position_at",
@@ -177,7 +179,7 @@ export const GetMonomer = () => {
 
     const createNewLigandMolecule = useCallback(
         async (tlc: string, molNo: number, ligandDict?: string) => {
-            const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+            const newMolecule = new MoorhenMolecule(moorhenInstance);
             newMolecule.molNo = molNo;
             newMolecule.name = tlc;
             newMolecule.setBackgroundColour(backgroundColor);
@@ -190,7 +192,7 @@ export const GetMonomer = () => {
             dispatch(addMolecule(newMolecule));
             return newMolecule;
         },
-        [defaultBondSmoothness]
+        [defaultBondSmoothness, moorhenInstance, backgroundColor]
     );
 
     const addLigand = useCallback(
@@ -199,7 +201,7 @@ export const GetMonomer = () => {
             if (selectedMolecule) {
                 await selectedMolecule.addDict(ligandDict);
             } else {
-                await commandCentre.current.cootCommand(
+                await moorhenInstance.commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "read_dictionary_string",
@@ -276,7 +278,7 @@ export const GetMonomer = () => {
         let result = await getMonomerFromLibcootAPI(newTlc, fromMolNo);
 
         if (result.data.result.result === -1) {
-            const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+            const newMolecule = new MoorhenMolecule(moorhenInstance);
             await newMolecule.loadMissingMonomer(newTlc, fromMolNo);
             result = await getMonomerFromLibcootAPI(newTlc, fromMolNo);
         }
