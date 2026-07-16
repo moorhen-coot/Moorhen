@@ -18,14 +18,15 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
 
     const [isPopoverShown, setIsPopoverShown] = React.useState<boolean>(false);
 
-    const trackData = validationTracks.map(track => residue?.validationData?.[track] ?? { value: null });
+    const normalizedTracks = validationTracks ?? [];
+    const trackData = normalizedTracks.map(track => residue?.validationData?.[track] ?? { value: null });
 
     const tracks = trackData.map((data, index) => {
         const value = Array.isArray(data.value) ? data.value[0] : data.value;
         const reverseGradient = data.reverseGradient ?? false;
         return (
             <div
-                key={validationTracks[index]}
+                key={normalizedTracks[index]}
                 className="moorhen__seqviewer__residue-validation-box-top"
                 style={
                     {
@@ -88,7 +89,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
         }
     }, [props.popoverRef]);
 
-    if (validationTracks.length > 0) {
+    if (normalizedTracks.length > 0) {
         return (
             <MoorhenPopover
                 isShown={isPopoverShown}
