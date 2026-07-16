@@ -1,7 +1,9 @@
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks"; 
 
 export const MoorhenConvertCisTransButton = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const getCootCommandInput = (
         selectedMolecule: moorhen.Molecule,
         chosenAtom: moorhen.ResidueSpec,
@@ -34,6 +36,7 @@ export const MoorhenConvertCisTransButton = (props: ContextButtonProps) => {
             refineAfterMod={false}
             toolTipLabel={"Cis/Trans isomerisation"}
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

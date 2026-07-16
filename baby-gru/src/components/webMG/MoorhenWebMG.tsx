@@ -55,6 +55,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
     const moorhenGlobalInstance = useMoorhenInstance();
     const videoRecorderRef = moorhenGlobalInstance.getVideoRecorderRef();
+    const moorhenInstance = useMoorhenInstance();
 
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp)
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection)
@@ -649,19 +650,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         if (isChangingRotamers || isRotatingAtoms || isDraggingAtoms || shortcutsBlocked ) {
             return false
         }
+
         return moorhenKeyPress(
             event,
-            {
-                molecules,
-                activeMap,
-                hoveredAtom,
-                dispatch,
-                glRef: glRef as React.RefObject<webGL.MGWebGL>,
-                videoRecorderRef,
-                commandCentre: commandCentre,
-                store: store,
-                ...props
-            },
+            hoveredAtom,
+            activeMap,
+            molecules,
+            props.viewOnly,
+            moorhenInstance,
             JSON.parse(shortCuts as string),
             showShortcutToast,
             shortcutOnHoveredAtom

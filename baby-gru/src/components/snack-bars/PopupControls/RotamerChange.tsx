@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCommandCentre } from "@/InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { MoorhenButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { enqueueSnackbar, removeMolecule, setHoveredAtom, setIsChangingRotamers, setShownControl, triggerUpdate } from "@/store";
@@ -16,6 +16,7 @@ export const RotamerChange = () => {
     const [rotamerName, setRotamerName] = useState<string | null>(null);
     const [rotamerRank, setRotamerRank] = useState<number | null>(null);
     const [rotamerProbability, setRotamerProbability] = useState<number | null>(null);
+    const moorhenInstance = useMoorhenInstance();
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -143,6 +144,7 @@ export const RotamerChange = () => {
         dispatch(triggerUpdate(chosenMolecule.current.molNo));
         dispatch(setIsChangingRotamers(false));
         dispatch(setShownControl(null));
+        moorhenInstance.triggerMoleculeChanged(chosenMolecule.current.uniqueId, "modify");
     }, []);
 
     const rejectTransform = async () => {

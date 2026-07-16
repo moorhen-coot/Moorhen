@@ -3,8 +3,9 @@ import { useSelector } from "react-redux";
 import { getTooltipShortcutLabel } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
-
+import { useMoorhenInstance } from "@/hooks"; 
 export const MoorhenEigenFlipLigandButton = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const [toolTipLabel, setToolTipLabel] = useState("Eigen Flip: flip the ligand around its eigenvectors");
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
 
@@ -27,6 +28,7 @@ export const MoorhenEigenFlipLigandButton = (props: ContextButtonProps) => {
         };
     };
 
+    
     useEffect(() => {
         if (shortCuts) {
             const shortCut = JSON.parse(shortCuts as string).eigen_flip;
@@ -45,6 +47,7 @@ export const MoorhenEigenFlipLigandButton = (props: ContextButtonProps) => {
             }
             toolTipLabel={toolTipLabel}
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

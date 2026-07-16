@@ -2,7 +2,7 @@ import { UnknownAction } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import React, { Dispatch, useCallback } from "react";
 import { setShownControl } from "@/store/globalUISlice";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre/MoorhenCommandCentre";
 import { hideModal } from "../../store/modalsSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -22,6 +22,7 @@ export const fillPartialResidue = async (
     dispatch: Dispatch<UnknownAction>,
     enableRefineAfterMod: boolean
 ) => {
+    const moorhenInstance = useMoorhenInstance();
     await commandCentre.current.cootCommand(
         {
             returnType: "status",
@@ -46,6 +47,7 @@ export const fillPartialResidue = async (
     selectedMolecule.setAtomsDirty(true);
     await selectedMolecule.redraw();
     dispatch(triggerUpdate(selectedMolecule.molNo));
+    moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "modify");
 };
 
 export const MoorhenFillMissingAtoms = () => {

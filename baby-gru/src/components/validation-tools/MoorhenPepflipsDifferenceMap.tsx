@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch, useCallback } from "react";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { setShownControl } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { usePersistentState } from "../../store/menusSlice";
 import { hideModal } from "../../store/modalsSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -23,6 +23,7 @@ export const flipPeptide = async (
     enableRefineAfterMod: boolean,
     dispatch: Dispatch<UnknownAction>
 ) => {
+    const moorhenInstance = useMoorhenInstance();
     await commandCentre.current.cootCommand(
         {
             returnType: "status",
@@ -48,6 +49,7 @@ export const flipPeptide = async (
     selectedMolecule.setAtomsDirty(true);
     await selectedMolecule.redraw();
     dispatch(triggerUpdate(selectedMolecule.molNo));
+    moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "refine");
 };
 export const MoorhenPepflipsDifferenceMap = () => {
     const modalId = modalKeys.PEPTIDE_FLIPS;

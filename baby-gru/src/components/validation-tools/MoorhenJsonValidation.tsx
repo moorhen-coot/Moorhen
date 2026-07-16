@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { hsvToRgb, rgbToHsv } from "../../utils/utils";
@@ -10,6 +10,7 @@ import { MoorhenAccordion } from "../interface-base";
 
 export const MoorhenJsonValidation = (props: {isDocked?: boolean}) => {
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -46,6 +47,7 @@ export const MoorhenJsonValidation = (props: {isDocked?: boolean}) => {
         selectedMolecule.setAtomsDirty(true);
         await selectedMolecule.redraw();
         dispatch(triggerUpdate(selectedMolecule.molNo));
+        moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "modify");
     };
 
     const handleRefine = async (
@@ -102,6 +104,7 @@ export const MoorhenJsonValidation = (props: {isDocked?: boolean}) => {
         selectedMolecule.setAtomsDirty(true);
         await selectedMolecule.redraw();
         dispatch(triggerUpdate(selectedMolecule.molNo));
+        moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "refine");
     };
 
     const handleFlipSide = (...args: [moorhen.Molecule, string, number, string]) => {

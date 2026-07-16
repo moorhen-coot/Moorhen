@@ -89,6 +89,7 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
         await newMolecule.fetchIfDirtyAndDraw(newMolecule.atomCount >= 50000 ? "CRs" : "CBs");
         await newMolecule.centreOn("/*/*/*/*", true);
         dispatch(addMolecule(newMolecule));
+        moorhenInstance.triggerMoleculeChanged(newMolecule.uniqueId, "new");
     }, [entryInfo, entityInfo, fetchMoleculeFromURL, selectedChain, selectedMolNo]);
 
     return (

@@ -280,10 +280,11 @@ export class MoorhenMolecule {
 
         if (cootResponse.data.result.status === "Completed") {
             this.atomsDirty = true;
-            return this.redraw();
+            return this.redraw().then(() => this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new"));
         }
 
         return Promise.reject(cootResponse.data.result.status);
+        
     }
 
     /**
@@ -886,6 +887,7 @@ export class MoorhenMolecule {
 
         await this.unhideAll();
         await fragmentMolecule.delete(true);
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")
     }
 
     /**
@@ -1889,6 +1891,7 @@ export class MoorhenMolecule {
         this.displayObjectsTransformation.centre = [0, 0, 0];
         this.setAtomsDirty(true);
         await this.redraw();
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
     }
 
     /**
@@ -1961,6 +1964,7 @@ export class MoorhenMolecule {
             if (doRedraw) {
                 await this.redraw();
             }
+            this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
         } catch (err) {
             console.log(err);
         }
@@ -2090,6 +2094,7 @@ export class MoorhenMolecule {
             true
         );
         this.setAtomsDirty(true);
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
         return this.redraw();
     }
 
@@ -2107,6 +2112,7 @@ export class MoorhenMolecule {
             true
         );
         this.setAtomsDirty(true);
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
         return this.redraw();
     }
 
@@ -2305,6 +2311,7 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
     }
 
     /**
@@ -2361,6 +2368,7 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "refine", cid)
     }
 
     /**
@@ -2386,6 +2394,7 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "refine", `//${chainId}/${start}-${stop}`)
     }
 
     /**
@@ -2413,7 +2422,9 @@ export class MoorhenMolecule {
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst);
         await newMolecule.animateRefine(50, 30, 50);
         await this.mergeFragmentFromRefinement(cidList.join("||"), newMolecule, true, true);
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "refine", cidList.join("||"))
     }
+    
 
     /**
      * Refine a molecule with animation effect
@@ -2466,6 +2477,8 @@ export class MoorhenMolecule {
             await this.redraw();
         }
 
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "delete", cid)
+
         return result.data.result.result;
     }
 
@@ -2492,6 +2505,7 @@ export class MoorhenMolecule {
             await this.redraw();
             await this.centreOn("/*/*/*/*", true);
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "modify")
     }
 
     /**
@@ -2604,7 +2618,7 @@ export class MoorhenMolecule {
         } else {
             console.warn("Something went wrong when finding ligands...");
         }
-
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "add")
         return newMolecules;
     }
 

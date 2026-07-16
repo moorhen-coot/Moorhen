@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useMoorhenInstance } from "@/hooks"; 
 import { getTooltipShortcutLabel } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
@@ -10,6 +11,7 @@ export const MoorhenDeleteButton = (props: ContextButtonProps) => {
     const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item");
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
 
     const deleteModes = [
         "ATOM",
@@ -102,7 +104,7 @@ export const MoorhenDeleteButton = (props: ContextButtonProps) => {
             refineAfterMod={false}
             needsMapData={false}
             toolTipLabel={toolTipLabel}
-            onExit={deleteMoleculeIfEmpty}
+
             popoverSettings={{
                 label: "Delete mode",
                 options: deleteModes,
@@ -112,6 +114,7 @@ export const MoorhenDeleteButton = (props: ContextButtonProps) => {
                     props.setDefaultActionButtonSettings({ key: "delete", value: newValue });
                 },
             }}
+            onExit={() => {deleteMoleculeIfEmpty; moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "delete")}}
             {...props}
         />
     );
