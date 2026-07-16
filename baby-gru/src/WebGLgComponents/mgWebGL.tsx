@@ -235,7 +235,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         showCrosshairs: boolean;
         showScaleBar: boolean;
         showFPS: boolean;
-        declare state:  {width: number, height: number };
+        declare state:  {width: number, height: number, hoveridx: number, hoverIndices: number[] };
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
@@ -431,6 +431,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         multiWayQuats: quat4[];
         multiWayRatio: number;
         currentMultiViewGroup: number;
+        hoverBuffer: WebGLBuffer;
 
     setupStereoTransformations() : void {
 
@@ -695,7 +696,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
-        this.state = { width: this.props.width, height: this.props.height };
+        this.state = { width: this.props.width, height: this.props.height,  hoveridx: -1, hoverIndices: [] };
         this.animating = false
         this.canvasRef = React.createRef();
         this.keysDown = {};
@@ -5528,6 +5529,37 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
             }
         }
+
+        if(this.state.hoveridx>-1 && this.state.hoverIndices.length>0){
+            const bufferTypes = displayBuffers[this.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[this.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[this.state.hoveridx].triangleVertexPositionBuffer
+
+                 const theShader = this.shaderProgram
+                 this.gl.useProgram(theShader)
+                 this.hoverBuffer ??= this.gl.createBuffer()
+                 console.log(this.state.hoveridx,this.state.hoverIndices.length,this.hoverBuffer)
+                 this.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
+
+                 this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
+
+                 this.gl.disable(this.gl.DEPTH_TEST)
+                 this.gl.depthFunc(this.gl.ALWAYS)
+                 this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0)
+
+                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.hoverBuffer)
+                 this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.state.hoverIndices), this.gl.DYNAMIC_DRAW)
+                 this.drawMaxElementsUInt(this.gl.TRIANGLES, this.state.hoverIndices.length)
+
+            }
+        }
     }
 
     drawTransparent(theMatrix) {
@@ -5664,7 +5696,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = this.store.getState().glRef.displayBuffers
         if (self.activeMolecule === null) {
 
-            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+            const [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event,self);
             const rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? displayBuffers[minidx].atoms[minj] : null,
@@ -5687,7 +5719,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (!self.mouseMoved) {
             let updateLabels = false
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
-            const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+            const [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 const atomLabel = parseAtomInfoLabel(displayBuffers[minidx].atoms[minj]);
                 const theAtom : webGL.clickAtom = {
@@ -5977,10 +6009,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //       We will start with metaballs, displayBuffers need something other than atoms?
 
         let minsym = -1;
+        //TODO- Do not ignore non-atom hovering with symmetry.
+        let minsym_pi = -1;
+
+        let clickTol = 3.65 * this.zoom;
 
         for (let idx = 0; idx < displayBuffers.length; idx++) {
-            if(displayBuffers[idx].pick_info){
-                const clickTol = 3.65 * this.zoom;
+            if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
                 if(displayBuffers[idx].pick_info.pick_points && displayBuffers[idx].pick_info.point_triangles){
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
@@ -6005,15 +6040,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             minj_pi = j;
                             mindist_pi = dpl[0];
                         }
-                        if(minidx_pi>-1&&minj_pi>-1){
-                            //TODO - Something!
-                            //console.log(mindist_pi,minidx_pi,minj_pi)
-                            //console.log(displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi])
-                        }
                     }
                 }
             }
-            let clickTol = 3.65 * this.zoom;
             if (!displayBuffers[idx].visible) {
                 continue;
             }
@@ -6075,7 +6104,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             })
         }
 
-        return [minidx,minj,mindist,minsym,minx,miny,minz];
+        return [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi];
 
     }
 
@@ -6090,11 +6119,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.hoverDebounceTimeout = setTimeout(() => {
             const displayBuffers = this.store.getState().glRef.displayBuffers
             if (this.props.onAtomHovered) {
-                const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+                const [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event,self);
+                if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj].length>0) {
+                    //Hmm, I am worried, could triangleIndexs.length > 1 ?
+                    const completeHoverIndices = []
+                    displayBuffers[minidx_pi]["pick_info"].point_triangles[minj].forEach(idx => {
+                        completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx])
+                        completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
+                        completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
+                    })
+                    this.setState({ hoveridx: minidx_pi })
+                    this.setState({ hoverIndices: completeHoverIndices })
+                } else {
+                    this.setState({ hoveridx: -1 })
+                    this.setState({ hoverIndices: [] })
+                }
                 if (minidx > -1) {
                     this.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
-                }
-                else {
+                } else {
                     this.props.onAtomHovered(null)
                 }
                 self.drawScene();
@@ -6840,7 +6882,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(displayBuffers.length>0){
-                    const [minidx,minj,mindist,minsym,minx,miny,minz] = self.getAtomFomMouseXY(event,self);
+                    const [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event,self);
                     if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                         const atx = displayBuffers[minidx].atoms[minj].x;
                         const aty = displayBuffers[minidx].atoms[minj].y;

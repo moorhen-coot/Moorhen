@@ -12,7 +12,7 @@ interface MGWebGLBuffer {
 }
 
 export class DisplayBuffer {
-    pick_info: {pick_points?:[], point_triangles?:[]}
+    pick_info: {pick_points?:[], point_triangles?:number[][]}
     origin: number[];
     visible: boolean;
     name_label: string;
