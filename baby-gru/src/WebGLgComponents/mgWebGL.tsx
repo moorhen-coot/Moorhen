@@ -5540,7 +5540,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                  const theShader = this.shaderProgram
                  this.gl.useProgram(theShader)
                  this.hoverBuffer ??= this.gl.createBuffer()
-                 console.log(this.state.hoveridx,this.state.hoverIndices.length,this.hoverBuffer)
                  this.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
                  this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
@@ -6123,7 +6122,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj].length>0) {
                     //Hmm, I am worried, could triangleIndexs.length > 1 ?
                     const completeHoverIndices = []
-                    displayBuffers[minidx_pi]["pick_info"].point_triangles[minj].forEach(idx => {
+                    displayBuffers[minidx_pi]["pick_info"].point_triangles[minj_pi].forEach(idx => {
                         completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx])
                         completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
                         completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
