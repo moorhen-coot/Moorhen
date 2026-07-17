@@ -1,6 +1,6 @@
 import { batch, useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
-import { setShownControl } from "@/store";
+import { enqueueSnackbar, setShownControl } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
@@ -38,31 +38,28 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
                 selectionType = refinementSelection;
             }
 
+            // Clamp neighbour lookups to the chain ends so residues near a terminus
+            // can't index past the sequence array (which would read undefined.resNum).
+            const neighbourResNum = (offset: number) =>
+                selectedSequence.sequence[Math.min(Math.max(selectedResidueIndex + offset, 0), selectedSequence.sequence.length - 1)]
+                    .resNum;
+
             switch (selectionType) {
                 case "SINGLE":
                     start = chosenAtom.res_no;
                     stop = chosenAtom.res_no;
                     break;
                 case "TRIPLE":
-                    start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 1].resNum : chosenAtom.res_no;
-                    stop =
-                        selectedResidueIndex < selectedSequence.sequence.length - 1
-                            ? selectedSequence.sequence[selectedResidueIndex + 1].resNum
-                            : chosenAtom.res_no;
+                    start = neighbourResNum(-1);
+                    stop = neighbourResNum(1);
                     break;
                 case "QUINTUPLE":
-                    start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 2].resNum : chosenAtom.res_no;
-                    stop =
-                        selectedResidueIndex < selectedSequence.sequence.length - 2
-                            ? selectedSequence.sequence[selectedResidueIndex + 2].resNum
-                            : selectedSequence.sequence[selectedResidueIndex - 1].resNum;
+                    start = neighbourResNum(-2);
+                    stop = neighbourResNum(2);
                     break;
                 case "HEPTUPLE":
-                    start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 3].resNum : chosenAtom.res_no;
-                    stop =
-                        selectedResidueIndex < selectedSequence.sequence.length - 3
-                            ? selectedSequence.sequence[selectedResidueIndex + 3].resNum
-                            : selectedSequence.sequence[selectedResidueIndex - 1].resNum;
+                    start = neighbourResNum(-3);
+                    stop = neighbourResNum(3);
                     break;
                 case "SPHERE":
                     sphereResidueCids = await molecule.getNeighborResiduesCids(chosenAtom.cid, 6);
@@ -72,7 +69,14 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
                     break;
             }
 
-            if (!sphereResidueCids && (!start || !stop)) {
+            const invalidSelection =
+                selectionType === "SPHERE"
+                    ? !sphereResidueCids || sphereResidueCids.length === 0
+                    : typeof start === "undefined" || typeof stop === "undefined";
+            if (invalidSelection) {
+                // Don't silently swallow the click: tell the user and close the menu.
+                dispatch(enqueueSnackbar({ message: "Could not determine a residue selection to drag", variant: "warning" }));
+                props.setShowContextMenu(false);
                 return;
             }
 
