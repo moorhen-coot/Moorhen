@@ -77,7 +77,7 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
             }
 
             if (selectionType !== "SPHERE") {
-                fragmentCid.current = [`//${chosenAtom.chain_id}/${start}-${stop}/*`];
+                fragmentCid.current = [`//${chosenAtom.chain_id}/${start}-${stop}/*:*`];
             } else {
                 fragmentCid.current = sphereResidueCids;
             }
