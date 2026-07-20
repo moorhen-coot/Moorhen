@@ -155,6 +155,8 @@ std::string get_chem_shift_info(const std::string &data) {
 }
 
 
+
+
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
