@@ -15,7 +15,7 @@ import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 
-export const MapMasking = () => {
+export const MapMasking = () =s {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const maps = useSelector((state: moorhen.State) => state.maps);

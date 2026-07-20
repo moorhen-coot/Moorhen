@@ -2,7 +2,12 @@ import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { setValidationJson } from "../../store/jsonValidation";
 import { modalKeys } from "../../utils/enums";
+<<<<<<< HEAD
 import { MoorhenFileInput } from "../inputs";
+=======
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { MoorhenStack } from "../interface-base";
+>>>>>>> d3cee605 (Resolved conflicts)
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenJsonValidation } from "../validation-tools/MoorhenJsonValidation";
@@ -16,7 +21,11 @@ export const MoorhenJsonValidationModal = (props: ModalComponentProps) => {
 
     const loadJsonFiles = async (files: FileList) => {
         for (const file of files) {
+<<<<<<< HEAD
             const fileContents = await file.text();
+=======
+            const fileContents = await file.text()
+>>>>>>> d3cee605 (Resolved conflicts)
             const json = JSON.parse(fileContents);
             dispatch(setValidationJson(json));
         }

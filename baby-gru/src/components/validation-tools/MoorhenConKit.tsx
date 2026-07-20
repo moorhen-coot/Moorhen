@@ -106,7 +106,6 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             seqElementMatch.hideResCode = true;
             seqElementMatch.displayName = "Matches";
             seqElementMatch.key = "Matches";
-
             const seqElement = moorhenSequenceToSeqViewer(seq, foundMol.name, foundMol.molNo);
             seqElement.colour = "rgb(128, 128, 128)";
             seqElement.blockAlternateColour = true;

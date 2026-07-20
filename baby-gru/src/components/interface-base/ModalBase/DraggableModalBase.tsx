@@ -578,6 +578,28 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                     </div>
                 )}
             </div>
-        );
-    }
+            <div
+                className="moorhen__modal-body"
+                style={{
+                    maxHeight: maxHeight,
+                    maxWidth: maxWidth,
+                }}
+            >
+                {props.body}
+            </div>
+            <div className="moorhen__modal-footer">
+                {props.footer}
+                {"\u00A0\u00A0\u00A0"}
+                <MoorhenButton
+                    type="icon-only"
+                    icon="resizable"
+                    size="medium"
+                    className="moorhen__modal-stretch-button"
+                    iconStyle={{ cursor: "nwse-resize" }}
+                    onMouseDown={handleResizeStart}
+                />
+            </div>
+            {additionalChildren}
+        </div>
+    );
 };

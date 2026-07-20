@@ -54,6 +54,10 @@ export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
+    const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
+    const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
+
+    const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);

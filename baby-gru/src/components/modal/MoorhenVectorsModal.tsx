@@ -17,7 +17,6 @@ import { MoorhenCidAndMoleculeSelect } from "../inputs/Cid/CidAndMoleculeSelect"
 
 export const MoorhenVectors = () => {
 
-
     const vectorsList = useSelector((state: RootState) => state.vectors.vectorsList.filter(x => !x.uniqueId.includes("__TAG")));
 
     const dispatch = useDispatch();
@@ -158,6 +157,8 @@ export const MoorhenVectors = () => {
                     if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = existingVector.drawMode;
                     if (arrowModeRef !== null && typeof arrowModeRef !== "function") arrowModeRef.current.value = existingVector.arrowMode;
                     if (labelModeRef !== null && typeof labelModeRef !== "function") labelModeRef.current.value = existingVector.labelMode;
+                    if (cidFromRef !== null && typeof cidFromRef !== "function") cidFromRef.current.value = existingVector.cidFrom;
+                    if (cidToRef !== null && typeof cidToRef !== "function") cidToRef.current.value = existingVector.cidTo;
                     setCoordsModeButtonState(existingVector.coordsMode);
                 } catch (e) {}
             }
@@ -294,6 +295,7 @@ export const MoorhenVectors = () => {
                         setSelectedMoleculeUniqueId={uid => updateVector({ molToUniqueId: uid })}
                         setSelectedCid={cid => updateVector({ cidTo: cid })}
                     />
+                    </MoorhenStack>
                 </MoorhenStack>
             )}
             {theVector.coordsMode === "points" && (
@@ -454,6 +456,51 @@ export const MoorhenVectors = () => {
             </MoorhenStack>
         </>
     );
+
+    const setAtomPickerEventListener = async evt => {
+        const chosenAtom = cidToSpec(evt.detail.label);
+        if(awaitAtomClick===0){
+            updateVector({ cidFrom: chosenAtom.cid })
+            cidFromRef.current.value = chosenAtom.cid
+        } else if(awaitAtomClick===1){
+            updateVector({ cidTo: chosenAtom.cid })
+            cidToRef.current.value = chosenAtom.cid
+        }
+        setAwaitAtomClick(-1);
+    }
+
+    useEffect(() => {
+        if (awaitAtomClick !== -1) {
+            document.addEventListener("atomClicked", setAtomPickerEventListener, { once: true });
+        }
+
+        return () => {
+            if (awaitAtomClick !== -1) {
+                document.removeEventListener("atomClicked", setAtomPickerEventListener);
+            }
+        };
+    }, [awaitAtomClick]);
+
+    return (<>
+                {bodyContent}
+                {footer}
+                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Spinner animation="border" style={{ marginRight: "0.5rem" }} />
+                        <span>Click on an atom...</span>
+                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
+                            Cancel
+                        </MoorhenButton>
+                    </MoorhenStack>
+                </Backdrop>
+            </>)
+}
+
+export const MoorhenVectorsModal = () => {
+
+    const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
+    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    const resizeNodeRef = useRef<HTMLDivElement>(null);
 
     return (
         <>

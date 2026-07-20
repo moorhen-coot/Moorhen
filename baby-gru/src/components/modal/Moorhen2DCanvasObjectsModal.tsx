@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
+import { Container } from "react-bootstrap";
 import {
     addFracPathOverlay,
     addImageOverlay,
@@ -246,7 +247,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                 })
             );
         } else if (objectType === "fracpath") {
-            let arr: number[] = [0, 0, 1, 1];
+c        let arr: number[] = [0, 0, 1, 1];
             try {
                 arr = pathText.split(",").map(v => parseFloat(v));
             } catch (e) {
@@ -724,7 +725,6 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     <option value="image">Image</option>
                     <option value="latex">Latex</option>
                 </MoorhenSelect>
-
                 {(isDefaultNew ||
                     (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
                     <>
@@ -890,6 +890,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     (drawModeRef.current.value === "text" ||
                         drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath") && (
+                        <Container style={{ height: "2rem", margin: "0.3rem" }}>
                         <MoorhenSelect
                             label="Draw Style"
                             value={selectedDrawStyle}
@@ -926,6 +927,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                                 Gradient
                             </option>
                         </MoorhenSelect>
+                        </Container>
                     )}
                 {drawModeRef.current &&
                     selectedDrawStyle === "stroke" &&
@@ -946,6 +948,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     (drawModeRef.current.value === "svgpath" ||
                         drawModeRef.current.value === "fracpath" ||
                         drawModeRef.current.value === "text") && (
+                        <Container style={{ height: "2rem", margin: "0.5rem" }}>
                         <MoorhenStack direction="line">
                             <label>Colour</label>
                             <MoorhenColourPicker
@@ -960,6 +963,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                             />
                             {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
                         </MoorhenStack>
+                        </Container>
                     )}
             </MoorhenStack>
             {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
