@@ -4494,6 +4494,8 @@ interface EmbindModule {
   Vectorg_triangle: {
     new(): Vectorg_triangle;
   };
+  getFloat32ArrayFromVector(arg0: any, arg1: any): void;
+  getUint32ArrayFromVector(arg0: any, arg1: any): void;
   getPositionsFromSimpleMesh2(_0: simple_mesh_t, _1: any): void;
   getReversedNormalsFromSimpleMesh2(_0: simple_mesh_t, _1: any): void;
   getReversedNormalsFromSimpleMesh3(_0: simple_mesh_t, _1: any): void;

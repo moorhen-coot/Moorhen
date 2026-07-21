@@ -235,7 +235,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         showCrosshairs: boolean;
         showScaleBar: boolean;
         showFPS: boolean;
-        declare state:  {width: number, height: number, hoveridx: number, hoverIndices: number[] };
+        declare state:  {width: number, height: number, hover_point: number, hoveridx: number, hoverIndices: number[] };
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
@@ -696,7 +696,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
-        this.state = { width: this.props.width, height: this.props.height,  hoveridx: -1, hoverIndices: [] };
+        this.state = { width: this.props.width, height: this.props.height,  hover_point: -1, hoveridx: -1, hoverIndices: [] };
         this.animating = false
         this.canvasRef = React.createRef();
         this.keysDown = {};
@@ -4818,6 +4818,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 }
 
                 this.gl.useProgram(theShader);
+
+                this.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                if(theShader.uPointTex !== null){
+                    this.gl.uniform1i(theShader.uPointTex, 7);
+                }
+                if(theShader.uWeightTex !== null){
+                    this.gl.uniform1i(theShader.uWeightTex, 8);
+                }
+                if(theShader.uOffsetTex !== null){
+                    this.gl.uniform1i(theShader.uOffsetTex, 9);
+                }
+
                 this.gl.uniform1i(theShader.doShadows, false);
                 if(this.doShadow&&!calculatingShadowMap&&!this.drawingGBuffers){
                     this.gl.uniform1i(theShader.ShadowMap, 0);
@@ -5530,6 +5542,49 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             }
         }
 
+        if(this.state.hoveridx>-1 && this.state.hover_point>-1){
+            //TODO - We don't really need to do this draw at all. This could be done in the
+            //       general drawing above.
+            console.log("Some fancy shader trickery to do now")
+            const bufferTypes = displayBuffers[this.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[this.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[this.state.hoveridx].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[this.state.hoveridx].triangleVertexIndexBuffer
+                 console.log(displayBuffers[this.state.hoveridx])
+
+                 const theShader = this.shaderProgram
+                 this.gl.useProgram(theShader)
+                 if(theShader.uPointTex !== null){
+                     this.gl.uniform1i(theShader.uPointTex, 7);
+                 }
+                 if(theShader.uWeightTex !== null){
+                     this.gl.uniform1i(theShader.uWeightTex, 8);
+                 }
+                 if(theShader.uOffsetTex !== null){
+                     this.gl.uniform1i(theShader.uOffsetTex, 9);
+                 }
+                 this.gl.uniform1ui(theShader.uHoveredPoint, this.state.hover_point);
+                 this.hoverBuffer ??= this.gl.createBuffer()
+                 this.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
+
+                 this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
+
+                 this.gl.disable(this.gl.DEPTH_TEST)
+                 this.gl.depthFunc(this.gl.ALWAYS)
+                 this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0)
+
+                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[0]);
+                 this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[0].numItems)
+            }
+        }
+
         if(this.state.hoveridx>-1 && this.state.hoverIndices.length>0){
             const bufferTypes = displayBuffers[this.state.hoveridx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
@@ -6015,7 +6070,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         for (let idx = 0; idx < displayBuffers.length; idx++) {
             if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
-                if(displayBuffers[idx].pick_info.pick_points && displayBuffers[idx].pick_info.point_triangles){
+                if(displayBuffers[idx].pick_info.pick_points){
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
                         const aty = displayBuffers[idx].pick_info.pick_points[j][1];
@@ -6119,7 +6174,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const displayBuffers = this.store.getState().glRef.displayBuffers
             if (this.props.onAtomHovered) {
                 const [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event,self);
-                if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj].length>0) {
+
+                if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
+                    this.setState({ hoveridx: minidx_pi })
+                    this.setState({ hover_point: minj_pi })
+                    this.setState({ hoverIndices: [] })
+                } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj].length>0) {
                     //Hmm, I am worried, could triangleIndexs.length > 1 ?
                     const completeHoverIndices = []
                     displayBuffers[minidx_pi]["pick_info"].point_triangles[minj_pi].forEach(idx => {
@@ -6128,9 +6188,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
                     })
                     this.setState({ hoveridx: minidx_pi })
+                    this.setState({ hover_point: -1 })
                     this.setState({ hoverIndices: completeHoverIndices })
                 } else {
                     this.setState({ hoveridx: -1 })
+                    this.setState({ hover_point: -1 })
                     this.setState({ hoverIndices: [] })
                 }
                 if (minidx > -1) {

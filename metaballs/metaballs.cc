@@ -85,6 +85,9 @@ void smooth_mesh(
     std::vector<std::pair<unsigned,float>> idx_frac_pair_vec;
     idx_frac_pair_vec.reserve(64);
 
+    std::vector<std::pair<unsigned,float>> influences;
+    influences.reserve(16);
+
     for (int ii = ip0; ii < ip1; ii++) {
 
         float best_val = -1.0f;
@@ -106,6 +109,7 @@ void smooth_mesh(
         float f_dz = 0.0f;
 
         idx_frac_pair_vec.clear();
+        influences.clear();
 
         CellKey base = get_cell(x, y, z, cell_size);
 
@@ -192,6 +196,13 @@ void smooth_mesh(
             theColor[1] += w * c[1];
             theColor[2] += w * c[2];
             theColor[3] += w * c[3];
+
+            //std::cout << "Contrib. from " << p.first << " " << w << ", for " << ii << std::endl;
+            if(w>0.005){//this is nonsense. We need to just pick top N and then normalize.
+                //if(ii<20)
+                    //std::cout << "Sig. contrib. from " << p.first << " " << w << ", for " << ii << std::endl;
+                influences.emplace_back(p.first, w);
+            }
         }
 
         if (totFrac > 1e-4f) {
@@ -203,6 +214,8 @@ void smooth_mesh(
         MC::mcVec3f new_norm({f_dx - f, f_dy - f, f_dz - f});
         new_norm = MC::mc_internalNormalize(new_norm);
 
+        //std::cout << "Influences for " << ii << " " << influences.size() << std::endl;
+        mesh->influences[ii] = influences;
         mesh->normals[ii] = new_norm;
         mesh->colors[ii] = theColor;
         mesh->vertex_owner[ii] = best_ip;
@@ -391,6 +404,7 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     std::array<float,4> theColor{0.5,0.5,0.5,1.0};
     mesh.colors.resize(np_smooth,theColor);
     mesh.vertex_owner.resize(mesh.vertices.size());
+    mesh.influences.resize(mesh.vertices.size());
     if(np_smooth>20&&n_threads>1){
         std::vector<std::thread> smooth_threads;
         for(int i=0;i<n_threads;i++){

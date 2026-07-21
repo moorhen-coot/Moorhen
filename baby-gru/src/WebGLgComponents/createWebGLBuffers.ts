@@ -473,7 +473,58 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
         theBuffer.doStencil = jsondata.doStencil;
     }
     if(jsondata.pick_info){
-        theBuffer.pick_info = jsondata.pick_info;
+        if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){
+            try {
+                theBuffer.pick_info = {}
+
+                const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+                console.log("Max texture size",maxTexSize);
+                console.log("jsondata.pick_info.influence_weights.length",jsondata.pick_info.influence_weights.length);
+                console.log("jsondata.pick_info.influence_point_indexes.length",jsondata.pick_info.influence_point_indexes.length);
+                console.log("jsondata.pick_info.influence_index_offsets.length",jsondata.pick_info.influence_index_offsets.length);
+
+                const influence_weights_texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, influence_weights_texture);
+                let width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_weights.length))
+                let height = Math.ceil(jsondata.pick_info.influence_weights.length / width);
+                if(width*height<maxTexSize*maxTexSize){
+                    const paddWeights = new Float32Array(width * height)
+                    paddWeights.set(jsondata.pick_info.influence_weights)
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, width, height, 0, gl.RED, gl.FLOAT, paddWeights);
+                    theBuffer.pick_info.influence_weights_texture = influence_weights_texture
+                }
+
+                const influence_point_indexes_texture = gl.createTexture();
+                width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_point_indexes.length))
+                height = Math.ceil(jsondata.pick_info.influence_point_indexes.length / width);
+                if(width*height<maxTexSize*maxTexSize){
+                    const padded_influence_point_indexes = new Uint32Array(width * height)
+                    padded_influence_point_indexes.set(jsondata.pick_info.influence_point_indexes)
+                    gl.bindTexture(gl.TEXTURE_2D, influence_point_indexes_texture);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, width, height, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, padded_influence_point_indexes);
+                    theBuffer.pick_info.influence_point_indexes_texture = influence_point_indexes_texture
+                }
+
+                const influence_index_offsets_texture = gl.createTexture();
+                width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_index_offsets.length))
+                height = Math.ceil(jsondata.pick_info.influence_index_offsets.length / width);
+                if(width*height<maxTexSize*maxTexSize){
+                    const padded_influence_index_offsets = new Uint32Array(width * height)
+                    padded_influence_index_offsets.set(jsondata.pick_info.influence_index_offsets)
+                    gl.bindTexture(gl.TEXTURE_2D, influence_index_offsets_texture);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, width, height, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, padded_influence_index_offsets);
+                    theBuffer.pick_info.influence_index_offsets_texture = influence_index_offsets_texture
+                }
+
+                //Do I want to texturify this as well? Or is that CPU stuff to detemine picked point?
+                theBuffer.pick_info.pick_points = jsondata.pick_info.pick_points
+
+            } catch(e) {
+                console.log(e)
+            }
+        } else {
+            theBuffer.pick_info = jsondata.pick_info
+        }
     }
 
     return theBuffer

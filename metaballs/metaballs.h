@@ -6,6 +6,7 @@ typedef struct moorhenMesh : public MC::mcMesh {
 		std::vector<std::array<float,4>> colors;
                 std::vector<uint32_t> vertex_owner;
                 std::vector<std::vector<unsigned>> point_triangles;
+                std::vector<std::vector<std::pair<unsigned,float>>> influences;
 } moorhenMesh;
 
 

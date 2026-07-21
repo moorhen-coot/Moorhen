@@ -46,7 +46,7 @@
 #include "MC.h"
 #include "metaballs.h"
 
-std::pair<coot::simple_mesh_t,std::vector<std::vector<unsigned>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads) {
+std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads) {
 
     coot::simple_mesh_t coot_mesh;
 
@@ -91,9 +91,9 @@ std::pair<coot::simple_mesh_t,std::vector<std::vector<unsigned>>> GenerateMoorhe
         }
     }
 
-    std::pair<coot::simple_mesh_t,std::vector<std::vector<unsigned>>> retval;
+    std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> retval;
     retval.first = coot_mesh;
-    retval.second = mesh.point_triangles;
+    retval.second = mesh.influences;
     return retval;
 
 }

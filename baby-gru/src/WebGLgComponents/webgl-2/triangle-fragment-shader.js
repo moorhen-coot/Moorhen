@@ -26,6 +26,8 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
     in mediump mat4 mvInvMatrix;
 
+    //in float vHighlight;
+
     uniform vec4 fogColour;
 
     uniform float fog_end;
@@ -178,6 +180,12 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
       fragColor = mix(color, fogColour, fogFactor );
       fragColor.a = vColor.a;
+
+      /*
+      if(vHighlight<0.9){
+          //fragColor.r *= vHighlight;
+      }
+      */
 
     }
 `;

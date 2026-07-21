@@ -225,6 +225,11 @@ export namespace webGL {
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
+        //Fancy picking ...
+        uPointTex: WebGLUniformLocation;
+        uWeightTex: WebGLUniformLocation;
+        uOffsetTex: WebGLUniformLocation;
+        uHoveredPoint: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}

@@ -422,9 +422,12 @@ struct PickableMesh {
     coot::simple_mesh_t mesh;
     std::vector<std::vector<unsigned>> point_triangles;
     std::vector<std::array<float,3>> pick_points;
+    std::vector<unsigned> influence_index_offsets;
+    std::vector<unsigned> influence_point_indexes;
+    std::vector<float> influence_weights;
 };
 
-std::pair<coot::simple_mesh_t,std::vector<std::vector<unsigned>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
+std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
@@ -583,10 +586,10 @@ class molecules_container_js : public molecules_container_t {
                 }
                 root[chain.name] = chain_json;
             }
-            
+
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
-            
+
             return json_string;
         }
 
@@ -737,8 +740,19 @@ class molecules_container_js : public molecules_container_t {
 
             PickableMesh pick_mesh;
             pick_mesh.mesh = mesh_assoc.first;
-            pick_mesh.point_triangles = mesh_assoc.second;
+            //pick_mesh.pick_weights = mesh_assoc.second;
+            //pick_mesh.point_triangles = mesh_assoc.second;
             pick_mesh.pick_points = points;
+
+            unsigned total_offset = 0;
+            for(const auto& influences: mesh_assoc.second){
+                for(const auto& aninfluence: influences){
+                    pick_mesh.influence_weights.push_back(aninfluence.second);
+                    pick_mesh.influence_point_indexes.push_back(aninfluence.first);
+                }
+                pick_mesh.influence_index_offsets.push_back(total_offset+influences.size());
+                total_offset += influences.size();
+            }
 
             return pick_mesh;
         }
@@ -1720,6 +1734,28 @@ inline emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
     }
 
     return float32ArrayFromVector(floatArray);
+
+}
+
+inline void getFloat32ArrayFromVector(const std::vector<float> &v, const emscripten::val &eval){
+    std::vector<float> floatArray;
+    floatArray.reserve(v.size());
+
+    for(const auto &val : v){
+        floatArray.push_back(val);
+    }
+    setFloat32ArrayFromVector(floatArray,eval);
+
+}
+
+inline void getUint32ArrayFromVector(const std::vector<unsigned> &v, const emscripten::val &eval){
+    std::vector<unsigned> unsignedArray;
+    unsignedArray.reserve(v.size());
+
+    for(const auto &val : v){
+        unsignedArray.push_back(val);
+    }
+    setUint32ArrayFromVector(unsignedArray,eval);
 
 }
 
