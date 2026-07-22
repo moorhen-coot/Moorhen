@@ -20,7 +20,6 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 
-import { ImportNOERestraints } from "../menu-item/ImportNOERestraints";
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
@@ -59,8 +58,6 @@ export const MoorhenDevMenu = () => {
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
-
-    const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);

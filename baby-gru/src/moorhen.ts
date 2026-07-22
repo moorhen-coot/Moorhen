@@ -5,7 +5,7 @@ import "./app.css";
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
-export type { MoorhenReduxStoreType } from "@/store/index";
+export type { MoorhenReduxStoreType } from "@/store";
 export { MoorhenProvider } from "./components/MoorhenProvider";
 export { MoorhenContainer } from "./components/container/MainContainer";
 export type { ContainerProps } from "./components/container/MainContainer";
@@ -39,7 +39,7 @@ export { autoOpenFiles } from "./utils/MoorhenFileLoading";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
 export { MoorhenMenuSystem } from "./components/menu-system/MenuSystem";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
-export type { RootState as MoorhenStoreRootState } from "./store/MoorhenReduxStore" ;
+export type { RootState } from "./store/MoorhenReduxStore" ;
 export { useCommandCentre, useCommandAndCapsule, useMoorhenInstance } from '@/InstanceManager';
 export { Preferences as MoorhenPreferences } from '@/components/managers/preferences/MoorhenPreferences';
 export { createMoorhenStore } from "@/store/MoorhenReduxStore";

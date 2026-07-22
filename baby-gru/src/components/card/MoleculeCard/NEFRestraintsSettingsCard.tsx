@@ -1,4 +1,3 @@
-// import { Slider } from "@mui/material";
 // import { useDispatch, useSelector } from "react-redux";
 // import { useEffect, useState } from "react";
 // import { MoleculeRepresentation } from "@/moorhen";
@@ -255,8 +254,6 @@
 //     );
 // };
 
-
-import { Slider } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoleculeRepresentation, MoorhenMolecule } from "@/utils";

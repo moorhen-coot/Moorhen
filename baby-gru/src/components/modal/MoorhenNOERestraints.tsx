@@ -458,65 +458,6 @@ export const MoorhenNOERestraints = () => {
                 }
             };
 
-
-    const footerContent = (
-        <MoorhenStack
-            gap={2}
-            direction="horizontal"
-            style={{
-                paddingTop: "0.5rem",
-                justifyContent: "space-between",
-                width: "100%",
-            }}
-        >
-            {/* LEFT: Checkboxes */}
-            {/* <MoorhenStack gap={2} direction="horizontal"> */}
-                {/* <MoorhenToggle
-                    label={"NOEs"}
-                    name={`NOERestraints`}
-                    type="checkbox"
-                    ref={isNOERef}
-                    checked={selectedTypes.noe}
-                    onChange={e => setSelectedTypes(prev => ({
-                        ...prev,
-                        noe: e.target.checked
-                    }))}
-                />
-                <MoorhenToggle
-                    label={"H bonds"}
-                    name={`HBondRestraints`}
-                    type="checkbox"
-                    ref={isHBondRef}
-                    checked={selectedTypes.hbond}
-                    onChange={e => setSelectedTypes(prev => ({
-                        ...prev,
-                        hbond: e.target.checked
-                    }))}
-                />
-                <MoorhenToggle
-                    label={"Undefined restraints"}
-                    name={`isUndefinedRestraints`}
-                    type="checkbox"
-                    ref={isUndefinedRef}
-                    checked={selectedTypes.undefined}
-                    onChange={e => setSelectedTypes(prev => ({
-                        ...prev,
-                        undefined: e.target.checked
-                    }))}
-                /> */}
-            {/* </MoorhenStack> */}
-
-            {/* RIGHT: File input */}
-            {/* <Form.Group style={{ width: "20rem", margin: "0.5rem" }} controlId="uploadMrParse">
-                <Form.Control
-                    type="file"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        loadNEF(e.target.files);
-                    }}
-                />
-            </Form.Group> */}
-        </MoorhenStack>
-    );
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.NOE}
@@ -531,7 +472,6 @@ export const MoorhenNOERestraints = () => {
             overflowX="auto"
             headerTitle="NEF Restraints"
             resizeNodeRef={resizeNodeRef}
-            footer={footerContent}
             body={
                 <div style={{ height: "100%" }}>
                     {/* <Row className={"small-validation-tool-container-row"}>
