@@ -8,7 +8,6 @@ import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
-    const moorhenInstance = useMoorhenInstance();
     const lastTime = useRef<number>(Date.now());
     const drawQueue = useRef<
         {
