@@ -118,7 +118,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectType) => {
             value={selectedMolNo}
             onChange={e => handleChange(e)}
             ref={ref}
-        dstyle={style}
+            style={style}
         >
             {options}
         </MoorhenSelect>
