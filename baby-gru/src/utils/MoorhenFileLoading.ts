@@ -17,7 +17,7 @@ import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeR
 import pako from "pako";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager"
-import { processNEFFileAutoLoader } from "../components/modal/MoorhenNOERestraints"
+import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { setNMRMode } from "@/store";
 
 interface MrParsePDBModelJson {
