@@ -8,6 +8,13 @@ export type Snackbar = {
     uid: string;
 };
 
+export type SnackbarPayload = {
+    message: string;
+    variant?: "success" | "error" | "warning" | "info";
+    autoHideDuration?: number | null;
+    uid?: string;
+};
+
 const initialState: Snackbar[] = [];
 
 const snackbarSlice = createSlice({
@@ -20,14 +27,7 @@ const snackbarSlice = createSlice({
         @variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
         @autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
         @uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
-        enqueueSnackbar: (
-            state,
-            action: PayloadAction<{
-                message: string;
-                variant?: "success" | "error" | "warning" | "info";
-                autoHideDuration?: number | null;
-                uid?: string;
-            }>
+        enqueueSnackbar: (state, action: PayloadAction<SnackbarPayload>
         ) => {
             state.push({
                 message: action.payload.message,

@@ -1,8 +1,7 @@
+//these are tests for the old moorhen container, and need replacement, kept for  reference
+
+
 jest.setTimeout(15000)
-jest.mock('protvista-sequence')
-jest.mock('protvista-navigation')
-jest.mock('protvista-manager')
-jest.mock('protvista-track')
 jest.mock('chart.js', () => ({
     ...jest.requireActual('chart.js'),
     registerables: []
@@ -52,48 +51,64 @@ let allowScripting = null
 let aceDRGInstance = null
 let mockMonomerLibraryPath = null
 
-const describeIfWasmExists = fs.existsSync('./moorhen.data') ? describe : describe.skip
+describe('Testing MoorhenContainer', () => {
 
-describeIfWasmExists('Testing MoorhenContainer', () => {
-
-    beforeAll(() => {
+    beforeAll(async () => {
         const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+        const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
 
-        mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+        const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
-        global.fetch = (url) => {
-            if (url.includes(mockMonomerLibraryPath)) {
-                return fetch(url)
-            } else if (url.includes('https:/files.rcsb.org/download/')) {
-                return fetch(url)
-            } else {
-                return Promise.resolve({
-                    ok: true,
-                    text: async () => {
-                        const fileContents = fs.readFileSync(`./public/baby-gru/${url}`, { encoding: 'utf8', flag: 'r' })
-                        return fileContents
-                    },
-                    blob: async () => {
-                        return {
-                            arrayBuffer: async () => {
-                                const fileContents = fs.readFileSync(`./public/baby-gru/${url}`)
-                                const buff = fileContents.buffer
-                                return buff
-                            }
-                        }
+        // Keep reference to real fetch
+        const realFetch = global.fetch
+
+        // Clean async fetch mock
+        global.fetch = async (input) => {
+            const url = typeof input === "string" ? input : input.url
+
+            if (
+                url.includes(mockMonomerLibraryPath) ||
+                url.includes('https:/files.rcsb.org/download/')
+            ) {
+                return realFetch(url)
+            }
+
+            return {
+                ok: true,
+
+                text: async () => {
+                    return fs.readFileSync(
+                        `./public/baby-gru/${url}`,
+                        { encoding: 'utf8', flag: 'r' }
+                    )
+                },
+
+                blob: async () => ({
+                    arrayBuffer: async () => {
+                        const fileContents = fs.readFileSync(
+                            `./public/baby-gru/${url}`
+                        )
+                        return fileContents.buffer
                     }
                 })
             }
         }
 
-        return createCootModule({
-            print(t) { () => console.log(["output", t]) },
-            printErr(t) { () => console.log(["output", t]); }
-        }).then(moduleCreated => {
-            cootModule = moduleCreated
-            global.window.CCP4Module = cootModule
-            return Promise.resolve()
-        })
+        // Shared module config
+        const moduleConfig = {
+            print: (t) => console.log(["output", t]),
+            printErr: (t) => console.log(["output", t]),
+        }
+
+        // Initialise WASM modules
+        cootModule = await createCootModule(moduleConfig)
+        const gemmiModule = await createGemmiModule(moduleConfig)
+
+        // Proper global setup
+        global.window = {
+            CCP4Module: cootModule,
+            gemmiModule: gemmiModule,
+        }
     })
 
     beforeEach(() => {
@@ -157,7 +172,7 @@ describeIfWasmExists('Testing MoorhenContainer', () => {
 
     afterEach(cleanup)
 
-    test('MoorhenContainer load tutorial data 1', async () => {
+    test.skip('MoorhenContainer load tutorial data 1', async () => {
 
         render(
             <Provider store={MoorhenReduxStore}>

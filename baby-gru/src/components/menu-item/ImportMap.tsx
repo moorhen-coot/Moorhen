@@ -1,7 +1,7 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -10,8 +10,7 @@ import { MoorhenButton, MoorhenFileInput, MoorhenToggle } from "../inputs";
 
 export const ImportMap = () => {
     const dispatch = useDispatch();
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
@@ -27,13 +26,13 @@ export const ImportMap = () => {
             const newMaps = [];
             try {
                 for (const file of files) {
-                    const newMap = new MoorhenMap(commandCentre, store);
+                    let newMap
                     try {
-                        await newMap.loadToCootFromMapFile(file, isDiff);
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff);
                     } catch (err) {
                         // Try again if this is a compressed file...
                         if (file.name.includes(".gz")) {
-                            await newMap.loadToCootFromMapFile(file, isDiff, true);
+                            newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
                         } else {
                             console.warn(err);
                             throw new Error("Cannot read the fetched map...");

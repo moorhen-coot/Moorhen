@@ -1,4 +1,3 @@
-import { GrainOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
@@ -10,20 +9,11 @@ import { addCustomRepresentation, removeCustomRepresentation } from "../../../st
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import { MoorhenNumberInput } from "../../inputs";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapping } from "../../../utils/enums";
-import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
-import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
-import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS,} from "../../../utils/enums";
+import { getMultiColourRuleArgs, } from "../../../utils/utils";
+import { MoorhenButton,MoorhenSelect,  MoorhenToggle } from "../../inputs";
+import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
-import { NcsColourSwatch } from "./ColourRuleCard";
-import {
-    BondSettingsPanel,
-    MolSurfSettingsPanel,
-    ResidueEnvironmentSettingsPanel,
-    RibbonSettingsPanel,
-} from "./MoleculeRepresentationSettingsCard";
 
 export const PictureWizardCard = memo(
     (props: {
@@ -191,7 +181,7 @@ export const PictureWizardCard = memo(
                     }
 
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
@@ -200,7 +190,7 @@ export const PictureWizardCard = memo(
                         extraRestrict += ":*"
                         cidSelection = restrictedCid.split("||").map(r => r+extraRestrict).join("||")
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         cidSelection = restrictedCid
                     } else {
                         cidSelection += ":*";
@@ -208,7 +198,7 @@ export const PictureWizardCard = memo(
                     if (representationStyle === "CBs" && !notHOH && sideChainOnly) {
                         if (representationStyle === "CBs" && restrictToNeighbours) {
                             const waterSelection = "/*/*/(HOH)";
-                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                            const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,waterSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                             if(restrictedWaterCid.length>2)
                                 cidSelection += "||"+restrictedWaterCid
                         } else {
@@ -231,7 +221,7 @@ export const PictureWizardCard = memo(
                         cidSelection += "[!H]";
                     }
                     if (representationStyle === "CBs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(theMolecule.gemmiStructure,unRestrictedCidSelection,neighboursCid,neighboursDistance,excludeNeighbours)
                         let extraRestrict = ""
                         if(sideChainOnly) extraRestrict += "/!O,C,N,H"
                         if(notH&&!sideChainOnly) extraRestrict += "/*[!H]"
@@ -426,11 +416,7 @@ export const PictureWizardCard = memo(
                            value={neighboursDistance}
                            type="number"
                            label="Neighbours distance:"
-                           onChange={evt => {
-                               try {
-                                   setNeighboursDistance(Number(evt.target.value));
-                               } catch (e) {}
-                           }}
+                           setValue={setNeighboursDistance}
                         />
                     }
                 </MoorhenStack>

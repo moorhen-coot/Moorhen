@@ -1,0 +1,21 @@
+@import "../../colors.css";
+
+.moorhen__compound-autocomplete-option {
+    all: unset;
+    position: relative;
+    background-color: var(--moorhen-background);
+    font-family: var(--moorhen-font-family);
+    border: 1px solid var(--moorhen-border);
+    cursor: pointer;
+    max-width: 50ch;
+    border-radius: 0.5rem;
+}
+
+.moorhen__compound-autocomplete-option:hover::after {
+    position: absolute;
+    content: "";
+    inset: 0;
+    background-color: var(--moorhen-focus);
+    opacity: 0.1;
+    border-radius: inherit;
+}

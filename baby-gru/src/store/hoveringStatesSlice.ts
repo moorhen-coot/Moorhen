@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { moorhen } from "@/types/moorhen";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 
@@ -25,15 +25,15 @@ const hoveringStatesSlice = createSlice({
         resetHoveringStates: () => {
             return initialState;
         },
-        setHoveredAtom: (state, action: { payload: HoveredAtom; type: string }) => {
-            return { ...state, hoveredAtom: action.payload };
+        setHoveredAtom: (state, action: PayloadAction<HoveredAtom>) => {
+            state.hoveredAtom = action.payload as unknown as typeof state.hoveredAtom; // FIXME this is a hack to get typscript to stop complaining about the type of the payload.
         },
         // API
-        setEnableAtomHovering: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, enableAtomHovering: action.payload };
+        setEnableAtomHovering: (state, action: PayloadAction<boolean>) => {
+            state.enableAtomHovering = action.payload;
         },
-        setCursorStyle: (state, action: { payload: string; type: string }) => {
-            return { ...state, cursorStyle: action.payload };
+        setCursorStyle: (state, action: PayloadAction<string>) => {
+            state.cursorStyle = action.payload;
         },
     },
 });

@@ -113,7 +113,7 @@ const globalUISlice = createSlice({
         setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
             state.isClickAwayListenerActive = action.payload;
         },
-    },
+    }
 });
 
 export const {

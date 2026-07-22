@@ -1,8 +1,6 @@
-import { SaveOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
-import { useState } from "react";
 import { RootState } from "@/store";
-import { MoorhenSpinner } from "../../icons";
+import { MoorhenIcon, MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
@@ -23,6 +21,9 @@ export const ActivityIndicator = () => {
         ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(1)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";
 
+    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
+
+
         const chemShiftAtom = hoveredAtom.atomInfo
         ? `Chemical shift: ${hoveredAtom.molecule?.chemShifts.filter(cs => 
             // edit moorhenNOEVectors to enumerate ambiguous restraints + flag
@@ -39,8 +40,6 @@ export const ActivityIndicator = () => {
              cs.resname === hoveredAtom.atomInfo.res_name)
                         )[0]?.ambiguityFlag?? "N/A"}`
         : "";    
-    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
-
     const busyIndicator = busy ? (
         <>
             <MoorhenSpinner size="3rem" />
@@ -79,7 +78,7 @@ export const ActivityIndicator = () => {
                             </span>
                         </MoorhenStack>
                     )}
-                    {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: "black" }} />}
+                    {timeCapsuleBusy && <MoorhenIcon moorhenSVG="MatSymSaveClock" />}
                 </div>
             )}
             {updatingMapsIsEnabled && (

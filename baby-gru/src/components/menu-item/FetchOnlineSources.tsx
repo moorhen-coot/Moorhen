@@ -1,15 +1,12 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef, useState } from "react";
 import { RootState, enqueueSnackbar, showModal } from "@/store";
-import { MoorhenInstance, useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
-import { setActiveMap } from "../../store/generalStatesSlice";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setBusy } from "../../store/globalUISlice";
-import { addMap } from "../../store/mapsSlice";
 import { usePersistentState } from "../../store/menusSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
-import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../../utils/utils";
 import { MoorhenButton, MoorhenToggle } from "../inputs";
@@ -21,7 +18,7 @@ export const FetchOnlineSources = () => {
         downloadMaps: true,
     };
 
-    const notes = "ligand test 5hes, glyco test 5fjj";
+   "ligand test 5hes, glyco test 5fjj";
 
     const { sources, downloadMaps } = { ...defaultProps };
 
@@ -36,6 +33,7 @@ export const FetchOnlineSources = () => {
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true);
 
     const dispatch = useDispatch();
+
 
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
@@ -63,14 +61,14 @@ export const FetchOnlineSources = () => {
         const emdbCode = pdbCodeFetchInputRef.current.value.toLowerCase().trim();
         if (emdbCode) {
             const mapUrl = `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-${emdbCode}/map/emd_${emdbCode}.map.gz`;
-            const mapInfoResponse = await fetch(`https://www.ebi.ac.uk/emdb/api/entry/map/${emdbCode}`);
-            let level: number;
-            if (mapInfoResponse.ok) {
-                const data = await mapInfoResponse.json();
-                level = data.map.contour_list.contour.find(item => item.primary)?.level as number;
-            }
-            const newMap = await fetchMapFromURL(mapUrl, `${emdbCode}.map.gz`, false, level);
-            newMap.centreOnMap();
+            // const mapInfoResponse = await fetch(`https://www.ebi.ac.uk/emdb/api/entry/map/${emdbCode}`);
+            // let level: number;
+            // if (mapInfoResponse.ok) {
+            //     const data = await mapInfoResponse.json();
+            //     level = data.map.contour_list.contour.find(item => item.primary)?.level as number;
+            // }
+            moorhenInstance.files.loadFiles(mapUrl)
+            // newMap.centreOnMap();
         } else {
             console.log("Error: no EMDB entry provided");
         }
@@ -135,29 +133,7 @@ export const FetchOnlineSources = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value;
         const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.cif`;
         const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz`;
-        if (pdbCode && fetchExtra) {
-            Promise.all([
-                fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, {
-                    F: "FWT",
-                    PHI: "PHWT",
-                    Fobs: "FP",
-                    SigFobs: "SIGFP",
-                    FreeR: "FREE",
-                    isDifference: false,
-                    useWeight: false,
-                    calcStructFact: true,
-                }),
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`, {
-                    F: "DELFWT",
-                    PHI: "PHDELWT",
-                    isDifference: true,
-                    useWeight: false,
-                }),
-            ]);
-        } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`);
-        }
+        moorhenInstance.files.loadFiles([coordUrl, mtzUrl], "PDBRedo")
     };
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
@@ -189,57 +165,7 @@ export const FetchOnlineSources = () => {
         }
     };
 
-    const fetchMapFromURL = async (
-        url: RequestInfo | URL,
-        mapName: string,
-        isDiffMap: boolean = false,
-        contourLevel?: number
-    ): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap(commandCentre, store);
-        try {
-            try {
-                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap);
-            } catch (err) {
-                // Try again if this is a compressed file...
-                if (url.toString().includes(".gz")) {
-                    await newMap.loadToCootFromMapURL(url, mapName.replace(".gz", ""), isDiffMap, true);
-                } else {
-                    console.warn(err);
-                    throw new Error("Cannot read the fetched map...");
-                }
-            }
-            if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...");
-            if (contourLevel) newMap.suggestedContourLevel = contourLevel;
-            dispatch(addMap(newMap));
-            dispatch(setActiveMap(newMap));
-        } catch (err) {
-            console.warn(err);
-            dispatch(enqueueSnackbar({ message: "Failed to read map", variant: "warning" }));
-            console.log(`Cannot fetch map from ${url}`);
-            dispatch(setBusy(false));
-        }
-        return newMap;
-    };
-
-    const fetchMtzFromURL = async (
-        url: RequestInfo | URL,
-        mapName: string,
-        selectedColumns: moorhen.selectedMtzColumns
-    ): Promise<moorhen.Map> => {
-        console.log(`Fetching mtz from ${url} with columns:`, selectedColumns);
-        const newMap = new MoorhenMap(commandCentre, store);
-        try {
-            await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns);
-            if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...");
-            dispatch(addMap(newMap));
-            dispatch(setActiveMap(newMap));
-        } catch {
-            dispatch(enqueueSnackbar({ message: "Failed to read mtz", variant: "error" }));
-            console.log(`Cannot fetch mtz from ${url}`);
-            dispatch(setBusy(false));
-        }
-        return newMap;
-    };
+    // };
 
     const fetchExtraLabel =
         remoteSource === "PDBe" || remoteSource === "PDB-REDO"

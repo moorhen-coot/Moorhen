@@ -1,5 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { moorhen } from "../types/moorhen";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type VectorsCoordMode = "atoms" | "points" | "atompoint";
 export type VectorsLabelMode = "none" | "start" | "end" | "middle";
@@ -33,6 +32,8 @@ export interface MoorhenVector {
     arrowHeadRadiusScale?: number;
     labelFontSize?: number;
     labelScreenOffsetDistance?: number;
+    visible?: boolean;
+    ambiguous?: boolean
 }
 
 const initialState: { vectorsList: MoorhenVector[] } = {
@@ -44,39 +45,25 @@ const vectorsSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
-        addVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
-            state = { ...state, vectorsList: [...state.vectorsList, ...action.payload] };
-            return state;
+        addVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
+            state.vectorsList.push(...action.payload);
         },
         // API
-        addVector: (state, action: { payload: MoorhenVector; type: string }) => {
-            state = { ...state, vectorsList: [...state.vectorsList, action.payload] };
-            return state;
+        addVector: (state, action: PayloadAction<MoorhenVector>) => {
+            state.vectorsList.push(action.payload);
         },
         // API
-        removeVectors: (state, action: { payload: MoorhenVector[]; type: string }) => {
+        removeVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
             const ids = action.payload.map(x => x.uniqueId);
-            state = {
-                ...state,
-                vectorsList: state.vectorsList.filter(item => !ids.includes(item.uniqueId)),
-            };
-            return state;
+            state.vectorsList = state.vectorsList.filter(item => !ids.includes(item.uniqueId));
         },
         // API
-        removeVectorsMatchingIDString: (state, action: { payload: string; type: string }) => {
-            state = {
-                ...state,
-                vectorsList: state.vectorsList.filter(item => !item.uniqueId.includes(action.payload)),
-            };
-            return state;
+        removeVectorsMatchingIDString: (state, action: PayloadAction<string>) => {
+            state.vectorsList = state.vectorsList.filter(item => !item.uniqueId.includes(action.payload));
         },
         // API
-        removeVector: (state, action: { payload: MoorhenVector; type: string }) => {
-            state = {
-                ...state,
-                vectorsList: state.vectorsList.filter(item => item.uniqueId !== action.payload.uniqueId),
-            };
-            return state;
+        removeVector: (state, action: PayloadAction<MoorhenVector>) => {
+            state.vectorsList = state.vectorsList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
         // API
         emptyVectors: state => {

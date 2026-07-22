@@ -1,12 +1,12 @@
-import { GrainOutlined } from "@mui/icons-material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
 
+import { RootState, enqueueSnackbar } from "@/store";
+
 import { MoorhenModelSelect } from "@/components/inputs/Selector/MoorhenModelSelect";
 
-import { RootState, enqueueSnackbar } from "@/store";
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -15,7 +15,7 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, representationLabelMapp
 import { getMultiColourRuleArgs, hexToRGB, rgbToHex } from "../../../utils/utils";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenNumberInput } from "../../inputs";
-import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
@@ -26,6 +26,7 @@ import {
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
 } from "./MoleculeRepresentationSettingsCard";
+import { MoorhenIcon } from "@/components/icons";
 
 export const AddCustomRepresentationCard = memo(
     (props: {
@@ -48,12 +49,10 @@ export const AddCustomRepresentationCard = memo(
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
 
+        const modelSelectRef = useRef<HTMLSelectElement | null>(null);
+
         const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model" | "neighbourhood">(
-            props.representation
-                ? props.representation?.restrictToNeighbours
-                    ? "neighbourhood"
-                    : props.representation.interfaceOption.selectionType
-                : "molecule"
+            props.representation ? (props.representation?.restrictToNeighbours ? "neighbourhood" : props.representation.interfaceOption.selectionType) : "molecule"
         );
 
 
@@ -190,7 +189,7 @@ export const AddCustomRepresentationCard = memo(
                         (representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") &&
                         restrictToNeighbours
                     ) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(
                             theMolecule.gemmiStructure,
                             unRestrictedCidSelection,
                             neighboursCid,
@@ -208,7 +207,7 @@ export const AddCustomRepresentationCard = memo(
                             .map(r => r + extraRestrict)
                             .join("||");
                     } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                        const restrictedCid = window.cootModule.cidToNeighboursCid(
+                        const restrictedCid = window.gemmiModule.cidToNeighboursCid(
                             theMolecule.gemmiStructure,
                             unRestrictedCidSelection,
                             neighboursCid,
@@ -231,7 +230,7 @@ export const AddCustomRepresentationCard = memo(
                             restrictToNeighbours
                         ) {
                             const waterSelection = "/*/*/(HOH)";
-                            const restrictedWaterCid = window.cootModule.cidToNeighboursCid(
+                            const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(
                                 theMolecule.gemmiStructure,
                                 waterSelection,
                                 neighboursCid,
@@ -615,6 +614,18 @@ export const AddCustomRepresentationCard = memo(
                         }}/>
                 </>
                 )}
+
+                    {ruleType === "protein-model" && (
+                        <>
+                            <MoorhenModelSelect
+                                selectedCoordMolNo={props.molecule.molNo}
+                                molecules={[props.molecule]}
+                                // allowAll
+                                ref={modelSelectRef}
+                            />
+                        </>
+                    )}
+                    
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
                     <>
@@ -692,17 +703,17 @@ export const AddCustomRepresentationCard = memo(
                     <MoorhenStack card>
                         <MoorhenSlider
                             sliderTitle="Neighbouring Res. Dist."
-                            externalValue={adaptDist}
-                            setExternalValue={(value: number) => {
+                            value={adaptDist}
+                            setValue={(value: number) => {
                                 setAdaptDist(value);
                                 props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.adaptiveDist = value;
                                 props.molecule.adaptativeBondsRepresentation.redraw();
                             }}
-                            showMinMaxVal={false}
+                            showLabels={false}
                             stepButtons={0.5}
                             minVal={1}
                             maxVal={15}
-                            logScale={false}
+                            scale="linear"
                             decimalPlaces={2}
                         />
                     </MoorhenStack>
@@ -860,17 +871,7 @@ export const AddCustomRepresentationCard = memo(
                                         applyColourChange={applyNcsColourChange}
                                     />
                                 ) : (
-                                    <GrainOutlined
-                                        style={{
-                                            height: "30px",
-                                            width: "30px",
-                                            padding: 0,
-                                            borderStyle: "solid",
-                                            borderColor: "#ced4da",
-                                            borderWidth: "3px",
-                                            borderRadius: "8px",
-                                        }}
-                                    />
+                                    <MoorhenIcon moorhenSVG="MatSymGrain" size="large"/>
                                 )
                             ) : colourMode === "custom" ? (
                                 <MoorhenColourPicker
@@ -899,10 +900,10 @@ export const AddCustomRepresentationCard = memo(
                                 maxVal={1.0}
                                 showButtons={false}
                                 decimalPlaces={2}
-                                logScale={false}
+                                scale="linear"
                                 sliderTitle="Opacity"
-                                externalValue={nonCustomOpacity}
-                                setExternalValue={(newVal: number) => handleOpacityChange(newVal)}
+                                value={nonCustomOpacity}
+                                setValue={(newVal: number) => handleOpacityChange(newVal)}
                             />
                         </MoorhenStack>
                     </>

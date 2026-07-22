@@ -1,4 +1,3 @@
-import { Slider } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoleculeRepresentation, MoorhenMolecule } from "@/utils";
@@ -87,63 +86,43 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
         <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Bond width"
-                externalValue={bondWidth}
-                setExternalValue={value => setBondWidth(value)}
-                showMinMaxVal={false}
+                value={bondWidth}
+                setValue={value => setBondWidth(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.05}
                 maxVal={0.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Radius-Bond ratio"
-                externalValue={atomRadiusBondRatio}
-                setExternalValue={value => setAtomRadiusBondRatio(value)}
-                showMinMaxVal={false}
+                value={atomRadiusBondRatio}
+                setValue={value => setAtomRadiusBondRatio(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={1.0}
                 maxVal={3.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenToggle type="switch" checked={showAniso} onChange={() => setShowAniso(prev => !prev)} label="Show Thermal ellipsoids" />
             <MoorhenToggle type="switch" checked={showOrtep} onChange={() => setShowOrtep(prev => !prev)} label="Ortep style" />
             {/* <MoorhenToggle type="switch" checked={showHs} onChange={() => setShowHs(prev => !prev)} label="Show Hs" /> */}
             <span>Bond Smoothness</span>
-            <Slider
+            <MoorhenSlider
                 aria-label="Smoothness"
-                style={{ width: "80%", marginLeft: "2rem" }}
                 value={bondSmoothness}
-                onChange={(evt, value: number) => {
-                    setBondSmoothness(value);
-                }}
-                valueLabelFormat={value => {
-                    switch (value) {
-                        case 1:
-                            return "Coarse";
-                        case 50:
-                            return "Nice";
-                        default:
-                            return "Smooth";
-                    }
-                }}
-                getAriaValueText={value => {
-                    switch (value) {
-                        case 1:
-                            return "Coarse";
-                        case 50:
-                            return "Nice";
-                        default:
-                            return "Smooth";
-                    }
-                }}
-                step={null}
-                valueLabelDisplay="auto"
-                marks={[
-                    { value: 1, label: "Coarse" },
-                    { value: 50, label: "Nice" },
-                    { value: 100, label: "Smooth" },
+                setValue={
+                    setBondSmoothness
+                }
+                sliderTitle="Bond Smoothness"
+                showTitleValue={false}
+                step={50}
+                labels={[
+                    { value: 1, label: "Coarse", tick:true },
+                    { value: 50, label: "Nice", tick:true },
+                    { value: 100, label: "Smooth", tick:true },
                 ]}
             />
         </MoorhenStack>
@@ -213,55 +192,55 @@ const SurfaceSettingsPanel = (props: MoleculeSettingPanelProps) => {
         <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Sigma"
-                externalValue={surfaceSigma}
-                setExternalValue={value => setSurfaceSigma(value)}
-                showMinMaxVal={false}
+                value={surfaceSigma}
+                setValue={value => setSurfaceSigma(value)}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Contour Level"
-                externalValue={surfaceLevel}
-                setExternalValue={value => setSurfaceLevel(value)}
-                showMinMaxVal={false}
+                value={surfaceLevel}
+                setValue={value => setSurfaceLevel(value)}
+                showLabels={false}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Box Radius"
-                externalValue={surfaceRadius}
-                setExternalValue={value => setSurfaceRadius(value)}
-                showMinMaxVal={false}
+                value={surfaceRadius}
+                setValue={value => setSurfaceRadius(value)}
+                showLabels={false}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. Grid Scale"
-                externalValue={surfaceGridScale}
-                setExternalValue={value => setSurfaceGridScale(value)}
-                showMinMaxVal={false}
+                value={surfaceGridScale}
+                setValue={value => setSurfaceGridScale(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={1.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Gauss. Surf. B-Factor"
-                externalValue={surfaceBFactor}
-                setExternalValue={value => setSurfaceBFactor(value)}
-                showMinMaxVal={false}
+                value={surfaceBFactor}
+                setValue={value => setSurfaceBFactor(value)}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
         </MoorhenStack>
@@ -359,13 +338,13 @@ export const SymmetrySettingsPanel = (props: {
             <MoorhenSlider
                 isDisabled={!symmetryOn}
                 sliderTitle="Symmetry Radius"
-                externalValue={symmetryRadius}
-                setExternalValue={value => setSymmetryRadius(value)}
-                showMinMaxVal={false}
+                value={symmetryRadius}
+                setValue={value => setSymmetryRadius(value)}
+                showLabels={false}
                 stepButtons={5}
                 minVal={0.01}
                 maxVal={100}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
         </MoorhenStack>
@@ -486,79 +465,79 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
         <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Ribbon Coil Thickness"
-                externalValue={ribbonCoilThickness}
-                setExternalValue={value => setRibbonCoilThickness(value)}
-                showMinMaxVal={false}
+                value={ribbonCoilThickness}
+                setValue={value => setRibbonCoilThickness(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={2}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Ribbon Helix Width"
-                externalValue={ribbonHelixWidth}
-                setExternalValue={value => setRibbonHelixWidth(value)}
-                showMinMaxVal={false}
+                value={ribbonHelixWidth}
+                setValue={value => setRibbonHelixWidth(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Ribbon Strand Width"
-                externalValue={ribbonStrandWidth}
-                setExternalValue={value => setRibbonStrandWidth(value)}
-                showMinMaxVal={false}
+                value={ribbonStrandWidth}
+                setValue={value => setRibbonStrandWidth(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Ribbon Arrow Width"
-                externalValue={ribbonArrowWidth}
-                setExternalValue={value => setRibbonArrowWidth(value)}
-                showMinMaxVal={false}
+                value={ribbonArrowWidth}
+                setValue={value => setRibbonArrowWidth(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Ribbon Nucleotides Width"
-                externalValue={ribbonDNARNAWidth}
-                setExternalValue={value => setRibbonDNARNAWidth(value)}
-                showMinMaxVal={false}
+                value={ribbonDNARNAWidth}
+                setValue={value => setRibbonDNARNAWidth(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Ribbon Axial Sampling"
-                externalValue={ribbonAxialSampling}
-                setExternalValue={value => setRibbonAxialSampling(value)}
-                showMinMaxVal={false}
+                value={ribbonAxialSampling}
+                setValue={value => setRibbonAxialSampling(value)}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0}
                 maxVal={15}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
             <MoorhenSlider
                 sliderTitle="Nucl. Dish Angular Sampling"
-                externalValue={dishStyleAngularSampling}
-                setExternalValue={value => setDishStyleAngularSampling(value)}
-                showMinMaxVal={false}
+                value={dishStyleAngularSampling}
+                setValue={value => setDishStyleAngularSampling(value)}
+                showLabels={false}
                 stepButtons={1}
                 minVal={1}
                 maxVal={64}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
 
@@ -633,24 +612,24 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
         <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Mol. Surf. Probe Radius"
-                externalValue={surfaceStyleProbeRadius}
-                setExternalValue={value => setSurfaceStyleProbeRadius(value)}
-                showMinMaxVal={false}
+                value={surfaceStyleProbeRadius}
+                setValue={value => setSurfaceStyleProbeRadius(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Mol. Surf. Radius Multiplier"
-                externalValue={ballsStyleRadiusMultiplier}
-                setExternalValue={value => setBallsStyleRadiusMultiplier(value)}
-                showMinMaxVal={false}
+                value={ballsStyleRadiusMultiplier}
+                setValue={value => setBallsStyleRadiusMultiplier(value)}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>
@@ -705,35 +684,35 @@ const CylinderSettingsPanel = (props: MoleculeSettingPanelProps) => {
         <MoorhenStack card>
             <MoorhenSlider
                 sliderTitle="Cylinder Angular Sampling"
-                externalValue={cylindersStyleAngularSampling}
-                setExternalValue={setCylindersStyleAngularSampling}
-                showMinMaxVal={false}
+                value={cylindersStyleAngularSampling}
+                setValue={setCylindersStyleAngularSampling}
+                showLabels={false}
                 stepButtons={1}
                 minVal={0.01}
                 maxVal={10}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={0}
             />
             <MoorhenSlider
                 sliderTitle="Cylinder Radius"
-                externalValue={cylindersStyleCylinderRadius}
-                setExternalValue={setCylindersStyleCylinderRadius}
-                showMinMaxVal={false}
+                value={cylindersStyleCylinderRadius}
+                setValue={setCylindersStyleCylinderRadius}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
             <MoorhenSlider
                 sliderTitle="Cylinder Ball Radius"
-                externalValue={cylindersStyleBallRadius}
-                setExternalValue={setCylindersStyleBallRadius}
-                showMinMaxVal={false}
+                value={cylindersStyleBallRadius}
+                setValue={setCylindersStyleBallRadius}
+                showLabels={false}
                 stepButtons={0.1}
                 minVal={0.01}
                 maxVal={3}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>
@@ -816,13 +795,13 @@ export const ResidueEnvironmentSettingsPanel = (props: MoleculeSettingPanelProps
             <MoorhenToggle type="switch" checked={showContacts} onChange={() => setShowContacts(prev => !prev)} label="Show contacts" />
             <MoorhenSlider
                 sliderTitle="Max Distance"
-                externalValue={maxDist}
-                setExternalValue={value => setMaxDist(value)}
-                showMinMaxVal={false}
+                value={maxDist}
+                setValue={value => setMaxDist(value)}
+                showLabels={false}
                 stepButtons={0.5}
                 minVal={2}
                 maxVal={4.5}
-                logScale={false}
+                scale="linear"
                 decimalPlaces={2}
             />
         </MoorhenStack>

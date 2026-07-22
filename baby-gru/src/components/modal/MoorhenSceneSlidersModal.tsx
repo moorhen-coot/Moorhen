@@ -860,10 +860,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     isDisabled={!useOffScreenBuffers}
                     minVal={1.0}
                     maxVal={12.0}
-                    logScale={false}
                     sliderTitle="Blur size"
-                    externalValue={blurSize}
-                    setExternalValue={newValue => {
+                    value={blurSize}
+                    setValue={newValue => {
                         dispatch(setDepthBlurRadius(newValue))
                     }}
                     stepButtons={1}

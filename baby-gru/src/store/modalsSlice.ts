@@ -1,6 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { ModalComponentProps, ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
-// import { ModalComponentProps } from "../../ModalsContainer.tsx";
 export type ModalCall = { key: ModalKey } & ModalComponentProps;
 
 const initialState: {
@@ -20,28 +19,22 @@ const modalsSlice = createSlice({
         },
         // API
         showModal: (state, action: PayloadAction<ModalCall>) => {
-            return {
-                ...state,
-                activeModals: [
-                    { key: action.payload.key, ...action.payload },
-                    ...state.activeModals.filter(item => item.key !== action.payload.key),
-                ],
-            };
+            state.activeModals = [
+                { key: action.payload.key, ...action.payload },
+                ...state.activeModals.filter(item => item.key !== action.payload.key),
+            ];
         },
         // API
         hideModal: (state, action: PayloadAction<ModalKey>) => {
-            return { ...state, activeModals: [...state.activeModals.filter(item => item.key !== action.payload)] };
+            state.activeModals = [...state.activeModals.filter(item => item.key !== action.payload)];
         },
         // API
         focusOnModal: (state, action: PayloadAction<ModalKey>) => {
-            return {
-                ...state,
-                focusHierarchy: [action.payload, ...state.focusHierarchy.filter(item => item !== action.payload)],
-            };
+            state.focusHierarchy = [action.payload, ...state.focusHierarchy.filter(item => item !== action.payload)];
         },
         // API
         unFocusModal: (state, action: PayloadAction<string>) => {
-            return { ...state, focusHierarchy: [...state.focusHierarchy.filter(item => item !== action.payload)] };
+            state.focusHierarchy = [...state.focusHierarchy.filter(item => item !== action.payload)];
         },
     },
 });

@@ -60,8 +60,8 @@ export type ModalKey =
     | "overlays-2d"
     | "conkit"
     | "pae-plot"
+    | "NOE"
     | "config-shortcuts"
-    | "NOE";
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;

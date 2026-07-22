@@ -1,71 +1,5 @@
 #include "moorhen-wrappers-helpers.h"
 
-std::string get_nef_restraints(const std::string &data, const std::string &sf_category){
-
-    auto doc = gemmi::cif::read_string(data);
-
-    Json::Value root;
-
-    for (const auto& block: doc.blocks){
-        for (const auto& item: block.items){
-           if (item.type == gemmi::cif::ItemType::Frame){
-                const gemmi::cif::Block& frame = item.frame;
-                bool isNefRestrains = false;
-                for(const auto& item2 : frame.items){
-                    if(item2.type == gemmi::cif::ItemType::Pair) {
-                        // if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]==restraintType){
-                        // used restraint_origin but that is not guaranteed to be present
-                        // so will just read in all restraints 
-                        const std::string full_category = "_" + sf_category + ".sf_category";
-                        std::cout << full_category; 
-                        // if(item2.pair[0]=="_nef_distance_restraint_list.sf_category"&&item2.pair[1]==sf_category){
-                        if(item2.pair[0]==full_category&&item2.pair[1]==sf_category){
-
-                        isNefRestrains = true;
-                        }
-                    }
-                    if(isNefRestrains){
-                        if(item2.type == gemmi::cif::ItemType::Loop) {
-                            for(auto i=0;i<item2.loop.values.size();i+=item2.loop.tags.size()){
-                                Json::Value row;
-                                for(auto j=0;j<item2.loop.tags.size();j++){
-                                    row[item2.loop.tags[j]] = item2.loop.values[i+j];
-                                }
-                                root.append(row);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Json::StreamWriterBuilder builder;
-    const std::string json_string = Json::writeString(builder, root);
-
-    return json_string;
-
-}
-
-// these three have been changed from specific to general 
-// so two are currently deprecated 
-std::string get_noe_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
-}
-
-std::string get_hbond_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
-}
-
-std::string get_undefined_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
-}
-
-std::string get_chem_shift_info(const std::string &data) {
-    return get_nef_restraints(data, "nef_chemical_shift_list");
-}
-
-
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
@@ -384,13 +318,5 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
-
-
-    function("get_noe_restraints",&get_noe_restraints);
-    function("get_hbond_restraints",&get_hbond_restraints);
-    function("get_undefined_restraints",&get_undefined_restraints);
-    function("get_chem_shift_info",&get_chem_shift_info);
-
-
 
 }

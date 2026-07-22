@@ -74,7 +74,7 @@ export const ImportNOERestraints = () => {
             if (files.length > 0 ) {
                const fileContents = await files[0].text()
                console.log(fileContents)
-            const parsedNOE = cootModule.get_noe_restraints(fileContents)
+            const parsedNOE = window.gemmiModule.get_noe_restraints(fileContents)
                console.log(parsedNOE)
             }
         }     

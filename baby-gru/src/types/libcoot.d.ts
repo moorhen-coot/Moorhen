@@ -8,6 +8,8 @@ declare global {
     function print(arg0: string): void;
     function createCoot64Module(arg0: any): Promise<libcootApi.CootModule>;
     function createCootModule(arg0: any): Promise<libcootApi.CootModule>;
+    function createGemmi64Module(arg0: any): Promise<any>; //FIXME
+    function createGemmiModule(arg0: any): Promise<any>; //FIXME
 }
 
 export namespace libcootApi {
@@ -85,6 +87,12 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_restraints(nef_input:string): string;
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
     };
     type headerInfoGemmi = {
         title: string;
@@ -671,6 +679,11 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_noe_restraints(nef_input:string): string;
+        get_hbond_restraints(nef_input:string): string;
+        get_undefined_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
     };
     interface DoublePairDoubleJS {
         first: number;

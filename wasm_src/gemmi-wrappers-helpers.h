@@ -45,6 +45,7 @@
 #include <gemmi/resinfo.hpp>
 #include <gemmi/cifdoc.hpp>
 #include <gemmi/smcif.hpp>
+#include "json/json.h"
 
 using namespace emscripten;
 
@@ -52,6 +53,71 @@ using namespace emscripten;
 
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
+
+inline std::string get_nef_restraints(const std::string &data, const std::string &sf_category){
+
+    auto doc = gemmi::cif::read_string(data);
+
+    Json::Value root;
+
+    for (const auto& block: doc.blocks){
+        for (const auto& item: block.items){
+           if (item.type == gemmi::cif::ItemType::Frame){
+                const gemmi::cif::Block& frame = item.frame;
+                bool isNefRestrains = false;
+                for(const auto& item2 : frame.items){
+                    if(item2.type == gemmi::cif::ItemType::Pair) {
+                        // if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]==restraintType){
+                        // used restraint_origin but that is not guaranteed to be present
+                        // so will just read in all restraints 
+                        const std::string full_category = "_" + sf_category + ".sf_category";
+                        std::cout << full_category; 
+                        // if(item2.pair[0]=="_nef_distance_restraint_list.sf_category"&&item2.pair[1]==sf_category){
+                        if(item2.pair[0]==full_category&&item2.pair[1]==sf_category){
+
+                        isNefRestrains = true;
+                        }
+                    }
+                    if(isNefRestrains){
+                        if(item2.type == gemmi::cif::ItemType::Loop) {
+                            for(auto i=0;i<item2.loop.values.size();i+=item2.loop.tags.size()){
+                                Json::Value row;
+                                for(auto j=0;j<item2.loop.tags.size();j++){
+                                    row[item2.loop.tags[j]] = item2.loop.values[i+j];
+                                }
+                                root.append(row);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Json::StreamWriterBuilder builder;
+    const std::string json_string = Json::writeString(builder, root);
+
+    return json_string;
+
+}
+
+// these three have been changed from specific to general 
+// so two are currently deprecated 
+inline std::string get_noe_restraints(const std::string &data) {
+    return get_nef_restraints(data, "nef_distance_restraint_list");
+}
+
+inline std::string get_hbond_restraints(const std::string &data) {
+    return get_nef_restraints(data, "nef_distance_restraint_list");
+}
+
+inline std::string get_undefined_restraints(const std::string &data) {
+    return get_nef_restraints(data, "nef_distance_restraint_list");
+}
+
+inline std::string get_chem_shift_info(const std::string &data) {
+    return get_nef_restraints(data, "nef_chemical_shift_list");
+}
 
 // --- Free functions ---
 
@@ -121,6 +187,92 @@ struct CompoundInfo {
     std::string name;
     std::string three_letter_code;
 };
+
+inline std::vector<std::string> split_string(const std::string &string_in,
+                         const std::string &splitter) {
+
+   std::vector<std::string> v;
+   std::string s=string_in;
+
+   while (1) {
+      std::string::size_type isplit=s.find_first_of(splitter);
+      if (isplit != std::string::npos) {
+         std::string f = s.substr(0, isplit);
+         v.push_back(f);
+         if (s.length() > (isplit+splitter.length())) {
+            s = s.substr(isplit+splitter.length());
+         } else {
+            break;
+         }
+      } else {
+         if (! s.empty()) {
+            v.push_back(s);
+            break;
+         }
+      }
+   }
+   return v;
+}
+
+
+inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
+
+    auto splitNeighboursCid = split_string(cidNeighbours, "||");
+    auto splitCid = split_string(cid, "||");
+
+    auto d2 = d*d;
+
+    auto distsq = [](const gemmi::Atom &a1, const gemmi::Atom &a2){
+        return (a1.pos.x-a2.pos.x)*(a1.pos.x-a2.pos.x) + (a1.pos.y-a2.pos.y)*(a1.pos.y-a2.pos.y) + (a1.pos.z-a2.pos.z)*(a1.pos.z-a2.pos.z);
+    };
+
+    std::string sel_str = "";
+
+    std::vector<gemmi::Atom> atoms;
+
+    for(const auto &_neighboursCid : splitNeighboursCid){
+        gemmi::Selection sel2(_neighboursCid);
+        for(auto m: sel2.models(st)){
+            for(auto c: sel2.chains(m)){
+                for(auto r: sel2.residues(c)){
+                    for(auto a: sel2.atoms(r)){
+                        atoms.push_back(a);
+                    }
+                }
+            }
+        }
+    }
+
+    for(const auto &_cid : splitCid){
+        gemmi::Selection sel(_cid);
+        for(auto m: sel.models(st)){
+            for(auto c: sel.chains(m)){
+                for(auto r: sel.residues(c)){
+                    auto num = r.seqid.num;
+                    bool found_residue = false;
+                    if(num.has_value()){
+                        for(auto a: sel.atoms(r)){
+                            for(auto a2:atoms){
+                                if(distsq(a,a2)<d2){
+                                    found_residue = true;
+                                    break;
+                                }
+                            }
+                            if(found_residue) break;
+                        }
+                        if(found_residue!=excl) sel_str += c.name + "/" + std::to_string(num.value) + "||";
+                    }
+                }
+            }
+        }
+    }
+
+    if(sel_str.length()>2)
+        return sel_str.substr(0,sel_str.length()-2);
+
+    return "";
+
+}
 
 inline std::vector<CompoundInfo> parse_mon_lib_list_cif(const std::string &data) {
     gemmi::cif::Document doc = gemmi::cif::read_string(data);

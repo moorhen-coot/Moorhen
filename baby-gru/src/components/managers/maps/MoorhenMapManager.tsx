@@ -1,6 +1,5 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useEffect, useMemo, useRef } from "react";
-import { useMoorhenInstance } from "@/InstanceManager";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
@@ -28,7 +27,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const map = useSelector((state: RootState) => {
         const map = state.maps.find(item => item.molNo === mapMolNo);
         if (!map) {
-            console.warn(`No map found with molNo: ${mapMolNo}`);
             return null;
         }
         return map;

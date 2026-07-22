@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { enqueueSnackbar } from "@/store";
 import { useCommandCentre, usePaths } from "../../InstanceManager";
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice";
@@ -10,6 +10,7 @@ import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenLigandSelect } from "../inputs/Selector/MoorhenLigandSelect";
 import { MoorhenStack } from "../interface-base";
+import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
 
 export const OpenLhasa = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -25,7 +26,19 @@ export const OpenLhasa = () => {
 
     const dispatch = useDispatch();
 
+    const urlPrefix = usePaths().urlPrefix
+
     const menuItemText = "Open ligand builder...";
+
+    useEffect(() => {
+        const loadCootModule = async() => {
+            if (!window.cootModule){
+                console.log("Attempting to load cootModule before starting Lhasa")
+                windowCootCCP4Loader(`${urlPrefix}/wasm/`);
+            }
+        }
+        loadCootModule()
+    }, []);
 
     const handleMoleculeChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedCoordMolNo(parseInt(evt.target.value));

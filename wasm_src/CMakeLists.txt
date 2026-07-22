@@ -76,6 +76,7 @@ ${coot_src}/layla/ligand_editor_canvas/model.cpp
 ${coot_src}/layla/ligand_editor_canvas/tools.cpp
 ${coot_src}/layla/ligand_editor_canvas/render.cpp
 ${coot_src}/layla/utils.cpp
+${coot_src}/layla/file_io.cpp
 ${coot_src}/layla/qed.cpp
 ${coot_src}/lhasa/lhasa.cpp
 ${coot_src}/lhasa/glog_replacement.cpp
@@ -92,6 +93,7 @@ ${coot_src}/utils/base64-encode-decode.cc
 ${coot_src}/utils/static-logging.cc
 ${coot_src}/utils/logging.cc
 ${coot_src}/pli/pi-stacking.cc
+${coot_src}/coot-utils/coot-coord-utils-mmdb-free.cc
 ${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
@@ -459,6 +461,12 @@ ${coot_src}/coot-utils/gl-matrix-eigensystem.cc
 glycoblocks.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
+${coot_src}/cremer-pople-sphere/data_sphere.cc
+            ${coot_src}/cremer-pople-sphere/density_map.cc
+            ${coot_src}/cremer-pople-sphere/primitives.cc
+            ${coot_src}/cremer-pople-sphere/ring.cc
+            ${coot_src}/cremer-pople-sphere/scene.cc
+
 )
 
 add_library(coot STATIC
@@ -490,9 +498,10 @@ target_include_directories(coot PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
     ${GSL_INCLUDE_DIRS}
     ${DEPS_INCLUDE_DIRS}
+    ${RDKIT_INCLUDE_DIRS}
 )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=1")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" )
 
@@ -505,6 +514,7 @@ FILE(MAKE_DIRECTORY "rota_arg_lys")
 FILE(MAKE_DIRECTORY "rota_other")
 FILE(MAKE_DIRECTORY "data/COOT_BACKUP/")
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
+FILE(MAKE_DIRECTORY "data/coot/data/carbohydrate/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/g")
@@ -579,6 +589,8 @@ FILE(COPY ../checkout/rotarama DESTINATION rotarama/data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
+FILE(COPY ${coot_src}/data/n-glycan-validated.bin DESTINATION data/coot/data/carbohydrate )
+FILE(COPY ${coot_src}/data/n-glycan-validated-rscc.bin DESTINATION data/coot/data/carbohydrate )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 if (EMSCRIPTEN)
@@ -594,16 +606,16 @@ endif()
 add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=8 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=8 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+target_link_options(moorhen PRIVATE -sASSERTIONS=1  -pthread -sPTHREAD_POOL_SIZE=8 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
 endif()
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
@@ -684,6 +696,7 @@ target_include_directories(moorhen PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include 
     ${CMAKE_CURRENT_SOURCE_DIR}/../wasm_src_frontend
     ${DEPS_INCLUDE_DIRS}
+    ${RDKIT_INCLUDE_DIRS}
 )
 
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
@@ -747,9 +760,9 @@ target_include_directories(gemmi-wasm PRIVATE
 )
 
 
-target_link_libraries(gemmi-wasm gemmi_cpp z)
+target_link_libraries(gemmi-wasm gemmi_cpp jsoncpp z)
 if(${MEMORY64} MATCHES "1")
-target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmiModule -sEXPORTED_RUNTIME_METHODS=['FS'])
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'])
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)
 else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)

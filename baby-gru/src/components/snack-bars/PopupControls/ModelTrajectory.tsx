@@ -1,7 +1,5 @@
-import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
-import { IconButton, LinearProgress, Slider } from "@mui/material";
-import { useDispatch, useSelector, useStore } from "react-redux";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {  useEffect, useMemo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenStack } from "@/components/interface-base";
 import { RootState } from "@/store/MoorhenReduxStore";
@@ -10,28 +8,28 @@ import { setShownControl } from "@/store/globalUISlice";
 import { hideMolecule, showMolecule } from "@/store/moleculesSlice";
 import { moorhen } from "@/types/moorhen";
 import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
-import { sleep } from "@/utils/utils";
+import { MoorhenButton, MoorhenNumberInput, MoorhenSlider } from "@/components/inputs";
+import { MoorhenLinearProgress } from "@/components/icons";
+import useStateWithRef from "@/hooks/useStateWithRef";
 
 export const ModelTrajectory = () => {
     const dispatch = useDispatch();
-    const store = useStore<RootState>();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-
-    const isPlayingAnimationRef = useRef<boolean>(false);
     const representationRef = useRef<null | moorhen.MoleculeRepresentation>(null);
     const framesRef = useRef<null | moorhen.DisplayObject[][]>([]);
-    const iFrameRef = useRef<number>(0);
 
     const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(true);
     const [nFrames, setNFrames] = useState<number>(0);
     const [progress, setProgress] = useState<number>(0);
-    const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
+    const [currentFrameIndex, setCurrentFrameIndex, currentFrameIndexRef] = useStateWithRef<number>(0);
     const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(false);
+    const [frameTime, setFrameTime] = useState<number>(100);
     const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
     const molNo = shownControl?.name === "trajectory" ? (shownControl.payload?.molNo ?? 0) : 0;
     const style = shownControl?.name === "trajectory" ? (shownControl?.payload?.style ?? "CRs") : "CRs";
+
+    const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === molNo), [molNo]);
     const commandCentre = useCommandCentre();
@@ -58,35 +56,47 @@ export const ModelTrajectory = () => {
         return frames;
     };
 
-    const playAnimation = useCallback(async () => {
-        if (isPlayingAnimation && iFrameRef.current === framesRef.current.length) {
-            setCurrentFrameIndex(0);
-            iFrameRef.current = 0;
-        } else if (isPlayingAnimation) {
-            isPlayingAnimationRef.current = false;
+    const handlePlayButton = () => {
+        if (isPlayingAnimation) {
             setIsPlayingAnimation(false);
+            if (animationTimerRef.current) {
+                clearInterval(animationTimerRef.current);}
         } else {
-            isPlayingAnimationRef.current = true;
+            if (currentFrameIndex  === nFrames) {
+                setCurrentFrameIndex(0);
+            }
             setIsPlayingAnimation(true);
+            playAnimation();
         }
+    }
 
-        if (isPlayingAnimationRef.current) {
-            const nSteps = framesRef.current.length;
-            const stepPercent = nSteps / 100;
-            const singleStepPercent = 1 / stepPercent;
+    useEffect(() => {
+        const buildCurrentFrame = async () => {
+            const representation = representationRef.current;
+            const frame = framesRef.current[currentFrameIndex];
+            if (!representation || !frame) {
+                return;
+            }
+            representationRef.current.deleteBuffers();
+            await representation.buildBuffers(frame);
+        };
 
-            while (iFrameRef.current < framesRef.current.length) {
-                representationRef.current.deleteBuffers();
-                await representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]);
-                setCurrentFrameIndex(prev => prev + singleStepPercent);
-                await sleep(5);
-                iFrameRef.current += 1;
-                if (!isPlayingAnimationRef.current) {
-                    break;
+        void buildCurrentFrame();
+    }, [currentFrameIndex]);
+
+    const playAnimation = () => {
+        animationTimerRef.current = setInterval(() => {
+            if (currentFrameIndexRef.current < nFrames) {
+                setCurrentFrameIndex(prev => prev + 1);
+            } else {
+                setIsPlayingAnimation(false);
+                if (animationTimerRef.current) {
+                    clearInterval(animationTimerRef.current);
                 }
             }
-        }
-    }, [isPlayingAnimation, selectedMolecule]);
+        }, frameTime);
+    };
+
 
     useEffect(() => {
         const loadFrames = async () => {
@@ -102,58 +112,61 @@ export const ModelTrajectory = () => {
     }, []);
 
     return (
-        <>
+        <div style={{ width: "20rem" }}>
             {busyComputingFrames ? (
-                <MoorhenStack gap={1} direction="vertical">
+                <MoorhenStack direction="vertical">
                     <span>Please wait...</span>
-                    <LinearProgress variant="determinate" value={progress} />
+                    <MoorhenLinearProgress value={progress} />
                 </MoorhenStack>
             ) : nFrames > 0 ? (
-                <MoorhenStack gap={1} direction="vertical">
-                    <div style={{ display: "flex", justifyContent: "center" }}>
-                        <IconButton onClick={playAnimation}>
-                            {iFrameRef.current === framesRef.current.length - 1 ? (
-                                <ReplayCircleFilledOutlined />
+                <MoorhenStack direction="vertical">
+                    <MoorhenStack gap="0.5rem" direction="horizontal" align="center" justify="center">
+                        <MoorhenButton onClick={handlePlayButton}
+                            type="icon-only" icon=
+                            {currentFrameIndex === nFrames ? (
+                                "MatSymReplay"
                             ) : isPlayingAnimation ? (
-                                <PauseCircleOutline />
+                                "MatSymPauseCircled"
                             ) : (
-                                <PlayCircleOutline />
-                            )}
-                        </IconButton>
-                        <IconButton
+                                "MatSymPlayCircled"
+                            )}>
+                        </MoorhenButton>
+                        <MoorhenButton
+                            type="icon-only"
                             onClick={() => {
-                                isPlayingAnimationRef.current = false;
                                 setIsPlayingAnimation(false);
                                 representationRef.current?.deleteBuffers();
                                 dispatch(showMolecule(selectedMolecule));
                                 dispatch(setIsAnimatingTrajectory(false));
                                 dispatch(setShownControl(null));
+                                if (animationTimerRef.current) {
+                                    clearInterval(animationTimerRef.current);
+                                }
                             }}
+                            icon="MatSymStopCircled"
                         >
-                            <StopCircleOutlined />
-                        </IconButton>
-                    </div>
-                    <Slider
-                        size="small"
-                        defaultValue={0}
+                        </MoorhenButton>
+                        <MoorhenNumberInput
+                            value={frameTime}
+                            setValue={setFrameTime}
+                            integer
+                            label="Frame Time:"
+                            type="number"
+                            disabled={isPlayingAnimation} />
+                    </MoorhenStack>
+                    <MoorhenSlider
                         value={currentFrameIndex}
-                        onChange={(evt, newVal) => {
-                            if (isPlayingAnimationRef.current && iFrameRef.current === framesRef.current.length) {
-                                isPlayingAnimationRef.current = false;
-                                setIsPlayingAnimation(false);
-                            }
-                            iFrameRef.current = Math.floor(((newVal as number) * framesRef.current.length) / 100);
-                            representationRef.current.deleteBuffers();
-                            if (iFrameRef.current < framesRef.current.length) {
-                                representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]);
-                                setCurrentFrameIndex(newVal as number);
-                            }
-                        }}
+                        minVal={1}
+                        maxVal={nFrames}
+                        step={1}
+                        decimalPlaces={0}
+                        sliderTitle="Frame"
+                        setValue={setCurrentFrameIndex}
                     />
                 </MoorhenStack>
             ) : (
                 <span>Loading...</span>
             )}
-        </>
+        </div>
     );
 };

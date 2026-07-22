@@ -1,19 +1,15 @@
-import { useDispatch, useSelector, useStore } from "react-redux";
+import { useSelector} from "react-redux";
 import { useState } from "react";
-import { useCommandCentre, useMoorhenInstance, useTimeCapsule } from "../../InstanceManager";
-import { MoorhenReduxStoreType, RootState } from "../../store/MoorhenReduxStore";
+import { useMoorhenInstance } from "../../InstanceManager";
+import { RootState } from "../../store/MoorhenReduxStore";
 import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
 import { MoorhenFileInput } from "../inputs";
 
-export const AutoLoadFiles = () => {
-    const commandCentre = useCommandCentre();
-    const store: MoorhenReduxStoreType = useStore<RootState>();
+export const LoadFiles = () => {
     const defaultBondSmoothness = useSelector((state: RootState) => state.sceneSettings.defaultBondSmoothness);
-    const monomerLibraryPath = useMoorhenInstance().paths.monomerLibraryPath;
-    const dispatch = useDispatch();
-    const timeCapsule = useTimeCapsule();
     const backgroundColor = useSelector((state: RootState) => state.sceneSettings.backgroundColor);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const moorhenInstance = useMoorhenInstance()
 
     const autoLoadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setIsLoading(true);
@@ -24,13 +20,9 @@ export const AutoLoadFiles = () => {
             }
             await autoOpenFiles(
                 files,
-                commandCentre,
-                store,
-                monomerLibraryPath,
+                moorhenInstance,
                 backgroundColor,
-                defaultBondSmoothness,
-                timeCapsule,
-                dispatch
+                defaultBondSmoothness
             );
         }
         setIsLoading(false);
@@ -41,7 +33,7 @@ export const AutoLoadFiles = () => {
         <>
             <span className="moorhen__input__label-menu">Open Files</span>
             <MoorhenFileInput
-                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb,.mrc, .nef"
+                accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb, .mrc, .ccp4 .nef"
                 multiple={true}
                 isLoading={isLoading}
                 className="moorhen_menu-custom-left-margin"

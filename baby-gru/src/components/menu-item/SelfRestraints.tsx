@@ -128,12 +128,12 @@ export const SelfRestraints = () => {
                 sliderTitle="Max. dist."
                 minVal={4}
                 maxVal={6}
-                showMinMaxVal={false}
-                logScale={false}
-                externalValue={maxDist}
+                showLabels={false}
+                scale="linear"
+                value={maxDist}
                 stepButtons={0.25}
                 decimalPlaces={2}
-                setExternalValue={value => setMaxDist(value)}
+                setValue={value => setMaxDist(value)}
             />
             <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
         </>

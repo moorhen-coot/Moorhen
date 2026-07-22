@@ -1,4 +1,4 @@
-import { hexToRgb } from "@mui/material";
+
 import * as mat3 from "gl-matrix/mat3";
 import * as vec3 from "gl-matrix/vec3";
 import JSZip from "jszip";
@@ -341,12 +341,12 @@ export const doDownloadText = (text: string, fileName: string) => {
 };
 
 export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: string): gemmi.Structure => {
-    const structure: gemmi.Structure = window.CCP4Module.read_structure_from_string(coordData, molName);
+    const structure: gemmi.Structure = window.gemmiModule.read_structure_from_string(coordData, molName);
     return structure;
 };
 
 export const readGemmiCifDocument = (coordData: string): gemmi.cifDocument => {
-    const doc: gemmi.cifDocument = window.CCP4Module.read_string(coordData);
+    const doc: gemmi.cifDocument = window.gemmiModule.read_string(coordData);
     return doc;
 };
 
@@ -659,6 +659,14 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
     }
 
     return multiRulesArgs;
+};
+
+export const hexToRgb = (hex: string): string => {
+    const hexWithoutHash = hex.replace("#", "");
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    return `rgb(${r}, ${g}, ${b})`;
 };
 
 export const hexToHsl = (hex: string): [number, number, number] => {
@@ -1014,7 +1022,7 @@ export function getCubeLines(
     unitCell: gemmi.UnitCell
 ): [{ x: number; y: number; z: number; serial: string }, { x: number; y: number; z: number; serial: string }][] {
     const orthogonalize = (x: number, y: number, z: number) => {
-        const fractPosition = new window.CCP4Module.Fractional(x, y, z);
+        const fractPosition = new window.gemmiModule.Fractional(x, y, z);
         const orthPosition = unitCell.orthogonalize(fractPosition);
         const result = [orthPosition.x, orthPosition.y, orthPosition.z] as [number, number, number];
         fractPosition.delete();
@@ -1074,15 +1082,15 @@ export function getCubeLines(
 }
 
 export const countResiduesInSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {
-    const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : "/*/*/*");
-    const count = window.CCP4Module.count_residues_in_selection(gemmiStructure, selection);
+    const selection = new window.gemmiModule.Selection(cidSelection ? cidSelection : "/*/*/*");
+    const count = window.gemmiModule.count_residues_in_selection(gemmiStructure, selection);
     selection.delete();
     return count;
 };
 
 export const copyStructureSelection = (gemmiStructure: gemmi.Structure, cidSelection?: string) => {
-    const selection = new window.CCP4Module.Selection(cidSelection ? cidSelection : "/*/*/*");
-    const newStruct = window.CCP4Module.remove_non_selected_atoms(gemmiStructure, selection);
+    const selection = new window.gemmiModule.Selection(cidSelection ? cidSelection : "/*/*/*");
+    const newStruct = window.gemmiModule.remove_non_selected_atoms(gemmiStructure, selection);
     selection.delete();
     return newStruct;
 };

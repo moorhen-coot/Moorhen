@@ -1,4 +1,3 @@
-import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
 import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
@@ -65,6 +64,15 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
+export type MenuItemHTMLSlot = BaseMenuItem & {
+    type: "HTMLslot";
+    slotName: string;
+};
+
+export type MenuItemSlider = BaseMenuItem & {
+    type: "customJSX";
+    jsx: (aeg0: any) => React.JSX.Element;
+};
 
 export type MenuItemSubMenu = BaseMenuItem & {
     type: "subMenu";
@@ -91,6 +99,7 @@ export type MenuItemType =
     | MenuItemSubMenu
     | MenuItemShowSidePanel
     | MenuItemDispatch
+    | MenuItemHTMLSlot
     | Separator;
 
 export type SubMenu = {
@@ -106,13 +115,14 @@ export const subMenuMap: SubMenuMap = {
     file: {
         label: "Files",
         items: [
+            { id: "slotTest", label: "slot test", type: "HTMLslot", slotName: "test-slot" },
             {
                 id: "auto-load",
                 label: "Auto load files",
                 type: "customJSX",
                 keywords: ["upload", "load", "pdb"],
                 description: "Upload and open files",
-                jsx: MenuItems.AutoLoadFiles,
+                jsx: MenuItems.LoadFiles,
                 specialType: "upload",
             },
             { type: "separator" },

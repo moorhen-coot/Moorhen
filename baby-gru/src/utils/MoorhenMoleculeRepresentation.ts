@@ -7,11 +7,19 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
-
+import {
+    centreOnGemmiAtoms,
+    cidToSpec,
+    copyStructureSelection,
+    countResiduesInSelection,
+    gemmiAtomPairsToCylindersInfo,
+    gemmiAtomsToCirclesSpheresInfo,
+    getCubeLines,
+    guid,
+} from "./utils";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState, useRef } from "react"; 
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../store/vectorsSlice"
-import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
 
 export type RepresentationStyles =
     | "VdwSpheres"
@@ -113,7 +121,7 @@ export type gaussianSurfSettings = {
 
 export class MoleculeRepresentation {
     uniqueId: string;
-    style: moorhen.RepresentationStyles;
+    style: RepresentationStyles;
     cid: string;
     neighboursCid: string;
     restrictToNeighbours: boolean;
@@ -507,6 +515,9 @@ export class MoleculeRepresentation {
                 }
             });
         }
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
@@ -528,6 +539,9 @@ export class MoleculeRepresentation {
                 buf.origin = selectionCentre;
             }
         });
+        if (this.nonCustomOpacity < 0.99) {
+            this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
     }
 
     /**
@@ -655,9 +669,8 @@ export class MoleculeRepresentation {
 
             hBonds.forEach(hb => {
                 [hb.acceptor, hb.donor].forEach(hbEnd => {
-
-                    const seqId_acc: gemmi.SeqId = new window.cootModule.SeqId("" + hbEnd.res_no);
-                    const addr_acc: gemmi.AtomAddress = new window.cootModule.AtomAddress(
+                    const seqId_acc: gemmi.SeqId = new window.gemmiModule.SeqId("" + hbEnd.res_no);
+                    const addr_acc: gemmi.AtomAddress = new window.gemmiModule.AtomAddress(
                         hbEnd.chain,
                         seqId_acc,
                         hbEnd.residue_name,
@@ -704,7 +717,7 @@ export class MoleculeRepresentation {
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
             if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha"].includes(_style)) {
-                restrictedCid = window.cootModule.cidToNeighboursCid(
+                restrictedCid = window.gemmiModule.cidToNeighboursCid(
                     this.parentMolecule.gemmiStructure,
                     _cid,
                     this.neighboursCid,

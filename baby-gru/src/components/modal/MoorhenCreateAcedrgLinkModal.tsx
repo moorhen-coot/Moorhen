@@ -1,16 +1,16 @@
-import { Backdrop, TextField } from "@mui/material";
+
 import { useDispatch, useSelector } from "react-redux";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { hideModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { cidToSpec, convertRemToPx, convertViewtoPx, parseAtomInfoLabel } from "../../utils/utils";
-import { MoorhenSpinner } from "../icons";
-import { MoorhenButton, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
+import { cidToSpec,parseAtomInfoLabel } from "../../utils/utils";
+import { MoorhenButton, MoorhenCidInputForm,  MoorhenMoleculeSelect,  MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
+import { moorhenSVGs } from "../icons/moorhen_icons";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -27,6 +27,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const [changeOrderBond, setChangeOrderBond] = useState<boolean>(false);
     const [changeAtomCharge, setChangeAtomCharge] = useState<boolean>(false);
     const [newAtomCharge, setNewAtomCharge] = useState<string>(null);
+    const [chosenMolecule, setChosenMolecule] = useState<moorhen.Molecule>(null);
 
     const selectedMolNoRef = useRef<number>(null);
     const selectedAtomValueRef = useRef<string>(null);
@@ -40,6 +41,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const newBondOrderValueRef = useRef<HTMLSelectElement | null>(null);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const moorhenInstance = useMoorhenInstance();
 
     useImperativeHandle(
         ref,
@@ -89,8 +91,8 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             return [];
         }
 
-        const doc = new window.CCP4Module.cifDocument();
-        window.CCP4Module.cif_parse_string(doc, fileContent);
+        const doc = new window.gemmiModule.cifDocument();
+        window.gemmiModule.cif_parse_string(doc, fileContent);
 
         const blocks = doc.blocks;
         const blocksSize = blocks.size();
@@ -144,6 +146,21 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         props.setAwaitAtomClick(-1);
     };
 
+    const setAtomPicked = async (cid:string) => {
+        // const chosenMolecule = molecules.find(molecule => molecule.buffersInclude(evt.detail.buffer));
+        const chosenAtom = cidToSpec(cid);
+        const [atoms, monomerBonds] = await Promise.all([
+            chosenMolecule.gemmiAtomsForCid(cid),
+            getBonds(chosenMolecule, chosenAtom),
+        ]);
+        console.log(chosenAtom);
+        selectedMolNoRef.current = chosenMolecule.molNo;
+        setSelectedAtom(chosenAtom.cid);
+        selectedAtomValueRef.current = chosenAtom.cid;
+        setMonomerAtoms(atoms);
+        setMonomerBonds(monomerBonds);
+    };
+
     useEffect(() => {
         if (props.awaitAtomClick === props.id) {
             document.addEventListener("atomClicked", setAtomPickerEventListener, { once: true });
@@ -159,10 +176,12 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     return (
         <MoorhenStack card>
             <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
-                <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
+                <MoorhenMoleculeSelect  onSelectUniqueId={(uid) => setChosenMolecule(moorhenInstance.getMolecule(uid))}/>
+                {/* <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                     Set Atom {props.id}
                 </MoorhenButton>
-                <MoorhenTextInput readOnly={true} text={selectedAtom ? selectedAtom : "No atom selected"} />
+                <MoorhenTextInput readOnly={true} text={selectedAtom ? selectedAtom : "No atom selected"} /> */}
+                <MoorhenCidInputForm setCid={setAtomPicked}/>
                 <MoorhenToggle label="Delete atom..." checked={deleteAtom} onChange={() => setDeleteAtom(!deleteAtom)} />
                 {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...
@@ -289,19 +308,19 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     })}
                 </MoorhenSelect>
                 {changeAtomCharge ? (
-                    <TextField
-                        style={{ margin: "0.5rem", width: "50%" }}
+                    <MoorhenNumberInput
                         label="New charge"
                         type="number"
-                        variant="standard"
-                        error={isNaN(parseInt(newAtomCharge)) || parseInt(newAtomCharge) === Infinity}
-                        value={newAtomCharge}
-                        onChange={evt => {
-                            newAtomChargeValueRef.current = evt.target.value;
-                            setNewAtomCharge(evt.target.value);
+                        integer={true}
+                        // error={isNaN(parseInt(newAtomCharge)) || parseInt(newAtomCharge) === Infinity}
+                        value={+newAtomCharge}
+                        setValue={value => {
+                            newAtomChargeValueRef.current = value.toString();
+                            setNewAtomCharge(value.toString());
                         }}
                     />
                 ) : null}
+                
             </MoorhenStack>
         </MoorhenStack>
     );
@@ -347,17 +366,6 @@ export const MoorhenCreateAcedrgLinkModal = (props: ModalComponentProps) => {
         <MoorhenDraggableModalBase
             modalId={modalKeys.ACEDRG}
             headerTitle="Create covalent link"
-            additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
-                    <MoorhenStack gap={2} direction="vertical" style={{ justifyContent: "center", alignItems: "center" }}>
-                        <MoorhenSpinner />
-                        <span>Click on an atom...</span>
-                        <MoorhenButton variant="danger" onClick={() => setAwaitAtomClick(-1)}>
-                            Cancel
-                        </MoorhenButton>
-                    </MoorhenStack>
-                </Backdrop>
-            }
             body={
                 <MoorhenStack
                     direction="horizontal"

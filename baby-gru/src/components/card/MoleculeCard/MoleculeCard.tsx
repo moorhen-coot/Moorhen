@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+import { MoorhenLinearProgress } from "../../icons";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
@@ -30,10 +30,11 @@ import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+
+import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
 // import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
 
-import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -320,15 +321,10 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const dropDownMenu: React.JSX.Element = (
         <MoorhenStack>
-            <MoorhenMenuItem
-                key={6}
-                onClick={() => {
-                    document.body.click();
-                    handleShowInfo();
-                }}
+            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto"}}
             >
-                Header info
-            </MoorhenMenuItem>
+                <MoorhenHeaderInfoCard molecule={props.molecule}/>
+            </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Rename Molecule">
                 <RenameDisplayObject key="rename" setCurrentName={handleRename} item={props.molecule} />
             </MoorhenMenuItemPopover>
@@ -404,6 +400,19 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const handleToggleXPIDList = value => {
+        setShownXPIDList(value);
+        props.molecule.moleculeCardState.showXpidList = value;
+        if (!value) {
+            const vectorList = store
+                .getState()
+                .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
+            dispatch(removeVectors(vectorList));
+        }
+    };
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
+        v.uniqueId.includes("__TAG_NEF"))
+    let doShowAllNEF = false 
 
     const handleNEFRestraintsToggle = value => {
         if (!value) {
@@ -415,68 +424,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         props.molecule.drawNEFRestraints().then(() => {
             dispatch(addGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
         });
-    };
-
-
-    // const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
-    //     v.uniqueId.includes("__TAG_NEF"))
-    // let doShowAllNEF = false 
-
-    // vectorsList.forEach(v => {
-    //     if (v.visible !== false){
-    //         doShowAllNEF = true
-    //     }
-    // })
-    // const [showAllNEF, setShowAllNEF] = useState<boolean>(
-    //     doShowAllNEF
-    // );
-    
-    // const newVisibilityChangedVector = (theVector,vis) => {
-    //             const newVector: MoorhenVector = {
-    //                 coordsMode: theVector.coordsMode,
-    //                 labelMode: theVector.labelMode,
-    //                 labelText: theVector.labelText,
-    //                 drawMode: theVector.drawMode,
-    //                 arrowMode: theVector.arrowMode,
-    //                 xFrom: theVector.xFrom,
-    //                 yFrom: theVector.yFrom,
-    //                 zFrom: theVector.zFrom,
-    //                 xTo: theVector.xTo,
-    //                 yTo: theVector.yTo,
-    //                 zTo: theVector.zTo,
-    //                 cidFrom: theVector.cidFrom,
-    //                 cidTo: theVector.cidTo,
-    //                 molFromUniqueId: theVector.molNoFrom,
-    //                 molToUniqueId: theVector.molNoTo,
-    //                 uniqueId: theVector.uniqueId,
-    //                 vectorColour: theVector.vectorColour,
-    //                 textColour: theVector.textColour,
-    //                 radius: theVector.radius,
-    //                 visible: vis,
-    //             };
-    //             return newVector
-    //         }
-    // const changeVectorVisibility = (type) => {
-    //     if (type === "All"){
-    //         vectorsList.forEach(v => {
-    //                 const newVector = newVisibilityChangedVector(v, !showAllNEF)
-    //                 dispatch(removeVector(v))
-    //                 dispatch(addVector(newVector))
-    //             console.log("Dispatched vectors (NEF)")
-                
-    //         }
-    //     )
-    //     }
-    //     }
-    const handleToggleXPIDList = value => {
-        setShownXPIDList(value);
-        props.molecule.moleculeCardState.showXpidList = value;
-        if (!value) {
-            const vectorList = store
-                .getState()
-                .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
-            dispatch(removeVectors(vectorList));
-        }
     };
 
     return (
@@ -558,7 +505,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                     );
                                 })}
                         </>
-                        {busyDrawingCustomRepresentation && <LinearProgress style={{ margin: "0.5rem" }} />}
+                        {busyDrawingCustomRepresentation && <MoorhenLinearProgress style={{ margin: "0.5rem" }} />}
                     </div>
                     {/* <hr style={{ margin: "0.5rem" }}></hr> */}
                 </MoorhenStack>
@@ -711,12 +658,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}
                 {/* </div> */}
-                <MoorhenHeaderInfoCard
-                    anchorEl={cardHeaderDivRef}
-                    molecule={props.molecule}
-                    show={showHeaderInfo}
-                    setShow={setShowHeaderInfo}
-                />
                 <div>
                     {/* <MoorhenSequencesAccordion
                         setBusy={setBusyLoadingSequences}

@@ -307,7 +307,7 @@ export const MoorhenNOERestraints = () => {
                 const binFileContents = await file.arrayBuffer()
                 const fileContents =  pako.inflate(binFileContents, { to: "string" })
                 // var restraintData = parseNEF_NOEs(fileContents)
-                // var restraintData = window.cootModule.get_noe_restraints(fileContents)
+                // var restraintData = window.gemmiModule.get_noe_restraints(fileContents)
 
                 // const headedData = convertDataHeaders(restraintData)
 
@@ -315,7 +315,7 @@ export const MoorhenNOERestraints = () => {
                 let allConvertedData: any[] = [];
 
                 if (selectedTypes.noe) {
-                    const data = window.cootModule.get_noe_restraints(fileContents);
+                    const data = window.gemmiModule.get_noe_restraints(fileContents);
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
                         restraintType: "NOE"
@@ -324,7 +324,7 @@ export const MoorhenNOERestraints = () => {
                 }
 
                 if (selectedTypes.hbond) {
-                    const data = window.cootModule.get_hbond_restraints(fileContents);
+                    const data = window.gemmiModule.get_hbond_restraints(fileContents);
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
                         restraintType: "HBOND"
@@ -333,7 +333,7 @@ export const MoorhenNOERestraints = () => {
                 }
 
                 if (selectedTypes.undefined) {
-                    const data = window.cootModule.get_undefined_restraints(fileContents);
+                    const data = window.gemmiModule.get_undefined_restraints(fileContents);
                     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                         ...row,
                         restraintType: "UNDEFINED"
@@ -363,15 +363,15 @@ export const MoorhenNOERestraints = () => {
                 const fileContents = await file.text()
                 // parseNEF_NOEs(fileContents)
                 
-                // window.cootModule.get_nef_restraints(fileContents)
+                // window.gemmiModule.get_nef_restraints(fileContents)
                 // var restraintData = parseNEF_NOEs(fileContents)
-                // var restraintData = window.cootModule.get_noe_restraints(fileContents)
+                // var restraintData = window.gemmiModule.get_noe_restraints(fileContents)
 
                 // const headedData = convertDataHeaders(restraintData)
 
                 // const convertedData = convertDataframe(headedData)
                 let allConvertedData: any[] = [];
-                    const chemShifts = window.cootModule.get_chem_shift_info(fileContents);
+                    const chemShifts = window.gemmiModule.get_chem_shift_info(fileContents);
                     const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
                     const chemShiftsEnum = loopReplaceProtons(chemShiftsConverted, "atom", "resname")
                     // dispatch(setChemShifts(chemShiftsConverted));
@@ -384,7 +384,7 @@ export const MoorhenNOERestraints = () => {
                 // if (selectedTypes.noe) {
                 if (true) {
 
-                    const data = window.cootModule.get_noe_restraints(fileContents);
+                    const data = window.gemmiModule.get_noe_restraints(fileContents);
                     const converted = convertDataframe(data).map(row => ({
                     
                     // const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
@@ -400,7 +400,7 @@ export const MoorhenNOERestraints = () => {
                 // // if (selectedTypes.hbond) {
                 // if (true) {
 
-                //     const data = window.cootModule.get_hbond_restraints(fileContents);
+                //     const data = window.gemmiModule.get_hbond_restraints(fileContents);
                 //     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                 //         ...row,
                 //         restraintType: "hbond"
@@ -411,7 +411,7 @@ export const MoorhenNOERestraints = () => {
                 // // if (selectedTypes.undefined) {
                 // if (true) {
 
-                //     const data = window.cootModule.get_undefined_restraints(fileContents);
+                //     const data = window.gemmiModule.get_undefined_restraints(fileContents);
                 //     const converted = convertDataframe(convertDataHeaders(data)).map(row => ({
                 //         ...row,
                 //         restraintType: "undefined"
@@ -558,9 +558,9 @@ export const processNEFFileAutoLoader = async (
         fileContents = await file.text();
     }
 
-    const data = window.cootModule.get_noe_restraints(fileContents);
+    const data = window.gemmiModule.get_noe_restraints(fileContents);
     const converted = convertDataframe(data);
-    const chemShifts = window.cootModule.get_chem_shift_info(fileContents);
+    const chemShifts = window.gemmiModule.get_chem_shift_info(fileContents);
     const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
     const chemShiftsEnum = loopReplaceProtons(chemShiftsConverted, "atom", "resname")
     if (molecules.length > 0) {

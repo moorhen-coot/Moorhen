@@ -14,7 +14,6 @@
 .moorhen__accordion-header {
     background-color: var(--moorhen-background-header-secondary);
     display: flex;
-    flex-direction: row;
     width: 100%;
     justify-content: space-between;
     align-items: center;
@@ -22,10 +21,15 @@
     padding-right: 1rem;
 }
 
+.moorhen__accordion-header.two-lines {
+    flex-direction: column;
+}
+
 .moorhen__accordion-header-card {
     background-color: var(--moorhen-background-header);
     border-radius: 0.3rem 0.3rem 0 0;
-    height: 2.5rem;
+    padding: 0.25rem;
+    height: auto;
 }
 
 .moorhen__accordion-header-card.moorhen__accordion-closed {

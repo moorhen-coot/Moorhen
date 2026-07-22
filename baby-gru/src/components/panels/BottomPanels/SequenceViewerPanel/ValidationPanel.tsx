@@ -29,7 +29,6 @@ export const ValidationPanel = () => {
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
-
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
@@ -49,15 +48,6 @@ export const ValidationPanel = () => {
 
     const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
 
-    const toggleBottomPanel = () => {
-        if (sequencesExpand) {
-            setSequencesExpand(false);
-        }
-        dispatch(setShowBottomPanel(!bottomPanelIsShown));
-    };
-    const handleExpand = () => {
-        setSequencesExpand(!sequencesExpand);
-    };
 
     const sequenceSelection = useMemo(() => {
         return MoorhenSelectionToSeqViewer(residueSelection);
@@ -166,8 +156,8 @@ export const ValidationPanel = () => {
 
     const configPanel = (
         <MoorhenStack inputGrid>
-            <MoorhenMoleculeSelect onSelect={val => setSelectedMolecule(val)} selected={selectedMolecule} />
-            <MoorhenMapSelect onSelect={setSelectedMap} maps={maps} />
+            <MoorhenMoleculeSelect setSelectedMolecule={setSelectedMolecule} selectedMolecule={selectedMolecule} />
+            <MoorhenMapSelect setSelectedMap={setSelectedMap} maps={maps} />
         </MoorhenStack>
     );
 
@@ -218,8 +208,8 @@ export const ValidationPanel = () => {
                         sequences={sequencesList}
                         selectedResidues={sequenceSelection}
                         hoveredResidue={hoveredResidue}
-                        maxDisplayHeight={4}
-                        displayHeight={sequencesExpand ? numberOfLines : 1}
+                        // maxDisplayHeight={1}
+                        displayHeight={1}
                         showTitleBar={false}
                         onResidueClick={handleClick}
                         onResiduesSelect={residueSelectionCallback}

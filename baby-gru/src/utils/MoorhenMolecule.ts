@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -264,7 +264,6 @@ export class MoorhenMolecule {
         this.moleculeCardState = { showXpidList: false };
         this.NEFRestraintRepresentation = new MoleculeRepresentation("NEFRestraints", null, this.commandCentre);
         this.NEFRestraintRepresentation.setParentMolecule(this);
-
     }
 
     /**
@@ -536,9 +535,9 @@ export class MoorhenMolecule {
         }
         this.cachedGemmiAtoms = null;
         this.gemmiStructure = readGemmiStructure(coordString, this.name);
-        window.CCP4Module.gemmi_setup_entities(this.gemmiStructure);
+        window.gemmiModule.gemmi_setup_entities(this.gemmiStructure);
         // Only override if this is mmcif
-        window.CCP4Module.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === "mmcif");
+        window.gemmiModule.gemmi_add_entity_types(this.gemmiStructure, this.coordsFormat === "mmcif");
         this.parseSequences();
         this.updateLigands();
         try {
@@ -610,7 +609,7 @@ export class MoorhenMolecule {
         }
 
         const result: Sequence[] = [];
-        const sequenceInfoVec = window.CCP4Module.get_sequence_info(this.gemmiStructure, this.name);
+        const sequenceInfoVec = window.gemmiModule.get_sequence_info(this.gemmiStructure, this.name);
         const sequenceInfoVecSize = sequenceInfoVec.size();
         for (let i = 0; i < sequenceInfoVecSize; i++) {
             const sequenceInfo = sequenceInfoVec.get(i);
@@ -640,7 +639,7 @@ export class MoorhenMolecule {
      */
     checkIsLigand(): boolean {
         const isLigand = true;
-        this.isLigand = window.CCP4Module.structure_is_ligand(this.gemmiStructure);
+        this.isLigand = window.gemmiModule.structure_is_ligand(this.gemmiStructure);
         return isLigand;
     }
 
@@ -931,7 +930,7 @@ export class MoorhenMolecule {
             const coordData = await source.text();
             let is_small = false;
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
-                is_small = window.CCP4Module.is_small_structure(coordData as string);
+                is_small = window.gemmiModule.is_small_structure(coordData as string);
             if (is_small) {
                 const small_to_cif_response = (await this.commandCentre.current.cootCommand(
                     {
@@ -992,7 +991,7 @@ export class MoorhenMolecule {
     static guessCoordFormat(coordDataString: string): moorhen.coorFormats {
         let result: moorhen.coorFormats = "pdb";
         try {
-            const format = window.CCP4Module.guess_coord_data_format(coordDataString);
+            const format = window.gemmiModule.guess_coord_data_format(coordDataString);
             if (format === 0) {
                 // result = 'unknown'
             } else if (format === 1) {
@@ -1456,10 +1455,10 @@ export class MoorhenMolecule {
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      */
     async addRepresentation(
-        style: moorhen.RepresentationStyles,
+        style: RepresentationStyles,
         cid?: string,
         isCustom?: boolean,
-        colourRules?: moorhen.ColourRule[],
+        colourRules?: ColourRule[],
         bondOptions?: moorhen.cootBondOptions,
         m2tParams?: m2tParameters,
         residueEnvOptions?: residueEnvironmentOptions,
@@ -1478,7 +1477,7 @@ export class MoorhenMolecule {
     async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
     async addRepresentation(
         styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
-        cid: string = "/*/*/*/*",
+        cid: string = "/*/*/*/*:*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
         bondOptions?: moorhen.cootBondOptions,
@@ -1800,7 +1799,7 @@ export class MoorhenMolecule {
     transformedCachedAtomsAsMovedAtoms(selectionCid: string = "/*/*/*/*"): moorhen.AtomInfo[][] {
         const movedResidues: moorhen.AtomInfo[][] = [];
 
-        const selection = new window.CCP4Module.Selection(selectionCid);
+        const selection = new window.gemmiModule.Selection(selectionCid);
         const models = this.gemmiStructure.models;
         const modelsSize = this.gemmiStructure.models.size();
         for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
@@ -1841,7 +1840,7 @@ export class MoorhenMolecule {
                         const atomAltLoc = atom.altloc;
                         const atomSerial = atom.serial;
                         const atomHasAltLoc = atom.has_altloc();
-                        const atomElementString: string = window.CCP4Module.getElementNameAsString(atomElement);
+                        const atomElementString: string = window.gemmiModule.getElementNameAsString(atomElement);
                         const atomName = atomElementString.length === 2 ? atom.name.padEnd(4, " ") : (" " + atom.name).padEnd(4, " ");
                         const diff = this.displayObjectsTransformation.centre;
                         const x = gemmiAtomPos.x + originState[0] - diff[0];
@@ -2144,7 +2143,7 @@ export class MoorhenMolecule {
     async updateLigands(): Promise<void> {
         this.cachedLigandSVGs = null;
         const ligandList: LigandInfo[] = [];
-        const ligandInfoVec = window.CCP4Module.get_ligand_info_for_structure(this.gemmiStructure);
+        const ligandInfoVec = window.gemmiModule.get_ligand_info_for_structure(this.gemmiStructure);
         const ligandInfoVecSize = ligandInfoVec.size();
         for (let i = 0; i < ligandInfoVecSize; i++) {
             const ligandInfo = ligandInfoVec.get(i);
@@ -2171,7 +2170,7 @@ export class MoorhenMolecule {
         }
 
         const result: moorhen.AtomInfo[] = [];
-        const atomInfoVec = window.CCP4Module.get_atom_info_for_selection(
+        const atomInfoVec = window.gemmiModule.get_atom_info_for_selection(
             this.gemmiStructure,
             cid,
             omitExcludedCids ? this.excludedSelections.join("||") : ""
@@ -2278,7 +2277,7 @@ export class MoorhenMolecule {
         }
 
         // We also want a list with individual residue CIDs
-        const cidVect = window.CCP4Module.parse_multi_cids(this.gemmiStructure, cid);
+        const cidVect = window.gemmiModule.parse_multi_cids(this.gemmiStructure, cid);
         const cidVectSize = cidVect.size();
         for (let i = 0; i < cidVectSize; i++) {
             const cid = cidVect.get(i);
@@ -2642,7 +2641,7 @@ export class MoorhenMolecule {
      */
     getResidueBFactors() {
         const result: { cid: string; bFactor: number; normalised_bFactor: number }[] = [];
-        const resBfactorInfoVec = window.CCP4Module.get_structure_bfactors(this.gemmiStructure);
+        const resBfactorInfoVec = window.gemmiModule.get_structure_bfactors(this.gemmiStructure);
         const resBfactorInfoVecSize = resBfactorInfoVec.size();
         for (let i = 0; i < resBfactorInfoVecSize; i++) {
             const resInfo = resBfactorInfoVec.get(i);
@@ -2878,7 +2877,7 @@ export class MoorhenMolecule {
      */
     getNonSelectedCids(cid: string): string[] {
         const result: string[] = [];
-        const nonSelectedCidVec = window.CCP4Module.get_non_selected_cids(this.gemmiStructure, cid);
+        const nonSelectedCidVec = window.gemmiModule.get_non_selected_cids(this.gemmiStructure, cid);
         const nonSelectedCidVecSize = nonSelectedCidVec.size();
         for (let i = 0; i < nonSelectedCidVecSize; i++) {
             const iCid = nonSelectedCidVec.get(i);
@@ -2952,7 +2951,7 @@ export class MoorhenMolecule {
      * @param {string} cid - The selection string of the ligand to get SVG descriptions for
      */
     async getFLEVSVG(cid: string): Promise<string> {
-        if (window.CCP4Module.has_hydrogen(this.gemmiStructure.first_model())) {
+        if (window.gemmiModule.has_hydrogen(this.gemmiStructure.first_model())) {
             const flev_result = (await this.commandCentre.current.cootCommand(
                 {
                     returnType: "string",
