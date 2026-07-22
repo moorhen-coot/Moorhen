@@ -52,7 +52,6 @@ export const reducers = {
     vectors: vectorsReducer,
     chemShifts: chemShiftReducer,
     snackBars: snackBarsReducer,
-    chemShifts: chemShiftReducer,
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)
