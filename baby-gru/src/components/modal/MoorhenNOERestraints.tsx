@@ -17,7 +17,6 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString
 import { useEffect, useState, useRef } from "react"; 
 import { libcootApi} from "../../types/libcoot"
 import { MoorhenButton, MoorhenToggle } from "../inputs";
-import { setNMRMode } from "@/store";
 import { convertDataframe, convertDataHeaders, convertChemShiftDataframe, loopReplaceProtons } from "@/utils/NEFFileAutoLoader"
 
 const newVector = () => {
@@ -160,7 +159,6 @@ export const MoorhenNOERestraints = () => {
                     const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
                     const chemShiftsEnum = loopReplaceProtons(chemShiftsConverted, "atom", "resname")
                     // dispatch(setChemShifts(chemShiftsConverted));
-                    dispatch(setNMRMode(true))
                 if (molecules.length > 0){
                     molecules[0].chemShifts = chemShiftsEnum
                 }

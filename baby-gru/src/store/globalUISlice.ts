@@ -17,7 +17,6 @@ const initialState: {
     controlLocked: number | null;
     selectionToolsActive: boolean;
     shownBottomPanel: BottomPanelIDs | null;
-    NMRMode: boolean; 
     isClickAwayListenerActive?: boolean;
 } = {
     busy: false,
@@ -33,7 +32,6 @@ const initialState: {
     controlLocked: null,
     selectionToolsActive: false,
     shownBottomPanel: "sequences-viewer",
-    NMRMode: false,
     isClickAwayListenerActive: true,
 };
 
@@ -107,9 +105,7 @@ const globalUISlice = createSlice({
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },
-        setNMRMode: (state, action: PayloadAction<boolean>) => {
-            state.NMRMode = action.payload;
-        },
+
         setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
             state.isClickAwayListenerActive = action.payload;
         },
@@ -131,7 +127,6 @@ export const {
     unlockControls,
     closeResidueSelectionTools,
     setShownBottomPanel,
-    setNMRMode,
     setClickAwayListenerActive,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

@@ -18,7 +18,6 @@ import pako from "pako";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager"
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
-import { setNMRMode } from "@/store";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -622,8 +621,7 @@ export const autoOpenFiles = async (
             const molecules = store.getState().molecules.moleculeList;
 
             await processNEFFileAutoLoader(file, molecules, dispatch);
-            dispatch(setNMRMode(true))
-
+            
         }
 
         else if (
