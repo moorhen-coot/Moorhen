@@ -11,6 +11,9 @@ var triangle_vertex_shader_source = `#version 300 es\n
     uniform sampler2D uWeightTex;
     uniform usampler2D uOffsetTex;
     uniform uint uHoveredPoint;
+    uniform uint uPointTexWidth;
+    uniform uint uOffsetTexWidth;
+    uniform uint uWeightTexWidth;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
@@ -27,27 +30,46 @@ var triangle_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 eyePos;
 
-    //out float vHighlight;
+    out float vHighlight;
 
-    uint fetchOffset(uint vertexId){
-        return texelFetch(uOffsetTex, ivec2(int(vertexId),0), 0).r;
+
+    uint fetchOffset(uint idx) {
+        uint x = idx % uOffsetTexWidth;
+        uint y = idx / uOffsetTexWidth;
+
+        return texelFetch( uOffsetTex, ivec2(int(x), int(y)), 0).r;
+    }
+
+    uint fetchPoint(uint idx) {
+        uint x = idx % uPointTexWidth;
+        uint y = idx / uPointTexWidth;
+
+        return texelFetch( uPointTex, ivec2(int(x), int(y)), 0).r;
+    }
+
+    float fetchWeight(uint idx) {
+        uint x = idx % uWeightTexWidth;
+        uint y = idx / uWeightTexWidth;
+
+        return texelFetch( uWeightTex, ivec2(int(x), int(y)), 0).r;
     }
 
     float weightForHoveredPoint(uint vertexId) {
         uint begin = (vertexId == 0u) ? 0u : fetchOffset(vertexId - 1u);
         uint end = fetchOffset(vertexId);
-        for(uint i = begin; i < end; ++i){
-            uint pointId = texelFetch( uPointTex, ivec2(int(i),0), 0).r;
-            if(pointId == uHoveredPoint){
-                return texelFetch( uWeightTex, ivec2(int(i),0), 0).r;
+
+        for(uint i = begin; i < end; ++i) {
+            if(fetchPoint(i) == uHoveredPoint) {
+                return fetchWeight(i);
             }
         }
+
         return 0.0;
     }
 
     void main(void) {
 
-      float vHighlight;
+      //float vHighlight;
       uint maxHover = 0xFFFFFFFFu;
       if(uHoveredPoint<maxHover){
           vHighlight = weightForHoveredPoint(uint(gl_VertexID));
