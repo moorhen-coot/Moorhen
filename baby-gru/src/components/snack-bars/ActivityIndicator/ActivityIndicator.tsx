@@ -4,7 +4,7 @@ import { MoorhenIcon, MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
-import type { MoorhenMolecule } from '../../../utils/MoorhenMolecule';
+// import type { MoorhenMolecule } from '../../../utils/MoorhenMolecule';
 
 export const ActivityIndicator = () => {
     const busy = useSelector((state: RootState) => state.globalUI.busy);
@@ -12,7 +12,7 @@ export const ActivityIndicator = () => {
     const showHoverInfo = useSelector((state: RootState) => state.generalStates.showHoverInfo);
     const timeCapsuleBusy = useSelector((state: RootState) => state.globalUI.isTimeCapsuleBusy);    
     
-    const chemShifts = useSelector((state: MoorhenMolecule.state) => state.molecules[0]?.chemShifts);
+    const chemShifts = useSelector((state: RootState) => state.molecules[0]?.chemShifts);
     const NMRMode = (hoveredAtom.molecule?.chemShifts?.length ?? 0) > 0;
     const updatingMapsIsEnabled = useSelector((state: RootState) => state.moleculeMapUpdate.updatingMapsIsEnabled);
     const cidAsArray = hoveredAtom.cid?.split("/") || [];
