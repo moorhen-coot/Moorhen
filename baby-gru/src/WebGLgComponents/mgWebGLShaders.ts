@@ -971,6 +971,9 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.uPointTex = gl.getUniformLocation(shaderProgram, "uPointTex");
     shaderProgram.uWeightTex = gl.getUniformLocation(shaderProgram, "uWeightTex");
     shaderProgram.uOffsetTex = gl.getUniformLocation(shaderProgram, "uOffsetTex");
+    shaderProgram.uPointTexWidth = gl.getUniformLocation(shaderProgram, "uPointTexWidth");
+    shaderProgram.uWeightTexWidth = gl.getUniformLocation(shaderProgram, "uWeightTexWidth");
+    shaderProgram.uOffsetTexWidth = gl.getUniformLocation(shaderProgram, "uOffsetTexWidth");
     shaderProgram.uHoveredPoint = gl.getUniformLocation(shaderProgram, "uHoveredPoint");
 
     shaderProgram.fog_start = gl.getUniformLocation(shaderProgram, "fog_start");

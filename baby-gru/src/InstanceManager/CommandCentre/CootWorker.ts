@@ -1482,9 +1482,6 @@ const doCootCommand = (messageData: {
                 const influence_index_offsets = cootResult.influence_index_offsets
                 const influence_point_indexes = cootResult.influence_point_indexes
                 const influence_weights = cootResult.influence_weights
-                console.log(influence_index_offsets.size())
-                console.log(influence_point_indexes.size())
-                console.log(influence_weights.size())
 
                 let influence_weights_C = new Float32Array(influence_weights.size())
                 let influence_index_offsets_C = new Uint32Array(influence_index_offsets.size())
@@ -1493,24 +1490,13 @@ const doCootCommand = (messageData: {
                 cootModule.getUint32ArrayFromVector(influence_point_indexes, influence_point_indexes_C)
                 cootModule.getUint32ArrayFromVector(influence_index_offsets, influence_index_offsets_C) // Size of vertices
 
-                console.log(influence_weights_C)
-                console.log(influence_index_offsets_C)
-                console.log(influence_point_indexes_C)
-
                 influence_index_offsets.delete()
                 influence_point_indexes.delete()
                 influence_weights.delete()
 
-                //const point_triangles = cootResult.point_triangles
                 const pick_points = cootResult.pick_points
-                //const pick_weights = cootResult.pick_weights
-                //const point_triangles_js = vectorVectorToJSArray(point_triangles)
                 const pick_points_js = vectorArray3ToJSArray(pick_points)
-                //const pick_weights_js = vectorVectorPairUintFloatToJSArray(pick_weights)
 
-                console.log(pick_points_js)
-
-                //returnResult = {mesh:simpleMeshToMeshData(mesh, true),pick_info:{pick_points:pick_points_js,point_triangles:point_triangles_js}}
                 returnResult = {mesh:simpleMeshToMeshData(mesh, true),pick_info:{influence_weights:influence_weights_C,influence_index_offsets:influence_index_offsets_C,influence_point_indexes:influence_point_indexes_C,pick_points:pick_points_js}}
                 break;
             case 'mesh_perm':

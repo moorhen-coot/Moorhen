@@ -5545,7 +5545,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.state.hoveridx>-1 && this.state.hover_point>-1){
             //TODO - We don't really need to do this draw at all. This could be done in the
             //       general drawing above.
-            console.log("Some fancy shader trickery to do now")
             const bufferTypes = displayBuffers[this.state.hoveridx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
 
@@ -5555,24 +5554,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                  const influence_weights_texture = displayBuffers[this.state.hoveridx].pick_info.influence_weights_texture
                  const influence_point_indexes_texture = displayBuffers[this.state.hoveridx].pick_info.influence_point_indexes_texture
                  const influence_index_offsets_texture = displayBuffers[this.state.hoveridx].pick_info.influence_index_offsets_texture
-                 console.log(displayBuffers[this.state.hoveridx])
-
+                 const influence_weights_width = displayBuffers[this.state.hoveridx].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[this.state.hoveridx].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[this.state.hoveridx].pick_info.influence_index_offsets_width
                  const theShader = this.shaderProgram
                  this.gl.useProgram(theShader)
                  if(theShader.uPointTex !== null){
                      this.gl.uniform1i(theShader.uPointTex, 7);
                      this.gl.activeTexture(this.gl.TEXTURE7);
                      this.gl.bindTexture(this.gl.TEXTURE_2D, influence_point_indexes_texture);
+                     this.gl.uniform1ui(theShader.uPointTexWidth, influence_point_indexes_width);
                  }
                  if(theShader.uWeightTex !== null){
                      this.gl.uniform1i(theShader.uWeightTex, 8);
                      this.gl.activeTexture(this.gl.TEXTURE8);
                      this.gl.bindTexture(this.gl.TEXTURE_2D, influence_weights_texture);
+                     this.gl.uniform1ui(theShader.uWeightTexWidth, influence_weights_width);
                  }
                  if(theShader.uOffsetTex !== null){
                      this.gl.uniform1i(theShader.uOffsetTex, 9);
                      this.gl.activeTexture(this.gl.TEXTURE9);
                      this.gl.bindTexture(this.gl.TEXTURE_2D, influence_index_offsets_texture);
+                     this.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
                  }
                  this.gl.uniform1ui(theShader.uHoveredPoint, this.state.hover_point);
                  this.hoverBuffer ??= this.gl.createBuffer()
@@ -5587,7 +5590,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                  this.gl.disable(this.gl.DEPTH_TEST)
                  this.gl.depthFunc(this.gl.ALWAYS)
                  this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                 this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0)
+                 this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.9, 0.5, 0.0, 1.0)
 
                  this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[0]);
                  this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[0].numItems)

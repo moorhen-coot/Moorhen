@@ -229,6 +229,9 @@ export namespace webGL {
         uPointTex: WebGLUniformLocation;
         uWeightTex: WebGLUniformLocation;
         uOffsetTex: WebGLUniformLocation;
+        uPointTexWidth: WebGLUniformLocation;
+        uWeightTexWidth: WebGLUniformLocation;
+        uOffsetTexWidth: WebGLUniformLocation;
         uHoveredPoint: WebGLUniformLocation;
     }
 
