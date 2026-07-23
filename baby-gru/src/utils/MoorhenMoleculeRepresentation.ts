@@ -9,13 +9,13 @@ import { ColourRule } from "./MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
 
-type MeshType =
+export type MeshType =
     | libcootApi.InstancedMeshJS
     | libcootApi.SimpleMeshJS
     | ReturnType<typeof gemmiAtomsToCirclesSpheresInfo>
     | ReturnType<typeof gemmiAtomPairsToCylindersInfo>;
 
-type PickableMesh = MeshType & {
+export type PickableMesh = MeshType & {
     pick_info?: {};
 };
 
