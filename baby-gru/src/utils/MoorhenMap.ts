@@ -319,6 +319,13 @@ export class MoorhenMap {
                 map.isDifference = selectedColumns.isDifference;
             }
             map.dataOrigin = "mtz";
+            const header = await readMTZHeader(data);
+            if (typeof header !== "number") {
+                map.fileHeader = header;
+                await map.initialise();
+            } else {
+                console.warn("Could not read MTZ header; skipping map.initialise() (contour stats may be unset)");
+            }
             return map;
         } catch (err) {
             return Promise.reject(err);
