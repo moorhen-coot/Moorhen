@@ -1237,6 +1237,26 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const privateerCremerPopleParametersToJSArray = (results: emscriptem.vector<privateer.CremerPopleParameters>): privateer.CremerPopleParameters[] => {
+    const data: privateer.CremerPopleParameters[] = [];
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize; i++) {
+        const entry = results.get(i);
+        const entryJS: privateer.CremerPopleParameters = {
+            q: entry.q,
+            phi: entry.phi, 
+            theta: entry.theta,
+            chain_id: entry.chain_id,
+            residue_id: entry.residue_id
+        }
+
+        data.push(entryJS);
+    }
+
+    results.delete();
+    return data;
+}
+
 const headerInfoGemmiAsJSObject = (result: libcootApi.headerInfoGemmi): libcootApi.headerInfoGemmiJS => {
 
     const journalMapKeys = result.journal.keys();
@@ -1293,6 +1313,26 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
         title: result.title,
         author_journal: [{author:author_lines,journal:journal_lines,id:"primary"}],
         compound_lines,
+    }
+}
+
+const doPrivateerValidate = (messageData: {
+    myTimeStamp: number;
+    chainID?: string;
+    messageId?: string;
+    message: string;
+    returnType: string;
+    command: string;
+    commandArgs: any[];
+}) => {
+    const fileDataString = messageData.commandArgs[0]
+    const retCode = cootModule.validate(fileDataString,"thing.cif")
+    const returnResult = privateerValidationToJSArray(retCode)
+    return {
+            messageId: messageData.messageId,
+            myTimeStamp: messageData.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
     }
 }
 
@@ -1505,6 +1545,9 @@ const doCootCommand = (messageData: {
                 break
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
+                break
+            case 'privateer_cremer_pople_parameters':
+                returnResult = privateerCremerPopleParametersToJSArray(cootResult)
                 break
             case 'status':
             default:
@@ -1763,6 +1806,30 @@ onmessage = function (e) {
             messageTag: "result",
             result: jsonContents,
         })
+    } else if (e.data.message === 'DrawCremerPopleSphere') {
+        const fileDataString = e.data.commandArgs[0]
+        const showRadialConformations = e.data.commandArgs[1]
+        const retCode = cootModule.DrawCremerPopleSphere(fileDataString,showRadialConformations)
+        const returnResult = simpleMeshToMeshData(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
+    } else if (e.data.message === 'privateer_calculate_cremer_pople_parameters') {
+        const fileDataString = e.data.commandArgs[0]
+        const retCode = cootModule.calculate_cremer_pople_parameters(fileDataString,"thing.cif")
+        const returnResult = privateerCremerPopleParametersToJSArray(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
+    } else if (e.data.message === 'privateer_validate') {
+        const returnResult = doPrivateerValidate(e.data)
+        postMessage(returnResult)
     }
 
     if (e.data.message === 'coot_command') {

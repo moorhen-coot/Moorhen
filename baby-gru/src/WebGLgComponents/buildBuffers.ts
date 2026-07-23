@@ -7,6 +7,16 @@ import { createWebGLBuffers } from './createWebGLBuffers'
 import {  RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 
+export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {
+        const theseBuffers = [];
+
+        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
+            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
+            theseBuffers.push(theBuffer);
+        }
+        return theseBuffers;
+    
+}
 export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
