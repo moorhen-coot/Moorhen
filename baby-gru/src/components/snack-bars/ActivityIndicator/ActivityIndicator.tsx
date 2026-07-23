@@ -4,7 +4,7 @@ import { MoorhenIcon, MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
-import type { MoorhenMolecule } from '../utils/MoorhenMolecule';
+import type { MoorhenMolecule } from '../../../utils/MoorhenMolecule';
 
 export const ActivityIndicator = () => {
     const busy = useSelector((state: RootState) => state.globalUI.busy);
