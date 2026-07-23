@@ -563,7 +563,14 @@ export class MoorhenMolecule {
             false
         )) as moorhen.WorkerResponse<string>;
 
-        const multiCidRanges: string[] = response.data.result.result.split("||");
+        // Guard against a missing/empty backend response so callers get an empty
+        // list to handle rather than a thrown "cannot read .split of undefined".
+        const rawResult = response?.data?.result?.result;
+        if (typeof rawResult !== "string" || rawResult.length === 0) {
+            return [];
+        }
+
+        const multiCidRanges: string[] = rawResult.split("||");
         const fixedAltConf = multiCidRanges.map(cid => `${cid}:*`);
         return fixedAltConf;
     }
