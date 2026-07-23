@@ -802,7 +802,6 @@ export class MoleculeRepresentation {
                 );
                 break;
             case "NEFRestraints":
-                // maybe we need our getEnvironmentBuffers in here
                 objects = await this.getNEFBuffers(_cid);
 
                 break;

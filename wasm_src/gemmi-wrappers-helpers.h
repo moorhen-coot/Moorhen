@@ -54,7 +54,7 @@ using namespace emscripten;
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
 
-inline std::string get_nef_restraints(const std::string &data, const std::string &sf_category){
+inline std::string get_nef_info(const std::string &data, const std::string &sf_category){
 
     auto doc = gemmi::cif::read_string(data);
 
@@ -103,20 +103,17 @@ inline std::string get_nef_restraints(const std::string &data, const std::string
 
 // these three have been changed from specific to general 
 // so two are currently deprecated 
-inline std::string get_noe_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
+inline std::string get_nef_restraints(const std::string &data) {
+    return get_nef_info(data, "nef_distance_restraint_list");
 }
 
 inline std::string get_hbond_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
+    return get_nef_info(data, "nef_distance_restraint_list");
 }
 
-inline std::string get_undefined_restraints(const std::string &data) {
-    return get_nef_restraints(data, "nef_distance_restraint_list");
-}
 
 inline std::string get_chem_shift_info(const std::string &data) {
-    return get_nef_restraints(data, "nef_chemical_shift_list");
+    return get_nef_info(data, "nef_chemical_shift_list");
 }
 
 // --- Free functions ---

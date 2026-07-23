@@ -615,9 +615,9 @@ GlobWalk
     function("parse_multi_cids", &parse_multi_cids);
     function("get_non_selected_cids", &get_non_selected_cids);
     function("parse_mon_lib_list_cif", &parse_mon_lib_list_cif);
-    function("get_noe_restraints",&get_noe_restraints);
-    function("get_hbond_restraints",&get_hbond_restraints);
-    function("get_undefined_restraints",&get_undefined_restraints);
+    function("get_nef_info",&get_nef_info);
+    function("get_nef_restraints",&get_nef_restraints);
+
     function("get_chem_shift_info",&get_chem_shift_info);
 
     function("cidToNeighboursCid",&cidToNeighboursCid);

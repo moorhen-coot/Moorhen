@@ -229,7 +229,7 @@ export const processNEFFileAutoLoader = async (
         fileContents = await file.text();
     }
 
-    const data = window.gemmiModule.get_noe_restraints(fileContents);
+    const data = window.gemmiModule.get_nef_restraints(fileContents);
     const converted = convertDataframe(data);
     const chemShifts = window.gemmiModule.get_chem_shift_info(fileContents);
     const chemShiftsConverted = convertChemShiftDataframe(chemShifts)
