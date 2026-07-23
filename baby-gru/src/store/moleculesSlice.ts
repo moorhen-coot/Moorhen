@@ -61,6 +61,7 @@ const moleculesSlice = createSlice({
                     action.payload.style === "gaussian" ||
                     action.payload.style === "VdwSpheres" ||
                     action.payload.style === "ligands" ||
+                    action.payload.style === "MetaBalls" ||
                     action.payload.style === "allHBonds")
             ) {
                 if (
