@@ -181,6 +181,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       fragColor = mix(color, fogColour, fogFactor );
       fragColor.a = vColor.a;
 
+      float ring = smoothstep(0.4, 0.45, vHighlight) - smoothstep(0.45, 0.5, vHighlight);
+
+      fragColor.rgb += ring * vec3(0.4, 1.0, 0.0);
       fragColor.a *= vHighlight;
 
     }
