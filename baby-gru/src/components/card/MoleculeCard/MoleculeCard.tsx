@@ -160,6 +160,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
+    const NMRMode = (props.molecule.chemShifts?.length ?? 0) > 0;
+
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
             return;
@@ -626,7 +628,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
-                                            <MoorhenStack direction="row" align="center">
+                    {NMRMode && <MoorhenStack direction="row" align="center">
                         <MoorhenToggle
                             onChange={e => handleNEFRestraintsToggle(e.target.checked)}
 
@@ -652,7 +654,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
 
                         </MoorhenStack>
-
+                        }
 
                     </MoorhenStack>
                 </MoorhenAccordion>
