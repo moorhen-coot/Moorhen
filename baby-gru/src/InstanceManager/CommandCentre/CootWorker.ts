@@ -1701,6 +1701,16 @@ onmessage = function (e) {
         postMessage({
             messageId: e.data.messageId, resultList
         })
+    } else if (e.data.message === 'get_nef_restraints') {
+        const noeString = e.data.commandArgs[0]
+        const retCode = cootModule.get_nef_restraints(noeString)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: retCode,
+        })
+
     } else if (e.data.message === 'run_conkit_validate') {
 
         const fileDataPdb = e.data.commandArgs[0]

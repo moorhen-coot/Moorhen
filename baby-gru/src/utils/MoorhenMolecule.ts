@@ -52,6 +52,31 @@ export type Sequence = {
     sequence: ResidueInfo[];
 };
 
+export type ChemShift = {
+    atom: string;
+    chain: string;
+    element: string;
+    isotope: number;
+    resname: string;
+    seq: number;
+    chemshift: number;
+    uncertainty?: number;
+    ambiguityFlag: boolean;
+}
+
+export type NEFRestraint = {
+    atom1: string;
+    chain1: string;
+    atom2: string;
+    chain2: string;
+    res1: string;
+    res2: string;
+    name1: number;
+    name2: number;
+    ambiguityFlag: boolean;
+    restraintID: number;
+}
+
 /**
  * Represents a molecule
  * @property {string} name - The name assigned to this molecule instance
@@ -140,6 +165,9 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
+    chemShifts: ChemShift[];
+    NEFRestraints: NEFRestraint[];
+    NEFRestraintRepresentation: moorhen.MoleculeRepresentation;
     moleculeCardState: { showXpidList: boolean };
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
@@ -209,6 +237,7 @@ export class MoorhenMolecule {
             labelled: true,
             showHBonds: true,
             showContacts: true,
+            showNEF: false,
         };
         this.restraints = [];
         this.adaptativeBondsEnabled = false;
@@ -230,7 +259,11 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.chemShifts = [];
+        this.NEFRestraints = [];
         this.moleculeCardState = { showXpidList: false };
+        this.NEFRestraintRepresentation = new MoleculeRepresentation("NEFRestraints", null, this.commandCentre);
+        this.NEFRestraintRepresentation.setParentMolecule(this);
     }
 
     /**
@@ -1574,6 +1607,9 @@ export class MoorhenMolecule {
             this.selectionRepresentation?.deleteBuffers();
         } else if (style === "adaptativeBonds") {
             this.adaptativeBondsRepresentation?.deleteBuffers();
+         } else if (style === "NEFRestraints") {
+            this.NEFRestraintRepresentation?.deleteBuffers();
+                       
         } else {
             this.representations.forEach(representation => (representation.style === style ? representation.deleteBuffers() : null));
             this.representations = this.representations.filter(representation => representation.style !== style);
@@ -1722,7 +1758,21 @@ export class MoorhenMolecule {
             }
         }
     }
+    async drawNEFRestraints(selectionCid?: string) {
+        if (typeof selectionCid === "string") {
+            this.NEFRestraintRepresentation.cid = selectionCid;
+            await this.NEFRestraintRepresentation.redraw();
+        } else {
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.store);
+            this.clearBuffersOfStyle("NEFRestraints");
+            if (molecule?.molNo === this.molNo && cid) {
+                this.NEFRestraintRepresentation.cid = cid;
+                await this.NEFRestraintRepresentation.redraw();
 
+            }
+        }
+
+    }
     /**
      * Redraw the molecule representations
      */
@@ -2608,6 +2658,132 @@ export class MoorhenMolecule {
 
         return result;
     }
+
+    getResidueCAPositions() {
+        const residueMap = new Map();
+
+        const models = this.gemmiStructure.models;
+
+        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+
+            const model = models.get(modelIndex);
+            const chains = model.chains;
+
+            for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+
+                const chain = chains.get(chainIndex);
+                const residues = chain.residues;
+
+                for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+
+                    const residue = residues.get(residueIndex);
+
+                    const residueKey =
+                        `${chain.name}/${residue.seqid.str()}`;
+
+                    const atoms = residue.atoms;
+
+                    for (let atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+
+                        const atom = atoms.get(atomIndex);
+
+                        if (atom.name.trim() === "CA") {
+
+                            if (!residueMap.has(residueKey)) {
+                                residueMap.set(residueKey, {
+                                    cid: residueKey,
+                                    positions: []
+                                });
+                            }
+
+                            residueMap.get(residueKey).positions.push({
+                                x: atom.pos.x,
+                                y: atom.pos.y,
+                                z: atom.pos.z
+                            });
+                        }
+
+                        atom.delete();
+                    }
+
+                    atoms.delete();
+                    residue.delete();
+                }
+
+                residues.delete();
+                chain.delete();
+            }
+
+            chains.delete();
+            model.delete();
+        }
+
+        models.delete();
+
+        return residueMap;
+    }
+    /**
+     * Calculate RMSD
+     * @returns {object[]} An array of objects indicating the residue CID and RMSD
+     */
+    getRMSDs() {
+        const result: { cid: string; RMSD: number }[] = [];
+        const residueMap = this.getResidueCAPositions()
+        const averagePositions = [];
+        for (const [cid, residue] of residueMap.entries()) {
+
+            const n = residue.positions.length;
+
+            const avgX =
+                residue.positions.reduce((s,p)=>s+p.x,0) / n;
+
+            const avgY =
+                residue.positions.reduce((s,p)=>s+p.y,0) / n;
+
+            const avgZ =
+                residue.positions.reduce((s,p)=>s+p.z,0) / n;
+
+            averagePositions.push({
+                cid,
+                x: avgX,
+                y: avgY,
+                z: avgZ
+            });
+        }
+        const rmsdValues = [];
+        for (const [cid, residue] of residueMap.entries()) {
+
+            const n = residue.positions.length;
+
+            const avgX =
+                residue.positions.reduce((s,p)=>s+p.x,0) / n;
+
+            const avgY =
+                residue.positions.reduce((s,p)=>s+p.y,0) / n;
+
+            const avgZ =
+                residue.positions.reduce((s,p)=>s+p.z,0) / n;
+
+            let sumSq = 0;
+
+            residue.positions.forEach(pos => {
+
+                const dx = pos.x - avgX;
+                const dy = pos.y - avgY;
+                const dz = pos.z - avgZ;
+
+                sumSq += dx*dx + dy*dy + dz*dz;
+            });
+
+            const RMSD = Math.sqrt(sumSq / n);
+
+            rmsdValues.push({
+                cid,
+                RMSD
+            });
+        }
+        return rmsdValues;
+        }
 
     /**
      * Get chain IDs that are related by NCS or molecular symmetry

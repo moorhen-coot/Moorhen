@@ -105,10 +105,11 @@ const globalUISlice = createSlice({
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },
+
         setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
             state.isClickAwayListenerActive = action.payload;
         },
-    },
+    }
 });
 
 export const {

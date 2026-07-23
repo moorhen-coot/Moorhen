@@ -514,6 +514,41 @@ const getBfactorColourRules = (
     return bFactors.map(item => `${item.cid}^${getColour(item[bFactorAttr])}`).join("|");
 };
 
+const getRMSDColourRules = (
+    RMSDValues: { cid: string; RMSD: number; }[]): string => {
+        const maxRMSD = Math.max(...RMSDValues.map(r => r.RMSD), 1e-6);
+
+        const getColour = (RMSD: number): string => {
+            const scaled = (RMSD / maxRMSD) * 100;
+            console.log("RMSD:", RMSD)
+            console.log("Max RMSD:", maxRMSD)
+            console.log("Scaled RMSD:", scaled)
+                let r: number, g: number, b: number;
+                if (scaled <= 25) {
+                    r = 0;
+                    g = Math.round(10.2 * scaled);
+                    b = 255;
+                } else if (scaled <= 50) {
+                    r = 0;
+                    g = 255;
+                    b = Math.round(scaled);
+                } else if (scaled <= 75) {
+                    r = Math.round(10.2 * (scaled - 50));
+                    g = 255;
+                    b = 0;
+                } else {
+                    r = 255;
+                    g = Math.round(510 - 10.2 * (scaled - 50));
+                    b = 0;
+                }
+                return rgbToHex(r, g, b);
+        };
+    console.log("RAW RMSD VALUES:", RMSDValues);
+    console.log(RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|"))
+    return RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|");
+
+};
+
 const getPlddtColourRules = (plddtList: { cid: string; bFactor: number }[]): string => {
     const getColour = (plddt: number) => {
         let r: number, g: number, b: number;
@@ -610,6 +645,13 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
         case "mol-symm":
             const ncsRelatedChains = await molecule.getNcsRelatedChains();
             multiRulesArgs = getNcsColourRules(ncsRelatedChains);
+            break;
+        case "RMSD":
+            const RMSDs = await molecule.getRMSDs();
+            console.log("RMSD sample:", RMSDs.slice(0, 10));
+            console.log("RMSD max:", Math.max(...RMSDs.map(r => r.rmsd)));
+            console.log("NaN count:", RMSDs.filter(r => isNaN(r.rmsd)).length);
+            multiRulesArgs = getRMSDColourRules(RMSDs);
             break;
         default:
             console.log("Unrecognised colour rule...");
@@ -775,7 +817,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     dashed: boolean = true,
     style: "cylinder" | "cone" = "cylinder",
     individualSizes?: number[],
-    dashedSteps: number = 15
+    dashedSteps: number = 15,
+    NEF?: boolean
 ) => {
     const atomPairs = atoms;
 
@@ -817,9 +860,9 @@ export const gemmiAtomPairsToCylindersInfo = (
         totTextIdxs.push(iat); // Meaningless, I think
         totTextPrimNorm.push(...[0, 0, 1]); // Also meaningless, I think
         totTextPrimPos.push(...[midpoint[0], midpoint[1], midpoint[2]]);
-
-        if (l > maxDist || l < minDist) continue;
-
+        if (NEF === false ){
+            if (l > maxDist || l < minDist) continue;
+            }
         for (let ip = 0; ip < colourScheme[`${at0.serial}`].length; ip++) {
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip]);
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip]);

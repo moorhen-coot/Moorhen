@@ -17,6 +17,7 @@ import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeR
 import pako from "pako";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager"
+import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -616,7 +617,14 @@ export const autoOpenFiles = async (
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
-        } else if (
+        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+            const molecules = store.getState().molecules.moleculeList;
+
+            await processNEFFileAutoLoader(file, molecules, dispatch);
+            
+        }
+
+        else if (
             file.name.endsWith(".mrc") ||
             file.name.endsWith(".map") ||
             file.name.endsWith(".ccp4") ||

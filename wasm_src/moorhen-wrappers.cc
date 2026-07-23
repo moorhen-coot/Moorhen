@@ -318,4 +318,5 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
+
 }

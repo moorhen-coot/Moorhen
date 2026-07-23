@@ -37,6 +37,9 @@ export const MoleculesOriginListener = () => {
             if (molecule.symmetryOn) {
                 molecule.drawSymmetry();
             }
+            if (molecule.NEFRestraintRepresentation.visible) {
+                molecule.drawNEFRestraints(cid)
+            }
         });
     };
 

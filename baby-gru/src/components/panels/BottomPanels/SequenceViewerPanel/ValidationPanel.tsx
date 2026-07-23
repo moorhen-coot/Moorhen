@@ -29,7 +29,6 @@ export const ValidationPanel = () => {
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [sequencesExpand, setSequencesExpand] = useState<boolean>(false);
-
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);
@@ -199,7 +198,6 @@ export const ValidationPanel = () => {
                 &nbsp;&nbsp;&nbsp;
                 {bottomPanelIsShown && <MoorhenInfoCard infoText={infoPanel} />}
             </div>
-
             <div
                 className={`moorhen__sequence-panel-container ${bottomPanelIsShown ? "" : "moorhen__sequence-panel-tab-panel-is-hidden"}`}
                 style={{ height: `${displaySize}px` }}

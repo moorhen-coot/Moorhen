@@ -57,6 +57,10 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
         cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
@@ -82,6 +86,10 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
     };
     type headerInfoGemmi = {
         title: string;
@@ -628,6 +636,10 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
@@ -663,6 +675,10 @@ export namespace libcootApi {
         detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
         detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
         cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_info(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+
     };
     interface DoublePairDoubleJS {
         first: number;

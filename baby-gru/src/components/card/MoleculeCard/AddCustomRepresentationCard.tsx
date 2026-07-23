@@ -2,7 +2,11 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
+
 import { RootState, enqueueSnackbar } from "@/store";
+
+import { MoorhenModelSelect } from "@/components/inputs/Selector/MoorhenModelSelect";
+
 import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -44,13 +48,15 @@ export const AddCustomRepresentationCard = memo(
         const colourModeSelectRef = useRef<HTMLSelectElement | null>(null);
         const alphaSwatchRef = useRef<HTMLImageElement | null>(null);
         const ncsColourRuleRef = useRef<null | ColourRule>(null);
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
-            props.representation
-                ? props.representation?.restrictToNeighbours
-                    ? "neighbourhood"
-                    : props.representation.interfaceOption.selectionType
-                : "molecule"
+
+        const modelSelectRef = useRef<HTMLSelectElement | null>(null);
+
+        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "protein-model" | "neighbourhood">(
+            props.representation ? (props.representation?.restrictToNeighbours ? "neighbourhood" : props.representation.interfaceOption.selectionType) : "molecule"
         );
+
+
+        
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
@@ -250,6 +256,12 @@ export const AddCustomRepresentationCard = memo(
                 case "ligands":
                     cidSelection = ligandFormRef.current.value;
                     break;
+                case "protein-model":
+                    // need a way to select protein model using cidSelection
+                    // cidSelection = /${modelSelectRef.current.value}/*/*/:*
+                    cidSelection = modelSelectRef.current.value;
+
+                    break;
                 default:
                     console.warn("Unrecognised residue selection for the custom representation");
                     break;
@@ -287,6 +299,7 @@ export const AddCustomRepresentationCard = memo(
                     case "jones-rainbow":
                     case "b-factor":
                     case "b-factor-norm":
+                    case "RMSD":
                     case "electrostatics":
                     case "af2-plddt":
                         colourRule = new ColourRule(
@@ -309,11 +322,13 @@ export const AddCustomRepresentationCard = memo(
                                           ? "B-factor"
                                           : colourModeSelectRef.current.value === "b-factor-norm"
                                             ? "B-factor norm."
-                                            : colourModeSelectRef.current.value === "af2-plddt"
-                                              ? "PLDDT"
-                                              : colourModeSelectRef.current.value === "electrostatics"
-                                                ? "Electrostatics"
-                                                : ""
+                                            : colourModeSelectRef.current.value === "RMSD"
+                                                ? "RMSD"                                            
+                                                : colourModeSelectRef.current.value === "af2-plddt"
+                                                    ? "PLDDT"
+                                                    : colourModeSelectRef.current.value === "electrostatics"
+                                                        ? "Electrostatics"
+                                                        : ""
                             }`
                         );
                         const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourModeSelectRef.current.value);
@@ -329,6 +344,7 @@ export const AddCustomRepresentationCard = memo(
             const nonCustomAlpha =
                 colourMode === "b-factor" ||
                 colourMode === "b-factor-norm" ||
+                colourMode === "RMSD" ||
                 colourMode === "secondary-structure" ||
                 colourMode === "af2-plddt" ||
                 colourMode === "electrostatics" ||
@@ -499,6 +515,9 @@ export const AddCustomRepresentationCard = memo(
                                 </>
                             ) : (
                                 <>
+                                    <option value={"protein-model"} key={"protein-model"}>
+                                        Protein model
+                                    </option>
                                     <option value={"molecule"} key={"molecule"}>
                                         All molecule
                                     </option>
@@ -567,6 +586,18 @@ export const AddCustomRepresentationCard = memo(
                             />
                         </>
                     )}
+
+                    {ruleType === "protein-model" && (
+                        <>
+                            <MoorhenModelSelect
+                                selectedCoordMolNo={props.molecule.molNo}
+                                molecules={[props.molecule]}
+                                // allowAll
+                                ref={modelSelectRef}
+                            />
+                        </>
+                    )}
+                    
                 {restrictToNeighbours && (
                 <>
                     <MoorhenCidInputForm
@@ -595,6 +626,18 @@ export const AddCustomRepresentationCard = memo(
                         }}/>
                 </>
                 )}
+
+                    {ruleType === "protein-model" && (
+                        <>
+                            <MoorhenModelSelect
+                                selectedCoordMolNo={props.molecule.molNo}
+                                molecules={[props.molecule]}
+                                // allowAll
+                                ref={modelSelectRef}
+                            />
+                        </>
+                    )}
+                    
                 </MoorhenStack>
                 {ruleType === "residue-range" ? (
                     <>
@@ -737,6 +780,9 @@ export const AddCustomRepresentationCard = memo(
                                 <option value={"mol-symm"} key={"mol-symm"}>
                                     Mol. Symmetry
                                 </option>
+                                <option value={"RMSD"} key={"RMSD"}>
+                                    RMSD
+                                </option>
                             </>
                             {representationStyle === "MolecularSurface" && (
                                 <option value={"electrostatics"} key={"electrostatics"}>
@@ -750,6 +796,21 @@ export const AddCustomRepresentationCard = memo(
                                     className="colour-rule-icon"
                                     src={`${props.urlPrefix}/pixmaps/temperature.svg`}
                                     alt="b-factor"
+                                    style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "3px",
+                                        border: "1px solid #c9c9c9",
+                                        padding: 0,
+                                    }}
+                                    ref={alphaSwatchRef}
+                                    onClick={() => setShowAlphaSlider(true)}
+                                />
+                            ) : colourMode === "RMSD" ? (
+                                <img
+                                    className="colour-rule-icon"
+                                    src={`${props.urlPrefix}/pixmaps/temperature.svg`}
+                                    alt="RMSD"
                                     style={{
                                         width: "30px",
                                         height: "30px",

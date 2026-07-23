@@ -30,7 +30,11 @@ import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
+import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
+// import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
+
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -133,6 +137,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "CDs";
         });
     });
+    const displayNEFRestraints = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "NEFRestraints";
+        });
+    });
 
     const symmetrySettingsProps = {
         symmetryRadius,
@@ -150,6 +159,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             redrawMolIfDirty(representationIds);
         }
     };
+
+    const NMRMode = (props.molecule.chemShifts?.length ?? 0) > 0;
 
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
@@ -253,10 +264,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         dispatch(isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule));
         if (isVisible) {
             props.molecule.environmentRepresentation?.hide();
+            props.molecule.NEFRestraintRepresentation?.hide();
+
         } else {
             if (displayEnvironment) {
                 props.molecule.environmentRepresentation?.show();
                 props.molecule.environmentRepresentation?.redraw();
+            }
+            
+            if (displayNEFRestraints) {
+                props.molecule.NEFRestraintRepresentation?.show();
+                props.molecule.NEFRestraintRepresentation?.redraw();
             }
         }
     }, [isVisible]);
@@ -393,6 +411,21 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
             dispatch(removeVectors(vectorList));
         }
+    };
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
+        v.uniqueId.includes("__TAG_NEF"))
+    let doShowAllNEF = false 
+
+    const handleNEFRestraintsToggle = value => {
+        if (!value) {
+            props.molecule.NEFRestraintRepresentation?.hide();
+            dispatch(removeGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+            return;
+        }
+
+        props.molecule.drawNEFRestraints().then(() => {
+            dispatch(addGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+        });
     };
 
     return (
@@ -594,6 +627,34 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
+                    {NMRMode && <MoorhenStack direction="row" align="center">
+                        <MoorhenToggle
+                            onChange={e => handleNEFRestraintsToggle(e.target.checked)}
+
+
+                            checked={displayNEFRestraints}
+
+                            disabled={isVisible ? false : true}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    NEF restraints&nbsp;    
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>NEF restraints</b>
+                                                <br />
+                                                Visualisation settings for NMR restraints loaded in from NEF files.
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                                }
+                            />
+
+
+                        </MoorhenStack>
+                        }
+
                     </MoorhenStack>
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}

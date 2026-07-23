@@ -2,7 +2,6 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { Dispatch } from "react";
 import { AnyAction, Store } from "@reduxjs/toolkit";
-
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4';
 import { getDeviceScale } from '../WebGLgComponents/webGLUtils';
 import { vec3Create } from '../WebGLgComponents/mgMaths';
