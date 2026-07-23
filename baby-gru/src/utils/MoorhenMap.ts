@@ -1304,7 +1304,7 @@ export class MoorhenMap {
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);
         if (
-            headerInfo.spacegroup === "P 1" &&
+            (headerInfo.spacegroup === "P 1" || headerInfo.spacegroup === undefined || headerInfo.spacegroup === "No space group") &&
             headerInfo.cell.alpha < 90 + 0.0001 &&
             headerInfo.cell.alpha > 90 - 0.0001 &&
             headerInfo.cell.beta < 90 + 0.0001 &&
