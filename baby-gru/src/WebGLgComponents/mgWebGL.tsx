@@ -5587,13 +5587,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
                  this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0)
 
-                 this.gl.disable(this.gl.DEPTH_TEST)
-                 this.gl.depthFunc(this.gl.ALWAYS)
+                 this.gl.enable(this.gl.DEPTH_TEST);
+                 this.gl.depthFunc(this.gl.LEQUAL);
+                 this.gl.depthMask(false);
                  this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                  this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.9, 0.5, 0.0, 1.0)
 
                  this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[0]);
                  this.drawMaxElementsUInt(this.gl.TRIANGLES, triangleVertexIndexBuffer[0].numItems)
+                 this.gl.enable(this.gl.DEPTH_TEST);
+                 this.gl.depthFunc(this.gl.LESS);
+                 this.gl.depthMask(true);
             }
         }
 
