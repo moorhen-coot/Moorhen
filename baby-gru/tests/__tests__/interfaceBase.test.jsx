@@ -324,7 +324,7 @@ describe('MoorhenStack', () => {
             </MoorhenStack>
         )
         const stackDiv = container.firstElementChild
-        expect(stackDiv).toHaveStyle('background-color: rgb(255, 0, 0)')
+        expect(stackDiv).toHaveStyle('background-color: red')
         expect(stackDiv).toHaveStyle('padding: 10px')
     })
 
@@ -570,7 +570,7 @@ describe('MoorhenMenuItem', () => {
         )
         const button = screen.getByRole('button', { name: /styled/i })
         expect(button).toHaveStyle('font-weight: bold')
-        expect(button).toHaveStyle('color: rgb(255, 0, 0)')
+        expect(button).toHaveStyle('color: red')
     })
 
     test('has disabled class when disabled', () => {
