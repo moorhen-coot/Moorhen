@@ -20,7 +20,7 @@ module.exports = {
         },
         {
             displayName: "react-components",
-            testMatch: ["<rootDir>/tests/__tests__/*.test.jsx"],
+            testMatch: ["<rootDir>/tests/__tests__/*.test.jsx", "<rootDir>/tests/__tests__/*.test.tsx"],
             setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             testEnvironment: "jsdom",
             preset: "ts-jest",

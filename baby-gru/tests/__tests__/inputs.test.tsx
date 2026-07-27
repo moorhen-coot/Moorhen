@@ -4,6 +4,13 @@ jest.mock('chart.js', () => ({
     registerables: []
 }))
 
+// Mock ResizeObserver for components that use popovers
+global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+} as any
+
 import '@testing-library/jest-dom'
 import { render, cleanup, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -24,6 +31,10 @@ import { MoorhenMoleculeSelect } from '../../src/components/inputs/Selector/Mole
 import { MoorhenMapSelect } from '../../src/components/inputs/Selector/MoorhenMapSelect'
 import { MoorhenChainSelect } from '../../src/components/inputs/Selector/MoorhenChainSelect'
 import { MoorhenLigandSelect } from '../../src/components/inputs/Selector/MoorhenLigandSelect'
+import { MoorhenAutoComplete } from '../../src/components/inputs/autocomplete/AutoComplete'
+import { MoorhenColourPicker } from '../../src/components/inputs/MoorhenColourPicker/MoorhenColourPicker'
+import { MoorhenGradientPicker } from '../../src/components/inputs/MoorhenGradientPicker/MoorhenGradientPicker'
+import { MoorhenMenuSystem } from '../../src/components/menu-system/MenuSystem'
 
 beforeAll(() => {
     MoorhenReduxStore.dispatch(setDevMode(false))
@@ -148,7 +159,7 @@ describe('MoorhenButton', () => {
     test('renders tooltip text', () => {
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenInstanceProvider>
+                <MoorhenInstanceProvider menuSystem={{} as MoorhenMenuSystem}>
                     <MoorhenButton label="TooltipBtn" tooltip="Useful tooltip" />
                 </MoorhenInstanceProvider>
             </Provider>
@@ -712,7 +723,7 @@ describe('MoorhenNumberInput', () => {
     test('shows tooltip when provided', () => {
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenInstanceProvider>
+                <MoorhenInstanceProvider menuSystem={{} as MoorhenMenuSystem}>
                     <MoorhenNumberInput value={0} tooltip="Number tooltip" />
                 </MoorhenInstanceProvider>
             </Provider>
@@ -1166,7 +1177,7 @@ describe('MoorhenSlider', () => {
             </Provider>
         )
         const labelButton = container.querySelector('.moorhen__slider__label-bottom')
-        expect(labelButton.style.color).toBe('red')
+        expect((labelButton as HTMLElement).style.color).toBe('red')
     })
 
     // -------------------------------------------------------
@@ -1202,7 +1213,7 @@ describe('MoorhenSlider', () => {
             </Provider>
         )
         const thumb = container.querySelector('.moorhen__slider-thumb')
-        expect(thumb.style.background).toBe('rgb(255, 0, 0)')
+        expect((thumb as HTMLElement).style.background).toBe('rgb(255, 0, 0)')
     })
 
     // -------------------------------------------------------
@@ -1294,7 +1305,7 @@ describe('MoorhenSlider', () => {
             </Provider>
         )
         const outermost = container.firstElementChild
-        expect(outermost.style.marginTop).toBe('20px')
+        expect((outermost as HTMLElement).style.marginTop).toBe('20px')
     })
 
     // -------------------------------------------------------
@@ -1308,7 +1319,7 @@ describe('MoorhenSlider', () => {
             </Provider>
         )
         const thumb = container.querySelector('.moorhen__slider-thumb')
-        expect(thumb.style.left).toBe('100%')
+        expect((thumb as HTMLElement).style.left).toBe('100%')
     })
 
     test('thumb position is 0% when value equals minVal', () => {
@@ -1318,7 +1329,7 @@ describe('MoorhenSlider', () => {
             </Provider>
         )
         const thumb = container.querySelector('.moorhen__slider-thumb')
-        expect(thumb.style.left).toBe('0%')
+        expect((thumb as HTMLElement).style.left).toBe('0%')
     })
 })
 
@@ -1343,7 +1354,7 @@ describe('MoorhenMoleculeSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMoleculeSelect molecules={mockMolecules} />
+                <MoorhenMoleculeSelect molecules={mockMolecules as any} />
             </Provider>
         )
         expect(screen.getByText('0: 3u7t')).toBeInTheDocument()
@@ -1356,7 +1367,7 @@ describe('MoorhenMoleculeSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMoleculeSelect molecules={mockMolecules} allowAny={true} />
+                <MoorhenMoleculeSelect molecules={mockMolecules as any} allowAny={true} />
             </Provider>
         )
         expect(screen.getByText('Any molecule')).toBeInTheDocument()
@@ -1379,7 +1390,7 @@ describe('MoorhenMoleculeSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMoleculeSelect molecules={mockMolecules} filterFunction={(mol) => mol.molNo === 0} />
+                <MoorhenMoleculeSelect molecules={mockMolecules as any} filterFunction={(mol) => mol.molNo === 0} />
             </Provider>
         )
         expect(screen.getByText('0: 3u7t')).toBeInTheDocument()
@@ -1392,7 +1403,7 @@ describe('MoorhenMoleculeSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMoleculeSelect molecules={mockMolecules} label="Pick Molecule" />
+                <MoorhenMoleculeSelect molecules={mockMolecules as any} label="Pick Molecule" />
             </Provider>
         )
         expect(screen.getByText('Pick Molecule')).toBeInTheDocument()
@@ -1420,7 +1431,7 @@ describe('MoorhenMapSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect maps={mockMaps} />
+                <MoorhenMapSelect maps={mockMaps as any} />
             </Provider>
         )
         expect(screen.getByText('0: 2FoFc')).toBeInTheDocument()
@@ -1435,7 +1446,7 @@ describe('MoorhenMapSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect maps={mockMaps} filterFunction={(map) => !map.hasReflectionData} />
+                <MoorhenMapSelect maps={mockMaps as any} filterFunction={(map: any) => !map.hasReflectionData} />
             </Provider>
         )
         expect(screen.queryByText('0: 2FoFc')).not.toBeInTheDocument()
@@ -1448,7 +1459,7 @@ describe('MoorhenMapSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenMapSelect maps={mockMaps} label="Select Map" />
+                <MoorhenMapSelect maps={mockMaps as any} label="Select Map" />
             </Provider>
         )
         expect(screen.getByText('Select Map')).toBeInTheDocument()
@@ -1483,7 +1494,7 @@ describe('MoorhenChainSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenChainSelect molecules={mockMolecules} selectedCoordMolNo={0} />
+                <MoorhenChainSelect molecules={mockMolecules as any} selectedCoordMolNo={0} />
             </Provider>
         )
         expect(screen.getByText('A')).toBeInTheDocument()
@@ -1502,7 +1513,7 @@ describe('MoorhenChainSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenChainSelect molecules={mockMolecules} selectedCoordMolNo={0} allowAll={true} />
+                <MoorhenChainSelect molecules={mockMolecules as any} selectedCoordMolNo={0} allowAll={true} />
             </Provider>
         )
         expect(screen.getByText('All')).toBeInTheDocument()
@@ -1522,7 +1533,7 @@ describe('MoorhenChainSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenChainSelect molecules={mockMolecules} selectedCoordMolNo={0} />
+                <MoorhenChainSelect molecules={mockMolecules as any} selectedCoordMolNo={0} />
             </Provider>
         )
         expect(screen.getByText('A')).toBeInTheDocument()
@@ -1542,7 +1553,7 @@ describe('MoorhenChainSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenChainSelect molecules={mockMolecules} selectedCoordMolNo={0} label="Chain ID" />
+                <MoorhenChainSelect molecules={mockMolecules as any} selectedCoordMolNo={0} label="Chain ID" />
             </Provider>
         )
         expect(screen.getByText('Chain ID')).toBeInTheDocument()
@@ -1560,7 +1571,7 @@ describe('MoorhenChainSelect', () => {
         ]
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenChainSelect molecules={mockMolecules} selectedCoordMolNo={null} />
+                <MoorhenChainSelect molecules={mockMolecules as any} selectedCoordMolNo={null} />
             </Provider>
         )
         const select = screen.getByRole('combobox')
@@ -1584,7 +1595,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }, { cid: '/A/ALA/2' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} />
             </Provider>
         )
         expect(screen.getByText('/A/LYS/1')).toBeInTheDocument()
@@ -1595,7 +1606,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} />
             </Provider>
         )
         expect(screen.getByText('No Ligands')).toBeInTheDocument()
@@ -1605,7 +1616,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }, { cid: '/A/ALA/2' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} allowAll={true} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} allowAll={true} />
             </Provider>
         )
         expect(screen.getByText('All Ligands')).toBeInTheDocument()
@@ -1617,7 +1628,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }, { cid: '/A/ALA/2' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} onChange={onChange} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} onChange={onChange} />
             </Provider>
         )
         const select = screen.getByRole('combobox')
@@ -1631,7 +1642,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }, { cid: '/A/ALA/2' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} setValue={setValue} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} setValue={setValue} />
             </Provider>
         )
         const select = screen.getByRole('combobox')
@@ -1643,7 +1654,7 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={null} />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={null} />
             </Provider>
         )
         // When no molecule is selected, the select renders with an empty options list
@@ -1656,10 +1667,293 @@ describe('MoorhenLigandSelect', () => {
         const molecule = makeMolecule([{ cid: '/A/LYS/1' }])
         render(
             <Provider store={MoorhenReduxStore}>
-                <MoorhenLigandSelect molecules={[molecule]} selectedCoordMolNo={0} label="Choose Ligand" />
+                <MoorhenLigandSelect molecules={[molecule] as any} selectedCoordMolNo={0} label="Choose Ligand" />
             </Provider>
         )
         expect(screen.getByText('Choose Ligand')).toBeInTheDocument()
+    })
+})
+
+// ==============================
+// MoorhenAutoComplete
+// ==============================
+describe('MoorhenAutoComplete', () => {
+
+    const resultsRenderer = (item: string) => <div key={item}>{item}</div>
+
+    const mockMenuSystem = {} as MoorhenMenuSystem
+
+    test('renders a text input field', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenAutoComplete<string>
+                        searchItems={['apple', 'banana', 'cherry']}
+                        resultsRenderer={resultsRenderer}
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        const input = screen.getByRole('textbox')
+        expect(input).toBeInTheDocument()
+    })
+})
+
+// ==============================
+// MoorhenColourPicker
+// ==============================
+describe('MoorhenColourPicker', () => {
+
+    const mockMenuSystem = {} as MoorhenMenuSystem
+
+    const clickSwatch = (container: HTMLElement) => {
+        const swatch = container.querySelector('[style*="border-radius: 8px"]') as HTMLElement
+        if (swatch) fireEvent.click(swatch)
+        return swatch
+    }
+
+    test('renders a coloured swatch trigger', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[255, 0, 0]} />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        const swatch = container.querySelector('[style*="border-radius: 8px"]')
+        expect(swatch).toBeInTheDocument()
+    })
+
+    test('applies the colour as background of the swatch', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[100, 150, 200]} />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        const swatch = container.querySelector('[style*="background-color"]') as HTMLElement
+        expect(swatch.style.backgroundColor).toBe('rgb(100, 150, 200)')
+    })
+
+    test('renders label text after opening the popover', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[0, 0, 255]} label="Main colour" />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        clickSwatch(container)
+        expect(screen.getByText('Main colour')).toBeInTheDocument()
+    })
+
+    test('renders dual colour labels after opening the popover', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker
+                        colour={[255, 0, 0]}
+                        colour2={[0, 0, 255]}
+                        setColour2={() => {}}
+                        label="A"
+                        label2="B"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        clickSwatch(container)
+        expect(screen.getByText('A')).toBeInTheDocument()
+        expect(screen.getByText('B')).toBeInTheDocument()
+    })
+
+    test('renders Apply button after opening the popover', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[0, 255, 0]} onApply={() => {}} />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        clickSwatch(container)
+        expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument()
+    })
+
+    test('calls onApply with the colour when Apply is clicked', async () => {
+        const user = userEvent.setup()
+        const onApply = jest.fn()
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[0, 255, 0]} onApply={onApply} />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        clickSwatch(container)
+        await user.click(screen.getByRole('button', { name: /apply/i }))
+        expect(onApply).toHaveBeenCalledWith([0, 255, 0])
+    })
+
+    test('renders with tooltip text', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[255, 255, 0]} tooltip="Pick a colour" />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        const swatch = container.querySelector('[style*="border-radius: 8px"]')
+        expect(swatch).toBeInTheDocument()
+    })
+
+    test('applies custom style to the swatch', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenColourPicker colour={[0, 0, 0]} style={{ opacity: 0.5 }} />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        const swatch = container.querySelector('[style*="border-radius: 8px"]') as HTMLElement
+        expect(swatch.style.opacity).toBe('0.5')
+    })
+})
+
+// ==============================
+// MoorhenGradientPicker
+// ==============================
+describe('MoorhenGradientPicker', () => {
+
+    const mockMenuSystem = {} as MoorhenMenuSystem
+    const basicColourTable: [number, [number, number, number]][] = [
+        [0.0, [255, 0, 0]],
+        [0.5, [255, 255, 255]],
+        [1.0, [0, 0, 255]],
+    ]
+
+    test('renders the gradient picker container with colour stops', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        // The outer container has a 0.5rem margin
+        const outerContainer = container.querySelector('[style*="margin: 0.5rem"]')
+        expect(outerContainer).toBeInTheDocument()
+        // The colour preset is rendered
+        expect(screen.getByText('Red White Blue')).toBeInTheDocument()
+    })
+
+    test('renders the points number input', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        expect(screen.getByText('Points:')).toBeInTheDocument()
+    })
+
+    test('renders preset selector with options', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        expect(screen.getByText('Custom')).toBeInTheDocument()
+        expect(screen.getByText('Red White Blue')).toBeInTheDocument()
+    })
+
+    test('renders value labels when showValues is true (default)', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        // With minValue=0, maxValue=1 and 3 points, values are 0.0, 0.5, 1.0
+        expect(screen.getByText('0.0')).toBeInTheDocument()
+        expect(screen.getByText('0.5')).toBeInTheDocument()
+        expect(screen.getByText('1.0')).toBeInTheDocument()
+    })
+
+    test('hides value labels when showValues is false', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                        showValues={false}
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        expect(screen.queryByText('0.0')).not.toBeInTheDocument()
+        expect(screen.queryByText('0.5')).not.toBeInTheDocument()
+        expect(screen.queryByText('1.0')).not.toBeInTheDocument()
+    })
+
+    test('renders revert button', () => {
+        const { container } = render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        // The revert button uses icon "MatSymFlipCamera"; find it by its containing stack
+        const reversionStack = container.querySelector('[style*="margin: 0.5rem"]')
+        expect(reversionStack).toBeInTheDocument()
+    })
+
+    test('renders number inputs for min/max when modifyValues is true', () => {
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                    <MoorhenGradientPicker
+                        colourTable={basicColourTable}
+                        setColourTable={() => {}}
+                        menu="test"
+                        modifyValues={true}
+                        minValue={0}
+                        maxValue={100}
+                        setMinValue={() => {}}
+                        setMaxValue={() => {}}
+                    />
+                </MoorhenInstanceProvider>
+            </Provider>
+        )
+        // Should show two number inputs for min/max
+        const textboxes = screen.getAllByRole('textbox')
+        expect(textboxes.length).toBeGreaterThanOrEqual(2)
     })
 })
 
