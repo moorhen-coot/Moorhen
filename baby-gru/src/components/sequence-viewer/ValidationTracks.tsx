@@ -24,9 +24,10 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
     const tracks = trackData.map((data, index) => {
         const value = Array.isArray(data.value) ? data.value[0] : data.value;
         const reverseGradient = data.reverseGradient ?? false;
+        const trackKey = `${normalizedTracks[index]}-${index}`;
         return (
             <div
-                key={normalizedTracks[index]}
+                key={trackKey}
                 className="moorhen__seqviewer__residue-validation-box-top"
                 style={
                     {

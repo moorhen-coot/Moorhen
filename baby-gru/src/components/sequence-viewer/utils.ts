@@ -112,16 +112,28 @@ export const addValidationDataToSeqViewerSequences = (
         return Math.min(val / rmszScale, 1);
     };
 
-    const validationTracks = new Set<{categorie: string, name: string }>();
+
 
     const newSequences = [...sequences];
     for (const sequence of newSequences) {
+        const validationTracks = new Map<string, {categorie: string, name: string }>();
+        for (const track of sequence.validationTracks ?? []) {
+            const trackKey = `${track.categorie}::${track.name}`;
+            validationTracks.set(trackKey, { categorie: track.categorie, name: track.name });
+        }
         const chainValidationData = validationData[sequence.chain];
         if (!chainValidationData) {
             continue;
         }
+        const chainValidationBySeqNum = new Map<number, ResidueValidationData>();
+        for (const entry of chainValidationData) {
+            // Preserve previous behavior of Array.find by keeping the first match for each seqNum.
+            if (!chainValidationBySeqNum.has(entry.seqNum)) {
+                chainValidationBySeqNum.set(entry.seqNum, entry);
+            }
+        }
         for (const residue of sequence.residues) {
-            const resValidation = chainValidationData.find(v => v.seqNum === residue.resNum);
+            const resValidation = chainValidationBySeqNum.get(residue.resNum);
             if (resValidation) {
                 if (!residue.validationData) {
                     residue.validationData = {};
@@ -147,11 +159,16 @@ export const addValidationDataToSeqViewerSequences = (
                                     category: category,
                                 };
                             }
+                            const trackCategory = key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category;
+                            const trackKey = `${trackCategory}::${key}`;
+                            validationTracks.set(trackKey, { categorie: trackCategory, name: key });
                         }
                     }
                 }
             }
+
         }
+        sequence.validationTracks = Array.from(validationTracks.values());
     }
     return newSequences;
 };

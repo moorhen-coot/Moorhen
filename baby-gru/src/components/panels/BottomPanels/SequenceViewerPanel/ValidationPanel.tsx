@@ -2,9 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
-import { MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import {
-    MoleculeToSeqViewerSequences,
     addValidationDataToSeqViewerSequences,
     cootMMRCCToSeqViewer,
     cootValidationDataToSeqViewer,
@@ -52,15 +50,6 @@ export const ValidationPanel = () => {
         return molecule?.seqViewerData ? [...molecule.seqViewerData] : []; // Return a copy of the seqViewerData array to avoid mutating the original data
     }, [molecule?.seqViewerData, triggerUpdate, moleculeChange]);
 
-    // useEffect(() => {
-    //     if (!molecule || molecule.molNo === null) {
-    //         setSequencesList([]);
-    //         return;
-    //     }
-    //     else {
-    //         setSequencesList(molecule.seqViewerData);
-    //     }
-    // }, [molecule]);
 
     useEffect(() => {
         let skipDensity = false;
@@ -131,7 +120,8 @@ export const ValidationPanel = () => {
                     
                 );
             }
-            // setValidationOption({ ...validationOption, availableData: sequences[0].validationTracks.map(track => track.name) });
+            dispatch(setValidationOption({ ...validationOption, availableData: sequences[0]?.validationTracks?.map(track => track.name) }));
+        
             setTriggerUpdate(current => current + 1);
             setIsLoading(false);
 

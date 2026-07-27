@@ -41,11 +41,17 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         className,
         onHoverResidue,
         showValidationData = false,
-        validationTracks = null,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
     const invalidSequences: boolean = inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0);
+    const validationTracks = useMemo(() => {
+        if (!props.validationTracks) {
+            return null;
+        }
+        return props.validationTracks.map((track, index) => (track === "" ? `empty track ${index + 1}` : track));
+    }, [props.validationTracks]);
+
 
     const applyOffset = (seqArray: SeqElement[]) =>
         seqArray.map(seq => ({

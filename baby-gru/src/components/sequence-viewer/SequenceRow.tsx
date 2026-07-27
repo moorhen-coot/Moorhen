@@ -38,7 +38,7 @@ export const SequenceRow = memo(
                 return (
 
                     <MoorhenTooltip tooltip={`${value}`}>
-                        <div className={`moorhen__seqviewer__sticky-left-column-validation-track-label`}
+                        <div key={`validation-track-label-${index}`} className={`moorhen__seqviewer__sticky-left-column-validation-track-label`}
                         >
                             {value}
                         </div>
