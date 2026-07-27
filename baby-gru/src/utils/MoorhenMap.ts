@@ -319,6 +319,13 @@ export class MoorhenMap {
                 map.isDifference = selectedColumns.isDifference;
             }
             map.dataOrigin = "mtz";
+            const header = await readMTZHeader(data);
+            if (typeof header !== "number") {
+                map.fileHeader = header;
+                await map.initialise();
+            } else {
+                console.warn("Could not read MTZ header; skipping map.initialise() (contour stats may be unset)");
+            }
             return map;
         } catch (err) {
             return Promise.reject(err);
@@ -1304,7 +1311,7 @@ export class MoorhenMap {
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);
         if (
-            headerInfo.spacegroup === "P 1" &&
+            (headerInfo.spacegroup === "P 1" || headerInfo.spacegroup === undefined || headerInfo.spacegroup === "No space group") &&
             headerInfo.cell.alpha < 90 + 0.0001 &&
             headerInfo.cell.alpha > 90 - 0.0001 &&
             headerInfo.cell.beta < 90 + 0.0001 &&

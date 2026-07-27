@@ -18,18 +18,6 @@ export class MoorhenWebComponent extends HTMLElement {
     constructor() {
         super();
         this._moorhenInstanceRef = React.createRef<null | MoorhenInstance>();
-        this._rootElement = document.createElement("div");
-        const shadow = this.attachShadow({ mode: "open" });
-        if (!this.style.display) this.style.display = "block";
-        if (!this.style.width) this.style.width = "100%";
-        if (!this.style.flex) this.style.flex = "1 1 auto";
-        if (!this.style.minHeight) this.style.minHeight = "0";
-        if (!this.style.minWidth) this.style.minWidth = "0";
-        this._rootElement.style.width = "100%";
-        this._rootElement.style.height = "100%";
-        this._rootElement.style.minHeight = "0";
-        this._rootElement.style.minWidth = "0";
-        shadow.appendChild(this._rootElement);
         this._parentElementRef = React.createRef<HTMLElement | null>();
         this._parentElementRef.current = this;
 
@@ -182,11 +170,24 @@ export class MoorhenWebComponent extends HTMLElement {
         };
 
     public async connectedCallback() {
+        this._rootElement = document.createElement("div");
+        this._reactRoot = createRoot(this._rootElement);
+
+        if (!this.style.display) this.style.display = "block";
+        if (!this.style.width) this.style.width = "100%";
+        if (!this.style.flex) this.style.flex = "1 1 auto";
+        if (!this.style.minHeight) this.style.minHeight = "0";
+        if (!this.style.minWidth) this.style.minWidth = "0";
+        this._rootElement.style.width = "100%";
+        this._rootElement.style.height = "100%";
+        this._rootElement.style.minHeight = "0";
+        this._rootElement.style.minWidth = "0";
+
+        const shadow = this.attachShadow({ mode: "open" });
+        shadow.appendChild(this._rootElement);
 
         await this.loadStylesheets();
 
-        if (!this._reactRoot) {
-        this._reactRoot = createRoot(this._rootElement);
         this._renderReactTree();
         const checkRefsReady = () => {
             if (this._moorhenInstanceRef?.current?.isReady()) {
@@ -201,9 +202,6 @@ export class MoorhenWebComponent extends HTMLElement {
         };
         const refCheckInterval = setInterval(checkRefsReady, 50);
     }
-    else {
-        this._renderReactTree();
-    }}
 }
 
 /**

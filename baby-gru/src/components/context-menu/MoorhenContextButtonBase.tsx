@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
+import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -194,7 +195,15 @@ export const MoorhenContextButtonBase = (props: {
             );
             setTimeout(() => props.setShowOverlay(true), 50);
         } else if (props.nonCootCommand) {
-            await props.nonCootCommand(props.selectedMolecule, props.chosenAtom);
+            try {
+                await props.nonCootCommand(props.selectedMolecule, props.chosenAtom);
+            } catch (err) {
+                // Never leave the context menu stuck open with no feedback if the
+                // action throws (e.g. a backend query fails mid-setup).
+                console.error("Context menu action failed", err);
+                dispatch(enqueueSnackbar({ message: "Action could not be completed", variant: "warning" }));
+                props.setShowContextMenu(false);
+            }
         } else if (props.cootCommandInput) {
             await doEdit(props.cootCommandInput);
         }
