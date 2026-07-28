@@ -2,30 +2,22 @@ import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 import { expect, test } from "@playwright/test";
 import {
-    assertPageScreenshotBaseline,
-    getMoorhenObjectCounts,
-    getWebGLCanvasStats,
-    gotoWebComponentPage,
-    loadFilesViaMoorhenInstance,
-    waitForWebGLRenderSettle,
-    waitForMoorhenReady,
+    startAndGetInstance,
 } from "./helpers/webcomponent";
 
 test.describe("Moorhen Web Component file loading", () => {
     test("loads molecule and map via moorhenInstance.files.loadFiles and updates WebGL output", async ({ page }) => {
         test.setTimeout(180_000);
 
-        const host = await gotoWebComponentPage(page);
-        await waitForMoorhenReady(page);
-
-        const beforeCounts = await getMoorhenObjectCounts(page);
-        const beforeGl = await getWebGLCanvasStats(page);
+        const moorhen = await startAndGetInstance(page);
+        const beforeCounts = await moorhen.getObjectCounts();
+        const beforeGl = await moorhen.getWebGLStats();
 
         const pdbPath = path.join(process.cwd(), "tests", "test_data", "5a3h.pdb");
         const mtzPath = path.join(process.cwd(), "tests", "test_data", "5a3h_sigmaa.mtz");
         const [pdbBytes, mtzBytes] = await Promise.all([readFile(pdbPath), readFile(mtzPath)]);
 
-        const loadSummary = await loadFilesViaMoorhenInstance(page, [
+        const loadSummary = await moorhen.loadFiles([
             {
                 name: "5a3h.pdb",
                 mimeType: "chemical/x-pdb",
@@ -44,19 +36,19 @@ test.describe("Moorhen Web Component file loading", () => {
 
         await expect
             .poll(async () => {
-                const counts = await getMoorhenObjectCounts(page);
+                const counts = await moorhen.getObjectCounts();
                 return counts.moleculeCount > beforeCounts.moleculeCount && counts.mapCount > beforeCounts.mapCount;
             }, { timeout: 120_000 })
             .toBe(true);
 
-        const settledGl = await waitForWebGLRenderSettle(page, {
+        const settledGl = await moorhen.waitForWebGLRenderSettle({
             minSettleMs: 1_500,
             minDisplayBufferCount: beforeGl.displayBufferCount + 1,
             timeoutMs: 30_000,
         });
 
-        const afterCounts = await getMoorhenObjectCounts(page);
-        const afterGl = await getWebGLCanvasStats(page);
+        const afterCounts = await moorhen.getObjectCounts();
+        const afterGl = await moorhen.getWebGLStats();
 
         expect(afterCounts.moleculeCount).toBeGreaterThan(beforeCounts.moleculeCount);
         expect(afterCounts.mapCount).toBeGreaterThan(beforeCounts.mapCount);
@@ -71,11 +63,8 @@ test.describe("Moorhen Web Component file loading", () => {
         expect(afterGl.uniqueColors).toBeGreaterThanOrEqual(beforeGl.uniqueColors);
         expect(settledGl.displayBufferCount).toBeGreaterThan(beforeGl.displayBufferCount);
 
-        if (process.env.MOORHEN_E2E_DISABLE_STRICT_CANVAS_BASELINE !== "1") {
-            await assertPageScreenshotBaseline(page, {
-                snapshotName: "5a3h-load-full-window.png",
-                fullPage: false,
-            });
-        }
+        await moorhen.assertPageScreenshotBaseline({
+            snapshotName: "5a3h-load-full-window.png"
+        });
     });
 });

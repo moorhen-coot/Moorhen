@@ -143,6 +143,10 @@ export async function assertCanvasScreenshotBaseline(host: Locator, options: Can
  * Baseline files are managed by Playwright snapshots (`--update-snapshots`).
  */
 export async function assertPageScreenshotBaseline(page: Page, options: PageScreenshotBaselineOptions): Promise<void> {
+    if (process.env.MOORHEN_E2E_DISABLE_STRICT_CANVAS_BASELINE === "1") {
+        return;
+    }
+
     const { snapshotName, fullPage = false } = options;
     const testInfo = test.info();
     const comparisonPolicy = getScreenshotComparisonPolicy();
@@ -215,6 +219,19 @@ export type BrowserFixtureFile = {
     bytes: number[];
 };
 
+export type MoorhenStartedSession = {
+    page: Page;
+    host: Locator;
+    elementId: string;
+    loadFiles: (files: BrowserFixtureFile[]) => Promise<MoorhenLoadSummary>;
+    callInstanceMethod: <T = unknown>(methodPath: string, ...args: unknown[]) => Promise<T>;
+    getObjectCounts: () => Promise<{ moleculeCount: number; mapCount: number }>;
+    getSceneSettings: () => Promise<SceneSettingsSnapshot>;
+    getWebGLStats: () => Promise<WebGLCanvasStats>;
+    waitForWebGLRenderSettle: (options?: Omit<WebGLSettleOptions, "elementId">) => Promise<WebGLCanvasStats>;
+    assertPageScreenshotBaseline: (options: PageScreenshotBaselineOptions) => Promise<void>;
+};
+
 export type MoorhenLoadSummary = {
     loadedTypes: ("molecule" | "map")[];
     loadedFileNames: string[];
@@ -227,6 +244,13 @@ export type WebGLSettleOptions = {
     timeoutMs?: number;
     minSettleMs?: number;
     minDisplayBufferCount?: number;
+};
+
+export type SceneSettingsSnapshot = {
+    backgroundColor: [number, number, number, number];
+    drawAxes: boolean;
+    doPerspectiveProjection: boolean;
+    doOutline: boolean;
 };
 
 export async function getMoorhenObjectCounts(page: Page, elementId = "moorhen-test"): Promise<{ moleculeCount: number; mapCount: number }> {
@@ -244,6 +268,27 @@ export async function getMoorhenObjectCounts(page: Page, elementId = "moorhen-te
         return {
             moleculeCount: state?.molecules?.moleculeList?.length ?? 0,
             mapCount: state?.maps?.length ?? 0,
+        };
+    }, elementId);
+}
+
+export async function getSceneSettingsSnapshot(page: Page, elementId = "moorhen-test"): Promise<SceneSettingsSnapshot> {
+    return page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as {
+            getMoorhenInstance: () => Promise<{ store: { getState: () => any } }>;
+        } | null;
+
+        if (!host?.getMoorhenInstance) {
+            throw new Error(`Unable to find web component host with id '${targetId}'`);
+        }
+
+        const instance = await host.getMoorhenInstance();
+        const sceneSettings = instance.store.getState()?.sceneSettings;
+        return {
+            backgroundColor: (sceneSettings?.backgroundColor as [number, number, number, number]) ?? [1, 1, 1, 1],
+            drawAxes: Boolean(sceneSettings?.drawAxes),
+            doPerspectiveProjection: Boolean(sceneSettings?.doPerspectiveProjection),
+            doOutline: Boolean(sceneSettings?.doOutline),
         };
     }, elementId);
 }
@@ -350,6 +395,66 @@ export async function loadFilesViaMoorhenInstance(
         },
         { targetId: elementId, inputFiles: files }
     );
+}
+
+/**
+ * High-level entrypoint to start the web component and get a simple test harness.
+ * This keeps test bodies concise while preserving robust browser-context boundaries.
+ */
+export async function startAndGetInstance(page: Page, elementId = "moorhen-test"): Promise<MoorhenStartedSession> {
+    const host = await gotoWebComponentPage(page);
+    await waitForMoorhenReady(page, elementId);
+
+    return {
+        page,
+        host,
+        elementId,
+        loadFiles: files => loadFilesViaMoorhenInstance(page, files, elementId),
+        callInstanceMethod: async <T = unknown>(methodPath: string, ...args: unknown[]): Promise<T> => {
+            const result = await page.evaluate(
+                async ({ targetId, path, methodArgs }) => {
+                    const hostElement = document.getElementById(targetId) as unknown as {
+                        getMoorhenInstance: () => Promise<Record<string, unknown>>;
+                    } | null;
+
+                    if (!hostElement?.getMoorhenInstance) {
+                        throw new Error(`Unable to find web component host with id '${targetId}'`);
+                    }
+
+                    const instance = await hostElement.getMoorhenInstance();
+                    const segments = path.split(".").filter(Boolean);
+                    if (segments.length === 0) {
+                        throw new Error("methodPath must not be empty");
+                    }
+
+                    let target: unknown = instance;
+                    for (let i = 0; i < segments.length - 1; i++) {
+                        const key = segments[i];
+                        target = (target as Record<string, unknown>)?.[key];
+                        if (target === undefined || target === null) {
+                            throw new Error(`Path '${path}' is invalid at '${key}'`);
+                        }
+                    }
+
+                    const methodName = segments[segments.length - 1];
+                    const method = (target as Record<string, unknown>)?.[methodName];
+                    if (typeof method !== "function") {
+                        throw new Error(`Path '${path}' does not resolve to a function`);
+                    }
+
+                    return await (method as (...innerArgs: unknown[]) => unknown).apply(target, methodArgs);
+                },
+                { targetId: elementId, path: methodPath, methodArgs: args }
+            );
+
+            return result as T;
+        },
+        getObjectCounts: () => getMoorhenObjectCounts(page, elementId),
+        getSceneSettings: () => getSceneSettingsSnapshot(page, elementId),
+        getWebGLStats: () => getWebGLCanvasStats(page, elementId),
+        waitForWebGLRenderSettle: options => waitForWebGLRenderSettle(page, { ...options, elementId }),
+        assertPageScreenshotBaseline: options => assertPageScreenshotBaseline(page, options),
+    };
 }
 
 export async function getWebGLCanvasStats(page: Page, elementId = "moorhen-test"): Promise<WebGLCanvasStats> {
