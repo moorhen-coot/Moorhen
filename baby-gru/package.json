@@ -89,13 +89,11 @@
         "test-react": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker && node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --detectOpenHandles --forceExit --testPathIgnorePatterns=MoorhenContainer.test.jsx --testPathIgnorePatterns=MoorhenLigandMenu.test.jsx --testPathIgnorePatterns=MoorhenEditMenu.test.jsx --selectProjects react-components",
         "debug-hmr": "DEBUG=vite:hmr,vite:react-refresh npm run start",
         "test:e2e": "playwright test",
-        "test:e2e:headed": "MOORHEN_E2E_HEADED_SCREENSHOT_TOLERANCE=1 MOORHEN_E2E_HEADED_MAX_DIFF_PIXEL_RATIO=0.01 MOORHEN_E2E_HEADED_THRESHOLD=0.2 playwright test --headed",
+        "test:e2e:headed": "MOORHEN_E2E_HEADED_SCREENSHOT_TOLERANCE=1 MOORHEN_E2E_HEADED_MAX_DIFF_PIXEL_RATIO=0.01 MOORHEN_E2E_HEADED_THRESHOLD=0.2 playwright test --headed --project=chromium",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:debug": "playwright test --debug",
         "test:e2e:install": "playwright install chromium firefox",
-        "test:e2e:update-snapshots": "playwright test --update-snapshots",
-        "test:e2e:update-snapshots:chromium": "playwright test --project=chromium --update-snapshots",
-        "test:e2e:update-snapshots:firefox": "playwright test --project=firefox --update-snapshots"
+        "test:e2e:update-snapshots": "playwright test --update-snapshots"
     },
     "eslintConfig": {
         "extends": [

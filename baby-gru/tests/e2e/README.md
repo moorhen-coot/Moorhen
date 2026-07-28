@@ -55,7 +55,8 @@ The load workflow now enforces strict pixel-to-pixel canvas baseline checks by d
 
 Details:
 
-- Baseline files are Playwright image snapshots under `tests/e2e/*-snapshots/`.
+- Baseline files are Playwright image snapshots under `tests/e2e/snapshots/`.
 - The strict check waits for render settling, then compares a full-window viewport screenshot (not just canvas) with exact diff settings (`maxDiffPixels: 0`, `threshold: 0`).
+- Snapshot baselines are always browser-specific (Chromium and Firefox each keep their own image files).
 - Headed runs (`npm run test:e2e:headed`) intentionally use a small tolerance (`maxDiffPixelRatio=0.01`, `threshold=0.2`) to reduce false positives from compositor/antialiasing differences.
 - Keep your runner/browser setup stable to avoid churn in strict image baselines.

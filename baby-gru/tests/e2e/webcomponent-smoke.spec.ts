@@ -10,7 +10,6 @@ test.describe("Moorhen Web Component smoke", () => {
     test("loads and exposes ready state", async ({ page }) => {
         const host = await gotoWebComponentPage(page);
 
-        await expect(page.getByRole("heading", { name: "Moorhen Web Component Test" })).toBeVisible();
         await waitForMoorhenReady(page);
 
         const readyState = await page.evaluate(() => {

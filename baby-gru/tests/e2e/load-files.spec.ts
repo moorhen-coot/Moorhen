@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import * as path from "node:path";
 import { expect, test } from "@playwright/test";
 import {
     startAndGetInstance,
@@ -13,26 +11,23 @@ test.describe("Moorhen Web Component file loading", () => {
         const beforeCounts = await moorhen.getObjectCounts();
         const beforeGl = await moorhen.getWebGLStats();
 
-        const pdbPath = path.join(process.cwd(), "tests", "test_data", "5a3h.pdb");
-        const mtzPath = path.join(process.cwd(), "tests", "test_data", "5a3h_sigmaa.mtz");
-        const [pdbBytes, mtzBytes] = await Promise.all([readFile(pdbPath), readFile(mtzPath)]);
-
-        const loadSummary = await moorhen.loadFiles([
+        const loaded = await moorhen.loadFiles([
             {
-                name: "5a3h.pdb",
-                mimeType: "chemical/x-pdb",
-                bytes: Array.from(pdbBytes),
+                url: "/tests/test_data/5a3h.pdb",
+                filename: "5a3h.pdb",
             },
             {
-                name: "5a3h_sigmaa.mtz",
-                mimeType: "application/octet-stream",
-                bytes: Array.from(mtzBytes),
+                url: "/tests/test_data/5a3h_sigmaa.mtz",
+                filename: "5a3h_sigmaa.mtz",
             },
         ]);
 
-        expect(loadSummary.loadedTypes).toContain("molecule");
-        expect(loadSummary.loadedTypes).toContain("map");
-        expect(loadSummary.loadedFileNames).toEqual(expect.arrayContaining(["5a3h.pdb", "5a3h_sigmaa.mtz"]));
+        expect(loaded).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ type: "molecule", fileName: "5a3h.pdb" }),
+                expect.objectContaining({ type: "map", fileName: "5a3h_sigmaa.mtz" }),
+            ])
+        );
 
         await expect
             .poll(async () => {
@@ -64,7 +59,8 @@ test.describe("Moorhen Web Component file loading", () => {
         expect(settledGl.displayBufferCount).toBeGreaterThan(beforeGl.displayBufferCount);
 
         await moorhen.assertPageScreenshotBaseline({
-            snapshotName: "5a3h-load-full-window.png"
+            snapshotName: "5a3h-load-full-window.png",
+            // canvasOnly: true,
         });
     });
 });

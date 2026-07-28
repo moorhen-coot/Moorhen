@@ -83,7 +83,126 @@ export type CanvasScreenshotBaselineOptions = {
 export type PageScreenshotBaselineOptions = {
     snapshotName: string | string[];
     fullPage?: boolean;
+    canvasOnly?: boolean;
+    canvasSelector?: string;
+    webComponentId?: string;
+    isolateCanvas?: boolean;
 };
+
+async function getWebGLCanvasLocator(page: Page, webComponentId: string): Promise<Locator> {
+    const markerAttr = "data-e2e-webgl-canvas-target";
+
+    await page.evaluate(({ targetId, marker }) => {
+        const host = document.getElementById(targetId) as HTMLElement | null;
+        if (!host?.shadowRoot) {
+            throw new Error(`Shadow root not found for element '${targetId}'`);
+        }
+
+        const canvases = Array.from(host.shadowRoot.querySelectorAll("canvas"));
+        if (canvases.length === 0) {
+            throw new Error(`No canvas elements found in web component '${targetId}'`);
+        }
+
+        let webglCanvas = canvases.find(canvas => {
+            try {
+                return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+            } catch {
+                return false;
+            }
+        });
+
+        // Fallback: choose the largest canvas in case context lookup is not available.
+        if (!webglCanvas) {
+            webglCanvas = canvases
+                .slice()
+                .sort((a, b) => b.getBoundingClientRect().width * b.getBoundingClientRect().height - a.getBoundingClientRect().width * a.getBoundingClientRect().height)[0];
+        }
+
+        canvases.forEach(canvas => canvas.removeAttribute(marker));
+        webglCanvas.setAttribute(marker, "1");
+    }, { targetId: webComponentId, marker: markerAttr });
+
+    return page.locator(`#${webComponentId}`).locator(`canvas[${markerAttr}="1"]`).first();
+}
+
+async function setCanvasCaptureIsolation(page: Page, webComponentId: string, enabled: boolean): Promise<void> {
+    await page.evaluate(({ targetId, shouldEnable }) => {
+        const host = document.getElementById(targetId) as HTMLElement | null;
+        if (!host?.shadowRoot) {
+            return;
+        }
+
+        const root = host.shadowRoot;
+        const hiddenMarker = "data-e2e-hidden-for-canvas-capture";
+        const prevVisibilityAttr = "data-e2e-prev-visibility";
+        const targetCanvas = root.querySelector("canvas[data-e2e-webgl-canvas-target=\"1\"]") as HTMLCanvasElement | null;
+
+        if (!shouldEnable) {
+            root.querySelectorAll<HTMLElement>(`[${hiddenMarker}="1"]`).forEach(el => {
+                const prevVisibility = el.getAttribute(prevVisibilityAttr);
+                if (prevVisibility === null) {
+                    el.style.removeProperty("visibility");
+                } else {
+                    el.style.visibility = prevVisibility;
+                }
+                el.removeAttribute(hiddenMarker);
+                el.removeAttribute(prevVisibilityAttr);
+            });
+            return;
+        }
+
+        if (!targetCanvas) {
+            return;
+        }
+
+        const keep = new Set<Node>();
+        let node: Node | null = targetCanvas;
+        while (node) {
+            keep.add(node);
+            node = node.parentNode;
+        }
+
+        root.querySelectorAll<HTMLElement>("*").forEach(el => {
+            if (keep.has(el)) {
+                return;
+            }
+            if (el.tagName === "STYLE" || el.tagName === "SCRIPT" || el.tagName === "LINK") {
+                return;
+            }
+            if (el.getAttribute(hiddenMarker) === "1") {
+                return;
+            }
+
+            el.setAttribute(prevVisibilityAttr, el.style.visibility ?? "");
+            el.style.visibility = "hidden";
+            el.setAttribute(hiddenMarker, "1");
+        });
+    }, { targetId: webComponentId, shouldEnable: enabled });
+}
+
+function withBrowserSpecificSuffix(snapshotName: string | string[], suffix: string): string | string[] {
+    const applySuffix = (value: string): string => {
+        const extMatch = value.match(/\.[^./]+$/);
+        if (!extMatch) {
+            return `${value}-${suffix}`;
+        }
+
+        const ext = extMatch[0];
+        const stem = value.slice(0, -ext.length);
+        return `${stem}-${suffix}${ext}`;
+    };
+
+    if (Array.isArray(snapshotName)) {
+        if (snapshotName.length === 0) {
+            return snapshotName;
+        }
+        const segments = [...snapshotName];
+        segments[segments.length - 1] = applySuffix(segments[segments.length - 1]);
+        return segments;
+    }
+
+    return applySuffix(snapshotName);
+}
 
 /**
  * Reusable strict pixel regression check for canvas output.
@@ -102,13 +221,14 @@ export async function assertCanvasScreenshotBaseline(host: Locator, options: Can
     const maxDiffOption = comparisonPolicy.maxDiffPixelRatio !== undefined
         ? { maxDiffPixelRatio: comparisonPolicy.maxDiffPixelRatio }
         : { maxDiffPixels: comparisonPolicy.maxDiffPixels ?? 0 };
-    const normalizedSnapshotName = Array.isArray(snapshotName) ? snapshotName.join("/") : snapshotName;
+    const resolvedSnapshotName = withBrowserSpecificSuffix(snapshotName, testInfo.project.name);
+    const normalizedSnapshotName = Array.isArray(resolvedSnapshotName) ? resolvedSnapshotName.join("/") : resolvedSnapshotName;
     const mismatchBaseName = normalizedSnapshotName.replaceAll("/", "-").replace(/\.(png|jpg|jpeg|webp)$/i, "");
     const baselinePath = testInfo.snapshotPath(normalizedSnapshotName);
     const outputPath = testInfo.outputPath(`screenshot-mismatch-${mismatchBaseName}.png`);
 
     try {
-        await expect(canvas, `Screenshot baseline mismatch: ${normalizedSnapshotName} (${comparisonPolicy.label})`).toHaveScreenshot(snapshotName, {
+        await expect(canvas, `Screenshot baseline mismatch: ${normalizedSnapshotName} (${comparisonPolicy.label})`).toHaveScreenshot(resolvedSnapshotName, {
             animations: "disabled",
             caret: "hide",
             scale: "css",
@@ -147,28 +267,62 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
         return;
     }
 
-    const { snapshotName, fullPage = false } = options;
+    const {
+        snapshotName,
+        fullPage = false,
+        canvasOnly = false,
+        canvasSelector = "canvas",
+        webComponentId = "moorhen-test",
+        isolateCanvas = true,
+    } = options;
     const testInfo = test.info();
     const comparisonPolicy = getScreenshotComparisonPolicy();
     const maxDiffOption = comparisonPolicy.maxDiffPixelRatio !== undefined
         ? { maxDiffPixelRatio: comparisonPolicy.maxDiffPixelRatio }
         : { maxDiffPixels: comparisonPolicy.maxDiffPixels ?? 0 };
-    const normalizedSnapshotName = Array.isArray(snapshotName) ? snapshotName.join("/") : snapshotName;
+    const resolvedSnapshotName = withBrowserSpecificSuffix(snapshotName, testInfo.project.name);
+    const normalizedSnapshotName = Array.isArray(resolvedSnapshotName) ? resolvedSnapshotName.join("/") : resolvedSnapshotName;
     const mismatchBaseName = normalizedSnapshotName.replaceAll("/", "-").replace(/\.(png|jpg|jpeg|webp)$/i, "");
     const baselinePath = testInfo.snapshotPath(normalizedSnapshotName);
     const outputPath = testInfo.outputPath(`screenshot-mismatch-${mismatchBaseName}.png`);
 
+    const screenshotOptions = {
+        animations: "disabled" as const,
+        caret: "hide" as const,
+        scale: "css" as const,
+        threshold: comparisonPolicy.threshold,
+        ...maxDiffOption,
+    };
+
+    const targetCanvas = canvasOnly
+        ? (canvasSelector === "canvas" ? await getWebGLCanvasLocator(page, webComponentId) : page.locator(canvasSelector).first())
+        : null;
+
+    const shouldIsolateCanvas = Boolean(targetCanvas && isolateCanvas && canvasSelector === "canvas");
+
     try {
-        await expect(page, `Screenshot baseline mismatch: ${normalizedSnapshotName} (${comparisonPolicy.label})`).toHaveScreenshot(snapshotName, {
-            animations: "disabled",
-            caret: "hide",
-            scale: "css",
-            fullPage,
-            threshold: comparisonPolicy.threshold,
-            ...maxDiffOption,
-        });
+        if (shouldIsolateCanvas) {
+            await setCanvasCaptureIsolation(page, webComponentId, true);
+        }
+
+        if (targetCanvas) {
+            await expect(targetCanvas).toBeVisible();
+            await expect(
+                targetCanvas,
+                `Screenshot baseline mismatch: ${normalizedSnapshotName} (${comparisonPolicy.label})`
+            ).toHaveScreenshot(resolvedSnapshotName, screenshotOptions);
+        } else {
+            await expect(page, `Screenshot baseline mismatch: ${normalizedSnapshotName} (${comparisonPolicy.label})`).toHaveScreenshot(resolvedSnapshotName, {
+                ...screenshotOptions,
+                fullPage,
+            });
+        }
     } catch (error) {
-        await page.screenshot({ path: outputPath, fullPage });
+        if (targetCanvas) {
+            await targetCanvas.screenshot({ path: outputPath });
+        } else {
+            await page.screenshot({ path: outputPath, fullPage });
+        }
 
         const originalMessage = error instanceof Error ? error.message : String(error);
         throw new Error(
@@ -176,9 +330,10 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
                 `Screenshot baseline mismatch for '${normalizedSnapshotName}'.`,
                 `Project: ${testInfo.project.name}`,
                 `Page URL: ${page.url()}`,
+                `Capture target: ${targetCanvas ? `canvas (${canvasSelector === "canvas" ? `webgl:${webComponentId}` : canvasSelector})` : `page (fullPage=${fullPage})`}`,
                 `Comparison mode: ${comparisonPolicy.label} (threshold=${comparisonPolicy.threshold}, ${comparisonPolicy.maxDiffPixelRatio !== undefined ? `maxDiffPixelRatio=${comparisonPolicy.maxDiffPixelRatio}` : `maxDiffPixels=${comparisonPolicy.maxDiffPixels ?? 0}`})`,
                 `Expected baseline: ${baselinePath}`,
-                `Captured current page: ${outputPath}`,
+                `Captured current screenshot: ${outputPath}`,
                 "To refresh baselines:",
                 "  npm run test:e2e:update-snapshots",
                 "  npm run test:e2e:update-snapshots:chromium",
@@ -188,6 +343,10 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
                 originalMessage,
             ].join("\n")
         );
+    } finally {
+        if (shouldIsolateCanvas) {
+            await setCanvasCaptureIsolation(page, webComponentId, false);
+        }
     }
 }
 
@@ -213,17 +372,11 @@ export type WebGLCanvasStats = {
     pixelSignature: number;
 };
 
-export type BrowserFixtureFile = {
-    name: string;
-    mimeType: string;
-    bytes: number[];
-};
-
 export type MoorhenStartedSession = {
     page: Page;
     host: Locator;
     elementId: string;
-    loadFiles: (files: BrowserFixtureFile[]) => Promise<MoorhenLoadSummary>;
+    loadFiles: (files: MoorhenLoadFilesInput, origin?: string) => Promise<MoorhenLoadResult[]>;
     callInstanceMethod: <T = unknown>(methodPath: string, ...args: unknown[]) => Promise<T>;
     getObjectCounts: () => Promise<{ moleculeCount: number; mapCount: number }>;
     getSceneSettings: () => Promise<SceneSettingsSnapshot>;
@@ -232,12 +385,21 @@ export type MoorhenStartedSession = {
     assertPageScreenshotBaseline: (options: PageScreenshotBaselineOptions) => Promise<void>;
 };
 
-export type MoorhenLoadSummary = {
-    loadedTypes: ("molecule" | "map")[];
-    loadedFileNames: string[];
-    moleculeCount: number;
-    mapCount: number;
+export type MoorhenLoadResult = {
+    type: "molecule" | "map";
+    fileName: string;
 };
+
+export type MoorhenLoadFilesInput =
+    | File[]
+    | File
+    | FileList
+    | string
+    | string[]
+    | URL
+    | URL[]
+    | { url: string | URL; filename: string }[]
+    | { url: string | URL; filename: string };
 
 export type WebGLSettleOptions = {
     elementId?: string;
@@ -355,11 +517,12 @@ export async function waitForWebGLRenderSettle(page: Page, options: WebGLSettleO
 
 export async function loadFilesViaMoorhenInstance(
     page: Page,
-    files: BrowserFixtureFile[],
+    files: MoorhenLoadFilesInput,
+    origin = "playwright-e2e",
     elementId = "moorhen-test"
-): Promise<MoorhenLoadSummary> {
+): Promise<MoorhenLoadResult[]> {
     return page.evaluate(
-        async ({ targetId, inputFiles }) => {
+        async ({ targetId, inputFiles, inputOrigin }) => {
             const host = document.getElementById(targetId) as unknown as {
                 getMoorhenInstance: () => Promise<{
                     files: {
@@ -368,7 +531,6 @@ export async function loadFilesViaMoorhenInstance(
                             origin?: string
                         ) => Promise<{ type: "molecule" | "map"; fileName: string }[]>;
                     };
-                    store: { getState: () => any };
                 }>;
             } | null;
 
@@ -377,23 +539,10 @@ export async function loadFilesViaMoorhenInstance(
             }
 
             const instance = await host.getMoorhenInstance();
-            const browserFiles = inputFiles.map(file => {
-                const payload = new Uint8Array(file.bytes);
-                return new File([payload], file.name, { type: file.mimeType });
-            });
-
-            // Explicitly use the public Moorhen instance file-loading API.
-            const loaded = await instance.files.loadFiles(browserFiles, "playwright-e2e");
-            const state = instance.store.getState();
-
-            return {
-                loadedTypes: loaded.map(item => item.type),
-                loadedFileNames: loaded.map(item => item.fileName),
-                moleculeCount: state?.molecules?.moleculeList?.length ?? 0,
-                mapCount: state?.maps?.length ?? 0,
-            };
+            // `page.evaluate` serializes payloads across Node/browser contexts; cast here to match browser-side API typing.
+            return await instance.files.loadFiles(inputFiles as Parameters<typeof instance.files.loadFiles>[0], inputOrigin);
         },
-        { targetId: elementId, inputFiles: files }
+        { targetId: elementId, inputFiles: files, inputOrigin: origin }
     );
 }
 
@@ -409,7 +558,7 @@ export async function startAndGetInstance(page: Page, elementId = "moorhen-test"
         page,
         host,
         elementId,
-        loadFiles: files => loadFilesViaMoorhenInstance(page, files, elementId),
+        loadFiles: (files, origin) => loadFilesViaMoorhenInstance(page, files, origin, elementId),
         callInstanceMethod: async <T = unknown>(methodPath: string, ...args: unknown[]): Promise<T> => {
             const result = await page.evaluate(
                 async ({ targetId, path, methodArgs }) => {

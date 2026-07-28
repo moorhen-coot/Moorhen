@@ -38,6 +38,8 @@ Strict baseline comparison is enabled by default in tests/e2e/load-files.spec.ts
 
 Headless/non-headed runs stay fully strict (`maxDiffPixels: 0`, `threshold: 0`).
 
+Snapshots are always browser-specific. Chromium and Firefox each maintain their own baseline image files.
+
 Headed runs through `npm run test:e2e:headed` enable a tiny tolerance to avoid false positives from local compositor differences:
 
 - `MOORHEN_E2E_HEADED_SCREENSHOT_TOLERANCE=1`
@@ -69,9 +71,9 @@ Update Firefox only:
 
 - npm run test:e2e:update-snapshots:firefox
 
-Generated snapshots are stored under Playwright snapshot folders next to the spec, for example:
+Generated snapshots are stored in a single folder:
 
-- tests/e2e/load-files.spec.ts-snapshots/
+- tests/e2e/snapshots/
 
 ## Agent Workflow (Required)
 
