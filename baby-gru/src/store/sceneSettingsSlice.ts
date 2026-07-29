@@ -106,7 +106,7 @@ export const initialState: {
     doAnaglyphStereo: false,
     doOutline: false,
     depthBlurRadius: 3.0,
-    depthBlurDepth: 0.2,
+    depthBlurDepth: 0.5,
     height: 0,
     width: 0,
     GlViewportHeight: 0,

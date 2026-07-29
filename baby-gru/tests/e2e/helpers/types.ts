@@ -17,7 +17,6 @@ export type PageScreenshotBaselineOptions = {
         width: number;
         height: number;
     };
-    compareWithSnapshot?: string;
 };
 
 export type WebGLCanvasStats = {
