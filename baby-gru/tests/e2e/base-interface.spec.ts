@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { startAndGetInstance } from "./helpers/webcomponent";
+import { startAndGetInstance } from "./helpers";
 
 test.describe("Moorhen Web Component scene settings", () => {
     test("updates scene settings via moorhenInstance.sceneSettings", async ({ page }) => {

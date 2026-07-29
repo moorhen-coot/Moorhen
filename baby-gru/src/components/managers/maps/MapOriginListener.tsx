@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 
 export const MapOriginListener = (props: { drawMap(): void, mapUID: string }) => {
-    const origin = useSelector((state: RootState) => state.glRef.origin);
+    const origin = useSelector((state: RootState) => state.sceneSettings.origin);
     const moorhenInstance = useMoorhenInstance();
     const map = moorhenInstance.getMap(props.mapUID);
     const isInRange = (value: number, min: number, max: number) => value >= min && value <= max;

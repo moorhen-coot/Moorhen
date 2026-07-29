@@ -13,7 +13,8 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { moorhenKeyPress } from '../../utils/MoorhenKeyboardPress';
 import { setQuat, setOrigin, setZoom,
-         setClipStart, setClipEnd, setFogStart, setFogEnd, setCursorPosition, setDisplayBuffers, setLabelBuffers } from "../../store/glRefSlice"
+         setCursorPosition, setDisplayBuffers, setLabelBuffers, setClipStart, setClipEnd, setFogStart, setFogEnd,
+         autoClipFogByZoom,  } from "../../store"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
@@ -107,22 +108,22 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin)
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
     const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
-    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition)
-    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient)
-    const specular = useSelector((state: moorhen.State) => state.glRef.specular)
-    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse)
-    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower)
-    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom)
+    const lightPosition = useSelector((state: moorhen.State) => state.sceneSettings.lightPosition)
+    const ambient = useSelector((state: moorhen.State) => state.sceneSettings.ambient)
+    const specular = useSelector((state: moorhen.State) => state.sceneSettings.specular)
+    const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse)
+    const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower)
+    const zoom = useSelector((state: moorhen.State) => state.sceneSettings.zoom)
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset)
-    const fogStart = useSelector((state: moorhen.State) => state.glRef.fogStart)
-    const fogEnd = useSelector((state: moorhen.State) => state.glRef.fogEnd)
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart)
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd)
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset)
+    const fogStart = useSelector((state: moorhen.State) => state.sceneSettings.fogStart)
+    const fogEnd = useSelector((state: moorhen.State) => state.sceneSettings.fogEnd)
+    const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart)
+    const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
     const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
@@ -175,20 +176,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const commandCentre = useCommandCentre()
 
-    const setClipFogByZoom = (): void => {
-        const fieldDepthFront: number = 8;
-        const fieldDepthBack: number = 21;
-        if (glRef !== null && typeof glRef !== 'function') {
-            dispatch(setFogStart(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront)))
-            dispatch(setFogEnd(glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack)))
-            dispatch(setClipStart(glRef.current.zoom * fieldDepthFront))
-            dispatch(setClipEnd(glRef.current.zoom * fieldDepthBack))
-        }
-    }
+
 
     const handleZoomChanged = useCallback(evt => {
         if (resetClippingFogging) {
-            setClipFogByZoom()
+            dispatch(autoClipFogByZoom())
         }
     }, [glRef, resetClippingFogging])
 
@@ -433,7 +425,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
             if (resetClippingFogging) {
-                setClipFogByZoom()
+                dispatch(autoClipFogByZoom())
             }
             glRef.current.resize(width, height)
             glRef.current.drawScene()
@@ -453,7 +445,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setDiffuseLightNoUpdate(diffuse[0],diffuse[1],diffuse[2])
             glRef.current.setLightPositionNoUpdate(lightPosition[0],lightPosition[1],lightPosition[2])
             glRef.current.setSpecularPowerNoUpdate(specularPower)
-            setClipFogByZoom()
+            dispatch(autoClipFogByZoom())
             glRef.current.resize(width, height)
             glRef.current.drawScene()
         }

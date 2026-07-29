@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
     startAndGetInstance,
-} from "./helpers/webcomponent";
+} from "./helpers";
 
 test.describe("Moorhen Web Component file loading", () => {
     test("loads molecule and map via moorhenInstance.files.loadFiles and updates WebGL output", async ({ page }) => {

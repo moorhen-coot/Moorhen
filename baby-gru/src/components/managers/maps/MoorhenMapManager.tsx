@@ -88,7 +88,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     });
 
     const appendDrawQueue = () => {
-        const currentOrigin = store.getState().glRef.origin;
+        const currentOrigin = store.getState().sceneSettings.origin;
         const drawRadius = mapFastRadius === -1 ? mapRadius : mapFastRadius;
         const [x, y, z] = currentOrigin.map(coord => -coord) as [number, number, number];
         drawQueue.current.push({

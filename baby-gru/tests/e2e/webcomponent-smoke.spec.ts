@@ -4,7 +4,7 @@ import {
     gotoWebComponentPage,
     openSearchBar,
     waitForMoorhenReady,
-} from "./helpers/webcomponent";
+} from "./helpers";
 
 test.describe("Moorhen Web Component smoke", () => {
     test("loads and exposes ready state", async ({ page }) => {

@@ -94,7 +94,7 @@ export const getCentreAtom = async (
     store: MoorhenReduxStoreType
 ): Promise<[MoorhenMolecule, string]> => {
     const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
-    const originState = store.getState().glRef.origin;
+    const originState = store.getState().sceneSettings.origin;
     if (visibleMolecules.length === 0) {
         return [null, null];
     }

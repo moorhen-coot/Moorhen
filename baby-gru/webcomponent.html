@@ -31,8 +31,10 @@
         <script type="module">
             import { registerMoorhenWebComponent } from "./src/WebComponent/entry";
             registerMoorhenWebComponent();
+            const moorhenTest = document.getElementById("moorhen-test");
+            const instance = await moorhenTest.getMoorhenInstance();
+            instance.sceneSettings.resetSceneSettings();
         </script>
-
         <moorhen-web-component id="moorhen-test"></moorhen-web-component>
     </main>
 </body>

@@ -75,6 +75,7 @@ import {
 } from "../../../store/sceneSettingsSlice";
 import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
 import { moorhen } from "../../../types/moorhen";
+import { initialState as sceneSettingsInitialState } from "../../../store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
@@ -89,7 +90,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "defaultBackgroundColor",
         valueSetter: setDefaultBackgroundColor,
         selector: (state: moorhen.State) => state.sceneSettings.defaultBackgroundColor,
-        defaultValue: [1, 1, 1, 1],
+        defaultValue: sceneSettingsInitialState.defaultBackgroundColor,
     },
     2: {
         label: "atomLabelDepthMode",
@@ -137,19 +138,19 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "drawCrosshairs",
         valueSetter: setDrawCrosshairs,
         selector: (state: moorhen.State) => state.sceneSettings.drawCrosshairs,
-        defaultValue: true,
+        defaultValue: sceneSettingsInitialState.drawCrosshairs,
     },
     10: {
         label: "drawFPS",
         valueSetter: setDrawFPS,
         selector: (state: moorhen.State) => state.sceneSettings.drawFPS,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.drawFPS,
     },
     11: {
         label: "drawMissingLoops",
         valueSetter: setDrawMissingLoops,
         selector: (state: moorhen.State) => state.sceneSettings.drawMissingLoops,
-        defaultValue: true,
+        defaultValue: sceneSettingsInitialState.drawMissingLoops,
     },
     12: {
         label: "mapLineWidth",
@@ -179,7 +180,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "defaultBondSmoothness",
         valueSetter: setDefaultBondSmoothness,
         selector: (state: moorhen.State) => state.sceneSettings.defaultBondSmoothness,
-        defaultValue: 1,
+        defaultValue: sceneSettingsInitialState.defaultBondSmoothness,
     },
     17: {
         label: "showScoresToast",
@@ -197,7 +198,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "resetClippingFogging",
         valueSetter: setResetClippingFogging,
         selector: (state: moorhen.State) => state.sceneSettings.resetClippingFogging,
-        defaultValue: true,
+        defaultValue: sceneSettingsInitialState.resetClippingFogging,
     },
     20: {
         label: "defaultUpdatingScores",
@@ -221,7 +222,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "clipCap",
         valueSetter: setClipCap,
         selector: (state: moorhen.State) => state.sceneSettings.clipCap,
-        defaultValue: true,
+        defaultValue: sceneSettingsInitialState.clipCap,
     },
     24: {
         label: "enableTimeCapsule",
@@ -233,13 +234,13 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "doPerspectiveProjection",
         valueSetter: setDoPerspectiveProjection,
         selector: (state: moorhen.State) => state.sceneSettings.doPerspectiveProjection,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doPerspectiveProjection,
     },
     26: {
         label: "useOffScreenBuffers",
         valueSetter: setUseOffScreenBuffers,
         selector: (state: moorhen.State) => state.sceneSettings.useOffScreenBuffers,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.useOffScreenBuffers,
     },
     27: {
         label: "contourWheelSensitivityFactor",
@@ -251,7 +252,7 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "drawAxes",
         valueSetter: setDrawAxes,
         selector: (state: moorhen.State) => state.sceneSettings.drawAxes,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.drawAxes,
     },
     29: {
         label: "devMode",
@@ -263,13 +264,13 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "doShadowDepthDebug",
         valueSetter: setDoShadowDepthDebug,
         selector: (state: moorhen.State) => state.sceneSettings.doShadowDepthDebug,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doShadowDepthDebug,
     },
     31: {
         label: "doShadow",
         valueSetter: setDoShadow,
         selector: (state: moorhen.State) => state.sceneSettings.doShadow,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doShadow,
     },
     32: {
         label: "GLLabelsFontFamily",
@@ -287,19 +288,19 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "doOutline",
         valueSetter: setDoOutline,
         selector: (state: moorhen.State) => state.sceneSettings.doOutline,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doOutline,
     },
     35: {
         label: "depthBlurRadius",
         valueSetter: setDepthBlurRadius,
         selector: (state: moorhen.State) => state.sceneSettings.depthBlurRadius,
-        defaultValue: 3.0,
+        defaultValue: sceneSettingsInitialState.depthBlurRadius,
     },
     36: {
         label: "depthBlurDepth",
         valueSetter: setDepthBlurDepth,
         selector: (state: moorhen.State) => state.sceneSettings.depthBlurDepth,
-        defaultValue: 0.2,
+        defaultValue: sceneSettingsInitialState.depthBlurDepth,
     },
     37: {
         label: "transparentModalsOnMouseOut",
@@ -317,25 +318,25 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "doSSAO",
         valueSetter: setDoSSAO,
         selector: (state: moorhen.State) => state.sceneSettings.doSSAO,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doSSAO,
     },
     40: {
         label: "ssaoRadius",
         valueSetter: setSsaoRadius,
         selector: (state: moorhen.State) => state.sceneSettings.ssaoRadius,
-        defaultValue: 0.4,
+        defaultValue: sceneSettingsInitialState.ssaoRadius,
     },
     41: {
         label: "ssaoBias",
         valueSetter: setSsaoBias,
         selector: (state: moorhen.State) => state.sceneSettings.ssaoBias,
-        defaultValue: 1.0,
+        defaultValue: sceneSettingsInitialState.ssaoBias,
     },
     42: {
         label: "drawScaleBar",
         valueSetter: setDrawScaleBar,
         selector: (state: moorhen.State) => state.sceneSettings.drawScaleBar,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.drawScaleBar,
     },
     43: {
         label: "animateRefine",
@@ -347,31 +348,31 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "doEdgeDetect",
         valueSetter: setDoEdgeDetect,
         selector: (state: moorhen.State) => state.sceneSettings.doEdgeDetect,
-        defaultValue: false,
+        defaultValue: sceneSettingsInitialState.doEdgeDetect,
     },
     45: {
         label: "edgeDetectDepthThreshold",
         valueSetter: setEdgeDetectDepthThreshold,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold,
-        defaultValue: 1.3,
+        defaultValue: sceneSettingsInitialState.edgeDetectDepthThreshold,
     },
     46: {
         label: "edgeDetectNormalThreshold",
         valueSetter: setEdgeDetectNormalThreshold,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold,
-        defaultValue: 0.5,
+        defaultValue: sceneSettingsInitialState.edgeDetectNormalThreshold,
     },
     47: {
         label: "edgeDetectDepthScale",
         valueSetter: setEdgeDetectDepthScale,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale,
-        defaultValue: 2.0,
+        defaultValue: sceneSettingsInitialState.edgeDetectDepthScale,
     },
     48: {
         label: "edgeDetectNormalScale",
         valueSetter: setEdgeDetectNormalScale,
         selector: (state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale,
-        defaultValue: 0.0,
+        defaultValue: sceneSettingsInitialState.edgeDetectNormalScale,
     },
     49: {
         label: "reContourMapOnlyOnMouseUp",

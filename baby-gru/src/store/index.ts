@@ -1,56 +1,8 @@
 // Auto-generated file. Do not edit directly.
 //Use scripts/CreateStoreExport.py to regenerate.
 
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setShowBottomPanel,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    setShownBottomPanel,
-    setClickAwayListenerActive,
-}  from "./globalUISlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
-export {
-    setOrigin,
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setLightPosition,
-    setAmbient,
-    setSpecular,
-    setDiffuse,
-    setSpecularPower,
-    setZoom,
-    setQuat,
-    setFogClipOffset,
-    setFogStart,
-    setFogEnd,
-    setClipStart,
-    setClipEnd,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates }  from "./hoveringStatesSlice";
 export { setValidationJson }  from "./jsonValidation";
 export {
@@ -82,7 +34,6 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setConnectedMolecule,
@@ -152,6 +103,7 @@ export {
     resetRefinementSettings,
 }  from "./refinementSettingsSlice";
 export {
+    setOrigin,
     setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -194,6 +146,18 @@ export {
     setMultiViewColumns,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
+    setLightPosition,
+    setAmbient,
+    setSpecular,
+    setDiffuse,
+    setSpecularPower,
+    setFogClipOffset,
+    setFogStart,
+    setFogEnd,
+    setClipStart,
+    setClipEnd,
+    setZoom,
+    autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
 export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
 export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
@@ -245,6 +209,43 @@ export {
     setDefaultMoleculeRepresentation,
 }  from "./generalStatesSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setShowBottomPanel,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    setShownBottomPanel,
+    setClickAwayListenerActive,
+}  from "./globalUISlice";
+export {
+    setRequestDrawScene,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
