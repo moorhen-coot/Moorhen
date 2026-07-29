@@ -61,11 +61,11 @@ export async function waitForMoorhenReady(page: Page, elementId = "moorhen-test"
     }, elementId);
 }
 
-export async function openMainMenu(host: Locator): Promise<void> {
-    const toggle = host.locator("button.moorhen__main-menu-toggle");
+export async function openMainMenu(page: Page): Promise<void> {
+    const toggle = page.locator("button.moorhen__main-menu-toggle").first();
     await expect(toggle).toBeVisible();
     await toggle.click();
-    await expect(host.locator("button.moorhen__main-menu-button").first()).toBeVisible();
+    await expect(page.locator("button.moorhen__main-menu-button").first()).toBeVisible();
 }
 
 export async function openSearchBar(host: Locator): Promise<void> {
@@ -381,6 +381,7 @@ export type MoorhenStartedSession = {
     getObjectCounts: () => Promise<{ moleculeCount: number; mapCount: number }>;
     getSceneSettings: () => Promise<SceneSettingsSnapshot>;
     getWebGLStats: () => Promise<WebGLCanvasStats>;
+    buttonClick: (ariaLabel: string) => Promise<void>;
     waitForWebGLRenderSettle: (options?: Omit<WebGLSettleOptions, "elementId">) => Promise<WebGLCanvasStats>;
     assertPageScreenshotBaseline: (options: PageScreenshotBaselineOptions) => Promise<void>;
 };
@@ -601,6 +602,43 @@ export async function startAndGetInstance(page: Page, elementId = "moorhen-test"
         getObjectCounts: () => getMoorhenObjectCounts(page, elementId),
         getSceneSettings: () => getSceneSettingsSnapshot(page, elementId),
         getWebGLStats: () => getWebGLCanvasStats(page, elementId),
+        buttonClick: async (ariaLabel: string): Promise<void> => {
+            await page.evaluate(
+                ({ targetId, label }) => {
+                    const host = document.getElementById(targetId) as HTMLElement | null;
+                    const root = host?.shadowRoot;
+                    if (!root) {
+                        throw new Error(`Shadow root not found for element '${targetId}'`);
+                    }
+
+                    const tryFindButton = (): HTMLButtonElement | null => {
+                        const buttons = Array.from(root.querySelectorAll("button")) as HTMLButtonElement[];
+                        return buttons.find(button => button.getAttribute("aria-label") === label) ?? null;
+                    };
+
+                    let targetButton = tryFindButton();
+
+                    // Main menu entries are rendered only when expanded.
+                    if (!targetButton) {
+                        const menuToggle = root.querySelector("button.moorhen__main-menu-toggle") as HTMLButtonElement | null;
+                        menuToggle?.click();
+                        targetButton = tryFindButton();
+                    }
+
+                    if (!targetButton) {
+                        const availableLabels = Array.from(root.querySelectorAll("button"))
+                            .map(button => button.getAttribute("aria-label"))
+                            .filter((item): item is string => Boolean(item));
+                        throw new Error(
+                            `Button with aria-label '${label}' not found. Available labels: ${availableLabels.join(", ") || "none"}`
+                        );
+                    }
+
+                    targetButton.click();
+                },
+                { targetId: elementId, label: ariaLabel }
+            );
+        },
         waitForWebGLRenderSettle: options => waitForWebGLRenderSettle(page, { ...options, elementId }),
         assertPageScreenshotBaseline: options => assertPageScreenshotBaseline(page, options),
     };

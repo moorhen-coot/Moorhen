@@ -18,13 +18,10 @@ test.describe("Moorhen Web Component scene settings", () => {
             },
         ]);
 
-        await moorhen.callInstanceMethod("sceneSettings.setDrawAxes", true);
-        await moorhen.callInstanceMethod("sceneSettings.setDoPerspectiveProjection", true);
-        await moorhen.callInstanceMethod("sceneSettings.setDoOutline", true);
-        await moorhen.callInstanceMethod("sceneSettings.setSpecularPower", 1);
 
         await moorhen.buttonClick("Open Models Panel");
         await moorhen.buttonClick("Open Maps Panel");
+        await moorhen.buttonClick("File Menu");
 
         await moorhen.waitForWebGLRenderSettle({
             minSettleMs: 500,
@@ -32,7 +29,12 @@ test.describe("Moorhen Web Component scene settings", () => {
         });
 
         await moorhen.assertPageScreenshotBaseline({
-            snapshotName: "scene-settings-toggles-full-window.png",
+            snapshotName: "base-interface-light.png",
+        });
+
+         await moorhen.callInstanceMethod("sceneSettings.setBackgroundColor", [0.22, 0.22, 0.32, 1]);
+        await moorhen.assertPageScreenshotBaseline({
+            snapshotName: "base-interface-dark.png",
         });
     });
 });
