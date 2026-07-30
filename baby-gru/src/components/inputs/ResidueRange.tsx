@@ -42,7 +42,7 @@ export const ResidueRangeSelector = (props: ResidueRangeSelectorProps) => {
             <MoorhenSequenceViewer
                 style={{ border: "none", marginTop: "0rem" }}
                 sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                onResiduesSelect={selection => {
+                setSelectedResidues={selection => {
                     handleResiduesRangeSelection(selection);
                 }}
                 showTitleBar={false}
