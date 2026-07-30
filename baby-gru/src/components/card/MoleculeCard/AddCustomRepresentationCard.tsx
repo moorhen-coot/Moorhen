@@ -257,8 +257,6 @@ export const AddCustomRepresentationCard = memo(
                     cidSelection = ligandFormRef.current.value;
                     break;
                 case "protein-model":
-                    // need a way to select protein model using cidSelection
-                    // cidSelection = /${modelSelectRef.current.value}/*/*/:*
                     cidSelection = modelSelectRef.current.value;
 
                     break;

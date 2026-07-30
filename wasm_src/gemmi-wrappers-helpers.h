@@ -101,13 +101,8 @@ inline std::string get_nef_info(const std::string &data, const std::string &sf_c
 
 }
 
-// these three have been changed from specific to general 
-// so two are currently deprecated 
-inline std::string get_nef_restraints(const std::string &data) {
-    return get_nef_info(data, "nef_distance_restraint_list");
-}
 
-inline std::string get_hbond_restraints(const std::string &data) {
+inline std::string get_nef_restraints(const std::string &data) {
     return get_nef_info(data, "nef_distance_restraint_list");
 }
 
