@@ -147,7 +147,7 @@ export class MoleculeRepresentation {
     ) => libcootApi.InstancedMeshJS[];
     interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" };
 
-    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
+    constructor(style: RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid();
         this.cid = cid;
         this.setStyle(style);

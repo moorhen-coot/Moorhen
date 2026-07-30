@@ -1492,6 +1492,7 @@ export class MoorhenMolecule {
             representation.hbondedToCid = hbondedToCid;
             representation.hbondedTo = hbondedTo;
             representation.neighboursDistance = neighboursDistance;
+            representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         }
 
         await representation.draw();

@@ -19,7 +19,7 @@ import { MoorhenAccordion, MoorhenInfoCard, MoorhenMenuItem, MoorhenMenuItemPopo
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
-import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
+import { AddCustomRepresentationCard } from "./addCustomRepresentation/AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import {
     MoorhenMoleculeRepresentationSettingsCard,

@@ -395,7 +395,7 @@ export const PictureWizardCard = memo(
                         }
                     {ruleType === "cid"  && (wizardType === "site-and-ribbons" || wizardType === "ribbons") && (
                         <MoorhenCidInputForm
-                            setCid={setCid}
+                            setValue={setCid}
                             label="Atom selection"
                             defaultValue={props.representation?.cid ?? ""}
                             allowUseCurrentSelection={true}
