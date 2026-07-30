@@ -26,7 +26,6 @@ export const ActivityIndicator = () => {
     const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
         const chemShiftAtom = hoveredAtom.atomInfo
         ? `Chemical shift: ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            // edit moorhenNOEVectors to enumerate ambiguous restraints + flag
             (cs.atom === hoveredAtom.atomInfo.name &&
              cs.chain === hoveredAtom.atomInfo.chain_id &&
              (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&

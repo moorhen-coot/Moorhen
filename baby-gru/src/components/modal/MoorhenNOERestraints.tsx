@@ -89,7 +89,7 @@ export const MoorhenNOERestraints = () => {
                     newNOEVector.cidTo = row.chain2 + "/" + row.res2 + "/" + row.atom2
                     if (row.ambiguityFlag) {
                         newNOEVector.vectorColour = { r: 185, g: 255, b: 255 };
-                        newNOEVector.ambiguous = true 
+                        newNOEVector.customTags.push("ambiguous")
                     }
                     newVectors.push(newNOEVector)
                 })
