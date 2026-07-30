@@ -136,7 +136,7 @@ export {
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export { setValidationJson }  from "./jsonValidation";
 export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
-export { setChemShifts, clearChemShifts }  from "./chemShiftSlice";
+// // export { setChemShifts, clearChemShifts }  from "./chemShiftSlice";
 export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
 export {
     addMolecule,

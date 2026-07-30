@@ -24,7 +24,6 @@ import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
 import vectorsReducer from "./vectorsSlice";
-import chemShiftReducer from "./chemShiftSlice"
 
 export const reducers = {
     molecules: moleculesReducer,
@@ -50,7 +49,7 @@ export const reducers = {
     menus: menusReducer,
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
-    chemShifts: chemShiftReducer,
+    // chemShifts: chemShiftReducer,
     snackBars: snackBarsReducer,
 };
 

@@ -33,7 +33,6 @@ import { MoorhenLigandList } from "./list/MoorhenLigandList";
 
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
-// import { addVector, removeVector, MoorhenVector} from "../../../store/vectorsSlice"
 
 import "./molecule-card.css";
 
