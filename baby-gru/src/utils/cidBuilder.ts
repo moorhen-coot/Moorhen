@@ -1,6 +1,6 @@
-import { ColourRule } from "../../../../../utils/MoorhenColourRule";
-import { getMultiColourRuleArgs } from "../../../../../utils/utils";
-import { moorhen } from "../../../../../types/moorhen";
+import { ColourRule } from "./MoorhenColourRule";
+import { getMultiColourRuleArgs } from "./utils";
+import { moorhen } from "../types/moorhen";
 
 export interface BuildCidSelectionParams {
     ruleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";

@@ -450,7 +450,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     >
                         <PictureWizardCard
                             setBusy={setBusyDrawingCustomRepresentation}
-                            urlPrefix={urlPrefix}
                             molecule={props.molecule}
                             onApply={() => document.body.click()}
                         />

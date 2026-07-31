@@ -22,7 +22,7 @@ import { NeighbourhoodSettings } from "./components/NeighbourhoodSettings";
 import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmentStyleSelectors";
 import { ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
-import { buildCidSelection, buildColourRule, getNonCustomAlpha } from "./utils/cidBuilder";
+import { buildCidSelection, buildColourRule, getNonCustomAlpha } from "../../../../utils/cidBuilder";
 import { parseCid } from "../../../../utils/utils";
 
 export const AddCustomRepresentationCard = memo(
