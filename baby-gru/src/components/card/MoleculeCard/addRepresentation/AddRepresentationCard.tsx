@@ -22,7 +22,7 @@ import { NeighbourhoodSettings } from "./components/NeighbourhoodSettings";
 import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmentStyleSelectors";
 import { ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
-import { buildCidSelection, buildColourRule, getNonCustomAlpha } from "../../../../utils/cidBuilder";
+import { getNonCustomAlpha } from "../../../../utils/RepresentationBuilder";
 import { parseCid } from "../../../../utils/utils";
 
 export const AddCustomRepresentationCard = memo(
@@ -127,44 +127,8 @@ export const AddCustomRepresentationCard = memo(
             }
         };
 
-        const createRepresentation = async () => {
+        const applyRepresentation = async () => {
             props.setBusy?.(true);
-
-            const cidSelection = buildCidSelection({
-                ruleType,
-                representationStyle,
-                molecule: props.molecule,
-                chainName: selectedChain || null,
-                notHOH,
-                notH,
-                sideChainOnly,
-                restrictToNeighbours,
-                excludeNeighbours,
-                neighboursCid,
-                neighboursDistance,
-                sequenceResidueRange: sequenceResidueRange[0] !== -9999 ? sequenceResidueRange : null,
-                cid,
-                ligandCid: ligandCid || null,
-            });
-
-            if (!cidSelection) {
-                console.warn("Invalid CID selection to create a custom representation");
-                props.setBusy?.(false);
-                return;
-            }
-
-            const colourRule = await buildColourRule({
-                useDefaultColours,
-                colourMode,
-                ruleType: ruleType !== "neighbourhood" ? ruleType : "molecule",
-                cidSelection,
-                colour,
-                molecule: props.molecule,
-                applyColourToNonCarbonAtoms,
-                ncsColourRule: ncsColourRuleRef.current,
-                styleSelectValue: representationStyle,
-                colourModeSelectValue: colourMode,
-            });
 
             const nonCustomAlpha = getNonCustomAlpha(colourMode, nonCustomOpacity);
 
@@ -181,50 +145,95 @@ export const AddCustomRepresentationCard = memo(
                         dispatch(addCustomRepresentation(props.molecule.adaptativeBondsRepresentation));
                     }
                 } else {
-                    const representation = await props.molecule.addRepresentation(
+                    const representation = await MoleculeRepresentation.create({
+                        ruleType,
                         representationStyle,
-                        cidSelection,
-                        true,
-                        colourRule ? [colourRule] : null,
-                        representationRef.current.useDefaultBondOptions ? null : { ...representationRef.current.bondOptions },
-                        representationRef.current.useDefaultM2tParams ? null : { ...representationRef.current.m2tParams },
-                        representationRef.current.useDefaultResidueEnvironmentOptions
-                            ? null
-                            : { ...representationRef.current.residueEnvironmentOptions },
-                        nonCustomAlpha,
-                        neighboursCid,
+                        molecule: props.molecule,
+                        chainName: selectedChain || null,
+                        notHOH,
+                        notH,
+                        sideChainOnly,
                         restrictToNeighbours,
                         excludeNeighbours,
                         neighboursCid,
+                        neighboursDistance,
+                        sequenceResidueRange:
+                            sequenceResidueRange && sequenceResidueRange[0] !== -9999 ? sequenceResidueRange : null,
+                        cid,
+                        ligandCid: ligandCid || null,
+                        useDefaultColours,
+                        colourMode,
+                        colour,
+                        applyColourToNonCarbonAtoms,
+                        ncsColourRule: ncsColourRuleRef.current,
+                        isCustom: true,
+                        bondOptions: representationRef.current.useDefaultBondOptions
+                            ? null
+                            : { ...representationRef.current.bondOptions },
+                        m2tParams: representationRef.current.useDefaultM2tParams
+                            ? null
+                            : { ...representationRef.current.m2tParams },
+                        residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
+                            ? null
+                            : { ...representationRef.current.residueEnvironmentOptions },
+                        nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
-                        neighboursDistance
-                    );
-                    representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
+                    });
+
+                    if (!representation) {
+                        props.setBusy?.(false);
+                        return;
+                    }
+
                     dispatch(addCustomRepresentation(representation));
                 }
             } else if (mode === "edit" && props.representation.uniqueId) {
-                const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId);
-                if (representation) {
-                    representation.cid = cidSelection;
-                    representation.restrictToNeighbours = restrictToNeighbours;
-                    representation.neighboursDistance = neighboursDistance;
-                    representation.excludeNeighbours = excludeNeighbours;
-                    representation.neighboursCid = neighboursCid;
-                    representation.hbondedTo = hbondedTo;
-                    representation.hbondedToCid = neighboursCid;
-                    representation.setStyle(representationStyle);
-                    representation.setUseDefaultColourRules(!colourRule);
-                    representation.setColourRules(colourRule ? [colourRule] : null);
-                    await representation.redraw();
-                    representation.setNonCustomOpacity(nonCustomAlpha);
-                }
+                const existingRepresentation = props.molecule.representations.find(
+                    item => item.uniqueId === props.representation.uniqueId
+                );
+                if (existingRepresentation) {
+                    existingRepresentation.edit({
+                        ruleType,
+                        representationStyle,
+                        chainName: selectedChain || null,
+                        notHOH,
+                        notH,
+                        sideChainOnly,
+                        restrictToNeighbours,
+                        excludeNeighbours,
+                        neighboursCid,
+                        neighboursDistance,
+                        sequenceResidueRange:
+                            sequenceResidueRange && sequenceResidueRange[0] !== -9999 ? sequenceResidueRange : null,
+                        cid,
+                        ligandCid: ligandCid || null,
+                        useDefaultColours,
+                        colourMode,
+                        colour,
+                        applyColourToNonCarbonAtoms,
+                        ncsColourRule: ncsColourRuleRef.current,
+                        bondOptions: representationRef.current.useDefaultBondOptions
+                            ? null
+                            : { ...representationRef.current.bondOptions },
+                        m2tParams: representationRef.current.useDefaultM2tParams
+                            ? null
+                            : { ...representationRef.current.m2tParams },
+                        residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
+                            ? null
+                            : { ...representationRef.current.residueEnvironmentOptions },
+                        nonCustomOpacity: nonCustomAlpha,
+                        hbondedTo,
+                    });}
+
+                    else {
+                        props.setBusy?.(false);
+                        return;
+                    }
+    
             }
             if (representationStyle === "adaptativeBonds") {
                 props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.backgroundRepresentation = adaptBondOOF;
                 props.molecule.adaptativeBondsRepresentation.residueEnvironmentOptions.adaptiveDist = adaptDist;
-            }
-            if (mode === "edit") {
-                props.representation.redraw();
             }
             props.setBusy?.(false);
             props.onApply?.();
@@ -232,7 +241,7 @@ export const AddCustomRepresentationCard = memo(
 
         const handleCreateRepresentation = async () => {
             try {
-                await createRepresentation();
+                await applyRepresentation();
             } catch (err) {
                 props.setBusy?.(false);
                 console.warn(err);

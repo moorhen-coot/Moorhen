@@ -38,7 +38,7 @@ export const stringToSeqViewer = (
 };
 
 export function moorhenSequenceToSeqViewer(sequence: Sequence, molName: string, molNo: number): SeqElement | null {
-    if (sequence !== null && sequence.sequence.length > 0) {
+    if (sequence && sequence.sequence.length > 0) {
         return {
             molName: molName,
             chain: sequence.chain,

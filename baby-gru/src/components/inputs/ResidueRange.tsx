@@ -18,6 +18,11 @@ export const ResidueRangeSelector = (props: ResidueRangeSelectorProps) => {
     };
 
     const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === props.selectedChain);
+
+    if (!selectedSequence) {
+        return null;
+    }
+
     const handleResidueRangeChange = (range: [number, number]) => {
         let clampedRange: [number, number] = range;
         if (clampedRange[0] > clampedRange[1]) {

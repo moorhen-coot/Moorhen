@@ -1247,7 +1247,7 @@ export class MoorhenMolecule {
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
         } else {
-            await this.addRepresentation(style, cid);
+            await MoleculeRepresentation.create({ representationStyle: style, molecule: this, isCustom: false });
         }
     }
 
@@ -1427,30 +1427,10 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
+     * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
         style: RepresentationStyles,
-        cid?: string,
-        isCustom?: boolean,
-        colourRules?: ColourRule[],
-        bondOptions?: moorhen.cootBondOptions,
-        m2tParams?: m2tParameters,
-        residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number,
-        neighboursCid?: string,
-        restrictToNeighbours?: boolean,
-        excludeNeighbours?: boolean,
-        hbondedToCid?: string,
-        hbondedTo?: boolean,
-        neighboursDistance?: number
-    ): Promise<moorhen.MoleculeRepresentation>;
-    /**
-     * Add a representation to the molecule
-     * @param {moorhen.MoleculeRepresentation} representation - A pre-configured molecule representation
-     */
-    async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
-    async addRepresentation(
-        styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
         cid: string = "/*/*/*/*:*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
@@ -1469,31 +1449,21 @@ export class MoorhenMolecule {
             await this.fetchDefaultColourRules();
         }
 
-        let representation: moorhen.MoleculeRepresentation;
-
-        // Check if the first argument is a MoleculeRepresentation instance
-        if (styleOrRepresentation instanceof MoleculeRepresentation) {
-            representation = styleOrRepresentation;
-            representation.setParentMolecule(this);
-        } else {
-            // Create a new representation from individual parameters
-            const style = styleOrRepresentation as moorhen.RepresentationStyles;
-            representation = new MoleculeRepresentation(style, cid, this.commandCentre);
-            representation.isCustom = isCustom;
-            representation.setParentMolecule(this);
-            representation.setColourRules(colourRules);
-            representation.setBondOptions(bondOptions);
-            representation.setM2tParams(m2tParams);
-            representation.setResidueEnvOptions(residueEnvOptions);
-            representation.setNonCustomOpacity(nonCustomOpacity);
-            representation.neighboursCid = neighboursCid;
-            representation.restrictToNeighbours = restrictToNeighbours;
-            representation.excludeNeighbours = excludeNeighbours;
-            representation.hbondedToCid = hbondedToCid;
-            representation.hbondedTo = hbondedTo;
-            representation.neighboursDistance = neighboursDistance;
-            representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
-        }
+        const representation = new MoleculeRepresentation(style, cid, this.commandCentre);
+        representation.isCustom = isCustom;
+        representation.setParentMolecule(this);
+        representation.setColourRules(colourRules);
+        representation.setBondOptions(bondOptions);
+        representation.setM2tParams(m2tParams);
+        representation.setResidueEnvOptions(residueEnvOptions);
+        representation.setNonCustomOpacity(nonCustomOpacity);
+        representation.neighboursCid = neighboursCid;
+        representation.restrictToNeighbours = restrictToNeighbours;
+        representation.excludeNeighbours = excludeNeighbours;
+        representation.hbondedToCid = hbondedToCid;
+        representation.hbondedTo = hbondedTo;
+        representation.neighboursDistance = neighboursDistance;
+        representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
 
         await representation.draw();
         this.representations.push(representation);
@@ -1529,7 +1499,13 @@ export class MoorhenMolecule {
             if (representation) {
                 await representation.show();
             } else {
-                representation = await this.addRepresentation(style, cid);
+                representation = await MoleculeRepresentation.create({
+                    representationStyle: style,
+                    molecule: this,
+                    ruleType: "cid",
+                    cid: cid ?? "/*/*/*/*:*",
+                    isCustom: false,
+                });
             }
         } catch (err) {
             console.log(err);

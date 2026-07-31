@@ -98,13 +98,13 @@ const readCoordsString = async (
 };
 
 export const drawModels = async (newMolecules: MoorhenMolecule[], representation : RepresentationStyles) => {
-    const drawPromises: Promise<MoleculeRepresentation>[] = [];
+    const drawPromises: Promise<MoleculeRepresentation | null>[] = [];
     if (newMolecules.length === 0) {
         return;
     }
 
     for (const newMolecule of newMolecules) {
-        drawPromises.push(newMolecule.addRepresentation(representation));
+        drawPromises.push(MoleculeRepresentation.create({ representationStyle: representation, molecule: newMolecule, isCustom: false }));
     }
     await Promise.all(drawPromises);
 };

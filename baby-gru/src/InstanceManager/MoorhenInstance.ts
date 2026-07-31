@@ -4,13 +4,16 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { MoorhenReduxStoreType, setOrigin } from "@/store";
+import { MoorhenReduxStoreType, addCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
+import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule, backupSession } from "@/utils/MoorhenTimeCapsule";
+import { INTERNAL_REPRESENTATION_STYLES } from "@/utils/RepresentationBuilder";
+import type { CreateRepresentationParams, PublicRepresentationStyles } from "@/utils/RepresentationBuilder";
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
@@ -43,7 +46,12 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
 
-    constructor(containerRef: React.RefObject<HTMLDivElement>, menuSystem?: MoorhenMenuSystem, externalCommandCentre?: CommandCentre, externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>) {
+    constructor(
+        containerRef: React.RefObject<HTMLDivElement>,
+        menuSystem?: MoorhenMenuSystem,
+        externalCommandCentre?: CommandCentre,
+        externalTimeCapsuleRef?: React.RefObject<MoorhenTimeCapsule | null>
+    ) {
         super();
         this.commandCentreRef = React.createRef<CommandCentre>();
         this.timeCapsuleRef = React.createRef<MoorhenTimeCapsule>();
@@ -62,9 +70,9 @@ export class MoorhenInstance extends StoreExtension {
         urlPrefix: string;
         monomerLibraryPath: string;
     } = {
-            urlPrefix: "",
-            monomerLibraryPath: "",
-        };
+        urlPrefix: "",
+        monomerLibraryPath: "",
+    };
 
     /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
     public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
@@ -79,7 +87,6 @@ export class MoorhenInstance extends StoreExtension {
             });
         }
     }
-
 
     public setCommandCentre(commandCentre: CommandCentre): void {
         this._commandCentre = commandCentre;
@@ -190,10 +197,15 @@ export class MoorhenInstance extends StoreExtension {
                     const urlString = url instanceof URL ? url.toString() : url;
 
                     // Handle Node.js file system paths or it bugs in testing
-                    if (typeof urlString === 'string' && !urlString.startsWith('http') && !urlString.startsWith('blob:') && !urlString.startsWith('file://')) {
+                    if (
+                        typeof urlString === "string" &&
+                        !urlString.startsWith("http") &&
+                        !urlString.startsWith("blob:") &&
+                        !urlString.startsWith("file://")
+                    ) {
                         try {
                             // Try to import fs (will work in Node.js)
-                            const fs = await import('fs');
+                            const fs = await import("fs");
                             const fsPromises = fs.promises;
                             const fileBuffer = await fsPromises.readFile(urlString);
                             const blob = new Blob([fileBuffer]);
@@ -214,7 +226,7 @@ export class MoorhenInstance extends StoreExtension {
 
                 if (files instanceof File) {
                     filesArray = [files];
-                } else if (typeof FileList !== 'undefined' && files instanceof FileList) {
+                } else if (typeof FileList !== "undefined" && files instanceof FileList) {
                     filesArray = Array.from(files);
                 } else if (typeof files === "string") {
                     filesArray = [await getFileFromURL(files)];
@@ -244,12 +256,7 @@ export class MoorhenInstance extends StoreExtension {
                 console.log("Files to load: ", filesArray);
 
                 const createdObjects = await execWhenReady(() =>
-                    autoOpenFiles(
-                        filesArray,
-                        moorhenInstance,
-                        backgroundColor,
-                        defaultBondSmoothness,
-                    )
+                    autoOpenFiles(filesArray, moorhenInstance, backgroundColor, defaultBondSmoothness)
                 );
 
                 for (const callbacks of Object.values(filesLoadedCallbacks)) {
@@ -288,14 +295,9 @@ export class MoorhenInstance extends StoreExtension {
     public get session() {
         const moorhenInstance = this;
 
-
         return {
             loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
-                const result = MoorhenTimeCapsule.loadSessionData(
-                    sessionData,
-                    moorhenInstance,
-                    fetchExternalUrl
-                );
+                const result = MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance, fetchExternalUrl);
                 return result;
             },
         };
@@ -318,6 +320,73 @@ export class MoorhenInstance extends StoreExtension {
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
+    }
+
+    public get representation() {
+        const moorhenInstance = this;
+        return {
+            get(uniqueID: string) {
+                let representation;
+                for (const molecule of moorhenInstance.getMoleculeList()) {
+                    representation = molecule.representations.find(rep => rep.uniqueId === uniqueID);
+                    if (representation) {
+                        break;
+                    }
+                }
+                return representation;
+            },
+            /**
+             * Create a new representation on the given molecule via the public API.
+             * @param moleculeUid - Unique ID of the target molecule
+             * @param params - Creation options. `representationStyle` is restricted to the
+             * public styles (see PublicRepresentationStyles); internal-only styles
+             * (hover, validation/analysis tools, etc.) are rejected.
+             * @param hideFromInterface - If true, the representation is created but not
+             * added to the interface (molecule card list).
+             * @returns The unique ID of the new representation, or "-1" on failure.
+             */
+            async create(
+                moleculeUid: string,
+                params: Omit<CreateRepresentationParams, "molecule" | "representationStyle" | "existingRepresentation"> & {
+                    representationStyle: PublicRepresentationStyles;
+                },
+                hideFromInterface: boolean = false
+            ): Promise<string> {
+                if ((INTERNAL_REPRESENTATION_STYLES as readonly string[]).includes(params.representationStyle)) {
+                    console.warn(
+                        `Representation style "${params.representationStyle}" is internal-only and not allowed via the public API.`
+                    );
+                    return "-1";
+                }
+                const molecule = moorhenInstance.getMolecule(moleculeUid);
+                const representation = await MoleculeRepresentation.create({ ...params, molecule: molecule });
+                if (representation) {
+                    if (!hideFromInterface) {
+                        await moorhenInstance.dispatch(addCustomRepresentation(representation));
+                    }
+                    return representation.uniqueId;
+                } else {
+                    return "-1";
+                }
+            },
+
+            async edit(
+                representationUid: string,
+                params: Omit<CreateRepresentationParams, "molecule" | "representationStyle" | "existingRepresentation"> & {
+                    representationStyle: PublicRepresentationStyles;
+                }
+            ) {
+                if ((INTERNAL_REPRESENTATION_STYLES as readonly string[]).includes(params.representationStyle)) {
+                    console.warn(
+                        `Representation style "${params.representationStyle}" is internal-only and not allowed via the public API.`
+                    );
+                    return "-1";
+                }
+                const representation = this.get(representationUid);
+
+                representation?.edit(params);
+            },
+        };
     }
 
     /** Return the MoorhenMap Object corresponding to the given unique ID */
@@ -516,7 +585,7 @@ export class MoorhenInstance extends StoreExtension {
 
             await newCommandCentre.init();
         }
-        
+
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;

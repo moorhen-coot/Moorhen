@@ -6,6 +6,8 @@ import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
+import { buildCidSelection, buildColourRule, createRepresentation } from "./RepresentationBuilder";
+import type { CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
 
@@ -214,6 +216,15 @@ export class MoleculeRepresentation {
         this.hbondedToCid = "";
         this.hbondedTo = false;
     }
+
+    /**
+     * Factory method to create (and add) a new representation on the given molecule
+     * from a params object. Builds the CID selection and colour rule internally,
+     * adds the representation to the molecule and returns it (or null if the
+     * selection is invalid).
+     */
+    static create(params: Omit<CreateRepresentationParams, "existingRepresentation">) { return createRepresentation(params)}
+    public edit(params: Omit<CreateRepresentationParams, "molecule" | "existingRepresentation">)  {createRepresentation({...params, molecule: this.parentMolecule, existingRepresentation: this })}
 
     /**
      * A method to set M2T style parameters for this molecule representation
@@ -433,10 +444,27 @@ export class MoleculeRepresentation {
      */
     setParentMolecule(molecule: moorhen.Molecule) {
         this.parentMolecule = molecule;
-        this.colourRules = this.parentMolecule.defaultColourRules;
-        this.bondOptions = this.parentMolecule.defaultBondOptions;
-        this.m2tParams = this.parentMolecule.defaultM2tParams;
-        this.residueEnvironmentOptions = this.parentMolecule.defaultResidueEnvironmentOptions;
+        // Only fall back to the molecule defaults when this representation is
+        // not using explicitly configured values. The setter methods (setColourRules,
+        // setBondOptions, setM2tParams, setResidueEnvOptions) set these flags to
+        // false, so pre-configured representations keep their settings here.
+        if (this.useDefaultColourRules) {
+            this.colourRules = this.parentMolecule.defaultColourRules;
+        } else if (this.colourRules) {
+            // Re-associate custom colour rules with this representation. setColourRules
+            // may have run before setParentMolecule (e.g. in MoleculeRepresentation.create),
+            // leaving the colour rules with a null parent molecule.
+            this.colourRules.forEach(rule => rule.setParentRepresentation(this));
+        }
+        if (this.useDefaultBondOptions) {
+            this.bondOptions = this.parentMolecule.defaultBondOptions;
+        }
+        if (this.useDefaultM2tParams) {
+            this.m2tParams = this.parentMolecule.defaultM2tParams;
+        }
+        if (this.useDefaultResidueEnvironmentOptions) {
+            this.residueEnvironmentOptions = this.parentMolecule.defaultResidueEnvironmentOptions;
+        }
         if (this.style === "ligands") {
             this.cid =
                 this.parentMolecule?.ligands?.length > 0

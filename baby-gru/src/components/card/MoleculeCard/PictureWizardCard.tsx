@@ -1,15 +1,13 @@
 import { useSnackbar } from "notistack";
 import { useDispatch } from "react-redux";
 import { memo, useState } from "react";
-import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
-import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation, removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
-import { buildCidSelection } from "../../../utils/cidBuilder";
+import { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
 
 export const PictureWizardCard = memo(
     (props: {
@@ -27,8 +25,6 @@ export const PictureWizardCard = memo(
         const dispatch = useDispatch();
 
         const { enqueueSnackbar } = useSnackbar();
-
-        const commandCentre = useCommandCentre();
 
         const createRepresentations = async () => {
 
@@ -61,78 +57,52 @@ export const PictureWizardCard = memo(
             if(wizardType==="site-and-ribbons") {
                 if(splitLigands){
                     if(splitLigands.length>3){
-                        await createRepresentation("molecule","CBs",splitLigands.join("||"),true,false,"",true);
-                        await createRepresentation("molecule","allHBonds",splitLigands.join("||"),true,false,"",false);
+                        await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true, sideChainOnly: true });
+                        await createWizardRepresentation({ ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true });
                     } else {
                         for(let ilig=0; ilig<splitLigands.length; ilig++){
-                            await createRepresentation("molecule","CBs",splitLigands[ilig],true,false,"",true);
-                            await createRepresentation("molecule","allHBonds",splitLigands[ilig],true,false,"",false);
+                            await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands[ilig], restrictToNeighbours: true, sideChainOnly: true });
+                            await createWizardRepresentation({ ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands[ilig], restrictToNeighbours: true });
                         }
                     }
                 }
-                await createRepresentation("molecule","CRs","",false,false,"",false);
+                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CRs" });
             } else if(wizardType==="ribbons") {
                 if(splitLigands){
-                    await createRepresentation("cid","CBs","",false,false,splitLigands.join("||"),false);
+                    await createWizardRepresentation({ ruleType: "cid", representationStyle: "CBs", cid: splitLigands.join("||") });
                 }
-                await createRepresentation("molecule","CRs","",false,false,"",false);
+                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CRs" });
             } else if(wizardType==="catrace") {
-                await createRepresentation("molecule","CAs","",false,false,"",false);
+                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CAs" });
             } else if(wizardType==="bonds") {
-                await createRepresentation("molecule","CBs","",false,false,"",false);
+                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs" });
             }
         }
 
-        const createRepresentation = async (
-            theRuleType: "molecule" | "cid",
-            representationStyle: "CBs" | "CRs" | "CAs" | "allHBonds",
-            neighboursCid: string,
-            restrictToNeighbours: boolean,
-            excludeNeighbours: boolean,
-            simpleCid: string,
-            sideChainOnly: boolean
-        ) => {
+        const createWizardRepresentation = async (params: {
+            ruleType: "molecule" | "cid";
+            representationStyle: "CBs" | "CRs" | "CAs" | "allHBonds";
+            neighboursCid?: string;
+            restrictToNeighbours?: boolean;
+            excludeNeighbours?: boolean;
+            cid?: string;
+            sideChainOnly?: boolean;
+        }) => {
             props.setBusy?.(true);
 
-            const cidSelection = buildCidSelection({
-                ruleType: theRuleType,
-                representationStyle,
+            const representation = await MoleculeRepresentation.create({
+                ...params,
                 molecule: props.molecule,
-                chainName: null,
-                notHOH: false,
-                notH: false,
-                sideChainOnly,
-                restrictToNeighbours,
-                excludeNeighbours,
-                neighboursCid,
                 neighboursDistance,
-                sequenceResidueRange: null,
-                cid: simpleCid,
-                ligandCid: null,
+                hbondedTo: params.restrictToNeighbours ?? false,
             });
 
-            if (!cidSelection) {
-                console.warn("Invalid CID selection to create a custom representation");
-                props.setBusy?.(false);
-                return;
+            if (representation) {
+                dispatch(addCustomRepresentation(representation));
+                props.onApply?.();
             }
 
-            const rep = new MoleculeRepresentation(representationStyle, cidSelection, commandCentre);
-            rep.cid = cidSelection;
-            rep.restrictToNeighbours = restrictToNeighbours;
-            rep.neighboursDistance = neighboursDistance;
-            rep.excludeNeighbours = excludeNeighbours;
-            rep.neighboursCid = neighboursCid;
-            rep.hbondedTo = restrictToNeighbours;
-            rep.hbondedToCid = neighboursCid;
-            rep.setStyle(representationStyle);
-            rep.setUseDefaultColourRules(true);
-            rep.setColourRules(null);
-            props.molecule.addRepresentation(rep);
-            dispatch(addCustomRepresentation(rep));
-
             props.setBusy?.(false);
-            props.onApply?.();
         };
 
         const handleCreateRepresentation = async () => {
