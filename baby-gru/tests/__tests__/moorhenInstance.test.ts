@@ -548,7 +548,6 @@ describe('Callbacks', () => {
     test('newMoleculeChangedCallback fires on trigger', () => {
         const callback = jest.fn();
         moorhenInstance.newMoleculeChangedCallback(callback);
-
         moorhenInstance.triggerMoleculeChanged('test-mol-uid');
         expect(callback).toHaveBeenCalledWith('test-mol-uid');
     });
@@ -608,7 +607,7 @@ describe('Callbacks', () => {
         expect(callback).not.toHaveBeenCalled();
     });
 
-    test('triggerMoleculeChanged with number resolves via store', async () => {
+    test('newAtomHoveredCallback with number resolves via store', async () => {
         const callback = jest.fn();
         const unsubscribe = moorhenInstance.newAtomHoveredCallback(callback);
 
@@ -625,22 +624,6 @@ describe('Callbacks', () => {
         unsubscribe();
     });
 
-    test('newAtomHoveredCallback unsubscribe stops callbacks', () => {
-        const callback = jest.fn();
-        const unsubscribe = moorhenInstance.newAtomHoveredCallback(callback);
-        unsubscribe();
-
-        moorhenInstance.store.dispatch({
-            type: 'hoveringStates/setHoveredAtom',
-            payload: {
-                molecule: { uniqueId: 'mol-1' },
-                atomInfo: { res_no: '32', name: 'CA' },
-            },
-        });
-
-        expect(callback).not.toHaveBeenCalled();
-    });
-});
 
 // ==============================
 // Category K: Web Component Setters

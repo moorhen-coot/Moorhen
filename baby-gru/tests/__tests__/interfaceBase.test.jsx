@@ -110,7 +110,6 @@ describe('MoorhenAccordion', () => {
         const toggleButton = screen.getByRole('button', { name: /keyboard/i })
         await user.click(toggleButton)
         expect(onChange).toHaveBeenCalledWith(true)
-
         await user.click(toggleButton)
         expect(onChange).toHaveBeenCalledWith(false)
     })
@@ -132,7 +131,6 @@ describe('MoorhenAccordion', () => {
         await user.click(toggleButton)
         expect(onOpen).toHaveBeenCalledTimes(1)
         expect(onClose).not.toHaveBeenCalled()
-
         await user.click(toggleButton)
         expect(onClose).toHaveBeenCalledTimes(1)
     })
@@ -186,8 +184,10 @@ describe('MoorhenAccordion', () => {
             </Provider>
         )
         const toggleButton = screen.getByRole('button', { name: /keyboard/i })
-        expect(screen.getByText('Disabled').closest('.moorhen__accordion-header')).toHaveClass('disabled')
+        await user.click(toggleButton)
+        expect(screen.queryByText('Disabled content')).not.toBeInTheDocument()
     })
+
 
     test('renders extra controls', () => {
         render(
@@ -408,10 +408,14 @@ describe('MoorhenTabContainer & MoorhenTab', () => {
             </MoorhenTabContainer>
         )
         const secondTab = screen.getByRole('tab', { name: /second/i })
+        expect(secondTab).toBeInTheDocument()
+        expect(screen.getByText('Second content')).toBeInTheDocument()
+        expect(screen.getByText('Second content')).not.toBeVisible()
         await user.click(secondTab)
+        expect(screen.getByText('Second content')).toBeVisible()
+        expect(screen.getByText('First content')).toBeInTheDocument()
+        expect(screen.getByText('First content')).not.toBeVisible()
 
-        // First tab content should now be hidden (no longer active)
-        // Second tab content becomes active
     })
 
     test('calls onChange when tab is clicked', async () => {
@@ -445,6 +449,10 @@ describe('MoorhenTabContainer & MoorhenTab', () => {
         )
         const firstTab = screen.getByRole('tab', { name: /first/i })
         expect(firstTab).toHaveAttribute('aria-selected', 'true')
+        const secondTab = screen.getByRole('tab', { name: /second/i })
+        expect(secondTab).toBeInTheDocument()
+        expect(screen.getByText('Second content')).toBeInTheDocument()
+        expect(screen.getByText('Second content')).not.toBeVisible()
     })
 
     test('marks active tab with aria-selected', async () => {
