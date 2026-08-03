@@ -57,9 +57,10 @@ const mockMonomerLibraryPath =
 };
 
 // Mock FileList for Node.js/Jest environment (setup.js is not loaded for api-utils project)
-(globalThis as any).FileList = class FileList {
+class MockFileList {
     files: any[];
     length: number;
+    [index: number]: any;
     constructor(files: any[] = []) {
         this.files = files;
         this.length = files.length;
@@ -73,7 +74,8 @@ const mockMonomerLibraryPath =
     [Symbol.iterator]() {
         return this.files[Symbol.iterator]();
     }
-};
+}
+(globalThis as any).FileList = MockFileList;
 
 beforeAll(async () => {
     cootModule = await createCootModule({
@@ -415,7 +417,7 @@ describe('File Loading', () => {
         });
         const file1 = new File([pdbContent], 'test1.pdb', { type: 'text/plain' });
         const file2 = new File([pdbContent], 'test2.pdb', { type: 'text/plain' });
-        const fileList = new FileList([file1, file2]);
+        const fileList = new MockFileList([file1, file2]);
         const result = await moorhenInstance.files.loadFiles(fileList);
         expect(result).toHaveLength(2);
     });
@@ -623,7 +625,7 @@ describe('Callbacks', () => {
         expect(callback).toHaveBeenCalledWith('mol-1', '32', 'CA');
         unsubscribe();
     });
-
+});
 
 // ==============================
 // Category K: Web Component Setters
