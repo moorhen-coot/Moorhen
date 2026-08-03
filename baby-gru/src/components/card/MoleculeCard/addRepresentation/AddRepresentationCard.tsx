@@ -9,7 +9,6 @@ import { ColourRule } from "../../../../utils/MoorhenColourRule";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../../../utils/enums";
 import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../../../inputs";
 import { MoorhenStack } from "../../../interface-base";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../../sequence-viewer";
 import {
     BondSettingsPanel,
     MolSurfSettingsPanel,
@@ -22,36 +21,32 @@ import { NeighbourhoodSettings } from "./components/NeighbourhoodSettings";
 import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmentStyleSelectors";
 import { ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
-import { getNonCustomAlpha } from "../../../../utils/RepresentationBuilder";
-import { parseCid } from "../../../../utils/utils";
+import { extractRepresentationParams, getNonCustomAlpha } from "../../../../utils/RepresentationBuilder";
 
 export const AddCustomRepresentationCard = memo(
-    (props: {
+    function AddCustomRepresentationCard(props: {
         molecule: moorhen.Molecule;
         urlPrefix: string;
         mode?: "add" | "edit";
         representation?: MoleculeRepresentation;
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
         onApply?: () => void;
-    }) => {
+    }) {
         const store = useStore<RootState>();
-        const ncsColourRuleRef = useRef<null | ColourRule>(null);
+        const existingParams = props.representation ? extractRepresentationParams(props.representation) : undefined;
+        const ncsColourRuleRef = useRef<null | ColourRule>(existingParams?.ncsColourRule ?? null);
         const [ligandCid, setLigandCid] = useState<string>("");
 
         const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
-            props.representation
-                ? props.representation?.restrictToNeighbours
-                    ? "neighbourhood"
-                    : props.representation.interfaceOption.selectionType
-                : "molecule"
+            existingParams?.ruleType ?? "molecule"
         );
-        const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(props.representation?.style ?? "CBs");
+        const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(existingParams?.representationStyle ?? "CBs");
 
-        const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(props.representation?.restrictToNeighbours ?? false);
-        const [hbondedTo, setHbondedTo] = useState<boolean>(props.representation?.hbondedTo ?? false);
-        const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(props.representation?.excludeNeighbours ?? false);
-        const [neighboursCid, setNeighboursCid] = useState<string>(props.representation?.neighboursCid ?? "");
-        const [neighboursDistance, setNeighboursDistance] = useState<number>(props.representation?.neighboursDistance ?? 6.0);
+        const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(existingParams?.restrictToNeighbours ?? false);
+        const [hbondedTo, setHbondedTo] = useState<boolean>(existingParams?.hbondedTo ?? false);
+        const [excludeNeighbours, setExcludeNeighbours] = useState<boolean>(existingParams?.excludeNeighbours ?? false);
+        const [neighboursCid, setNeighboursCid] = useState<string>(existingParams?.neighboursCid ?? "");
+        const [neighboursDistance, setNeighboursDistance] = useState<number>(existingParams?.neighboursDistance ?? 6.0);
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
@@ -66,35 +61,32 @@ export const AddCustomRepresentationCard = memo(
             return true;
         });
 
-        const [colourMode, setColourMode] = useState<string>("custom");
-        const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(props.representation?.nonCustomOpacity ?? 1.0);
+        const [colourMode, setColourMode] = useState<string>(existingParams?.colourMode ?? "custom");
+        const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(existingParams?.nonCustomOpacity ?? 1.0);
         const [colour, setColour] = useState<string>(
-            props.representation && !props.representation?.useDefaultColourRules && !props.representation?.colourRules[0]?.isMultiColourRule
-                ? props.representation?.colourRules[0].color
+            existingParams && !existingParams.useDefaultColours && existingParams.colour !== ""
+                ? existingParams.colour
                 : "#47d65f"
         );
         const [applyColourToNonCarbonAtoms, setApplyColourToNonCarbonAtoms] = useState<boolean>(
-            props.representation && !props.representation?.useDefaultColourRules && props.representation?.colourRules?.length !== 0
-                ? props.representation?.colourRules[0].applyColourToNonCarbonAtoms
-                : false
+            existingParams?.applyColourToNonCarbonAtoms ?? false
         );
-        const [useDefaultColours, setUseDefaultColours] = useState<boolean>(props.representation?.useDefaultColourRules ?? true);
+        const [useDefaultColours, setUseDefaultColours] = useState<boolean>(existingParams?.useDefaultColours ?? true);
 
-        const parsedCid = props.representation ? parseCid(props.representation.cid) : null;
-        const defaultChain = parsedCid?.chain !== "*" ? parsedCid?.chain : props.molecule.sequences[0]?.chain || "";
+        const defaultChain = existingParams?.chainName || props.molecule.sequences[0]?.chain || "";
 
         const [selectedChain, setSelectedChain] = useState<string>(defaultChain);
         const [sequenceResidueRange, setSequenceResidueRange] = useState<[number, number] | null>(
-            parsedCid?.residueRange ?? null
+            existingParams?.sequenceResidueRange ?? null
         );
         
-        const [cid, setCid] = useState<string>(props.representation?.cid ?? "/*/*/*/*:*");
+        const [cid, setCid] = useState<string>(existingParams?.cid ?? "/*/*/*/*:*");
         const [adaptBondOOF, setAdaptBondOOF] = useState<RepresentationStyles>("CRs");
         const [adaptDist, setAdaptDist] = useState<number>(props.representation?.residueEnvironmentOptions.adaptiveDist ?? 8.0);
 
-        const [notHOH, setNotHOH] = useState<boolean>(props.representation?.cid?.includes("(!HOH)") ?? false);
-        const [notH, setNotH] = useState<boolean>(props.representation?.cid?.includes("[!H]") ?? false);
-        const [sideChainOnly, setSideChainOnly] = useState<boolean>(props.representation?.cid?.includes("!O,C,N") ?? false);
+        const [notHOH, setNotHOH] = useState<boolean>(existingParams?.notHOH ?? false);
+        const [notH, setNotH] = useState<boolean>(existingParams?.notH ?? false);
+        const [sideChainOnly, setSideChainOnly] = useState<boolean>(existingParams?.sideChainOnly ?? false);
 
         const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 

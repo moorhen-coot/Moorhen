@@ -352,7 +352,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             size="accordion"
             tooltip="Save molecule"
         />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
+        <MoorhenPopoverButton key="more" size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];
@@ -413,8 +413,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         lastRepRef.current = await moorhenInstance.representation.create(props.molecule.uniqueId, {
                             representationStyle: "CRs",
                             colour: "#56c942",
-                            chainName: "A",
-                            notHOH: true,
                         });
                     }
                 }
@@ -427,6 +425,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     moorhenInstance.representation.edit(lastRepRef.current, {
                         representationStyle: "CRs",
                         colour: "#426dc9",
+                        cid: `//A/50-100/*`,
                     })
                 }
             >

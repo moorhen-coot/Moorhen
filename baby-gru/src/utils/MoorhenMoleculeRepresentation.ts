@@ -6,8 +6,8 @@ import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
-import { buildCidSelection, buildColourRule, createRepresentation } from "./RepresentationBuilder";
-import type { CreateRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation } from "./RepresentationBuilder";
+import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
 
@@ -117,6 +117,7 @@ export class MoleculeRepresentation {
     hbondedToCid: string;
     hbondedTo: boolean;
     excludeNeighbours: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebGL buffer objects are heterogeneous and flow through untyped appendOtherData/buildBuffers
     buffers: any;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -148,6 +149,8 @@ export class MoleculeRepresentation {
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
     interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" };
+    /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
+    buildParams: BuildRepresentationParams | null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.uniqueId = guid();
@@ -215,6 +218,7 @@ export class MoleculeRepresentation {
         this.neighboursDistance = 6.0;
         this.hbondedToCid = "";
         this.hbondedTo = false;
+        this.buildParams = null;
     }
 
     /**
@@ -519,7 +523,7 @@ export class MoleculeRepresentation {
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         if (this.buffers) {
             this.buffers.forEach(buf => {
-                if (buf.hasOwnProperty("origin")) {
+                if (Object.hasOwn(buf, "origin")) {
                     buf.origin = selectionCentre;
                 }
             });
@@ -544,7 +548,7 @@ export class MoleculeRepresentation {
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         this.buffers.forEach(buf => {
-            if (buf.hasOwnProperty("origin")) {
+            if (Object.hasOwn(buf, "origin")) {
                 buf.origin = selectionCentre;
             }
         });
@@ -590,7 +594,7 @@ export class MoleculeRepresentation {
             this.visible = true;
             if (this.buffers && this.buffers.length > 0) {
                 this.buffers?.forEach(buffer => {
-                    if (buffer.hasOwnProperty("visible")) {
+                    if (Object.hasOwn(buffer, "visible")) {
                         buffer.visible = true;
                     }
                     if ("labels" in buffer) {
@@ -617,7 +621,7 @@ export class MoleculeRepresentation {
         try {
             this.visible = false;
             this.buffers?.forEach(buffer => {
-                if (buffer.hasOwnProperty("visible")) {
+                if (Object.hasOwn(buffer, "visible")) {
                     buffer.visible = false;
                 }
                 if ("labels" in buffer) {

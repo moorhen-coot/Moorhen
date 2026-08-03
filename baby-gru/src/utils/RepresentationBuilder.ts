@@ -2,7 +2,10 @@ import { moorhen } from "@/types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import type { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
-import { getMultiColourRuleArgs } from "./utils";
+import { getMultiColourRuleArgs, parseCid } from "./utils";
+
+/** The supported ways a representation selection can be built. */
+export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
 
 export interface BuildCidSelectionParams {
     ruleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
@@ -159,7 +162,6 @@ export interface BuildColourRuleParams {
     applyColourToNonCarbonAtoms: boolean;
     ncsColourRule: ColourRule | null;
     styleSelectValue: string;
-    colourModeSelectValue: string;
 }
 
 /**
@@ -177,7 +179,6 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
         applyColourToNonCarbonAtoms,
         ncsColourRule,
         styleSelectValue,
-        colourModeSelectValue,
     } = params;
 
     if (useDefaultColours) {
@@ -212,13 +213,14 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
         case "b-factor":
         case "b-factor-norm":
         case "electrostatics":
-        case "af2-plddt":
+        case "af2-plddt": {
             colourRule = new ColourRule(colourMode, "/*/*/*/*:*", "#ffffff", molecule.commandCentre, true, applyColourToNonCarbonAtoms);
             colourRule.setLabel(getColourModeLabel(colourMode));
             const ruleArgs = await getMultiColourRuleArgs(molecule, colourMode);
             colourRule.setArgs([ruleArgs]);
             colourRule.setParentMolecule(molecule);
             break;
+        }
         default:
             console.log("Unrecognised colour mode");
             return undefined;
@@ -293,6 +295,98 @@ export interface CreateRepresentationParams {
     hbondedTo?: boolean;
 }
 
+/**
+ * The parameters of a MoleculeRepresentation that can be extracted and reused
+ * (e.g. to pre-populate the edit dialog, or as fallback defaults in edit mode).
+ */
+export interface ExtractedRepresentationParams {
+    representationStyle: RepresentationStyles;
+    ruleType: RepresentationRuleType;
+    cid: string;
+    chainName: string | null;
+    sequenceResidueRange: [number, number] | null;
+    ligandCid: string | null;
+    notHOH: boolean;
+    notH: boolean;
+    sideChainOnly: boolean;
+    restrictToNeighbours: boolean;
+    excludeNeighbours: boolean;
+    neighboursCid: string;
+    neighboursDistance: number;
+    hbondedTo: boolean;
+    useDefaultColours: boolean;
+    colourMode: string;
+    colour: string;
+    applyColourToNonCarbonAtoms: boolean;
+    ncsColourRule: ColourRule | null;
+    bondOptions: moorhen.cootBondOptions | null;
+    m2tParams: m2tParameters | null;
+    residueEnvironmentOptions: residueEnvironmentOptions | null;
+    nonCustomOpacity: number | null;
+}
+
+/**
+ * The subset of creation parameters that cannot be reconstructed exactly from a
+ * representation's live state (they are encoded lossily in the built CID string
+ * and colour rules). Snapshot onto the representation at build time so that
+ * edit mode reuses the exact original values instead of re-deriving them.
+ */
+export interface BuildRepresentationParams {
+    ruleType: RepresentationRuleType;
+    colourMode: string;
+    ncsColourRule: ColourRule | null;
+    notHOH: boolean;
+    notH: boolean;
+    sideChainOnly: boolean;
+    chainName: string | null;
+    sequenceResidueRange: [number, number] | null;
+    ligandCid: string | null;
+}
+
+/**
+ * Read the parameters off an existing representation so they can be reused in
+ * edit mode (pre-populating the edit dialog, or as defaults when some creation
+ * options are omitted). Values stored in `representation.buildParams` (the
+ * snapshot taken at build time) are preferred for fields that would otherwise
+ * be lossy to reconstruct; all other fields are read from live state.
+ */
+export function extractRepresentationParams(representation: MoleculeRepresentation): ExtractedRepresentationParams {
+    const colourRule = representation.colourRules?.[0] ?? null;
+    const snapshot = representation.buildParams;
+    const colourMode = snapshot?.colourMode ?? (colourRule?.isMultiColourRule ? (colourRule?.ruleType ?? "custom") : "custom");
+    const parsedCid = snapshot ? null : parseCid(representation.cid);
+
+    return {
+        representationStyle: representation.style,
+        ruleType:
+            snapshot?.ruleType ?? (representation.restrictToNeighbours ? "neighbourhood" : representation.interfaceOption.selectionType),
+        cid: representation.cid,
+        chainName: snapshot?.chainName ?? (parsedCid && parsedCid.chain !== "*" ? parsedCid.chain : null),
+        sequenceResidueRange: snapshot?.sequenceResidueRange ?? (parsedCid?.residueRange ?? null),
+        ligandCid: snapshot?.ligandCid ?? representation.ligandsCid,
+        notHOH: snapshot?.notHOH ?? representation.cid.includes("(!HOH)"),
+        notH: snapshot?.notH ?? representation.cid.includes("[!H]"),
+        sideChainOnly: snapshot?.sideChainOnly ?? representation.cid.includes("!O,C,N"),
+        restrictToNeighbours: representation.restrictToNeighbours,
+        excludeNeighbours: representation.excludeNeighbours,
+        neighboursCid: representation.neighboursCid,
+        neighboursDistance: representation.neighboursDistance,
+        hbondedTo: representation.hbondedTo,
+        useDefaultColours: representation.useDefaultColourRules,
+        colourMode,
+        colour: !representation.useDefaultColourRules && colourRule && !colourRule.isMultiColourRule ? colourRule.color : "",
+        applyColourToNonCarbonAtoms:
+            !representation.useDefaultColourRules && colourRule ? colourRule.applyColourToNonCarbonAtoms : false,
+        ncsColourRule: colourMode === "mol-symm" ? (snapshot?.ncsColourRule ?? colourRule) : null,
+        bondOptions: representation.useDefaultBondOptions ? null : representation.bondOptions,
+        m2tParams: representation.useDefaultM2tParams ? null : representation.m2tParams,
+        residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions
+            ? null
+            : representation.residueEnvironmentOptions,
+        nonCustomOpacity: representation.nonCustomOpacity,
+    };
+}
+
 /** Representation styles that are internal-only and not exposed on the public API surface. */
 export const INTERNAL_REPRESENTATION_STYLES = [
     "hover",
@@ -316,45 +410,53 @@ export const INTERNAL_REPRESENTATION_STYLES = [
 export type PublicRepresentationStyles = Exclude<RepresentationStyles, (typeof INTERNAL_REPRESENTATION_STYLES)[number]>;
 
 export async function createRepresentation(params: CreateRepresentationParams): Promise<MoleculeRepresentation | null> {
+    // In edit mode, any parameter that is not explicitly provided falls back to
+    // the existing representation's current value instead of a hard-coded default.
+    const existingParams = params.existingRepresentation
+        ? extractRepresentationParams(params.existingRepresentation)
+        : undefined;
+
     const {
         representationStyle,
         molecule,
-        notHOH = false,
-        notH = false,
-        sideChainOnly = false,
-        restrictToNeighbours = false,
-        excludeNeighbours = false,
-        neighboursCid = "",
-        neighboursDistance = 6.0,
-        sequenceResidueRange = null,
-        cid = "/*/*/*/*:*",
-        ligandCid = null,
-        colourMode = "custom",
-        colour = "",
-        useDefaultColours = colour === "",
-        applyColourToNonCarbonAtoms = false,
-        ncsColourRule = null,
+        notHOH = existingParams?.notHOH ?? false,
+        notH = existingParams?.notH ?? false,
+        sideChainOnly = existingParams?.sideChainOnly ?? false,
+        restrictToNeighbours = existingParams?.restrictToNeighbours ?? false,
+        excludeNeighbours = existingParams?.excludeNeighbours ?? false,
+        neighboursCid = existingParams?.neighboursCid ?? "",
+        neighboursDistance = existingParams?.neighboursDistance ?? 6.0,
+        sequenceResidueRange = existingParams?.sequenceResidueRange ?? null,
+        cid = existingParams?.cid ?? "/*/*/*/*:*",
+        ligandCid = existingParams?.ligandCid ?? null,
+        colourMode = existingParams?.colourMode ?? "custom",
+        colour = existingParams?.colour ?? "",
+        useDefaultColours = colour === "" ? (existingParams?.useDefaultColours ?? true) : false,
+        applyColourToNonCarbonAtoms = existingParams?.applyColourToNonCarbonAtoms ?? false,
+        ncsColourRule = existingParams?.ncsColourRule ?? null,
         isCustom = true,
-        bondOptions,
-        m2tParams,
-        residueEnvironmentOptions,
-        nonCustomOpacity,
-        hbondedTo = false,
+        bondOptions = existingParams?.bondOptions ?? undefined,
+        m2tParams = existingParams?.m2tParams ?? undefined,
+        residueEnvironmentOptions = existingParams?.residueEnvironmentOptions ?? undefined,
+        nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
+        hbondedTo = existingParams?.hbondedTo ?? false,
         existingRepresentation,
     } = params;
 
-    let ruleType: CreateRepresentationParams["ruleType"] = "molecule";
+    // Explicitly-provided CID-related params take precedence; otherwise fall back
+    // to the existing selection type in edit mode (or "molecule" for new reps).
+    let ruleType: RepresentationRuleType = existingParams?.ruleType ?? "molecule";
     if (params.ruleType) {
         ruleType = params.ruleType;
     } else if (params.cid) {
         ruleType = "cid";
     } else if (params.sequenceResidueRange) {
-         ruleType = "residue-range";
+        ruleType = "residue-range";
     } else if (params.chainName) {
-        ruleType = "chain"
+        ruleType = "chain";
     }
 
-    let chainName = params.chainName;
+    let chainName = params.chainName ?? existingParams?.chainName ?? null;
     if (!chainName && (ruleType === "chain" || ruleType === "residue-range")) {
         console.log(`Impossible to create new representation: ${ruleType} require chainName`);
         return;
@@ -391,7 +493,6 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         applyColourToNonCarbonAtoms,
         ncsColourRule,
         styleSelectValue: representationStyle,
-        colourModeSelectValue: colourMode,
     });
 
     const isEdit = existingRepresentation != null;
@@ -423,6 +524,19 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.setNonCustomOpacity(nonCustomOpacity);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = true;
+    // Snapshot the params that would be lossy to reconstruct later, so edit mode
+    // can reuse the exact original values (see extractRepresentationParams).
+    representation.buildParams = {
+        ruleType,
+        colourMode,
+        ncsColourRule,
+        notHOH,
+        notH,
+        sideChainOnly,
+        chainName,
+        sequenceResidueRange,
+        ligandCid,
+    };
 
     if (isEdit) {
         await representation.redraw();
