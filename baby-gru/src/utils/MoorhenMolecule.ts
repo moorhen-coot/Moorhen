@@ -178,9 +178,9 @@ export class MoorhenMolecule {
             bFactor: 100,
         };
         this.defaultBondOptions = {
-            smoothness: 1,
+            smoothness: 50,
             width: 0.1,
-            atomRadiusBondRatio: 1,
+            atomRadiusBondRatio: 2,
             showAniso: false,
             showOrtep: false,
             showHs: true,

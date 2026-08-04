@@ -394,10 +394,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         }
     };
 
-    const moorhenInstance = useMoorhenInstance();
-
-    const lastRepRef = useRef<string>(null)
-
     return (
         <MoorhenAccordion
             title={cardLabel}
@@ -407,31 +403,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             open={props.open}
             onChange={isOpen => (props.onCollapseToggle ? props.onCollapseToggle(props.molecule.molNo, isOpen) : () => {})}
         >
-            <MoorhenButton
-                onClick={async () =>
-                    {
-                        lastRepRef.current = await moorhenInstance.representation.create(props.molecule.uniqueId, {
-                            representationStyle: "CRs",
-                            colour: "#56c942",
-                        });
-                    }
-                }
-            >
-                {" "}
-                Test Add
-            </MoorhenButton>
-                        <MoorhenButton
-                onClick={() =>
-                    moorhenInstance.representation.edit(lastRepRef.current, {
-                        representationStyle: "CRs",
-                        colour: "#426dc9",
-                        cid: `//A/50-100/*`,
-                    })
-                }
-            >
-                {" "}
-                Test edit
-            </MoorhenButton>
             <MoorhenStack direction="vertical">
                 <MoorhenStack direction="row" justify="center">
                     <MoorhenPopoverButton

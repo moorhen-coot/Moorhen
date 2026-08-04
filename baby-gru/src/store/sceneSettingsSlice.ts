@@ -48,7 +48,7 @@ const initialState: {
     drawCrosshairs: null,
     drawFPS: null,
     drawMissingLoops: null,
-    defaultBondSmoothness: null,
+    defaultBondSmoothness: 50,
     drawAxes: null,
     drawEnvBOcc: null,
     doSSAO: null,
