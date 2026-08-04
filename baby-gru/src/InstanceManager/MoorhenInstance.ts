@@ -4,12 +4,14 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { MoorhenReduxStoreType, addCustomRepresentation, setOrigin } from "@/store";
+import { addCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
 import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
+import { runPictureWizard } from "@/utils/PictureWizard";
+import type { PictureWizardType } from "@/utils/PictureWizard";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule, backupSession } from "@/utils/MoorhenTimeCapsule";
 import { INTERNAL_REPRESENTATION_STYLES } from "@/utils/RepresentationBuilder";
@@ -385,6 +387,33 @@ export class MoorhenInstance extends StoreExtension {
                 const representation = this.get(representationUid);
 
                 representation?.edit(params);
+            },
+
+            /**
+             * Run the picture wizard on the given molecule via the public API.
+             * Optionally deletes the molecule's existing representations first,
+             * then creates the set of representations implied by the wizard type.
+             * @param molecule - The target molecule
+             * @param wizardType - The wizard type to run: "site-and-ribbons" (binding site and ribbons),
+             * "ribbons" (ribbons and ligands), "catrace" (CA trace and ligands), or "bonds" (bonds)
+             * @param deleteExisting - If true, delete existing representations before creating new ones
+             * (defaults to true)
+             * @returns The unique IDs of the created representations (already added to the interface)
+             */
+            async wizard(
+                molecule: MoorhenMolecule,
+                wizardType: PictureWizardType,
+                deleteExisting: boolean = true
+            ): Promise<string[]> {
+                const representations = await runPictureWizard({
+                    molecule,
+                    wizardType,
+                    deleteExisting,
+                });
+                for (const representation of representations) {
+                    await moorhenInstance.dispatch(addCustomRepresentation(representation));
+                }
+                return representations.map(representation => representation.uniqueId);
             },
         };
     }

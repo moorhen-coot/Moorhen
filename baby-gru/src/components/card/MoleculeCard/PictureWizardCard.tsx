@@ -7,7 +7,7 @@ import { moorhen } from "../../../types/moorhen";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
-import { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
+import { PictureWizardType, runPictureWizard } from "../../../utils/PictureWizard";
 
 export const PictureWizardCard = memo(
     (props: {
@@ -15,7 +15,7 @@ export const PictureWizardCard = memo(
         setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
         onApply?: () => void;
     }) => {
-        const [wizardType, setWizardType] = useState<"site-and-ribbons" | "bonds" | "ribbons" | "catrace">("site-and-ribbons");
+        const [wizardType, setWizardType] = useState<PictureWizardType>("site-and-ribbons");
         const [ruleType, setRuleType] = useState<"ligands" | "cid">("ligands");
         const [ligandSelection, setLigandSelection] = useState<string | null>(null);
         const [cid, setCid] = useState<string>("/*/*/*/*:*");
@@ -26,88 +26,21 @@ export const PictureWizardCard = memo(
 
         const { enqueueSnackbar } = useSnackbar();
 
-        const createRepresentations = async () => {
-
-            if(deleteExisting){
-                props.setBusy?.(true);
-                props.molecule.representations.forEach(rep => {
-                    props.molecule.removeRepresentation(rep.uniqueId)
-                    dispatch(removeCustomRepresentation(rep));
-                })
-                props.molecule.clearBuffersOfStyle("environment");
-                props.setBusy?.(false);
-            }
-
-            let splitLigands = []
-            if(wizardType==="site-and-ribbons" || wizardType==="ribbons") {
-                if(ruleType==="ligands"){
-                    let theLigandSelection = ""
-                    if(ligandSelection){
-                        theLigandSelection = ligandSelection
-                    } else if(props.molecule.ligands&&props.molecule.ligands.length>0) {
-                        theLigandSelection = props.molecule.ligands.map(x => x.cid).join("||")
-                    } else {
-                        return
-                    }
-                    splitLigands = theLigandSelection.split("||")
-                } else if(ruleType==="cid"){
-                    splitLigands = cid.split("||")
-                }
-            }
-            if(wizardType==="site-and-ribbons") {
-                if(splitLigands){
-                    if(splitLigands.length>3){
-                        await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true, sideChainOnly: true });
-                        await createWizardRepresentation({ ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true });
-                    } else {
-                        for(let ilig=0; ilig<splitLigands.length; ilig++){
-                            await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands[ilig], restrictToNeighbours: true, sideChainOnly: true });
-                            await createWizardRepresentation({ ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands[ilig], restrictToNeighbours: true });
-                        }
-                    }
-                }
-                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CRs" });
-            } else if(wizardType==="ribbons") {
-                if(splitLigands){
-                    await createWizardRepresentation({ ruleType: "cid", representationStyle: "CBs", cid: splitLigands.join("||") });
-                }
-                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CRs" });
-            } else if(wizardType==="catrace") {
-                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CAs" });
-            } else if(wizardType==="bonds") {
-                await createWizardRepresentation({ ruleType: "molecule", representationStyle: "CBs" });
-            }
-        }
-
-        const createWizardRepresentation = async (params: {
-            ruleType: "molecule" | "cid";
-            representationStyle: "CBs" | "CRs" | "CAs" | "allHBonds";
-            neighboursCid?: string;
-            restrictToNeighbours?: boolean;
-            excludeNeighbours?: boolean;
-            cid?: string;
-            sideChainOnly?: boolean;
-        }) => {
-            props.setBusy?.(true);
-
-            const representation = await MoleculeRepresentation.create({
-                ...params,
-                molecule: props.molecule,
-                neighboursDistance,
-                hbondedTo: params.restrictToNeighbours ?? false,
-            });
-
-            if (representation) {
-                dispatch(addCustomRepresentation(representation));
-                props.onApply?.();
-            }
-
-            props.setBusy?.(false);
-        };
-
         const handleCreateRepresentation = async () => {
             try {
-                await createRepresentations();
+                await runPictureWizard({
+                    molecule: props.molecule,
+                    wizardType,
+                    ruleType,
+                    ligandSelection,
+                    cid,
+                    neighboursDistance,
+                    deleteExisting,
+                    setBusy: props.setBusy,
+                    onRepresentationAdded: representation => dispatch(addCustomRepresentation(representation)),
+                    onRepresentationRemoved: representation => dispatch(removeCustomRepresentation(representation)),
+                    onApply: props.onApply,
+                });
             } catch (err) {
                 console.warn(err);
                 enqueueSnackbar(`Something went wrong while creating a new custom representation`, {
