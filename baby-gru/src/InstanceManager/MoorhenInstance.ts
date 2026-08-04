@@ -327,6 +327,11 @@ export class MoorhenInstance extends StoreExtension {
     public get representation() {
         const moorhenInstance = this;
         return {
+            /**
+             * Get a representation by its unique ID, searching across all molecules.
+             * @param uniqueID - The unique identifier of the representation
+             * @returns The matching representation, or undefined if not found
+             */
             get(uniqueID: string) {
                 let representation;
                 for (const molecule of moorhenInstance.getMoleculeList()) {
@@ -345,7 +350,7 @@ export class MoorhenInstance extends StoreExtension {
              * (hover, validation/analysis tools, etc.) are rejected.
              * @param hideFromInterface - If true, the representation is created but not
              * added to the interface (molecule card list).
-             * @returns The unique ID of the new representation, or "-1" on failure.
+             * @returns The unique ID of the new representation, or null on failure.
              */
             async create(
                 moleculeUid: string,
@@ -353,12 +358,12 @@ export class MoorhenInstance extends StoreExtension {
                     representationStyle: PublicRepresentationStyles;
                 },
                 hideFromInterface: boolean = false
-            ): Promise<string> {
+            ): Promise<string | null> {
                 if ((INTERNAL_REPRESENTATION_STYLES as readonly string[]).includes(params.representationStyle)) {
                     console.warn(
                         `Representation style "${params.representationStyle}" is internal-only and not allowed via the public API.`
                     );
-                    return "-1";
+                    return null;
                 }
                 const molecule = moorhenInstance.getMolecule(moleculeUid);
                 const representation = await MoleculeRepresentation.create({ ...params, molecule: molecule });
@@ -368,10 +373,19 @@ export class MoorhenInstance extends StoreExtension {
                     }
                     return representation.uniqueId;
                 } else {
-                    return "-1";
+                    return null;
                 }
             },
 
+            /**
+             * Edit an existing representation in place via the public API.
+             * @param representationUid - Unique ID of the representation to edit
+             * @param params - Update options. `representationStyle` is restricted to the
+             * public styles (see PublicRepresentationStyles); internal-only styles
+             * (hover, validation/analysis tools, etc.) are rejected.
+             * @returns null if the style is internal-only or the representation is not found,
+             * otherwise the representation is updated in place (no return value).
+             */
             async edit(
                 representationUid: string,
                 params: Omit<CreateRepresentationParams, "molecule" | "representationStyle" | "existingRepresentation"> & {
@@ -382,7 +396,7 @@ export class MoorhenInstance extends StoreExtension {
                     console.warn(
                         `Representation style "${params.representationStyle}" is internal-only and not allowed via the public API.`
                     );
-                    return "-1";
+                    return null;
                 }
                 const representation = this.get(representationUid);
 
