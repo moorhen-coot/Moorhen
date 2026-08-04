@@ -40,7 +40,7 @@ export namespace moorhen {
     type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
     type Map = import("../utils/MoorhenMap").MoorhenMap;
     type CommandCentre = import("../InstanceManager/CommandCentre").CommandCentre;
-    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoleculeRepresentation;
+    type MoleculeRepresentation = import("../utils/Representation/MoorhenMoleculeRepresentation").MoleculeRepresentation;
     type State = import("../store/MoorhenReduxStore").RootState;
     type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
     type PreferencesValues = import("../components/managers/preferences").PreferencesValues;
@@ -61,7 +61,7 @@ export namespace moorhen {
     type WorkerResponse<T = any> = import("../InstanceManager/CommandCentre").WorkerResponse;
     type cootCommandKwargs = import("../InstanceManager/CommandCentre").cootCommandKwargs;
     type ResidueSelection = import("../store/generalStatesSlice").ResidueSelection;
-    type RepresentationStyles = import("../utils/MoorhenMoleculeRepresentation").RepresentationStyles;
+    type RepresentationStyles = import("../utils/Representation/MoorhenMoleculeRepresentation").RepresentationStyles;
 
     //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 

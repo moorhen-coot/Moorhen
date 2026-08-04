@@ -13,7 +13,7 @@ export type { MoorhenPanel } from "./components/panels";
 export { MoorhenDraggableModalBase } from "./components/interface-base/ModalBase/DraggableModalBase";
 export { MoorhenQuerySequenceModal } from "./components/modal/MoorhenQuerySequenceModal";
 export { ColourRule } from "./utils/MoorhenColourRule";
-export { MoleculeRepresentation } from "./utils/MoorhenMoleculeRepresentation";
+export { MoleculeRepresentation } from "./utils/Representation/MoorhenMoleculeRepresentation";
 export { MoorhenMolecule } from "./utils/MoorhenMolecule";
 export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";

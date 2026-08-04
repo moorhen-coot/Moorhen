@@ -1,4 +1,4 @@
-import type { MoorhenMolecule } from "./MoorhenMolecule";
+import type { MoorhenMolecule } from "../MoorhenMolecule";
 import type { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { createRepresentation } from "./RepresentationBuilder";
 

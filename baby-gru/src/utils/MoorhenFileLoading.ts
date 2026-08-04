@@ -13,7 +13,7 @@ import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
 import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles } from "./Representation/MoorhenMoleculeRepresentation";
 import pako from "pako";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager"

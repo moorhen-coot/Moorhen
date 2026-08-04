@@ -1,7 +1,7 @@
 import { MoorhenSelect } from "../../../../inputs";
 import { representationLabelMapping } from "../../../../../utils/enums";
 import { moorhen } from "../../../../../types/moorhen";
-import { RepresentationStyles } from "../../../../../utils/MoorhenMoleculeRepresentation";
+import { RepresentationStyles } from "../../../../../utils/Representation/MoorhenMoleculeRepresentation";
 
 interface StyleSelectorProps {
     value: moorhen.RepresentationStyles;

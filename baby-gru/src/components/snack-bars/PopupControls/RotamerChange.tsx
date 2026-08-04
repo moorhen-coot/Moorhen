@@ -7,7 +7,7 @@ import { enqueueSnackbar, removeMolecule, setHoveredAtom, setIsChangingRotamers,
 import { RootState } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import { moorhen } from "@/types/moorhen";
-import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 
 export const RotamerChange = () => {
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null);

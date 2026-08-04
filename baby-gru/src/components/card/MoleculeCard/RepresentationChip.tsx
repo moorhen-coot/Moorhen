@@ -7,7 +7,7 @@ import { RootState } from "../../../store/MoorhenReduxStore";
 import { removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import type { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
+import type { MoleculeRepresentation } from "../../../utils/Representation/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
 import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentationCard";
 import "./representation.css";

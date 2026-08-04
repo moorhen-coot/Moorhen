@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { RootState, enqueueSnackbar } from "@/store";
-import { MoleculeRepresentation, RepresentationStyles } from "@/utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { addCustomRepresentation } from "../../../../store/moleculesSlice";
 import { moorhen } from "../../../../types/moorhen";
 import { ColourRule } from "../../../../utils/MoorhenColourRule";
@@ -21,7 +21,7 @@ import { NeighbourhoodSettings } from "./components/NeighbourhoodSettings";
 import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmentStyleSelectors";
 import { ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
-import { extractRepresentationParams, getNonCustomAlpha } from "../../../../utils/RepresentationBuilder";
+import { extractRepresentationParams, getNonCustomAlpha } from "../../../../utils/Representation/RepresentationBuilder";
 
 export const AddCustomRepresentationCard = memo(
     function AddCustomRepresentationCard(props: {

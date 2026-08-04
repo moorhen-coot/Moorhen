@@ -8,7 +8,7 @@ import { setActiveMolecule } from "../../../store/glRefSlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../../types/moorhen";
 import { getTooltipShortcutLabel } from "../../../utils/utils";
-import { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "../../../utils/Representation/MoorhenMoleculeRepresentation";
 import { MoorhenStack } from "../../interface-base";
 
 export const AcceptRejectRotateTranslate = () => {

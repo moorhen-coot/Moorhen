@@ -1,7 +1,7 @@
 import { MoorhenSelect } from "../../../../inputs";
 import { MoorhenStack } from "../../../../interface-base";
 import { representationLabelMapping } from "../../../../../utils/enums";
-import { MoleculeRepresentation } from "../../../../../utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "../../../../../utils/Representation/MoorhenMoleculeRepresentation";
 
 interface ResidueEnvironmentStyleSelectorsProps {
     representation: MoleculeRepresentation;

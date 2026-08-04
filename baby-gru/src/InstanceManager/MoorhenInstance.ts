@@ -9,13 +9,13 @@ import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } fro
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
-import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
-import { runPictureWizard } from "@/utils/PictureWizard";
-import type { PictureWizardType } from "@/utils/PictureWizard";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
+import { runPictureWizard } from "@/utils/Representation/PictureWizard";
+import type { PictureWizardType } from "@/utils/Representation/PictureWizard";
 import { ScreenRecorder } from "@/utils/MoorhenScreenRecorder";
 import { MoorhenTimeCapsule, backupSession } from "@/utils/MoorhenTimeCapsule";
-import { INTERNAL_REPRESENTATION_STYLES } from "@/utils/RepresentationBuilder";
-import type { CreateRepresentationParams, PublicRepresentationStyles } from "@/utils/RepresentationBuilder";
+import { INTERNAL_REPRESENTATION_STYLES } from "@/utils/Representation/RepresentationBuilder";
+import type { CreateRepresentationParams, PublicRepresentationStyles } from "@/utils/Representation/RepresentationBuilder";
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";

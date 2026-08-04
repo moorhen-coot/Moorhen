@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation.js";
 import {
     centreOnGemmiAtoms,
     doDownload,

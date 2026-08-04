@@ -1,8 +1,8 @@
 import { moorhen } from "@/types/moorhen";
-import { ColourRule } from "./MoorhenColourRule";
-import type { MoorhenMolecule } from "./MoorhenMolecule";
+import { ColourRule } from "../MoorhenColourRule";
+import type { MoorhenMolecule } from "../MoorhenMolecule";
 import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
-import { getMultiColourRuleArgs, parseCid } from "./utils";
+import { getMultiColourRuleArgs, parseCid } from "../utils";
 
 /** The supported ways a representation selection can be built. */
 export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";

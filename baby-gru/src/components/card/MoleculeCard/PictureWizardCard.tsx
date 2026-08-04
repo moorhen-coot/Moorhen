@@ -7,7 +7,7 @@ import { moorhen } from "../../../types/moorhen";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
-import { PictureWizardType, runPictureWizard } from "../../../utils/PictureWizard";
+import { PictureWizardType, runPictureWizard } from "../../../utils/Representation/PictureWizard";
 
 export const PictureWizardCard = memo(
     (props: {

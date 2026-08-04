@@ -1,15 +1,15 @@
 import { batch } from "react-redux";
-import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../store/glRefSlice";
-import { gemmi } from "../types/gemmi";
-import { libcootApi } from "../types/libcoot";
-import { webGL } from "../types/mgWebGL";
-import { moorhen } from "../types/moorhen";
-import { ColourRule } from "./MoorhenColourRule";
+import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
+import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
+import { gemmi } from "../../types/gemmi";
+import { libcootApi } from "../../types/libcoot";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
+import { ColourRule } from "../MoorhenColourRule";
 import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "./enums";
-import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "./utils";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
 
 
 export type RepresentationStyles =

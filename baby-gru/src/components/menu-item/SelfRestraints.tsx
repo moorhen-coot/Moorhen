@@ -11,7 +11,7 @@ import {
 import { MoorhenStack } from "@/components/interface-base";
 import { addGeneralRepresentation, triggerUpdate } from "@/store";
 import { moorhen } from "@/types/moorhen";
-import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 
 export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
