@@ -70,7 +70,7 @@ export const PictureWizardCard = memo(
                                     </option>
                                 </>
                         </MoorhenSelect>
-                        {(wizardType === "site-and-ribbons" || wizardType === "ribbons") && (
+                        {(wizardType === "site-and-ribbons" || wizardType === "ribbons-and-ligands") && (
                             <MoorhenSelect label={"Residue selection"} defaultValue={ruleType} setValue={setRuleType}>
                                 <>
                                     {isThereLigand && (
@@ -84,7 +84,7 @@ export const PictureWizardCard = memo(
                                 </>
                             </MoorhenSelect>
                         )}
-                    {ruleType === "cid"  && (wizardType === "site-and-ribbons" || wizardType === "ribbons") && (
+                    {ruleType === "cid"  && (wizardType === "site-and-ribbons" || wizardType === "ribbons-and-ligands") && (
                         <MoorhenCidInputForm
                             setValue={setCid}
                             label="Atom selection"
@@ -92,7 +92,7 @@ export const PictureWizardCard = memo(
                             allowUseCurrentSelection={true}
                         />
                     )}
-                    {ruleType === "ligands" && (wizardType === "site-and-ribbons" || wizardType === "ribbons") && (
+                    {ruleType === "ligands" && (wizardType === "site-and-ribbons" || wizardType === "ribbons-and-ligands") && (
                         <>
                             <MoorhenLigandSelect
                                 selectedCoordMolNo={props.molecule.molNo}

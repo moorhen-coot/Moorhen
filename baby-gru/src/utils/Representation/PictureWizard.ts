@@ -2,7 +2,7 @@ import type { MoorhenMolecule } from "../MoorhenMolecule";
 import type { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 import { createRepresentation } from "./RepresentationBuilder";
 
-export type PictureWizardType = "site-and-ribbons" | "bonds" | "ribbons" | "catrace";
+export type PictureWizardType = "site-and-ribbons" | "bonds" | "ribbons-and-ligands" | "catrace";
 
 export type PictureWizardRuleType = "ligands" | "cid";
 
@@ -98,17 +98,20 @@ export async function runPictureWizard(params: RunPictureWizardParams): Promise<
     }
 
     let splitLigands: string[] = [];
-    if (wizardType === "site-and-ribbons" || wizardType === "ribbons") {
+    if (wizardType === "site-and-ribbons" || wizardType === "ribbons-and-ligands") {
         if (ruleType === "ligands") {
-            let theLigandSelection = "";
-            if (ligandSelection) {
-                theLigandSelection = ligandSelection;
-            } else if (molecule.ligands && molecule.ligands.length > 0) {
+            let theLigandSelection = ligandSelection ?? "";
+            if (!theLigandSelection && molecule.ligands && molecule.ligands.length > 0) {
                 theLigandSelection = molecule.ligands.map(x => x.cid).join("||");
-            } else {
+            }
+            if (theLigandSelection) {
+                splitLigands = theLigandSelection.split("||");
+            } else if (wizardType === "site-and-ribbons") {
+                // Binding-site style needs a ligand to build a site around; nothing to draw.
                 return createdRepresentations;
             }
-            splitLigands = theLigandSelection.split("||");
+            // For "ribbons" with no ligand, splitLigands stays empty so the ribbon
+            // (CRs) representation below is still created.
         } else if (ruleType === "cid") {
             splitLigands = cid.split("||");
         }
@@ -137,7 +140,7 @@ export async function runPictureWizard(params: RunPictureWizardParams): Promise<
         createdRepresentations.push(
             await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CRs" })
         );
-    } else if (wizardType === "ribbons") {
+    } else if (wizardType === "ribbons-and-ligands") {
         if (splitLigands.length > 0) {
             createdRepresentations.push(
                 await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "cid", representationStyle: "CBs", cid: splitLigands.join("||") })

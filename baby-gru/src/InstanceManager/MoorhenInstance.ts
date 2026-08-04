@@ -8,7 +8,7 @@ import { addCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
-import { autoOpenFiles } from "@/utils/MoorhenFileLoading";
+import { autoOpenFiles } from "@/utils/FileLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { runPictureWizard } from "@/utils/Representation/PictureWizard";
 import type { PictureWizardType } from "@/utils/Representation/PictureWizard";
@@ -30,6 +30,7 @@ export type LoadFilesResult = {
 }[];
 
 export class MoorhenInstance extends StoreExtension {
+    private _defaultStyle: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "site-and-ribbons" = "ribbons-and-ligands";
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -164,10 +165,6 @@ export class MoorhenInstance extends StoreExtension {
 
     //========================================
     // Files loading and saving methods
-
-    public setDefaultRepresentation() {
-        return null;
-    }
 
     public get files() {
         const moorhenInstance = this;
@@ -327,6 +324,13 @@ export class MoorhenInstance extends StoreExtension {
     public get representation() {
         const moorhenInstance = this;
         return {
+            set defaultStyle(style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "site-and-ribbons") {
+                moorhenInstance._defaultStyle = style;
+            },
+            get defaultStyle() {
+                return moorhenInstance._defaultStyle;
+            },
+            
             /**
              * Get a representation by its unique ID, searching across all molecules.
              * @param uniqueID - The unique identifier of the representation
@@ -407,7 +411,9 @@ export class MoorhenInstance extends StoreExtension {
              * Run the picture wizard on the given molecule via the public API.
              * Optionally deletes the molecule's existing representations first,
              * then creates the set of representations implied by the wizard type.
-             * @param molecule - The target molecule
+             * @param molecule - The target molecule uniqueId, or a MoorhenMolecule object
+             * (passing the object avoids a store lookup, which is needed when the
+             * molecule has not yet been added to the store)
              * @param wizardType - The wizard type to run: "site-and-ribbons" (binding site and ribbons),
              * "ribbons" (ribbons and ligands), "catrace" (CA trace and ligands), or "bonds" (bonds)
              * @param deleteExisting - If true, delete existing representations before creating new ones
@@ -415,12 +421,13 @@ export class MoorhenInstance extends StoreExtension {
              * @returns The unique IDs of the created representations (already added to the interface)
              */
             async wizard(
-                molecule: MoorhenMolecule,
+                molecule: string | MoorhenMolecule,
                 wizardType: PictureWizardType,
                 deleteExisting: boolean = true
             ): Promise<string[]> {
+                const targetMolecule = typeof molecule === "string" ? moorhenInstance.getMolecule(molecule) : molecule;
                 const representations = await runPictureWizard({
-                    molecule,
+                    molecule: targetMolecule,
                     wizardType,
                     deleteExisting,
                 });
