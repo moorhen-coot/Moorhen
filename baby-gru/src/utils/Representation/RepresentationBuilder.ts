@@ -21,7 +21,6 @@ export interface BuildCidSelectionParams {
     neighboursDistance: number;
     sequenceResidueRange: [number, number] | null;
     cid: string;
-    ligandCid: string | null;
 }
 
 /**
@@ -43,7 +42,6 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
         neighboursDistance,
         sequenceResidueRange,
         cid,
-        ligandCid,
     } = params;
 
     let cidSelection: string;
@@ -139,10 +137,8 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                     : null;
             break;
         case "cid":
-            cidSelection = cid;
-            break;
         case "ligands":
-            cidSelection = ligandCid;
+            cidSelection = cid;
             break;
         default:
             console.warn("Unrecognised residue selection for the custom representation");
@@ -279,7 +275,6 @@ export interface CreateRepresentationParams {
     neighboursDistance?: number;
     sequenceResidueRange?: [number, number] | null;
     cid?: string;
-    ligandCid?: string | null;
     /** Colour-related options (default to default colours) */
     useDefaultColours?: boolean;
     colourMode?: string;
@@ -305,7 +300,6 @@ export interface ExtractedRepresentationParams {
     cid: string;
     chainName: string | null;
     sequenceResidueRange: [number, number] | null;
-    ligandCid: string | null;
     notHOH: boolean;
     notH: boolean;
     sideChainOnly: boolean;
@@ -340,7 +334,6 @@ export interface BuildRepresentationParams {
     sideChainOnly: boolean;
     chainName: string | null;
     sequenceResidueRange: [number, number] | null;
-    ligandCid: string | null;
 }
 
 /**
@@ -363,7 +356,6 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         cid: representation.cid,
         chainName: snapshot?.chainName ?? (parsedCid && parsedCid.chain !== "*" ? parsedCid.chain : null),
         sequenceResidueRange: snapshot?.sequenceResidueRange ?? (parsedCid?.residueRange ?? null),
-        ligandCid: snapshot?.ligandCid ?? representation.ligandsCid,
         notHOH: snapshot?.notHOH ?? representation.cid.includes("(!HOH)"),
         notH: snapshot?.notH ?? representation.cid.includes("[!H]"),
         sideChainOnly: snapshot?.sideChainOnly ?? representation.cid.includes("!O,C,N"),
@@ -428,7 +420,6 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         neighboursDistance = existingParams?.neighboursDistance ?? 6.0,
         sequenceResidueRange = existingParams?.sequenceResidueRange ?? null,
         cid = existingParams?.cid ?? "/*/*/*/*:*",
-        ligandCid = existingParams?.ligandCid ?? null,
         colourMode = existingParams?.colourMode ?? "custom",
         colour = existingParams?.colour ?? "",
         useDefaultColours = colour === "" ? (existingParams?.useDefaultColours ?? true) : false,
@@ -476,7 +467,6 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         neighboursDistance,
         sequenceResidueRange,
         cid,
-        ligandCid,
     });
     if (!cidSelection) {
         console.warn("Invalid CID selection to create a custom representation");
@@ -535,7 +525,6 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         sideChainOnly,
         chainName,
         sequenceResidueRange,
-        ligandCid,
     };
 
     if (isEdit) {

@@ -102,7 +102,11 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
     const representation = moorhenInstance.representation.defaultStyle;
 
     for (const newMolecule of newMolecules) {
-        if (representation === "ribbons-and-ligands" || representation === "site-and-ribbons") {
+        if (
+            representation === "ribbons-and-ligands" ||
+            representation === "ribbons-and-side-chains" ||
+            representation === "site-and-ribbons"
+        ) {
             await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
         } else {
             await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });

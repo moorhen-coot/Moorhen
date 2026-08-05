@@ -17,7 +17,6 @@ interface ResidueSelectionSectionProps {
     setSequenceResidueRange: React.Dispatch<React.SetStateAction<[number, number] | null>>;
     cid: string;
     setCid: (val: string) => void;
-    setLigandCid: (cid: string) => void;
     setRestrictToNeighbours: (val: boolean) => void;
     isThereLigand: boolean;
 }
@@ -37,7 +36,6 @@ export const ResidueSelectionSection = (props: ResidueSelectionSectionProps) => 
         setSequenceResidueRange,
         cid,
         setCid,
-        setLigandCid,
         setRestrictToNeighbours,
         isThereLigand,
     } = props;
@@ -104,7 +102,7 @@ export const ResidueSelectionSection = (props: ResidueSelectionSectionProps) => 
                 />
             )}
             {ruleType === "ligands" && (
-                <MoorhenLigandSelect selectedCoordMolNo={molecule.molNo} molecules={[molecule]} allowAll setValue={setLigandCid} />
+                <MoorhenLigandSelect selectedCoordMolNo={molecule.molNo} molecules={[molecule]} allowAll setValue={setCid} />
             )}
             {ruleType === "residue-range"  &&(
                 <ResidueRangeSelector
