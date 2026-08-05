@@ -8,6 +8,7 @@ import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from 
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../../interface-base";
 import { PictureWizardType, runPictureWizard } from "../../../utils/Representation/PictureWizard";
+import { useMoorhenInstance } from "@/InstanceManager/useMoorhenInstance";
 
 export const PictureWizardCard = memo(
     (props: {
@@ -21,6 +22,7 @@ export const PictureWizardCard = memo(
         const [cid, setCid] = useState<string>("/*/*/*/*:*");
         const [deleteExisting, setDeleteExisting] = useState<boolean>(true);
         const [neighboursDistance, setNeighboursDistance] = useState<number>(6.0);
+        const moorhenInstance = useMoorhenInstance();
 
         const dispatch = useDispatch();
 
@@ -59,7 +61,7 @@ export const PictureWizardCard = memo(
                                     <option value={"site-and-ribbons"} key={"site-and-ribbons"}>
                                         Binding site and ribbons
                                     </option>
-                                    <option value={"ribbons"} key={"ribbons"}>
+                                    <option value={"ribbons-and-ligands"} key={"ribbons-and-ligands"}>
                                         Ribbons and ligands
                                     </option>
                                     <option value={"catrace"} key={"catrace"}>

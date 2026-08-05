@@ -121,41 +121,124 @@ export async function runPictureWizard(params: RunPictureWizardParams): Promise<
         if (splitLigands.length > 0) {
             if (splitLigands.length > 3) {
                 createdRepresentations.push(
-                    await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true, sideChainOnly: true })
+                    await createWizardRepresentation({
+                        molecule,
+                        neighboursDistance,
+                        setBusy,
+                        onRepresentationAdded,
+                        onApply,
+                        ruleType: "molecule",
+                        representationStyle: "CBs",
+                        neighboursCid: splitLigands.join("||"),
+                        restrictToNeighbours: true,
+                        sideChainOnly: true,
+                    })
                 );
                 createdRepresentations.push(
-                    await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands.join("||"), restrictToNeighbours: true })
+                    await createWizardRepresentation({
+                        molecule,
+                        neighboursDistance,
+                        setBusy,
+                        onRepresentationAdded,
+                        onApply,
+                        ruleType: "molecule",
+                        representationStyle: "allHBonds",
+                        neighboursCid: splitLigands.join("||"),
+                        restrictToNeighbours: true,
+                    })
                 );
             } else {
                 for (let ilig = 0; ilig < splitLigands.length; ilig++) {
                     createdRepresentations.push(
-                        await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CBs", neighboursCid: splitLigands[ilig], restrictToNeighbours: true, sideChainOnly: true })
+                        await createWizardRepresentation({
+                            molecule,
+                            neighboursDistance,
+                            setBusy,
+                            onRepresentationAdded,
+                            onApply,
+                            ruleType: "molecule",
+                            representationStyle: "CBs",
+                            neighboursCid: splitLigands[ilig],
+                            restrictToNeighbours: true,
+                            sideChainOnly: true,
+                        })
                     );
                     createdRepresentations.push(
-                        await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "allHBonds", neighboursCid: splitLigands[ilig], restrictToNeighbours: true })
+                        await createWizardRepresentation({
+                            molecule,
+                            neighboursDistance,
+                            setBusy,
+                            onRepresentationAdded,
+                            onApply,
+                            ruleType: "molecule",
+                            representationStyle: "allHBonds",
+                            neighboursCid: splitLigands[ilig],
+                            restrictToNeighbours: true,
+                        })
                     );
                 }
             }
         }
         createdRepresentations.push(
-            await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CRs" })
+            await createWizardRepresentation({
+                molecule,
+                neighboursDistance,
+                setBusy,
+                onRepresentationAdded,
+                onApply,
+                ruleType: "molecule",
+                representationStyle: "CRs",
+            })
         );
     } else if (wizardType === "ribbons-and-ligands") {
         if (splitLigands.length > 0) {
             createdRepresentations.push(
-                await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "cid", representationStyle: "CBs", cid: splitLigands.join("||") })
+                await createWizardRepresentation({
+                    molecule,
+                    neighboursDistance,
+                    setBusy,
+                    onRepresentationAdded,
+                    onApply,
+                    ruleType: "cid",
+                    representationStyle: "CBs",
+                    cid: splitLigands.join("||"),
+                })
             );
         }
         createdRepresentations.push(
-            await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CRs" })
+            await createWizardRepresentation({
+                molecule,
+                neighboursDistance,
+                setBusy,
+                onRepresentationAdded,
+                onApply,
+                ruleType: "molecule",
+                representationStyle: "CRs",
+            })
         );
     } else if (wizardType === "catrace") {
         createdRepresentations.push(
-            await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CAs" })
+            await createWizardRepresentation({
+                molecule,
+                neighboursDistance,
+                setBusy,
+                onRepresentationAdded,
+                onApply,
+                ruleType: "molecule",
+                representationStyle: "CAs",
+            })
         );
     } else if (wizardType === "bonds") {
         createdRepresentations.push(
-            await createWizardRepresentation({ molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply, ruleType: "molecule", representationStyle: "CBs" })
+            await createWizardRepresentation({
+                molecule,
+                neighboursDistance,
+                setBusy,
+                onRepresentationAdded,
+                onApply,
+                ruleType: "molecule",
+                representationStyle: "CBs",
+            })
         );
     }
 
