@@ -178,7 +178,8 @@ export class MoorhenMolecule {
             bFactor: 100,
         };
         this.defaultBondOptions = {
-            smoothness: 50,
+            // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth (NOT the slider value 1/50/100)
+            smoothness: 2,
             width: 0.1,
             atomRadiusBondRatio: 2,
             showAniso: false,
