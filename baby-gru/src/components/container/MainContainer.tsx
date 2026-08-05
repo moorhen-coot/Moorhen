@@ -41,7 +41,6 @@ import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
-import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
@@ -168,6 +167,26 @@ export const MoorhenContainer = (props: ContainerProps) => {
         },
         [props.onUserPreferencesChange]
     );
+
+    // Keep the latest host callback so the instance always notifies the current handler.
+    const onUserPreferencesChangeRef = useRef(onUserPreferencesChange);
+    useEffect(() => {
+        onUserPreferencesChangeRef.current = onUserPreferencesChange;
+    }, [onUserPreferencesChange]);
+
+    // Initialise preference persistence (restore from local storage + subscribe to the store) on
+    // the instance. This replaces the old React-based MoorhenPreferencesContainer, so it is
+    // independent of UI mounting. The instance dispatches `userPreferencesMounted` once all
+    // preferences are restored, which then triggers the startup effect below.
+    useEffect(() => {
+        const unsubscribe = moorhenInstance.initPreferences(
+            store,
+            dispatch,
+            (key, value) => onUserPreferencesChangeRef.current?.(key, value)
+        );
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
@@ -405,7 +424,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     {" "}
                     <div />
                 </OverlayModal>
-                <MoorhenPreferencesContainer />
             </div>
         );
     }
@@ -426,7 +444,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <SnackBars />
                     <ActivityIndicator />
                     <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />

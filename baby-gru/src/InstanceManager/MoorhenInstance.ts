@@ -2,7 +2,7 @@ import localforage from "localforage";
 import { Dispatch, Store, UnknownAction } from "redux";
 import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
-import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
+import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { addCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
@@ -21,6 +21,8 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
+import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
 export type LoadFilesResult = {
     type: "molecule" | "map";
@@ -48,6 +50,7 @@ export class MoorhenInstance extends StoreExtension {
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
+    private preferencesUnsubscribe: (() => void) | null = null;
 
     constructor(
         containerRef: React.RefObject<HTMLDivElement>,
@@ -136,6 +139,30 @@ export class MoorhenInstance extends StoreExtension {
 
     public getPreferences(): Preferences {
         return this.preferences;
+    }
+
+    /**
+     * Initialise preference persistence (restore from local storage + subscribe to the store).
+     * This replaces the old React-based MoorhenPreferencesContainer, so preferences load and
+     * persist independently of UI mounting. The implementation lives in a small module
+     * (PreferencePersistence) to keep this class lean; here we only bind it to the store.
+     * @returns an unsubscribe function (stop subscribing to the store).
+     */
+    public initPreferences(
+        store: MoorhenReduxStoreType,
+        dispatch: AppDispatch,
+        onUserPreferencesChange?: (key: string, value: unknown) => void
+    ): (() => void) {
+        if (this.preferencesUnsubscribe) {
+            this.preferencesUnsubscribe();
+        }
+        this.preferencesUnsubscribe = initPreferencePersistence({
+            store,
+            dispatch,
+            localStorageInstance: this.preferences,
+            onUserPreferencesChange,
+        });
+        return this.preferencesUnsubscribe;
     }
 
     public setPaths(urlPrefix: string, monomerLibrary: string): void {
@@ -645,6 +672,10 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     public cleanup(): void {
+        if (this.preferencesUnsubscribe) {
+            this.preferencesUnsubscribe();
+            this.preferencesUnsubscribe = null;
+        }
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;

@@ -6,7 +6,7 @@ import pako from "pako";
 import { CommandCentre, WorkerResponse } from "@/InstanceManager/CommandCentre";
 import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 import type { MoorhenMolecule, ResidueInfo } from "@/utils//MoorhenMolecule";
-import { Shortcut } from "../components/managers/preferences";
+import { Shortcut } from "../InstanceManager/Preferences";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
