@@ -6,6 +6,7 @@ import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
 import "./react-colorful.css";
+import "./colour-picker.css";
 
 type RGBAColour = [number, number, number] | [number, number, number, number];
 type MoorhenColourPickerBase = {

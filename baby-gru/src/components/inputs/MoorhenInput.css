@@ -21,6 +21,7 @@
     margin-left: 0;
 }
 
+.moorhen-hex-input:focus,
 .moorhen__input:focus {
     color: var(--moorhen-input-color);
     background-color: var(--moorhen-input-background);
@@ -59,6 +60,7 @@
     margin-top: 0.25rem;
 }
 
+.moorhen-hex-input:hover,
 .moorhen__input-files-upload:hover,
 .moorhen__input-fetch-online-container:hover {
     border-color: var(--moorhen-focus);
