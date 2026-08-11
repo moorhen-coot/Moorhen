@@ -1,5 +1,6 @@
 @import "../../colors.css";
 @import "../../z-indexes.css";
+@import "../../app.css";
 
 .moorhen__inner-container {
     font-family: var(--moorhen-font-family);
