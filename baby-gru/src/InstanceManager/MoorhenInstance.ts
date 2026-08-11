@@ -4,7 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "@/components/managers/preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { addCustomRepresentation, setOrigin } from "@/store";
+import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -344,8 +344,8 @@ export class MoorhenInstance extends StoreExtension {
              * @param uniqueID - The unique identifier of the representation
              * @returns The matching representation, or undefined if not found
              */
-            get(uniqueID: string) {
-                let representation;
+            get(uniqueID: string): MoleculeRepresentation | null {
+                let representation: MoleculeRepresentation | null = null;
                 for (const molecule of moorhenInstance.getMoleculeList()) {
                     representation = molecule.representations.find(rep => rep.uniqueId === uniqueID);
                     if (representation) {
@@ -387,6 +387,22 @@ export class MoorhenInstance extends StoreExtension {
                 } else {
                     return null;
                 }
+            },
+
+            /**
+             * Delete an existing representation via the public API.
+             * @param representationUid - Unique ID of the representation to delete
+             * @returns true if the representation was found and deleted, otherwise false
+             */
+            async delete(representationUid: string): Promise<boolean> {
+                const representation: MoleculeRepresentation | null = this.get(representationUid);
+                if (representation) {
+                    representation.parentMolecule.removeRepresentation(representationUid); //it's a bit roundabout way but it works
+                    moorhenInstance.dispatch(removeCustomRepresentation(representation));
+                    return true;
+
+                }
+                return false;
             },
 
             /**
