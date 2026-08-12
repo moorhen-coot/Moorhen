@@ -1,6 +1,7 @@
 
 
 export const spaceGroupList = {
+  "0": "No space group", 
   "1": "P 1",
   "2": "P -1",
   "3": "P 1 2 1",
