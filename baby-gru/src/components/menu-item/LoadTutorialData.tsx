@@ -62,7 +62,7 @@ export const LoadTutorialData = () => {
                     return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>;
                 })}
             </MoorhenSelect>
-            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
+            <MoorhenButton onClick={onCompleted} ariaLabel="Load Tutorial OK">Ok</MoorhenButton>
         </>
     );
 };

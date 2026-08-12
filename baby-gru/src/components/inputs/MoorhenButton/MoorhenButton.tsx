@@ -23,6 +23,7 @@ type MoorhenButtonPropsTypeBase = {
     disabledTooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
+    ariaLabel?: string;
 };
 
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
@@ -63,6 +64,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
         children,
         iconStyle = null,
         tooltipPlacement,
+        ariaLabel = null,
     } = props;
 
     const internalButtonRef = useRef<HTMLButtonElement>(null);
@@ -125,6 +127,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             ref={setButtonRef}
             style={{ ...style }}
             value={props.value}
+            aria-label={ariaLabel}
         >
             {animation && <span className={`moorhen__button__animation`} />}
             <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem">
