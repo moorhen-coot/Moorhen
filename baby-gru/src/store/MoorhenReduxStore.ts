@@ -49,7 +49,6 @@ export const reducers = {
     menus: menusReducer,
     globalUI: globalUISliceReducer,
     vectors: vectorsReducer,
-    // chemShifts: chemShiftReducer,
     snackBars: snackBarsReducer,
 };
 
