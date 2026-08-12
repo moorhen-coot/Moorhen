@@ -120,6 +120,16 @@ export const ValidationPanel = () => {
                     
                 );
             }
+            // const peptideOmegaData = await moorhenInstance.cootCommand.getPeptideOmegaAnalysis(molecule.molNo);
+            // addValidationDataToSeqViewerSequences(
+            //     sequences,
+            //     cootValidationDataToSeqViewer(peptideOmegaData, "Pept. Omega"),
+            //     "Geometry",
+            //     4,
+            //     "mpl Viridis",
+            //     undefined
+            // );
+
             dispatch(setValidationOption({ ...validationOption, availableData: sequences[0]?.validationTracks?.map(track => track.name) }));
         
             setTriggerUpdate(current => current + 1);

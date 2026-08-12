@@ -184,6 +184,18 @@ export class CootCommandWrapper {
         return (await result).data.result.result as CootValidationData;
     }
 
+    async getPeptideOmegaAnalysis(selectedModel): Promise<CootValidationData> {
+        const result = this.cootCommand(
+            {
+                command: "peptide_omega_analysis",
+                returnType: "validation_data",
+                commandArgs: [selectedModel],
+            },
+            false
+        );
+        return (await result).data.result.result as CootValidationData;
+    }
+
     async get_map_bounding_sphere(imol: number, thresold: number): Promise<{ center: [number, number, number]; radius: number }> {
         const result = this.cootCommand(
             {
