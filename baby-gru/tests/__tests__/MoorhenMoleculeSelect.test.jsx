@@ -5,7 +5,16 @@ import { userEvent } from '@testing-library/user-event'
 import { MoorhenMoleculeSelect }  from '../../src/components/inputs/Selector/MoleculeSelector'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
+        const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+            },
+            commandCentre: new MockMoorhenCommandCentre(),
+            triggerMoleculeChanged: jest.fn()
 
+        }
 describe('Testing MoorhenMoleculeSelect', () => {
 
     afterEach(cleanup)
@@ -25,13 +34,13 @@ describe('Testing MoorhenMoleculeSelect', () => {
     })
 
     test('MoorhenMoleculeSelect select molecules', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 
@@ -64,13 +73,13 @@ describe('Testing MoorhenMoleculeSelect', () => {
     })
 
     test('MoorhenMoleculeSelect filter', () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 
@@ -102,13 +111,13 @@ describe('Testing MoorhenMoleculeSelect', () => {
     })
 
     test('MoorhenMoleculeSelect onChange', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 

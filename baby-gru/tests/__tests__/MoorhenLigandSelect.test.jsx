@@ -25,7 +25,13 @@ describe('Testing MoorhenLigandSelect', () => {
     })
 
     test('MoorhenLigandSelect select ligands', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+                const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: ""
+            },
+        }
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
         molecule_1.ligands = [
@@ -39,10 +45,10 @@ describe('Testing MoorhenLigandSelect', () => {
                 cid: '//A/303',
             }
         ]
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 
@@ -73,7 +79,13 @@ describe('Testing MoorhenLigandSelect', () => {
     })
 
     test('MoorhenLigandSelect onChange', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+                const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: ""
+            },
+        }
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
         molecule_1.ligands = [
@@ -87,10 +99,10 @@ describe('Testing MoorhenLigandSelect', () => {
                 cid: '//A/303',
             }
         ]
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 

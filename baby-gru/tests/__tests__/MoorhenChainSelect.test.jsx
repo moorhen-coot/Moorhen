@@ -5,7 +5,16 @@ import { userEvent } from '@testing-library/user-event'
 import { MoorhenChainSelect }  from '../../src/components/inputs/Selector/MoorhenChainSelect'
 import { MoorhenMolecule } from '../../src/utils/MoorhenMolecule'
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
+        const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+            },
+            commandCentre: new MockMoorhenCommandCentre(),
+            triggerMoleculeChanged: jest.fn()
 
+        }
 describe('Testing MoorhenChainSelect', () => {
 
     afterEach(cleanup)
@@ -25,7 +34,7 @@ describe('Testing MoorhenChainSelect', () => {
     })
 
     test('MoorhenChainSelect select chains', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
         molecule_1.sequences = [
@@ -42,10 +51,10 @@ describe('Testing MoorhenChainSelect', () => {
                 chain: 'C',
             }
         ]
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 
@@ -76,7 +85,7 @@ describe('Testing MoorhenChainSelect', () => {
     })
 
     test('MoorhenChainSelect allowedTypes', () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
         molecule_1.sequences = [
@@ -93,10 +102,10 @@ describe('Testing MoorhenChainSelect', () => {
                 chain: 'C',
             }
         ]
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 
@@ -122,7 +131,13 @@ describe('Testing MoorhenChainSelect', () => {
     })
 
     test('MoorhenChainSelect onChange', async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, '')
+        const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: ""
+            },
+        }
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_1.molNo = 0
         molecule_1.name = 'mol-1'
         molecule_1.sequences = [
@@ -139,10 +154,10 @@ describe('Testing MoorhenChainSelect', () => {
                 chain: 'C',
             }
         ]
-        const molecule_2 = new MoorhenMolecule(null, null, '')
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_2.molNo = 1
         molecule_2.name = 'mol-2'
-        const molecule_3 = new MoorhenMolecule(null, null, '')
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance)
         molecule_3.molNo = 2
         molecule_3.name = 'mol-3'
 

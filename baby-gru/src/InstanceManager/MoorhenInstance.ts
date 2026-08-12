@@ -17,6 +17,7 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 
+
 export type LoadFilesResult = {
     type: "molecule" | "map";
     uniqueID: string;
