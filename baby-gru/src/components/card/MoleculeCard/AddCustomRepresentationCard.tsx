@@ -267,6 +267,7 @@ export const AddCustomRepresentationCard = memo(
 
             if (!cidSelection) {
                 console.warn("Invalid CID selection to create a custom representation");
+                props.setBusy?.(false);
                 return;
             }
 
@@ -361,19 +362,26 @@ export const AddCustomRepresentationCard = memo(
                         dispatch(addCustomRepresentation(props.molecule.adaptativeBondsRepresentation));
                     }
                 } else {
-                    representationRef.current.cid = cidSelection;
-                    representationRef.current.restrictToNeighbours = restrictToNeighbours;
-                    representationRef.current.neighboursDistance = neighboursDistance;
-                    representationRef.current.excludeNeighbours = excludeNeighbours;
-                    representationRef.current.neighboursCid = neighboursCid;
-                    representationRef.current.hbondedTo = hbondedTo;
-                    representationRef.current.hbondedToCid = neighboursCid;
-                    representationRef.current.setStyle(representationStyle);
-                    representationRef.current.setUseDefaultColourRules(useDefaultColours);
-                    representationRef.current.setColourRules(colourRule ? [colourRule] : null);
-                    representationRef.current.nonCustomOpacity = nonCustomAlpha;
-                    props.molecule.addRepresentation(representationRef.current);
-                    dispatch(addCustomRepresentation(representationRef.current));
+                    const representation = await props.molecule.addRepresentation(
+                        representationStyle,
+                        cidSelection,
+                        true,
+                        colourRule ? [colourRule] : null,
+                        representationRef.current.useDefaultBondOptions ? null : { ...representationRef.current.bondOptions },
+                        representationRef.current.useDefaultM2tParams ? null : { ...representationRef.current.m2tParams },
+                        representationRef.current.useDefaultResidueEnvironmentOptions
+                            ? null
+                            : { ...representationRef.current.residueEnvironmentOptions },
+                        nonCustomAlpha,
+                        neighboursCid,
+                        restrictToNeighbours,
+                        excludeNeighbours,
+                        neighboursCid,
+                        hbondedTo,
+                        neighboursDistance
+                    );
+                    representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
+                    dispatch(addCustomRepresentation(representation));
                 }
             } else if (mode === "edit" && props.representation.uniqueId) {
                 const representation = props.molecule.representations.find(item => item.uniqueId === props.representation.uniqueId);
@@ -407,6 +415,7 @@ export const AddCustomRepresentationCard = memo(
             try {
                 await createRepresentation();
             } catch (err) {
+                props.setBusy?.(false);
                 console.warn(err);
                 dispatch(
                     enqueueSnackbar({
@@ -543,7 +552,10 @@ export const AddCustomRepresentationCard = memo(
                     {(ruleType === "chain" || ruleType === "residue-range") && (
                         <MoorhenChainSelect
                             molecules={molecules}
-                            onChange={evt => setSelectedChain(evt.target.value)}
+                            onChange={evt => {
+                                setSelectedChain(evt.target.value);
+                                setSequenceResidueRange(null);
+                            }}
                             selectedCoordMolNo={props.molecule.molNo}
                             ref={chainSelectRef}
                             allowedTypes={[1, 2, 3, 4, 5]}
