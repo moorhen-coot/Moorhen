@@ -37,19 +37,6 @@ function convertNEFHydrogen(nefName, resName) {
   if (nefName.endsWith('%')) {
     const base = nefName.slice(0, -1); // remove %
 
-    // QQ special cases (VAL/LEU methyls)
-    // if (resName === 'VAL' && base === 'HG') {
-    //   results.add('QQH');
-    // }
-    // if (resName === 'LEU' && base === 'HD') {
-    //   results.add('QQD');
-    // }
-
-    // // General Q rule reversal (H% -> Q)
-    // if (base.includes('H')) {
-    //   results.add(base.replace(/H/g, 'Q'));
-    // }
-
     // VL methyls (HGx% / HGy%)
     if (resiTypesVL.includes(resName)) {
       if (base.endsWith('x')) {
@@ -71,9 +58,6 @@ function convertNEFHydrogen(nefName, resName) {
     }
 
     // ALA / THR special
-    // if (resName === 'ALA' && base === 'HB') {
-    //   results.add('HB');
-    // }
     if (resName === 'ALA' && base === 'HB') {
         results.add('HB1');
         results.add('HB2');
@@ -144,10 +128,7 @@ function convertNEFHydrogen(nefName, resName) {
 }
 
 export function loopReplaceProtons(rows, atomN = "atom1", nameN = "name1") {
-    // loops through rows
-    // runs convertNEFhydrogen
-    // pushes to dataframe
-    // returns dataframe
+
     const newDF = []
     rows.forEach(row => { 
         if(row[atomN].includes("%") || row[atomN].includes("x") || row[atomN].includes("y"))
@@ -195,9 +176,7 @@ export function convertDataHeaders(restraintDict){
 
 export function convertDataframe(df, pdbAtoms = null) {
 
-//   const newDF = [];
-// atom1 and atom2 are not named correctly now the fn is done in c++
-// need to change header names etc
+
     const headersFixed = convertDataHeaders(df);
     const withSourceFlag = headersFixed.map(row => ({
         ...row,
