@@ -1,8 +1,6 @@
 /* Main entry point */
 // @ts-strict
 import "./app.css";
-// customElements.define("moorhen-helper", MoorhenHelper);
-
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
 export type { MoorhenReduxStoreType } from "@/store";

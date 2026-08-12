@@ -67,12 +67,9 @@ inline std::string get_nef_info(const std::string &data, const std::string &sf_c
                 bool isNefRestrains = false;
                 for(const auto& item2 : frame.items){
                     if(item2.type == gemmi::cif::ItemType::Pair) {
-                        // if(item2.pair[0]=="_nef_distance_restraint_list.restraint_origin"&&item2.pair[1]==restraintType){
-                        // used restraint_origin but that is not guaranteed to be present
-                        // so will just read in all restraints 
+
                         const std::string full_category = "_" + sf_category + ".sf_category";
                         std::cout << full_category; 
-                        // if(item2.pair[0]=="_nef_distance_restraint_list.sf_category"&&item2.pair[1]==sf_category){
                         if(item2.pair[0]==full_category&&item2.pair[1]==sf_category){
 
                         isNefRestrains = true;
