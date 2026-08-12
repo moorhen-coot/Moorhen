@@ -64,9 +64,8 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     id={props.id ? props.id : id}
                     type="text"
                     onChange={handleChange}
-                    value={props.text !== undefined ? props.text : undefined}
-                    defaultValue={props.text === undefined ? props.text : undefined}
-                    className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${props.className ?? ""} ${isInvalid ? " invalid" : null}`}
+                    value={props.text}
+                    className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${isInvalid ? " invalid" : null}`}
                     onBlur={handleBlur}
                     onFocus={handleFocus}
                     ref={ref}
