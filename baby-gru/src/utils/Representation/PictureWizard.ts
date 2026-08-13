@@ -71,10 +71,7 @@ const bindingSiteHBondsStep = (neighboursCid: string): WizardStep => ({
     restrictToNeighbours: true,
 });
 
-/**
- * Resolve the user's ligand/CID selection into a list of individual CIDs.
- * Returns an empty list when there is nothing to draw around.
- */
+
 function resolveLigandSelection(params: {
     molecule: MoorhenMolecule;
     ruleType: PictureWizardRuleType;
@@ -101,11 +98,7 @@ interface BuildWizardStepsParams {
     dispatch: Dispatch;
 }
 
-/**
- * Compute the ordered list of representation steps implied by a wizard type.
- * Returns an empty list when nothing should be drawn (e.g. a binding site with
- * no ligand to build the site around).
- */
+
 function buildWizardSteps(params: BuildWizardStepsParams): WizardStep[] {
     const { wizardType, molecule, ruleType, ligandSelection, cid, dispatch } = params;
 
@@ -151,13 +144,7 @@ function buildWizardSteps(params: BuildWizardStepsParams): WizardStep[] {
     }
 }
 
-/**
- * Run the "Picture Wizard" for a molecule: optionally delete the existing
- * representations, then create the set of representations implied by the
- * given wizard type. This is React-free so it can be reused by Moorhen core
- * (e.g. moorhenInstance.representation.wizard). Returns the created
- * representations.
- */
+
 export async function runPictureWizard(params: RunPictureWizardParams): Promise<MoleculeRepresentation[]> {
     const {
         molecule,
