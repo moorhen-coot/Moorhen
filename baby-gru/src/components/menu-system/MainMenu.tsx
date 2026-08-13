@@ -92,7 +92,7 @@ export const MoorhenMainMenu = memo(() => {
     }, [isOpen, isDevMode, menuSystem, menuVersion]);
 
     return (
-        <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 10 }}>
+        <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 2 }}>
             {/* moorhen__main-menu-scroll have these CSS properties that will propagate and cause bugs: 
             direction: ltr 
             pointer-events: none;

@@ -1,0 +1,10 @@
+# uv-managed Python project for Moorhen development tooling.
+# Run `uv sync` to (re)create .venv, then e.g. `uv run python scripts/check_unused_css.py`.
+[project]
+name = "moorhen-dev-tools"
+version = "0.1.0"
+description = "Development tooling scripts for the Moorhen codebase (e.g. check_unused_css.py)"
+requires-python = ">=3.10"
+dependencies = [
+    "tinycss2>=1.3",
+]
