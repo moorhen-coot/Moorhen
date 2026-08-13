@@ -207,6 +207,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}
+                        minMax={minMax}
                     />
                     <PlusMinusButton
                         step={-Math.pow(10, -decimalDigits)}
@@ -215,6 +216,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}
+                        minMax={minMax}
                     />
                 </MoorhenStack>
             )}

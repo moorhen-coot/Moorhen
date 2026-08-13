@@ -40,6 +40,10 @@ export const ValidationTab = () => {
         }
     }
 
+    const handleColumnWidthChange = (val: number) => {
+        dispatch(setValidationOption({ ...validationOption, columnWidth: val }));
+    }
+
     const handleNumberOfLinesChange = (val: number) => {
         setNumberOfLines(val);
         const newShownData = [...validationOption.shownData];
@@ -99,6 +103,16 @@ export const ValidationTab = () => {
                     Custom
                 </option>
             </MoorhenSelect>
+            <MoorhenNumberInput
+                label="Column width"
+                labelPosition="left"
+                minMax={[0.5, 1.5]}
+                type="numberForm"
+                decimalDigits={1}
+                value={validationOption.columnWidth}
+                setValue={handleColumnWidthChange}
+                width="4rem"
+            />
         </MoorhenStack>
 
 {preset === "Custom" && <MoorhenStack inputGrid card>

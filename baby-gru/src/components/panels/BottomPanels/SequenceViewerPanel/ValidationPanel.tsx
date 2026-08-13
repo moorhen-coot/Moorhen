@@ -20,6 +20,7 @@ export type ValidationOption = {
     selectedMap: string
     availableData: string[]
     shownData: string[]
+    columnWidth: number
 };
 
 export const ValidationPanel = () => {
@@ -151,6 +152,7 @@ export const ValidationPanel = () => {
             showValidationData={true}
             nameColumnWidth={4}
             validationTracks={validationOption.shownData ?? []}
+            columnWidth={validationOption.columnWidth}
         /></OverlayModal>
         </div>
     );

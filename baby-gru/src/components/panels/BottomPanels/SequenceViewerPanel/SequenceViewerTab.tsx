@@ -3,6 +3,7 @@ import { setSeqViewerOption, setShownBottomPanel } from "@/store";
 import { RootState } from "@/store/MoorhenReduxStore";
 import { useDispatch, useSelector } from "react-redux";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
+import { MoorhenStack } from "@/components/interface-base";
 
 
 export const SequenceViewerTab = () => {
@@ -24,9 +25,8 @@ export const SequenceViewerTab = () => {
     }
 
     const configPanel = (
-        <div>
+        <MoorhenStack inputGrid>
             <MoorhenMoleculeSelect useUniqueId setSelectedMolecule={setSelectedMolecule} selectedMolecule={seqviewerOption.selectedMolecule} />
-            <p></p>
             <MoorhenNumberInput
                 label="Max lines"
                 labelPosition="left"
@@ -39,7 +39,19 @@ export const SequenceViewerTab = () => {
                 }}
                 width="4rem"
             />
-        </div>
+                        <MoorhenNumberInput
+                label="Column width"
+                labelPosition="left"
+                minMax={[0.5, 1.5]}
+                type="numberForm"
+                decimalDigits={1}
+                value={seqviewerOption.columnWidth}
+                setValue={(val: number) => {
+                    dispatch(setSeqViewerOption({ ...seqviewerOption, columnWidth: val }))
+                }}
+                width="4rem"
+            />
+        </MoorhenStack>
     );
 
     return (

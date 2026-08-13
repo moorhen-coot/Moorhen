@@ -13,6 +13,7 @@ export interface BaseSequenceViewerPanelProps {
     nameColumnWidth?: number;
     validationTracks?: string[];
     showTitleBar?: boolean;
+    columnWidth?: number;
 }
 
 /**
@@ -27,6 +28,7 @@ export const BaseSequenceViewerPanel = ({
     nameColumnWidth,
     validationTracks,
     showTitleBar = false,
+    columnWidth = 1,
 }: BaseSequenceViewerPanelProps) => {
     const dispatch = useDispatch();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
@@ -97,6 +99,7 @@ export const BaseSequenceViewerPanel = ({
             showValidationData={showValidationData}
             nameColumnWidth={nameColumnWidth}
             validationTracks={validationTracks}
+            columnWidth={columnWidth}
         />
     );
 };

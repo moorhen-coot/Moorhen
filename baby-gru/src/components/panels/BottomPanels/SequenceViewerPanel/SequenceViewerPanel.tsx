@@ -9,6 +9,7 @@ export type SequenceViewerOption = {
     nOfLines:number;
     expanded: boolean;
     selectedMolecule: string;
+    columnWidth: number;
 };
 
 export const SequenceViewerPanel = () => {
@@ -39,6 +40,7 @@ export const SequenceViewerPanel = () => {
             sequences={sequenceList}
             displayHeight={option.expanded ? expandLength : 1}
             showValidationData={false}
+            columnWidth={option.columnWidth}
         />
     );
 };

@@ -15,12 +15,14 @@ const initialState: {
         nOfLines: 4,
         expanded: false,
         selectedMolecule: "",
+        columnWidth: 1,
     },
     validationOption: {
         selectedMolecule: "",
         selectedMap: "",
         availableData: [],
         shownData: ["Overall RMSZ", "Density Correlation"],
+        columnWidth: 0.8,
     },
 };
 
