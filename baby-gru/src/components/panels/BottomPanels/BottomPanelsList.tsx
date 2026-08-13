@@ -1,7 +1,7 @@
 import { SequenceViewerPanel } from "./SequenceViewerPanel/SequenceViewerPanel";
 import { ValidationPanel } from "./SequenceViewerPanel/ValidationPanel";
 
-export type BottomPanelIDs = "sequences-viewer" | "validation" | (string & {}) | null;
+export type BottomPanelIDs = "sequences-viewer" | "validation" | null;
 
 export const BottomPanelsList: Partial<Record<BottomPanelIDs, React.JSX.Element>> = {
     "sequences-viewer": <SequenceViewerPanel />,

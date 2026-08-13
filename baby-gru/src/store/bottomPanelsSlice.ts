@@ -15,7 +15,7 @@ const initialState: {
         nOfLines: 4,
         expanded: false,
         selectedMolecule: "",
-        columnWidth: 1,
+        columnWidth: 0.9,
     },
     validationOption: {
         selectedMolecule: "",

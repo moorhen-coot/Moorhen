@@ -605,7 +605,13 @@ export class MoorhenMolecule {
         sequenceInfoVec.delete();
 
         this.sequences = result;
-        this.updateSeqViewerData();
+        // Do not cache seqViewer data while molNo is not yet assigned (e.g. during
+        // the initial load, parseSequences runs before read_coords_string returns),
+        // otherwise the cached data would permanently carry molNo === null and
+        // residue selection/interaction in the sequence viewer would break.
+        if (this.molNo !== null) {
+            this.updateSeqViewerData();
+        }
         this.hasDNA = this.sequences.some(sequence => [3, 4, 5].includes(sequence.type));
     }
 
@@ -618,7 +624,12 @@ export class MoorhenMolecule {
     }
 
     get seqViewerData(): SeqElement[] {
-        if (!this._seqViewerData || this._seqViewerData.length === 0) {
+        const cachedMolNo = this._seqViewerData?.[0]?.molNo;
+        const needsRefresh =
+            !this._seqViewerData ||
+            this._seqViewerData.length === 0 ||
+            (this.molNo !== null && cachedMolNo !== this.molNo);
+        if (needsRefresh) {
             this.updateSeqViewerData();
         }
         return this._seqViewerData;

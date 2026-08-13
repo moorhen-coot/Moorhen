@@ -144,7 +144,7 @@ export const ValidationPanel = () => {
 
     return (
         <div style={{ position: "relative"}}>
-        <OverlayModal overlay={<><MoorhenSpinner size="4rem" colour="white"/> Loading</>} isShown={isLoading} style={{ height: "calc(100% - 54px)", transform: "translateY(50px)"}}>
+        <OverlayModal overlay={<><MoorhenSpinner size="4rem" colour="white"/> Loading</>} isShown={isLoading} style={{ height: "calc(100% - 54px)", transform: "translateY(52px)"}}>
         <BaseSequenceViewerPanel
             selectedMolecule={validationOption.selectedMolecule}
             sequences={sequencesList}

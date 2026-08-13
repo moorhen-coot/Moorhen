@@ -1,6 +1,6 @@
 import Fasta from "biojs-io-fasta";
 import type { Dispatch, Store } from "redux";
-import { MoorhenReduxStoreType, enqueueSnackbar } from "@/store";
+import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBottomPanel } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
@@ -485,6 +485,7 @@ export const autoOpenFiles = async (
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number,
 ) => {
+    const areThereMolecules = moorhenInstance.getMoleculeList().length > 0
     const store = moorhenInstance.store
     const dispatch = moorhenInstance.dispatch
     const commandCentre = moorhenInstance.getCommandCentreRef()
@@ -643,6 +644,12 @@ export const autoOpenFiles = async (
     }
     if (moleculesCreated.length > 0) {
         moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
+        if (!areThereMolecules) {
+            dispatch(setShownBottomPanel("sequences-viewer"));
+        }
+        const oldOption = store.getState().bottomPanels.seqviewerOption
+        dispatch(setSeqViewerOption({...oldOption,  selectedMolecule: moleculesCreated.at(-1).uniqueId }));
+        
     }
     if (isRelionLocresFolder) {
         dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));
