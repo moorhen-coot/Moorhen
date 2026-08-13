@@ -70,7 +70,7 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
         };
         // When ending drag (in onMouseUp):
         const onMouseUp = () => {
-            setDragState(s => ({ ...s, isDragging: false }));
+            setTimeout(() => setDragState(s => ({ ...s, isDragging: false })), 50);
             if (onDraggingChange) onDraggingChange(false); // Notify parent
         };
         window.addEventListener('mousemove', onMouseMove);
@@ -82,6 +82,7 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
     }, [dragState.isDragging, dragState.dragStartX, dragState.initialThumbLeft, thumbWidth]);
 
     const onTrackClick = (e: React.MouseEvent) => {
+        if (dragState.isDragging) return; // Ignore clicks while dragging
         const el = scrollRef.current;
         if (!el) return;
         const track = e.currentTarget as HTMLDivElement;
