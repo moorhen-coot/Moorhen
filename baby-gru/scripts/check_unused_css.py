@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+// This script is fully AI generated, and is just for checking CSS usage in the app. 
+It might contain errors and is likely unreliable, but still useful.
+It is not part of the app itself, and is not used at runtime.
+
 check_unused_css.py - find CSS classes defined under src/ that are not used in the app.
 
 For every *.css file under --css-dir (default src/) this script lists every class
