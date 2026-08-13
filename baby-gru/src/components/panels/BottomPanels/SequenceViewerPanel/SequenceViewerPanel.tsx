@@ -11,11 +11,11 @@ export type SequenceViewerOption = {
     selectedMolecule: string;
 };
 
-export const SequenceViewerPanel = (props: { option: SequenceViewerOption }) => {
-    const { option } = props
+export const SequenceViewerPanel = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
+    const option = useSelector((state: RootState) => state.bottomPanels.seqviewerOption);
     const molecule = useMemo(() => {
         return moleculeList.length > 0
             ? (moleculeList.find(molecule => molecule.uniqueId === option.selectedMolecule) ?? moleculeList[0])

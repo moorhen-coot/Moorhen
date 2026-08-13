@@ -7,12 +7,12 @@ const initialState: {
     busy: boolean;
     isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
-    bottomPanelIsShown: boolean;
     isMainMenuOpen: boolean;
     isSearchBarActive: boolean;
     areShortcutsBlocked: boolean;
     shownSidePanel: SidePanelIDs | null;
     sidePanelWidth: number;
+    bottomPanelHeight: number | null;
     shownControl: ShownControl | null;
     controlLocked: number | null;
     selectionToolsActive: boolean;
@@ -21,12 +21,12 @@ const initialState: {
     busy: false,
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
-    bottomPanelIsShown: true,
     isMainMenuOpen: true,
     isSearchBarActive: false,
     areShortcutsBlocked: false,
     shownSidePanel: null,
     sidePanelWidth: 450,
+    bottomPanelHeight: 0,
     shownControl: null,
     controlLocked: null,
     selectionToolsActive: false,
@@ -45,10 +45,6 @@ const globalUISlice = createSlice({
         },
         setTimeCapsuleBusy: (state, action: PayloadAction<boolean>) => {
             state.isTimeCapsuleBusy = action.payload;
-        },
-        // API
-        setShowBottomPanel: (state, action: PayloadAction<boolean>) => {
-            state.bottomPanelIsShown = action.payload;
         },
         setMainMenuOpen: (state, action: PayloadAction<boolean>) => {
             state.isMainMenuOpen = action.payload;
@@ -70,6 +66,9 @@ const globalUISlice = createSlice({
         // API
         setSidePanelWidth: (state, action: PayloadAction<number>) => {
             state.sidePanelWidth = action.payload;
+        },
+        setBottomPanelHeight: (state, action: PayloadAction<number>) => {
+            state.bottomPanelHeight = action.payload;
         },
         setShownControl: (state, action: PayloadAction<ShownControl | null>) => {
             if (state.controlLocked) return;
@@ -109,12 +108,12 @@ export const {
     setBusy,
     setTimeCapsuleBusy,
     setGlobalInstanceReady,
-    setShowBottomPanel,
     setSearchBarActive,
     setMainMenuOpen,
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
+    setBottomPanelHeight,
     setShownControl,
     lockControls,
     unlockControls,

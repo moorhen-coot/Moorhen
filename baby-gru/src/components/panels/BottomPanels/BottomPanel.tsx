@@ -1,7 +1,7 @@
-import { useSelector, } from "react-redux";
+import { useDispatch, useSelector, } from "react-redux";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActivityCompat } from "@/components/interface-base/Compatibility";
-import { RootState } from "@/store";
+import { RootState, setBottomPanelHeight } from "@/store";
 import { BottomPanelIDs, BottomPanelsList } from "./BottomPanelsList";
 import {  SequenceViewerTab } from "./SequenceViewerPanel/SequenceViewerTab";
 import { ValidationTab } from "./SequenceViewerPanel/ValidationTab";
@@ -15,7 +15,8 @@ export const BottomPanelContainer = () => {
     const contentRef = useRef<HTMLDivElement | null>(null);
     const width = window.innerWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
     const shownPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel);
-    const seqviewerOption = useSelector((state: RootState) => state.bottomPanels.seqviewerOption);
+
+    const dispatch = useDispatch();
 
     useLayoutEffect(() => {
         if (!contentRef.current) {
@@ -23,6 +24,9 @@ export const BottomPanelContainer = () => {
         }
         setContainerHeight(contentRef.current.scrollHeight);
     }, []);
+
+    console.log("BottomPanelContainer size", containerHeight, contentRef.current?.scrollHeight);
+
 
     useEffect(() => {
         if (!contentRef.current) {
@@ -33,8 +37,13 @@ export const BottomPanelContainer = () => {
             if (!contentRef.current) {
                 return;
             }
-            setContainerHeight(contentRef.current.scrollHeight);
-        });
+            setContainerHeight(contentRef.current.scrollHeight );
+            setTimeout(() => {
+                dispatch(setBottomPanelHeight(contentRef.current?.scrollHeight ?? 0));
+            }, 250);
+        }
+            // dispatch(setBottomPanelHeight(contentRef.current.scrollHeight));
+        );
 
         resizeObserver.observe(contentRef.current);
 
@@ -43,10 +52,11 @@ export const BottomPanelContainer = () => {
         };
     }, []);
 
+
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
             <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
-                {BottomPanelsList[id].renderPanelContent(seqviewerOption)}
+                {BottomPanelsList[id]}
             </ActivityCompat>
         );
     });
@@ -56,7 +66,7 @@ export const BottomPanelContainer = () => {
             className="moorhen__bottom-panel-container"
             style={{ width: width, height: containerHeight !== null ? `${containerHeight}px` : undefined }}
         >
-            <div ref={contentRef}>
+            <div ref={contentRef} style={{ padding: "0", margin: "0" }}>
                 <div className="moorhen__bottom-panel-tabs-container">
                     <SequenceViewerTab/>
                     <ValidationTab/>

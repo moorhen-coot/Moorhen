@@ -12,6 +12,8 @@ import { libcootApi } from "@/types/libcoot";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
 import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
 import { OverlayModal } from "@/components/interface-base/ModalBase/OverlayModal";
+import { MoorhenSpinner } from "@/components/icons/MoorhenSpinner";
+import { MoorhenStack } from "@/components/interface-base/Stack/Stack";
 
 export type ValidationOption = {
     selectedMolecule: string
@@ -141,7 +143,7 @@ export const ValidationPanel = () => {
 
     return (
         <div style={{ position: "relative"}}>
-        <OverlayModal overlay="Loading" isShown={isLoading} style={{ height: "calc(100% - 54px)", transform: "translateY(54px)"}}>
+        <OverlayModal overlay={<><MoorhenSpinner size="4rem" colour="white"/> Loading</>} isShown={isLoading} style={{ height: "calc(100% - 54px)", transform: "translateY(50px)"}}>
         <BaseSequenceViewerPanel
             selectedMolecule={validationOption.selectedMolecule}
             sequences={sequencesList}

@@ -1,13 +1,15 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { SequenceViewerOption } from "@/components/panels/BottomPanels/SequenceViewerPanel/SequenceViewerPanel";
 import { ValidationOption } from "@/components/panels/BottomPanels/SequenceViewerPanel/ValidationPanel";
+import { BottomPanelIDs } from "@/components/panels";
+
 
 const initialState: {
-    shownBottomPanel: "sequences-viewer" | "validation",
+    shownBottomPanel: BottomPanelIDs;
     seqviewerOption: SequenceViewerOption;
     validationOption: ValidationOption;
 } = {
-    shownBottomPanel: "sequences-viewer",
+    shownBottomPanel: null,
     seqviewerOption: {
         showExpandButton: true,
         nOfLines: 4,
@@ -32,7 +34,7 @@ const bottomPanelsSlice = createSlice({
         setValidationOption: (state, action: PayloadAction<ValidationOption>) => {
             state.validationOption = action.payload;
         },
-        setShownBottomPanel: (state, action: PayloadAction<"sequences-viewer" | "validation">) => {
+        setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs>) => {
             state.shownBottomPanel = action.payload;
         },
     },
