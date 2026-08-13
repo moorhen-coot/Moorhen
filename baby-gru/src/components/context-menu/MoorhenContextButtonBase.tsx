@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef } from "react";
-import { enqueueSnackbar } from "@/store";
+import { enqueueSnackbar, RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -102,6 +102,7 @@ export const MoorhenContextButtonBase = (props: {
     chosenAtom: moorhen.ResidueSpec;
     refineAfterMod?: boolean;
     needsMapData?: boolean;
+    ligandOnly?: boolean;
     needsAtomData?: boolean;
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
     cootCommandInput?: moorhen.cootCommandKwargs;
@@ -124,20 +125,16 @@ export const MoorhenContextButtonBase = (props: {
         setDefaultValue?: (arg0: string) => void;
     };
 }) => {
-    const defaultProps = {
-        needsMapData: false,
-        needsAtomData: true,
-        refineAfterMod: true,
-    };
 
-    const { refineAfterMod, needsAtomData, needsMapData } = { ...defaultProps, ...props };
+    const { refineAfterMod = true, needsAtomData = true, needsMapData = false, ligandOnly = false } = { ...props };
 
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine);
+    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const enableRefineAfterMod = useSelector((state: RootState) => state.refinementSettings.enableRefineAfterMod);
+    const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
+    const animateRefine = useSelector((state: RootState) => state.refinementSettings.animateRefine);
     const commandCentre = useCommandCentre();
+
+    const isLigand = !["ALA","CYS","ASP","GLU","PHE","GLY","HIS","ILE","LYS","LEU","MET","ASN","PRO","GLN","ARG","SER","THR","VAL","TRP","TYR","WAT","HOH","THP","SEP","TPO","TYP","PTR","OH2","H2O","G","C","U","A","T"].includes(props.chosenAtom.res_name);
 
     const dispatch = useDispatch();
 
@@ -209,15 +206,17 @@ export const MoorhenContextButtonBase = (props: {
         }
     }, [props]);
 
+    const disabled = (needsMapData && !activeMap) || (needsAtomData && molecules.length === 0) || (ligandOnly && !isLigand);
+
     return (
         <>
             <MoorhenButton
                 onClick={handleClick}
-                className="moorhen__context-menu-button"
+                className={`moorhen__context-menu-button ${disabled ? "disabled" : ""}`}
                 // onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
-                // style={{ backgroundColor: isDark ? "grey" : "white" }}
-                disabled={(needsMapData && !activeMap) || (needsAtomData && molecules.length === 0)}
+                disabled={disabled}
                 tooltip={props.toolTipLabel}
+                disabledTooltip={needsMapData ?"An active map is required" : ligandOnly ? "Only for ligand" : "No molecule loaded"}
             >
                 {props.icon}
             </MoorhenButton>

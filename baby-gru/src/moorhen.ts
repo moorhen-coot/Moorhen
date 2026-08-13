@@ -1,6 +1,6 @@
 /* Main entry point */
 // @ts-strict
-import "./app.css";
+
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
 export type { MoorhenReduxStoreType } from "@/store";

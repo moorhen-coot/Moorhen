@@ -78,6 +78,7 @@
         "build-and-pack": "npm run build-release && cd dist && npm pack && cd ..",
         "build-and-pack-dev": "npm run build-release-dev && cd dist && npm pack && cd ..",
         "build-and-pack-versioned": "node scripts/pack-versioned.mjs",
+        "check:css": "uv run python scripts/check_unused_css.py",
         "create-docs": "npm run create-version && npx jsdoc -c jsdoc.json ../README.md && mkdir -p docs/wasm_src_frontend && cp -a ../wasm_src_frontend/baby_gru.png docs/wasm_src_frontend",
         "test-api": "npm run create-version && npm run transpile-protobuf && npm run transpile-graphql-codegen && npx tsc && npm run transpile-ts-worker && env MOORHEN_TEST_PTHREAD_POOL_SIZE=${MOORHEN_TEST_PTHREAD_POOL_SIZE:-1} node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js --selectProjects api-utils --runInBand --detectOpenHandles --forceExit --expand --reporters=jest-silent-reporter --reporters=summary",
         "test": "npm run test-api && npm run test-react",
