@@ -46,6 +46,7 @@ export const MoorhenEigenFlipLigandButton = (props: ContextButtonProps) => {
                 />
             }
             toolTipLabel={toolTipLabel}
+            ligandOnly={true}
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
             onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}

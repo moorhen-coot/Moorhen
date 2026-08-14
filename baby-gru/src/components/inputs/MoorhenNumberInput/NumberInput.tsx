@@ -25,6 +25,7 @@ type MoorhenNumberInputProps = {
     integer?: boolean;
     tooltip?: string;
     className?: string;
+    isInvalid?: boolean;
 };
 
 /**

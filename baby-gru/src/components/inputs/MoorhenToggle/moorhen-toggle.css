@@ -12,21 +12,6 @@
     pointer-events: none;
 }
 
-.moorhen__toggle-container-large {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid red;
-    height: 2.5rem;
-    width: fit-content;
-}
-
-.moorhen__toggle-menu-item {
-    margin-top: 0.4rem;
-    margin-bottom: 0.4rem;
-    margin-left: 0.8rem;
-    margin-right: 0.8rem;
-}
 
 .moorhen__toggle-switch {
     position: relative;
@@ -94,6 +79,7 @@
 }
 
 .moorhen__toggle-slider:before {
+    box-sizing: border-box;
     position: absolute;
     bottom: 1px;
     content: "";

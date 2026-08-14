@@ -33,6 +33,7 @@ export const MoorhenJedFlipFalseButton = (props: ContextButtonProps) => {
                     alt="jed-flip"
                 />
             }
+            ligandOnly={true}
             toolTipLabel="JED Flip: wag the tail"
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
             onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}

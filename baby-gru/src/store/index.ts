@@ -243,7 +243,8 @@ export {
     lockControls,
     unlockControls,
     closeResidueSelectionTools,
-    setClickAwayListenerActive,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
 }  from "./globalUISlice";
 
 // Export store configuration and types
