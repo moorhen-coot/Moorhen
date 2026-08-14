@@ -551,7 +551,7 @@ describe('Callbacks', () => {
         const callback = jest.fn();
         moorhenInstance.newMoleculeChangedCallback(callback);
         moorhenInstance.triggerMoleculeChanged('test-mol-uid');
-        expect(callback).toHaveBeenCalledWith('test-mol-uid');
+        expect(callback).toHaveBeenCalledWith('test-mol-uid', undefined, undefined);
     });
 
     test('newMoleculeChangedCallback with specific moleculeUID', () => {
@@ -564,7 +564,7 @@ describe('Callbacks', () => {
 
         // Trigger for the target molecule - SHOULD fire
         moorhenInstance.triggerMoleculeChanged('target-mol');
-        expect(callback).toHaveBeenCalledWith('target-mol');
+        expect(callback).toHaveBeenCalledWith('target-mol', undefined, undefined);
     });
 
     test('newMoleculeChangedCallback unsubscribe works', () => {
