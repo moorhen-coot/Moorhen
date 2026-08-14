@@ -4,7 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
-import { addCustomRepresentation, setOrigin } from "@/store";
+import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
@@ -32,7 +32,13 @@ export type LoadFilesResult = {
 }[];
 
 export class MoorhenInstance extends StoreExtension {
-    private _defaultStyle: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "site-and-ribbons" = "ribbons-and-ligands";
+    private _defaultStyle:
+        | "CAs"
+        | "CBs"
+        | "CRs"
+        | "ribbons-and-ligands"
+        | "ribbons-and-side-chains"
+        | "site-and-ribbons" = "ribbons-and-ligands";
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -351,7 +357,9 @@ export class MoorhenInstance extends StoreExtension {
     public get representation() {
         const moorhenInstance = this;
         return {
-            set defaultStyle(style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "site-and-ribbons") {
+            set defaultStyle(
+                style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "ribbons-and-side-chains" | "site-and-ribbons"
+            ) {
                 moorhenInstance._defaultStyle = style;
             },
             get defaultStyle() {
@@ -363,8 +371,8 @@ export class MoorhenInstance extends StoreExtension {
              * @param uniqueID - The unique identifier of the representation
              * @returns The matching representation, or undefined if not found
              */
-            get(uniqueID: string) {
-                let representation;
+            get(uniqueID: string): MoleculeRepresentation | null {
+                let representation: MoleculeRepresentation | null = null;
                 for (const molecule of moorhenInstance.getMoleculeList()) {
                     representation = molecule.representations.find(rep => rep.uniqueId === uniqueID);
                     if (representation) {
@@ -409,6 +417,22 @@ export class MoorhenInstance extends StoreExtension {
             },
 
             /**
+             * Delete an existing representation via the public API.
+             * @param representationUid - Unique ID of the representation to delete
+             * @returns true if the representation was found and deleted, otherwise false
+             */
+            async delete(representationUid: string): Promise<boolean> {
+                const representation: MoleculeRepresentation | null = this.get(representationUid);
+                if (representation) {
+                    representation.parentMolecule.removeRepresentation(representationUid); //it's a bit roundabout way but it works
+                    moorhenInstance.dispatch(removeCustomRepresentation(representation));
+                    return true;
+
+                }
+                return false;
+            },
+
+            /**
              * Edit an existing representation in place via the public API.
              * @param representationUid - Unique ID of the representation to edit
              * @param params - Update options. `representationStyle` is restricted to the
@@ -443,7 +467,8 @@ export class MoorhenInstance extends StoreExtension {
              * (passing the object avoids a store lookup, which is needed when the
              * molecule has not yet been added to the store)
              * @param wizardType - The wizard type to run: "site-and-ribbons" (binding site and ribbons),
-             * "ribbons-and-ligands" (ribbons and ligands), "catrace" (CA trace and ligands), or "bonds" (bonds)
+             * "ribbons-and-ligands" (ribbons and ligands), "ribbons-and-side-chains" (ribbons and side chains),
+             * "catrace" (CA trace and ligands), or "bonds" (bonds)
              * @param deleteExisting - If true, delete existing representations before creating new ones
              * (defaults to true)
              * @returns The unique IDs of the created representations (already added to the interface)
@@ -458,6 +483,7 @@ export class MoorhenInstance extends StoreExtension {
                     molecule: targetMolecule,
                     wizardType,
                     deleteExisting,
+                    dispatch: moorhenInstance.dispatch,
                 });
                 for (const representation of representations) {
                     await moorhenInstance.dispatch(addCustomRepresentation(representation));

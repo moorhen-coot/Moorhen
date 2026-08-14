@@ -53,6 +53,7 @@ import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import "./container.css";
+import "../../global.css";
 
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;

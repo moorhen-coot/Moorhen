@@ -1,8 +1,15 @@
+import { enqueueSnackbar } from "@/store";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
 import type { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
-import { createRepresentation } from "./RepresentationBuilder";
+import { createRepresentation, type CreateRepresentationParams } from "./RepresentationBuilder";
+import { Dispatch } from "@reduxjs/toolkit";
 
-export type PictureWizardType = "site-and-ribbons" | "bonds" | "ribbons-and-ligands" | "catrace";
+export type PictureWizardType =
+    | "site-and-ribbons"
+    | "bonds"
+    | "ribbons-and-ligands"
+    | "ribbons-and-side-chains"
+    | "catrace";
 
 export type PictureWizardRuleType = "ligands" | "cid";
 
@@ -14,62 +21,130 @@ export interface RunPictureWizardParams {
     cid?: string;
     neighboursDistance?: number;
     deleteExisting?: boolean;
-    setBusy?: (busy: boolean) => void;
     onRepresentationAdded?: (representation: MoleculeRepresentation) => void;
     onRepresentationRemoved?: (representation: MoleculeRepresentation) => void;
     onApply?: () => void;
+    dispatch: Dispatch;
 }
 
-interface CreateWizardRepresentationParams {
+/**
+ * One step of the picture wizard: the parameters for one call to
+ * createRepresentation, minus the ones shared by every step (molecule,
+ * neighbours distance, isCustom).
+ */
+type WizardStep = Omit<CreateRepresentationParams, "molecule" | "neighboursDistance" | "isCustom">;
+
+/** Ribbon: shared by every ribbon-based wizard type. */
+const ribbonStep = (): WizardStep => ({ ruleType: "molecule", representationStyle: "CRs" });
+
+/** Side chains: every non-water side chain (backbone atoms excluded) as sticks. */
+const sideChainsStep = (): WizardStep => ({
+    ruleType: "molecule",
+    representationStyle: "CBs",
+    sideChainOnly: true,
+    notHOH: true,
+});
+
+/** CA trace: the alpha-carbon backbone only. */
+const caTraceStep = (): WizardStep => ({ ruleType: "molecule", representationStyle: "CAs" });
+
+/** Bonds: every atom of the molecule as sticks. */
+const bondsStep = (): WizardStep => ({ ruleType: "molecule", representationStyle: "CBs" });
+
+/** Ligands: the given CID (usually the ligand(s)) as sticks. */
+const ligandsStep = (cid: string): WizardStep => ({ ruleType: "ligands", representationStyle: "CBs", cid });
+
+/** Side chains of the residues around the given CID (binding-site style). */
+const bindingSiteSideChainsStep = (neighboursCid: string): WizardStep => ({
+    ruleType: "neighbourhood",
+    representationStyle: "CBs",
+    neighboursCid,
+    restrictToNeighbours: true,
+    sideChainOnly: true,
+});
+
+/** H-bonds around the given CID (binding-site style). */
+const bindingSiteHBondsStep = (neighboursCid: string): WizardStep => ({
+    ruleType: "molecule",
+    representationStyle: "allHBonds",
+    neighboursCid,
+    restrictToNeighbours: true,
+});
+
+
+function resolveLigandSelection(params: {
     molecule: MoorhenMolecule;
-    neighboursDistance: number;
-    ruleType: "molecule" | "cid";
-    representationStyle: "CBs" | "CRs" | "CAs" | "allHBonds";
-    neighboursCid?: string;
-    restrictToNeighbours?: boolean;
-    excludeNeighbours?: boolean;
-    cid?: string;
-    sideChainOnly?: boolean;
-    setBusy?: (busy: boolean) => void;
-    onRepresentationAdded?: (representation: MoleculeRepresentation) => void;
-    onApply?: () => void;
-}
-
-/**
- * Create a single "wizard-style" representation (one step of the picture
- * wizard) via the core representation builder. Fires onRepresentationAdded /
- * onApply when the representation is successfully created.
- */
-async function createWizardRepresentation(params: CreateWizardRepresentationParams): Promise<MoleculeRepresentation | null> {
-    const { molecule, neighboursDistance, setBusy, onRepresentationAdded, onApply } = params;
-
-    setBusy?.(true);
-
-    const representation = await createRepresentation({
-        ...params,
-        molecule,
-        neighboursDistance,
-        hbondedTo: params.restrictToNeighbours ?? false,
-        isCustom: true,
-    });
-
-    if (representation) {
-        onRepresentationAdded?.(representation);
-        onApply?.();
+    ruleType: PictureWizardRuleType;
+    ligandSelection: string | null;
+    cid: string;
+}): string[] {
+    const { molecule, ruleType, ligandSelection, cid } = params;
+    if (ruleType === "cid") {
+        return cid.split("||");
     }
-
-    setBusy?.(false);
-
-    return representation;
+    let selection = ligandSelection ?? "";
+    if (!selection && molecule.ligands && molecule.ligands.length > 0) {
+        selection = molecule.ligands.map(x => x.cid).join("||");
+    }
+    return selection ? selection.split("||") : [];
 }
 
-/**
- * Run the "Picture Wizard" for a molecule: optionally delete the existing
- * representations, then create the set of representations implied by the
- * given wizard type. This is React-free so it can be reused by Moorhen core
- * (e.g. moorhenInstance.representation.wizard). Returns the created
- * representations.
- */
+interface BuildWizardStepsParams {
+    wizardType: PictureWizardType;
+    molecule: MoorhenMolecule;
+    ruleType: PictureWizardRuleType;
+    ligandSelection: string | null;
+    cid: string;
+    dispatch: Dispatch;
+}
+
+
+function buildWizardSteps(params: BuildWizardStepsParams): WizardStep[] {
+    const { wizardType, molecule, ruleType, ligandSelection, cid, dispatch } = params;
+
+    switch (wizardType) {
+        case "site-and-ribbons": {
+            const steps: WizardStep[] = [];
+            const splitLigands = resolveLigandSelection({ molecule, ruleType, ligandSelection, cid });
+            if (splitLigands.length === 0) {
+                dispatch(enqueueSnackbar({
+                    message: "No ligands found for binding-site style",
+                    variant: "warning" }
+                ));
+                // Binding-site style needs a ligand to build a site around; nothing to draw.
+            } else if (splitLigands.length > 3) {
+                steps.push(
+                    bindingSiteSideChainsStep(splitLigands.join("||")),
+                    bindingSiteHBondsStep(splitLigands.join("||"))
+                );
+            } else {
+                for (const ligand of splitLigands) {
+                    steps.push(bindingSiteSideChainsStep(ligand), bindingSiteHBondsStep(ligand));
+                }
+            }
+            steps.push(ribbonStep());
+            return steps;
+        }
+        case "ribbons-and-ligands": {
+            const splitLigands = resolveLigandSelection({ molecule, ruleType, ligandSelection, cid });
+            const steps: WizardStep[] = [];
+            if (splitLigands.length > 0) {
+                steps.push(ligandsStep(splitLigands.join("||")));
+            }
+            // A bare ribbon is still drawn when there is no ligand to show.
+            steps.push(ribbonStep());
+            return steps;
+        }
+        case "ribbons-and-side-chains":
+            return [sideChainsStep(), ribbonStep()];
+        case "catrace":
+            return [caTraceStep()];
+        case "bonds":
+            return [bondsStep()];
+    }
+}
+
+
 export async function runPictureWizard(params: RunPictureWizardParams): Promise<MoleculeRepresentation[]> {
     const {
         molecule,
@@ -79,167 +154,37 @@ export async function runPictureWizard(params: RunPictureWizardParams): Promise<
         cid = "/*/*/*/*:*",
         neighboursDistance = 6.0,
         deleteExisting = true,
-        setBusy,
         onRepresentationAdded,
         onRepresentationRemoved,
         onApply,
+        dispatch,
     } = params;
 
     const createdRepresentations: MoleculeRepresentation[] = [];
 
     if (deleteExisting) {
-        setBusy?.(true);
         molecule.representations.forEach(rep => {
             molecule.removeRepresentation(rep.uniqueId);
             onRepresentationRemoved?.(rep);
         });
         molecule.clearBuffersOfStyle("environment");
-        setBusy?.(false);
     }
 
-    let splitLigands: string[] = [];
-    if (wizardType === "site-and-ribbons" || wizardType === "ribbons-and-ligands") {
-        if (ruleType === "ligands") {
-            let theLigandSelection = ligandSelection ?? "";
-            if (!theLigandSelection && molecule.ligands && molecule.ligands.length > 0) {
-                theLigandSelection = molecule.ligands.map(x => x.cid).join("||");
-            }
-            if (theLigandSelection) {
-                splitLigands = theLigandSelection.split("||");
-            } else if (wizardType === "site-and-ribbons") {
-                // Binding-site style needs a ligand to build a site around; nothing to draw.
-                return createdRepresentations;
-            }
-            // For "ribbons" with no ligand, splitLigands stays empty so the ribbon
-            // (CRs) representation below is still created.
-        } else if (ruleType === "cid") {
-            splitLigands = cid.split("||");
-        }
-    }
+    const steps = buildWizardSteps({ wizardType, molecule, ruleType, ligandSelection, cid, dispatch });
 
-    if (wizardType === "site-and-ribbons") {
-        if (splitLigands.length > 0) {
-            if (splitLigands.length > 3) {
-                createdRepresentations.push(
-                    await createWizardRepresentation({
-                        molecule,
-                        neighboursDistance,
-                        setBusy,
-                        onRepresentationAdded,
-                        onApply,
-                        ruleType: "molecule",
-                        representationStyle: "CBs",
-                        neighboursCid: splitLigands.join("||"),
-                        restrictToNeighbours: true,
-                        sideChainOnly: true,
-                    })
-                );
-                createdRepresentations.push(
-                    await createWizardRepresentation({
-                        molecule,
-                        neighboursDistance,
-                        setBusy,
-                        onRepresentationAdded,
-                        onApply,
-                        ruleType: "molecule",
-                        representationStyle: "allHBonds",
-                        neighboursCid: splitLigands.join("||"),
-                        restrictToNeighbours: true,
-                    })
-                );
-            } else {
-                for (let ilig = 0; ilig < splitLigands.length; ilig++) {
-                    createdRepresentations.push(
-                        await createWizardRepresentation({
-                            molecule,
-                            neighboursDistance,
-                            setBusy,
-                            onRepresentationAdded,
-                            onApply,
-                            ruleType: "molecule",
-                            representationStyle: "CBs",
-                            neighboursCid: splitLigands[ilig],
-                            restrictToNeighbours: true,
-                            sideChainOnly: true,
-                        })
-                    );
-                    createdRepresentations.push(
-                        await createWizardRepresentation({
-                            molecule,
-                            neighboursDistance,
-                            setBusy,
-                            onRepresentationAdded,
-                            onApply,
-                            ruleType: "molecule",
-                            representationStyle: "allHBonds",
-                            neighboursCid: splitLigands[ilig],
-                            restrictToNeighbours: true,
-                        })
-                    );
-                }
-            }
+    for (const step of steps) {
+        const representation = await createRepresentation({
+            ...step,
+            molecule,
+            neighboursDistance,
+            hbondedTo: step.restrictToNeighbours ?? false,
+            isCustom: true,
+        });
+        if (representation) {
+            createdRepresentations.push(representation);
+            onRepresentationAdded?.(representation);
+            onApply?.();
         }
-        createdRepresentations.push(
-            await createWizardRepresentation({
-                molecule,
-                neighboursDistance,
-                setBusy,
-                onRepresentationAdded,
-                onApply,
-                ruleType: "molecule",
-                representationStyle: "CRs",
-            })
-        );
-    } else if (wizardType === "ribbons-and-ligands") {
-        if (splitLigands.length > 0) {
-            createdRepresentations.push(
-                await createWizardRepresentation({
-                    molecule,
-                    neighboursDistance,
-                    setBusy,
-                    onRepresentationAdded,
-                    onApply,
-                    ruleType: "cid",
-                    representationStyle: "CBs",
-                    cid: splitLigands.join("||"),
-                })
-            );
-        }
-        createdRepresentations.push(
-            await createWizardRepresentation({
-                molecule,
-                neighboursDistance,
-                setBusy,
-                onRepresentationAdded,
-                onApply,
-                ruleType: "molecule",
-                representationStyle: "CRs",
-            })
-        );
-    } else if (wizardType === "catrace") {
-        createdRepresentations.push(
-            await createWizardRepresentation({
-                molecule,
-                neighboursDistance,
-                setBusy,
-                onRepresentationAdded,
-                onApply,
-                ruleType: "molecule",
-                representationStyle: "CAs",
-            })
-        );
-    } else if (wizardType === "bonds") {
-        createdRepresentations.push(
-            await createWizardRepresentation({
-                molecule,
-                neighboursDistance,
-                setBusy,
-                onRepresentationAdded,
-                onApply,
-                ruleType: "molecule",
-                representationStyle: "CBs",
-            })
-        );
     }
 
     return createdRepresentations;

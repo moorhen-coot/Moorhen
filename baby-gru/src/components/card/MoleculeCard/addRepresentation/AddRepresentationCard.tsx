@@ -35,7 +35,6 @@ export const AddCustomRepresentationCard = memo(
         const store = useStore<RootState>();
         const existingParams = props.representation ? extractRepresentationParams(props.representation) : undefined;
         const ncsColourRuleRef = useRef<null | ColourRule>(existingParams?.ncsColourRule ?? null);
-        const [ligandCid, setLigandCid] = useState<string>("");
 
         const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
             existingParams?.ruleType ?? "molecule"
@@ -152,7 +151,6 @@ export const AddCustomRepresentationCard = memo(
                         sequenceResidueRange:
                             sequenceResidueRange && sequenceResidueRange[0] !== -9999 ? sequenceResidueRange : null,
                         cid,
-                        ligandCid: ligandCid || null,
                         useDefaultColours,
                         colourMode,
                         colour,
@@ -198,7 +196,6 @@ export const AddCustomRepresentationCard = memo(
                         sequenceResidueRange:
                             sequenceResidueRange && sequenceResidueRange[0] !== -9999 ? sequenceResidueRange : null,
                         cid,
-                        ligandCid: ligandCid || null,
                         useDefaultColours,
                         colourMode,
                         colour,
@@ -272,7 +269,6 @@ export const AddCustomRepresentationCard = memo(
                             setSequenceResidueRange={setSequenceResidueRange}
                             cid={cid}
                             setCid={setCid}
-                            setLigandCid={setLigandCid}
                             setRestrictToNeighbours={setRestrictToNeighbours}
                             isThereLigand={isThereLigand}
                         />

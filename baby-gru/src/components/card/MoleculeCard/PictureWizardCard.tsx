@@ -29,6 +29,7 @@ export const PictureWizardCard = memo(
         const { enqueueSnackbar } = useSnackbar();
 
         const handleCreateRepresentation = async () => {
+            props.setBusy?.(true);
             try {
                 await runPictureWizard({
                     molecule: props.molecule,
@@ -38,16 +39,18 @@ export const PictureWizardCard = memo(
                     cid,
                     neighboursDistance,
                     deleteExisting,
-                    setBusy: props.setBusy,
                     onRepresentationAdded: representation => dispatch(addCustomRepresentation(representation)),
                     onRepresentationRemoved: representation => dispatch(removeCustomRepresentation(representation)),
                     onApply: props.onApply,
+                    dispatch: moorhenInstance.dispatch,
                 });
             } catch (err) {
                 console.warn(err);
                 enqueueSnackbar(`Something went wrong while creating a new custom representation`, {
                     variant: "error",
                 });
+            } finally {
+                props.setBusy?.(false);
             }
         };
 
@@ -63,6 +66,9 @@ export const PictureWizardCard = memo(
                                     </option>
                                     <option value={"ribbons-and-ligands"} key={"ribbons-and-ligands"}>
                                         Ribbons and ligands
+                                    </option>
+                                    <option value={"ribbons-and-side-chains"} key={"ribbons-and-side-chains"}>
+                                        Ribbons and side chains
                                     </option>
                                     <option value={"catrace"} key={"catrace"}>
                                         CA trace and ligands
