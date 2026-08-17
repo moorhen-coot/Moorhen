@@ -29,6 +29,21 @@ const colourPalettes = {
     peptide_omega_analysis: value => {
         return "rgb(" + Math.floor(256 * value) + ", 132, 132)";
     },
+    density_correlation_analysis_json: value => {
+        return "rgb(255, 255, " + Math.floor(256 * value) + ")";
+    },
+    density_fit_analysis_json: value => {
+        return "rgb(0, " + Math.floor(256 * value) + ", 255)";
+    },
+    rotamer_analysis_json: value => {
+        return "rgb(" + Math.floor(256 * value) + ", 255, 132)";
+    },
+    ramachandran_analysis_json: value => {
+        return "rgb(" + Math.floor(256 * value) + ", 132, 255)";
+    },
+    peptide_omega_analysis_json: value => {
+        return "rgb(" + Math.floor(256 * value) + ", 132, 132)";
+    },
 };
 
 const metricInfoScaling = {
@@ -47,6 +62,24 @@ const metricInfoScaling = {
         return Math.min(1 / value, 50) / 50;
     },
     peptide_omega_analysis: value => {
+        // deviation from ideal 180 peptide omega angle
+        return value;
+    },
+    density_correlation_analysis_json: value => {
+        return Math.min(Math.max(value, 0), 1);
+    },
+    density_fit_analysis_json: value => {
+        return value;
+    },
+    rotamer_analysis_json: value => {
+        // ??
+        return (Math.min(Math.max(value, 50), 80) - 50) / 30;
+    },
+    ramachandran_analysis_json: value => {
+        // probability density turned into a score...
+        return Math.min(1 / value, 50) / 50;
+    },
+    peptide_omega_analysis_json: value => {
         // deviation from ideal 180 peptide omega angle
         return value;
     },
@@ -123,40 +156,40 @@ export const MoorhenValidation = (props: { chartId: string }) => {
     const getAvailableMetrics = (selectedModel: number, selectedMap: number, selectedChain: string) => {
         const allMetrics = [
             {
-                command: "density_correlation_analysis",
-                returnType: "validation_data",
+                command: "density_correlation_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel, selectedMap],
                 needsMapData: true,
                 displayName: "Dens. Corr.",
             },
             {
-                command: "density_fit_analysis",
-                returnType: "validation_data",
+                command: "density_fit_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel, selectedMap],
                 needsMapData: true,
                 displayName: "Dens. Fit",
             },
             {
-                command: "rotamer_analysis",
-                returnType: "validation_data",
+                command: "rotamer_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
                 displayName: "Rota.",
             },
             {
-                command: "ramachandran_analysis",
-                returnType: "validation_data",
+                command: "ramachandran_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
                 displayName: "Rama.",
             },
             {
-                command: "peptide_omega_analysis",
-                returnType: "validation_data",
+                command: "peptide_omega_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
@@ -175,23 +208,30 @@ export const MoorhenValidation = (props: { chartId: string }) => {
         return currentlyAvailable;
     };
 
+    const fetchInProgress = useRef(false);
     const fetchData = async (selectedModel: number, selectedMap: number, selectedChain: string) => {
-        if (selectedModel === null || selectedChain === null) {
-            return null;
-        }
-        const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain);
-
-        const promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = [];
-        availableMetrics.forEach(metric => {
-            const inputData = { message: "coot_command", ...metric };
-            promises.push(commandCentre.current.cootCommand(inputData, false));
-        });
-        const responses = await Promise.all(promises);
-
         const newPlotData: libcootApi.ValidationInformationJS[][] = [];
-        responses.forEach(response => {
-            newPlotData.push(response.data.result.result);
-        });
+        if (fetchInProgress.current) {
+            console.log("SKIPPING FETCH");
+            return newPlotData;
+        }
+        fetchInProgress.current = true;
+        try {
+            if (selectedModel === null || selectedChain === null) {
+                return null;
+            }
+            const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain);
+
+            for (const metric of availableMetrics) {
+                const inputData = { message: "coot_command", ...metric };
+
+                const response = await commandCentre.current.cootCommand( inputData, false);
+
+                newPlotData.push(response.data.result.result);
+            }
+        } finally {
+            fetchInProgress.current = false;
+        }
 
         return newPlotData;
     };

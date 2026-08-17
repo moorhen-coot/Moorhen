@@ -782,6 +782,15 @@ const stringPairVectorToJSArray = (stringPairsVector: emscriptem.vector<libcootA
     return result
 }
 
+const validationDataJSONToJSArray = (validationData: any, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
+    let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
+    if(validationData){
+        if (chainID !== null && chainID in validationData) {
+            return validationData[chainID]
+        }
+    }
+    return returnResult
+}
 const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
     const cviv = validationData.cviv
@@ -1472,6 +1481,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'acedrg_types_for_bond_data':
                 returnResult = acedrgTypesForBondDataToJSArray(cootResult.bond_types)
+                break;
+            case 'validation_data_json':
+                returnResult = validationDataJSONToJSArray(JSON.parse(cootResult), messageData.chainID)
                 break;
             case 'validation_data':
                 returnResult = validationDataToJSArray(cootResult, messageData.chainID)
