@@ -77,6 +77,7 @@ export const ValidationPanel = () => {
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
             addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, undefined, scaleRMSZ);
+            console.log(geoValidationData);
 
             const BValidationData = await moorhenInstance.cootCommand.getBValidationData(molecule.molNo);
             addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });

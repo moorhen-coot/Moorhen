@@ -462,12 +462,19 @@ class molecules_container_js : public molecules_container_t {
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
+            std::vector<gemmi::Topo::Bond> outlier_bonds;
+            std::vector<gemmi::Topo::Angle> outlier_angles;
+            std::vector<gemmi::Topo::Torsion> outlier_torsions;
+            std::vector<gemmi::Topo::Plane> outlier_planes;
+            std::vector<gemmi::Topo::Chir> outlier_chirals;
             for (const auto& bond : topo->bonds) {
                 double z = bond.calculate_z();
                 atom_zs[bond.atoms[0]].push_back(z);
                 atom_zs[bond.atoms[1]].push_back(z);
                 atom_zs_bonds[bond.atoms[0]].push_back(z);
                 atom_zs_bonds[bond.atoms[1]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_bonds.push_back(bond);
             }
             for (const auto& angle : topo->angles) {
                 double z = angle.calculate_z();
@@ -477,6 +484,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_angles[angle.atoms[0]].push_back(z);
                 atom_zs_angles[angle.atoms[1]].push_back(z);
                 atom_zs_angles[angle.atoms[2]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_angles.push_back(angle);
             }
             for (const auto& torsion : topo->torsions) {
                 // Some torsions are only restrained with planes so check esd
@@ -490,16 +499,23 @@ class molecules_container_js : public molecules_container_t {
                     atom_zs_torsions[torsion.atoms[1]].push_back(z);
                     atom_zs_torsions[torsion.atoms[2]].push_back(z);
                     atom_zs_torsions[torsion.atoms[3]].push_back(z);
+                    if (std::abs(z) > 3.0)
+                        outlier_torsions.push_back(torsion);
                 }
             }
             for (const auto& plane : topo->planes) {
                 const auto abcd = gemmi::find_best_plane(plane.atoms);
+                double max_abs_z = 0;
                 for (const auto &atom : plane.atoms)
                 {
                     const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
-                    atom_zs[atom].push_back(dist / plane.restr->esd);
-                    atom_zs_planes[atom].push_back(dist / plane.restr->esd);
+                    const double z = dist / plane.restr->esd;
+                    atom_zs[atom].push_back(z);
+                    atom_zs_planes[atom].push_back(z);
+                    max_abs_z = std::max(max_abs_z, std::abs(z));
                 }
+                if (max_abs_z > 3.0)
+                    outlier_planes.push_back(plane);
             }
             for (const auto& chir : topo->chirs) {
                 static const double esd = 0.1;
@@ -513,6 +529,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_chirals[chir.atoms[1]].push_back(z);
                 atom_zs_chirals[chir.atoms[2]].push_back(z);
                 atom_zs_chirals[chir.atoms[3]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_chirals.push_back(chir);
             }
 
             Json::Value root;
@@ -580,6 +598,15 @@ class molecules_container_js : public molecules_container_t {
                 root[chain.name] = chain_json;
             }
             
+            string outlierstring = "";
+            for (const auto& bond : outlier_bonds) {
+                if (std::find(bond.atoms.begin(), bond.atoms.end(), &res) != bond.atoms.end()) {
+                    outlierstring += "Bond ";
+                    outlierstring += bond.atoms[0]->name + " - " + bond.atoms[1]->name + " Z: " + std::to_string(bond.calculate_z()) + "\n";
+                }
+            }
+            root["OutlierBonds"] = outlierstring;
+
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
             
